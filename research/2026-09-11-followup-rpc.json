@@ -1,0 +1,142 @@
+{
+  "observedAtUtc": "2026-09-11T10:44:41.957232+00:00",
+  "rpc": "https://rpc.mainnet.chain.robinhood.com",
+  "block": "0x3968473",
+  "reads": [
+    {
+      "address": "0x8660a7f019c7943b0b0a91b8e39aff3b6db6ae62",
+      "signature": "owner()",
+      "data": "0x8da5cb5b",
+      "block": "0x3968473",
+      "response": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": "0x0000000000000000000000003da42dbecbeff476c027f8298bfad0d6c3ba5656"
+      },
+      "decoded": "0x3da42dbecbeff476c027f8298bfad0d6c3ba5656"
+    },
+    {
+      "address": "0x8660a7f019c7943b0b0a91b8e39aff3b6db6ae62",
+      "signature": "launchFeeWei()",
+      "data": "0x83eeb3bb",
+      "block": "0x3968473",
+      "response": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": "0x0000000000000000000000000000000000000000000000000001c6bf52634000"
+      },
+      "decoded": "500000000000000"
+    },
+    {
+      "address": "0x8660a7f019c7943b0b0a91b8e39aff3b6db6ae62",
+      "signature": "launchV2ModeRegistry()",
+      "data": "0xc25dc96f",
+      "block": "0x3968473",
+      "response": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": "0x000000000000000000000000dacaed317f72d8ff127a732e1b8f1e2d4807bb2d"
+      },
+      "decoded": "0xdacaed317f72d8ff127a732e1b8f1e2d4807bb2d"
+    },
+    {
+      "address": "0xacdaeb4c9de24299b27027cbb3b47195c2ef67a9",
+      "signature": "owner()",
+      "data": "0x8da5cb5b",
+      "block": "0x3968473",
+      "response": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "error": {
+          "code": 3,
+          "message": "execution reverted",
+          "data": "0x"
+        }
+      }
+    },
+    {
+      "address": "0xd1adef92714bfa5e0f59dd48479bcf9a5ee77c01",
+      "signature": "epoch()",
+      "data": "0x900cf0cf",
+      "block": "0x3968473",
+      "response": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": "0x0000000000000000000000000000000000000000000000000000000000000001"
+      },
+      "decoded": "1"
+    },
+    {
+      "address": "0x1637195a674630E475ACD18B3D27b13C0EefDac1",
+      "signature": "owner()",
+      "data": "0x8da5cb5b",
+      "block": "0x3968473",
+      "response": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": "0x000000000000000000000000801294a07f7b67dcf328ebb4b1430cfd3abbf440"
+      },
+      "decoded": "0x801294a07f7b67dcf328ebb4b1430cfd3abbf440"
+    },
+    {
+      "address": "0x1637195a674630E475ACD18B3D27b13C0EefDac1",
+      "signature": "subscriptions()",
+      "data": "0xb8e381e5",
+      "block": "0x3968473",
+      "response": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": "0x0000000000000000000000003fbfe73935b729c6a30ae6060d5708215b3633f5"
+      },
+      "decoded": "0x3fbfe73935b729c6a30ae6060d5708215b3633f5"
+    },
+    {
+      "address": "0x1637195a674630E475ACD18B3D27b13C0EefDac1",
+      "signature": "baseFee()",
+      "data": "0x6ef25c3a",
+      "block": "0x3968473",
+      "response": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": "0x00000000000000000000000000000000000000000000000000005af3107a4000"
+      },
+      "decoded": "100000000000000"
+    },
+    {
+      "address": "0x1637195a674630E475ACD18B3D27b13C0EefDac1",
+      "signature": "perWordFee()",
+      "data": "0x7cc7f639",
+      "block": "0x3968473",
+      "response": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": "0x000000000000000000000000000000000000000000000000000000000bebc200"
+      },
+      "decoded": "200000000"
+    },
+    {
+      "address": "0x1637195a674630E475ACD18B3D27b13C0EefDac1",
+      "signature": "perCallbackGasFee()",
+      "data": "0x2238a494",
+      "block": "0x3968473",
+      "response": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": "0x0000000000000000000000000000000000000000000000000000000017d78400"
+      },
+      "decoded": "400000000"
+    },
+    {
+      "address": "0x1637195a674630E475ACD18B3D27b13C0EefDac1",
+      "signature": "price(uint32,uint32)",
+      "data": "0x1fd845c8000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000249f0",
+      "block": "0x3968473",
+      "response": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": "0x00000000000000000000000000000000000000000000000000009184f315c200"
+      },
+      "decoded": "160000200000000"
+    }
+  ]
+}

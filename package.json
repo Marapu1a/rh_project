@@ -1,0 +1,20 @@
+{
+  "name": "pair-promo-fee-router",
+  "private": true,
+  "version": "0.0.0",
+  "scripts": {
+    "test": "node --test --test-concurrency=1 test/fee-router.test.cjs test/promo-vault.test.cjs",
+    "test:fork": "node scripts/economics-fork.cjs",
+    "test:fork:farming": "node scripts/economics-fork.cjs --farming",
+    "report:economics": "python scripts/summarize-economics.py",
+    "report:farming": "python scripts/farming-model.py",
+    "test:farming": "python test/farming-model.test.py",
+    "compile": "node scripts/compile.cjs"
+  },
+  "devDependencies": {
+    "@openzeppelin/contracts": "5.6.1",
+    "ethers": "6.17.0",
+    "hardhat": "2.29.1",
+    "solc": "0.8.37"
+  }
+}

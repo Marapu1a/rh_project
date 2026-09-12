@@ -1,0 +1,12 @@
+[
+  {
+    "url": "https://rpc.mainnet.chain.robinhood.com",
+    "status": 200,
+    "body": "[{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":\"0x1237\"},{\"jsonrpc\":\"2.0\",\"id\":2,\"error\":{\"code\":-32000,\"message\":\"metadata is not found, 60313781\"}}]\n"
+  },
+  {
+    "url": "https://robinhood-mainnet-rpc.blockreq.com/v1/rpc/public",
+    "status": 200,
+    "body": "[{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":\"0x1237\"},{\"jsonrpc\":\"2.0\",\"id\":2,\"error\":{\"code\":-32601,\"message\":\"public endpoint only serves recent blocks (last 32768). Register at blockreq.com for historical / archive access.\"}}]"
+  }
+]

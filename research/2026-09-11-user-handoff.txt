@@ -1,0 +1,402 @@
+````
+# PAIR / Robinhood Chain MVP — ответы 1–8 после technical recon
+
+Дата состояния: 11.09.2026.
+
+Важно: где написано «подтверждено» — это либо документация, либо конкретное on-chain/API наблюдение. Где доказательств нет — явно указано «не выяснено».
+
+Исследование пока было read-only: PAIR API, Blockscout, RPC-чтения. Подписанных и broadcast транзакций не выполнялось. :contentReference[oaicite:0]{index=0}
+
+---
+
+## 1. Какой PAIR и какой релиз исследуем
+
+### Принято
+Основной текущий путь — **PAIR Launch V2** на Robinhood Chain mainnet.
+
+Legacy V5 используем только как историческую документацию, а не как источник ABI/экономики текущего релиза.
+
+Сайт и документация:
+- https://pair.fund
+- https://pair.fund/docs
+- https://docs.robinhood.com/chain/
+
+### Подтверждено
+
+У живого токена одновременно наблюдаются:
+
+```text
+launchVersion = v2
+marketVersion = v5_v2
+````
+а policy endpoint возвращает:
+```
+generation = V5_V2
+releaseKind = legacy
+canonical = false
+```
+Следовательно, по одному слову V2 нельзя выбирать ABI и fee-модель. 
+Текущий custom launch readiness возвращал:
+```
+launchpad
+0x8660a7f019c7943b0b0a91b8e39aff3b6db6ae62
+
+coordinator
+0xacdaeb4c9de24299b27027cbb3b47195c2ef67a9
+
+tokenFactory
+0x0eb7c2fecb61d00ef630f46c3b93430267312009
+
+initializer
+0xe7eb9fd0c18be6d4d4dc28019301d0f32ae66e99
+
+priceSigner
+0xd763caef4bf7ba54cb7fa71f7ed124203e8ff01d
+
+developerBuyAggregator
+0x85f590535ec9a09bdaffc61b8526cd3682dbc658
+
+routeHook
+0x16D1560630Ce74af4478d9b8AD46548A092A2000
+```
+
+В реально наблюдавшемся launchV2Token использовались:
+```
+Launchpad
+0x8660A7F019C7943b0b0A91B8E39AFf3b6DB6Ae62
+
+PoolManager
+0x8366a39CC670B4001A1121B8F6A443A643e40951
+
+Hook созданных пулов
+0x544A394b1553b016c0Cb19aD68BFf7B712f3C0c0
+```
+Hook отличается от текущего routeHook, поэтому конкретный launch path нужно фиксировать отдельно. 
+Launchpad — EIP-1967 proxy. Blockscout показывает implementation:
+```
+0x8000B64B62837a1511E302c62354E1Bc39b5641a
+```
+
+-  полный набор production ABI; 
+-  исходники всех PAIR contracts; 
+-  proxy admin; 
+-  admin/ownership coordinator, vault, hook; 
+-  точный актуальный release family для нашего будущего запуска. 
+Для MVP предпочтительный вариант для дальнейшего исследования — один прямой TOKEN/USDG рынок.
+Причина: максимально простая оценка eligible volume без лишних oracle-зависимостей.
+Прямой TOKEN/USDG рынок реально существует в Launch V2.
+Найден успешный запуск:
+```
+tx
+0xa0e94e585afa21743c69e41b374043ece7c6ea0c76422e9657e8e38c43b63556
+
+token
+0xffbd891398a53d88880089afadf336693b075555
+```
+Созданы два V4 рынка:
+```
+TOKEN / USDG
+PoolId:
+0x4838bcfc2f5c43c783926ef973cd284b4b68f86f108b8c2410b3715f75608171
+
+TOKEN / WETH
+PoolId:
+0xaaa4adac9a8cb4c90e7e01f210bac375913a99ca1e1ad1a50082b6ab9db523ee
+```
+
+USDG mainnet:
+```
+0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168
+decimals = 6
+```
+
+Launch V2 по документации умеет создавать 1–5 рынков за одну транзакцию. 
+Custom readiness был:
+```
+enabled = true
+launchAuthorized = true
+simulationAuthorized = true
+```
+Но это readiness API, а не доказательство успешного запуска именно нашей конфигурации. 
+У исследованного токена:
+```
+initialDeveloperBuy = 0
+quoteSpentOnDeveloperBuy = 0
+developerBuyWithEth = false
+```
+То есть обязательный developer buy не подтверждён. 
+Launch tx передала:
+```
+0.00051 ETH
+```
+но назначение этой суммы полностью не разобрано. 
+-  обязательный launch fee; 
+-  minimum developer buy; 
+-  required initial liquidity; 
+-  точная стоимость запуска одного TOKEN/USDG; 
+-  живой пример текущего custom release только с одним USDG market. 
+В двух реально созданных пулах:
+```
+fee = 10000
+```
+В Uniswap V4 это соответствует 1% pool fee. 
+PAIR token API также показывает:
+```
+poolFee = 10000
+feeTier = 10000
+```
+
+70% creator / 30% protocol пришло из legacy V5 documentation.
+После recon это нельзя использовать как production-константу.
+Наш старый расчёт:
+```
+$100 volume
+→ $1 fee
+→ $0.70 creator revenue
+```
+остаётся только иллюстрацией до проверки текущего релиза. 
+1% — pool fee, но итоговая стоимость маршрута и доля проекта могут отличаться.
+Не разобраны:
+-  hook fees; 
+-  router fees; 
+-  policy accounting; 
+-  launch protection; 
+-  возможные threshold-dependent rules. 
+
+-  актуальный creator %; 
+-  protocol %; 
+-  дополнительные fees; 
+-  одинаковы ли итоговые условия BUY и SELL; 
+-  могут ли ставки меняться. 
+Решения пока нет.
+Старое предположение:
+```
+BUY → quote fees
+SELL → TOKEN fees
+```
+не считать фактом.
+Есть отдельный policy vault и creator fee recipient:
+```
+vault
+0xd1adef92714bfa5e0f59dd48479bcf9a5ee77c01
+```
+Policy содержит:
+```
+recipient
+shareBps
+```
+
+Не прослежена цепочка:
+```
+Swap
+→ fee accrual
+→ collect
+→ vault
+→ distribution
+→ creator recipient
+```
+Неизвестно, получает creator:
+-  TOKEN; 
+-  USDG; 
+-  оба; 
+-  другой quote; 
+-  уже конвертированный актив. 
+Реальные collect/claim транзакции пока не найдены.
+Наша целевая архитектура:
+```
+PAIR
+ ↓
+FeeRouter
+ ├─ Promo
+ ├─ Investors
+ └─ Treasury
+```
+Это пока архитектурное решение проекта, а не подтверждённая возможность PAIR.
+В живом запуске creator и creatorFeeRecipient разные:
+```
+creator
+0xb1bf6346cd6f7a8f52a709a4265a00d969bd531d
+
+creatorFeeRecipient
+0x9dfa34bf39e7ce41390c0ef2ce928e4090e49d48
+```
+
+Policy epoch показывает:
+```
+recipient = 0x9dfa...
+shareBps = 10000
+```
+
+Следовательно, recipient точно отделён от creator.
+-  можно ли указать arbitrary contract address; 
+-  нужен ли recipient interface; 
+-  кто вызывает collect/claim; 
+-  permissionless ли claim; 
+-  нужна ли подпись creator; 
+-  нужен ли backend/UI PAIR; 
+-  можно ли менять recipient; 
+-  кто имеет право менять recipient. 
+Итог:
+FeeRouter как creator recipient — правдоподобно, но пока не подтверждено.
+Launchpad — upgradeable EIP-1967 proxy. 
+Policy epochs существуют.
+Пример:
+```
+epoch = 1
+mode = 1
+vault = 0xd1ade...
+recipient/shareBps
+```
+
+-  proxy admin; 
+-  upgrade permissions; 
+-  coordinator owner; 
+-  vault owner; 
+-  hook admin; 
+-  возможность паузы; 
+-  возможность изменения pool fee; 
+-  возможность принудительной смены recipient. 
+Критически важный неизвестный вопрос:
+К какой policy epoch относится доход — к epoch на момент swap, collect или distribution?
+Это нужно выяснить до того, как обещать неизменность revenue rules активной Promo Campaign.
+Правила активной Promo Campaign не должны меняться.
+Но пока не доказано, что PAIR semantics позволяют гарантировать это только через нашу архитектуру.
+Сейчас не подходит.
+Robinhood Chain отсутствует в проверенном списке поддерживаемых VRF сетей.
+Наличие Chainlink price feeds не означает наличие VRF. 
+Статус:
+не выяснено
+Robinhood provider/address не подтверждены.
+Не исключён, но и не подтверждён. 
+Главный кандидат для следующей проверки.
+Mainnet coordinator:
+```
+0x1637195a674630E475ACD18B3D27b13C0EefDac1
+```
+Документация заявляет:
+```
+threshold BLS = 5/9
+ETH payment
+retryCallback
+```
+Blockscout:
+```
+name = VRFCoordinator
+is_verified = true
+is_fully_verified = false
+```
+
+Не выяснено:
+-  request price; 
+-  реальные successful fulfillments; 
+-  operators; 
+-  key rotation; 
+-  ownership; 
+-  audit; 
+-  testnet contract; 
+-  timeout/failure semantics. 
+Рассматривали.
+Есть testnet и commit-reveal.
+Но в собственной security docs указано:
+-  нет независимого аудита; 
+-  provider может withholding reveal. 
+Поэтому сейчас не основной кандидат. 
+Независимо от RNG:
+```
+freeze entries
+freeze reward budget
+freeze rules
+→ request randomness
+```
+Повторный callback не должен повторно платить.
+Timeout не должен позволять владельцу перезапрашивать random до выгодного результата. 
+Robinhood Chain:
+```
+Mainnet
+chainId = 4663
+RPC = https://rpc.mainnet.chain.robinhood.com
+
+Testnet
+chainId = 46630
+RPC = https://rpc.testnet.chain.robinhood.com
+```
+Оба RPC отвечали на:
+```
+eth_chainId
+eth_blockNumber
+```
+
+Testnet и faucet документированы Robinhood.
+Mainnet assets:
+```
+USDG
+0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168
+
+WETH
+0x0Bd7D308f8E1639FAb988df18A8011f41EAcAD73
+```
+
+Только read-only:
+-  PAIR API; 
+-  Blockscout; 
+-  mainnet/testnet RPC; 
+-  launch logs; 
+-  swap logs; 
+-  readiness/policy endpoints. 
+Никаких signed transactions не выполнялось. 
+Публичный mainnet RPC позже вернул Cloudflare challenge на расширенный batch-read.
+Для production indexer нужен отдельный RPC/archive provider. 
+Не подтверждены testnet equivalents для:
+-  PAIR launchpad; 
+-  coordinator; 
+-  factory; 
+-  hook; 
+-  USDG; 
+-  policy vault; 
+-  RH-VRF. 
+То есть полный цикл:
+```
+launch
+→ buy
+→ creator fee
+→ FeeRouter
+→ entries
+→ randomness
+→ claim
+```
+ещё нигде end-to-end не прогонялся.
+Решение не принято.
+Mocks/fork пригодны для разработки нашей части, но не доказывают совместимость с реальным PAIR.
+Итог:
+готовой полной тестовой среды пока нет.
+Не кодировать как факт:
+```
+creator share = 70%
+```
+Не кодировать как факт:
+```
+BUY fees → USDG
+SELL fees → TOKEN
+```
+Не считать подтверждённым:
+```
+FeeRouter можно сразу поставить recipient
+```
+Не использовать PAIR trades API isBuy как источник истины.
+Уже найден кейс:
+```
+USDG → TOKEN → WETH
+```
+где TOKEN был промежуточным активом, а PAIR API классифицировал один leg некорректно. 
+Также не считать подтверждённым:
+-  полный testnet stack; 
+-  Chainlink VRF; 
+-  обязательный developer buy; 
+-  creator payout assets. 
+Сейчас не расширяем MVP.
+Нужно закрыть четыре вещи:
+1.  Зафиксировать конкретный действующий PAIR release для TOKEN/USDG. 
+2.  Проследить fee path end-to-end до recipient. 
+3.  Разобрать реальные swap routes и wallet attribution. 
+4.  Подтвердить один randomness provider и рабочую test strategy. 
+Это полностью совпадает с выводом technical recon. 

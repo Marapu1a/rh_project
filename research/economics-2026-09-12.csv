@@ -1,0 +1,5 @@
+﻿scenario,status,gross_buy_USDG,quote_returned_USDG,round_trip_loss_USDG_excluding_gas,hypothetical_entries,carry_USDG,creator_TOKEN_inventory,creator_USDG,swap_execution_gas_units,loss_USDG_per_entry_excluding_gas,error
+BUY 25 then SELL received TOKEN,complete,25,24.504297,0.495703,0,25,51357.614296187694346747,0.174999,380619,,
+BUY 100 then SELL received TOKEN,complete,100,98.038152,1.961848,1,0,201006.196024282328572454,0.699999,379591,1.961848,
+BUY 500 then SELL received TOKEN,complete,500,490.681922,9.318078,5,0,901485.018850853199218243,3.499999,380543,1.8636156,
+"5 cycles BUY 100 / SELL all received TOKEN, one wallet",complete,500,490.19068,9.80932,5,0,1003894.272652684392362054,3.499995,1711531,1.961864,

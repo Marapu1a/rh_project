@@ -1,0 +1,76 @@
+{
+  "mode": "offline candidate-policy counterexamples",
+  "source": "research/economics-fork-2026-09-12.json",
+  "attack": {
+    "attack": "BUY 500 then SELL received TOKEN",
+    "entries": 5,
+    "loss": "9.318078",
+    "own_quote": "3.499999"
+  },
+  "rows": [
+    {
+      "policy": "No additional restriction",
+      "expected_reward_USDG": "47.78571423809523809523809523809523809524",
+      "cost_USDG": "10.318078",
+      "profit_EV_USDG": "37.46763623809523809523809523809523809524",
+      "assumption": "1000 USDG available externally, 100 other entries, TOKEN payout zero"
+    },
+    {
+      "policy": "Minimum 100 total entries",
+      "expected_reward_USDG": "47.78571423809523809523809523809523809524",
+      "cost_USDG": "10.318078",
+      "profit_EV_USDG": "37.46763623809523809523809523809523809524",
+      "assumption": "105 total entries already satisfy the minimum"
+    },
+    {
+      "policy": "Cap one entry per wallet: one wallet",
+      "expected_reward_USDG": "9.935643554455445544554455445544554455446",
+      "cost_USDG": "10.318078",
+      "profit_EV_USDG": "-0.382434445544554455445544554455445544554",
+      "assumption": "Four owned entries excluded; same observed trading loss"
+    },
+    {
+      "policy": "Cap one entry per wallet: five wallets",
+      "expected_reward_USDG": "47.78571423809523809523809523809523809524",
+      "cost_USDG": "10.318078",
+      "profit_EV_USDG": "37.46763623809523809523809523809523809524",
+      "assumption": "Conditional same total eligible volume and cost; additional wallet/route costs NOT measured"
+    },
+    {
+      "policy": "Release 10% now",
+      "expected_reward_USDG": "4.778571423809523809523809523809523809524",
+      "cost_USDG": "10.318078",
+      "profit_EV_USDG": "-5.539506576190476190476190476190476190476",
+      "assumption": "Other 90% not awarded in this observation horizon"
+    },
+    {
+      "policy": "Release 10% in each of ten draws",
+      "expected_reward_USDG": "47.78571423809523809523809523809523809524",
+      "cost_USDG": "10.318078",
+      "profit_EV_USDG": "37.46763623809523809523809523809523809524",
+      "assumption": "Same entries remain eligible in all ten; no discount, added claims, or new participants"
+    },
+    {
+      "policy": "Jackpot capped at 1 USDG per total entry",
+      "expected_reward_USDG": "5",
+      "cost_USDG": "10.318078",
+      "profit_EV_USDG": "-5.318078",
+      "assumption": "Available budget sufficient; TOKEN payout zero"
+    },
+    {
+      "policy": "Each of two reward layers capped at 1 USDG per entry",
+      "expected_reward_USDG": "10",
+      "cost_USDG": "10.318078",
+      "profit_EV_USDG": "-0.318078",
+      "assumption": "Both draws active and funded; TOKEN value hypothetical executable value"
+    },
+    {
+      "policy": "Two separate caps, gas excluded",
+      "expected_reward_USDG": "10",
+      "cost_USDG": "9.318078",
+      "profit_EV_USDG": "0.681922",
+      "assumption": "Counterexample to separately limiting each reward layer"
+    }
+  ],
+  "limits": "No general safety proof; no wallet-splitting fork or TOKEN liquidation represented here"
+}
