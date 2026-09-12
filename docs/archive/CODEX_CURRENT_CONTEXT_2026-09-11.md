@@ -1,5 +1,8 @@
 # PAIR Promo Token — Current Technical Context & Next Step
 
+> **АРХИВ.** Документ отражает прошлый этап, не текущие правила. Актуальная логика: [PRODUCT_SPEC](../PRODUCT_SPEC.md); реализация: [IMPLEMENTATION_STATUS](../IMPLEMENTATION_STATUS.md). Числа и следующие шаги ниже относятся к дате документа.
+
+
 **Date:** 2026-09-11  
 **Purpose:** concise working context for Codex. This file combines the current MVP decisions, verified integration facts, unresolved risks, and the recommended next implementation step.
 

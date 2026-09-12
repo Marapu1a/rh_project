@@ -1,6 +1,8 @@
 # PromoVault — минимальный учёт обеспеченных призов
 
-Статус: локальный прототип. Основной контракт `contracts/PromoVault.sol`. Публичного deployment нет. Обновление 12.09: полный путь PAIR → FeeRouter → rollover → PromoVault → claim проверен на свежем fork; см. [результаты](ECONOMICS_FORK_2026-09-12.md). Продуктовая реализация controller/RNG по-прежнему отсутствует.
+> Технический отчёт о существующем прототипе. Новые продуктовые правила — [PRODUCT_SPEC](PRODUCT_SPEC.md); карта реализации — [IMPLEMENTATION_STATUS](IMPLEMENTATION_STATUS.md).
+
+Статус: локальный прототип. Основной контракт `contracts/PromoVault.sol`. Публичного deployment нет. Обновление 12.09: полный путь PAIR → FeeRouter → rollover → PromoVault → claim проверен на свежем fork; см. [результаты](archive/ECONOMICS_FORK_2026-09-12.md). Продуктовая реализация controller/RNG по-прежнему отсутствует.
 
 ## Учёт по каждому активу
 

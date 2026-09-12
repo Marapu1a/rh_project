@@ -1,5 +1,8 @@
 # PAIR Promo Token — MVP Specification
 
+> **АРХИВ.** Документ отражает прошлый этап, не текущие правила. Актуальная логика: [PRODUCT_SPEC](../PRODUCT_SPEC.md); реализация: [IMPLEMENTATION_STATUS](../IMPLEMENTATION_STATUS.md). Числа и следующие шаги ниже относятся к дате документа.
+
+
 **Status:** Product freeze for MVP  
 **Target network:** Robinhood Chain  
 **Launch layer:** PAIR  

@@ -1,5 +1,8 @@
 # PAIR: восстановление fork, экономика и интеграция
 
+> **АРХИВ.** Документ отражает прошлый этап, не текущие правила. Актуальная логика: [PRODUCT_SPEC](../PRODUCT_SPEC.md); реализация: [IMPLEMENTATION_STATUS](../IMPLEMENTATION_STATUS.md). Числа и следующие шаги ниже относятся к дате документа.
+
+
 Дата: 12.09.2026. **Все четыре экономических сценария и интеграция rollover + PromoVault прошли.** Эксперимент целиком локальный; публичные транзакции и реальные расходы отсутствуют. Размеры наград не выбирались.
 
 Последующее исследование: [offline farming-модель](FARMING_RESEARCH_2026-09-12.md) проверяет 10 368 комбинаций бюджетов и entries на основе этих измерений. Найдены условно прибыльные сценарии; исполнение атаки с выдачей и продажей TOKEN-призов на fork остаётся следующим этапом.
@@ -19,7 +22,7 @@
 
 Исторический блок прежней проверки недоступен через основной public RPC; альтернативный BlockReq ограничивает публичную историю последними 32768 блоками. Поэтому эксперимент использует свежий fork. Для контроля нагрузки добавлен локальный read-only HTTP посредник: последовательные запросы, временный кеш неизменяемых чтений и ограниченные retries. Он не подставляет фиктивное состояние при ошибках. В завершённом прогоне: 513 upstream requests, 0 retries, 0 JSON-RPC errors после применения ограничителя. Временный listener закрывается после выполнения.
 
-Evidence: [trace](../research/local-launch-trace.json), [текущая launch simulation](../research/current-launch-2026-09-12.json), [RPC probes](../research/rpc-recovery-2026-09-12.json).
+Evidence: [trace](../../research/local-launch-trace.json), [текущая launch simulation](../../research/current-launch-2026-09-12.json), [RPC probes](../../research/rpc-recovery-2026-09-12.json).
 
 ## Условия измерения
 
@@ -104,10 +107,10 @@ TOKEN revenue — инвентарь, а не готовый USDG-доход. Д
 
 ## Файлы и воспроизведение
 
-- [Полные данные и receipts](../research/economics-fork-2026-09-12.json).
-- [CSV-таблица](../research/economics-2026-09-12.csv).
-- [Эксперимент](../scripts/economics-fork.cjs), [сводка из raw units](../scripts/summarize-economics.py).
-- [Ограничитель read-only RPC](../scripts/read-only-fork-rpc.cjs).
+- [Полные данные и receipts](../../research/economics-fork-2026-09-12.json).
+- [CSV-таблица](../../research/economics-2026-09-12.csv).
+- [Эксперимент](../../scripts/economics-fork.cjs), [сводка из raw units](../../scripts/summarize-economics.py).
+- [Ограничитель read-only RPC](../../scripts/read-only-fork-rpc.cjs).
 
 `npm run test:fork` запускает текущий объединённый эксперимент; `npm run report:economics` строит CSV из сохранённого результата. Исходный `scripts/fork-fee-router.cjs` оставлен для воспроизведения исторического baseline. `RH_RPC_URL` позволяет выбрать другой upstream; по умолчанию используется public BlockReq. Нужен Node с fetch и существующие npm/Python dependencies.
 
