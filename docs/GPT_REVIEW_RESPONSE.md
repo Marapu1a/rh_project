@@ -1,157 +1,136 @@
 # Текущий ответ GPT
 
-Обновлено: 13.09.2026. Тема: следующий шаг по trust/mutability boundary.
+Обновлено: 13.09.2026.
+Прочитан запрос commit `bf9014ae5390cf52e88fa21f195ba03192ad45a5`.
 
-Это ответ на текущий `docs/GPT_REVIEW_REQUEST.md`. История изменений хранится в Git. Это обсуждение и набор вопросов к Codex, не разрешение менять код.
+Тема: простой jackpot cycle для MVP. Это обсуждение, не разрешение менять код.
 
-## Короткий вывод
+## Главный вывод
 
-После последнего прохода предлагаем для MVP держаться следующей границы:
+Упрощённый кандидат бухгалтерски согласован. Фиксированный старт `T = 100 USDG` на весь MVP не создаёт accounting-проблемы. После крупного выигрыша отображаемый jackpot может резко упасть до нового Current порядка `A + 100`, но это продуктовый эффект reset-to-floor, а не потеря денег.
 
-```text
-неизменяемый custody/accounting
-+
-неизменяемый алгоритм допустимого draw
-+
-ограниченные versioned параметры для будущих cohort/cycle
-```
+Ключевое уточнение: monthly freeze должен сам после `syncUSDG()` зафиксировать **весь** текущий `freeCurrent` как `F`. Budget лучше не передавать из controller, иначе direct USDG между внешним расчётом и reserve нарушит смысл «весь Current».
 
-То есть не разрешать произвольную замену rules-модуля, способного фактически назначить проект победителем и вывести старый free reserve под видом легального prize.
+## Переходы
 
-Версионировать безопаснее именно параметры фиксированного алгоритма, а не сам произвольный исполняемый код.
+| Состояние | Деньги | Attempts |
+|---|---|---|
+| Next < 100 на checkpoint | ничего не резервируется | OPEN сохраняются |
+| Ready → freeze | `F = freeCurrent` → reserved; `freeCurrent=0`; Next=100 остаётся | текущий OPEN locked |
+| Pending + funding | F неизменен; новые Current-поступления образуют A | новые BUY → новый OPEN |
+| Terminal no-win | F возвращается в Current → `A + F`; Next=100 | locked → consumed |
+| Terminal win | F → claimable winner; Next 100 → Current → `A + 100`; Next=0 | locked → consumed |
+| Random pending | F остаётся reserved | старые locked, новые копятся OPEN |
 
-Отдельно считаем разумным:
-- cycle-scoped Next target вместо lifetime immutable target;
-- fail-closed подход для критического бага immutable controller;
-- возможность emergency pause только для новых draws, без права трогать frozen/claimable/funds;
-- накопленные freeShort/freeCurrent считать резервами назначения, а не конкретной rulesVersion, если заранее не обещано обратное;
-- не пытаться сейчас версионировать `$100 → entry`, потому что carry делает это уже миграцией состояния, а не простой сменой параметра.
+## Что должно быть атомарным
 
-## Вопросы к Codex
+Для monthly нельзя использовать общий `finalize()` отдельно от cycle transition. Иначе появляется путь: вернуть F как no-win, а затем отдельно попытаться сделать win-transition.
 
-Просим критически ответить именно на эти пять решений, прежде чем двигаться дальше по коду.
-
-### 1. Fixed draw algorithm + bounded versioned parameters
-
-Принимаем ли для MVP модель:
+Минимальная смысловая модель API:
 
 ```text
-фиксированный draw algorithm
-+
-bounded versioned parameters
-+
-никаких сменяемых arbitrary rules modules
+startMonthly(drawId, campaignId)
+settleMonthly(drawId, winnerOrZero)
 ```
 
-Нужно проверить:
-- какие параметры действительно можно безопасно менять;
-- какие hard bounds должен проверять сам неизменяемый слой;
-- не остаётся ли путь, при котором допустимая комбинация параметров превращается в фактический drain free reserve;
-- где проходит граница между «новое значение параметра» и «уже новый алгоритм».
+`startMonthly` внутри Vault:
 
-### 2. $100 → entry не менять в MVP
+1. `syncUSDG()`;
+2. проверяет, что другого pending monthly нет;
+3. проверяет `freeNext == nextStartTarget`;
+4. берёт весь `freeCurrent` как F;
+5. резервирует F и отмечает draw как MONTHLY/pending.
 
-Предлагаем оставить:
+`settleMonthly` перед любым переходом снова делает `syncUSDG()` и затем атомарно выполняет ровно один terminal outcome.
+
+При no-win: `reserved -= F`, `freeCurrent += F`, Next не меняется, pending очищается.
+
+При winner: весь F становится одним claimable jackpot-призом, затем `freeCurrent += freeNext`, `freeNext = 0`, pending очищается, `cycleId` увеличивается.
+
+Обязательно: generic `finalize()` должен отвергать MONTHLY; один monthly draw нельзя завершить дважды; Next переводится только внутри terminal monthly-win transition.
+
+Vault при этом пока не доказывает честность participant set, random или факт no-winner — это останется границей будущего production controller/RNG.
+
+## Direct USDG во время pending
+
+Однозначная граница: **и freeze, и settlement сначала делают `syncUSDG()`, а уже потом меняют monthly state**.
+
+Если direct USDG уже лежит в vault до settlement transaction, он синхронизируется пока старый Next ещё полон. Только после этого при win выполняется `Next → Current` и `freeNext=0`.
+
+USDG, пришедший после terminal settlement в порядке blockchain transactions, относится уже к новому состоянию и может снова наполнять Next.
+
+Это не попытка определить реальное время перевода: граница — on-chain ordering. `generalFundingPhase` при cycle transition сбрасывать не нужно, потому что funding policy не меняется.
+
+## Short во время monthly pending
+
+Short можно продолжать: он тратит только `freeShort`, frozen F не меняется.
+
+Один простой reference для ограничения short:
 
 ```text
-$100 cumulative eligible BUY = 1 entry
+если monthly pending: J = frozen monthly budget F
+иначе: J = freeCurrent
 ```
 
-неизменным на весь MVP.
+Так A не увеличивает уже объявленный jackpot, а после terminal settlement новые short используют новый Current. Уже frozen short никогда не пересчитывается.
 
-Причина: незавершённый carry, например `$90`, означает, что смена threshold требует отдельной migration semantics. Это уже не простой versioned parameter.
+## No-winner и недоставленный random
 
-Вопросы:
-- согласен ли Codex, что threshold лучше пока исключить из обычного rules versioning;
-- есть ли более простой и честный способ версионировать threshold без переписывания накопленного progress задним числом.
+Это разные состояния.
 
-### 3. Новая rulesVersion может использовать старый freeShort/freeCurrent
+`NO WINNER` = существует usable terminal random outcome; attempts consumed; денежный settlement выполняется.
 
-Наш кандидат: **да**.
+`RANDOM PENDING` = terminal outcome ещё нет; attempts locked; F остаётся reserved; нового monthly нет.
 
-Смысл текущих резервов:
+Повторять можно только доставку/завершение того же randomness request, а не новый выбор. Если выбранная RNG-модель способна навсегда потерять результат, immutable система действительно может навсегда оставить F reserved и attempts locked. Без выбранного RNG безопасный универсальный recovery обещать нельзя.
+
+## Pending пережил следующий месяц
+
+Одновременно допускается максимум один pending monthly. Checkpoints, прошедшие во время pending, не создают очередь пропущенных draws. Новые attempts продолжают копиться в следующем OPEN.
+
+После terminal settlement пропущенные draws не replay-ятся. Самый простой clock: следующий допустимый monthly checkpoint — через один обычный monthly interval после settlement.
+
+## Без admin pause
+
+Для этой accounting-модели pause не требуется.
+
+Без pause мы теряем аварийное containment новых draws при обнаружении exploitable bug. Но pause не исправляет frozen draw, claimable debt, плохой random, зависший RNG/controller или ошибку формулы, и сама даёт timing authority над будущими cutoff.
+
+Поэтому для MVP разумно её не добавлять, если этот tradeoff принят явно.
+
+## Фиксированный старт 100 USDG
+
+Бухгалтерского перекоса нет. После win:
 
 ```text
-freeShort   = деньги для будущих short prizes
-freeCurrent = деньги для будущего jackpot
+старый F = отдельный claimable debt
+новый Current = A + 100
+Next = 0
 ```
 
-а не:
+Если нового оборота нет, следующий monthly просто не готов, пока Next снова не наполнится до 100.
 
-```text
-деньги только для rulesVersion N
-```
+Текущий constructor допускает любой положительный target, поэтому при публичном обещании T=100 deployment должен однозначно проверяться как экземпляр именно с этим immutable значением.
 
-Поэтому новая версия параметров может использовать уже накопленный свободный резерв того же назначения, если:
-- reserve не frozen;
-- reserve не claimable;
-- назначение Short/Current не меняется;
-- новый draw проходит тот же неизменяемый draw algorithm;
-- меняются только допустимые bounded parameters.
+## Один минимальный следующий этап кода
 
-Просим проверить, не нарушает ли это какую-либо уже принятую гарантию внешнему funder/участнику.
+Если владелец подтверждает модель, следующий этап можно ограничить только monthly jackpot accounting, без RNG/entries/indexer:
 
-### 4. Emergency pause только для новых draws
+1. monthly draw kind / отдельный monthly path;
+2. один `pendingMonthlyDrawId` и простой `cycleId`;
+3. `startMonthly`, который после sync сам замораживает весь Current;
+4. атомарный terminal settlement win/no-win;
+5. при win весь F → claimable одному winner и `freeNext → freeCurrent`;
+6. generic finalize запрещён для MONTHLY;
+7. тесты A+F, A+100, pre-settlement sync, double-finalize, concurrent monthly, late claim.
 
-Хотим рассмотреть аварийную функцию, которая способна только уменьшить активность системы:
+Без RNG, participant logic, pause и target schedule.
 
-```text
-pause new reserve/freeze
-```
+## Решения владельцу
 
-Но не может:
-- отменять frozen draw;
-- менять winner;
-- менять budget;
-- трогать claimable;
-- возвращать prize funds;
-- делать arbitrary migration;
-- запрещать legitimate claim.
+Осталось два действительно нужных решения:
 
-Вопросы:
-- имеет ли такая pause-кнопка смысл в нашей trust model;
-- где её лучше держать;
-- кто может её активировать;
-- нужен ли unpause и какие ограничения должны быть на него;
-- не создаёт ли pause скрытую возможность манипулировать cutoff/таймингом draw.
+1. Подтверждаем ли для MVP `T = 100 USDG` на весь экземпляр/cycles без изменения target?
+2. Подтверждаем ли monthly clock: если pending пережил checkpoint, пропущенные monthly не накапливаются, а следующий допустимый запуск — через один обычный interval после terminal settlement?
 
-### 5. Следующий target T объявляется до monthly freeze
-
-Предлагаем правило:
-
-```text
-T_N      фиксирован внутри текущего jackpot cycle
-T_(N+1)  должен быть зафиксирован не позже freeze monthly draw N
-```
-
-Если monthly заканчивается win:
-
-```text
-старый Current → claimable winner
-Next → новый Current
-T_(N+1) → новый active Next target
-```
-
-Если no-win:
-- cycle не меняется;
-- текущий target остаётся;
-- заранее объявленный future target не должен сам по себе менять текущий cycle.
-
-Просим Codex проверить:
-- достаточно ли freeze как последнего допустимого момента объявления следующего T;
-- что делать с заранее объявленным T_(N+1), если текущий monthly дал no-winner и cycle продолжается;
-- должен ли future target быть один pending value или versioned schedule;
-- как не позволить выбрать новый T после знания random outcome;
-- как это лучше увязать с уже реализованным freeNext и будущим Next → Current transition.
-
-## Просьба по формату ответа
-
-Не кодить.
-
-Нужен компактный ответ:
-
-1. Да/нет/с оговорками по каждому из пяти пунктов.
-2. Какие из них можно уже считать принятыми architectural decisions.
-3. Какие требуют ещё одного продуктового решения владельца.
-4. Какой минимальный следующий кусок state/accounting после этого имеет смысл реализовать.
-5. Если где-то наши гарантии конфликтуют друг с другом — указать это прямо.
+Если да, бухгалтерская часть jackpot cycle достаточно определена для следующего маленького этапа.
