@@ -16,9 +16,21 @@ contract MockToken is ERC20 {
     function _update(address from, address to, uint256 value) internal override {
         require(to != blocked, "blocked recipient");
         super._update(from, to, value);
-        if (callback != address(0) && from == callback) {
+        if (callback != address(0) && (from == callback || to == callback)) {
             (reentrySucceeded,) = callback.call(callbackData);
         }
+    }
+}
+
+/// Funding-only negative fixture: takes one raw unit from each nonzero transfer.
+contract ShortTransferToken is ERC20 {
+    constructor() ERC20("Short transfer", "SHORT") {}
+    function mint(address to, uint256 amount) external { _mint(to, amount); }
+    function _update(address from, address to, uint256 value) internal override {
+        if (from != address(0) && to != address(0) && value != 0) {
+            super._update(from, address(0), 1);
+            super._update(from, to, value - 1);
+        } else super._update(from, to, value);
     }
 }
 

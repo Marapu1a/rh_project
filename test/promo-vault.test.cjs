@@ -15,13 +15,13 @@ async function sent(promise) { return (await promise).wait(); }
 async function rejects(action) {
   await assert.rejects(async()=>{const t=await action();if(t.wait) await t.wait();});
 }
-async function fixture() {
+async function fixture(target=1000n, quoteName='MockToken') {
   await hre.network.provider.send('hardhat_reset');
   provider=new ethers.BrowserProvider(hre.network.provider,undefined,{cacheTimeout:-1});
   [admin,keeper,alice,bob]=await Promise.all([0,1,2,3].map(i=>provider.getSigner(i)));
-  const token=await deploy('MockToken'),quote=await deploy('MockToken');
+  const token=await deploy('MockToken'),quote=await deploy(quoteName);
   const controller=await deploy('DrawControllerFixture');
-  const vault=await deploy('PromoVault',[token.target,quote.target,controller.target]);
+  const vault=await deploy('PromoVault',[token.target,quote.target,controller.target,target]);
   const control=(method,args)=>controller.execute(vault.target,vault.interface.encodeFunctionData(method,args));
   return {token,quote,controller,vault,control};
 }
@@ -45,19 +45,22 @@ test('real FeeRouter credit is not vault funding until pay; both assets complete
     await sent(router.connect(keeper).harvest(asset.target,1));
     assert.equal(await router.credit(asset.target,vault.target),1000n);
     await accounting(vault,asset,[0,0,0,0]);
-    await rejects(()=>control('reserve',[draw,1,asset.target,800]));
+    const isQuote=asset.target===quote.target;
+    const budget=isQuote?400:800, first=isQuote?150:300, second=isQuote?200:400;
+    const reserve=()=>isQuote?control('reserveUSDG',[draw,1,0,budget]):control('reserve',[draw,1,asset.target,budget]);
+    await rejects(reserve);
     await sent(router.connect(keeper).pay(asset.target,vault.target));
-    await sent(control('reserve',[draw,1,asset.target,800]));
-    await accounting(vault,asset,[1000,800,0,200]);
-    await sent(control('finalize',[draw,[await alice.getAddress(),await bob.getAddress()],[300,400]]));
-    await accounting(vault,asset,[1000,0,700,300]);
+    await sent(reserve());
+    await accounting(vault,asset,[1000,budget,0,1000-budget]);
+    await sent(control('finalize',[draw,[await alice.getAddress(),await bob.getAddress()],[first,second]]));
+    await accounting(vault,asset,[1000,0,first+second,1000-first-second]);
     await sent(vault.connect(keeper).claim(draw,await alice.getAddress()));
-    await accounting(vault,asset,[700,0,400,300]);
+    await accounting(vault,asset,[1000-first,0,second,1000-first-second]);
     await sent(vault.connect(bob).claim(draw,await bob.getAddress()));
-    await accounting(vault,asset,[300,0,0,300]);
-    assert.equal((await vault.draws(draw)).paid,700n);
-    assert.equal(await asset.balanceOf(await alice.getAddress()),300n);
-    assert.equal(await asset.balanceOf(await bob.getAddress()),400n);
+    await accounting(vault,asset,[1000-first-second,0,0,1000-first-second]);
+    assert.equal((await vault.draws(draw)).paid,BigInt(first+second));
+    assert.equal(await asset.balanceOf(await alice.getAddress()),BigInt(first));
+    assert.equal(await asset.balanceOf(await bob.getAddress()),BigInt(second));
   }
 });
 
@@ -87,7 +90,7 @@ test('only immutable controller can reserve/finalize; constructor rejects EOA co
   await sent(control('reserve',[id(1),1,token.target,100]));
   await rejects(()=>vault.connect(keeper).finalize(id(1),[],[]));
   const eoa=await admin.getAddress();
-  await rejects(()=>deploy('PromoVault',[token.target,quote.target,eoa]));
+  await rejects(()=>deploy('PromoVault',[token.target,quote.target,eoa,1000]));
 });
 
 test('invalid or reused draw IDs and unsupported assets cannot reserve',async()=>{
@@ -191,4 +194,218 @@ test('unexpected balance deficit fails closed for reserve, finalize and claim',a
   await sent(token.mint(vault.target,10));
   await sent(vault.claim(id(1),a));
   await accounting(vault,token,[0,0,0,0]);
+});
+
+async function fundingCapital(quote,vault,amount=1000000n) {
+  await sent(quote.mint(await alice.getAddress(),amount));
+  await sent(quote.connect(alice).approve(vault.target,ethers.MaxUint256));
+  return (amount,destination=0)=>sent(vault.connect(alice).fundUSDG(amount,destination));
+}
+async function buckets(vault) {
+  return Promise.all([vault.freeShort(),vault.freeCurrent(),vault.freeNext(),vault.generalFundingPhase()]);
+}
+async function conserved(vault,quote) {
+  const [s,c,n]=await buckets(vault);
+  const r=await vault.reserved(quote.target),owed=await vault.claimable(quote.target),u=await vault.unrecognizedUSDG();
+  assert.equal(await quote.balanceOf(vault.target),s+c+n+r+owed+u);
+  assert.equal(await vault.available(quote.target),s+c+n+u);
+  assert.ok(n<=await vault.nextStartTarget());
+}
+
+test('USDG general and targeted funding: exact cap crossing, overflow, no project fee',async()=>{
+  const {quote,vault}=await fixture(100n);
+  const fund=await fundingCapital(quote,vault);
+  await fund(120); // 60 short, 40 current, 20 next
+  assert.deepEqual(await buckets(vault),[60n,40n,20n,0n]);
+  await fund(600); // only 80 of nominal 100 to next
+  assert.deepEqual(await buckets(vault),[360n,260n,100n,0n]);
+  await fund(600);
+  assert.deepEqual(await buckets(vault),[660n,560n,100n,0n]);
+  await fund(12,3); // filled targeted NEXT -> CURRENT
+  await fund(7,1);
+  await fund(11,2);
+  assert.deepEqual(await buckets(vault),[667n,583n,100n,0n]);
+  assert.equal(await quote.balanceOf(vault.target),1350n);
+  await conserved(vault,quote);
+});
+
+test('direct transfers are GENERAL, never attributed to a later targeted caller; sync is idempotent',async()=>{
+  const {quote,vault}=await fixture(100n);
+  const fund=await fundingCapital(quote,vault);
+  await sent(quote.connect(alice).transfer(vault.target,120));
+  assert.equal(await vault.unrecognizedUSDG(),120n);
+  assert.deepEqual(await buckets(vault),[0n,0n,0n,0n]);
+  const receipt=await fund(100,3);
+  const events=receipt.logs.map(l=>{try{return vault.interface.parseLog(l);}catch{return null;}}).filter(e=>e?.name==='USDGAllocated');
+  assert.equal(events.length,2);
+  assert.equal(events[0].args.payer,ethers.ZeroAddress);
+  assert.equal(events[0].args.destination,0n);
+  assert.equal(events[0].args.received,120n);
+  assert.equal(events[1].args.payer,await alice.getAddress());
+  assert.deepEqual(await buckets(vault),[60n,60n,100n,0n]);
+  await sent(vault.connect(keeper).syncUSDG());
+  await sent(vault.connect(bob).syncUSDG());
+  assert.deepEqual(await buckets(vault),[60n,60n,100n,0n]);
+  await conserved(vault,quote);
+});
+
+test('general allocation is partition invariant across all phases and Next saturation',async()=>{
+  const {quote,vault}=await fixture(3n);
+  const fund=await fundingCapital(quote,vault);
+  for(let phase=0;phase<6;phase++) {
+    assert.equal(await vault.generalFundingPhase(),BigInt(phase));
+    let snapshot=await hre.network.provider.send('evm_snapshot');
+    await fund(29);
+    const whole=await buckets(vault);
+    await hre.network.provider.send('evm_revert',[snapshot]);
+    snapshot=await hre.network.provider.send('evm_snapshot');
+    for(const x of [1,1,2,5,7,13]) await fund(x);
+    assert.deepEqual(await buckets(vault),whole);
+    await conserved(vault,quote);
+    await hre.network.provider.send('evm_revert',[snapshot]);
+    await fund(1);
+  }
+});
+
+test('targeted deposits and prize release do not advance or reset general rounding phase',async()=>{
+  const {quote,vault,control}=await fixture(100n);
+  const fund=await fundingCapital(quote,vault);
+  await fund(5);
+  assert.deepEqual(await buckets(vault),[3n,2n,0n,5n]);
+  await fund(99,3);
+  await sent(control('reserveUSDG',[id(1),1,0,3]));
+  await sent(control('finalize',[id(1),[],[]]));
+  assert.equal(await vault.generalFundingPhase(),5n);
+  await fund(1);
+  assert.deepEqual(await buckets(vault),[3n,2n,100n,0n]);
+  await fund(6);
+  assert.deepEqual(await buckets(vault),[6n,5n,100n,0n]);
+  await conserved(vault,quote);
+});
+
+test('USDG reserve sources isolate frozen budgets and unpaid debts; unused budget returns to source',async()=>{
+  const {quote,vault,control}=await fixture(100n);
+  const fund=await fundingCapital(quote,vault);
+  await fund(600);
+  await sent(control('reserveUSDG',[id(1),1,0,250]));
+  await sent(control('reserveUSDG',[id(2),1,1,150]));
+  assert.deepEqual(await buckets(vault),[50n,50n,100n,0n]);
+  await rejects(()=>control('reserveUSDG',[id(3),1,0,51]));
+  await rejects(()=>control('reserveUSDG',[id(3),1,1,51]));
+  await rejects(()=>control('reserve',[id(3),1,quote.target,1]));
+  await sent(quote.connect(alice).transfer(vault.target,60));
+  await sent(vault.syncUSDG());
+  assert.equal((await vault.draws(id(1))).budget,250n);
+  assert.equal((await vault.draws(id(2))).budget,150n);
+  await sent(control('finalize',[id(1),[await alice.getAddress()],[200]]));
+  await sent(control('finalize',[id(2),[],[]]));
+  assert.deepEqual(await buckets(vault),[130n,230n,100n,0n]);
+  assert.equal(await vault.claimable(quote.target),200n);
+  await sent(control('reserveUSDG',[id(3),2,0,130]));
+  const before=await buckets(vault);
+  await sent(quote.blockRecipient(await alice.getAddress()));
+  await rejects(async()=>vault.claim(id(1),await alice.getAddress()));
+  assert.equal(await vault.reward(id(1),await alice.getAddress()),200n);
+  await sent(quote.blockRecipient(ethers.ZeroAddress));
+  await sent(vault.connect(keeper).claim(id(1),await alice.getAddress()));
+  assert.deepEqual(await buckets(vault),before);
+  await conserved(vault,quote);
+});
+
+test('USDG reserve/finalize validation reverts source debits and partial winner assignments',async()=>{
+  const {quote,vault,control,token,controller}=await fixture();
+  const fund=await fundingCapital(quote,vault);
+  await fund(60,1);
+  await rejects(()=>vault.reserveUSDG(id(1),1,0,1));
+  for(const args of [[id(0),1,0,1],[id(1),0,0,1],[id(1),1,0,0],[id(1),1,2,1]])
+    await rejects(()=>control('reserveUSDG',args));
+  assert.deepEqual(await buckets(vault),[60n,0n,0n,0n]);
+  await sent(control('reserveUSDG',[id(1),1,0,60]));
+  await rejects(()=>control('reserveUSDG',[id(1),2,1,1]));
+  const a=await alice.getAddress(),b=await bob.getAddress();
+  for(const [w,amounts] of [[[a,b],[30,31]],[[a,a],[20,20]],[[a,b],[20,0]]]) {
+    await rejects(()=>control('finalize',[id(1),w,amounts]));
+    assert.equal(await vault.reward(id(1),a),0n);
+    assert.equal(await vault.reserved(quote.target),60n);
+    assert.deepEqual(await buckets(vault),[0n,0n,0n,0n]);
+  }
+  await sent(control('finalize',[id(1),[a],[40]]));
+  await rejects(()=>control('finalize',[id(1),[],[]]));
+  assert.deepEqual(await buckets(vault),[20n,0n,0n,0n]);
+  await rejects(()=>deploy('PromoVault',[token.target,quote.target,controller.target,0]));
+  await rejects(()=>deploy('PromoVault',[quote.target,quote.target,controller.target,1]));
+  await conserved(vault,quote);
+});
+
+test('failed funding restores allowance, direct-transfer recognition and rounding; invalid input rejected',async()=>{
+  const {quote,vault}=await fixture();
+  const fund=await fundingCapital(quote,vault,100n);
+  await sent(quote.connect(alice).transfer(vault.target,5));
+  await sent(quote.blockRecipient(vault.target));
+  await rejects(()=>fund(12,1));
+  assert.equal(await vault.unrecognizedUSDG(),5n);
+  assert.deepEqual(await buckets(vault),[0n,0n,0n,0n]);
+  await sent(quote.blockRecipient(ethers.ZeroAddress));
+  await rejects(()=>fund(0));
+  await rejects(()=>fund(1,4));
+  await sent(quote.connect(alice).approve(vault.target,0));
+  await rejects(()=>fund(1));
+  assert.equal(await vault.unrecognizedUSDG(),5n);
+  await sent(vault.syncUSDG());
+  assert.deepEqual(await buckets(vault),[3n,2n,0n,5n]);
+  await conserved(vault,quote);
+});
+
+test('short transfer is rejected rather than accounting nominal or fee-on-transfer funding',async()=>{
+  const {quote,vault}=await fixture(100n,'ShortTransferToken');
+  const fund=await fundingCapital(quote,vault,20n);
+  await rejects(()=>fund(10));
+  assert.equal(await quote.balanceOf(vault.target),0n);
+  assert.equal(await quote.balanceOf(await alice.getAddress()),20n);
+  assert.deepEqual(await buckets(vault),[0n,0n,0n,0n]);
+});
+
+test('incoming and outgoing callbacks cannot reenter funding, sync or claim',async()=>{
+  const {quote,vault,control}=await fixture();
+  const fund=await fundingCapital(quote,vault);
+  for(const [method,args] of [['syncUSDG',[]],['fundUSDG',[1,0]]]) {
+    await sent(quote.setCallback(vault.target,vault.interface.encodeFunctionData(method,args)));
+    await fund(12,1);
+    assert.equal(await quote.reentrySucceeded(),false);
+  }
+  assert.deepEqual(await buckets(vault),[24n,0n,0n,0n]);
+  await sent(control('reserveUSDG',[id(1),1,0,24]));
+  await sent(control('finalize',[id(1),[await alice.getAddress()],[24]]));
+  await sent(quote.setCallback(vault.target,vault.interface.encodeFunctionData('claim',[id(1),await alice.getAddress()])));
+  await sent(vault.claim(id(1),await alice.getAddress()));
+  assert.equal(await quote.reentrySucceeded(),false);
+  assert.equal((await vault.draws(id(1))).paid,24n);
+  await conserved(vault,quote);
+});
+
+test('USDG deficit includes free buckets, fails closed, and cannot be hidden by new funding',async()=>{
+  const {quote,vault,control}=await fixture();
+  const fund=await fundingCapital(quote,vault);
+  await fund(60,1);
+  await sent(control('reserveUSDG',[id(1),1,0,20]));
+  await sent(control('finalize',[id(1),[await alice.getAddress()],[10]]));
+  await sent(quote.blockRecipient(await bob.getAddress()));
+  await sent(quote.burn(vault.target,1)); // actual 59, buckets 50 + claimable 10
+  await rejects(()=>vault.available(quote.target));
+  await rejects(()=>vault.syncUSDG());
+  await rejects(()=>fund(100));
+  await rejects(()=>control('reserveUSDG',[id(2),1,0,1]));
+  await rejects(async()=>vault.claim(id(1),await alice.getAddress()));
+  assert.equal(await vault.reward(id(1),await alice.getAddress()),10n);
+  await sent(quote.mint(vault.target,1)); // restore fixture-only destruction, not a funding operation
+  await conserved(vault,quote);
+});
+
+test('allocation handles maximum uint256 funding without amount-sized iteration or rounding overflow',async()=>{
+  const {quote,vault}=await fixture(ethers.MaxUint256);
+  const fund=await fundingCapital(quote,vault,ethers.MaxUint256);
+  await fund(ethers.MaxUint256);
+  const x=ethers.MaxUint256;
+  assert.deepEqual(await buckets(vault),[(x+1n)/2n,x-(x+1n)/2n-x/6n,x/6n,x%6n]);
+  await conserved(vault,quote);
 });

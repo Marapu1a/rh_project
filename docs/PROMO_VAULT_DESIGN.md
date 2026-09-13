@@ -1,70 +1,95 @@
-# PromoVault — минимальный учёт обеспеченных призов
+# PromoVault — USDG funding и обеспеченные призы
 
-> Технический отчёт о существующем прототипе. Новые продуктовые правила — [PRODUCT_SPEC](PRODUCT_SPEC.md); карта реализации — [IMPLEMENTATION_STATUS](IMPLEMENTATION_STATUS.md).
+Обновлено 13.09.2026. [Продуктовая спецификация](PRODUCT_SPEC.md), [карта реализации](IMPLEMENTATION_STATUS.md). Исходник: [PromoVault.sol](../contracts/PromoVault.sol). Это локальный прототип, не production controller и не публичный deployment.
 
-Статус: локальный прототип. Основной контракт `contracts/PromoVault.sol`. Публичного deployment нет. Обновление 12.09: полный путь PAIR → FeeRouter → rollover → PromoVault → claim проверен на свежем fork; см. [результаты](archive/ECONOMICS_FORK_2026-09-12.md). Продуктовая реализация controller/RNG по-прежнему отсутствует.
+## Граница этапа
 
-## Учёт по каждому активу
+Реализованы внешнее USDG funding и три свободных продуктовых резерва. Существующие reserve/finalize/claim связаны с ними бухгалтерски. Creator revenue allocation, конвертация, entries, короткая/месячная случайная логика, RNG и новый controller не добавлены. FeeRouter не менялся.
 
-Поддержаны только фиксированные TOKEN и USDG:
+Новый constructor: `PromoVault(token, quote, controller, nextStartTarget)`. Активы различны и ненулевые, controller должен иметь код, target положителен и задаётся в raw units quoteToken. Target immutable, setters нет. Старые вызовы constructor с тремя аргументами несовместимы; локальные tests и текущий fork-script обновлены. Proxy/migration живого экземпляра нет.
+
+**Next сейчас только наполняется.** В этой версии нет перехода Next → Current и изменения target: это следующий отдельный этап. Не использовать этот промежуточный контракт для живых призовых средств.
+
+## Состояние и инварианты
 
 ```text
-balance   = IERC20(asset).balanceOf(PromoVault)
-reserved  = сумма бюджетов зарезервированных, но не завершённых draws
-claimable = сумма назначенных, но не выплаченных призов
-available = balance - reserved - claimable
+S = freeShort
+C = freeCurrent
+N = freeNext
+T = nextStartTarget
+R = reserved[USDG]
+L = claimable[USDG]
+U = unrecognizedUSDG()
+B = фактический balanceOf(vault)
+
+B = S + C + N + R + L + U
+0 <= N <= T
 ```
 
-Основной инвариант: `reserved + claimable <= balance`. Прямые переводы и `FeeRouter.pay` автоматически увеличивают доступный баланс: отдельный deposit/sync не нужен. Кредит в FeeRouter, ещё не перечисленный vault, бюджет не увеличивает. При неожиданном дефиците баланса reserve/finalize/claim отклоняются; contract не списывает долг для маскировки дефицита.
+`available(USDG) = B - R - L = S + C + N + U` — весь незакреплённый баланс, **не доступный бюджет конкретного draw**. Для draw используется только выбранный S или C. Если B не покрывает уже учтённые S+C+N+R+L, методы отклоняются с BalanceDeficit. Новое fundUSDG не маскирует существующий дефицит. Rebasing и fee-on-transfer не поддерживаются.
 
-Поддерживаются обычные ERC20, без rebasing и transfer fees. Vault не конвертирует активы. Ни эмиссии, ни withdrawal администратора, ни rescue посторонних активов, ни proxy нет.
+TOKEN сохраняет прежнее per-asset available/reserved/claimable поведение для существующих локальных интеграций. Оно не означает возврат TOKEN-призов в актуальную продуктовую концепцию. Общего денежного баланса TOKEN+USDG нет.
 
-## API и жизненный цикл
+## Funding API
 
-`reserve(drawId, campaignId, asset, budget)` — только drawController. Ненулевой уникальный drawId, ненулевая campaignId, положительный бюджет не выше available. Фиксирует asset, campaignId и budget навсегда. Весь бюджет переходит available → reserved.
+`fundUSDG(amount, destination)` — permissionless; transferFrom только msg.sender. Значения destination: GENERAL=0, SHORT=1, CURRENT=2, NEXT=3. Нужен allowance на quoteToken, amount > 0. Прежде обрабатываются старые direct transfers; затем измеряется только новый balance delta. Для обычного ERC20 ожидается delta == amount; несовпадение целиком откатывает вызов, включая прежний sync и перевод. Это сознательный отказ от transfer-fee токенов, а не обещание их поддержки.
 
-`finalize(drawId, winners[], amounts[])` — только drawController, один раз после reserve. Полный список фиксируется атомарно. Нулевые адреса/суммы, сам vault в качестве winner, дубликаты wallets, несовпадающие длины и сумма выше budget отклоняются. При любой ошибке весь список откатывается.
+- GENERAL: 3:2:1 с ограничением Next по T; его overflow идёт Current.
+- SHORT: вся сумма Short.
+- CURRENT: вся сумма Current.
+- NEXT: только room до T в Next, всё остальное Current.
+- Project fee отсутствует во всех четырёх вариантах.
 
-На успешном finalize весь бюджет освобождается из reserved, сумма призов переходит в claimable, остаток становится available. Новое финансирование не увеличивает уже зафиксированный draw budget. CampaignId служит неизменяемой меткой принадлежности, но vault не проверяет расписание/политику campaign — это обязанность controller.
+`syncUSDG()` — permissionless. Распределяет U как GENERAL; при U=0 ничего не меняет. `unrecognizedUSDG()` показывает U без изменения состояния.
 
-`claim(drawId, winner)` — любой caller может инициировать выплату только этому заранее записанному winner. Перенаправить деньги caller не может. Кредит уменьшается до перевода, все денежные операции защищены ReentrancyGuard; revert transfer сохраняет кредит. Ошибка выплаты одному winner не блокирует другого. Истечения срока claims и изъятия старых долгов нет.
+Прямой ERC20 transfer не несёт назначения. Опубликованное правило контракта — GENERAL. Для целевого funding нужен fundUSDG. В USDGAllocated для распознанного прямого перевода payer=zero: вызывающий sync не объявляется спонсором. Положительный U может объединять переводы нескольких отправителей.
 
-Пропуск розыгрыша из-за недостатка entries означает отсутствие reserve вообще. В vault нет таймера, который автоматически освобождал бы действующие обязательства.
+Старый прямой USDG перевод от FeeRouter.pay также обрабатывается как GENERAL: receiver не знает экономическое происхождение баланса. Это не реализация project share или нового creator allocation. Призовой TOKEN не конвертируется и не учитывается этим API.
 
-## Кто определяет победителей
+## Точное округление
 
-В constructor фиксируется отдельный `drawController`; требуется адрес с кодом, прямой EOA не подходит. Смены controller и обходного owner API нет. Это ограничивает точку записи результатов, **но само по себе не доказывает честность результатов**: вредоносный/управляемый произвольно controller способен назначить произвольных winners в пределах бюджета.
+GENERAL использует непрерывную последовательность минимальных единиц:
 
-Будущий production controller должен разрешать reserve/finalize только согласно утверждённой state machine: freeze участников/бюджета/правил до randomness, аутентификация результата, запрет повторного выбора и заранее определённые действия при сбое RNG. Эта логика здесь не реализована.
+```text
+SHORT, CURRENT, SHORT, CURRENT, SHORT, NEXT
+```
 
-`test/contracts/DrawControllerFixture.sol` — намеренно неограниченная заглушка для тестирования вызовов от контрактного адреса. **Она не предназначена для production.** С ней нельзя запускать систему с реальными призами. Требование code.length не является аудитом controller.
+`generalFundingPhase` хранит следующую позицию, от 0 до 5. Целые группы по шесть единиц считаются арифметически; хвост имеет максимум пять итераций независимо от суммы. Это работает и на максимальном uint256, без накопительного счётчика общего lifetime funding.
 
-Пустые winners/amounts в finalize освобождают весь бюджет и навсегда закрывают draw. Это разрешённая бухгалтерская операция, а не согласованная политика отмены розыгрыша: production controller обязан ограничить её допустимыми условиями. Отдельного cancel/admin-reclaim нет. Потеря/неработоспособность controller может оставить средства в reserved; механизм аварийной смены не добавлялся.
+В полном цикле ровно 3/2/1. При заполнении Next его единицы идут Current. Фаза продолжает двигаться; targeted funding, резервирование, освобождение draw и claim её не меняют. Повторный sync не дублирует поступления.
 
-## Размер списка победителей
+Для суммы X, начиная с нулевой фазы, Short=ceil(X/2), nominal Next=floor(X/6); остаток Current с учётом cap Next. Для следующего вызова учитывается уже сохранённая фаза. Это намеренно не floor(X/2) заново для каждого вызова.
 
-В этой минимальной реализации полный список записывается одной транзакцией, без Merkle root, batch-финализации и внешних доказательств. Это позволяет проверить сумму всех обязательств до завершения draw. Несколько выигрышей одного wallet должны быть заранее агрегированы controller в одну сумму.
+Каждая raw unit сразу назначена ровно одному резерву. Дробление последовательного общего funding сохраняет итог при одинаковом порядке относительно остальных операций. Перестановка targeted NEXT между общими поступлениями может изменить остаточную ёмкость Next — это изменение входных условий, не rounding bug. Нельзя приписывать микродолю конкретному спонсору независимо от общей фазы.
 
-Стоимость finalize линейна числу winners; слишком большой список не поместится в gas limit и целиком откатится. Максимальный размер production draw ещё не выбран и нагрузочно не измерен. До запуска нужно сопоставить целевое число winners с лимитами сети; текущие тесты не доказывают пригодность для тысяч winners. Нельзя обходить gas-проблему произвольным сокращением уже определённого списка победителей.
+## Резервирование draw
 
-## Локальные проверки
+`reserveUSDG(drawId, campaignId, source, budget)` — только существующий immutable drawController, nonReentrant. Source: SHORT=0 или CURRENT=1. NEXT отсутствует в enum и не может использоваться для draw.
 
-Результат текущего прогона: **25/25 passed** — 16 FeeRouter и 9 PromoVault tests. Компиляция обоих контрактов входит в test run.
+Метод синхронизирует прямой USDG, затем списывает budget из выбранного свободного резерва, увеличивает reserved и запоминает source в `usdgDrawSource(drawId)`. Требуются уникальный ненулевой drawId, положительные campaignId/budget, достаточный выбранный резерв. Любой отказ откатывает в том числе sync и списание source.
 
-`npm test` запускает последовательно старые FeeRouter tests и новые PromoVault tests. Используются настоящие локальные реализации FeeRouter/PromoVault и тестовые PAIR vault/ERC20/controller. Это не новая проверка настоящего PAIR на fork.
+Старый `reserve(drawId,campaignId,asset,budget)` сохраняет TOKEN-путь; для USDG возвращает UseUSDGReserve. Это закрывает обход продуктовых резервов через общий available.
 
-Сценарии PromoVault:
+Никакие новые поступления не меняют уже записанные budget, source и asset draw. Current-поступления после резервирования увеличивают свободный Current; будущий monthly controller должен определить принадлежность этого остатка циклу. Сами jackpot cycles сейчас не реализованы.
 
-- оба актива: PAIR mock → FeeRouter credit → pay → reserve → finalize → claim;
-- обещанная, но не переведённая creator revenue не позволяет создать резерв;
-- параллельные draws не расходуют чужие резервы или назначенные призы;
-- позднее финансирование увеличивает available, не меняя старый budget;
-- права controller, запрет повторного reserve/finalize, неподдержанные активы;
-- атомарный откат невалидного списка и превышения бюджета;
-- неизменяемый получатель, повторный claim, сохранение claims после длительного ожидания;
-- сбой ERC20 transfer, reentrant callback;
-- дефицит фактического баланса не списывает обязательства и останавливает операции.
+## Finalize и claim
 
-Для воспроизведения: `npm ci --ignore-scripts`, затем `npm test`. Сборка: `npm run compile`.
+`finalize(drawId,winners,amounts)` — тот же controller, один раз после reserve. Проверяется весь список атомарно: ненулевые допустимые winners и суммы, отсутствие дублей, общая сумма не выше budget. При ошибке нет частичных назначений.
 
-Техническая граница текущего этапа: обеспеченность учёта и локальная интеграция с FeeRouter. Справедливость winners, controller, RNG, indexer, production gas-пределы и публичная сеть остаются отдельными проверками.
+Для USDG весь budget уходит из reserved, сумма наград переходит в claimable, `budget - awarded` возвращается именно в исходный Short/Current. Возврат остатка не является новым GENERAL funding и не пополняет Next. Пустой результат возвращает весь budget и закрывает draw, но допустимость no-winner должен доказывать будущий controller.
+
+`claim(drawId,winner)` — любой caller, выплата только уже записанному winner. CEI, SafeERC20, ReentrancyGuard; transfer failure сохраняет долг. Невостребованный приз не сгорает и не блокирует другие claims или reserve. Claim не меняет свободные S/C/N и не создаёт U повторно.
+
+## Граница доверия и ограничения
+
+Owner withdrawal, произвольные переводы, fee, смена controller и rescue не добавлены. Но controller по-прежнему определяет список winners; код по адресу controller не доказывает честность. DrawControllerFixture намеренно произвольный, только для тестирования.
+
+`campaignId` — metadata, не проверка расписания или policy FeeRouter. Полная финализация O(N), без Merkle/batching; production предел списка не выбран. Продуктовое отклонение кандидата из-за бюджета выполняется будущей логикой **до** передачи winners в finalize; vault не обрезает невалидный список и не меняет результаты сам.
+
+## Проверки
+
+13.09: 20 PromoVault tests, включая 11 новых; полный набор — 36 контрактных tests (16 FeeRouter + 20 PromoVault). Отдельная offline farming-модель имеет 9 tests и не проверяет актуальный production draw.
+
+Новые проверки: general/targeted overflow, direct transfer перед targeted, повторный sync, все шесть фаз и дробление до/после Next cap, сохранение фазы, изоляция source/reserved/claimable, атомарный rollback reserve/finalize/fund, invalid enums, входящая/исходящая reentrancy, short transfer rejection, дефицит свободных средств и максимальный uint256.
+
+`npm test` включает локальную интеграцию реального FeeRouter с новым PromoVault и mock PAIR; внешняя сеть не нужна. Fork-script адаптирован к новому constructor/reserveUSDG, но **новый RPC/fork в этом этапе не запускался**. Старые fork-данные в архиве проверяли предыдущее API.

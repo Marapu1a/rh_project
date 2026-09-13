@@ -10,7 +10,7 @@
 
 Утверждено внешнее общее пополнение без project fee: Short/Current/Next = 3:2:1, после заполнения Next — 50:50 между Short и Current. Излишки Next, включая целевое пополнение, идут в Current. Призовой фонд невозвратен проекту/спонсорам. Промежуточный допуск не является выигрышем: приз назначается только при наличии достаточного бюджета и ненулевой допустимой суммы.
 
-Это **не полностью реализованный продукт**. Есть прототипы [FeeRouter](contracts/FeeRouter.sol) и [PromoVault](contracts/PromoVault.sol), unit tests и исследования. Три продуктовых резерва, новые правила funding, конвертация, билеты и production draw/RNG ещё не реализованы. Публичного deployment нет.
+Это **не полностью реализованный продукт**. Есть прототипы [FeeRouter](contracts/FeeRouter.sol) и [PromoVault](contracts/PromoVault.sol), unit tests и исследования. USDG funding и три свободных резерва реализованы: [API и проверки](docs/PROMO_VAULT_DESIGN.md). Переход следующего старта в новый jackpot, конвертация, билеты и production draw/RNG ещё не реализованы. Публичного deployment нет.
 
 ## Локальные проверки
 

@@ -42,7 +42,8 @@ async function main() {
     await c.waitForDeployment(); return c;
   }
   const controller = await deploy('DrawControllerFixture');
-  const promo = await deploy('PromoVault',[tokenAddress,USDG,controller.target]);
+  const promo = await deploy('PromoVault',[tokenAddress,USDG,controller.target,100n*10n**6n]);
+  report.prizeAccounting='USDG Short/Current source reservations; Next locked; legacy TOKEN prizes only for fixture integration, not current product';
   const now = Number((await provider.getBlock('latest')).timestamp);
   const router = await deploy('FeeRouter',[await admin.getAddress(),tokenAddress,USDG,[now+86400,[promo.target,ethers.ZeroAddress,ethers.ZeroAddress],[10000,0,0]]]);
   report.router=router.target; report.promoVault=promo.target; report.token=tokenAddress;
@@ -104,6 +105,7 @@ async function main() {
   }
   await harvest('clear developer-buy fees');
   for(const asset of [token,quote]) await tx('fund PromoVault from launch fees',router.connect(keeper).pay(asset.target,promo.target));
+  await tx('recognize launch USDG funding',promo.syncUSDG());
   const swapInterface=new ethers.Interface(['event Swap(bytes32 indexed id,address indexed sender,int128 amount0,int128 amount1,uint160 sqrtPriceX96,uint128 liquidity,int24 tick,uint24 fee)']);
   const decodeSwap=receipt=>receipt.logs.map(l=>{try{return l.address.toLowerCase()===MANAGER?swapInterface.parseLog(l):null;}catch{return null;}}).find(l=>l && l.args.id===init.args.id);
   const initialSwap=decodeSwap(launch);
@@ -124,23 +126,43 @@ async function main() {
     const fees=await harvest(direction+' fees');
     return {direction,requestedInputRaw:String(amount),quoteDeltaRaw:String(quoteDelta),tokenDeltaRaw:String(tokenDelta),creatorFeesRaw:fees,gasUnits:String(receipt.gasUsed),poolSwapFee:String(event.args.fee),spotBefore:beforeSpot,spotAfter:spot(sqrt),executionUSDGPerToken:Math.abs(Number(quoteDelta)/Number(tokenDelta))*1e12,endingTick:String(event.args.tick)};
   }
+  async function awardFromSources(label,asset,parts) {
+    for(const [source,budget] of parts) {
+      if(budget===0n) continue;
+      const draw=ethers.id(label+' '+source);
+      const method=asset.target.toLowerCase()===USDG?'reserveUSDG':'reserve';
+      const args=asset.target.toLowerCase()===USDG?[draw,1,source,budget]:[draw,1,asset.target,budget];
+      await tx(label+' reserve '+source,controller.execute(promo.target,promo.interface.encodeFunctionData(method,args)));
+      await tx(label+' finalize '+source,controller.execute(promo.target,promo.interface.encodeFunctionData('finalize',[draw,[wallet],[budget]])));
+      const before=await asset.balanceOf(wallet);
+      await tx(label+' claim '+source,promo.connect(participant).claim(draw,wallet));
+      assert.equal((await asset.balanceOf(wallet))-before,budget);
+    }
+  }
   async function selfFundedPayout(scenario) {
     // Maximal attacker allocation: owns every entry. No RNG fairness claim.
     // Baseline developer fees already sit in PromoVault and are never awarded here.
     assert.equal(await token.balanceOf(wallet),0n,'Trade inventory must be closed before prizes');
     const beforeQuote=await quote.balanceOf(wallet);
     const eligibleShort=BigInt(scenario.entries)>=30n;
-    const payout={eligibleShort,allocation:'all eligible self-funded prizes to sole participant; no RNG',assets:{}};
+    const payout={eligibleShort,allocation:'eligible self-funded distributable prizes to sole participant; Next excluded; no RNG',assets:{}};
     for(const [symbol,asset] of [['TOKEN',token],['USDG',quote]]) {
       const ownFees=await router.credit(asset.target,promo.target);
-      const budget=symbol==='TOKEN' && !eligibleShort ? 0n : ownFees;
-      payout.assets[symbol]={ownFeesRaw:String(ownFees),awardedRaw:String(budget)};
-      if(budget===0n) continue;
+      let budget=symbol==='TOKEN' && !eligibleShort ? 0n : ownFees;
+      if(budget===0n) {
+        payout.assets[symbol]={ownFeesRaw:String(ownFees),awardedRaw:'0'};
+        continue;
+      }
+      const beforeShort=await promo.freeShort(),beforeCurrent=await promo.freeCurrent(),beforeNext=await promo.freeNext();
       await tx('pay own fees '+symbol,router.connect(keeper).pay(asset.target,promo.target));
-      const draw=ethers.id('self-funded '+scenario.name+' '+symbol);
-      await tx('reserve own prize '+symbol,controller.execute(promo.target,promo.interface.encodeFunctionData('reserve',[draw,1,asset.target,budget])));
-      await tx('assign own prize '+symbol,controller.execute(promo.target,promo.interface.encodeFunctionData('finalize',[draw,[wallet],[budget]])));
-      await tx('claim own prize '+symbol,promo.connect(participant).claim(draw,wallet));
+      let parts=[[0,budget]];
+      if(symbol==='USDG') {
+        await tx('recognize own USDG fees',promo.syncUSDG());
+        parts=[[0,(await promo.freeShort())-beforeShort],[1,(await promo.freeCurrent())-beforeCurrent]];
+        budget=parts.reduce((sum,part)=>sum+part[1],0n);
+      }
+      payout.assets[symbol]={ownFeesRaw:String(ownFees),awardedRaw:String(budget),nextHeldRaw:symbol==='USDG'?String((await promo.freeNext())-beforeNext):'0'};
+      await awardFromSources('self-funded '+scenario.name+' '+symbol,asset,parts);
       assert.equal(await promo.claimable(asset.target),0n);
       assert.equal(await promo.reserved(asset.target),0n);
     }
@@ -205,13 +227,10 @@ async function main() {
     assert.ok(credit>0n);
     await tx('pay old credit '+symbol,router.connect(keeper).pay(asset.target,promo.target));
     assert.equal(await router.credit(asset.target,promo.target),0n);
-    const budget=await promo.available(asset.target);assert.ok(budget>0n);
-    const draw=ethers.id('integration '+symbol);
-    await tx('reserve '+symbol,controller.execute(promo.target,promo.interface.encodeFunctionData('reserve',[draw,1,asset.target,budget])));
-    await tx('finalize '+symbol,controller.execute(promo.target,promo.interface.encodeFunctionData('finalize',[draw,[wallet],[budget]])));
-    const before=await asset.balanceOf(wallet);
-    await tx('winner claim '+symbol,promo.connect(participant).claim(draw,wallet));
-    assert.equal((await asset.balanceOf(wallet))-before,budget);
+    if(symbol==='USDG') await tx('recognize integration USDG',promo.syncUSDG());
+    const parts=symbol==='USDG'?[[0,await promo.freeShort()],[1,await promo.freeCurrent()]]:[[0,await promo.available(asset.target)]];
+    const budget=parts.reduce((sum,part)=>sum+part[1],0n);assert.ok(budget>0n);
+    await awardFromSources('integration '+symbol,asset,parts);
     assert.equal(await promo.claimable(asset.target),0n);
     assert.equal(await promo.reserved(asset.target),0n);
     const transferAsset=asset.connect(participant);
@@ -219,7 +238,7 @@ async function main() {
     await tx('sync new campaign '+symbol,router.sync(asset.target));
     assert.equal(await router.received(2,asset.target),7n);
     assert.equal(await router.received(1,asset.target),oldTotal);
-    report.integration.assets[symbol]={oldRevenueRaw:String(oldTotal),winnerPaidRaw:String(budget),newRevenueRaw:'7'};
+    report.integration.assets[symbol]={oldRevenueRaw:String(oldTotal),winnerPaidRaw:String(budget),nextHeldRaw:symbol==='USDG'?String(await promo.freeNext()):'0',newRevenueRaw:'7'};
   }
   await assert.rejects(()=>router.rollCampaign.staticCall(1,[now+200000,[promo.target,ethers.ZeroAddress,ethers.ZeroAddress],[10000,0,0]]));
   assert.ok(report.scenarios.every(s=>s.status==='complete'),'At least one economic scenario failed; inspect report');

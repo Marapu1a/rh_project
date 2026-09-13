@@ -10,6 +10,8 @@ import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol
 contract PromoVault is ReentrancyGuard {
     using SafeERC20 for IERC20;
     enum Status { None, Reserved, Finalized }
+    enum FundingDestination { GENERAL, SHORT, CURRENT, NEXT }
+    enum ReserveSource { SHORT, CURRENT }
     struct Draw {
         address asset;
         uint64 campaignId;
@@ -22,6 +24,13 @@ contract PromoVault is ReentrancyGuard {
     address public immutable projectToken;
     address public immutable quoteToken;
     address public immutable drawController;
+    uint256 public immutable nextStartTarget;
+    uint256 public freeShort;
+    uint256 public freeCurrent;
+    uint256 public freeNext;
+    // Next position in SHORT, CURRENT, SHORT, CURRENT, SHORT, NEXT.
+    uint8 public generalFundingPhase;
+    mapping(bytes32 => ReserveSource) public usdgDrawSource;
     mapping(bytes32 => Draw) public draws;
     mapping(address => uint256) public reserved;
     mapping(address => uint256) public claimable;
@@ -35,18 +44,26 @@ contract PromoVault is ReentrancyGuard {
     error InsufficientAvailable();
     error BalanceDeficit();
     error NothingToClaim();
+    error InvalidFunding();
+    error UnexpectedReceivedAmount();
+    error UseUSDGReserve();
     event DrawReserved(bytes32 indexed drawId, uint64 indexed campaignId, address indexed asset, uint256 budget);
     event RewardAssigned(bytes32 indexed drawId, address indexed winner, uint256 amount);
     event DrawFinalized(bytes32 indexed drawId, uint256 awarded, uint256 released);
     event RewardPaid(bytes32 indexed drawId, address indexed asset, address indexed winner, uint256 amount);
+    // payer=zero for unrecognized direct transfers: the sender cannot be inferred.
+    event USDGAllocated(address indexed payer, FundingDestination indexed destination, uint256 received,
+        uint256 shortAmount, uint256 currentAmount, uint256 nextAmount);
+    event USDGReserveDebited(bytes32 indexed drawId, ReserveSource indexed source, uint256 amount);
 
-    constructor(address token, address quote, address controller) {
+    constructor(address token, address quote, address controller, uint256 target) {
         // TOKEN may be a predicted PAIR address before launch; code is required when used.
-        if (token == address(0) || quote == address(0) || token == quote || controller.code.length == 0)
+        if (token == address(0) || quote == address(0) || token == quote || controller.code.length == 0 || target == 0)
             revert InvalidConfiguration();
         projectToken = token;
         quoteToken = quote;
         drawController = controller;
+        nextStartTarget = target;
     }
 
     modifier onlyController() {
@@ -54,18 +71,97 @@ contract PromoVault is ReentrancyGuard {
         _;
     }
 
-    /// Direct ERC20 transfers, including FeeRouter.pay, need no deposit bookkeeping.
+    /// Total uncommitted balance, NOT the amount available from an individual USDG reserve.
+    /// USDG includes unrecognized direct funding; reserveUSDG synchronizes it as GENERAL.
     function available(address asset) public view returns (uint256) {
         _asset(asset);
         uint256 balance = IERC20(asset).balanceOf(address(this));
         uint256 liabilities = reserved[asset] + claimable[asset];
         if (balance < liabilities) revert BalanceDeficit();
+        if (asset == quoteToken && balance - liabilities < freeShort + freeCurrent + freeNext)
+            revert BalanceDeficit();
         return balance - liabilities;
+    }
+
+    function unrecognizedUSDG() public view returns (uint256) {
+        return available(quoteToken) - freeShort - freeCurrent - freeNext;
+    }
+
+    /// Explicit destination applies only to this transferFrom, never to earlier donations.
+    function fundUSDG(uint256 amount, FundingDestination destination) external nonReentrant {
+        if (amount == 0) revert InvalidFunding();
+        _syncUSDG();
+        IERC20 quote = IERC20(quoteToken);
+        uint256 beforeBalance = quote.balanceOf(address(this));
+        quote.safeTransferFrom(msg.sender, address(this), amount);
+        uint256 afterBalance = quote.balanceOf(address(this));
+        if (afterBalance < beforeBalance || afterBalance - beforeBalance != amount)
+            revert UnexpectedReceivedAmount();
+        _allocateUSDG(afterBalance - beforeBalance, destination, msg.sender);
+    }
+
+    /// Permissionless recognition under the published GENERAL default; zero is a no-op.
+    function syncUSDG() external nonReentrant { _syncUSDG(); }
+
+    function _syncUSDG() private {
+        uint256 amount = unrecognizedUSDG();
+        if (amount != 0) _allocateUSDG(amount, FundingDestination.GENERAL, address(0));
+    }
+
+    function _allocateUSDG(uint256 amount, FundingDestination destination, address payer) private {
+        uint256 shortAmount;
+        uint256 nextAmount;
+        if (destination == FundingDestination.GENERAL) {
+            // Whole six-unit groups have the same allocation from every phase.
+            // Only the tail is walked: at most five iterations, regardless of amount.
+            shortAmount = (amount / 6) * 3;
+            nextAmount = amount / 6;
+            uint8 phase = generalFundingPhase;
+            uint256 tail = amount % 6;
+            for (uint256 i; i < tail; ++i) {
+                if (phase % 2 == 0) ++shortAmount;
+                else if (phase == 5) ++nextAmount;
+                phase = (phase + 1) % 6;
+            }
+            generalFundingPhase = phase;
+        } else if (destination == FundingDestination.SHORT) {
+            shortAmount = amount;
+        } else if (destination == FundingDestination.NEXT) {
+            nextAmount = amount;
+        }
+        uint256 room = nextStartTarget - freeNext;
+        if (nextAmount > room) nextAmount = room;
+        uint256 currentAmount = amount - shortAmount - nextAmount;
+        freeShort += shortAmount;
+        freeCurrent += currentAmount;
+        freeNext += nextAmount;
+        emit USDGAllocated(payer, destination, amount, shortAmount, currentAmount, nextAmount);
     }
 
     function reserve(bytes32 drawId, uint64 campaignId, address asset, uint256 budget)
         external onlyController nonReentrant
     {
+        if (asset == quoteToken) revert UseUSDGReserve();
+        _reserve(drawId, campaignId, asset, budget);
+    }
+
+    function reserveUSDG(bytes32 drawId, uint64 campaignId, ReserveSource source, uint256 budget)
+        external onlyController nonReentrant
+    {
+        _syncUSDG();
+        if (source == ReserveSource.SHORT) {
+            if (budget > freeShort) revert InsufficientAvailable();
+            freeShort -= budget;
+        } else {
+            if (budget > freeCurrent) revert InsufficientAvailable();
+            freeCurrent -= budget;
+        }
+        _reserve(drawId, campaignId, quoteToken, budget);
+        usdgDrawSource[drawId] = source;
+        emit USDGReserveDebited(drawId, source, budget);
+    }
+
+    function _reserve(bytes32 drawId, uint64 campaignId, address asset, uint256 budget) private {
         if (drawId == bytes32(0) || campaignId == 0 || budget == 0 || draws[drawId].status != Status.None)
             revert InvalidDraw();
         if (budget > available(asset)) revert InsufficientAvailable();
@@ -96,6 +192,11 @@ contract PromoVault is ReentrancyGuard {
         }
         reserved[d.asset] -= d.budget;
         claimable[d.asset] += total;
+        if (d.asset == quoteToken) {
+            uint256 released = d.budget - total;
+            if (usdgDrawSource[drawId] == ReserveSource.SHORT) freeShort += released;
+            else freeCurrent += released;
+        }
         d.status = Status.Finalized;
         d.awarded = total;
         emit DrawFinalized(drawId, total, d.budget - total);

@@ -1,13 +1,13 @@
 # Состояние реализации
 
-Проверено по локальным контрактам и package.json: 12.09.2026. Это карта кода, а не утверждение реализации всей [продуктовой схемы](PRODUCT_SPEC.md).
+Проверено по локальным контрактам и package.json: 13.09.2026. Это карта кода, а не утверждение реализации всей [продуктовой схемы](PRODUCT_SPEC.md).
 
 | Часть | Фактическое состояние |
 |---|---|
 | FeeRouter | Прототип TOKEN/USDG accounting, фиксированный PAIR source, recipient credits, атомарный rollover |
 | PromoVault | Резервирование draw, назначение обеспеченных призов и claim; поддерживает оба актива |
-| Три продуктовых USDG-резерва | Не реализованы |
-| Внешнее funding 3:2:1 / targeted / overflow | Не реализовано |
+| Три продуктовых USDG-резерва | Реализованы free Short/Current/Next; target immutable, переход Next → Current ещё отсутствует |
+| Внешнее funding 3:2:1 / targeted / overflow | Реализовано, direct USDG — GENERAL, дробление учитывается общей фазой |
 | Конвертация TOKEN → USDG | Не реализована |
 | Indexer, регистрация и entries | Production-реализации нет |
 | Production controller, capped odds, RNG | Нет; DrawControllerFixture — неограниченная тестовая заглушка |
@@ -23,7 +23,7 @@
 
 ## PromoVault
 
-Исходник: [PromoVault.sol](../contracts/PromoVault.sol). По активу: available = balance − reserved − claimable. Только immutable controller резервирует бюджет и назначает ненулевые обеспеченные награды. Claim разрешён любому caller, но только заранее указанному winner; transfer failure сохраняет долг. Owner withdrawal, срок сгорания claim, proxy и arbitrary rescue не добавлены.
+Исходник: [PromoVault.sol](../contracts/PromoVault.sol). Новый constructor требует четвёртый аргумент — положительный nextStartTarget в raw USDG. По активу: available = balance − reserved − claimable. USDG available включает три свободных резерва и ещё не распознанные переводы; брать из него произвольный бюджет нельзя. reserveUSDG списывает только Short или Current, finalize возвращает остаток в исходный резерв. Старый reserve для USDG запрещён. Только immutable controller резервирует бюджет и назначает ненулевые обеспеченные награды. Claim разрешён любому caller, но только заранее указанному winner; transfer failure сохраняет долг. Owner withdrawal, срок сгорания claim, proxy и arbitrary rescue не добавлены.
 
 Пустой finalize разрешён бухгалтерски, но контракт не доказывает, что random действительно дал no winners. `campaignId` — metadata, не проверенная связь с policy FeeRouter. Controller может назначать winners в пределах бюджета; безопасность production rules этим не обеспечена.
 
@@ -31,7 +31,7 @@
 
 ## Проверки и воспроизведение
 
-Последний подтверждённый unit run перед реорганизацией документов: 25 контрактных tests (16 FeeRouter + 9 PromoVault), 9 offline farming tests — passed. Документационная реорганизация не является новым прогоном тестов.
+Проверка 13.09: 36 контрактных tests (16 FeeRouter + 20 PromoVault), 9 offline farming tests. Новые тесты funding включены в npm test. Новый сетевой fork не запускался.
 
 ```powershell
 npm ci --ignore-scripts
@@ -55,8 +55,8 @@ npm run test:fork
 npm run test:fork:farming
 ```
 
-PAIR route и доступность блока могут измениться; прошлый успех не гарантирует повтор. Выходы могут перезаписываться. [Политика research-файлов](../research/README.md). Исторический подтверждённый путь PAIR → FeeRouter → rollover → PromoVault → claim приведён в архивном отчёте экономики.
+PAIR route и доступность блока могут измениться; прошлый успех не гарантирует повтор. Выходы могут перезаписываться. Скрипт адаптирован к новому API, но эта адаптация на RPC не проверялась; USDG Next теперь исключается из тестовых выплат. Старый сохранённый self-funded результат нельзя считать результатом новой версии. [Политика research-файлов](../research/README.md). Исторический подтверждённый путь PAIR → FeeRouter → rollover → PromoVault → claim приведён в архивном отчёте экономики.
 
 ## Следующий этап
 
-Проектирование и реализация USDG funding/трёх резервов согласно разделу 5 PRODUCT_SPEC. До новых контрактных изменений определить API, rounding, direct transfers и переходы pending. Конвертация, RNG и полный draw — отдельные последующие задачи. Наличие готового денежного vault не означает готовность к публичному запуску.
+USDG funding/три резерва реализованы; API и rounding описаны в PROMO_VAULT_DESIGN. Следом нужно отдельно спроектировать jackpot cycle/переход Next → Current и изменение цели, не затрагивая старые долги и frozen budgets. Конвертация, RNG и полный draw остаются последующими задачами. Текущий immutable target и отсутствие перехода Next делают версию промежуточным прототипом, не готовым публичным vault.
