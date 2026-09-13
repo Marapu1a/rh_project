@@ -12,6 +12,7 @@ contract PromoVault is ReentrancyGuard {
     enum Status { None, Reserved, Finalized }
     enum FundingDestination { GENERAL, SHORT, CURRENT, NEXT }
     enum ReserveSource { SHORT, CURRENT }
+    enum DrawKind { GENERIC, MONTHLY }
     struct Draw {
         address asset;
         uint64 campaignId;
@@ -31,6 +32,10 @@ contract PromoVault is ReentrancyGuard {
     // Next position in SHORT, CURRENT, SHORT, CURRENT, SHORT, NEXT.
     uint8 public generalFundingPhase;
     mapping(bytes32 => ReserveSource) public usdgDrawSource;
+    mapping(bytes32 => DrawKind) public drawKind;
+    mapping(bytes32 => uint256) public monthlyDrawCycle;
+    bytes32 public pendingMonthlyDrawId;
+    uint256 public cycleId = 1;
     mapping(bytes32 => Draw) public draws;
     mapping(address => uint256) public reserved;
     mapping(address => uint256) public claimable;
@@ -47,6 +52,9 @@ contract PromoVault is ReentrancyGuard {
     error InvalidFunding();
     error UnexpectedReceivedAmount();
     error UseUSDGReserve();
+    error MonthlyPending();
+    error NextStartNotReady();
+    error UseMonthlySettlement();
     event DrawReserved(bytes32 indexed drawId, uint64 indexed campaignId, address indexed asset, uint256 budget);
     event RewardAssigned(bytes32 indexed drawId, address indexed winner, uint256 amount);
     event DrawFinalized(bytes32 indexed drawId, uint256 awarded, uint256 released);
@@ -55,6 +63,9 @@ contract PromoVault is ReentrancyGuard {
     event USDGAllocated(address indexed payer, FundingDestination indexed destination, uint256 received,
         uint256 shortAmount, uint256 currentAmount, uint256 nextAmount);
     event USDGReserveDebited(bytes32 indexed drawId, ReserveSource indexed source, uint256 amount);
+    event MonthlyStarted(bytes32 indexed drawId, uint256 indexed cycle, uint256 budget);
+    event MonthlySettled(bytes32 indexed drawId, uint256 indexed cycle, address indexed winner,
+        uint256 awarded, uint256 nextMovedToCurrent);
 
     constructor(address token, address quote, address controller, uint256 target) {
         // TOKEN may be a predicted PAIR address before launch; code is required when used.
@@ -148,6 +159,8 @@ contract PromoVault is ReentrancyGuard {
     function reserveUSDG(bytes32 drawId, uint64 campaignId, ReserveSource source, uint256 budget)
         external onlyController nonReentrant
     {
+        // While monthly is pending, new Current belongs to the following accounting outcome.
+        if (source == ReserveSource.CURRENT && pendingMonthlyDrawId != bytes32(0)) revert MonthlyPending();
         _syncUSDG();
         if (source == ReserveSource.SHORT) {
             if (budget > freeShort) revert InsufficientAvailable();
@@ -159,6 +172,58 @@ contract PromoVault is ReentrancyGuard {
         _reserve(drawId, campaignId, quoteToken, budget);
         usdgDrawSource[drawId] = source;
         emit USDGReserveDebited(drawId, source, budget);
+    }
+
+    /// Accounting only. Eligibility, checkpoints and random authentication belong to controller.
+    function startMonthly(bytes32 drawId, uint64 campaignId) external onlyController nonReentrant {
+        _syncUSDG();
+        if (pendingMonthlyDrawId != bytes32(0)) revert MonthlyPending();
+        if (freeNext != nextStartTarget) revert NextStartNotReady();
+        uint256 budget = freeCurrent;
+        freeCurrent = 0;
+        _reserve(drawId, campaignId, quoteToken, budget);
+        usdgDrawSource[drawId] = ReserveSource.CURRENT;
+        drawKind[drawId] = DrawKind.MONTHLY;
+        monthlyDrawCycle[drawId] = cycleId;
+        pendingMonthlyDrawId = drawId;
+        emit USDGReserveDebited(drawId, ReserveSource.CURRENT, budget);
+        emit MonthlyStarted(drawId, cycleId, budget);
+    }
+
+    /// Zero winner means a terminal no-win, never a timeout or a request for another random.
+    function settleMonthly(bytes32 drawId, address winner) external onlyController nonReentrant {
+        Draw storage d = draws[drawId];
+        if (drawId == bytes32(0) || pendingMonthlyDrawId != drawId ||
+            drawKind[drawId] != DrawKind.MONTHLY || d.status != Status.Reserved ||
+            monthlyDrawCycle[drawId] != cycleId) revert InvalidDraw();
+        if (winner == address(this)) revert InvalidAwards();
+        // Recognize direct funds while OLD Next is still full, before moving it on a win.
+        _syncUSDG();
+        uint256 finishedCycle = cycleId;
+        uint256 moved;
+        reserved[quoteToken] -= d.budget;
+        if (winner == address(0)) {
+            freeCurrent += d.budget;
+        } else {
+            reward[drawId][winner] = d.budget;
+            claimable[quoteToken] += d.budget;
+            d.awarded = d.budget;
+            moved = freeNext;
+            freeCurrent += moved;
+            freeNext = 0;
+            ++cycleId;
+            emit RewardAssigned(drawId, winner, d.budget);
+        }
+        d.status = Status.Finalized;
+        pendingMonthlyDrawId = bytes32(0);
+        emit DrawFinalized(drawId, d.awarded, d.budget - d.awarded);
+        emit MonthlySettled(drawId, finishedCycle, winner, d.awarded, moved);
+    }
+
+    /// Recognized jackpot reference for a future short policy, not a second spendable balance.
+    function currentJackpotReference() external view returns (uint256) {
+        bytes32 pending = pendingMonthlyDrawId;
+        return pending == bytes32(0) ? freeCurrent : draws[pending].budget;
     }
 
     function _reserve(bytes32 drawId, uint64 campaignId, address asset, uint256 budget) private {
@@ -176,6 +241,7 @@ contract PromoVault is ReentrancyGuard {
         external onlyController nonReentrant
     {
         Draw storage d = draws[drawId];
+        if (drawKind[drawId] == DrawKind.MONTHLY) revert UseMonthlySettlement();
         if (d.status != Status.Reserved) revert InvalidDraw();
         if (winners.length != amounts.length) revert InvalidAwards();
         available(d.asset); // fail closed on an unsupported balance reduction

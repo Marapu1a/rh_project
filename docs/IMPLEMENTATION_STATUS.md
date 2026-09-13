@@ -6,8 +6,9 @@
 |---|---|
 | FeeRouter | Прототип TOKEN/USDG accounting, фиксированный PAIR source, recipient credits, атомарный rollover |
 | PromoVault | Резервирование draw, назначение обеспеченных призов и claim; поддерживает оба актива |
-| Три продуктовых USDG-резерва | Реализованы free Short/Current/Next; target immutable, переход Next → Current ещё отсутствует |
+| Три продуктовых USDG-резерва | Реализованы free Short/Current/Next; target immutable; monthly win переносит Next → Current |
 | Внешнее funding 3:2:1 / targeted / overflow | Реализовано, direct USDG — GENERAL, дробление учитывается общей фазой |
+| Monthly accounting | start/settle win/no-win, один pending, cycleId, независимый claim; без календаря/RNG/attempts |
 | Конвертация TOKEN → USDG | Не реализована |
 | Indexer, регистрация и entries | Production-реализации нет |
 | Production controller, capped odds, RNG | Нет; DrawControllerFixture — неограниченная тестовая заглушка |
@@ -31,7 +32,7 @@
 
 ## Проверки и воспроизведение
 
-Проверка 13.09: 36 контрактных tests (16 FeeRouter + 20 PromoVault), 9 offline farming tests. Новые тесты funding включены в npm test. Новый сетевой fork не запускался.
+Проверка 13.09: 43 контрактных tests (16 FeeRouter + 27 PromoVault), 9 offline farming tests. Новые тесты funding и monthly accounting включены в npm test. Новый сетевой fork не запускался.
 
 ```powershell
 npm ci --ignore-scripts
@@ -59,4 +60,4 @@ PAIR route и доступность блока могут измениться;
 
 ## Следующий этап
 
-USDG funding/три резерва реализованы; API и rounding описаны в PROMO_VAULT_DESIGN. Следом нужно отдельно спроектировать jackpot cycle/переход Next → Current и изменение цели, не затрагивая старые долги и frozen budgets. Конвертация, RNG и полный draw остаются последующими задачами. Текущий immutable target и отсутствие перехода Next делают версию промежуточным прототипом, не готовым публичным vault.
+USDG funding и monthly accounting реализованы; API/ограничения описаны в PROMO_VAULT_DESIGN. Target фиксирован: для MVP deployment 100 USDG, изменения targets не нужны. Следующие отдельные задачи — production controller с календарём/проверкой исходов, participants/entries и выбранный RNG; конвертация также отсутствует. Пока можно проверить проводки, но нельзя доказать легитимность outcome, monthly interval или consumption попыток. Публичный запуск не готов.

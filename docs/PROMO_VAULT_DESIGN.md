@@ -4,11 +4,11 @@
 
 ## Граница этапа
 
-Реализованы внешнее USDG funding и три свободных продуктовых резерва. Существующие reserve/finalize/claim связаны с ними бухгалтерски. Creator revenue allocation, конвертация, entries, короткая/месячная случайная логика, RNG и новый controller не добавлены. FeeRouter не менялся.
+Реализованы внешнее USDG funding, три свободных продуктовых резерва и отдельный monthly accounting path. Существующие reserve/finalize/claim связаны с ними бухгалтерски. Creator revenue allocation, конвертация, entries, короткая/месячная случайная логика, RNG и новый controller не добавлены. FeeRouter не менялся.
 
 Новый constructor: `PromoVault(token, quote, controller, nextStartTarget)`. Активы различны и ненулевые, controller должен иметь код, target положителен и задаётся в raw units quoteToken. Target immutable, setters нет. Старые вызовы constructor с тремя аргументами несовместимы; локальные tests и текущий fork-script обновлены. Proxy/migration живого экземпляра нет.
 
-**Next сейчас только наполняется.** В этой версии нет перехода Next → Current и изменения target: это следующий отдельный этап. Не использовать этот промежуточный контракт для живых призовых средств.
+**Next переносится в Current только при успешном settleMonthly с winner.** Target не меняется между циклами. Для MVP принято 100 USDG: при USDG decimals=6 deployment должен задавать `100000000`; constructor по-прежнему параметризован положительным raw target для локальных fixtures. Эта версия без production controller/RNG/расписания не предназначена для живых призовых средств.
 
 ## Состояние и инварианты
 
@@ -70,11 +70,11 @@ SHORT, CURRENT, SHORT, CURRENT, SHORT, NEXT
 
 Старый `reserve(drawId,campaignId,asset,budget)` сохраняет TOKEN-путь; для USDG возвращает UseUSDGReserve. Это закрывает обход продуктовых резервов через общий available.
 
-Никакие новые поступления не меняют уже записанные budget, source и asset draw. Current-поступления после резервирования увеличивают свободный Current; будущий monthly controller должен определить принадлежность этого остатка циклу. Сами jackpot cycles сейчас не реализованы.
+Никакие новые поступления не меняют уже записанные budget, source и asset draw. Пока monthly pending, обычный reserveUSDG из CURRENT запрещён; SHORT разрешён. До/после pending GENERIC CURRENT API сохраняется как прежняя бухгалтерская операция controller — это не способ сменить jackpot cycle и не production правило розыгрыша.
 
 ## Finalize и claim
 
-`finalize(drawId,winners,amounts)` — тот же controller, один раз после reserve. Проверяется весь список атомарно: ненулевые допустимые winners и суммы, отсутствие дублей, общая сумма не выше budget. При ошибке нет частичных назначений.
+`finalize(drawId,winners,amounts)` — тот же controller, один раз после GENERIC reserve. MONTHLY этим методом завершить нельзя, включая пустой список. Проверяется весь список атомарно: ненулевые допустимые winners и суммы, отсутствие дублей, общая сумма не выше budget. При ошибке нет частичных назначений.
 
 Для USDG весь budget уходит из reserved, сумма наград переходит в claimable, `budget - awarded` возвращается именно в исходный Short/Current. Возврат остатка не является новым GENERAL funding и не пополняет Next. Пустой результат возвращает весь budget и закрывает draw, но допустимость no-winner должен доказывать будущий controller.
 
@@ -88,8 +88,37 @@ Owner withdrawal, произвольные переводы, fee, смена con
 
 ## Проверки
 
-13.09: 20 PromoVault tests, включая 11 новых; полный набор — 36 контрактных tests (16 FeeRouter + 20 PromoVault). Отдельная offline farming-модель имеет 9 tests и не проверяет актуальный production draw.
+13.09: после monthly этапа 27 PromoVault tests; полный набор — 43 контрактных tests (16 FeeRouter + 27 PromoVault). Отдельная offline farming-модель имеет 9 tests и не проверяет актуальный production draw.
 
 Новые проверки: general/targeted overflow, direct transfer перед targeted, повторный sync, все шесть фаз и дробление до/после Next cap, сохранение фазы, изоляция source/reserved/claimable, атомарный rollback reserve/finalize/fund, invalid enums, входящая/исходящая reentrancy, short transfer rejection, дефицит свободных средств и максимальный uint256.
 
 `npm test` включает локальную интеграцию реального FeeRouter с новым PromoVault и mock PAIR; внешняя сеть не нужна. Fork-script адаптирован к новому constructor/reserveUSDG, но **новый RPC/fork в этом этапе не запускался**. Старые fork-данные в архиве проверяли предыдущее API.
+
+## Monthly accounting
+
+API: `startMonthly(drawId,campaignId)` и `settleMonthly(drawId,winnerOrZero)`, только существующий immutable controller, nonReentrant. `DrawKind` = GENERIC(0) / MONTHLY(1), `drawKind(id)` хранит вид, `monthlyDrawCycle(id)` — зафиксированный cycle. `cycleId` начинается с 1 и увеличивается только при monthly win. `pendingMonthlyDrawId=0` означает отсутствие ожидающего monthly.
+
+Start выполняет syncUSDG, запрещает второй pending, требует полного Next, самостоятельно берёт **весь** свободный Current как F. Нулевой F, нулевые ID/campaign и повторные ID отклоняются. Source фиксируется CURRENT, F переходит в reserved. Отдельный параметр budget отсутствует. Никакой выплаты или RNG в start нет.
+
+Settle принимает только текущий pending MONTHLY нужного cycle и Reserved status. Нулевой winner — terminal no-win, адрес самого vault запрещён. После syncUSDG:
+
+| Исход | Резервы и обязательства | Cycle |
+|---|---|---|
+| No-win | F из reserved обратно в Current; новые поступления A сохраняются: A+F; Next нетронут | Тот же |
+| Winner | Весь F из reserved в claimable фиксированного winner; весь Next в Current: A+T; Next=0 | +1 |
+
+Status становится Finalized, pending очищается атомарно с проводками. Общий finalize не может завершить MONTHLY. Старый monthly ID нельзя повторно start/settle или использовать для другого draw. GENERIC draw не может пройти settleMonthly. Claim использует существующий путь и не управляет переходом цикла.
+
+Прямой USDG до settlement синхронизируется **пока старый Next полон**. Funding после успешного перехода может снова наполнять Next. Это accounting по порядку транзакций, не восстановление времени исходного перевода. generalFundingPhase не сбрасывается.
+
+`currentJackpotReference()` возвращает frozen F при pending, иначе распознанный freeCurrent. Это view для будущей short policy, не новый баланс и не реализация ограничения short exposure. Unrecognized direct funds не входят в view до sync. Уже frozen Short не пересчитывается при monthly win; его budget/debt остаются независимыми.
+
+### Что этот этап намеренно не обеспечивает
+
+- Не проверяет participants, random, no-winner, вероятность или календарь. Controller пока может передать произвольный outcome: accounting не доказывает честность выигрыша.
+- Не устанавливает monthly interval/checkpoint и не отсчитывает следующий интервал после settlement. Принятое продуктовое правило должен обеспечить будущий production controller; текущий fixture позволяет запускать следующие бухгалтерские операции сразу. Отдельного executor/scheduler нет.
+- Не закрывает/расходует реальные attempts: indexer и cohorts ещё не реализованы.
+- Нет pause, cancel, timeout, replay или автоматического no-win. Pending остаётся pending сколь угодно долго, блокируя новый monthly, но не funding, разрешённый Short и legitimate claims.
+- GENERIC CURRENT вне pending остаётся доверенным API controller; злоупотребление controller всё ещё возможно, как и до этого этапа. Не считать эту версию законченным trust layer для production.
+
+Семь monthly tests проверяют freeze после direct sync, A+F и A+T, сохранение фазы, старый/новый Next на границе settlement, несколько no-win, invalid/concurrent/double paths, изоляцию Short, поздний/ошибочный claim, долгий pending и атомарный отказ при дефиците. Новый fork не запускался.

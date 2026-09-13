@@ -409,3 +409,150 @@ test('allocation handles maximum uint256 funding without amount-sized iteration 
   assert.deepEqual(await buckets(vault),[(x+1n)/2n,x-(x+1n)/2n-x/6n,x/6n,x%6n]);
   await conserved(vault,quote);
 });
+
+test('monthly freeze synchronizes direct funding and locks ALL Current; Short remains independent',async()=>{
+  const {quote,vault,control}=await fixture(100n);
+  const fund=await fundingCapital(quote,vault);
+  await fund(100,3);
+  await fund(500,2);
+  await sent(quote.connect(alice).transfer(vault.target,60));
+  await sent(control('startMonthly',[id(1),7]));
+  assert.equal((await vault.draws(id(1))).budget,530n);
+  assert.equal(await vault.pendingMonthlyDrawId(),id(1));
+  assert.equal(await vault.drawKind(id(1)),1n);
+  assert.equal(await vault.monthlyDrawCycle(id(1)),1n);
+  assert.deepEqual(await buckets(vault),[30n,0n,100n,0n]);
+  await fund(40,2);
+  assert.equal(await vault.currentJackpotReference(),530n);
+  await sent(control('reserveUSDG',[id(2),7,0,20]));
+  await rejects(()=>control('reserveUSDG',[id(3),7,1,1]));
+  await sent(control('finalize',[id(2),[],[]]));
+  assert.equal((await vault.draws(id(1))).budget,530n);
+  await conserved(vault,quote);
+});
+
+test('monthly win: pre-settlement direct USDG sees full old Next; A+T survives and phase continues',async()=>{
+  const {quote,vault,control}=await fixture(100n);
+  const fund=await fundingCapital(quote,vault);
+  await fund(600);
+  await sent(control('startMonthly',[id(1),1])); // F=200
+  await fund(25,2);
+  await sent(quote.connect(alice).transfer(vault.target,7)); // S+4 C+3 before old Next resets
+  await sent(control('settleMonthly',[id(1),await alice.getAddress()]));
+  assert.deepEqual(await buckets(vault),[304n,128n,0n,1n]);
+  assert.equal(await vault.claimable(quote.target),200n);
+  assert.equal(await vault.reward(id(1),await alice.getAddress()),200n);
+  assert.equal(await vault.cycleId(),2n);
+  assert.equal(await vault.pendingMonthlyDrawId(),id(0));
+  assert.equal(await vault.currentJackpotReference(),128n);
+  await fund(5); // remaining phase: C,S,C,S,N
+  assert.deepEqual(await buckets(vault),[306n,130n,1n,0n]);
+  await conserved(vault,quote);
+});
+
+test('terminal no-wins preserve cycle and Next, merge A+F, and need distinct draws',async()=>{
+  const {quote,vault,control}=await fixture(100n);
+  const fund=await fundingCapital(quote,vault);
+  await fund(600);
+  for(let i=1;i<=3;i++) {
+    const expected=200n+10n*BigInt(i-1);
+    await sent(control('startMonthly',[id(i),1]));
+    assert.equal((await vault.draws(id(i))).budget,expected);
+    await fund(10,2);
+    await sent(control('settleMonthly',[id(i),ethers.ZeroAddress]));
+    assert.equal(await vault.freeCurrent(),expected+10n);
+    assert.equal(await vault.freeNext(),100n);
+    assert.equal(await vault.cycleId(),1n);
+    assert.equal(await vault.claimable(quote.target),0n);
+    await rejects(()=>control('startMonthly',[id(i),1]));
+  }
+  await conserved(vault,quote);
+});
+
+test('monthly guarded paths: missing funding, concurrent draws, wrong ID, generic finalize and double settlement',async()=>{
+  const {quote,vault,control}=await fixture(100n);
+  const fund=await fundingCapital(quote,vault);
+  await fund(99,3);
+  await fund(40,2);
+  await rejects(()=>control('startMonthly',[id(1),1]));
+  await fund(1,3);
+  await rejects(()=>control('startMonthly',[id(0),1]));
+  await rejects(()=>control('startMonthly',[id(1),0]));
+  await rejects(()=>vault.startMonthly(id(1),1));
+  await sent(control('startMonthly',[id(1),1]));
+  await sent(quote.connect(alice).transfer(vault.target,6));
+  await rejects(()=>control('startMonthly',[id(2),1]));
+  assert.equal(await vault.unrecognizedUSDG(),6n); // rejected start also rolls back its sync
+  await rejects(()=>control('finalize',[id(1),[],[]]));
+  await rejects(()=>control('settleMonthly',[id(2),ethers.ZeroAddress]));
+  await rejects(()=>vault.settleMonthly(id(1),ethers.ZeroAddress));
+  await rejects(()=>control('settleMonthly',[id(1),vault.target]));
+  assert.equal(await vault.reserved(quote.target),40n);
+  await sent(control('settleMonthly',[id(1),ethers.ZeroAddress]));
+  await rejects(()=>control('settleMonthly',[id(1),ethers.ZeroAddress]));
+  await conserved(vault,quote);
+});
+
+test('empty Current cannot start monthly and generic draws cannot settle a jackpot cycle',async()=>{
+  const {quote,vault,control}=await fixture(100n);
+  const fund=await fundingCapital(quote,vault);
+  await fund(100,3);
+  await rejects(()=>control('startMonthly',[id(1),1]));
+  await fund(10,1);
+  await sent(control('reserveUSDG',[id(1),1,0,10]));
+  await rejects(()=>control('settleMonthly',[id(1),ethers.ZeroAddress]));
+  await rejects(()=>control('startMonthly',[id(1),1]));
+  assert.equal(await vault.freeNext(),100n);
+  assert.equal(await vault.cycleId(),1n);
+  await conserved(vault,quote);
+});
+
+test('late or failed jackpot claim does not block later cycle or alter an earlier frozen Short',async()=>{
+  const {quote,vault,control}=await fixture(100n);
+  const fund=await fundingCapital(quote,vault);
+  const a=await alice.getAddress(),b=await bob.getAddress();
+  await fund(600);
+  await sent(control('reserveUSDG',[id(10),1,0,200]));
+  await sent(control('startMonthly',[id(1),1]));
+  await sent(control('settleMonthly',[id(1),a]));
+  await rejects(()=>control('settleMonthly',[id(1),b]));
+  await rejects(()=>control('finalize',[id(1),[b],[200]]));
+  assert.equal((await vault.draws(id(10))).budget,200n);
+  await sent(quote.blockRecipient(a));
+  await rejects(()=>vault.claim(id(1),a));
+  await rejects(()=>control('startMonthly',[id(2),1])); // Next empty, despite large liabilities/balance
+  await fund(100,3);
+  await sent(control('startMonthly',[id(2),2]));
+  assert.equal((await vault.draws(id(2))).budget,100n);
+  await sent(control('settleMonthly',[id(2),b]));
+  assert.equal(await vault.cycleId(),3n);
+  assert.equal(await vault.claimable(quote.target),300n);
+  await sent(vault.connect(keeper).claim(id(2),b));
+  await sent(quote.blockRecipient(ethers.ZeroAddress));
+  await sent(vault.claim(id(1),a));
+  await rejects(()=>vault.claim(id(1),a));
+  await sent(control('finalize',[id(10),[],[]]));
+  assert.equal(await vault.freeShort(),300n);
+  await conserved(vault,quote);
+});
+
+test('pending monthly does not expire or multiply when time advances; deficit settlement is atomic',async()=>{
+  const {quote,vault,control}=await fixture(100n);
+  const fund=await fundingCapital(quote,vault);
+  await fund(600);
+  await sent(control('startMonthly',[id(1),1]));
+  await hre.network.provider.send('evm_increaseTime',[86400*90]);
+  await hre.network.provider.send('evm_mine');
+  await rejects(()=>control('startMonthly',[id(2),1]));
+  assert.equal(await vault.pendingMonthlyDrawId(),id(1));
+  await sent(quote.blockRecipient(await bob.getAddress()));
+  await sent(quote.burn(vault.target,1));
+  await rejects(()=>control('settleMonthly',[id(1),ethers.ZeroAddress]));
+  assert.equal(await vault.cycleId(),1n);
+  assert.equal(await vault.reserved(quote.target),200n);
+  assert.equal(await vault.freeNext(),100n);
+  assert.equal((await vault.draws(id(1))).status,1n);
+  await sent(quote.mint(vault.target,1));
+  await sent(control('settleMonthly',[id(1),ethers.ZeroAddress]));
+  await conserved(vault,quote);
+});
