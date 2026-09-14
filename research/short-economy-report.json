@@ -1,0 +1,476 @@
+{
+  "assumptions": [
+    "Hypothetical rates and prize settings, not PAIR facts or approved product settings.",
+    "Revenue rate is assumed effective USDG proceeds per turnover, not total pool fee.",
+    "Equal BUY among fixed wallets; all BUY eligible, carry initially zero; SELL creates no entries.",
+    "Events and readiness sampled every six hours, not a production scheduling decision.",
+    "All free Short is selected when it covers the 110 USDG minimum; no exposure cap.",
+    "External startup is GENERAL without project fee; creator prize share uses candidate 3:2:1.",
+    "Conversion delay is a fixed cash-arrival lag, not a swap or TOKEN price model.",
+    "All winners claim immediately; no monthly draw, operating costs, RNG delay or market profit modeled."
+  ],
+  "config": {
+    "daily_volumes": [
+      10000,
+      20000,
+      40000
+    ],
+    "initial_external": 400,
+    "wallets": 60,
+    "buy_share": "3/5",
+    "revenue_rate": "1/200",
+    "project_share": "1/10",
+    "conversion_delay_blocks": 0,
+    "seed": 20260914
+  },
+  "startup_raw": {
+    "short": 200000000,
+    "current": 133333334,
+    "next": 66666666
+  },
+  "rules": {
+    "version": "EXPERIMENT-ten-seats",
+    "p_max": "2/5",
+    "h_e": 3,
+    "h_l": 6,
+    "weights": [
+      7,
+      5,
+      2,
+      2,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    "min_prize": 5000000,
+    "min_wallets": 1
+  },
+  "minimum_budget_raw": 110000000,
+  "rows": [
+    {
+      "hour": 6,
+      "volume_raw": 2500000000,
+      "buy_raw": 1500000000,
+      "sell_raw": 1000000000,
+      "new_entries": 0,
+      "revenue_generated_raw": 12500000,
+      "revenue_received_raw": 12500000,
+      "project_raw": 1250000,
+      "short_funding_raw": 5625000,
+      "current_funding_raw": 3750000,
+      "next_funding_raw": 1875000,
+      "free_short_before_raw": 205625000,
+      "draw": null,
+      "free_short_after_raw": 205625000,
+      "current_raw": 137083334,
+      "next_raw": 68541666,
+      "pending_revenue_raw": 0,
+      "reason": "no entries"
+    },
+    {
+      "hour": 12,
+      "volume_raw": 2500000000,
+      "buy_raw": 1500000000,
+      "sell_raw": 1000000000,
+      "new_entries": 0,
+      "revenue_generated_raw": 12500000,
+      "revenue_received_raw": 12500000,
+      "project_raw": 1250000,
+      "short_funding_raw": 5625000,
+      "current_funding_raw": 3750000,
+      "next_funding_raw": 1875000,
+      "free_short_before_raw": 211250000,
+      "draw": null,
+      "free_short_after_raw": 211250000,
+      "current_raw": 140833334,
+      "next_raw": 70416666,
+      "pending_revenue_raw": 0,
+      "reason": "no entries"
+    },
+    {
+      "hour": 18,
+      "volume_raw": 2500000000,
+      "buy_raw": 1500000000,
+      "sell_raw": 1000000000,
+      "new_entries": 0,
+      "revenue_generated_raw": 12500000,
+      "revenue_received_raw": 12500000,
+      "project_raw": 1250000,
+      "short_funding_raw": 5625000,
+      "current_funding_raw": 3750000,
+      "next_funding_raw": 1875000,
+      "free_short_before_raw": 216875000,
+      "draw": null,
+      "free_short_after_raw": 216875000,
+      "current_raw": 144583334,
+      "next_raw": 72291666,
+      "pending_revenue_raw": 0,
+      "reason": "no entries"
+    },
+    {
+      "hour": 24,
+      "volume_raw": 2500000000,
+      "buy_raw": 1500000000,
+      "sell_raw": 1000000000,
+      "new_entries": 60,
+      "revenue_generated_raw": 12500000,
+      "revenue_received_raw": 12500000,
+      "project_raw": 1250000,
+      "short_funding_raw": 5625000,
+      "current_funding_raw": 3750000,
+      "next_funding_raw": 1875000,
+      "free_short_before_raw": 222500000,
+      "draw": {
+        "id": 1,
+        "participants": 60,
+        "entries": 60,
+        "admitted": 4,
+        "budget_raw": 222500000,
+        "basket_raw": [
+          70795452,
+          50568180,
+          20227272,
+          20227272,
+          10113636,
+          10113636,
+          10113636,
+          10113636,
+          10113636,
+          10113636
+        ],
+        "awards": [
+          {
+            "wallet": "w017",
+            "prize_raw": 10113636
+          },
+          {
+            "wallet": "w021",
+            "prize_raw": 10113636
+          },
+          {
+            "wallet": "w051",
+            "prize_raw": 70795452
+          },
+          {
+            "wallet": "w055",
+            "prize_raw": 10113636
+          }
+        ],
+        "awarded_raw": 101136360,
+        "returned_raw": 121363640
+      },
+      "free_short_after_raw": 121363640,
+      "current_raw": 148333334,
+      "next_raw": 74166666,
+      "pending_revenue_raw": 0,
+      "reason": "draw"
+    },
+    {
+      "hour": 30,
+      "volume_raw": 5000000000,
+      "buy_raw": 3000000000,
+      "sell_raw": 2000000000,
+      "new_entries": 0,
+      "revenue_generated_raw": 25000000,
+      "revenue_received_raw": 25000000,
+      "project_raw": 2500000,
+      "short_funding_raw": 11250000,
+      "current_funding_raw": 7500000,
+      "next_funding_raw": 3750000,
+      "free_short_before_raw": 132613640,
+      "draw": null,
+      "free_short_after_raw": 132613640,
+      "current_raw": 155833334,
+      "next_raw": 77916666,
+      "pending_revenue_raw": 0,
+      "reason": "no entries"
+    },
+    {
+      "hour": 36,
+      "volume_raw": 5000000000,
+      "buy_raw": 3000000000,
+      "sell_raw": 2000000000,
+      "new_entries": 60,
+      "revenue_generated_raw": 25000000,
+      "revenue_received_raw": 25000000,
+      "project_raw": 2500000,
+      "short_funding_raw": 11250000,
+      "current_funding_raw": 7500000,
+      "next_funding_raw": 3750000,
+      "free_short_before_raw": 143863640,
+      "draw": {
+        "id": 2,
+        "participants": 60,
+        "entries": 60,
+        "admitted": 10,
+        "budget_raw": 143863640,
+        "basket_raw": [
+          45774792,
+          32696280,
+          13078512,
+          13078512,
+          6539256,
+          6539256,
+          6539256,
+          6539256,
+          6539256,
+          6539256
+        ],
+        "awards": [
+          {
+            "wallet": "w005",
+            "prize_raw": 6539256
+          },
+          {
+            "wallet": "w010",
+            "prize_raw": 13078512
+          },
+          {
+            "wallet": "w012",
+            "prize_raw": 6539256
+          },
+          {
+            "wallet": "w017",
+            "prize_raw": 6539256
+          },
+          {
+            "wallet": "w018",
+            "prize_raw": 45774792
+          },
+          {
+            "wallet": "w030",
+            "prize_raw": 32696280
+          },
+          {
+            "wallet": "w032",
+            "prize_raw": 6539256
+          },
+          {
+            "wallet": "w033",
+            "prize_raw": 6539256
+          },
+          {
+            "wallet": "w044",
+            "prize_raw": 6539256
+          },
+          {
+            "wallet": "w054",
+            "prize_raw": 13078512
+          }
+        ],
+        "awarded_raw": 143863632,
+        "returned_raw": 8
+      },
+      "free_short_after_raw": 8,
+      "current_raw": 163333334,
+      "next_raw": 81666666,
+      "pending_revenue_raw": 0,
+      "reason": "draw"
+    },
+    {
+      "hour": 42,
+      "volume_raw": 5000000000,
+      "buy_raw": 3000000000,
+      "sell_raw": 2000000000,
+      "new_entries": 0,
+      "revenue_generated_raw": 25000000,
+      "revenue_received_raw": 25000000,
+      "project_raw": 2500000,
+      "short_funding_raw": 11250000,
+      "current_funding_raw": 7500000,
+      "next_funding_raw": 3750000,
+      "free_short_before_raw": 11250008,
+      "draw": null,
+      "free_short_after_raw": 11250008,
+      "current_raw": 170833334,
+      "next_raw": 85416666,
+      "pending_revenue_raw": 0,
+      "reason": "no entries"
+    },
+    {
+      "hour": 48,
+      "volume_raw": 5000000000,
+      "buy_raw": 3000000000,
+      "sell_raw": 2000000000,
+      "new_entries": 60,
+      "revenue_generated_raw": 25000000,
+      "revenue_received_raw": 25000000,
+      "project_raw": 2500000,
+      "short_funding_raw": 11250000,
+      "current_funding_raw": 7500000,
+      "next_funding_raw": 3750000,
+      "free_short_before_raw": 22500008,
+      "draw": null,
+      "free_short_after_raw": 22500008,
+      "current_raw": 178333334,
+      "next_raw": 89166666,
+      "pending_revenue_raw": 0,
+      "reason": "below 110 USDG"
+    },
+    {
+      "hour": 54,
+      "volume_raw": 10000000000,
+      "buy_raw": 6000000000,
+      "sell_raw": 4000000000,
+      "new_entries": 60,
+      "revenue_generated_raw": 50000000,
+      "revenue_received_raw": 50000000,
+      "project_raw": 5000000,
+      "short_funding_raw": 22500000,
+      "current_funding_raw": 15000000,
+      "next_funding_raw": 7500000,
+      "free_short_before_raw": 45000008,
+      "draw": null,
+      "free_short_after_raw": 45000008,
+      "current_raw": 193333334,
+      "next_raw": 96666666,
+      "pending_revenue_raw": 0,
+      "reason": "below 110 USDG"
+    },
+    {
+      "hour": 60,
+      "volume_raw": 10000000000,
+      "buy_raw": 6000000000,
+      "sell_raw": 4000000000,
+      "new_entries": 60,
+      "revenue_generated_raw": 50000000,
+      "revenue_received_raw": 50000000,
+      "project_raw": 5000000,
+      "short_funding_raw": 22500000,
+      "current_funding_raw": 19166666,
+      "next_funding_raw": 3333334,
+      "free_short_before_raw": 67500008,
+      "draw": null,
+      "free_short_after_raw": 67500008,
+      "current_raw": 212500000,
+      "next_raw": 100000000,
+      "pending_revenue_raw": 0,
+      "reason": "below 110 USDG"
+    },
+    {
+      "hour": 66,
+      "volume_raw": 10000000000,
+      "buy_raw": 6000000000,
+      "sell_raw": 4000000000,
+      "new_entries": 60,
+      "revenue_generated_raw": 50000000,
+      "revenue_received_raw": 50000000,
+      "project_raw": 5000000,
+      "short_funding_raw": 22500000,
+      "current_funding_raw": 22500000,
+      "next_funding_raw": 0,
+      "free_short_before_raw": 90000008,
+      "draw": null,
+      "free_short_after_raw": 90000008,
+      "current_raw": 235000000,
+      "next_raw": 100000000,
+      "pending_revenue_raw": 0,
+      "reason": "below 110 USDG"
+    },
+    {
+      "hour": 72,
+      "volume_raw": 10000000000,
+      "buy_raw": 6000000000,
+      "sell_raw": 4000000000,
+      "new_entries": 60,
+      "revenue_generated_raw": 50000000,
+      "revenue_received_raw": 50000000,
+      "project_raw": 5000000,
+      "short_funding_raw": 22500000,
+      "current_funding_raw": 22500000,
+      "next_funding_raw": 0,
+      "free_short_before_raw": 112500008,
+      "draw": {
+        "id": 3,
+        "participants": 60,
+        "entries": 300,
+        "admitted": 11,
+        "budget_raw": 112500008,
+        "basket_raw": [
+          35795452,
+          25568180,
+          10227272,
+          10227272,
+          5113636,
+          5113636,
+          5113636,
+          5113636,
+          5113636,
+          5113636
+        ],
+        "awards": [
+          {
+            "wallet": "w003",
+            "prize_raw": 5113636
+          },
+          {
+            "wallet": "w006",
+            "prize_raw": 5113636
+          },
+          {
+            "wallet": "w015",
+            "prize_raw": 5113636
+          },
+          {
+            "wallet": "w022",
+            "prize_raw": 25568180
+          },
+          {
+            "wallet": "w029",
+            "prize_raw": 10227272
+          },
+          {
+            "wallet": "w030",
+            "prize_raw": 35795452
+          },
+          {
+            "wallet": "w031",
+            "prize_raw": 10227272
+          },
+          {
+            "wallet": "w040",
+            "prize_raw": 5113636
+          },
+          {
+            "wallet": "w044",
+            "prize_raw": 5113636
+          },
+          {
+            "wallet": "w051",
+            "prize_raw": 5113636
+          }
+        ],
+        "awarded_raw": 112499992,
+        "returned_raw": 16
+      },
+      "free_short_after_raw": 16,
+      "current_raw": 257500000,
+      "next_raw": 100000000,
+      "pending_revenue_raw": 0,
+      "reason": "draw"
+    }
+  ],
+  "totals": {
+    "volume_raw": 70000000000,
+    "buy_raw": 42000000000,
+    "sell_raw": 28000000000,
+    "generated_revenue_raw": 350000000,
+    "received_revenue_raw": 350000000,
+    "pending_revenue_raw": 0,
+    "project_raw": 35000000,
+    "short_allocated_raw": 357500000,
+    "current_raw": 257500000,
+    "next_raw": 100000000,
+    "free_short_raw": 16,
+    "paid_raw": 357499984,
+    "entries": 420,
+    "carry_raw": 0,
+    "short_entries_open": 0,
+    "monthly_entries": 420,
+    "draws": 3,
+    "unique_winners": 20
+  }
+}

@@ -18,6 +18,7 @@ Thumbs.db
 research/*
 !research/README.md
 !research/short-model-report.json
+!research/short-economy-report.json
 !research/simulate_native_launch.py
 !research/simulation-requirements.txt
 !research/current-usdg-launch-simulation.json
