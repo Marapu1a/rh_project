@@ -80,3 +80,5 @@ python scripts/short_economy.py --daily-volumes 5000,5000,5000 --revenue-rate 1/
 ```
 
 [Скрипт](../scripts/short_economy.py), [проверки](../test/short-economy.test.py), [точный отчёт основного сценария](../research/short-economy-report.json). Проверки охватывают conservation, carry, SELL без entries, отсутствие расходования ожидаемого дохода, внешний funding без project fee, overflow и воспроизводимость. Контракты не менялись.
+
+Следующее исследование: [5 760 недельных сравнений настроек](SHORT_SWEEP_RESULTS.md), одинаковые потоки и несколько seeds.

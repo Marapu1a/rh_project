@@ -19,3 +19,5 @@
 Локальная модель короткого розыгрыша, команды и результаты: [SHORT_MODEL.md](SHORT_MODEL.md).
 
 Практический сценарий оборота и казны Short: [SHORT_ECONOMY_SCENARIO.md](SHORT_ECONOMY_SCENARIO.md).
+
+Сравнение настроек по 5 760 недельным сценариям: [SHORT_SWEEP_RESULTS](SHORT_SWEEP_RESULTS.md).
