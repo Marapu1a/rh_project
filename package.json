@@ -15,7 +15,9 @@
     "test:short:economy": "python test/short-economy.test.py",
     "report:short:economy": "python scripts/short_economy.py",
     "test:short:sweep": "python test/short-sweep.test.py",
-    "report:short:sweep": "python scripts/short_sweep.py"
+    "report:short:sweep": "python scripts/short_sweep.py",
+    "test:short:luck": "python test/short-luck.test.py",
+    "report:short:luck": "python scripts/short_luck_review.py"
   },
   "devDependencies": {
     "@openzeppelin/contracts": "5.6.1",

@@ -56,7 +56,7 @@ def events(profile, seed):
     return initial_carry,tuple(result),rate,2 if profile=='low-fee-delay' else 0
 
 
-def run(stream, k, h_e, policy, bank, seed, tiered=False):
+def run(stream, k, h_e, policy, bank, seed, tiered=False, luck_enabled=True):
     carry, timeline, rate, delay = stream
     carry = list(carry)
     historical_carry = sum(carry)
@@ -65,7 +65,7 @@ def run(stream, k, h_e, policy, bank, seed, tiered=False):
     state = State(s,tuple(Wallet(f'w{i:02}') for i in range(60)))
     weights = (7,5,2,2,1,1,1,1,1,1) if tiered else (1,)*k
     if tiered and k != 10: raise ValueError('tiered control requires ten seats')
-    rules = Rules('experiment',Fraction(2,5),h_e,6,weights,5*USDG)
+    rules = Rules('experiment',Fraction(2,5),h_e,6,weights,5*USDG,luck_enabled=luck_enabled)
     minimum = sum(weights)*5*USDG
     volume = generated = received = project = entries = buy_total = 0
     scheduled = []

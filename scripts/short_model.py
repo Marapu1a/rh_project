@@ -15,16 +15,20 @@ def natural(value, name, minimum=0):
 class Rules:
     version: str
     p_max: Fraction
-    h_e: int
+    h_e: int | Fraction
     h_l: int
     weights: tuple
     min_prize: int
     min_wallets: int = 1
+    luck_enabled: bool = True
 
     def __post_init__(self):
         if not self.version or not isinstance(self.p_max, Fraction) or not 0 < self.p_max < 1:
             raise ValueError("version and exact fractional p_max in (0,1) required")
-        natural(self.h_e, "h_e", 1)
+        if type(self.h_e) not in (int, Fraction) or self.h_e <= 0:
+            raise ValueError("h_e must be a positive exact number")
+        if type(self.luck_enabled) is not bool:
+            raise ValueError("luck_enabled must be boolean")
         natural(self.h_l, "h_l", 1)
         natural(self.min_prize, "min_prize", 1)
         natural(self.min_wallets, "min_wallets", 1)
@@ -39,6 +43,8 @@ def admission(entries, luck, rules):
     natural(luck, "luck")
     if not entries:
         return Fraction(0)
+    if not rules.luck_enabled:
+        luck = 0
     return rules.p_max * (1 - Fraction(rules.h_e * rules.h_l,
                                       (entries + rules.h_e) * (luck + rules.h_l)))
 
@@ -160,7 +166,7 @@ def settle(state, draw_id, now, seed):
     awards = dict(zip(admitted, prizes))
     outcomes = tuple(Outcome(w.address, w.entries, w.luck, probabilities[w.address],
                              w.address in admitted_set, awards.get(w.address, 0),
-                             0 if w.address in awards else w.luck+1)
+                             0 if w.address in awards or not draw.rules.luck_enabled else w.luck+1)
                      for w in draw.participants)
     by_address = {o.address: o for o in outcomes}
     wallets = tuple(replace(w, luck=by_address[w.address].after_luck,
