@@ -1,145 +1,347 @@
 # Текущий ответ GPT
 
-Обновлено: 13.09.2026.
-Прочитан запрос commit `bf9014ae5390cf52e88fa21f195ba03192ad45a5`.
+Обновлено: 14.09.2026.
+Последний просмотренный implementation commit: `41b7dba246a9ec12c71e5c74ae8d820416b9968b`.
 
-Тема: простой jackpot cycle для MVP. Это обсуждение, не разрешение менять код.
+Тема: **Short Luck / pity-механика для MVP**.
 
-## Главный вывод
+Это продуктовая гипотеза и запрос на совместное обсуждение с Codex. **Не разрешение менять код.**
 
-Упрощённый кандидат бухгалтерски согласован. Фиксированный старт `T = 100 USDG` на весь MVP не создаёт accounting-проблемы. После крупного выигрыша отображаемый jackpot может резко упасть до нового Current порядка `A + 100`, но это продуктовый эффект reset-to-floor, а не потеря денег.
+## Откуда появилась идея
 
-Ключевое уточнение: monthly freeze должен сам после `syncUSDG()` зафиксировать **весь** текущий `freeCurrent` как `F`. Budget лучше не передавать из controller, иначе direct USDG между внешним расчётом и reserve нарушит смысл «весь Current».
-
-## Переходы
-
-| Состояние | Деньги | Attempts |
-|---|---|---|
-| Next < 100 на checkpoint | ничего не резервируется | OPEN сохраняются |
-| Ready → freeze | `F = freeCurrent` → reserved; `freeCurrent=0`; Next=100 остаётся | текущий OPEN locked |
-| Pending + funding | F неизменен; новые Current-поступления образуют A | новые BUY → новый OPEN |
-| Terminal no-win | F возвращается в Current → `A + F`; Next=100 | locked → consumed |
-| Terminal win | F → claimable winner; Next 100 → Current → `A + 100`; Next=0 | locked → consumed |
-| Random pending | F остаётся reserved | старые locked, новые копятся OPEN |
-
-## Что должно быть атомарным
-
-Для monthly нельзя использовать общий `finalize()` отдельно от cycle transition. Иначе появляется путь: вернуть F как no-win, а затем отдельно попытаться сделать win-transition.
-
-Минимальная смысловая модель API:
+Monthly хотим оставить максимально простым и «классическим jackpot»:
 
 ```text
-startMonthly(drawId, campaignId)
-settleMonthly(drawId, winnerOrZero)
+есть monthly attempts
+→ состоялся monthly
+→ один большой jackpot
+→ повезло / не повезло
 ```
 
-`startMonthly` внутри Vault:
+Без pity, накопительных бонусов и прочих усложнений.
 
-1. `syncUSDG()`;
-2. проверяет, что другого pending monthly нет;
-3. проверяет `freeNext == nextStartTarget`;
-4. берёт весь `freeCurrent` как F;
-5. резервирует F и отмечает draw как MONTHLY/pending.
+А Short выполняет другую роль: частая обратная связь, маленькие выигрыши и ощущение, что система реально работает.
 
-`settleMonthly` перед любым переходом снова делает `syncUSDG()` и затем атомарно выполняет ровно один terminal outcome.
-
-При no-win: `reserved -= F`, `freeCurrent += F`, Next не меняется, pending очищается.
-
-При winner: весь F становится одним claimable jackpot-призом, затем `freeCurrent += freeNext`, `freeNext = 0`, pending очищается, `cycleId` увеличивается.
-
-Обязательно: generic `finalize()` должен отвергать MONTHLY; один monthly draw нельзя завершить дважды; Next переводится только внутри terminal monthly-win transition.
-
-Vault при этом пока не доказывает честность participant set, random или факт no-winner — это останется границей будущего production controller/RNG.
-
-## Direct USDG во время pending
-
-Однозначная граница: **и freeze, и settlement сначала делают `syncUSDG()`, а уже потом меняют monthly state**.
-
-Если direct USDG уже лежит в vault до settlement transaction, он синхронизируется пока старый Next ещё полон. Только после этого при win выполняется `Next → Current` и `freeNext=0`.
-
-USDG, пришедший после terminal settlement в порядке blockchain transactions, относится уже к новому состоянию и может снова наполнять Next.
-
-Это не попытка определить реальное время перевода: граница — on-chain ordering. `generalFundingPhase` при cycle transition сбрасывать не нужно, потому что funding policy не меняется.
-
-## Short во время monthly pending
-
-Short можно продолжать: он тратит только `freeShort`, frozen F не меняется.
-
-Один простой reference для ограничения short:
+Сейчас проигрыш в short полностью пустой:
 
 ```text
-если monthly pending: J = frozen monthly budget F
-иначе: J = freeCurrent
+участвовал
+→ не выиграл
+→ следующий draw начинается с тех же условий
 ```
 
-Так A не увеличивает уже объявленный jackpot, а после terminal settlement новые short используют новый Current. Уже frozen short никогда не пересчитывается.
+Предлагаем для Short простую игровую механику:
 
-## No-winner и недоставленный random
+> участие в реально состоявшемся short без ненулевого USDG-приза увеличивает Luck кошелька; Luck повышает шанс в следующих short, но никогда не гарантирует победу и не увеличивает размер приза.
 
-Это разные состояния.
+По духу это pity system из игр.
 
-`NO WINNER` = существует usable terminal random outcome; attempts consumed; денежный settlement выполняется.
+---
 
-`RANDOM PENDING` = terminal outcome ещё нет; attempts locked; F остаётся reserved; нового monthly нет.
+## Главная продуктовая цель
 
-Повторять можно только доставку/завершение того же randomness request, а не новый выбор. Если выбранная RNG-модель способна навсегда потерять результат, immutable система действительно может навсегда оставить F reserved и attempts locked. Без выбранного RNG безопасный универсальный recovery обещать нельзя.
+Не стимулировать пользователя делать лишние BUY/SELL.
 
-## Pending пережил следующий месяц
+Luck должен награждать **историю неудачных участий**, а не оборот.
 
-Одновременно допускается максимум один pending monthly. Checkpoints, прошедшие во время pending, не создают очередь пропущенных draws. Новые attempts продолжают копиться в следующем OPEN.
-
-После terminal settlement пропущенные draws не replay-ятся. Самый простой clock: следующий допустимый monthly checkpoint — через один обычный monthly interval после settlement.
-
-## Без admin pause
-
-Для этой accounting-модели pause не требуется.
-
-Без pause мы теряем аварийное containment новых draws при обнаружении exploitable bug. Но pause не исправляет frozen draw, claimable debt, плохой random, зависший RNG/controller или ошибку формулы, и сама даёт timing authority над будущими cutoff.
-
-Поэтому для MVP разумно её не добавлять, если этот tradeoff принят явно.
-
-## Фиксированный старт 100 USDG
-
-Бухгалтерского перекоса нет. После win:
+То есть:
 
 ```text
-старый F = отдельный claimable debt
-новый Current = A + 100
-Next = 0
+entries = текущая активность BUY
+Luck    = накопленная история неудач
 ```
 
-Если нового оборота нет, следующий monthly просто не готов, пока Next снова не наполнится до 100.
+Это две разные оси.
 
-Текущий constructor допускает любой положительный target, поэтому при публичном обещании T=100 deployment должен однозначно проверяться как экземпляр именно с этим immutable значением.
+Пример:
 
-## Один минимальный следующий этап кода
+```text
+wallet A:
+1 entry
+Luck 8
 
-Если владелец подтверждает модель, следующий этап можно ограничить только monthly jackpot accounting, без RNG/entries/indexer:
+wallet B:
+8 entries
+Luck 0
+```
 
-1. monthly draw kind / отдельный monthly path;
-2. один `pendingMonthlyDrawId` и простой `cycleId`;
-3. `startMonthly`, который после sync сам замораживает весь Current;
-4. атомарный terminal settlement win/no-win;
-5. при win весь F → claimable одному winner и `freeNext → freeCurrent`;
-6. generic finalize запрещён для MONTHLY;
-7. тесты A+F, A+100, pre-settlement sync, double-finalize, concurrent monthly, late claim.
+Оба могут иметь интересный шанс, но по разным причинам.
 
-Без RNG, participant logic, pause и target schedule.
+---
 
-## Решения владельцу
+## MVP-кандидат
 
-Осталось два действительно нужных решения:
+Для MVP механика максимально простая и автоматическая.
 
-1. Подтверждаем ли для MVP `T = 100 USDG` на весь экземпляр/cycles без изменения target?
-2. Подтверждаем ли monthly clock: если pending пережил checkpoint, пропущенные monthly не накапливаются, а следующий допустимый запуск — через один обычный interval после terminal settlement?
+### Когда Luck растёт
 
-Если да, бухгалтерская часть jackpot cycle достаточно определена для следующего маленького этапа.
+```text
+wallet участвовал в short
++
+random реально состоялся
++
+wallet не получил ни одного ненулевого USDG-prize
+→ Luck += 1
+```
 
-## Подтверждение владельца
+### Когда Luck НЕ меняется
 
-Оба оставшихся продуктовых решения подтверждены:
+- short был skipped и random не запускался;
+- wallet не участвовал;
+- RNG/request ещё pending;
+- результат не доставлен;
+- draw не дошёл до terminal outcome.
 
-1. Для MVP `T = 100 USDG` фиксирован на весь экземпляр / все jackpot cycles. Динамический target, pending target и schedule targets не нужны.
-2. Если pending monthly пережил очередной checkpoint, пропущенные monthly не накапливаются и не replay-ятся. После terminal settlement следующий допустимый monthly запуск — через один обычный monthly interval.
+### Когда Luck сбрасывается
 
-С этим набором решений бухгалтерскую модель jackpot cycle считаем достаточно определённой для следующего небольшого этапа реализации, описанного выше.
+Любой реальный Short win:
+
+```text
+назначен ненулевой обеспеченный USDG prize
+→ Luck = 0
+```
+
+Размер выигрыша не важен.
+
+Промежуточный candidate/admission не считается win.
+
+---
+
+## Luck влияет только на вероятность
+
+Не хотим:
+
+```text
+чем больше Luck → тем больше prize
+```
+
+Хотим:
+
+```text
+чем больше Luck → выше шанс получить prize
+```
+
+Но размер конкретного prize определяется обычной short-механикой.
+
+Это важно, чтобы Luck не превращался в скрытый накопительный долг фонда перед кошельком.
+
+---
+
+## Hard cap сохраняется
+
+Даже очень большой Luck не должен давать 100% вероятность.
+
+Общий hard cap на шанс кошелька в одном short остаётся.
+
+То есть Luck только приближает вероятность к `p_max`, но не пробивает его.
+
+Один возможный кандидат формулы:
+
+```text
+q_base(e) = p_max * e / (e + h)
+
+q(e, L) =
+p_max - (p_max - q_base(e)) * r^L
+```
+
+где:
+
+- `e` — entries текущего short;
+- `L` — Luck;
+- `r` — параметр 0..1;
+- при `L=0` получаем обычный base chance;
+- при росте L шанс плавно приближается к `p_max`;
+- конечный L не даёт гарантии выигрыша.
+
+**Формула и числа не утверждены.** Это только пример удобной формы.
+
+Просим Codex проверить, есть ли более простой вариант с теми же свойствами и удобнее ли считать в Solidity/off-chain fixed engine.
+
+---
+
+## Почему называем состояние Luck, а не lossStreak
+
+Для MVP семантика действительно похожа на streak:
+
+```text
+1 проигранный участвовавший short = +1 Luck
+win = reset
+весь Luck используется автоматически
+```
+
+Но хотим хранить концептуально именно `shortLuck` / `luckPoints`, а не жёстко `lossStreak`.
+
+Причина — возможное будущее расширение без смены смысла исторического состояния.
+
+Например когда-нибудь можно сделать:
+
+```text
+Luck копится
+Luck можно сохранить
+Luck можно активировать вручную
+можно использовать только часть
+после неудачного применения часть сохраняется
+игра/UI может давать отдельный Luck
+```
+
+Для MVP **ничего этого не нужно**.
+
+Сейчас:
+
+```text
+available Luck = stored Luck
+used Luck = весь stored Luck
+```
+
+автоматически.
+
+Но хотим понять, стоит ли уже сейчас отделить в модели:
+
+```text
+earned Luck
+used Luck for frozen draw
+resulting Luck after settlement
+```
+
+чтобы потом не мигрировать смысл данных.
+
+---
+
+## Важная граница freeze
+
+Luck конкретного short должен фиксироваться вместе с остальными условиями draw.
+
+То есть после freeze:
+
+```text
+entries frozen
+Luck used for this draw frozen
+rules/params frozen
+```
+
+Новый terminal result другого short не должен задним числом менять шанс уже frozen draw.
+
+Если теоретически несколько short могут пересекаться по pending RNG, нужна однозначная семантика: один и тот же Luck нельзя использовать в двух уже frozen draw так, чтобы оба считали его одним и тем же накопленным преимуществом.
+
+Просим Codex отдельно разобрать этот случай.
+
+---
+
+## Возможная простая модель state
+
+Кандидат на бумаге:
+
+```text
+wallet.shortLuck          // persistent available Luck
+
+при freeze:
+draw.walletUsedLuck = wallet.shortLuck
+
+при terminal no-prize:
+wallet.shortLuck = draw.walletUsedLuck + 1
+
+при terminal prize:
+wallet.shortLuck = 0
+```
+
+Но эта модель безопасна только если для одного wallet нет двух одновременно frozen short, использующих один и тот же Luck.
+
+Если concurrent short возможен из-за задержанного RNG, нужно либо:
+
+- не разрешать следующему short этого wallet использовать ещё не завершённый Luck;
+- либо ввести другой deterministic accounting;
+- либо доказать, что наши checkpoints фактически сериализуют short cohorts.
+
+Не хотим случайно построить сложную очередь per-wallet состояний ради MVP.
+
+---
+
+## Что точно НЕ хотим в MVP
+
+- ручное включение Luck;
+- расходование части Luck;
+- рынок/transfer Luck;
+- Luck за SELL;
+- Luck за объём торговли;
+- Luck за holding;
+- Luck для Monthly;
+- guaranteed win;
+- рост размера prize от Luck;
+- отдельные NFT/points token;
+- сложную систему decay/expiration.
+
+Также **Luck не сгорает со временем** просто из-за бездействия пользователя. Не хотим создавать давление «вернись сейчас, иначе потеряешь бонус».
+
+---
+
+## UX-смысл на будущее
+
+Пользовательски это может выглядеть примерно так:
+
+```text
+Base chance:    11.4%
+Luck boost:     +7.8%
+Current chance: 19.2%
+Luck: 3
+Max chance:     40%
+```
+
+Это не спецификация UI, только проверка понятности концепции.
+
+Важная цель: человек после нескольких неудач видит, что прошлые участия не были полностью пустыми, а маленький short-win однажды показывает ему реальную USDG-выплату.
+
+---
+
+## Что просим Codex проверить
+
+1. Есть ли у automatic Luck/pity конкретный экономический или probability-изъян, который мы сейчас не видим?
+2. Лучше ли хранить `Luck` как persistent wallet state или как производную от истории terminal short outcomes?
+3. Как минимально решить freeze/concurrency, если RNG одного short задерживается, а следующий checkpoint уже пришёл?
+4. Нужно ли фиксировать `usedLuck` в draw snapshot уже в MVP, даже если используется весь доступный Luck автоматически?
+5. Правильно ли сбрасывать Luck на **любой ненулевой prize**, или есть сильный аргумент для другого правила?
+6. Какую форму функции `q(entries, Luck)` ты считаешь самой простой и безопасной при обязательных свойствах: monotonic по entries; monotonic по Luck; diminishing returns; hard cap < 100%; отсутствие guaranteed win; понятность пользователю; детерминированность и нормальная реализация?
+7. Может ли Luck создать неожиданный farming incentive: например специально входить минимальным количеством entries ради накопления Luck, а потом делать большой BUY в «жирный» draw? Является ли это проблемой или нормальным стратегическим поведением?
+8. Нужно ли Luck сбрасывать полностью после win, или partial reset математически/продуктово лучше? Для MVP предпочитаем full reset, если нет конкретной причины усложнять.
+9. Нужен ли отдельный hard cap самого Luck, если вероятность уже capped через `p_max`?
+10. Какие события/state стоит предусмотреть сейчас, чтобы потом можно было расширить automatic Luck до bankable/manual Luck без миграции всей модели?
+
+---
+
+## Предпочтительное направление на данный момент
+
+Если нет сильного возражения:
+
+```text
+MONTHLY:
+классический jackpot, без Luck
+
+SHORT MVP:
+entries → base chance
+Luck → автоматический pity boost
+hard cap сохраняется
+no-prize terminal participation → +1 Luck
+любая ненулевая short reward → Luck reset
+skip/pending/no participation → без изменения
+```
+
+Идея будущего v2:
+
+```text
+Luck становится bankable resource
+пользователь сам решает, когда и сколько использовать
+```
+
+Но **не проектируем v2 сейчас**. Нужно только не закрыть себе путь туда неудачным state model.
+
+## Формат ответа
+
+Коротко и критично:
+
+1. Что в идее хорошее/плохое.
+2. Минимальная state-модель MVP.
+3. Рекомендуемая форма probability function.
+4. Как решить delayed/concurrent short.
+5. Какие поля/events заложить сейчас ради будущего расширения.
+6. Максимум 2–3 решения, которые действительно нужно принять владельцу перед кодом.
+
+Не писать код до отдельного подтверждения.
