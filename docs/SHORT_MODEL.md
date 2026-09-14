@@ -1,12 +1,21 @@
 # Локальная модель Short
 
+> Статус после решения 14.09: Luck удалён из продукта. Ниже сохранено исследование на момент его проведения, а не текущие правила. Основная модель — `short_model.py` без Luck; исторические сравнения используют `short_model_legacy.py`. Актуальные правила — [PRODUCT_SPEC](PRODUCT_SPEC.md).
+
+## Текущая модель без Luck
+
+Рабочие команды: `npm run test:short` и `npm run report:short` (денежный сценарий). [Текущий код](../scripts/short_model.py) хранит только entries/monthly/claimable кошелька. Rules задаёт version, p_max, h_e, weights, min_prize и min_wallets; `admission(entries, rules)` не принимает историю. Сохранены freeze/settle/fund/add_entries/claim и проверка custody. Рабочие настройки cash-flow: p_max=40%, h_e=1, один билет даёт 20% допуска. Его D=all остаётся экспериментальной политикой прежнего cash-flow runner; выбор бюджетной политики не меняется решением об удалении Luck.
+
+Далее — историческое описание. Команды `report:short:legacy`, `report:short:sweep` и `report:short:luck` оставлены для воспроизведения прошлых исследований; они не определяют текущие продуктовые правила.
+
+
 Реализовано 14.09.2026 по разделам 8–9 [PRODUCT_SPEC](PRODUCT_SPEC.md). Это воспроизводимый Python-симулятор, не production controller и не проверка экономики торговли. Контракты не менялись. Нужен Python 3.10+; сторонние Python-пакеты, сеть и кошелёк не нужны.
 
 ## Запуск
 
 ```powershell
-npm run test:short
-npm run report:short
+npm run test:short:legacy
+npm run report:short:legacy
 python scripts/short-report.py --rounds 100 --seed 20260914 --output research/short-model-report.json
 python scripts/short-report.py --p-max 1/3 --h-e 4 --h-l 8 --weights 1,1,2,4 --min-prize-raw 1000000 --budget-raw 100000000
 ```
@@ -15,7 +24,7 @@ python scripts/short-report.py --p-max 1/3 --h-e 4 --h-l 8 --weights 1,1,2,4 --m
 
 ## Что моделируется
 
-[short_model.py](../scripts/short_model.py) содержит неизменяемые состояния и чистые переходы. Новый вызов возвращает новое состояние; при ошибке исходное остаётся прежним.
+[short_model.py](../scripts/short_model_legacy.py) содержит неизменяемые состояния и чистые переходы. Новый вызов возвращает новое состояние; при ошибке исходное остаётся прежним.
 
 - `Rules`: версия, точный дробный p_max, h_e/h_l, целочисленные веса, минимум приза и минимум кошельков. Эти настройки экспериментальные.
 - `admission`: принятая рациональная формула через Fraction; без потери точности и промежуточных float. Python integers не ограничены uint256.
@@ -59,7 +68,7 @@ after claim: custody уменьшается ровно на выплаченно
 
 ## Проверки и границы
 
-[Тесты](../test/short-model.test.py) проверяют точную формулу и монотонность, нулевые entries, большие числа, rounding/readiness, изоляцию frozen, новые entries/funding во время pending, win/no-win, обновление проигравших, monthly independence, stale/double/early переходы, ошибку RNG, сохранение unpaid credits и денежного равенства на серии циклов. Положения призов проверяются также на воспроизводимом наборе seeds; это не сертификация RNG.
+[Тесты](../test/short-legacy.test.py) проверяют точную формулу и монотонность, нулевые entries, большие числа, rounding/readiness, изоляцию frozen, новые entries/funding во время pending, win/no-win, обновление проигравших, monthly independence, stale/double/early переходы, ошибку RNG, сохранение unpaid credits и денежного равенства на серии циклов. Положения призов проверяются также на воспроизводимом наборе seeds; это не сертификация RNG.
 
 Модель не выбирает автоматически бюджет D, не устанавливает безопасные торговые стратегии и не доказывает отсутствие farming. Она не реализует attribution BUY, indexer, on-chain хранение, conversion, месячный random, спонсорские акции или восстановление после недоставленного RNG. Стоимость gas не измерена, точный Fraction ещё нужно перевести в заданную ограниченную арифметику для контрактов. Входные состояния создаёт исследователь; они не являются недоверенными запросами к серверу.
 

@@ -5,7 +5,7 @@ from fractions import Fraction
 import json
 from pathlib import Path
 
-from short_model import Rules, admission
+from short_model_legacy import Rules, admission
 from short_sweep import PROFILES, aggregate, events, run
 
 VARIANTS = {'luck': (True,1), 'no-luck': (False,1), 'no-luck-higher-base': (False,Fraction(1,2))}

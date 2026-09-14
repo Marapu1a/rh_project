@@ -1,4 +1,4 @@
-"""Offline cash-flow scenario; assumed realized revenue, not a DEX price model."""
+"""HISTORICAL Luck cash-flow scenario; assumed realized revenue, not a DEX price model."""
 import argparse
 from dataclasses import asdict, dataclass
 from fractions import Fraction
@@ -6,7 +6,7 @@ import json
 from pathlib import Path
 import random
 
-from short_model import Rules, State, Wallet, add_entries, claim, custody, freeze, fund, settle
+from short_model_legacy import Rules, State, Wallet, add_entries, claim, custody, freeze, fund, settle
 
 USDG = 1_000_000
 
@@ -64,7 +64,7 @@ def simulate(config):
     state = State(startup[0],tuple(Wallet(a) for a in sorted(f'w{i:03}' for i in range(config.wallets))))
     carry = [0]*config.wallets
     rng = random.Random(config.seed)
-    rules = Rules('EXPERIMENT-ten-seats',Fraction(2,5),1,(7,5,2,2,1,1,1,1,1,1),5*USDG)
+    rules = Rules('EXPERIMENT-ten-seats',Fraction(2,5),3,6,(7,5,2,2,1,1,1,1,1,1),5*USDG)
     minimum = sum(rules.weights)*rules.min_prize  # 110 USDG; all free Short selected
     pending = []
     cumulative_volume = cumulative_buy = buy_delivered = 0

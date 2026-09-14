@@ -11,13 +11,15 @@
     "test:farming": "python test/farming-model.test.py",
     "compile": "node scripts/compile.cjs",
     "test:short": "python test/short-model.test.py",
-    "report:short": "python scripts/short-report.py",
+    "report:short": "python scripts/short_economy.py",
     "test:short:economy": "python test/short-economy.test.py",
     "report:short:economy": "python scripts/short_economy.py",
     "test:short:sweep": "python test/short-sweep.test.py",
     "report:short:sweep": "python scripts/short_sweep.py",
     "test:short:luck": "python test/short-luck.test.py",
-    "report:short:luck": "python scripts/short_luck_review.py"
+    "report:short:luck": "python scripts/short_luck_review.py",
+    "report:short:legacy": "python scripts/short-report.py",
+    "test:short:legacy": "python test/short-legacy.test.py"
   },
   "devDependencies": {
     "@openzeppelin/contracts": "5.6.1",

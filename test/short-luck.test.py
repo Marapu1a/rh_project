@@ -4,7 +4,7 @@ sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'scripts'))
 from dataclasses import replace
 from fractions import Fraction
 import unittest
-from short_model import Rules,Wallet,State,admission,freeze,settle,custody
+from short_model_legacy import Rules,Wallet,State,admission,freeze,settle,custody
 from short_luck_review import seat_factor
 from short_sweep import run,events
 

@@ -1,4 +1,4 @@
-"""Offline Short reference model. Exact arithmetic; seeded RNG is NOT production RNG."""
+"""HISTORICAL Luck research model. Not current product rules. Exact arithmetic; seeded RNG is NOT production RNG."""
 from dataclasses import dataclass, replace
 from fractions import Fraction
 import random
@@ -16,15 +16,20 @@ class Rules:
     version: str
     p_max: Fraction
     h_e: int | Fraction
+    h_l: int
     weights: tuple
     min_prize: int
     min_wallets: int = 1
+    luck_enabled: bool = True
 
     def __post_init__(self):
         if not self.version or not isinstance(self.p_max, Fraction) or not 0 < self.p_max < 1:
             raise ValueError("version and exact fractional p_max in (0,1) required")
         if type(self.h_e) not in (int, Fraction) or self.h_e <= 0:
             raise ValueError("h_e must be a positive exact number")
+        if type(self.luck_enabled) is not bool:
+            raise ValueError("luck_enabled must be boolean")
+        natural(self.h_l, "h_l", 1)
         natural(self.min_prize, "min_prize", 1)
         natural(self.min_wallets, "min_wallets", 1)
         if type(self.weights) is not tuple or not self.weights:
@@ -33,9 +38,15 @@ class Rules:
             natural(weight, "weight", 1)
 
 
-def admission(entries, rules):
+def admission(entries, luck, rules):
     natural(entries, "entries")
-    return rules.p_max * Fraction(entries, entries + rules.h_e)
+    natural(luck, "luck")
+    if not entries:
+        return Fraction(0)
+    if not rules.luck_enabled:
+        luck = 0
+    return rules.p_max * (1 - Fraction(rules.h_e * rules.h_l,
+                                      (entries + rules.h_e) * (luck + rules.h_l)))
 
 
 def basket(budget, rules):
@@ -49,12 +60,13 @@ class Wallet:
     address: str
     entries: int = 0
     monthly: int = 0
+    luck: int = 0
     claimable: int = 0
 
     def __post_init__(self):
         if not self.address:
             raise ValueError("wallet address required")
-        for name in ("entries", "monthly", "claimable"):
+        for name in ("entries", "monthly", "luck", "claimable"):
             natural(getattr(self, name), name)
 
 
@@ -108,7 +120,7 @@ def freeze(state, now, budget, rules):
     prizes = basket(budget, rules)
     participants = tuple(sorted((w for w in state.wallets if w.entries), key=lambda w: w.address))
     if not prizes or len(participants) < rules.min_wallets:
-        return state  # not ready: no attempts or money changed
+        return state  # not ready: no attempts, Luck or money changed
     snapshot = Frozen(state.next_id, now, budget, prizes, participants, rules)
     wallets = tuple(replace(w, entries=0) if w.entries else w for w in state.wallets)
     return replace(state, free_short=state.free_short-budget, wallets=wallets,
@@ -119,9 +131,11 @@ def freeze(state, now, budget, rules):
 class Outcome:
     address: str
     entries_consumed: int
+    used_luck: int
     probability: Fraction
     admitted: bool
     prize: int
+    after_luck: int
 
 
 @dataclass(frozen=True)
@@ -142,7 +156,7 @@ def settle(state, draw_id, now, seed):
     if draw is None or draw.draw_id != draw_id or now < draw.at:
         raise ValueError("missing, stale or invalid draw")
     rng = random.Random(seed)
-    probabilities = {w.address: admission(w.entries, draw.rules) for w in draw.participants}
+    probabilities = {w.address: admission(w.entries, w.luck, draw.rules) for w in draw.participants}
     admitted = [w.address for w in draw.participants
                 if rng.randrange(probabilities[w.address].denominator) < probabilities[w.address].numerator]
     admitted_set = set(admitted)
@@ -150,11 +164,14 @@ def settle(state, draw_id, now, seed):
     prizes = list(draw.prizes)
     rng.shuffle(prizes)
     awards = dict(zip(admitted, prizes))
-    outcomes = tuple(Outcome(w.address, w.entries, probabilities[w.address],
-                             w.address in admitted_set, awards.get(w.address, 0))
+    outcomes = tuple(Outcome(w.address, w.entries, w.luck, probabilities[w.address],
+                             w.address in admitted_set, awards.get(w.address, 0),
+                             0 if w.address in awards or not draw.rules.luck_enabled else w.luck+1)
                      for w in draw.participants)
-    wallets = tuple(replace(w, claimable=w.claimable+awards.get(w.address, 0))
-                    for w in state.wallets)
+    by_address = {o.address: o for o in outcomes}
+    wallets = tuple(replace(w, luck=by_address[w.address].after_luck,
+                            claimable=w.claimable+by_address[w.address].prize)
+                    if w.address in by_address else w for w in state.wallets)
     awarded = sum(awards.values())
     result = Result(draw_id, draw.budget, sum(draw.prizes), awarded, draw.budget-awarded, outcomes)
     return replace(state, wallets=wallets, free_short=state.free_short+result.returned,

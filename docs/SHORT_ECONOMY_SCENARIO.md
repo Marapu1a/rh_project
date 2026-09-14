@@ -1,5 +1,7 @@
 # Short: оборот, казна и реальные проводки локального сценария
 
+> Статус после решения 14.09: Luck удалён из продукта. Ниже сохранено исследование на момент его проведения, а не текущие правила. Основная модель — `short_model.py` без Luck; исторические сравнения используют `short_model_legacy.py`. Актуальные правила — [PRODUCT_SPEC](PRODUCT_SPEC.md).
+
 14.09.2026. После обсуждения приоритета заметных призов рассматриваем фиксированные 10 мест как экспериментальный кандидат. Dynamic K из последнего GPT review сейчас не внедряем. Числа ниже не утверждают production-настройки и не являются прогнозом нового токена.
 
 ## Допущения
@@ -72,13 +74,13 @@ Python 3.10+, без зависимостей, сети и реальных тр
 
 ```powershell
 npm run test:short:economy
-npm run report:short:economy
-python scripts/short_economy.py --output research/short-economy-report.json
-python scripts/short_economy.py --initial-bank 0
-python scripts/short_economy.py --initial-bank 0 --delay-blocks 2
-python scripts/short_economy.py --daily-volumes 5000,5000,5000 --revenue-rate 1/400
+python scripts/short_economy_legacy.py
+python scripts/short_economy_legacy.py --output research/short-economy-report.json
+python scripts/short_economy_legacy.py --initial-bank 0
+python scripts/short_economy_legacy.py --initial-bank 0 --delay-blocks 2
+python scripts/short_economy_legacy.py --daily-volumes 5000,5000,5000 --revenue-rate 1/400
 ```
 
-[Скрипт](../scripts/short_economy.py), [проверки](../test/short-economy.test.py), [точный отчёт основного сценария](../research/short-economy-report.json). Проверки охватывают conservation, carry, SELL без entries, отсутствие расходования ожидаемого дохода, внешний funding без project fee, overflow и воспроизводимость. Контракты не менялись.
+[Скрипт](../scripts/short_economy_legacy.py), [проверки](../test/short-economy.test.py), [точный отчёт основного сценария](../research/short-economy-report.json). Проверки охватывают conservation, carry, SELL без entries, отсутствие расходования ожидаемого дохода, внешний funding без project fee, overflow и воспроизводимость. Контракты не менялись.
 
 Следующее исследование: [5 760 недельных сравнений настроек](SHORT_SWEEP_RESULTS.md), одинаковые потоки и несколько seeds.

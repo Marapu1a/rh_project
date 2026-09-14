@@ -9,7 +9,7 @@ import random
 from statistics import mean
 
 from short_economy import Allocation, USDG
-from short_model import Rules, State, Wallet, custody, freeze, fund, settle
+from short_model_legacy import Rules, State, Wallet, custody, freeze, fund, settle
 
 PROFILES = {
     'steady': ([20000]*7, False, Fraction(1,200)),

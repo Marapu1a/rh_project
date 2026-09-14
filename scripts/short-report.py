@@ -6,7 +6,7 @@ import json
 from pathlib import Path
 import random
 
-from short_model import Rules, State, Wallet, freeze, settle, fund, custody
+from short_model_legacy import Rules, State, Wallet, freeze, settle, fund, custody
 
 USDG = 1_000_000
 
