@@ -12,6 +12,7 @@
 | Конвертация TOKEN → USDG | Не реализована |
 | Indexer, регистрация и entries | Production-реализации нет |
 | Production controller, capped odds, RNG | Нет; DrawControllerFixture — неограниченная тестовая заглушка |
+| Short Luck и корзина призов | Согласована продуктовая схема 14.09; игровая логика, snapshot Luck и обновление проигравших не реализованы |
 | Frontend, спонсорские физические призы | Не реализованы |
 
 ## FeeRouter
