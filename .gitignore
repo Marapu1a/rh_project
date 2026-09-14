@@ -17,6 +17,7 @@ Thumbs.db
 # Keep only reproducible inputs and evidence referenced by project reports.
 research/*
 !research/README.md
+!research/short-model-report.json
 !research/simulate_native_launch.py
 !research/simulation-requirements.txt
 !research/current-usdg-launch-simulation.json

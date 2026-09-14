@@ -12,7 +12,7 @@
 | Конвертация TOKEN → USDG | Не реализована |
 | Indexer, регистрация и entries | Production-реализации нет |
 | Production controller, capped odds, RNG | Нет; DrawControllerFixture — неограниченная тестовая заглушка |
-| Short Luck и корзина призов | 14.09 приняты формула допуска, целочисленная корзина и один pending short с интервалом после settlement; параметры открыты, реализация отсутствует |
+| Short Luck и корзина призов | 14.09 реализована локальная Python-модель полного short; параметры открыты, production-реализации нет. [Описание и результаты](SHORT_MODEL.md) |
 | Frontend, спонсорские физические призы | Не реализованы; 14.09 принята граница отдельного спонсорского слоя поверх постоянного промо, без доступа к основной казне |
 
 ## FeeRouter
@@ -33,7 +33,7 @@
 
 ## Проверки и воспроизведение
 
-Проверка 13.09: 43 контрактных tests (16 FeeRouter + 27 PromoVault), 9 offline farming tests. Новые тесты funding и monthly accounting включены в npm test. Новый сетевой fork не запускался.
+Проверка 14.09: 43 контрактных tests (16 FeeRouter + 27 PromoVault), 9 offline farming tests и 11 новых Short tests прошли. Сохранённый Short-отчёт воспроизведён с точным совпадением. Новые тесты funding и monthly accounting включены в npm test. Новый сетевой fork не запускался.
 
 ```powershell
 npm ci --ignore-scripts
@@ -61,4 +61,4 @@ PAIR route и доступность блока могут измениться;
 
 ## Следующий этап
 
-USDG funding и monthly accounting реализованы; API/ограничения описаны в PROMO_VAULT_DESIGN. Target фиксирован: для MVP deployment 100 USDG, изменения targets не нужны. Для Short сначала проверяем принятую математическую модель, выбираем параметры и оцениваем gas для обновления всех участников; это план, не выполненная проверка. Следующие отдельные задачи — production controller с календарём/проверкой исходов, participants/entries и выбранный RNG; конвертация также отсутствует. Пока можно проверить проводки, но нельзя доказать легитимность outcome, monthly interval или consumption попыток. Публичный запуск не готов.
+USDG funding и monthly accounting реализованы; API/ограничения описаны в PROMO_VAULT_DESIGN. Target фиксирован: для MVP deployment 100 USDG, изменения targets не нужны. Локальная модель Short реализована и проверена; первые сценарии — в SHORT_MODEL.md. Далее сравниваем параметры на нескольких seeds, выбираем настройки и оцениваем gas для обновления всех участников; gas пока не измерен. Следующие отдельные задачи — production controller с календарём/проверкой исходов, participants/entries и выбранный RNG; конвертация также отсутствует. Пока можно проверить проводки, но нельзя доказать легитимность outcome, monthly interval или consumption попыток. Публичный запуск не готов.
