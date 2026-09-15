@@ -1,284 +1,383 @@
 # Текущий ответ GPT
 
 Обновлено: 15.09.2026.
-Просмотрен latest commit `9adf46d44e36714b31e8f947b4ddb4e6358cf914` — `bind Short snapshots and prize baskets to atomic USDG reserve`.
+Просмотрен latest commit `eb7070d862c7b6fe372204ad8c1836e5f417f9ac` — `verify Short outcomes and preserve per-draw rule flexibility`.
 
-Фактически прочитаны `ShortDrawCommitment.sol`, `SHORT_DRAW_COMMITMENT.md`, commitment tests/fixture, актуальные `PromoVault.sol`, `ShortPrizeBasket.sol`, `PRODUCT_SPEC.md`, `PROMO_VAULT_DESIGN.md`, `IMPLEMENTATION_STATUS.md` и lifecycle docs. GitHub CI/status для commit пусты; заявленные `93/93` тестов в этом проходе мной независимо не запускались.
+Фактически прочитаны текущий `GPT_REVIEW_REQUEST.md`, `ShortOutcome.sol`, V2 `ShortDrawCommitment.sol`, `SHORT_OUTCOME_VERIFICATION.md`, независимый JS verifier, outcome tests/fixture, gas script/report и актуальные product/status документы. GitHub CI/status для commit пусты; заявленные `103/103` тестов и 12 gas-сценариев в этом проходе мной независимо не запускались.
 
-Тема: **ревью атомарного Short commitment и следующая граница результата**.
+Тема: **ревью outcome V1, gas boundary и минимальная модель безопасной активации Short rules**.
 
 ## Короткий вердикт
 
-Пакет сделал ровно то, что требовалось предыдущим ревью: теперь успешный Short freeze атомарно связывает:
+Существенной ошибки в текущей арифметике outcome V1 не вижу. Solidity и JS описывают один и тот же детерминированный алгоритм, а bounded top-K корректно сопоставлен независимой full-sort модели.
 
-```text
-cutoff
-+ attemptSnapshotHash
-+ rulesHash
-+ budget D
-+ детерминированную basket
-+ реальный PromoVault.reserveUSDG(D)
-```
+Главный production-risk теперь не в random arithmetic, а в двух местах:
 
-Если reserve откатывается, commitment и `AttemptsFrozen` тоже отсутствуют. Это правильная граница перед random.
+1. **до freeze надо уметь доказуемо ограничить объём будущего settlement**; одного `evmParticipantsHash` для этого недостаточно;
+2. **правила нельзя просто выбирать при каждом freeze** — нужна state machine активации, которая защищает уже существующие OPEN attempts.
 
-Критической ошибки в текущем abstract-компоненте не вижу. Особенно хорошо, что это **не публично deployable controller** и что terminal/RNG не были притянуты раньше времени.
-
-Но после этого шага проявились две архитектурные вещи, которые нельзя незаметно зацементировать в production.
+До решения этих двух вещей я бы seed authentication не подключал.
 
 ---
 
-## 1. Что сделано хорошо
+## 1. Outcome arithmetic / encoding
 
-### Atomicity
+### Admission threshold
 
-`_freezeShort()` сначала валидирует request/cutoff/vault binding, строит basket и вызывает настоящий:
+Формула Solidity корректно реализует:
 
-```solidity
-promoVault.reserveUSDG(drawId, campaignId, SHORT, budget)
+```text
+floor(2^256 * p * e / (e + h))
 ```
 
-Только после успешного reserve сохраняет commitment/pending и emits freeze events.
+через `type(uint256).max` плюс точную коррекцию на ещё один `numerator`.
 
-Любой revert откатывает в том числе `_syncUSDG()` внутри vault и изменения `generalFundingPhase`. Тест на donation/rounding rollback полезный.
+Это не off-by-one:
 
-### Деньги фиксируются именно из Short
+```text
+2^256*n = (2^256 - 1)*n + n
+```
 
-`ReserveSource.SHORT` зашит в компонент и не передаётся caller'ом. CURRENT/NEXT нельзя случайно или специально использовать этим путем.
+а `numerator < denominator`, поэтому нужна максимум одна коррекция. При принятых `uint128/uint32` промежуточные значения значительно ниже uint256.
 
-### Basket уже не может измениться после freeze
+`random < threshold` соответствует ровно этому floor-порогy. При `entries=0` threshold=0; реальные Participant ranges нулевой count не допускают.
 
-weights/minimumUnit фиксированы, D записан в request, `basketHash`, `basketTotal` и `remainder` сохранены. Позднее funding на frozen draw не влияет.
+### uint128 / uint32 bounds
 
-### Domain commitment
+Для максимальных значений:
 
-`shortCommitmentHash` включает chainId, controller, instanceId, registry, vault, quoteToken и весь Commitment. Это хорошо отделяет один deployment/draw от другого.
+```text
+entries * hDenominator < 2^160
+pNumerator * scaledEntries < 2^192
+pDenominator * (scaledEntries + hNumerator) < 2^192
+```
 
-### Cutoff check честно ограничен EVM blockhash window
+поэтому скрытого overflow в threshold не вижу.
 
-Использование `blockhash()` даёт on-chain проверку конкретного recent ancestor, а не выдуманную finality. Документация правильно отмечает, что окно 256 блоков — технический предел, а не политика подтверждений.
+Сокращённые дроби через gcd — хорошая canonicalization: один и тот же p/h не имеет нескольких rulesHash.
 
-### Vault/controller reverse binding
+### top-K
 
-Проверка `promoVault.drawController() == address(this)` закрывает случай ошибочно связанного vault. Для predicted vault deployment схема рабочая.
+`_select()` корректно работает в обоих режимах:
+
+- пока admitted < K — обычная insertion-sort вставка;
+- после заполнения K — новый candidate вставляется только если лучше текущего worst;
+- `admittedCount` при этом считает всех admitted, а не только winners.
+
+Tie-break `(rank, wallet)` совпадает с JS full-sort. Один wallet встречается один раз из-за canonical participant list, значит второй prize ему не появится.
+
+### Prize ordering
+
+`_slots()` создаёт permutation исходных basket indices по hash-rank. При равном rank стабильная обработка возрастающих индексов действительно оставляет меньший index первым.
+
+Modulo bias отсутствует; остаётся только практически ничтожный collision/tie bias 256-bit rank, который документация честно признаёт.
+
+### resultHash
+
+Формат однозначный.
+
+В Solidity `Result memory result` имеет `resultHash == 0` до последнего присваивания; именно такой tuple хешируется. JS явно ставит `ZeroHash`. `abi.encode` динамических массивов каноничен, и hash дополнительно связывает:
+
+```text
+context
+seed
+participantsHash
+outcomeRulesHash
+basketHash
+winners
+amounts
+prizeIndices
+admittedCount
+```
+
+Отдельной неоднозначности между JS/Solidity здесь не вижу.
 
 ---
 
-## 2. Не блокер сейчас, но важный production decision: правила сейчас singleton immutable
+## 2. Два participant commitments достаточны для принятой trust model — но следующий verifier должен проверять их автоматически
 
-Текущий `ShortDrawCommitment` фиксирует на весь controller deployment:
+Текущая конструкция разумная:
 
 ```text
-weights
-minimumUnit
-shortRulesHash
+attemptSnapshotHash    = полный canonical replay snapshot
+evmParticipantsHash    = ABI Participant[] из того же snapshot
 ```
 
-Это означает, что после публичного deployment Short template/rules фактически нельзя сменить без нового controller.
+On-chain ABI hash нужен не для доказательства правдивости indexer, а чтобы после freeze нельзя было подменить payload, используемый для outcome.
 
-А `PromoVault.drawController` immutable, поэтому заменить только controller у живой казны тоже нельзя.
+Это соответствует принятой модели: ложный snapshot не предотвращается контрактом, но должен быть публично обнаружим.
 
-Это **нормально для нынешнего abstract/test component**, но это уже не просто техническая деталь, если перенести layout без изменений в production.
+Следующий verifier должен без ручного шага делать цепочку:
 
-`PRODUCT_SPEC` пока оставляет направление:
+```text
+свой RPC
+→ replay registrations/BUY/carry/attempt lifecycle до cutoff
+→ canonical snapshot
+→ attemptSnapshotHash
+→ evmParticipantsHash
+→ compare с frozen request
+→ read frozen public rules/basket/D
+→ после seed compute outcome
+→ compare resultHash
+→ compare PromoVault rewards/finalize
+```
 
-> ограничения/обязательства immutable, а параметры фиксированных алгоритмов могут версионироваться для будущих периодов; точная архитектура ещё не выбрана.
-
-Поэтому прошу Codex не трактовать singleton `shortRulesHash` как уже принятое lifetime-правило продукта.
-
-Перед полным controller нужно выбрать одно из двух:
-
-1. **MVP instance = одна неизменяемая Short rules version на весь срок жизни deployment.** Тогда текущая схема отлично подходит, но это надо явно принять как продуктовый компромисс.
-2. **Ограниченное versioning будущих rules внутри одного immutable controller.** Тогда current component надо обобщить до bounded/versioned rules до production deployment, без proxy/arbitrary modules.
-
-Сейчас production K/weights/minimum/D/pmax/h_e ещё не приняты, поэтому решение не требуется в этом коммите. Главное — не считать его уже закрытым случайно.
+И публиковать один machine-readable draw-proof artifact. Сам lifecycle CLI, который проверяет только JSON hash, после появления production draw уже будет недостаточен как полный verifier.
 
 ---
 
-## 3. Главная следующая техническая проблема: frozen hash ещё недостаточен для проверки winners
+## 3. Concrete finding: pre-freeze gas limit сейчас нельзя enforce по одному hash
 
-`attemptSnapshotHash` сейчас отлично фиксирует **заявленный публичный snapshot** и replay может обнаружить ложь.
+Severity: **MEDIUM / production blocker до live controller**, не дефект текущей fixture.
 
-Но production controller при terminal должен выполнить более сильное требование:
-
-> после появления random он не должен иметь возможности принять произвольный список winners/amounts, не связанный с frozen participant set.
-
-Текущий canonical JSON `attemptSnapshotHash` сам по себе неудобен для Solidity-проверки результата: контракт не умеет из одного bytes32 восстановить participants/entries и проверить admission/winner selection.
-
-Это не дефект commitment-пакета — он сознательно не делал result verification. Но это теперь следующая реальная граница.
-
-Нельзя просто сделать:
+Settlement gas и calldata растут с N, но `FreezeRequest` V2 фиксирует только:
 
 ```text
-random seed
-+ caller-supplied winners
-→ PromoVault.finalize
+evmParticipantsHash
 ```
 
-иначе мы снова получим доверенный произвольный controller, только с красивым snapshot hash рядом.
+Контракт из hash не знает, сколько там участников.
+
+Следовательно, будущий production controller не сможет на freeze доказать:
+
+```text
+N <= safe limit
+```
+
+или:
+
+```text
+N * K <= safe work limit
+```
+
+не получая полный список on-chain уже при freeze.
+
+Плохой сценарий:
+
+```text
+operator commits корректный огромный snapshot
+→ USDG reserve успешно frozen
+→ честный seed приходит
+→ единственный допустимый atomic settlement не помещается в gas/tx-size limit
+→ pending и attempts зависают навсегда
+```
+
+Минимальная правка до production:
+
+добавить в frozen request хотя бы canonical `participantCount` (лучше также `totalFrozenAttempts` как audit metadata), включить его в commitment V3 и заставить independent verifier доказать соответствие snapshot.
+
+Тогда controller может **до reserve** enforce immutable technical bound, например:
+
+```text
+participantCount <= MAX_N
+weights.length <= MAX_K
+participantCount * weights.length <= MAX_SELECTION_WORK
+```
+
+Точные MAX_N/MAX_WORK выбирать только после целевых gas tests.
+
+Это намного полезнее, чем пытаться спасать oversized draw batching'ом после freeze.
 
 ---
 
-## 4. Рекомендованный следующий пакет: deterministic Short outcome + EVM-verifiable participant commitment
+## 4. Gas: причин отказываться от atomic settlement пока нет
 
-До выбора конкретного RNG provider я бы сделал офлайн/локальный пакет условно:
-
-```text
-short-outcome-verification-v1
-```
-
-Цель — доказать, что **один random seed + frozen participant data + frozen basket/rules дают ровно один результат**, который controller способен проверить.
-
-### Двойной commitment полезнее одного JSON hash
-
-Сохранить нынешний `attemptSnapshotHash` как публичный canonical/replay commitment.
-
-Для EVM verification добавить параллельный hash структурированного participant payload, например:
+Текущие измерения выглядят обнадёживающе:
 
 ```text
-evmParticipantsHash = keccak256(abi.encode(sorted ParticipantRange[]))
+N=1000, K=10
+~6.26M normal
+~7.36M all-admitted
+~96 KB calldata
 ```
 
-где ParticipantRange содержит минимум:
+Но перед production cap нужны ещё четыре проверки:
 
-```text
-wallet
-attemptCount / firstAttempt / lastAttempt
-```
+1. **K sweep**, минимум K=1/10/32/64. Сейчас измерен только K=10.
+2. **Worst insertion work.** All-admitted повышает работу, но случайный rank order не гарантирует максимальные K shifts на каждом candidate. Нужен либо специальный harness с synthetic ranks, либо консервативная аналитическая/измеренная верхняя граница worst-path.
+3. **Target-chain limits:** фактический Robinhood Chain block gas limit, max tx/calldata/RPC acceptance и запас под production seed verification/controller logic.
+4. **N beyond intended cap** (например 1500/2000 или до явного failure), чтобы cap выбирался от измеренной границы, а не от последней успешной строки.
 
-или иной минимальный набор, достаточный для q(e).
+Отдельно calldata может стать ограничением раньше compute gas.
 
-Почему два hash:
-
-- canonical JSON hash удобен внешнему verifier и связывает полный snapshot/domain/cutoff;
-- ABI hash дешево и однозначно пересчитывается Solidity при settlement.
-
-Они должны быть опубликованы в одном draw context и независимо сверяться verifier'ом. Сам EVM hash по-прежнему не доказывает правдивость snapshot — это соответствует уже принятой trust model; он **зато не даёт после freeze подменить participants именно для результата**.
-
-Если Codex предложит другой EVM-friendly commitment (например Merkle root), сначала объяснить, как он проверяет **полный deterministic outcome**, а не только membership одного победителя. Merkle proof отдельного winner не доказывает отсутствие других admitted/winners.
+Пока K небольшой и N порядка 1000, данных недостаточно, чтобы оправдать Merkle/batching/lazy settlement. Простая atomic transaction всё ещё предпочтительнее.
 
 ---
 
-## 5. Outcome algorithm сначала на seed, без RNG integration
+## 5. Минимальная state machine для rules versioning без очереди старых epochs
 
-Не выбирать Chainlink/VRF/keeper в этом пакете.
+Я бы не привязывал правила только при freeze: это действительно позволяет ухудшить уже накопленные OPEN attempts.
 
-Сначала определить pure/versioned функцию:
+Минимальная модель — **boundary activation**.
 
-```text
-(randomSeed, frozenParticipants, frozenRules, frozenBasket)
-→ admitted
-→ ordered winners
-→ prize assignments
-→ resultHash
-```
-
-с текущей принятой семантикой:
-
-- admission зависит только от entries по принятой формуле q(e); Luck отсутствует;
-- max один Short prize на wallet;
-- entries не добавляют второй вес после admission;
-- если admitted > K — K winners;
-- если admitted < K — случайное подмножество basket соответствует admitted wallets;
-- невыданная basket + dust возвращаются в Short при finalize;
-- random состоялся → все frozen Short attempts consumed, даже при 0 winners.
-
-Численные `p_max/h_e/K/weights/m/D` всё ещё не считать production settings. Алгоритм может быть параметрическим/rulesVersion fixture.
-
-### Важный deterministic detail
-
-Не использовать stateful RNG loop, результат которого зависит от порядка обхода/числа предыдущих admitted без явной спецификации.
-
-Лучше domain-separated hashes от одного seed, например отдельные потоки для:
+### Состояние
 
 ```text
-admission(wallet)
-winner/order rank(wallet)
-basket permutation
+activeRules
+pendingRules?        // максимум одна будущая версия
+pendingAnnouncedAt
+pendingActivationBoundary
 ```
 
-чтобы verifier мог воспроизвести результат byte-for-byte.
+Код controller immutable; поддерживаемый алгоритм outcome V1 тоже immutable. Версионируется только bounded data payload.
 
-Конкретную схему hashing/modulo/rejection sampling Codex должен описать и тестировать; modulo bias не замалчивать.
+### Announce
+
+Новая rules version сначала публикуется целиком и получает hash. Она ещё ни на что не влияет.
+
+Должен существовать immutable минимальный notice period/blocks, значение которого владелец выберет отдельно. Нельзя announce и тут же применить к уже накопленным attempts.
+
+### Boundary Short
+
+Первый Short freeze после достаточного notice:
+
+```text
+использует СТАРЫЕ rules
+замораживает ВСЕ old-version OPEN attempts до cutoff
+```
+
+и этот же cutoff становится activation boundary новой версии.
+
+После boundary:
+
+```text
+attempts, minted после cutoff → new rules epoch
+старые frozen attempts → завершаются только old rules
+```
+
+Пока boundary draw pending, новые attempts уже спокойно копятся под новой version.
+
+После terminal старой boundary draw старого OPEN cohort больше нет; следующий Short работает на новой version.
+
+Чтобы не получить очередь epochs:
+
+- максимум одна pending rules update;
+- новую следующую update нельзя объявить/активировать, пока boundary draw предыдущей версии не terminal и новая version не стала единственной OPEN version.
+
+Так мы получаем максимум два соседних epochs в системе: frozen old + open new.
+
+### Где rules становятся обязательством
+
+Для **Short attempt** — при его mint.
+
+Это важная граница. Уже minted OPEN attempt нельзя перевести на худшую version.
+
+Для frozen attempt — тем более остаётся frozen rules.
 
 ---
 
-## 6. Самый важный эксперимент этого этапа — gas/scale
+## 6. Отдельное решение про BUY carry
 
-Если on-chain verification требует передать и пройти весь frozen participant list, нужно измерить это **до** production controller.
+Здесь нужна одна явная продуктовая формулировка.
 
-Сделать sweep хотя бы для:
+Моя рекомендация для MVP:
 
-```text
-N = 10, 50, 100, 250, 500, 1000
-K = небольшой фиксированный template
-```
+> BUY carry гарантирует только неизменный `100 USDG nominal → entry` threshold. Short rules version прикрепляется не к неполному carry, а к attempt в момент, когда entry реально minted.
 
-и измерить:
+Тогда `$99` carry до boundary не теряется и не пересчитывается: покупка ещё `$1` после boundary создаёт ровно одну entry, но уже новой Short version.
 
-- calldata size;
-- gas verification/outcome calculation;
-- gas PromoVault.finalize;
-- worst-case admitted;
-- итоговый transaction gas.
+Это сохраняет экономический смысл carry без вечного хвоста старых rule epochs.
 
-Если полный atomic settlement для ожидаемого N реально помещается — отлично, не усложняем систему.
+Если владелец хочет, чтобы частичный carry наследовал ещё и старые p/K/D условия, нужна отдельная `carryEpoch` модель; тогда старые attempts смогут появляться после activation boundary, и простой двух-epoch механизм ломается.
 
-Если нет — только тогда проектируем commitment + batching/proofs/lazy settlement. Не выбирать Merkle/batching заранее.
+Я бы этого не добавлял.
+
+Entry threshold `100 USDG` для MVP уже фиксирован отдельно; его не включать в versionable Short rules.
 
 ---
 
-## 7. Следующий terminal invariant уже можно считать жёстким
+## 7. Какие параметры можно версионировать
 
-Какая бы result architecture ни была выбрана:
+Безопаснее разделить **algorithm/invariants** и **economic data**.
 
-```text
-verify random/result
-→ PromoVault.finalize(drawId, winners, amounts)
-→ clear pending Short
-→ emit AttemptsConsumed / terminal
-```
+### Immutable для deployment / MVP
 
-должно быть **одной атомарной транзакцией** в простой версии.
+- custody/no-withdraw authority;
+- outcome algorithm V1 и его encoding/hash domains;
+- max one Short prize per wallet;
+- Luck отсутствует;
+- no reroll после доставленного random;
+- frozen inputs/results immutable;
+- entry threshold 100 USDG для MVP;
+- T=100 USDG;
+- hard technical MAX_K / MAX_N / MAX_WORK после измерений;
+- минимальная граница расписания, уже принятый минимум 6h;
+- запрет recipient/address-specific rules.
 
-Если `finalize` revert:
+### Можно version как публичный bounded payload для будущих attempts
 
-```text
-pending остаётся
-attempts остаются FROZEN
-AttemptsConsumed отсутствует
-```
+- `p_max`; 
+- `h_e`; 
+- K/weights;
+- minimum prize/unit;
+- Short budget policy D;
+- возможно интервал > immutable minimum, если владелец захочет.
 
-Никакого timeout-as-no-win и никакого нового seed/reroll.
+Но bounds для каждого параметра должны быть в immutable controller code, а не только в UI.
+
+### Особенно D
+
+Я бы **не оставлял production D произвольным аргументом оператора на каждый freeze**.
+
+Лучше rules version содержит детерминированную публичную формулу D от уже известного on-chain reserve state, с hard cap. Controller сам вычисляет D и сравнивает/не принимает caller value.
+
+Иначе оператор после просмотра participant set может произвольно менять expected payout draw, пусть даже не может назвать конкретного winner.
 
 ---
 
-## 8. Ещё два небольших замечания
+## 8. Как flexibility не превращается в скрытый вывод связанным кошелькам
 
-### `remainingRulesHash`
+Нужен жёсткий порядок полномочий:
 
-Сейчас это opaque commitment, что нормально для component boundary. Перед production нужен canonical public rules payload, иначе пользователь видит bytes32, но не может однозначно понять, что именно было зафиксировано.
+```text
+1. public rules payload announced
+2. notice проходит
+3. activation boundary/cutoff фиксирован
+4. participant snapshot + D + basket frozen
+5. только ПОСЛЕ этого появляется единственный authenticated seed
+6. immutable outcome V1 вычисляет winners
+7. atomic finalize + AttemptsConsumed
+```
 
-### `campaignId`
+Rules payload должен содержать только глобальные параметры. Никаких wallet addresses, allowlists, per-wallet multipliers, caller-selected winners или специальных recipient branches.
 
-Он остаётся metadata и не доказывает связь с FeeRouter campaign — docs это честно говорят. Не надо строить безопасность Short на этом поле.
+При таком порядке изменение p/K/D может менять экономику **будущих attempts**, но не позволяет после знания seed подобрать параметры под связанный кошелёк.
+
+Sybil несколькими обычными кошельками остаётся тем остаточным риском, который продукт уже принял.
 
 ---
 
-## Что сейчас не делать
+## 9. Какой следующий пакет
 
-- не подключать RNG provider;
-- не делать production executor/scheduler;
-- не реализовывать Monthly terminal;
-- не расширять BUY decoder;
-- не выбирать proxy;
-- не принимать тестовые weights/minimum как production;
-- не решать finality случайным числом confirmations.
+Из трёх кандидатов я бы выбрал **rules activation + public payload + pre-freeze work bounds**.
+
+Условно:
+
+```text
+short-rules-activation-v1
+```
+
+Почему не seed authentication прямо сейчас:
+
+seed verification бесполезно цементировать, пока controller ещё может выбирать правила при freeze и пока нельзя доказать, что frozen N вообще settlement-safe.
+
+Минимальный пакет:
+
+1. canonical public `ShortRulesV1` payload;
+2. immutable hard bounds;
+3. `announceRules(hash/payload)` без немедленного действия;
+4. максимум одна pending update;
+5. boundary activation с old OPEN → old frozen, post-cutoff mint → new epoch;
+6. participantCount в snapshot/commitment и pre-freeze MAX_N/MAX_WORK check;
+7. verifier обновить так, чтобы он проверял epoch/rules/count вместе с обоими snapshot hashes;
+8. тесты на notice, попытку мгновенного downgrade, pending boundary, reorg, повторную update и отсутствие смешивания epochs.
+
+После этого следующий пакет уже естественно будет seed authentication + production terminal.
 
 ## Итог
 
-`9adf46d` — хороший шаг: теперь до random уже существует настоящий денежно обеспеченный immutable Short input.
+`eb7070d` заметно усиливает систему: outcome V1 уже не доверяет caller-supplied winners и воспроизводится независимым кодом.
 
-Следующий риск не в custody, а в **проверяемости результата из frozen participants**.
+Текущая atomic architecture выглядит жизнеспособной; преждевременно уходить в Merkle/batching не надо.
 
-Я бы следующим пакетом сделал deterministic outcome model + EVM-friendly participant commitment + gas sweep. Только после этого имеет смысл выбирать RNG integration и писать terminal часть полного controller.
+Самая полезная следующая работа — закрыть **когда и для каких attempts правила становятся обязательством** и одновременно не позволить заморозить draw, который заведомо невозможно атомарно settle из-за N/K.
