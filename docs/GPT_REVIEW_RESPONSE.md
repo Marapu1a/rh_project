@@ -1,465 +1,549 @@
 # Текущий ответ GPT
 
 Обновлено: 15.09.2026.
-Просмотрен latest request commit `49cb27f28412c10b206b168fc27c1cb58f10342f`, а также результаты `91f5d704aaa8edd72a08df7369be440179242a87` и `0eed3f70fe79f489520b41d28efc3a8624243660`.
+Просмотрен latest request commit `2d2d540bd50d164aba573926e8278e4244ca36ee`, а также реализованные commits `d6216fee06cf701fff180b81eac721e09e5ea216` и `a884f2ac2f898e53e6391fd5d9a0053d25f119ee`.
 
 Фактически прочитаны:
 
-- `docs/PAIR_DEPENDENCY_AUDIT_2026-09-15.md`;
-- `docs/PAIR_PORTABILITY_AND_SOURCES_2026-09-15.md`;
-- `research/pair-source-audit/manifest.json`;
-- сохранённые verified sources `VaultV2`, `FactoryV2`, `ModeRegistry`, `NativeFeeSharingModeV5`, `NativeFeeHook`, `NativeFeeCoordinator`, `PairLaunchpadV5Upgradeable`;
-- наши `FeeRouter.sol` и `PromoVault.sol`.
+- `contracts/ParticipantRegistry.sol` и `test/participant-registry.test.cjs`;
+- `docs/PARTICIPANT_REGISTRY.md`;
+- `contracts/ShortPrizeBasket.sol` и `test/short-prize-basket.test.cjs`;
+- `docs/SHORT_PRIZE_BASKET.md`;
+- `docs/INDEXER_TRUST_MODEL.md`;
+- актуальные разделы 7–9 `PRODUCT_SPEC.md` и `IMPLEMENTATION_STATUS.md`;
+- `scripts/economics-fork.cjs` и test-only `SwapFixture` из `test/contracts/Fixtures.sol`;
+- ранее сохранённые PAIR native hook/coordinator sources только в той мере, в какой они относятся к attribution.
 
-Никакие сетевые команды в этом проходе мной не запускались. Ни Sourcify, ни RPC заново не опрашивал; ниже ревью сохранённого evidence и кода.
+Тесты в этом проходе мной не запускались. GitHub workflow/status для latest commit пусты. Ниже отделяю чтение кода от предложений.
 
-Тема: **что действительно доказал PAIR source audit, где остаётся trust boundary и какой следующий пакет работ имеет смысл**.
+Тема: **ParticipantRegistry + ShortPrizeBasket review и минимальная схема BUY → entries / replay**.
 
 ## Короткий вердикт
 
-Исследование получилось полезным и в целом выводы прочитаны правильно.
+Оба новых компонента выглядят удачно изолированными. Критического дефекта в `ParticipantRegistry` или арифметике `ShortPrizeBasket` не вижу.
 
-Главное изменение относительно первого прохода: теперь уже есть исходники конкретной native fee-sharing ветки, и стало видно, что риск не в «PAIR может тайно вытащить наш LP через VaultV2», а в другом:
+Основная следующая сложность действительно не Solidity, а **доказуемая атрибуция BUY**:
 
-> PAIR registry owner способен сменить fee-sharing recipients будущего epoch через `communityTakeover`, а наш текущий FeeRouter специально fail-closed на любое изменение `sourceEpoch`.
+> надо уметь из публичной истории канонического TOKEN/USDG pool получить полный набор swap-кандидатов, а затем для каждого детерминированно доказать payer, final recipient и фактический USDG input.
 
-То есть security boundary стала намного конкретнее.
+Текущий historical fork этого ещё не доказывает: там торговал наш test-only `SwapFixture`, а `grossBuyRaw` считался по balance delta тестового кошелька. Это хорошее экономическое evidence, но не production decoder.
 
-При этом:
-
-- уже созданные `FeeRouter.credit` не зависят от дальнейшего PAIR rollover и могут быть выплачены через `pay()`;
-- старые `VaultV2.claimable[oldEpoch]` не переписываются при atomic transition;
-- PromoVault вообще не вызывает PAIR;
-- existing native hook path по прочитанному коду не требует PAIR API/price signer на каждом swap;
-- новый независимый deployment продукта на другой площадке действительно реалистичен без переноса старой казны.
-
-Я бы **не добавлял сейчас универсальную миграцию source** и не делал proxy. Текущий fail-closed подход приемлем для MVP, если публично и технически считать потерю будущего PAIR revenue внешним availability risk, а не обещанием непрерывного дохода.
+Для MVP рекомендую сознательно поддержать **один узкий direct route**, а все неоднозначные aggregator/multihop/batch случаи явно помечать unsupported, а не угадывать.
 
 ---
 
-## 1. Существенные поправки к формулировкам source audit
+## 1. Ревью ParticipantRegistry
 
-### Vault лучше называть не «immutable vault вообще», а «non-upgradeable VaultV2 family в проверенной ветке»
+### Существенных code findings нет
 
-`PairV5LaunchV2NativeFeeVaultFactoryV2` действительно делает:
-
-```solidity
-new PairV5LaunchV2NativeFeeVaultV2{salt:salt}(...)
-```
-
-и его `upgradeVaultImplementation()` всегда revert с `ImmutableImplementation()`.
-
-У самого `VaultV2` нет proxy/upgrader path; критические зависимости — `positionManager`, `registrar`, `protocolTreasury`, `projectToken`, `launchpad`, `policyController`, `buybackExecutor`, `modeId` — immutable.
-
-Это сильное доказательство для **этой factory family**.
-
-Но factory source сам по себе ещё не доказывает, что будущий vault нашего конкретного launch создан именно этой factory и именно этим handler/version. Поэтому production wording лучше:
-
-> «наш canary launch должен доказать, что конкретный vault создан verified FactoryV2/VaultV2 path и runtime/constructor bindings совпадают с receipt»
-
-а не просто «VaultV2 immutable».
-
-### LP custody выглядит хорошо, но последний кусок доказательства всё ещё PositionManager
-
-`PoolEngine.createPool()` mint'ит position сразу с recipient=`vault`.
-
-`VaultV2.registerPosition()` дополнительно требует:
-
-```solidity
-positionManager.ownerOf(id) == address(this)
-```
-
-и `collectFees()` снова проверяет ownership.
-
-В прочитанном `VaultV2` нет функции transfer/approve/decrease/burn/rescue/arbitraryCall.
-
-Это очень хороший сигнал.
-
-Но абсолютное «LP невозможно вывести» пока требует ещё двух вещей на конкретном launch:
-
-1. `PositionManager.ownerOf(positionId) == vault`;
-2. у position нет approval/operator, позволяющего третьей стороне им распоряжаться, и semantics конкретного PositionManager не дают обход ownership.
-
-То есть вывод документа правильный: native V2 custody не надо путать с legacy PairV4Locker, но canary должен проверять именно position ownership/approvals.
-
-### Community takeover прочитан правильно и это главный внешний risk
-
-`PairV5LaunchV2ModeRegistry.communityTakeover()` — `onlyOwner`.
-
-Для mode 1 handler возвращает `eligible=true`, а registry при регистрации проекта сохраняет takeover eligibility.
-
-Далее registry может без подписи прежних recipients вызвать:
+`register()` делает ровно одну вещь:
 
 ```text
-VaultV2.transitionFeeSharingAtomic(newRecipients,newShares)
+registered[msg.sender] false → true
++ Registered(msg.sender)
 ```
 
-Внутри VaultV2:
+Нет owner, third-party enrollment, backdating, unregister, внешних calls или proxy. Для выбранного одноразового opt-in это хорошая trust boundary.
+
+Smart wallet semantics тоже правильные: регистрируется тот contract wallet, который **сам вызывает** registry. Generic forwarder/relay, вызвавший `register()` от своего адреса, зарегистрирует себя — это уже честно описано в документации.
+
+Отсутствие `unregister()` само по себе не проблема: eligibility — исторический факт opt-in, а не текущая membership subscription.
+
+### Finding PR-1 — LOW / data-model, не Solidity
+
+Для исторической записи одного порядка
 
 ```text
-collect all registered positions under old epoch
-→ set new policy
-→ epoch++
+(blockNumber, transactionIndex, logIndex)
 ```
 
-Старое `claimable[oldEpoch][oldRecipient][asset]` не переписывается.
+недостаточно как долговечного identity при reorg.
 
-Это означает:
-
-- уже начисленный старый recipient debt сохраняется;
-- **будущие** creator fees могут быть направлены другим recipients;
-- наш `FeeRouter.rollCampaign()` после epoch drift начнёт revert с `SourceEpochChanged()`.
-
-Это не теоретическая неизвестность — такой authority path в прочитанном коде есть.
-
-### Protocol treasury transfer — отдельный availability risk
-
-В `VaultV2._allocate()` сначала считается:
+Для raw occurrence хранить минимум:
 
 ```text
-70% modeAmount
-30% protocolAmount
+chainId
+registry address
+blockNumber
+blockHash
+transactionHash
+transactionIndex
+logIndex
+participant
 ```
 
-и protocol amount немедленно `safeTransfer(protocolTreasury)`.
+Порядок по-прежнему задаётся `(blockNumber, transactionIndex, logIndex)`, а `blockHash`/parent linkage отвечает за каноничность.
 
-Если transfer конкретного asset в treasury revert'ит, весь `collectFees()` revert'ит, включая начисление creator share.
+`INDEXER_TRUST_MODEL.md` уже требует chainId/address/blockHash, поэтому это не архитектурная ошибка — лучше просто сделать такую схему обязательной в indexer.
 
-То есть даже при честной recipient policy collection зависит не только от нашего router, но и от способности VaultV2 перевести protocol share.
+### Finding PR-2 — LOW / deployment convention
 
-Это стоит оставить в threat model как runtime availability dependency.
+Фраза «один registry соответствует одному экземпляру promo» не обеспечивается байткодом: registry не знает `PromoVault`, TOKEN или instance id.
 
-### Hook действительно выглядит off-chain independent на swap path
+Это нормально, но должно оставаться **manifest/controller binding**, а не контрактной гарантией.
 
-`beforeSwap/afterSwap` читают только зарегистрированный pool и on-chain `stateView`; server price signer там нет.
+Минимальная защита: snapshot domain всегда содержит конкретный `ParticipantRegistry` address + chainId + promo instance/version.
 
-`registrar` и `stateView` immutable.
+### Чего не надо добавлять
 
-Существующий pool повторно зарегистрировать нельзя.
+- admin registration/unregistration;
+- `tx.origin`;
+- mutable terms/version setter;
+- off-chain allowlist как источник права участия.
 
-Поэтому по **этому verified hook source** исчезновение pair.fund API не является условием остановки swap.
-
-Но остаются обычные runtime dependencies: PoolManager, StateView, ERC20 и сама сеть.
+Если когда-нибудь понадобится новый opt-in semantics/terms, проще новый registry/version, чем переписывать историю старого.
 
 ---
 
-## 2. Достаточна ли выбранная граница переносимости
+## 2. Ревью ShortPrizeBasket
 
-Да. Я бы оставил её именно такой:
+### Арифметика выглядит корректно
+
+Логика:
 
 ```text
-portable core:
-PromoVault + prize accounting + product rules + future controller/RNG
-
-platform-specific:
-fee collection + TOKEN→USDG conversion + eligible BUY attribution
+sumW = Σ weights
+unit = floor(budget / sumW)
+prize[i] = unit * weight[i]
+total = unit * sumW
+remainder = budget - total
 ```
 
-При повторном запуске мы **не мигрируем deployment**, а создаём новый экземпляр.
+безопасна по uint256:
 
-Что реально помешает такому запуску сейчас:
+- overflow суммы weights проверяется;
+- `unit <= budget / sumW`, поэтому `unit * sumW <= budget`; 
+- так как `weight[i] <= sumW`, каждый `unit * weight[i] <= budget`; 
+- `minimumUnit * sumW` вообще не вычисляется, поэтому threshold не создаёт отдельного overflow;
+- нулевые weights/template/minimum отклоняются.
 
-1. production controller/RNG ещё нет;
-2. production indexer/BUY attribution ещё нет;
-3. TOKEN→USDG conversion ещё нет;
-4. FeeRouter знает конкретный PAIR vault API и не является универсальным adapter;
-5. другой EVM может не поддерживать текущий build/EVM target;
-6. quote token/decimals/target надо заново проверять.
+Интеграционный тест с PromoVault правильно показывает, что late funding не меняет frozen budget, dust и невыданные slots возвращаются в Short через `finalize`, а старые claims сохраняются.
 
-Ничего из этого не требует сегодня проектировать вторую площадку.
+### Finding PB-1 — MEDIUM как production gate, сейчас не exploitable
 
-И важная граница корректна:
+`build()` линейна по `weights.length` и сама не ограничивает K.
 
-> новый deployment не имеет права забирать free/reserved/claimable из старого PromoVault.
+Сейчас это internal pure library без production controller, поэтому у пользователя нет входа для gas-DoS. Но перед production rules нужно обязательно зафиксировать **bounded K** в rules/controller.
 
-Старые obligations продолжают жить в старом экземпляре.
+Не обязательно зашивать cap в библиотеку сегодня. Важно, чтобы future freeze не принимал произвольный user-supplied массив.
+
+### Finding PB-2 — LOW / freeze invariant
+
+Библиотека детерминирована, но сама не доказывает, что controller вызвал её с тем же `budget/weights/minimum`, которые были committed до random.
+
+Документация это уже честно признаёт. В future snapshot/commitment фиксировать либо всю готовую корзину, либо canonical serialization её inputs + computed basket hash.
+
+### Документация
+
+`SHORT_PRIZE_BASKET.md` обещает не больше, чем код. Старые `51/51` и новые `57/57` — хронологические результаты разных этапов, не противоречат друг другу.
+
+У `IMPLEMENTATION_STATUS.md` только косметически устарел заголовок «проверено 13.09», хотя внутри уже есть изменения 15.09.
 
 ---
 
-## 3. Что deployment config, а что code version
+## 3. Кому засчитывать BUY: минимальная MVP-граница
 
-Я бы не параметризовал GENERAL 3:2:1 в constructor сейчас.
+Сохранённых данных недостаточно, чтобы честно написать production decoder для PAIR UI/UniversalRouter. `economics-fork.cjs` использует наш test-only `SwapFixture`, который явно передаёт `payer=msg.sender` и получает output тому же payer.
 
-Причина: это не инфраструктурный адрес, а публичное правило движения призовых денег. Если его сделать произвольным constructor config, мы получим много экономически разных vault deployment'ов с одним и тем же bytecode/API, что усложнит проверку пользователем.
+Это **не** доказательство production route.
 
-Для MVP проще:
+Поэтому сначала зафиксировать policy, а потом собрать реальные receipt/calldata intended route.
+
+### Рекомендованный MVP rule
+
+Самый чистый вариант:
+
+> eligible BUY только если один поддерживаемый direct TOKEN/USDG swap однозначно доказывает `payer == finalRecipient == registered wallet`.
+
+Это снимает спор «кто заработал entry» при gifts/relayers и делает replay проще.
+
+### Минимальная таблица
+
+| Случай | MVP | Что требуется доказать |
+|---|---|---|
+| Обычный EOA, direct supported TOKEN/USDG route, payer=recipient | **Eligible** | canonical pool swap + payer + final recipient + actual quote input |
+| Smart wallet, который сам зарегистрирован и является payer=recipient | **Eligible**, если route decoder поддерживает этот вызов | нельзя использовать `tx.from`; bundler/EntryPoint не участник |
+| Known router, один direct single-hop swap | **Eligible** после route-specific decoder | exact command/calldata + receipt evidence |
+| payer != recipient | **Unsupported для MVP** | позже нужен отдельный продуктовый выбор, кому принадлежат entries |
+| Несколько relevant swaps в одном batch/multicall | **Unsupported сначала** | нужен action-level decoder и разделение settlement |
+| Aggregator / multihop | **Unsupported сначала** | pool Swap сам по себе не доказывает payer/recipient и экономику всего path |
+| Exact-output direct swap | Можно поддержать только после decoder test | считать actual spent quote после refund, не maximum input |
+| Прямой ERC20 transfer TOKEN/USDG | **Not a BUY** | нет canonical swap |
+| SELL TOKEN→USDG | **Not eligible** | direction определяется canonical pool swap |
+| Developer buy при launch | **Not eligible**, пока явно не принято обратное | отдельный launch path, не обычный registered BUY |
+
+Поддержка smart-wallet registration **не означает**, что любой aggregator route этого wallet автоматически eligible.
+
+### Явный статус неопределённости
+
+Indexer должен хранить для каждого canonical pool swap candidate:
 
 ```text
-изменились prize allocation rules
-→ новая code version
-→ новые tests
-→ новый code hash
+ELIGIBLE
+INELIGIBLE
+UNSUPPORTED_ROUTE
+AMBIGUOUS
 ```
 
-### Минимальный deployment manifest
+и reason code/evidence.
 
-Я бы сохранял JSON + человекочитаемый MD со следующим:
+Только `ELIGIBLE` меняет carry.
 
-```text
-identity
-- git commit
-- contracts version/schema
-- compiler version
-- optimizer/viaIR
-- evmVersion
-- artifact/runtime code hashes
-
-network
-- chainId
-- network name
-- deployment block/tx hashes
-
-assets
-- projectToken
-- quoteToken
-- token decimals
-- quote decimals
-- human nextStartTarget
-- raw nextStartTarget
-
-local authorities
-- FeeRouter owner
-- drawController
-- code hashes этих contracts
-
-FeeRouter
-- pairVault
-- positionId
-- sourceEpoch
-- projectToken/quoteToken
-- initial campaign policy recipients/bps/endsAt
-
-PAIR provenance
-- launchpad
-- active registry
-- coordinator
-- handler + mode/version
-- factory
-- vault
-- hook
-- poolId(s)
-- positionId(s)
-- code hashes / runtime hashes
-- epoch recipients/shares at bind
-
-product/economic version references
-- PRODUCT_SPEC commit/hash
-- creator allocation policy version
-- Short rules version
-- external funding allocation version
-```
-
-Не надо класть RPC secrets или считать URL частью trust boundary.
+Неоднозначный swap нельзя молча пропустить из публичного отчёта: независимый verifier должен видеть, что swap найден в pool history и почему он не засчитан.
 
 ---
 
-## 4. Один следующий пакет работ
+## 4. Откуда брать полный набор BUY-кандидатов
 
-Кандидат Codex «локальный независимый deployment ядра» правильный, но в чистом виде он частично повторит unit tests.
+Для полноты начинать не со списка нашего сервера и не с wallet transactions.
 
-Чтобы он дал новую ценность, сделать его не как ещё один test file, а как **reproducible deployment artifact**.
+Для конкретного promo instance известен canonical `poolId`.
 
-### Пакет: `core-local-deployment`
+Verifier/indexer проходит весь диапазон blocks и собирает **все canonical PoolManager Swap logs этого pool**.
 
-С чистого локального chain state:
+Каждый такой log — candidate.
 
-1. compile конкретного git commit;
-2. deploy обычные mock TOKEN/USDG;
-3. deploy минимальный controller fixture только как явную test authority;
-4. deploy PromoVault с production constructor semantics;
-5. выполнить внешний USDG funding;
-6. проверить GENERAL / targeted allocation;
-7. reserve Short;
-8. finalize реальные winner amounts;
-9. claim;
-10. start/settle monthly win и no-win отдельными clean runs;
-11. сохранить deployment manifest, constructor args, addresses, tx receipts, code hashes и final accounting state;
-12. повторить deployment второй раз и доказать, что различия объясняются только nonces/addresses, а конфигурация и code hashes воспроизводимы.
+Дальше для tx кандидата читаются:
 
-FeeRouter без PAIR в этот пакет **не надо искусственно универсализировать**. Его portability boundary уже честно описана: другой fee source → другая явная integration implementation.
+- raw transaction calldata;
+- receipt + все logs;
+- known router/version code/ABI;
+- instance manifest (TOKEN, USDG, poolId, currencies).
 
-### Acceptance criteria
+И route-specific decoder решает direction/payer/recipient/actual quote input.
 
-Этап готов, если из пустой локальной сети одной документированной командой получается:
+`Swap.sender` нельзя автоматически считать участником: на router path это обычно инфраструктурный caller PoolManager. Исторический `SwapFixture` уже показывает архитектурно, что между wallet и PoolManager есть отдельный contract caller.
 
-```text
-deploy manifest
-+ code-hash verification
-+ funding
-+ reserve/finalize/claim
-+ monthly accounting
-+ conservation assertions
-```
+Если production route невозможно доказуемо декодировать из calldata + receipts без node-specific trace, я бы **не делал trace обязательным consensus input**.
 
-и результат не зависит от pair.fund/RPC PAIR.
+Два варианта:
 
-Это уже проверяет именно **развёртываемость ядра**, а не отдельные функции контрактов.
+1. этот route объявить unsupported;
+2. позже сделать маленький canonical promo buy router, который после успешного direct swap публикует достаточное on-chain evidence.
+
+Trace полезен как diagnostic, но плох как единственный публично воспроизводимый источник истины.
 
 ---
 
-## 5. Минимальный pre-launch PAIR canary
+## 5. Gross BUY: что именно считать
 
-Не надо превращать canary в аудит всей экосистемы.
+Рекомендованное определение:
 
-Перед реальным запуском достаточно доказать наш конкретный путь.
+> `grossBuyRaw` = фактическое количество USDG raw units, которое было **settled into the supported canonical direct swap** как quote input.
 
-### До launch
+Не wallet balance delta вообще и не declared/max input.
 
-1. Зафиксировать current canonical graph и code hashes:
+### Включается
+
+- фактический quote input canonical pool;
+- pool swap fee, если она является частью фактически settled input.
+
+### Не включается
+
+- gas в ETH;
+- approval/Permit2 allowance;
+- exact-output `amountInMaximum`, если часть вернулась;
+- отдельная router/service fee вне pool swap;
+- tips;
+- unrelated USDG transfers в той же транзакции;
+- SELL proceeds;
+- creator revenue.
+
+То есть отдельная router fee не должна печатать entries: она не является TOKEN purchase volume канонического pool.
+
+### Exact-in
+
+Считать фактически settled quote input, а не только calldata `amountIn`, пока decoder не доказал, что они обязаны совпасть.
+
+### Exact-out
+
+Считать фактически consumed quote after refund, не max.
+
+### Что текущий fork действительно показал
+
+В test-only fixture для BUY 100 скрипт получил wallet quote delta `-100 USDG` и именно её использовал как `grossBuyRaw`. Это полезный sanity check, но не доказывает, какое поле production PoolManager/router event надо использовать.
+
+Следующий этап должен на настоящем intended route сравнить:
 
 ```text
-launchpad implementation
-active registry
-coordinator
-mode-1 handler/version
-FactoryV2
-hook
+calldata amount
+PoolManager Swap delta
+ERC20/Permit2 transfers
+payer balance delta
+refunds/router fees
 ```
 
-2. Проверить, что intended mode действительно fee-sharing V5/compatible atomic path.
+и выбрать минимальный достаточный evidence set.
 
-### После test launch на свежем fork / canary
+### `$100` против `100 USDG`
 
-3. Получить конкретные:
+Для полностью детерминированного MVP проще всего формализовать:
 
 ```text
-projectToken
-vault
+ENTRY_THRESHOLD = 100 * 10^USDG_decimals raw units
+```
+
+то есть **100 USDG nominal**, без внешнего price oracle.
+
+Это надо принять явно: такая формула не доказывает рыночный peg USDG к доллару. Если продукт хочет именно market-value `$100`, потребуется отдельный price source/time rule.
+
+---
+
+## 6. Минимальная replay model
+
+Локальная БД — только materialized view. Детерминированный reducer должен восстанавливаться с deployment genesis.
+
+### Instance manifest
+
+```text
+chainId
+ParticipantRegistry address + deployment block
+PoolManager
 poolId
-positionId
+TOKEN
+USDG + decimals
+supported route/version(s)
+entryThresholdRaw
+decoderVersion
+promo/controller/rules version
 ```
 
-4. Проверить:
+### Raw canonical occurrences
+
+**Registration**
 
 ```text
-vault.projectToken == TOKEN
-vault.policyController == expected registry
-vault.modeId == 1
-vault.epoch == expected
-epoch recipient count == 1
-recipient == наш FeeRouter
-share == 10000
-PositionManager.ownerOf(positionId) == vault
-vault.positions(positionId).registered == true
-hook.pools(poolId) points to TOKEN/quote/vault/position
+blockNumber/blockHash/parentHash
+txHash/transactionIndex/logIndex
+participant
 ```
 
-5. Проверить отсутствие unexpected position approvals/operator approvals.
+**Swap candidate**
 
-6. `FeeRouter.bindSource(vault, positionId)` должен пройти только после этой сверки.
+```text
+blockNumber/blockHash/parentHash
+txHash/transactionIndex/logIndex
+poolId
+raw Swap fields
+```
 
-### Economic path
+**Buy decision** (derived, reproducible)
 
-7. Сделать intended BUY + SELL.
+```text
+candidate id
+status
+payer
+recipient
+grossQuoteRaw
+routeVersion/decoderVersion
+reasonCode
+evidence log indexes
+```
 
-8. Permissionless `collectFees(positionId)`.
+### Wallet reducer
 
-9. Проверить фактические fee deltas и 70/30 split по обоим assets.
+Для каждого wallet:
 
-10. Claim creator share через FeeRouter для TOKEN и quote.
+```text
+carryRaw
+entriesMintedTotal
+shortAttemptsAvailable/Frozen/Consumed
+monthlyAttemptsAvailable/Frozen/Consumed
+```
 
-11. Проверить rollover на неизменившемся epoch.
+На ELIGIBLE BUY:
 
-12. Довести реально полученный USDG через PromoVault → reserve → finalize → claim.
+```text
+x = carryRaw + grossQuoteRaw
+newEntries = floor(x / ENTRY_THRESHOLD_RAW)
+carryRaw = x % ENTRY_THRESHOLD_RAW
 
-Когда conversion будет реализован — добавить отдельный TOKEN→USDG canary с slippage/recipient checks.
+short += newEntries
+monthly += newEntries
+```
 
-### Invalidation
+Все вычисления integer raw units.
 
-Если до production меняется critical graph/code hash — canary повторяется.
+### Draw consumption ledger
+
+Каждый freeze/settlement ссылается на:
+
+```text
+drawId + kind
+cutoff block number/hash
+snapshot/rules version
+wallet → frozen attempts
+terminal random/result
+wallet → consumed attempts
+```
+
+Short consumption не меняет monthly, и наоборот.
 
 ---
 
-## 6. Что происходит со старыми обязательствами при проблеме PAIR
+## 7. Reorg / idempotency / completeness
 
-Здесь важно разделять состояния.
+### Ingestion
 
-### Будущий creator revenue
+Обрабатывать blocks только с проверкой parent hash.
 
-Не является нашим активом до фактического начисления/получения.
-
-Community takeover или поломка PAIR могут оборвать будущий поток. Наш контракт не может это исправить.
-
-### VaultV2 старого epoch
-
-Atomic transition сначала собирает fees в старый epoch.
-
-Сохранённые `claimable[oldEpoch][FeeRouter][asset]` остаются claimable, если asset/vault работают.
-
-`FeeRouter.harvest(asset, oldEpoch)` не требует, чтобы `sourceEpoch` совпадал с текущим vault epoch.
-
-### Уже признанные FeeRouter credits
-
-После `_sync()` это balance-backed local accounting.
-
-`pay(asset, recipient)` не вызывает PAIR и не требует rollover.
-
-Даже если будущий `rollCampaign()` навсегда заблокирован epoch drift, старые credits можно выплачивать.
-
-### PromoVault free reserves
-
-Остаются внутри старого vault.
-
-Их нельзя мигрировать в новый deployment или вывести администратору.
-
-Они могут стать призами только через допустимый старый controller.
-
-### Frozen/reserved draws
-
-Вот здесь availability зависит уже не от PAIR, а от нашего controller.
-
-Если production controller/RNG застрял после reserve, нынешний PromoVault сам не имеет timeout/unfreeze recovery.
-
-Поэтому до появления production controller нельзя обещать универсальное восстановление frozen draw.
-
-### Claimable winner debt
-
-После finalize/settle это самый сильный случай:
+Если новый canonical head не продолжает локальный head:
 
 ```text
-winner + amount уже зафиксированы
-→ любой caller может вызвать claim(drawId,winner)
-→ PAIR не нужен
+найти common ancestor
+→ удалить/пометить orphan raw occurrences
+→ rollback derived buys/carry/attempts/draw-open state
+→ replay canonical branch
 ```
 
-при условии, что quote/token ERC20 и сеть работают.
+Повторное чтение тех же block/log не должно менять state.
+
+Raw occurrence key лучше хранить как:
+
+```text
+(chainId, blockHash, txHash, logIndex)
+```
+
+а tx/log identity отдельно для поиска re-inclusion.
+
+### Регистрация и BUY в одном block/tx
+
+Eligibility определяется порядком canonical confirmation event.
+
+Предлагаю считать моментом BUY сам canonical PoolManager `Swap` log этого pool. Тогда registration должна быть строго раньше него по `(blockNumber, txIndex, logIndex)`.
+
+Если production decoder выберет другой canonical confirmation event, это должно быть versioned rule, а не эвристика.
+
+### Completeness
+
+Independent verifier не получает «наш список BUY». Он сам:
+
+```text
+scan Registry Registered logs
+scan every Swap log of poolId
+decode every candidate
+replay every previous draw consumption
+```
+
+из собственного RPC.
+
+Именно так обнаруживаются и лишние, и пропущенные entries.
+
+Нужен RPC, способный прочитать всю required history; наш зеркальный JSON не заменяет independent chain source.
+
+### Finality
+
+Не выбираю случайные `N confirmations`: из текущих материалов безопасный production параметр Robinhood Chain не доказан.
+
+До выбора finality policy indexer должен различать:
+
+```text
+seen
+canonical-at-current-head
+eligible-for-commit
+```
+
+а `latest` не считать final.
+
+Если RPC/providers не позволяют подтвердить требуемую canonical history или расходятся — **не freeze новый snapshot**, а остановиться.
+
+### Reorg вокруг on-chain commitment
+
+Если snapshot commitment находится в той же chain позже cutoff, нормальный reorg ancestor удалит и descendants, включая commitment/random/settlement tx на orphan branch.
+
+После этого canonical reducer строится заново.
+
+Future commitment всё равно должен включать cutoff block hash и instance domain; verifier проверяет, что cutoff является canonical ancestor.
+
+Если commitment canonical, но заявленный cutoff hash не является его ancestor/не найден — это не «переоценить данные», а fail/halt.
 
 ---
 
-## 7. Нужна ли архитектурная правка FeeRouter прямо сейчас
+## 8. Следующий один пакет работ
 
-На основании прочитанного source graph я бы **пока не менял**.
+Не production indexer целиком.
 
-Да, community takeover делает конкретный failure scenario реальным:
+Предлагаю пакет **`PAIR direct-BUY evidence + deterministic replay v1`**.
+
+### Часть A — получить реальные данные intended route
+
+На свежем local fork текущего PAIR release провести именно тем route, который собираемся поддерживать в frontend:
+
+1. registered EOA direct BUY exact-in;
+2. BUY меньше threshold + следующий BUY, пересекающий threshold;
+3. SELL;
+4. BUY до registration и после registration;
+5. если UI поддерживает exact-out — exact-out с refund;
+6. smart wallet direct route, если он входит в MVP;
+7. один deliberately unsupported batch/aggregator example, если легко получить.
+
+Сохранить raw:
 
 ```text
-registry owner меняет epoch
-→ old FeeRouter sourceEpoch остаётся прежним
-→ rollCampaign навсегда fail-closed
+tx input
+receipt/logs
+pool key/id
+relevant token transfers
+pre/post balances только как diagnostic
+router address + verified source/ABI/code hash
+block/hash
 ```
 
-Но если takeover убирает наш router из recipients, никакая функция `acceptNewEpoch()` не вернёт будущий revenue.
+Trace сохранить можно, но decoder не должен зависеть только от trace.
 
-Если takeover оставляет наш router единственным 100% recipient, теоретически можно было бы безопасно разрешить ограниченный epoch advance. Но проектировать его сейчас — это добавлять recovery authority ради редкого сценария, который ещё не произошёл.
+### Часть B — route decoder
 
-Для MVP проще и честнее:
+Чистая функция:
 
-- bind один раз;
-- fail closed на epoch drift;
-- alert/monitor epoch;
-- старые claims/credits продолжать обслуживать;
-- future revenue interruption считать внешним incident;
-- новый независимый deployment при необходимости делать отдельно.
+```text
+(instance manifest, tx, receipt)
+→ zero/one/many swap candidate decisions
+```
 
-Если позже появится реальный operational requirement переживать benign epoch rotation при сохранении `recipient=this,10000`, тогда отдельно спроектировать узкий `acceptEpoch` с доказуемыми preconditions. Не arbitrary source migration.
+с explicit statuses/reasons.
+
+Никакой базы и carry внутри decoder.
+
+### Часть C — block-range replay
+
+Минимальный indexer/replay:
+
+```text
+scan registrations
+scan all canonical pool Swap logs
+fetch tx/receipts
+decode
+sort
+apply registration rule
+apply carry → entries
+output canonical ledger
+```
+
+Выход — deterministic file + hash, но файл не объявляется source of truth.
+
+### Acceptance
+
+- повторный replay того же range byte-for-byte одинаков по canonical serialization;
+- duplicate RPC/log delivery не создаёт двойных entries;
+- удаление записи из operator-provided output обнаруживается verifier replay;
+- pre-registration BUY не учитывается;
+- same-block ordering работает;
+- `99 USDG + 1 USDG` создаёт ровно одну entry и carry 0;
+- SELL не создаёт entry;
+- unsupported/ambiguous candidate не создаёт entry и остаётся видимым с reason;
+- reorg fixture rollback/replay даёт state новой canonical branch;
+- replay можно выполнить без нашей production DB.
+
+После этого уже имеет смысл проектировать snapshot commitment/controller boundary.
 
 ---
 
-## Что осталось владельцу
+## Решения владельцу
 
-Я вижу только два решения, и оба можно принять без изменения контрактов:
+Нужно всего три небольших решения перед этим этапом:
 
-1. **Принимаем ли для MVP external PAIR takeover risk как риск потери будущего revenue**, при сохранности уже начисленных claims/credits и prize reserves? Моё предложение — да.
-2. **Делаем ли следующим пакетом reproducible local deployment manifest/core smoke**, прежде чем возвращаться к production controller? Моё предложение — да.
+1. **MVP payer rule:** принимаем `payer == finalRecipient == registered wallet`; payer != recipient пока не получает entries?
+2. **Threshold semantics:** принимаем `100 USDG nominal` в raw units вместо внешнего USD price oracle?
+3. **Route scope:** принимаем один явно поддержанный direct TOKEN/USDG route для MVP, а aggregator/multihop/batch не засчитываем до отдельного decoder?
 
-Остальное уже не требует продуктового решения: pre-launch canary и epoch/code-hash monitoring — технические release gates.
+Моя рекомендация по всем трём — **да**. Это даёт воспроизводимый и понятный indexer без эвристик и не закрывает расширение позже.
