@@ -26,4 +26,4 @@
 
 Актуальное решение 14.09: Luck удалён. Основной `short_model.py` и `report:short` работают без истории проигрышей; legacy и сравнительные отчёты сохранены только как исследования.
 
-PAIR dependencies и pre-launch canary: [аудит 15.09](PAIR_DEPENDENCY_AUDIT_2026-09-15.md). Частично подтверждено; внешние vault/locker authority ещё требуют source verification.
+PAIR dependencies и pre-launch canary: [первый аудит 15.09](PAIR_DEPENDENCY_AUDIT_2026-09-15.md). [Продолжение: полученные исходники и переносимость](PAIR_PORTABILITY_AND_SOURCES_2026-09-15.md) — verified sources, реальные границы внешнего потока комиссий и план независимого повторного запуска.
