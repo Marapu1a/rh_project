@@ -37,8 +37,8 @@
 ## Очерёдность реализации
 
 1. **Готово:** одноразовая публичная регистрация самого кошелька, без администратора и заднего числа; [API и тесты](PARTICIPANT_REGISTRY.md).
-2. **Готов первый узкий компонент:** canonical direct BUY attribution и полный replay регистраций/покупок без нашей базы; тесты пропусков, дубликатов, reorg и carry. Есть RPC reader и проверка ledger, нет production daemon/finality и ledger расхода попыток. [Отчёт](DIRECT_BUY_REPLAY.md).
-3. Затем: канонический формат полного снимка и независимый пересчёт, commitment и доступность данных.
+2. **Готов первый узкий компонент:** canonical direct BUY attribution и полный replay регистраций/покупок без нашей базы; тесты пропусков, дубликатов, reorg и carry. Есть RPC reader и проверка ledger; нет production daemon/finality. [Отчёт](DIRECT_BUY_REPLAY.md).
+3. **Готов lifecycle replay:** независимый учёт OPEN/FROZEN/CONSUMED, точный block cutoff и canonical attempt snapshot/hash. [Отчёт](ATTEMPT_LIFECYCLE.md). Production commitment, денежный контекст снимка и гарантии доступности данных ещё не реализованы.
 4. Затем: подключение snapshot к жизненному циклу Short, проверяемому random и расчёту результата. Нельзя выдавать произвольный `finalize(winners,amounts)` через fixture за реализацию этого шага.
 
 Это последовательные компоненты одной архитектуры. Временный signer, production RNG заглушка, admin setter или обход проверки winners не добавлены. Существующие FeeRouter/PromoVault не меняются.

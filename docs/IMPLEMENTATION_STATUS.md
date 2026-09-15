@@ -11,7 +11,8 @@
 | Monthly accounting | start/settle win/no-win, один pending, cycleId, независимый claim; без календаря/RNG/attempts |
 | Конвертация TOKEN → USDG | Не реализована |
 | Публичная регистрация | 15.09 реализован ParticipantRegistry: самостоятельный opt-in, публичное событие, без admin/backdating. Пока не подключён к indexer/controller. [Описание](PARTICIPANT_REGISTRY.md) |
-| Indexer и entries | 15.09 реализованы узкий direct BUY decoder, полный replay регистраций/покупок → carry/начисленные attempts, CLI чтения блоков через свой RPC и сравнения отчёта. Проверены на настоящем router в локальном fork. Нет daemon, production finality/cutoff и расхода attempts по draws. [Результат и границы](DIRECT_BUY_REPLAY.md) |
+| Indexer и entries | 15.09 реализованы узкий direct BUY decoder, полный replay регистраций/покупок → carry/начисленные attempts, CLI чтения блоков через свой RPC и сравнения отчёта. Проверены на настоящем router в локальном fork. Нет daemon и production finality. [Результат и границы](DIRECT_BUY_REPLAY.md) |
+| Жизненный цикл attempts | 15.09 реализован replay OPEN/FROZEN/CONSUMED по Short/Monthly: inclusive block cutoff, пересчёт снимка, проверка его hash, диапазоны и conservation. Есть test-only event source; нет production связи с RNG/денежным settlement или выбора eligible cutoff. [Описание](ATTEMPT_LIFECYCLE.md) |
 | Production controller, capped odds, RNG | Нет; DrawControllerFixture — неограниченная тестовая заглушка |
 | Short без Luck и корзина призов | 14.09 реализована локальная Python-модель полного short; параметры открыты, production-реализации нет. [Описание и результаты](SHORT_MODEL.md) |
 | Расчёт корзины на Solidity | 15.09 реализована pure-библиотека ShortPrizeBasket: положительные призы, порог базовой единицы, точный остаток. Проверена с PromoVault; production controller пока не подключён. [API и границы](SHORT_PRIZE_BASKET.md) |
@@ -34,6 +35,8 @@
 Полная финализация списком O(N), максимальный production размер не установлен. Нельзя заменять gas-проблему произвольным исключением уже назначенных winners. [Подробности](PROMO_VAULT_DESIGN.md).
 
 ## Проверки и воспроизведение
+
+Текущая проверка 15.09: **82/82 tests в npm test прошли**, включая lifecycle replay и реальный локальный event-fixture ABI. [Команды и синтетический отчёт попыток](ATTEMPT_LIFECYCLE.md). Настоящий PAIR/router на local fork проверен предыдущим этапом [direct BUY](DIRECT_BUY_REPLAY.md); новый fork на этапе lifecycle не запускался.
 
 Проверка 14.09: 43 контрактных tests (16 FeeRouter + 27 PromoVault), 9 offline farming tests и 11 новых Short tests прошли. Сохранённый Short-отчёт воспроизведён с точным совпадением. Новые тесты funding и monthly accounting включены в npm test. Новый сетевой fork не запускался.
 
@@ -63,6 +66,6 @@ PAIR route и доступность блока могут измениться;
 
 ## Следующий этап
 
-USDG funding и monthly accounting реализованы; API/ограничения описаны в PROMO_VAULT_DESIGN. Target фиксирован: для MVP deployment 100 USDG, изменения targets не нужны. Локальная модель Short реализована и проверена; первые сценарии — в SHORT_MODEL.md. Далее сравниваем параметры на нескольких seeds, выбираем настройки и оцениваем gas для обновления всех участников; gas пока не измерен. Следующие отдельные задачи — production controller с календарём/проверкой исходов, participants/entries и выбранный RNG; конвертация также отсутствует. Пока можно проверить проводки, но нельзя доказать легитимность outcome, monthly interval или consumption попыток. Публичный запуск не готов.
+USDG funding/monthly accounting, регистрация, basket math и BUY/attempt replay реализованы отдельными компонентами. Target для MVP deployment — 100 USDG. Следующая граница — production controller: момент допустимого cutoff/finality, атомарная связь snapshot с резервированием бюджета, проверенный random/result и денежный settlement. Численные настройки draws/gas-пределы и конвертация остаются открыты. Lifecycle replay проверяет расход попыток согласно source events, но не доказывает легитимность outcome или соблюдение расписания. Публичный запуск не готов.
 
 14.09: Luck удалён из принятой схемы и `short_model.py`; `short_economy.py` использует только entries (рабочий допуск первого билета 20%). Исторические модели изолированы в `short_model_legacy.py` / `short_economy_legacy.py`. Прошли 6 текущих модельных, 5 economy и 19 исторических/сравнительных тестов.

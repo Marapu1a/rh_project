@@ -3,7 +3,7 @@ const {keccak256}=require('ethers');
 const {replay,canonical,hash,validateManifest}=require('./direct-buy.cjs');
 
 // Independent reader: fetch whole blocks and every receipt, not an operator BUY list.
-async function scan(manifest,rpcUrl,toBlock){
+async function scan(manifest,rpcUrl,toBlock,lifecycle=null){
   validateManifest(manifest);
   let sequence=0;
   async function rpc(method,params=[]){
@@ -20,6 +20,10 @@ async function scan(manifest,rpcUrl,toBlock){
   for(const field of ['router','manager','hook','token','quote','registry']){
     const code=await rpc('eth_getCode',[manifest[field],tag(toBlock)]);
     if(code==='0x'||keccak256(code)!==manifest.codeHashes[field])throw Error('Unexpected '+field+' runtime; review deployment binding');
+  }
+  if(lifecycle){
+    const code=await rpc('eth_getCode',[lifecycle.source,tag(toBlock)]);
+    if(code==='0x'||keccak256(code)!==lifecycle.sourceCodeHash.toLowerCase())throw Error('Unexpected lifecycle source runtime');
   }
   const blocks=[];
   for(let n=BigInt(manifest.anchor.number)+1n;n<=BigInt(toBlock);n++){

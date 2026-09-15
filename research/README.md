@@ -1,5 +1,7 @@
 # Данные исследований
 
+`attempt-lifecycle-report.json` — воспроизводимый **синтетический** пример OPEN/FROZEN/CONSUMED поверх прежнего fork BUY evidence. Новые BUY/lifecycle occurrences генерируются тестовым кодом, не получены из новой сети. `npm run report:attempts`; [формат, инварианты и границы доверия](../docs/ATTEMPT_LIFECYCLE.md).
+
 `direct-buy/` — свежий local-fork evidence исполнения native PAIR launch и настоящего Robinhood Universal Router, manifest/code hashes, выбранные внешние MIT/GPL источники и воспроизводимый ledger. Офлайн: `npm run report:direct-buy`; новый fork: `npm run test:fork:direct-buy`. Это локальные транзакции, не публичные сделки. [Доказательства и ограничения](../docs/DIRECT_BUY_REPLAY.md).
 
 `pair-source-audit/` — выбранные публичные MIT-исходники PAIR и manifest их Sourcify/RPC-проверки. Внешние лицензии сохранены; эти файлы не включаются в сборку наших contracts. Обновление: `node scripts/pair-source-audit.cjs` (read-only сеть, перезаписывает snapshot). Полные временные ответы API остаются вне Git. Границы проверки: [исходники и переносимость](../docs/PAIR_PORTABILITY_AND_SOURCES_2026-09-15.md).

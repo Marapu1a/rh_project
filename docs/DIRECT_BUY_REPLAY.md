@@ -42,7 +42,7 @@ minted = floor(x / 100000000)
 carryRaw = x % 100000000
 ```
 
-Выход — канонически сериализованный ledger и его hash, с отдельными счётчиками `shortAttemptsMinted` / `monthlyAttemptsMinted`. Это **накопительное начисление, не доступные после draws попытки**: freeze/consumption ledger ещё не реализован. Не подключать эти total counters к production draw как available.
+Выход — канонически сериализованный ledger и его hash, с отдельными счётчиками `shortAttemptsMinted` / `monthlyAttemptsMinted`. Это **накопительное начисление, не доступные после draws попытки**. Поверх него теперь реализован [lifecycle replay](ATTEMPT_LIFECYCLE.md) с OPEN/FROZEN/CONSUMED; production controller отсутствует. Не использовать minted totals как available.
 
 При reorg используем полный replay новой непрерывной ветки от anchor; инкрементальная БД/поиск common ancestor не добавлены. Результат помечен `canonical-in-supplied-branch-not-eligible-for-commit`. Это не finality policy и не on-chain запрет freeze. Canonical hash и определение достаточных подтверждений для commitment остаются отдельной задачей.
 
@@ -93,4 +93,4 @@ npm run report:direct-buy
 
 ## Следующая граница
 
-Не реализованы: production daemon/finality/cutoff, history потребления attempts, snapshot commitment, random и проверка winners. Следующий этап должен связать рассчитанные начисления с OPEN/FROZEN/CONSUMED и точным cutoff, сохранив независимую воспроизводимость. Smart-wallet wrappers, exact-out и другие маршруты не расширяем молча.
+Не реализованы: production daemon/finality/выбор cutoff, денежный snapshot commitment, random и проверка winners. Учёт потребления attempts, inclusive cutoff и проверка attempt snapshot реализованы следующим отдельным [этапом](ATTEMPT_LIFECYCLE.md), пока на test-only lifecycle source. Smart-wallet wrappers, exact-out и другие маршруты не расширяем молча.

@@ -146,6 +146,9 @@ test('independent RPC scan fetches all receipts and detects changed head or code
     const scanned=await scan(manifest,url,to);
     assert.equal(receiptReads,receipts.size);
     assert.equal(canonical(replay(scanned.manifest,scanned.blocks)),canonical(replay(manifest,blocks)));
+    await assert.rejects(scan(manifest,url,to,{source:manifest.registry,sourceCodeHash:keccak256('0x6002')}),/lifecycle source runtime/);
+    const withLifecycle=await scan(manifest,url,to,{source:manifest.registry,sourceCodeHash:keccak256(fakeCode)});
+    assert.equal(withLifecycle.blocks.length,blocks.length);
     mode='code';await assert.rejects(scan(manifest,url,to),/runtime/);
     mode='reorg';headReads=0;await assert.rejects(scan(manifest,url,to),/Chain changed/);
   }finally{server.closeAllConnections();await new Promise(resolve=>server.close(resolve));}

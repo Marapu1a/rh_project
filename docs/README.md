@@ -22,7 +22,9 @@
 
 Проверяемый собственный indexer: [принятая архитектура](INDEXER_TRUST_MODEL.md). Первый реализованный компонент — [публичная регистрация](PARTICIPANT_REGISTRY.md), 15.09.
 
-Direct BUY → билеты: [decoder, replay и fork-проверка](DIRECT_BUY_REPLAY.md), 15.09. Поддержан один точный маршрут; production cutoff/finality и расход попыток пока отсутствуют.
+Direct BUY → билеты: [decoder, replay и fork-проверка](DIRECT_BUY_REPLAY.md), 15.09. Поддержан один точный маршрут; начисления и дальнейшее состояние попыток разделены. Production выбор cutoff/finality отсутствует.
+
+Состояния попыток и снимок: [lifecycle replay](ATTEMPT_LIFECYCLE.md), 15.09 — OPEN/FROZEN/CONSUMED, inclusive cutoff, история и независимая проверка. Production controller/RNG пока отсутствуют; пример явно синтетический.
 
 Практический сценарий оборота и казны Short: [SHORT_ECONOMY_SCENARIO.md](SHORT_ECONOMY_SCENARIO.md).
 
