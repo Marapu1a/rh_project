@@ -1,290 +1,465 @@
 # Текущий ответ GPT
 
 Обновлено: 15.09.2026.
-Последний просмотренный commit проекта: `5bf7abd0c649afba86b214fd4ab516bf87b4a25f`.
+Просмотрен latest request commit `49cb27f28412c10b206b168fc27c1cb58f10342f`, а также результаты `91f5d704aaa8edd72a08df7369be440179242a87` и `0eed3f70fe79f489520b41d28efc3a8624243660`.
 
-Тема: **PAIR dependency / escape audit перед реальным запуском**.
+Фактически прочитаны:
 
-Это отдельный инфраструктурный follow-up. Текущие продуктовые изменения Short (включая удаление Luck в latest spec/model) не пересматриваем. Production-код сейчас менять не просим.
+- `docs/PAIR_DEPENDENCY_AUDIT_2026-09-15.md`;
+- `docs/PAIR_PORTABILITY_AND_SOURCES_2026-09-15.md`;
+- `research/pair-source-audit/manifest.json`;
+- сохранённые verified sources `VaultV2`, `FactoryV2`, `ModeRegistry`, `NativeFeeSharingModeV5`, `NativeFeeHook`, `NativeFeeCoordinator`, `PairLaunchpadV5Upgradeable`;
+- наши `FeeRouter.sol` и `PromoVault.sol`.
 
-## Решение владельца
+Никакие сетевые команды в этом проходе мной не запускались. Ни Sourcify, ни RPC заново не опрашивал; ниже ревью сохранённого evidence и кода.
 
-Продолжаем делать первый запуск под PAIR / Robinhood Chain.
+Тема: **что действительно доказал PAIR source audit, где остаётся trust boundary и какой следующий пакет работ имеет смысл**.
 
-Падение цены самого `$PAIR` не является причиной бросать текущую разработку. Код проекта не должен быть одноразово привязан к одному launchpad: если когда-нибудь PAIR окажется проблемным, продуктовую/призовую часть можно портировать на другую EVM-сеть или другую площадку.
+## Короткий вердикт
 
-Рабочий принцип:
+Исследование получилось полезным и в целом выводы прочитаны правильно.
 
-> **PAIR — первый launch/fee infrastructure adapter, а не сам проект.**
+Главное изменение относительно первого прохода: теперь уже есть исходники конкретной native fee-sharing ветки, и стало видно, что риск не в «PAIR может тайно вытащить наш LP через VaultV2», а в другом:
 
-Теоретически тот же продукт можно запускать независимыми экземплярами под разными именами и/или в разных сетях:
+> PAIR registry owner способен сменить fee-sharing recipients будущего epoch через `communityTakeover`, а наш текущий FeeRouter специально fail-closed на любое изменение `sourceEpoch`.
 
-```text
-network A:
-  TOKEN_A
-  fee-source adapter A
-  PromoVault A
-  Short/Monthly A
+То есть security boundary стала намного конкретнее.
 
-network B:
-  TOKEN_B
-  fee-source adapter B
-  PromoVault B
-  Short/Monthly B
-```
+При этом:
 
-Без bridge это отдельные токены и отдельные экономики. Старые holders автоматически не мигрируют; snapshot/airdrop/bridge были бы отдельным продуктовым решением.
+- уже созданные `FeeRouter.credit` не зависят от дальнейшего PAIR rollover и могут быть выплачены через `pay()`;
+- старые `VaultV2.claimable[oldEpoch]` не переписываются при atomic transition;
+- PromoVault вообще не вызывает PAIR;
+- existing native hook path по прочитанному коду не требует PAIR API/price signer на каждом swap;
+- новый независимый deployment продукта на другой площадке действительно реалистичен без переноса старой казны.
 
-Пока никаких multi-chain модулей проектировать не надо. Важно только не зашить PAIR-специфику глубже, чем она действительно нужна.
+Я бы **не добавлял сейчас универсальную миграцию source** и не делал proxy. Текущий fail-closed подход приемлем для MVP, если публично и технически считать потерю будущего PAIR revenue внешним availability risk, а не обещанием непрерывного дохода.
 
 ---
 
-## Что уже видно по нашей архитектуре
+## 1. Существенные поправки к формулировкам source audit
 
-Универсальная часть проекта в основном уже отделяется:
+### Vault лучше называть не «immutable vault вообще», а «non-upgradeable VaultV2 family в проверенной ветке»
 
-- PromoVault / free-reserved-claimable accounting;
-- Short/Monthly logic;
-- USDG prize liabilities;
-- future controller/RNG/indexer/product UI.
-
-PAIR-специфичная часть сейчас прежде всего:
-
-1. источник creator fees;
-2. provenance/атрибуция launch pool и position;
-3. сбор/claim native PAIR revenue;
-4. определение eligible canonical BUY по конкретному торговому пути.
-
-То есть потенциальный future port должен скорее менять `fee source / trade attribution adapter`, а не переписывать весь Promo.
-
----
-
-## Конкретная текущая runtime-зависимость
-
-`FeeRouter.sol` сейчас одноразово привязывается к внешнему PAIR vault через:
+`PairV5LaunchV2NativeFeeVaultFactoryV2` действительно делает:
 
 ```solidity
-IPairNativeVault public pairVault;
-uint256 public positionId;
-uint64 public sourceEpoch;
+new PairV5LaunchV2NativeFeeVaultV2{salt:salt}(...)
 ```
 
-`bindSource()` проверяет:
+и его `upgradeVaultImplementation()` всегда revert с `ImmutableImplementation()`.
+
+У самого `VaultV2` нет proxy/upgrader path; критические зависимости — `positionManager`, `registrar`, `protocolTreasury`, `projectToken`, `launchpad`, `policyController`, `buybackExecutor`, `modeId` — immutable.
+
+Это сильное доказательство для **этой factory family**.
+
+Но factory source сам по себе ещё не доказывает, что будущий vault нашего конкретного launch создан именно этой factory и именно этим handler/version. Поэтому production wording лучше:
+
+> «наш canary launch должен доказать, что конкретный vault создан verified FactoryV2/VaultV2 path и runtime/constructor bindings совпадают с receipt»
+
+а не просто «VaultV2 immutable».
+
+### LP custody выглядит хорошо, но последний кусок доказательства всё ещё PositionManager
+
+`PoolEngine.createPool()` mint'ит position сразу с recipient=`vault`.
+
+`VaultV2.registerPosition()` дополнительно требует:
+
+```solidity
+positionManager.ownerOf(id) == address(this)
+```
+
+и `collectFees()` снова проверяет ownership.
+
+В прочитанном `VaultV2` нет функции transfer/approve/decrease/burn/rescue/arbitraryCall.
+
+Это очень хороший сигнал.
+
+Но абсолютное «LP невозможно вывести» пока требует ещё двух вещей на конкретном launch:
+
+1. `PositionManager.ownerOf(positionId) == vault`;
+2. у position нет approval/operator, позволяющего третьей стороне им распоряжаться, и semantics конкретного PositionManager не дают обход ownership.
+
+То есть вывод документа правильный: native V2 custody не надо путать с legacy PairV4Locker, но canary должен проверять именно position ownership/approvals.
+
+### Community takeover прочитан правильно и это главный внешний risk
+
+`PairV5LaunchV2ModeRegistry.communityTakeover()` — `onlyOwner`.
+
+Для mode 1 handler возвращает `eligible=true`, а registry при регистрации проекта сохраняет takeover eligibility.
+
+Далее registry может без подписи прежних recipients вызвать:
 
 ```text
-vault.projectToken() == projectToken
-epochRecipientCount(epoch) == 1
-recipient == FeeRouter
-share == 10000
+VaultV2.transitionFeeSharingAtomic(newRecipients,newShares)
 ```
 
-После bind router использует:
+Внутри VaultV2:
 
 ```text
-collectFees(positionId)
-claimable(epoch, recipient, asset)
-claim(asset, epoch)
+collect all registered positions under old epoch
+→ set new policy
+→ epoch++
 ```
 
-`rollCampaign()` специально fail-closed при:
+Старое `claimable[oldEpoch][oldRecipient][asset]` не переписывается.
+
+Это означает:
+
+- уже начисленный старый recipient debt сохраняется;
+- **будущие** creator fees могут быть направлены другим recipients;
+- наш `FeeRouter.rollCampaign()` после epoch drift начнёт revert с `SourceEpochChanged()`.
+
+Это не теоретическая неизвестность — такой authority path в прочитанном коде есть.
+
+### Protocol treasury transfer — отдельный availability risk
+
+В `VaultV2._allocate()` сначала считается:
 
 ```text
-pairVault.epoch() != sourceEpoch
+70% modeAmount
+30% protocolAmount
 ```
 
-Это хорошая защита от тихой смены внешней fee policy, но одновременно availability risk: если PAIR способен изменить epoch/policy не по нашей воле, наш rollover остановится.
+и protocol amount немедленно `safeTransfer(protocolTreasury)`.
 
-Одноразовый `bindSource` также означает, что текущий прототип сознательно не умеет мигрировать на другой PAIR vault/source после запуска.
+Если transfer конкретного asset в treasury revert'ит, весь `collectFees()` revert'ит, включая начисление creator share.
 
-Это не обязательно надо менять — сначала нужно понять реальные полномочия PAIR и свойства deployed contracts.
+То есть даже при честной recipient policy collection зависит не только от нашего router, но и от способности VaultV2 перевести protocol share.
+
+Это стоит оставить в threat model как runtime availability dependency.
+
+### Hook действительно выглядит off-chain independent на swap path
+
+`beforeSwap/afterSwap` читают только зарегистрированный pool и on-chain `stateView`; server price signer там нет.
+
+`registrar` и `stateView` immutable.
+
+Существующий pool повторно зарегистрировать нельзя.
+
+Поэтому по **этому verified hook source** исчезновение pair.fund API не является условием остановки swap.
+
+Но остаются обычные runtime dependencies: PoolManager, StateView, ERC20 и сама сеть.
 
 ---
 
-## Что уже проверялось
+## 2. Достаточна ли выбранная граница переносимости
 
-В `docs/archive/ECONOMICS_FORK_2026-09-12.md` есть успешный свежий fork, где настоящий PAIR launch path был использован вместе с нашими FeeRouter и PromoVault.
-
-На том fork были проверены:
-
-- реальный TOKEN/USDG PAIR launch;
-- BUY/SELL через настоящий PoolManager/hook;
-- creator revenue в USDG и TOKEN;
-- collection/claim native PAIR fees;
-- `FeeRouter` rollover;
-- выплата в PromoVault и claim;
-- accounting старой/новой кампании.
-
-Это сильный integration evidence для той версии PAIR, но **не вечная гарантия совместимости**.
-
-В архивном отчёте уже зафиксировано, что PAIR launch route менялся: прежняя проверка salt/factory перестала быть достаточной, пришлось находить актуальные coordinator/registry/factory.
-
-Следовательно, перед production launch нужен новый canary на текущем live release, а не ссылка на старый успешный fork.
-
----
-
-## Что именно хотим проверить у PAIR
-
-Нужен не общий обзор `$PAIR` tokenomics, а **dependency / escape-hatch audit нашего конкретного launch path**.
-
-Главный вопрос:
-
-> Если завтра pair.fund frontend/API/keeper исчезнут или команда PAIR перестанет помогать, что из нашего проекта всё равно продолжит жить on-chain и что мы сможем обслуживать сами?
-
-Разделить минимум четыре уровня риска.
-
-### A. Цена `$PAIR` падает почти в ноль
-
-Проверить, существует ли хоть какая-то runtime-зависимость нашего TOKEN/pool/fees/Promo от владения, цены или ликвидности `$PAIR`.
-
-Желаемый результат: цена protocol token сама по себе технически нас не ломает.
-
-### B. Off-chain PAIR исчезает
-
-Представить:
+Да. Я бы оставил её именно такой:
 
 ```text
-pair.fund UI = down
-PAIR API/indexer = down
-PAIR keeper = down
+portable core:
+PromoVault + prize accounting + product rules + future controller/RNG
+
+platform-specific:
+fee collection + TOKEN→USDG conversion + eligible BUY attribution
 ```
 
-Проверить, можем ли мы:
+При повторном запуске мы **не мигрируем deployment**, а создаём новый экземпляр.
 
-- восстановить token/pool/position/vault только из chain state/events;
-- торговать напрямую через canonical V4 infrastructure без PAIR frontend;
-- самостоятельно вызвать collect/claim;
-- продолжать наш indexer и Promo;
-- не зависеть от их серверного random/oracle для уже существующего рынка.
+Что реально помешает такому запуску сейчас:
 
-### C. PAIR protocol contracts меняются
+1. production controller/RNG ещё нет;
+2. production indexer/BUY attribution ещё нет;
+3. TOKEN→USDG conversion ещё нет;
+4. FeeRouter знает конкретный PAIR vault API и не является универсальным adapter;
+5. другой EVM может не поддерживать текущий build/EVM target;
+6. quote token/decimals/target надо заново проверять.
 
-Выяснить для **текущего live release**:
+Ничего из этого не требует сегодня проектировать вторую площадку.
 
-- какие контракты proxy/upgradeable, какие immutable;
-- кто admin каждого proxy/handler/registry/factory/vault/hook/locker;
-- кто способен менять implementation;
-- кто способен менять fee policy/epoch/recipient;
-- может ли PAIR admin сделать это для уже launched project без нашего согласия;
-- есть ли pause/emergency/rescue/withdraw пути;
-- может ли изменение внешней policy сломать только новые fees или также старые claimable balances.
+И важная граница корректна:
 
-### D. Locker / liquidity safety
+> новый deployment не имеет права забирать free/reserved/claimable из старого PromoVault.
 
-Особенно проверить контракт, который держит V4 LP position:
-
-- есть ли withdraw;
-- arbitrary transfer;
-- rescue;
-- admin path;
-- upgrade path;
-- возможность перевести/сжечь/заменить position;
-- зависит ли permanently locked liquidity от доверия к proxy admin.
-
-Не принимать маркетинговую формулировку «locked forever» как доказательство — смотреть deployed bytecode/source/storage/admin.
+Старые obligations продолжают жить в старом экземпляре.
 
 ---
 
-## Предлагаемый production canary
+## 3. Что deployment config, а что code version
 
-Непосредственно перед реальным запуском сделать свежий mainnet-fork test по **текущему canonical PAIR release**.
+Я бы не параметризовал GENERAL 3:2:1 в constructor сейчас.
 
-Последовательность:
+Причина: это не инфраструктурный адрес, а публичное правило движения призовых денег. Если его сделать произвольным constructor config, мы получим много экономически разных vault deployment'ов с одним и тем же bytecode/API, что усложнит проверку пользователем.
 
-1. Определить текущие canonical launchpad/coordinator/registry/factory/hook/locker/vault addresses из live chain + текущего frontend/docs; не использовать автоматически старые 12.09 addresses.
-2. Проверить proxy implementations/admins/code hashes.
-3. Запустить тестовый TOKEN тем же режимом/policy, который планируется для production.
-4. Сохранить launch receipt/provenance:
+Для MVP проще:
 
 ```text
-token
-project id/address
-pool ids
-hook
-locker
-LP position ids
-native vault
-epoch
-recipients
-shares
-implementations/code hashes
+изменились prize allocation rules
+→ новая code version
+→ новые tests
+→ новый code hash
 ```
 
-5. Привязать наш FeeRouter и доказать, что текущая policy действительно даёт ожидаемый recipient/share.
-6. Сделать реальные fork BUY + SELL.
-7. Собрать fees без PAIR frontend/API.
-8. Claim TOKEN и quote fees через on-chain vault.
-9. Провести их через FeeRouter → PromoVault.
-10. Проверить старые/new credits и rollover.
-11. Смоделировать PAIR API unavailable: дальнейшие действия только через RPC/on-chain state.
-12. Проверить, что direct V4 trade существующего pool не требует PAIR UI/backend.
+### Минимальный deployment manifest
 
-Отдельно сохранить доказательства authority/upgradeability и результат locker audit.
+Я бы сохранял JSON + человекочитаемый MD со следующим:
+
+```text
+identity
+- git commit
+- contracts version/schema
+- compiler version
+- optimizer/viaIR
+- evmVersion
+- artifact/runtime code hashes
+
+network
+- chainId
+- network name
+- deployment block/tx hashes
+
+assets
+- projectToken
+- quoteToken
+- token decimals
+- quote decimals
+- human nextStartTarget
+- raw nextStartTarget
+
+local authorities
+- FeeRouter owner
+- drawController
+- code hashes этих contracts
+
+FeeRouter
+- pairVault
+- positionId
+- sourceEpoch
+- projectToken/quoteToken
+- initial campaign policy recipients/bps/endsAt
+
+PAIR provenance
+- launchpad
+- active registry
+- coordinator
+- handler + mode/version
+- factory
+- vault
+- hook
+- poolId(s)
+- positionId(s)
+- code hashes / runtime hashes
+- epoch recipients/shares at bind
+
+product/economic version references
+- PRODUCT_SPEC commit/hash
+- creator allocation policy version
+- Short rules version
+- external funding allocation version
+```
+
+Не надо класть RPC secrets или считать URL частью trust boundary.
 
 ---
 
-## Audit invalidation rule
+## 4. Один следующий пакет работ
 
-Предлагаю считать canary привязанным к конкретному внешнему release.
+Кандидат Codex «локальный независимый deployment ядра» правильный, но в чистом виде он частично повторит unit tests.
 
-Если перед production изменился любой критичный компонент:
+Чтобы он дал новую ценность, сделать его не как ещё один test file, а как **reproducible deployment artifact**.
+
+### Пакет: `core-local-deployment`
+
+С чистого локального chain state:
+
+1. compile конкретного git commit;
+2. deploy обычные mock TOKEN/USDG;
+3. deploy минимальный controller fixture только как явную test authority;
+4. deploy PromoVault с production constructor semantics;
+5. выполнить внешний USDG funding;
+6. проверить GENERAL / targeted allocation;
+7. reserve Short;
+8. finalize реальные winner amounts;
+9. claim;
+10. start/settle monthly win и no-win отдельными clean runs;
+11. сохранить deployment manifest, constructor args, addresses, tx receipts, code hashes и final accounting state;
+12. повторить deployment второй раз и доказать, что различия объясняются только nonces/addresses, а конфигурация и code hashes воспроизводимы.
+
+FeeRouter без PAIR в этот пакет **не надо искусственно универсализировать**. Его portability boundary уже честно описана: другой fee source → другая явная integration implementation.
+
+### Acceptance criteria
+
+Этап готов, если из пустой локальной сети одной документированной командой получается:
+
+```text
+deploy manifest
++ code-hash verification
++ funding
++ reserve/finalize/claim
++ monthly accounting
++ conservation assertions
+```
+
+и результат не зависит от pair.fund/RPC PAIR.
+
+Это уже проверяет именно **развёртываемость ядра**, а не отдельные функции контрактов.
+
+---
+
+## 5. Минимальный pre-launch PAIR canary
+
+Не надо превращать canary в аудит всей экосистемы.
+
+Перед реальным запуском достаточно доказать наш конкретный путь.
+
+### До launch
+
+1. Зафиксировать current canonical graph и code hashes:
 
 ```text
 launchpad implementation
-coordinator / factory / registry
+active registry
+coordinator
+mode-1 handler/version
+FactoryV2
 hook
-locker
-vault implementation / handler
-fee policy semantics
 ```
 
-то старый integration audit считается протухшим и прогоняется заново.
+2. Проверить, что intended mode действительно fee-sharing V5/compatible atomic path.
 
-Это особенно важно потому, что история репозитория уже показывает реальные изменения PAIR launch route между нашими fork-проверками.
+### После test launch на свежем fork / canary
 
----
-
-## Что НЕ нужно делать сейчас
-
-- не бросать PAIR из-за движения цены `$PAIR`;
-- не строить multi-chain bridge;
-- не делать универсальный plugin framework на все DEX;
-- не добавлять arbitrary source migration в FeeRouter до понимания threat model;
-- не переписывать PromoVault;
-- не менять Short/Monthly продуктовую логику ради этого аудита.
-
-Сначала нужно понять реальную внешнюю trust boundary.
-
----
-
-## Что просим Codex сделать
-
-1. Прочитать текущий `FeeRouter.sol`, `FEE_ROUTER_ROLLOVER_REPORT.md`, `archive/ECONOMICS_FORK_2026-09-12.md` и fork scripts.
-2. Найти все места кода/документации, где production path зависит именно от PAIR, а не от обычного ERC20/V4/Promo.
-3. Разделить dependencies на:
+3. Получить конкретные:
 
 ```text
-launch-only
-runtime required
-off-chain convenience only
-admin/trust dependency
+projectToken
+vault
+poolId
+positionId
 ```
 
-4. Составить конкретный checklist live contracts/roles/storage/code hashes, которые нужно проверить перед production.
-5. Проверить, достаточно ли текущего fail-closed `sourceEpoch` поведения, либо оно создаёт критичный availability trap.
-6. Отдельно оценить one-time `bindSource`: для MVP это полезная immutability boundary или слишком опасная невозможность recovery при внешнем upgrade?
-7. Не менять код автоматически. Если видишь необходимость архитектурной правки — сначала описать конкретный failure scenario, который она исправляет.
-8. Предложить минимальный reproducible fork/canary plan и набор артефактов, которые надо сохранить как production evidence.
+4. Проверить:
 
-## Желаемый формат ответа
+```text
+vault.projectToken == TOKEN
+vault.policyController == expected registry
+vault.modeId == 1
+vault.epoch == expected
+epoch recipient count == 1
+recipient == наш FeeRouter
+share == 10000
+PositionManager.ownerOf(positionId) == vault
+vault.positions(positionId).registered == true
+hook.pools(poolId) points to TOKEN/quote/vault/position
+```
 
-Коротко и прикладно:
+5. Проверить отсутствие unexpected position approvals/operator approvals.
 
-1. Что переживает полное исчезновение PAIR off-chain.
-2. Что остаётся runtime-зависимостью от PAIR contracts.
-3. Какие полномочия PAIR admins являются для нас критичными.
-4. Какие свойства locker/vault надо доказать.
-5. Какие проверки уже покрыты нашим 12.09 fork, а какие надо повторить.
-6. Нужна ли какая-либо правка нашей архитектуры **до** production или текущего fail-closed подхода достаточно для MVP.
-7. Финальный pre-launch canary checklist.
+6. `FeeRouter.bindSource(vault, positionId)` должен пройти только после этой сверки.
 
-Не писать production-код до обсуждения результатов.
+### Economic path
+
+7. Сделать intended BUY + SELL.
+
+8. Permissionless `collectFees(positionId)`.
+
+9. Проверить фактические fee deltas и 70/30 split по обоим assets.
+
+10. Claim creator share через FeeRouter для TOKEN и quote.
+
+11. Проверить rollover на неизменившемся epoch.
+
+12. Довести реально полученный USDG через PromoVault → reserve → finalize → claim.
+
+Когда conversion будет реализован — добавить отдельный TOKEN→USDG canary с slippage/recipient checks.
+
+### Invalidation
+
+Если до production меняется critical graph/code hash — canary повторяется.
+
+---
+
+## 6. Что происходит со старыми обязательствами при проблеме PAIR
+
+Здесь важно разделять состояния.
+
+### Будущий creator revenue
+
+Не является нашим активом до фактического начисления/получения.
+
+Community takeover или поломка PAIR могут оборвать будущий поток. Наш контракт не может это исправить.
+
+### VaultV2 старого epoch
+
+Atomic transition сначала собирает fees в старый epoch.
+
+Сохранённые `claimable[oldEpoch][FeeRouter][asset]` остаются claimable, если asset/vault работают.
+
+`FeeRouter.harvest(asset, oldEpoch)` не требует, чтобы `sourceEpoch` совпадал с текущим vault epoch.
+
+### Уже признанные FeeRouter credits
+
+После `_sync()` это balance-backed local accounting.
+
+`pay(asset, recipient)` не вызывает PAIR и не требует rollover.
+
+Даже если будущий `rollCampaign()` навсегда заблокирован epoch drift, старые credits можно выплачивать.
+
+### PromoVault free reserves
+
+Остаются внутри старого vault.
+
+Их нельзя мигрировать в новый deployment или вывести администратору.
+
+Они могут стать призами только через допустимый старый controller.
+
+### Frozen/reserved draws
+
+Вот здесь availability зависит уже не от PAIR, а от нашего controller.
+
+Если production controller/RNG застрял после reserve, нынешний PromoVault сам не имеет timeout/unfreeze recovery.
+
+Поэтому до появления production controller нельзя обещать универсальное восстановление frozen draw.
+
+### Claimable winner debt
+
+После finalize/settle это самый сильный случай:
+
+```text
+winner + amount уже зафиксированы
+→ любой caller может вызвать claim(drawId,winner)
+→ PAIR не нужен
+```
+
+при условии, что quote/token ERC20 и сеть работают.
+
+---
+
+## 7. Нужна ли архитектурная правка FeeRouter прямо сейчас
+
+На основании прочитанного source graph я бы **пока не менял**.
+
+Да, community takeover делает конкретный failure scenario реальным:
+
+```text
+registry owner меняет epoch
+→ old FeeRouter sourceEpoch остаётся прежним
+→ rollCampaign навсегда fail-closed
+```
+
+Но если takeover убирает наш router из recipients, никакая функция `acceptNewEpoch()` не вернёт будущий revenue.
+
+Если takeover оставляет наш router единственным 100% recipient, теоретически можно было бы безопасно разрешить ограниченный epoch advance. Но проектировать его сейчас — это добавлять recovery authority ради редкого сценария, который ещё не произошёл.
+
+Для MVP проще и честнее:
+
+- bind один раз;
+- fail closed на epoch drift;
+- alert/monitor epoch;
+- старые claims/credits продолжать обслуживать;
+- future revenue interruption считать внешним incident;
+- новый независимый deployment при необходимости делать отдельно.
+
+Если позже появится реальный operational requirement переживать benign epoch rotation при сохранении `recipient=this,10000`, тогда отдельно спроектировать узкий `acceptEpoch` с доказуемыми preconditions. Не arbitrary source migration.
+
+---
+
+## Что осталось владельцу
+
+Я вижу только два решения, и оба можно принять без изменения контрактов:
+
+1. **Принимаем ли для MVP external PAIR takeover risk как риск потери будущего revenue**, при сохранности уже начисленных claims/credits и prize reserves? Моё предложение — да.
+2. **Делаем ли следующим пакетом reproducible local deployment manifest/core smoke**, прежде чем возвращаться к production controller? Моё предложение — да.
+
+Остальное уже не требует продуктового решения: pre-launch canary и epoch/code-hash monitoring — технические release gates.
