@@ -2,6 +2,8 @@
 
 15.09.2026. Реализован [детерминированный lifecycle replay](../scripts/attempt-lifecycle.cjs) поверх [BUY replay](DIRECT_BUY_REPLAY.md). Это постоянный формат учёта попыток и проверки снимка, **не production controller или проверка random**. Custody-контракты не менялись.
 
+Следующий пакет 15.09: [ShortDrawCommitment](SHORT_DRAW_COMMITMENT.md) связывает этот же AttemptsFrozen ABI с настоящим резервированием USDG атомарно. Есть проверка raw receipts и локального reorg. Он не доказывает правильность snapshot и не добавляет terminal; описанный ниже синтетический пример остаётся примером, а не production history.
+
 ## Проверяемая история
 
 Каждая entry создаёт по одной Short и Monthly attempt. Replay сохраняет исходный BUY ledger, историю MINT/FREEZE/TERMINAL с блоками/транзакциями/логами и состояние каждого кошелька отдельно по типам:

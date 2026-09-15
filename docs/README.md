@@ -26,6 +26,8 @@ Direct BUY → билеты: [decoder, replay и fork-проверка](DIRECT_B
 
 Состояния попыток и снимок: [lifecycle replay](ATTEMPT_LIFECYCLE.md), 15.09 — OPEN/FROZEN/CONSUMED, inclusive cutoff, история и независимая проверка. Production controller/RNG пока отсутствуют; пример явно синтетический.
 
+Связь снимка с деньгами: [атомарный Short commitment](SHORT_DRAW_COMMITMENT.md), 15.09 — внутренний компонент будущего общего controller, реальный reserveUSDG и receipt replay. Нет публичного запуска, readiness или terminal.
+
 Практический сценарий оборота и казны Short: [SHORT_ECONOMY_SCENARIO.md](SHORT_ECONOMY_SCENARIO.md).
 
 Сравнение настроек по 5 760 недельным сценариям: [SHORT_SWEEP_RESULTS](SHORT_SWEEP_RESULTS.md).

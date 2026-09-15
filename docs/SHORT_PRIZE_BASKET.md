@@ -35,4 +35,4 @@ remainder = budget − total
 
 Результат 15.09: **51/51 tests passed** (45 существующих и 6 новых), включая Solidity compilation.
 
-Следующая часть Short — фиксация snapshot и жизненный цикл controller; отдельно требуется завершить дизайн подтверждения entries/random. Этот компонент не закрывает pending/recovery и не делает MVP готовым к запуску.
+Фиксация snapshot и корзины с настоящим резервом теперь реализована отдельным внутренним [ShortDrawCommitment](SHORT_DRAW_COMMITMENT.md). Там weights/minimumUnit неизменяемы, есть технический предел 64 места; сама pure-библиотека не менялась. Полный жизненный цикл controller, подтверждение entries/random и terminal ещё не реализованы; MVP не готов к запуску.

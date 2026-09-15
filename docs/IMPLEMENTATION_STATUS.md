@@ -14,6 +14,7 @@
 | Indexer и entries | 15.09 реализованы узкий direct BUY decoder, полный replay регистраций/покупок → carry/начисленные attempts, CLI чтения блоков через свой RPC и сравнения отчёта. Проверены на настоящем router в локальном fork. Нет daemon и production finality. [Результат и границы](DIRECT_BUY_REPLAY.md) |
 | Жизненный цикл attempts | 15.09 реализован replay OPEN/FROZEN/CONSUMED по Short/Monthly: inclusive block cutoff, пересчёт снимка, проверка его hash, диапазоны и conservation. Есть test-only event source; нет production связи с RNG/денежным settlement или выбора eligible cutoff. [Описание](ATTEMPT_LIFECYCLE.md) |
 | Production controller, capped odds, RNG | Нет; DrawControllerFixture — неограниченная тестовая заглушка |
+| Атомарный Short commitment | 15.09 реализован abstract ShortDrawCommitment: фиксированные rules/basket + snapshot/cutoff/D и настоящий reserveUSDG в одной транзакции. Только внутренний API; нет readiness/authorization/terminal. [Границы и тесты](SHORT_DRAW_COMMITMENT.md) |
 | Short без Luck и корзина призов | 14.09 реализована локальная Python-модель полного short; параметры открыты, production-реализации нет. [Описание и результаты](SHORT_MODEL.md) |
 | Расчёт корзины на Solidity | 15.09 реализована pure-библиотека ShortPrizeBasket: положительные призы, порог базовой единицы, точный остаток. Проверена с PromoVault; production controller пока не подключён. [API и границы](SHORT_PRIZE_BASKET.md) |
 | Frontend, спонсорские физические призы | Не реализованы; 14.09 принята граница отдельного спонсорского слоя поверх постоянного промо, без доступа к основной казне |
@@ -36,7 +37,7 @@
 
 ## Проверки и воспроизведение
 
-Текущая проверка 15.09: **82/82 tests в npm test прошли**, включая lifecycle replay и реальный локальный event-fixture ABI. [Команды и синтетический отчёт попыток](ATTEMPT_LIFECYCLE.md). Настоящий PAIR/router на local fork проверен предыдущим этапом [direct BUY](DIRECT_BUY_REPLAY.md); новый fork на этапе lifecycle не запускался.
+Текущая проверка 15.09: **93/93 tests в npm test прошли**, включая 11 новых тестов [атомарного Short commitment](SHORT_DRAW_COMMITMENT.md), настоящий PromoVault, raw receipt replay и локальный reorg. Компиляция Solidity прошла. Предыдущий lifecycle-пакет: 82/82. [Команды и синтетический отчёт попыток](ATTEMPT_LIFECYCLE.md). Настоящий PAIR/router на local fork проверен предыдущим этапом [direct BUY](DIRECT_BUY_REPLAY.md); новый сетевой fork на этапе commitment не запускался.
 
 Проверка 14.09: 43 контрактных tests (16 FeeRouter + 27 PromoVault), 9 offline farming tests и 11 новых Short tests прошли. Сохранённый Short-отчёт воспроизведён с точным совпадением. Новые тесты funding и monthly accounting включены в npm test. Новый сетевой fork не запускался.
 
@@ -66,6 +67,6 @@ PAIR route и доступность блока могут измениться;
 
 ## Следующий этап
 
-USDG funding/monthly accounting, регистрация, basket math и BUY/attempt replay реализованы отдельными компонентами. Target для MVP deployment — 100 USDG. Следующая граница — production controller: момент допустимого cutoff/finality, атомарная связь snapshot с резервированием бюджета, проверенный random/result и денежный settlement. Численные настройки draws/gas-пределы и конвертация остаются открыты. Lifecycle replay проверяет расход попыток согласно source events, но не доказывает легитимность outcome или соблюдение расписания. Публичный запуск не готов.
+USDG funding/monthly accounting, регистрация, basket math, BUY/attempt replay и атомарный Short commitment реализованы отдельными компонентами. Target для MVP deployment — 100 USDG. Следующая граница — полный immutable controller: авторизация и проверяемость snapshot, readiness/расписание/выбор D, допустимый cutoff/finality, проверенный random/result и атомарный денежный settlement + расход attempts. ShortDrawCommitment — внутренняя часть этого будущего controller, не промежуточный контракт для публичной казны; один controller должен поддерживать также Monthly до deployment. Численные настройки draws/gas-пределы и конвертация остаются открыты. Lifecycle replay проверяет расход попыток согласно source events, но не доказывает легитимность outcome или соблюдение расписания. Публичный запуск не готов.
 
 14.09: Luck удалён из принятой схемы и `short_model.py`; `short_economy.py` использует только entries (рабочий допуск первого билета 20%). Исторические модели изолированы в `short_model_legacy.py` / `short_economy_legacy.py`. Прошли 6 текущих модельных, 5 economy и 19 исторических/сравнительных тестов.

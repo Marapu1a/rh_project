@@ -9,9 +9,9 @@
 - [Карта документации](docs/README.md) — порядок чтения и правила актуальности.
 - [Текущее обращение к GPT](docs/GPT_REVIEW_REQUEST.md) — постоянная ссылка на вопросы очередного обсуждения.
 
-Утверждено внешнее общее пополнение без project fee: Short/Current/Next = 3:2:1, после заполнения Next — 50:50 между Short и Current. Излишки Next, включая целевое пополнение, идут в Current. Призовой фонд невозвратен проекту/спонсорам. Концепция Short обновлена 14.09: допуск с entries/Luck, случайная раздача заранее обеспеченной корзины, не больше одного приза кошельку. Допуск не является выигрышем; игровая логика ещё не реализована.
+Утверждено внешнее общее пополнение без project fee: Short/Current/Next = 3:2:1, после заполнения Next — 50:50 между Short и Current. Излишки Next, включая целевое пополнение, идут в Current. Призовой фонд невозвратен проекту/спонсорам. Концепция Short: допуск на основе entries без Luck, случайная раздача заранее обеспеченной корзины, не больше одного приза кошельку. Допуск не является выигрышем; полный розыгрыш ещё не реализован.
 
-Это **не полностью реализованный продукт**. Есть прототипы [FeeRouter](contracts/FeeRouter.sol) и [PromoVault](contracts/PromoVault.sol), unit tests и исследования. USDG funding и три свободных резерва реализованы: [API и проверки](docs/PROMO_VAULT_DESIGN.md). Monthly accounting (freeze всего Current, win/no-win, Next → Current) реализован. Конвертация, билеты, календарь и production draw/RNG ещё не реализованы. Публичного deployment нет.
+Это **не полностью реализованный продукт**. Есть прототипы [FeeRouter](contracts/FeeRouter.sol) и [PromoVault](contracts/PromoVault.sol), unit tests и исследования. USDG funding, три свободных резерва и Monthly accounting реализованы. Есть регистрация, BUY/attempt replay, расчёт корзины и [атомарная фиксация Short с резервом](docs/SHORT_DRAW_COMMITMENT.md). Конвертация, календарь и полный production controller/RNG ещё не реализованы. Публичного deployment нет.
 
 ## Локальные проверки
 
