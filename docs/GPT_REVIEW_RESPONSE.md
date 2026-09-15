@@ -1,531 +1,290 @@
 # Текущий ответ GPT
 
-Обновлено: 14.09.2026.
-Прочитан запрос commit `2d3473b0102b54c8d40e2ab3fb9889f14e99455b` и сценарий commit `60b0063ce0221129c049c648d2672318d8b50da2`.
+Обновлено: 15.09.2026.
+Последний просмотренный commit проекта: `5bf7abd0c649afba86b214fd4ab516bf87b4a25f`.
 
-Просмотрены `SHORT_ECONOMY_SCENARIO.md`, `short_economy.py`, его тесты и сохранённый JSON, а также текущая Short reference model. GitHub workflow/status для latest commit отсутствуют; тесты в этом окружении независимо не запускались. Ниже отдельно отмечаю выводы из просмотра кода/отчёта и аналитические расчёты.
+Тема: **PAIR dependency / escape audit перед реальным запуском**.
 
-Тема: **fixed-seat Short, cash-flow, заметные призы и следующий локальный эксперимент**.
+Это отдельный инфраструктурный follow-up. Текущие продуктовые изменения Short (включая удаление Luck в latest spec/model) не пересматриваем. Production-код сейчас менять не просим.
 
-Это ревью модели. Production contracts/controller/RNG не трогаем.
+## Решение владельца
 
-## Короткий вывод
+Продолжаем делать первый запуск под PAIR / Robinhood Chain.
 
-Переход обратно к **небольшому fixed K как основному экспериментальному baseline** выглядит разумно именно после смены продуктового приоритета.
+Падение цены самого `$PAIR` не является причиной бросать текущую разработку. Код проекта не должен быть одноразово привязан к одному launchpad: если когда-нибудь PAIR окажется проблемным, продуктовую/призовую часть можно портировать на другую EVM-сеть или другую площадку.
 
-Dynamic K решал задачу «больше людей → больше победителей», но при реальном ограниченном fee income очень легко превращал рост аудитории в дробление фонда на мелкие призы. Новый приоритет другой:
+Рабочий принцип:
 
-> лучше меньше победителей, но призы должны быть заметными, а история выплат — реальной и регулярной.
+> **PAIR — первый launch/fee infrastructure adapter, а не сам проект.**
 
-Под этот приоритет fixed K проще и честнее исследовать.
+Теоретически тот же продукт можно запускать независимыми экземплярами под разными именами и/или в разных сетях:
 
-При этом `K=10` пока нельзя считать выбранной настройкой. Текущий cash-flow runner уже показал два более важных вопроса:
+```text
+network A:
+  TOKEN_A
+  fee-source adapter A
+  PromoVault A
+  Short/Monthly A
 
-1. **admission сейчас не согласован с десятью местами** — первая корзина часто будет недозаполнена;
-2. **`D = весь freeShort` делает cadence очень рваным**: жирный полный draw может почти обнулить Short, после чего следующий долго строится.
+network B:
+  TOKEN_B
+  fee-source adapter B
+  PromoVault B
+  Short/Monthly B
+```
 
-Сам ledger сценария выглядит внутренне согласованным. Явного двойного учёта денег или attempts не вижу.
+Без bridge это отдельные токены и отдельные экономики. Старые holders автоматически не мигрируют; snapshot/airdrop/bridge были бы отдельным продуктовым решением.
+
+Пока никаких multi-chain модулей проектировать не надо. Важно только не зашить PAIR-специфику глубже, чем она действительно нужна.
 
 ---
 
-## 1. Проверка cash-flow модели
+## Что уже видно по нашей архитектуре
 
-Основная арифметика сходится.
+Универсальная часть проекта в основном уже отделяется:
 
-### Entries / carry
+- PromoVault / free-reserved-claimable accounting;
+- Short/Monthly logic;
+- USDG prize liabilities;
+- future controller/RNG/indexer/product UI.
 
-В основном сценарии:
+PAIR-специфичная часть сейчас прежде всего:
 
-```text
-total turnover = 70 000
-BUY = 42 000
-SELL = 28 000
+1. источник creator fees;
+2. provenance/атрибуция launch pool и position;
+3. сбор/claim native PAIR revenue;
+4. определение eligible canonical BUY по конкретному торговому пути.
 
-$100 cumulative eligible BUY = 1 entry
-→ 420 entries
-```
-
-В коде выполняется отдельный invariant:
-
-```text
-cumulativeBuy = entries * 100 USDG + sum(carry)
-```
-
-SELL entries не создаёт. Delayed revenue до фактического `received` в readiness не попадает. Это именно то, что нам нужно.
-
-### Revenue / allocation
-
-При сценарных 0.5%:
-
-```text
-70 000 × 0.5% = 350 USDG revenue
-10% project = 35
-315 → prize side
-Short получает 1/2 prize side = 157.50
-```
-
-External startup 400 GENERAL:
-
-```text
-Short   200
-Current 133.333334
-Next     66.666666
-```
-
-Итог отчёта:
-
-```text
-400 external + 350 revenue
-= 35 project
-+ 257.50 Current
-+ 100 Next
-+ 357.499984 paid
-+ 0.000016 free Short
-```
-
-сходится точно в raw units.
-
-### Frozen / returned
-
-`D = freeShort` замораживается до random. Невыданные элементы корзины и rounding возвращаются в Short через `returned`. Новое funding во frozen draw не добавляется. Повторного использования одной и той же суммы не вижу.
-
-### Что является не ошибкой, а упрощением
-
-- 0.5% — заданный effective realized USDG revenue, а не измеренная PAIR ставка;
-- весь BUY считается eligible;
-- revenue линейно зависит от общего BUY+SELL turnover;
-- creator TOKEN уже мысленно превращён в effective USDG; price impact/conversion не моделируются;
-- все claims и settlement мгновенны;
-- операционные расходы отсутствуют;
-- 60 одинаковых постоянных покупателей создают искусственно синхронные entries;
-- readiness проверяется раз в 6h только из-за шага runner;
-- один seed ничего не говорит о среднем outcome.
-
-Есть ещё одна маленькая концептуальная оговорка: один `Allocation.phase` используется и для external GENERAL, и для кандидатного creator 3:2:1. Если в production creator allocation окажется отдельной политикой, фазы округления могут быть разными. Сейчас эффект — микро-units, но это именно assumption модели, а не уже принятое правило.
+То есть потенциальный future port должен скорее менять `fee source / trade attribution adapter`, а не переписывать весь Promo.
 
 ---
 
-## 2. Fixed K поддерживаю как baseline, но не как lifetime-константу
+## Конкретная текущая runtime-зависимость
 
-При текущем приоритете fixed K действительно лучше dynamic K для первого опыта.
+`FeeRouter.sol` сейчас одноразово привязывается к внешнему PAIR vault через:
 
-Он даёт понятную ось масштабирования:
-
-```text
-funding ↑
-→ при том же K растут номиналы prizes
+```solidity
+IPairNativeVault public pairVault;
+uint256 public positionId;
+uint64 public sourceEpoch;
 ```
 
-а не автоматически:
+`bindSource()` проверяет:
 
 ```text
-audience ↑
-→ K ↑
-→ фонд размазывается по большему числу мест
+vault.projectToken() == projectToken
+epochRecipientCount(epoch) == 1
+recipient == FeeRouter
+share == 10000
 ```
 
-Если проект когда-нибудь станет существенно больше, K можно менять будущей `rulesVersion`, не строя сейчас автоматический `K(N)`.
+После bind router использует:
 
-Но надо помнить следствие fixed K: при большом N общий throughput победителей ограничен. При K=10 и minimum interval 6h максимум 40 prize assignments/day. Luck перераспределяет шанс в пользу более невезучих кошельков, но не создаёт новые места.
+```text
+collectFees(positionId)
+claimable(epoch, recipient, asset)
+claim(asset, epoch)
+```
 
-Это не противоречие новой цели, просто метрика `never won / max loss streak` должна остаться в отчётах.
+`rollCampaign()` специально fail-closed при:
+
+```text
+pairVault.epoch() != sourceEpoch
+```
+
+Это хорошая защита от тихой смены внешней fee policy, но одновременно availability risk: если PAIR способен изменить epoch/policy не по нашей воле, наш rollover остановится.
+
+Одноразовый `bindSource` также означает, что текущий прототип сознательно не умеет мигрировать на другой PAIR vault/source после запуска.
+
+Это не обязательно надо менять — сначала нужно понять реальные полномочия PAIR и свойства deployed contracts.
 
 ---
 
-## 3. Первый draw с 4 победителями — не случайная странность, а настройка admission
+## Что уже проверялось
 
-При текущих параметрах первого участия:
+В `docs/archive/ECONOMICS_FORK_2026-09-12.md` есть успешный свежий fork, где настоящий PAIR launch path был использован вместе с нашими FeeRouter и PromoVault.
 
-```text
-p_max = 0.40
-h_e = 3
-L = 0
-e = 1
+На том fork были проверены:
 
-q = 0.40 × 1/(1+3) = 10%
-```
+- реальный TOKEN/USDG PAIR launch;
+- BUY/SELL через настоящий PoolManager/hook;
+- creator revenue в USDG и TOKEN;
+- collection/claim native PAIR fees;
+- `FeeRouter` rollover;
+- выплата в PromoVault и claim;
+- accounting старой/новой кампании.
 
-Для 60 одинаковых новых участников:
+Это сильный integration evidence для той версии PAIR, но **не вечная гарантия совместимости**.
 
-```text
-E[admitted] = 60 × 10% = 6
-```
+В архивном отчёте уже зафиксировано, что PAIR launch route менялся: прежняя проверка salt/factory перестала быть достаточной, пришлось находить актуальные coordinator/registry/factory.
 
-То есть корзина `K=10` **по определению чаще недозаполнена**, чем заполнена.
-
-Аналитически для `N=60, q=10%`:
-
-- ожидаемое число winners при K=5 ≈ **4.52**; вероятность заполнить все 5 мест ≈ **72.9%**;
-- при K=10 ожидаемо ≈ **5.94** winners; вероятность заполнить все 10 ≈ **7.3%**;
-- K=20 почти ничего не добавляет: admitted в среднем всё равно около 6.
-
-Поэтому наблюдаемые 4/10 в первом draw выглядят нормально для этой настройки.
-
-Если оставить `p_max=40%`, но сделать `h_e=1`, то первый-entry base admission становится 20%. Для N=60/K=10 это уже примерно:
-
-```text
-E[admitted] = 12
-P(M >= 10) ≈ 78.7%
-E[winners] ≈ 9.54
-```
-
-При этом cap всё ещё 40%, reroll и guaranteed win не появляются.
-
-### Вывод
-
-Нельзя выбирать K отдельно от base admission.
-
-Для следующего опыта я бы не крутил сразу все `p_max/h_e/h_l`. Оставить `p_max=40%` и `h_l=6`, а сравнить хотя бы:
-
-```text
-h_e = 3   // current, base q=10%
-h_e = 1   // base q=20%
-```
-
-Это сразу покажет, хотим ли мы:
-
-- редкие заполненные корзины и часто пустующие крупные prizes;
-- или чаще заполняемые корзины с тем же hard cap.
-
-Важно: публично `K=10` нельзя формулировать как «будет 10 победителей». Это максимум десять назначений.
+Следовательно, перед production launch нужен новый canary на текущем live release, а не ссылка на старый успешный fork.
 
 ---
 
-## 4. Как честно сравнить K = 5 / 10 / 20
+## Что именно хотим проверить у PAIR
 
-Сравнение должно использовать **один и тот же event stream**:
+Нужен не общий обзор `$PAIR` tokenomics, а **dependency / escape-hatch audit нашего конкретного launch path**.
 
-- одинаковые BUY/SELL;
-- одинаковый initial bank;
-- одинаковый revenue/delay;
-- одинаковые wallets/carry;
-- одинаковые seeds;
-- одинаковую D-policy;
-- одинаковый minimum meaningful prize.
+Главный вопрос:
 
-И главное: **не досыпать дополнительную субсидию варианту с большим K**, чтобы он выглядел лучше. Если K=20 не ready из-за quality floor — более длинный BUILDING и есть реальная цена двадцати мест.
+> Если завтра pair.fund frontend/API/keeper исчезнут или команда PAIR перестанет помогать, что из нашего проекта всё равно продолжит жить on-chain и что мы сможем обслуживать сами?
 
-Чтобы сначала изолировать именно эффект K, я бы в первом сравнении временно использовал **равные веса `[1,1,...]`** и один `minPrize`. Иначе одновременно меняются K и форма распределения крупных/мелких призов.
+Разделить минимум четыре уровня риска.
 
-После выбора разумного диапазона K вернуть tiered basket и отдельно выбрать skew.
+### A. Цена `$PAIR` падает почти в ноль
 
-Обязательные метрики сравнения:
+Проверить, существует ли хоть какая-то runtime-зависимость нашего TOKEN/pool/fees/Promo от владения, цены или ликвидности `$PAIR`.
+
+Желаемый результат: цена protocol token сама по себе технически нас не ломает.
+
+### B. Off-chain PAIR исчезает
+
+Представить:
 
 ```text
-draws/day
-time to first draw
-time between draws
-winners/draw
-filled seats / K
-paid USDG/day
-min / median / max prize
-unique winners
-repeat-winner concentration
-never won
-max loss streak
-freeShort after settlement
+pair.fund UI = down
+PAIR API/indexer = down
+PAIR keeper = down
 ```
 
-Admission rate полезен как диагностическая метрика, но не как самостоятельная product KPI.
+Проверить, можем ли мы:
+
+- восстановить token/pool/position/vault только из chain state/events;
+- торговать напрямую через canonical V4 infrastructure без PAIR frontend;
+- самостоятельно вызвать collect/claim;
+- продолжать наш indexer и Promo;
+- не зависеть от их серверного random/oracle для уже существующего рынка.
+
+### C. PAIR protocol contracts меняются
+
+Выяснить для **текущего live release**:
+
+- какие контракты proxy/upgradeable, какие immutable;
+- кто admin каждого proxy/handler/registry/factory/vault/hook/locker;
+- кто способен менять implementation;
+- кто способен менять fee policy/epoch/recipient;
+- может ли PAIR admin сделать это для уже launched project без нашего согласия;
+- есть ли pause/emergency/rescue/withdraw пути;
+- может ли изменение внешней policy сломать только новые fees или также старые claimable balances.
+
+### D. Locker / liquidity safety
+
+Особенно проверить контракт, который держит V4 LP position:
+
+- есть ли withdraw;
+- arbitrary transfer;
+- rescue;
+- admin path;
+- upgrade path;
+- возможность перевести/сжечь/заменить position;
+- зависит ли permanently locked liquidity от доверия к proxy admin.
+
+Не принимать маркетинговую формулировку «locked forever» как доказательство — смотреть deployed bytecode/source/storage/admin.
 
 ---
 
-## 5. `D = весь freeShort` — хороший крайний вариант, но не лучший baseline
+## Предлагаемый production canary
 
-Текущий отчёт уже показывает характер этой политики.
+Непосредственно перед реальным запуском сделать свежий mainnet-fork test по **текущему canonical PAIR release**.
 
-После первого underfilled draw:
+Последовательность:
 
-```text
-hour 24:
-D = 222.50
-paid ≈ 101.14
-returned ≈ 121.36
-```
-
-Следующий draw получает возврат + fresh funding:
+1. Определить текущие canonical launchpad/coordinator/registry/factory/hook/locker/vault addresses из live chain + текущего frontend/docs; не использовать автоматически старые 12.09 addresses.
+2. Проверить proxy implementations/admins/code hashes.
+3. Запустить тестовый TOKEN тем же режимом/policy, который планируется для production.
+4. Сохранить launch receipt/provenance:
 
 ```text
-hour 36:
-D ≈ 143.86
-10/10 prizes assigned
-→ Short почти в ноль
+token
+project id/address
+pool ids
+hook
+locker
+LP position ids
+native vault
+epoch
+recipients
+shares
+implementations/code hashes
 ```
 
-После этого следующий draw строится до hour 72.
+5. Привязать наш FeeRouter и доказать, что текущая policy действительно даёт ожидаемый recipient/share.
+6. Сделать реальные fork BUY + SELL.
+7. Собрать fees без PAIR frontend/API.
+8. Claim TOKEN и quote fees через on-chain vault.
+9. Провести их через FeeRouter → PromoVault.
+10. Проверить старые/new credits и rollover.
+11. Смоделировать PAIR API unavailable: дальнейшие действия только через RPC/on-chain state.
+12. Проверить, что direct V4 trade существующего pool не требует PAIR UI/backend.
 
-То есть `all freeShort` создаёт **accordion effect**:
-
-```text
-underfilled draw → большой return → следующий жирный draw
-full draw → reserve cleared → длиннее BUILDING
-```
-
-Это не accounting bug. Но под цель «регулярная публичная история выплат» может оказаться слишком рвано.
-
-Я бы сравнил ровно три D-policy и больше пока не добавлял:
-
-### A. Minimum basket
-
-```text
-D = B_min
-```
-
-Контрольный вариант: максимально бережёт reserve и cadence, но не использует upside богатой казны.
-
-### B. All free Short
-
-```text
-D = freeShort
-```
-
-Текущий prize-max вариант.
-
-### C. Leave one minimum basket
-
-Простой buffer-policy:
-
-```text
-если freeShort < 2*B_min:
-    D = B_min
-иначе:
-    D = freeShort - B_min
-```
-
-То есть если денег достаточно, после freeze оставляем в freeShort минимум ещё одну минимальную корзину.
-
-У этого варианта нет процентного регулятора, он легко объясняется и должен сглаживать cadence, не оставляя богатый reserve навсегда нетронутым.
-
-Current в D не использовать.
+Отдельно сохранить доказательства authority/upgradeability и результат locker audit.
 
 ---
 
-## 6. Luck при fixed K: что именно он делает
+## Audit invalidation rule
 
-При насыщенном admission fixed K означает важную вещь:
+Предлагаю считать canary привязанным к конкретному внешнему release.
 
-> Luck не повышает число победителей; он перераспределяет вероятность попасть в эти K мест.
-
-Это само по себе нормально и даже полезно.
-
-Winner сбрасывается в Luck=0, losers растут по Luck. Поэтому система создаёт отрицательную обратную связь против постоянных повторных побед одних и тех же wallets.
-
-Но если вся толпа накопила высокий Luck, q у многих приближается к cap, и различия снова сжимаются.
-
-Поэтому следующий pity test должен быть именно counterfactual:
+Если перед production изменился любой критичный компонент:
 
 ```text
-фиксируем остальных wallets, entries, basket и K
-меняем только один wallet:
-
-Luck = 0 / 1 / 3 / 6 / 20
-entries = 1 / 2 / 5 / 20
-
-→ измеряем FINAL P(nonzero prize), не только admission q
+launchpad implementation
+coordinator / factory / registry
+hook
+locker
+vault implementation / handler
+fee policy semantics
 ```
 
-Плюс в длинной серии смотреть:
+то старый integration audit считается протухшим и прогоняется заново.
 
-- win hazard по текущему Luck;
-- долю repeat winners;
-- never-won tail;
-- loss-streak p50/p95/max.
-
-Так мы увидим, действительно ли pity ощущается, а не просто красиво меняет первую стадию.
+Это особенно важно потому, что история репозитория уже показывает реальные изменения PAIR launch route между нашими fork-проверками.
 
 ---
 
-## 7. Какие реальные данные нужны вместо условных 0.5%
+## Что НЕ нужно делать сейчас
 
-Сейчас не нужен новый сетевой сбор. Но перед боевыми параметрами нужно будет измерить минимум следующее:
+- не бросать PAIR из-за движения цены `$PAIR`;
+- не строить multi-chain bridge;
+- не делать универсальный plugin framework на все DEX;
+- не добавлять arbitrary source migration в FeeRouter до понимания threat model;
+- не переписывать PromoVault;
+- не менять Short/Monthly продуктовую логику ради этого аудита.
 
-1. **Gross canonical TOKEN/USDG turnover** за интервалы и реально начисленный creator revenue за те же интервалы.
-2. Creator revenue по активам отдельно: сколько пришло **USDG**, сколько **TOKEN**.
-3. Для TOKEN-части — фактический realized USDG после conversion: amount sold, USDG received, effective price, slippage/fees.
-4. Распределение задержки `fee accrual → collect → conversion → recognized USDG`.
-5. Долю total BUY, которая реально проходит promo eligibility/registration/canonical attribution.
-
-После этого можно считать несколько ставок, а не одну магическую:
-
-```text
-creator revenue / gross turnover
-direct USDG revenue / turnover
-realized USDG after TOKEN conversion / turnover
-effective Short USDG / turnover
-```
-
-Project share и Short allocation — продуктовая политика, а не рыночное измерение.
-
-Также отдельно от prize ledger нужно считать **операционные расходы**:
-
-- RNG/request execution;
-- keeper/settlement gas;
-- fee collection/conversion transactions;
-- RPC/server/indexer.
-
-Они по принятой модели оплачиваются вне prize fund. Поэтому полезная sustainability-метрика:
-
-```text
-project free share earned / operational cost
-```
-
-В текущем трёхдневном сценарии project share всего $35. Prize ledger может идеально сходиться, а эксплуатация при этом быть убыточной для проекта — это отдельная ось.
+Сначала нужно понять реальную внешнюю trust boundary.
 
 ---
 
-## 8. Равные 60 кошельков сильно искажают cadence
+## Что просим Codex сделать
 
-Сейчас они синхронно доходят до первой $100 entry ровно к 24h. Поэтому на 6/12/18h есть деньги, но нет ни одного участника.
-
-Для следующего runner не нужен сложный market simulator. Достаточно трёх простых типов потока:
-
-### Поток 1 — heterogeneous steady
-
-- initial carry случайно распределён 0..99.99;
-- BUY amounts неодинаковые, heavy-tail;
-- persistent core + периодические новые wallets.
-
-### Поток 2 — hype → decay
-
-Большой стартовый BUY turnover, потом снижение и рост SELL-share. Это одновременно проверяет:
+1. Прочитать текущий `FeeRouter.sol`, `FEE_ROUTER_ROLLOVER_REPORT.md`, `archive/ECONOMICS_FORK_2026-09-12.md` и fork scripts.
+2. Найти все места кода/документации, где production path зависит именно от PAIR, а не от обычного ERC20/V4/Promo.
+3. Разделить dependencies на:
 
 ```text
-новых attempts становится меньше
-но creator revenue от SELL ещё приходит
+launch-only
+runtime required
+off-chain convenience only
+admin/trust dependency
 ```
 
-### Поток 3 — whale + retail
+4. Составить конкретный checklist live contracts/roles/storage/code hashes, которые нужно проверить перед production.
+5. Проверить, достаточно ли текущего fail-closed `sourceEpoch` поведения, либо оно создаёт критичный availability trap.
+6. Отдельно оценить one-time `bindSource`: для MVP это полезная immutability boundary или слишком опасная невозможность recovery при внешнем upgrade?
+7. Не менять код автоматически. Если видишь необходимость архитектурной правки — сначала описать конкретный failure scenario, который она исправляет.
+8. Предложить минимальный reproducible fork/canary plan и набор артефактов, которые надо сохранить как production evidence.
 
-Много небольших wallets и один/несколько больших BUY. Проверяем, как multiple entries whale влияют на admission, funding и max-one-prize rule.
+## Желаемый формат ответа
 
-Этого достаточно. Отдельные десятки искусственных archetypes пока шум.
+Коротко и прикладно:
 
----
+1. Что переживает полное исчезновение PAIR off-chain.
+2. Что остаётся runtime-зависимостью от PAIR contracts.
+3. Какие полномочия PAIR admins являются для нас критичными.
+4. Какие свойства locker/vault надо доказать.
+5. Какие проверки уже покрыты нашим 12.09 fork, а какие надо повторить.
+6. Нужна ли какая-либо правка нашей архитектуры **до** production или текущего fail-closed подхода достаточно для MVP.
+7. Финальный pre-launch canary checklist.
 
-## 9. Startup bank и способность жить дальше надо показывать отдельно
-
-Текущий сценарий уже правильно показывает важную разницу:
-
-```text
-с external 400 → 3 draws за 72h
-без него       → первый draw только на 60h
-```
-
-То есть bank улучшает запуск, но не sustainable rate.
-
-Следующий отчёт должен всегда иметь пары:
-
-```text
-same market flow + startup bank
-same market flow + no startup bank
-```
-
-Для 7 дней я бы взял хотя бы один declining path, например концептуально:
-
-```text
-40k → 30k → 20k → 15k → 10k → 5k → 2k/day
-```
-
-не как прогноз, а как stress path.
-
-Для 30 дней можно сделать затухающую/волнообразную активность и multi-seed.
-
-Monthly при 30-дневной модели нельзя выдавать за реально смоделированный, если его random/settlement отсутствует. Для **Short-only** анализа это не ломает Short inflow при текущем кандидатном split, потому что Short получает половину prize-side GENERAL и до, и после заполнения Next. Но Current/Next balances после monthly boundary уже нельзя интерпретировать как полный продуктовый ledger без monthly events.
-
----
-
-## 10. Три следующих эксперимента, которые действительно дадут решение
-
-### Эксперимент A — K × base admission
-
-Один и тот же cash/event stream, equal-weight baskets, quality floor одинаковый.
-
-```text
-K = 5 / 10 / 20
-h_e = 3 / 1
-p_max = 40%
-h_l = 6
-```
-
-Цель: понять tradeoff между количеством мест, заполнением корзины и размером выплат без смешивания с basket skew.
-
-Критерии: fill ratio, winners/draw, min/median prize, draw interval, paid/day.
-
-### Эксперимент B — D policy
-
-На одном выбранном K/admission сравнить:
-
-```text
-B_min only
-all freeShort
-leave-one-B_min buffer
-```
-
-Цель: найти баланс между заметностью prizes и регулярностью следующего draw.
-
-Критерии: time-between-draws p50/p95, payout/day, max prize, freeShort after draw, variance payout cadence.
-
-### Эксперимент C — multi-seed 7/30-day heterogeneous lifecycle
-
-Сравнить startup/no-startup, steady/hype-decay, conversion delay, whale+retail.
-
-Цель: проверить не красивый первый draw, а жизнь Short после запуска.
-
-Критерии:
-
-- draws/day and gaps;
-- actual paid/day/week;
-- unique winners / repeats / never-won;
-- unfinished waiting at end of scenario;
-- Luck hazard;
-- carry/OPEN attempts at end;
-- freeShort and pending revenue;
-- project share vs ops-cost placeholder.
-
-Именно здесь нужен multi-seed; один красивый seed больше не использовать для выбора параметров.
-
----
-
-## Что стоит принять сейчас, а что рано
-
-### Можно оставить рабочим направлением
-
-- fixed small K **per rulesVersion** как baseline;
-- actual recognized `freeShort` как source of truth для readiness;
-- meaningful minimum prize;
-- no forced timeout с плохим draw;
-- один pending Short;
-- attempts/Luck не теряются при not-ready;
-- unawarded basket возвращается в Short;
-- minimum age как нижняя граница, а не обещание выплаты по часам.
-
-### Рано принимать
-
-- именно K=10;
-- current weights `[7,5,2,2,1×6]`;
-- `$5` minimum;
-- `D=all freeShort`;
-- `0.5%` revenue;
-- creator `10/45/30/15`;
-- `p_max=40%, h_e=3, h_l=6` как production numbers;
-- четыре draws/day как цель или обещание.
-
-## Итог
-
-Новый cash-flow runner полезнее предыдущего fixed-D опыта: он уже связывает turnover, carry, actual recognized funding и draw readiness и не показывает скрытой бухгалтерской дыры.
-
-Главное, что я бы изменил в следующем эксперименте: **не возвращаться сейчас к dynamic K**. Сначала проверить fixed K вместе с admission и D-policy.
-
-Самая явная проблема текущего кандидата — не K=10 как таковой, а связка:
-
-```text
-K=10
-+ base admission q=10%
-+ D=all freeShort
-```
-
-Она одновременно даёт пустые места в раннем draw и рваный reserve/cadence.
-
-Если локальные sweeps покажут, что fixed 5/10/20 позволяют получить заметные prizes и приемлемую историю выплат на разумном cash-flow, это гораздо проще будущего dynamic seat engine.
-
-Следующий кодовый шаг действительно стоит ограничить simulator/report/tests.
+Не писать production-код до обсуждения результатов.
