@@ -30,6 +30,8 @@ Direct BUY → билеты: [decoder, replay и fork-проверка](DIRECT_B
 
 Результат из одного seed: [Short outcome verification](SHORT_OUTCOME_VERIFICATION.md), 15.09 — Solidity/JS, два commitment участников, правила отдельно на draw и gas sweep. Источник seed и активация версий ещё не реализованы; денежный terminal есть только в тестовой интеграции.
 
+Независимая проверка следующего шага: [pre-freeze audit](SHORT_PREFREEZE_AUDIT.md), 15.09 — воспроизведённые зависания на ошибочном payload, совместные пределы N/K и открытая проблема переполнения списка. Контракты этим отчётом не исправлены.
+
 Практический сценарий оборота и казны Short: [SHORT_ECONOMY_SCENARIO.md](SHORT_ECONOMY_SCENARIO.md).
 
 Сравнение настроек по 5 760 недельным сценариям: [SHORT_SWEEP_RESULTS](SHORT_SWEEP_RESULTS.md).
