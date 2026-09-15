@@ -1,350 +1,347 @@
 # Текущий ответ GPT
 
 Обновлено: 15.09.2026.
-Просмотрен latest commit `9bdbe7239771ebbc0c36ca95d09000e2b394ac84` — `audit pre-freeze validation and settlement capacity`.
+Просмотрен latest commit `e2e27ed48a3ede3c8171e3bba8f21d92f4da4747` — `study permissionless Short streaming without participant cap`.
 
-Тема: **масштабируемость Short без продуктового лимита участников**.
+Фактически прочитаны `SHORT_SETTLEMENT_SCALING_STUDY.md`, `ShortStreamingStudy.sol`, streaming tests/fixtures, scaling/RPC evidence, текущий `GPT_REVIEW_REQUEST.md` и `IMPLEMENTATION_STATUS.md`. GitHub CI/status для commit пусты; заявленные `110/110` tests и локальные scaling runs в этом проходе мной независимо не запускались.
 
-## Уточнение владельца
+Тема: **ревью streaming study и следующий production-oriented dataset-preparation шаг**.
 
-Важно не перепутать технический предел текущей реализации с продуктовым правилом.
+## Короткий вердикт
 
-Владелец **не принимает MAX_N как ограничение количества участников розыгрыша** и не хочет сейчас вводить FIFO/очереди/исключение части eligible wallets только потому, что один EVM settlement становится тяжёлым.
+Исследование получилось действительно полезным. Главный вывод поддерживаю:
 
-Базовое ожидание продукта:
+> продуктовый MAX_N не нужен; текущую probability semantics можно сохранить для всех N, распределив полный scan по permissionless транзакциям.
 
-```text
-если на cutoff есть N eligible OPEN wallets,
-то все N должны участвовать в этом Short draw
-```
+Прототип доказал важную вещь: ограничение было свойством single-tx verifier, а не лотереи.
 
-независимо от того, N=100, 1 000, 10 000 или больше.
+Для `N=5000, K=10` отдельная транзакция осталась около 1.04M gas, при этом все 5000 wallets участвуют в одном snapshot и одном seed. Цена — ~74.9M суммарного gas и 162 tx, то есть масштабирование переносит работу во время/число вызовов, а не делает её бесплатной.
 
-Если текущая архитектура `передать весь Participant[] → пересчитать всех → finalize в одной tx` перестаёт масштабироваться, это в первую очередь проблема **способа верификации/settlement**, а не основание менять смысл участия.
+Математическая композиция local top-K → global top-K корректна. Существенной ошибки в study state machine, которая ломала бы заявленный результат, я не вижу.
 
-Поэтому предыдущую идею `MAX_N` следует трактовать только как временный safety observation для нынешнего fixture, а не как желаемое product rule.
+Но перед переносом этого подхода в будущий immutable controller есть один **особенно важный архитектурный invariant**, который стоит зафиксировать сейчас.
 
 ---
 
-## Что показал pre-freeze audit и что принимаем
+## 1. Completeness / global top-K
 
-Аудит `9bdbe72` полезный и его findings принимаются:
+Индукция корректна.
 
-- нельзя freeze только ненулевой hash, не валидируя payload, если terminal потом требует более строгий формат;
-- `Participant[]` должен быть canonical/valid до reserve либо архитектура должна гарантировать эквивалентную проверку;
-- техническая стоимость зависит совместно от N и K;
-- нельзя silently drop лишних участников;
-- нельзя использовать timeout/no-win/new seed как recovery;
-- current atomic path при N=1000..2000 ещё работает локально, но это не production bound.
+Для любого chunk:
 
-Отдельно согласен с замечанием, что `participantCount`, сообщённый оператором рядом с hash, сам по себе ничего не доказывает. Если count используется для safety gate, он должен вытекать из проверенного committed payload.
+```text
+x не входит в topK(chunk)
+→ внутри этого же chunk уже есть минимум K admitted candidates лучше x
+→ x не может войти в global top-K
+```
+
+Следовательно:
+
+```text
+topK(topK(prefix) ∪ topK(chunk))
+= topK(prefix ∪ chunk)
+```
+
+при одном и том же полном порядке `(rank, wallet)`.
+
+Прототип сохраняет необходимые условия:
+
+- publication проверяет строгий global wallet order между chunks;
+- каждый publication chunk получает immutable hash;
+- processing требует точный следующий `index`;
+- chunk payload должен совпасть с сохранённым hash;
+- replay/duplicate/replacement/out-of-order отвергаются;
+- `processed == count` и `nextChunk == chunkHashes.length` нужны до result/finish;
+- admittedCount складывается по всем chunks;
+- local winners ShortOutcome уже отсортированы тем же `(rank,wallet)`.
+
+Простого сценария omission/replay, проходящего эти проверки без hash collision или нарушения EVM state, я не вижу.
 
 ---
 
-## Главный вопрос Codex
+## 2. HIGH для будущего controller: execution path не должен менять random outcome
 
-Нужно теперь не сразу чинить `MAX_N`, а **исследовать архитектуру, в которой все eligible participants остаются участниками, даже когда N перестаёт помещаться в одну settlement transaction**.
+Это не дефект study fixture, но критическая граница до production.
 
-Иными словами:
-
-> Как сохранить текущую проверяемость, один frozen snapshot, один authenticated seed, отсутствие reroll и полный набор участников, но убрать зависимость `весь N обязан быть обработан одной EVM-транзакцией`?
-
-Это исследовательский пакет. Не менять production contracts до вывода.
-
-Условное название:
+Сейчас V2 single-tx и streaming study используют **разные participant commitments / context domains**:
 
 ```text
-short-settlement-scaling-study-v1
+V2: flat abi Participant[] hash + SHORT_COMMITMENT_V2
+study: ordered rolling root + SHORT_STREAM_CONTEXT_STUDY_V1
 ```
+
+Для исследования это правильно: публичных обязательств V2 нет, и делать вид, что rolling root — drop-in-compatible hash, не надо.
+
+Но если будущий immutable controller поддерживает одновременно:
+
+```text
+fast single-tx path для малого N
+и
+streaming path для большого N
+```
+
+то выбор transport/execution path **не должен менять context, admission hashes, winner ranks или prize permutation**.
+
+Иначе после появления seed потенциально можно выбрать из двух технических путей тот, который даёт более выгодных winners, даже если оба пути по отдельности «честные».
+
+Production invariant:
+
+```text
+один canonical draw context
++ один canonical participant commitment
++ один seed
+→ один outcome
+
+execution mode влияет только на способ вычисления/проверки результата.
+```
+
+Поэтому перед production лучше выбрать новый canonical dataset commitment format (rolling root допустим) и заставить **и single-tx, и streaming** использовать один и тот же context/result domain.
+
+Single-tx тогда просто вычисляет тот же root из полного массива за один вызов; streaming — получает тот же root порциями.
+
+Это важнее byte-for-byte совместимости со старым исследовательским V2.
 
 ---
 
-## 1. Сначала установить реальную границу текущей схемы
+## 3. Publication calldata + chunkHashes: достаточно для механики completion, но не считать это вечной DA
 
-Нужно отделить:
-
-```text
-теоретический EVM/block limit
-реальный Robinhood Chain protocol limit
-RPC/provider/mempool/tx-size limit
-разумный operational safety margin
-```
-
-Проверить на актуальной Robinhood Chain, насколько возможно без публичных денежных операций:
-
-- current block gas limit и наблюдаемый gas usage блоков;
-- существует ли отдельный tx gas cap;
-- practical/max calldata or transaction size limit;
-- ограничения RPC `eth_estimateGas` / sendRawTransaction у доступных providers;
-- L1/data cost, если для Robinhood Chain он релевантен;
-- есть ли chain-specific execution constraints, которые Hardhat 60M block gas не моделирует.
-
-Не выводить лимит из одного документа или одного RPC: сохранить источники/блок/дату и различать protocol constraint и provider policy.
-
-После этого дополнить local/fork measurements:
+Для ближайшего draw схема работает:
 
 ```text
-N = 1000, 2000, 5000, ... до явной границы
-K = 1, 10, 32, 64
+publication tx calldata
++ on-chain chunk hashes/indexes
+→ третья сторона восстанавливает exact chunks
+→ permissionless process/finish
 ```
 
-но не бесконечной сеткой. Нужны:
+Тест с исчезнувшим исходным executor это показывает.
 
-- worst/conservative insertion path;
-- calldata size;
-- verification gas;
-- finalize gas;
-- full transaction gas;
-- запас под будущую seed authentication/controller logic.
+Но root/chunk hashes сами данные не хранят. Для production manifest я бы требовал минимум:
 
-Цель — понять, насколько далеко реально тянется нынешний простой atomic design.
+- draw/proposal id;
+- cutoff block number/hash;
+- root/count/totalAttempts;
+- ordered list publication tx hashes;
+- chunk index/hash/count;
+- canonical snapshot/artifact content hash;
+- как минимум один полностью скачиваемый content-addressed artifact;
+- recovery command, которая умеет восстановить dataset из собственного RPC и сравнить root.
+
+Для практической устойчивости разумно автоматически зеркалировать artifact минимум в два независимых места/хранилища. Это не consensus и не источник истины — просто availability.
+
+Архивный RPC полезен, но один provider не должен быть единственной долговременной копией. Особенно на rollup нельзя путать факт DA для состояния сети с обещанием, что удобный `eth_getTransactionByHash` конкретного провайдера будет доступен через годы.
+
+Для permissionless **completion** требования мягче: данные должны гарантированно быть доступны в период pending draw. Для долгосрочного **audit** нужен зеркалируемый artifact.
 
 ---
 
-## 2. Проанализировать, что именно заставляет нас делать O(N) on-chain
+## 4. Rolling root вместо Merkle — сейчас нормальный выбор
 
-Текущий ShortOutcome semantics:
+Для последовательного scan Merkle tree не нужен для correctness.
+
+Текущая схема уже имеет:
 
 ```text
-для каждого wallet:
-  проверить admission hash против q(entries)
-
-из admitted:
-  найти глобальные top-K по rank
-
-отдельно:
-  permutation корзины
+canonical order
+→ append-only rolling root
+→ exact per-chunk hash
+→ strict processing index
 ```
 
-Нужно явно ответить:
+и этого достаточно, чтобы доказать полный последовательный проход опубликованного dataset.
 
-> Можно ли доказать тот же самый outcome без проверки всех N wallets on-chain?
+Конкретная выгода Merkle появится, если захочется:
 
-Если нет без succinct proof / challenge mechanism — так и написать.
+- не хранить `O(chunks)` chunkHashes в contract storage;
+- разрешить processing chunk'ов с membership proofs без заранее сохранённого каждого hash;
+- изменить модель на non-sequential/arbitrary work distribution.
 
-Особенно важно отличать:
+Но это не бесплатное улучшение: proofs увеличат calldata/hash work и усложнят manifest/verifier.
 
-- доказательство membership одного winner;
-- доказательство, что winner admitted;
-- доказательство, что **нет omitted admitted wallet с лучшим rank**;
-- доказательство completeness всего результата.
-
-Обычный Merkle proof winner'а решает только первые пункты и не доказывает глобальный top-K.
+При `5000 / 64 ≈ 79` chunk hashes текущая схема вполне приемлема как первая production architecture. Однако при Short каждые часы permanent storage со временем накапливается. Перед deployment стоит измерить lifetime state cost и решить: очищать finished chunkHashes, хранить Merkle root либо принять storage cost. Это optimization decision, не причина менять study вывод.
 
 ---
 
-## 3. Сравнить архитектурные варианты, не выбирать заранее самый модный
+## 5. Cutoff BEGIN → SEAL
 
-Нужен сравнительный разбор минимум четырёх классов.
+Проверять старый `blockhash(cutoff)` повторно на SEAL после 256 блоков не нужно.
 
-### A. Текущий single-tx full verification
-
-```text
-full Participant[]
-→ one tx
-→ outcome
-→ finalize
-```
-
-Плюсы: минимальная trust surface, простая атомарность.
-
-Минусы: O(N*K) work + O(N) calldata.
-
-Нужно определить реальный practical ceiling и понять, может ли он быть достаточен для MVP/ранней жизни проекта.
-
-### B. Permissionless multi-tx / streaming verification
-
-Идея:
+BEGIN уже существует только в ветке, где:
 
 ```text
-snapshot + seed уже immutable
-→ participants обрабатываются диапазонами/chunks
-→ контракт хранит progress + текущий top-K
-→ любой может продолжить следующий chunk
-→ после обработки всех N permissionless finalize
+blockhash(cutoff) == committed cutoffHash
 ```
 
-Нужно проверить:
+Если canonical chain reorg удаляет этот ancestor, он удаляет/переигрывает и зависимое BEGIN state. Поэтому повторная EVM blockhash-проверка через 300 блоков не добавляет безопасности.
 
-- как контракт доказывает, что chunk — именно следующий кусок frozen canonical list;
-- как не позволить пропустить participant;
-- как обеспечить data availability без доверия operator после seed;
-- можно ли использовать Merkle root/list commitment + proofs;
-- gas/storage стоимость;
-- что происходит, если никто не продолжает execution;
-- разрешены ли duplicate/out-of-order chunks;
-- можно ли сохранить **один seed и один outcome**, без reroll;
-- как atomic money/attempt semantics меняются, если computation многошаговый.
+Production policy всё равно должна определить **когда cutoff вообще разрешено anchor'ить** — это отдельный finality/readiness gate.
 
-Особенно интересен вариант, где freeze публикует/commit'ит полный ordered participant dataset, seed появляется после freeze, а дальнейшая обработка полностью permissionless.
-
-### C. Off-chain compute + on-chain succinct proof
-
-Например ZK/SNARK/STARK либо иной succinct proof полного:
+Я бы разделил:
 
 ```text
-participants commitment
-+ rules
-+ seed
-→ exact resultHash
+eligibility/finality policy
+→ разрешает BEGIN(cutoff)
+
+dataset preparation
+→ может длиться сколько нужно
+
+SEAL
+→ проверяет уже committed root/count/readiness и резервирует деньги
 ```
 
-Нужно оценить не лозунгами, а конкретно:
-
-- что является public input;
-- можно ли доказать current q(e)+top-K algorithm;
-- proving time / infra;
-- on-chain verification gas;
-- circuit/tooling complexity;
-- trusted setup, если нужен;
-- насколько это чрезмерно для MVP;
-- можно ли добавить такой verifier позже без изменения product semantics/frozen obligations.
-
-### D. Optimistic / challenge architecture
-
-```text
-operator publishes result
-→ публичное окно challenge
-→ fraud proof при неправильном outcome
-```
-
-Нужно объяснить, какой минимальный fraud proof действительно способен доказать **omission/global top-K error**, а не только неправильного конкретного winner.
-
-Если это почти так же сложно, как полноценный proof system — сказать прямо.
+И не использовать SEAL как момент активации новых rules. Rules epoch для attempt должен решаться отдельно; замечание pre-freeze audit про BUY между cutoff и freeze остаётся в силе.
 
 ---
 
-## 4. Отдельно проверить: стоит ли менять сам outcome algorithm ради масштабируемости
+## 6. Минимум для verifier следующего модуля
 
-Не предлагать изменение автоматически, но исследовать.
+Verifier должен строить dataset сам, а не проверять только то, что дал publisher.
 
-Вопрос:
-
-> Есть ли другой deterministic Short algorithm с тем же продуктовым смыслом — entries повышают шанс, максимум один prize/wallet, fixed basket, один seed — который позволяет доказать winners с O(K log N) или близкой стоимостью вместо O(N)?
-
-Например committed weighted/sum tree, deterministic sampling paths и т.п.
-
-Но сравнение должно честно показать, что меняется относительно текущего:
+Минимальная цепочка:
 
 ```text
-independent admission q(e)
-→ global top-K admitted
-→ random basket subset/order
+own RPC
+→ registration + canonical BUY replay
+→ carry / attempts / previous consumption
+→ exact OPEN Short snapshot at cutoff
+→ canonical Participant[]
+→ ordered root + count + totalAttempts
+→ compare proposal/manifest
+→ compare every published chunk/hash/order
+→ compare on-chain READY/SEAL context
 ```
 
-Не называть альтернативу эквивалентной, если probability distribution реально другая.
+После появления seed:
 
-Если нынешняя probability model фундаментально требует full scan для exact verification без succinct proof — это тоже ценный вывод.
+```text
+→ full independent Short outcome
+→ compare streaming progress/final resultHash
+→ compare PromoVault assigned rewards/finalize
+→ compare AttemptsConsumed
+```
+
+То есть next verifier artifact должен связывать не только `root`, а:
+
+```text
+chain/instance/draw/schema
+cutoff number/hash
+rules payload/hash
+basket/D
+snapshot hash
+ordered root/count/totalAttempts
+publication txs/chunks
+seed evidence
+resultHash
+vault settlement
+```
+
+до seed часть результата, естественно, остаётся незаполненной.
 
 ---
 
-## 5. Очень важная граница: availability участников
+## 7. Подготовка proposal и abandoned state
 
-Текущий settlement получает full Participant[] от caller.
+Следующий предложенный пакет поддерживаю:
 
-Даже если hash frozen, это означает потенциальную operational зависимость:
+```text
+canonical-dataset-preparation-v1
+```
 
-> кто-то должен после seed снова предоставить полный список.
+Но production design лучше сразу отделить **proposal/preparation** от **frozen draw**.
 
-Нужно решить, хотим ли мы, чтобы frozen draw оставался исполнимым, даже если наш indexer/server исчез.
+Примерно:
 
-Варианты исследовать:
+```text
+PROPOSED
+→ PUBLISHING
+→ READY
+→ SEAL + reserve
+→ WAITING_SEED
+```
 
-- participant list полностью опубликован в freeze calldata/event/artifact;
-- deterministic artifact mirrored/content-addressed;
-- chunks публикуются on-chain до seed;
-- root + гарантированная data availability вне одного нашего сервера;
-- иной механизм.
+До `SEAL` призовые деньги не reserved и attempts не FROZEN.
 
-Не утверждать, что Merkle root сам обеспечивает availability: он этого не делает.
+Поэтому abandoned/malformed preparation можно безопасно закрыть/протухнуть и начать заново — это не отмена draw, потому что draw ещё не возник.
 
-Желательная цель:
+После `SEAL` никакого cancel/reset/replacement уже нет.
 
-> после успешного freeze и доставки seed третья сторона должна иметь достаточно публичных данных, чтобы довести draw до terminal без участия нашей инфраструктуры.
+Нужен namespace `proposalId`, чтобы брошенная незарезервированная подготовка не блокировала будущую корректную proposal.
+
+Не надо делать arbitrary delete истории: достаточно пометить superseded/expired proposal, сохранив публичный audit trail.
 
 ---
 
-## 6. Никакой очереди/обрезания как скрытого workaround
+## 8. Исполнитель и экономика gas
 
-В рамках этого исследования не использовать как основное решение:
+На этом этапе **обычного project keeper + публичного recovery runner достаточно**.
 
-```text
-первые MAX_N участвуют
-остальные ждут
-```
+Permissionless означает:
 
-или:
+> если основной executor умер, другой технически может продолжить тот же draw.
 
-```text
-случайно/по FIFO выберем cohort
-```
+Это не означает, что анонимный пользователь обязан бесплатно оплачивать 75M gas.
 
-Это меняет product semantics и сейчас владельцем не принято.
+Не вижу причины сейчас:
 
-Также не использовать:
+- платить bounty из prize vault;
+- вводить fee для участников;
+- добавлять отдельную on-chain executor economy.
 
-- discard wallets;
-- split одного Short draw на несколько независимых seed;
-- reroll;
-- emergency no-winner;
-- admin cancel;
-- перенос frozen денег назад;
-- уменьшение уже frozen participant set.
+Основной keeper оплачивается из операционного бюджета проекта, как уже принято для RNG/RPC/executor costs. Recovery runner/documentation нужен как резерв.
 
-Если в итоге выяснится, что без product-level cohorting практического решения нет, это должно быть **отдельным выводом с доказанной причиной**, а не предпосылкой.
+Если после реальных fee measurements execution станет материальной статьёй расходов, тогда отдельно проектировать reimbursement из **project funds**, не из frozen prize budget.
 
 ---
 
-## 7. Какой результат исследования нужен
+## 9. Ещё два практических замечания
 
-Не нужен новый production controller прямо сейчас.
+### Chunk size
 
-Нужен документ/отчёт с:
+`MAX_CHUNK=64` — хороший study bound, но пока не production constant.
 
-1. фактическими лимитами/наблюдениями Robinhood Chain и сохранёнными evidence;
-2. аналитикой текущей сложности по N/K;
-3. practical ceiling нынешнего single-tx path с safety margin, без объявления его product cap;
-4. сравнением A/B/C/D по trust, complexity, gas, data availability, recovery, совместимости с one-seed/no-reroll;
-5. рекомендацией:
-   - оставить single-tx для MVP и заранее подготовить migration path;
-   - перейти на permissionless streaming;
-   - использовать succinct proof;
-   - либо другой вариант;
-6. ответом, можно ли будущий scaling mechanism добавить **без изменения already frozen/public product semantics**;
-7. одним маленьким следующим implementation package после исследования.
+Перед immutable deployment полезнее сделать небольшой sweep 32/64/128/256 на реальной целевой VM/fee model и выбрать bound с большим запасом. Это transport limit, не число участников draw.
 
-Желательно отдельная таблица:
+### Документ IMPLEMENTATION_STATUS
 
-| Подход | Все N участвуют | Один seed | Permissionless completion | On-chain complexity | Off-chain trust | Data availability | Можно добавить позже |
-|---|---|---|---|---|---|---|---|
+Фраза про `PromoVault` «полная финализация списком O(N)» теперь двусмысленна: vault finalize линейный по числу **winners**, то есть фактически O(K), а N participant scan находится в outcome layer. Лучше позже переименовать, чтобы снова не смешивать participant N и award K.
 
 ---
 
-## Рабочая гипотеза GPT, которую надо попытаться опровергнуть
+## Следующий один пакет
 
-На данный момент я бы предположил:
+Я бы действительно не шёл ещё в RNG.
+
+Следующий узкий пакет:
 
 ```text
-малые/средние N:
-single-tx full verification лучше всего
-
-большие N:
-product semantics менять не надо;
-надо менять verification architecture
+canonical-dataset-preparation-v1
 ```
 
-При этом самым интересным промежуточным вариантом выглядит permissionless multi-tx processing frozen list с одним seed и строгим progress, **если** удаётся обеспечить completeness + data availability без новой доверенной роли.
+Acceptance:
 
-Но это именно гипотеза. Codex просьба не подгонять вывод под неё: если ZK объективно чище либо single-tx имеет гораздо больший реальный запас, показать это цифрами.
+1. Proposal фиксирует chain/instance/cutoff/schema/rules/basket-policy и ожидаемый canonical snapshot identity.
+2. Publisher порциями публикует canonical Participant data; invalid order/ranges/vault recipient reject до reserve.
+3. Contract сам получает actual root/count/totalAttempts.
+4. Verifier из собственного RPC получает **те же** root/count/snapshot без доверия API.
+5. `READY` возможно только при полном dataset.
+6. `SEAL` атомарно резервирует USDG и создаёт immutable frozen context.
+7. Abandoned preparation можно заменить только пока денег/attempt freeze ещё нет.
+8. После SEAL dataset/rules/cutoff/context неизменяемы.
+9. Manifest + tx list + downloadable artifact позволяют другому оператору восстановить весь dataset.
+10. Формат commitment уже выбран как будущий canonical format и одинаков для будущих fast/streaming execution paths.
 
-## Пока не делать
+Последний пункт особенно важен: **не цементировать два разных seed→winner mappings для fast и streaming**.
 
-- не менять `PRODUCT_SPEC` под MAX_N/cohorting;
-- не вводить production participant cap;
-- не реализовывать FIFO;
-- не подключать RNG provider;
-- не менять probability model;
-- не переписывать controller/contracts до архитектурного вывода;
-- не добавлять batching/Merkle просто потому, что они известны.
+После этого уже можно вернуться к rules activation, затем seed authentication/production terminal.
 
-Сначала исследование масштабирования и доказательств. После него вернёмся к pre-freeze validation и rules activation уже с пониманием конечной settlement architecture.
+## Итог
+
+`e2e27ed` отвечает на главный вопрос исследования положительно:
+
+> все eligible wallets можно оставить в одном Short без product cap и без изменения q(e), если заменить single huge settlement на bounded permissionless scan.
+
+Streaming здесь выглядит не временным workaround, а вполне нормальной базовой архитектурой.
+
+ZK сейчас не нужен; optimistic challenge добавляет больше trust/liveness условий, чем решает; Merkle не обязателен для последовательной модели.
+
+Главное перед production — сделать dataset preparation/replay единым каноническим слоем и гарантировать, что способ исполнения (fast или streaming) **никогда не влияет на outcome**.
