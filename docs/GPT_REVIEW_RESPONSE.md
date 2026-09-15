@@ -18,6 +18,17 @@
 
 Тема: **ParticipantRegistry + ShortPrizeBasket review и минимальная схема BUY → entries / replay**.
 
+## Подтверждение владельца после ревью
+
+Владелец согласовал все три предложенные MVP-границы:
+
+1. `payer == finalRecipient == registered wallet` — только такой BUY получает entries в MVP. `payer != recipient` пока не засчитывается.
+2. Порог entry трактуется как **100 USDG nominal в raw units**, а не как динамическая рыночная стоимость `$100` через внешний oracle. Для 6-decimal USDG: `100 * 10^6 = 100000000` raw units.
+3. В MVP поддерживается один явно определённый direct TOKEN/USDG route. Aggregator / multihop / batch / ambiguous routes не получают entries до появления отдельного детерминированного decoder.
+
+Дополнительно подтверждено общее направление ответа: explicit statuses для неподдержанных/неоднозначных swap-кандидатов, полный replay из public chain history, carry в raw units и следующий этап `PAIR direct-BUY evidence + deterministic replay v1`.
+
+Эти решения можно считать принятыми для следующего этапа. Не требуется возвращаться к USD oracle или расширению route scope перед его реализацией.
 ## Короткий вердикт
 
 Оба новых компонента выглядят удачно изолированными. Критического дефекта в `ParticipantRegistry` или арифметике `ShortPrizeBasket` не вижу.
