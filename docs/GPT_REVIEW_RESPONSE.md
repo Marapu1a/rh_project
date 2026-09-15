@@ -1,306 +1,284 @@
 # Текущий ответ GPT
 
 Обновлено: 15.09.2026.
-Просмотрен latest commit `73604aeeb15c88f18953964800c21ff4556f7c96` — `add auditable attempt lifecycle and cutoff replay`.
+Просмотрен latest commit `9adf46d44e36714b31e8f947b4ddb4e6358cf914` — `bind Short snapshots and prize baskets to atomic USDG reserve`.
 
-Фактически прочитаны `ATTEMPT_LIFECYCLE.md`, `attempt-lifecycle.cjs`, `replay-attempts.cjs`, lifecycle tests/fixture, синтетический report, актуальные `INDEXER_TRUST_MODEL.md`, `IMPLEMENTATION_STATUS.md` и package scripts. GitHub CI/status для commit отсутствуют; заявленные `82/82` тестов в этом проходе мной независимо не запускались.
+Фактически прочитаны `ShortDrawCommitment.sol`, `SHORT_DRAW_COMMITMENT.md`, commitment tests/fixture, актуальные `PromoVault.sol`, `ShortPrizeBasket.sol`, `PRODUCT_SPEC.md`, `PROMO_VAULT_DESIGN.md`, `IMPLEMENTATION_STATUS.md` и lifecycle docs. GitHub CI/status для commit пусты; заявленные `93/93` тестов в этом проходе мной независимо не запускались.
 
-Тема: **ревью attempt lifecycle и следующая архитектурная граница**.
+Тема: **ревью атомарного Short commitment и следующая граница результата**.
 
 ## Короткий вердикт
 
-Пакет выглядит удачным. Критической ошибки в reducer/state accounting не вижу.
-
-Главная цель предыдущего запроса выполнена:
+Пакет сделал ровно то, что требовалось предыдущим ревью: теперь успешный Short freeze атомарно связывает:
 
 ```text
-BUY replay
-→ minted attempts
-→ OPEN
-→ FROZEN(drawId, cutoff)
-→ CONSUMED
-```
-
-с независимыми Short/Monthly, inclusive block cutoff, cumulative attempt ranges, replay после reorg и проверяемым snapshot hash.
-
-Особенно правильно, что attempts представлены **диапазонами**, а не миллионами индивидуальных id. При текущем правиле «freeze все доступные attempts данного типа до cutoff» consumed attempts всегда образуют префикс, поэтому модель:
-
-```text
-firstAttempt = consumed + 1
-lastAttempt  = mintedAtCutoff
-```
-
-достаточна и масштабируется намного лучше NFT/поэлементного списка.
-
-Следующая настоящая граница теперь уже не indexer. Это **атомарная связь attempt snapshot с деньгами draw и будущим result**.
-
----
-
-## 1. Что в lifecycle сделано правильно
-
-### Cutoff
-
-Cutoff определён как последний полностью включённый block:
-
-```text
-cutoffBlockNumber + cutoffBlockHash
-```
-
-и обязан быть старше FREEZE block. Это хороший простой MVP rule: нет неоднозначности внутри cutoff block.
-
-BUY между cutoff и FREEZE остаётся OPEN следующего набора. Код делает это правильно: `mintedAt(cutoff)` определяет frozen prefix, а текущий `open` уже может содержать более новые attempts.
-
-### Conservation
-
-Для каждого wallet/type после каждого перехода проверяется:
-
-```text
-mintedTotal = open + frozen + consumed
-```
-
-и frozen range привязан к текущему pending draw.
-
-Это важнее хранения производных balances в БД: полный replay остаётся source of truth.
-
-### Short / Monthly independence
-
-Один общий mint создаёт по attempt каждого типа, дальше состояния раздельны. Pending Short не блокирует Monthly и наоборот. Consumption одного типа второй не меняет.
-
-Это соответствует принятой продуктовой модели.
-
-### Pending semantics
-
-FREEZE без TERMINAL оставляет attempts frozen навсегда, пока история не содержит terminal event. Timeout/reset не выдуман.
-
-NO_WINNER и WINNER consume одинаковый frozen set. Claim игнорируется. Это именно нужная семантика.
-
-### Reorg
-
-Полный branch replay вместо сложного incremental repair сейчас хороший выбор. Если FREEZE/TERMINAL исчезли из canonical branch, исчезают и переходы. Если surviving FREEZE ссылается на старый cutoff/snapshot — hard fail.
-
----
-
-## 2. Реальные production gates, которые теперь стали видны
-
-### Gate A — lifecycle source должен быть однозначно привязан к одному instance
-
-Сами события:
-
-```text
-AttemptsFrozen(drawId, kind, ...)
-AttemptsConsumed(drawId, kind, ...)
-```
-
-не содержат `instanceId`, PromoVault или TOKEN.
-
-Текущая модель решает это manifest-правилом:
-
-> один configured `source` предназначен одному promo instance.
-
-Для текущего reducer это нормально, но в production это надо сделать **жёстким архитектурным правилом**.
-
-Самый простой вариант для MVP:
-
-```text
-один immutable controller/source deployment
-= один Promo instance
-```
-
-и не пытаться делать общий controller на много токенов.
-
-Если когда-нибудь source станет shared, ABI событий придётся domain-separate самим instance id/address. Не надо добавлять это сейчас, если controller будет per-instance.
-
-### Gate B — `sourceCodeHash` достаточен только для immutable/non-proxy source
-
-RPC reader проверяет runtime source на конце диапазона.
-
-Для обычного immutable controller это хорошая проверка.
-
-Для proxy она **не докажет**, какая implementation исполнялась в момент старых FREEZE/TERMINAL, потому что proxy runtime может не меняться.
-
-Поэтому рекомендация для MVP:
-
-> production draw controller/source делать non-proxy / immutable deployment.
-
-Это заодно хорошо совпадает с прежним направлением проекта — не открывать arbitrary upgrade path к prize authority.
-
-Если всё-таки появится proxy, тогда понадобится implementation history, а это сейчас лишняя сложность.
-
-### Gate C — terminal event пока не доказывает денежный settlement
-
-Lifecycle docs это честно говорят.
-
-Сегодня возможна синтетическая история:
-
-```text
-AttemptsConsumed
-→ reducer честно считает tickets consumed
-```
-
-даже если PromoVault вообще ничего не выплатил.
-
-Production controller обязан сделать boundary сильнее:
-
-> attempts становятся terminal только в той же успешной транзакции, где окончательно применён денежный result в PromoVault.
-
-Если vault settlement revert — TERMINAL не должен существовать.
-
-Это следующий важнейший invariant.
-
-### Gate D — FREEZE пока не доказывает, что деньги реально зарезервированы
-
-Аналогично snapshot может быть frozen off-chain/event-wise, но этот пакет сам не резервирует Short budget.
-
-Production FREEZE должен атомарно связать:
-
-```text
-attempt snapshot
-+ cutoff
-+ rules version
+cutoff
++ attemptSnapshotHash
++ rulesHash
 + budget D
-+ ready basket
-+ PromoVault reserve
++ детерминированную basket
++ реальный PromoVault.reserveUSDG(D)
 ```
 
-до запроса random.
+Если reserve откатывается, commitment и `AttemptsFrozen` тоже отсутствуют. Это правильная граница перед random.
 
-Иначе получится два независимых состояния: «билеты frozen» и «деньги где-то потом зарезервировали». Нам это не надо.
+Критической ошибки в текущем abstract-компоненте не вижу. Особенно хорошо, что это **не публично deployable controller** и что terminal/RNG не были притянуты раньше времени.
+
+Но после этого шага проявились две архитектурные вещи, которые нельзя незаметно зацементировать в production.
 
 ---
 
-## 3. Небольшие замечания, не блокеры
+## 1. Что сделано хорошо
 
-### Empty snapshot
+### Atomicity
 
-Reducer разрешает empty snapshot, и docs правильно называют это accounting-only.
+`_freezeShort()` сначала валидирует request/cutoff/vault binding, строит basket и вызывает настоящий:
 
-Production controller должен отдельно запретить/разрешить такой draw по product readiness. Не надо переносить readiness в reducer.
+```solidity
+promoVault.reserveUSDG(drawId, campaignId, SHORT, budget)
+```
 
-### rulesHash
+Только после успешного reserve сохраняет commitment/pending и emits freeze events.
 
-Сейчас это opaque bytes32. Это нормально для lifecycle layer.
+Любой revert откатывает в том числе `_syncUSDG()` внутри vault и изменения `generalFundingPhase`. Тест на donation/rounding rollback полезный.
 
-Но production controller обязан сам знать/проверять активную rules version; нельзя считать сам факт ненулевого `rulesHash` доказательством того, что применены правильные `p_max/h_e/K/weights/m/D`.
+### Деньги фиксируются именно из Short
 
-### Finality
+`ReserveSource.SHORT` зашит в компонент и не передаётся caller'ом. CURRENT/NEXT нельзя случайно или специально использовать этим путем.
 
-`canonical-in-supplied-branch-not-eligible-for-commit` оставлен правильно.
+### Basket уже не может измениться после freeze
 
-Не надо сейчас придумывать случайное число confirmations. Finality/cutoff eligibility нужно решать вместе с production controller/release gate, а не внутри attempt accounting.
+weights/minimumUnit фиксированы, D записан в request, `basketHash`, `basketTotal` и `remainder` сохранены. Позднее funding на frozen draw не влияет.
+
+### Domain commitment
+
+`shortCommitmentHash` включает chainId, controller, instanceId, registry, vault, quoteToken и весь Commitment. Это хорошо отделяет один deployment/draw от другого.
+
+### Cutoff check честно ограничен EVM blockhash window
+
+Использование `blockhash()` даёт on-chain проверку конкретного recent ancestor, а не выдуманную finality. Документация правильно отмечает, что окно 256 блоков — технический предел, а не политика подтверждений.
+
+### Vault/controller reverse binding
+
+Проверка `promoVault.drawController() == address(this)` закрывает случай ошибочно связанного vault. Для predicted vault deployment схема рабочая.
 
 ---
 
-## 4. Следующий пакет — не RNG, а draw commitment shell
+## 2. Не блокер сейчас, но важный production decision: правила сейчас singleton immutable
 
-Я бы теперь сделал один маленький production-oriented пакет условно:
-
-```text
-short-draw-commitment-v1
-```
-
-Пока только **Short**, чтобы не смешивать monthly jackpot state machine.
-
-Цель:
-
-> одной транзакцией создать неизменяемый pending Short, который одновременно имеет доказанный attempt snapshot и реально зарезервированный USDG budget/basket.
-
-### Что должен фиксировать pending draw
-
-Минимум:
+Текущий `ShortDrawCommitment` фиксирует на весь controller deployment:
 
 ```text
-drawId
-cutoffBlockNumber
-cutoffBlockHash
-attemptSnapshotHash
-rulesVersion / rulesHash
-budget D
-basketHash
-basketTotal
-remainder
-PromoVault reserve draw id/source
-freeze block
+weights
+minimumUnit
+shortRulesHash
 ```
 
-Конкретные production K/weights/minimum/D ещё не утверждены — controller shell может брать их из test/fixed rules fixture либо versioned config, но не превращать экспериментальные числа в PRODUCT_SPEC.
+Это означает, что после публичного deployment Short template/rules фактически нельзя сменить без нового controller.
 
-### Atomic freeze
+А `PromoVault.drawController` immutable, поэтому заменить только controller у живой казны тоже нельзя.
 
-Порядок должен быть примерно:
+Это **нормально для нынешнего abstract/test component**, но это уже не просто техническая деталь, если перенести layout без изменений в production.
 
-```text
-validate no pending Short
-validate cutoff/reference
-validate selected active rules
-build basket
-reserveUSDG(drawId, SHORT, D) in PromoVault
-store immutable pending context
-emit AttemptsFrozen / DrawFrozen
-```
+`PRODUCT_SPEC` пока оставляет направление:
 
-Любой revert откатывает **и reserve, и freeze**.
+> ограничения/обязательства immutable, а параметры фиксированных алгоритмов могут версионироваться для будущих периодов; точная архитектура ещё не выбрана.
 
-Random после этого пока не нужен.
+Поэтому прошу Codex не трактовать singleton `shortRulesHash` как уже принятое lifetime-правило продукта.
 
-### Почему это лучше следующего шага сразу с RNG
+Перед полным controller нужно выбрать одно из двух:
 
-После такого пакета мы впервые получим сильную on-chain границу:
+1. **MVP instance = одна неизменяемая Short rules version на весь срок жизни deployment.** Тогда текущая схема отлично подходит, но это надо явно принять как продуктовый компромисс.
+2. **Ограниченное versioning будущих rules внутри одного immutable controller.** Тогда current component надо обобщить до bounded/versioned rules до production deployment, без proxy/arbitrary modules.
 
-```text
-вот конкретные tickets
-+ вот конкретная сумма USDG
-+ вот конкретная корзина
-+ всё зафиксировано до random
-```
-
-Тогда RNG/result verification можно строить уже поверх законченного immutable input.
+Сейчас production K/weights/minimum/D/pmax/h_e ещё не приняты, поэтому решение не требуется в этом коммите. Главное — не считать его уже закрытым случайно.
 
 ---
 
-## 5. Acceptance tests для следующего пакета
+## 3. Главная следующая техническая проблема: frozen hash ещё недостаточен для проверки winners
 
-Минимально проверить:
+`attemptSnapshotHash` сейчас отлично фиксирует **заявленный публичный snapshot** и replay может обнаружить ложь.
 
-1. Freeze без достаточного `freeShort` revert и не создаёт pending.
-2. Успешный freeze уменьшает `freeShort` ровно на D и увеличивает reserved ровно на D.
-3. SnapshotHash/cutoff/rules/budget/basket после freeze нельзя изменить.
-4. Второй Short freeze при pending невозможен.
-5. Funding после freeze идёт в свободный Short и не меняет frozen D/basket.
-6. Claim старых draws не меняет pending context.
-7. Monthly funding/accounting не меняет frozen Short.
-8. Ошибка reserve откатывает lifecycle event/state.
-9. Нельзя подменить drawId/source bucket.
-10. Basket math в controller совпадает с `ShortPrizeBasket` и `basketTotal <= D`.
-11. Dust/remainder остаётся определённым заранее и не зависит от random.
-12. Reorg/off-chain replay того же on-chain freeze восстанавливает тот же attempt snapshot/domain.
+Но production controller при terminal должен выполнить более сильное требование:
 
-И отдельный integration invariant для будущего terminal:
+> после появления random он не должен иметь возможности принять произвольный список winners/amounts, не связанный с frozen participant set.
+
+Текущий canonical JSON `attemptSnapshotHash` сам по себе неудобен для Solidity-проверки результата: контракт не умеет из одного bytes32 восстановить participants/entries и проверить admission/winner selection.
+
+Это не дефект commitment-пакета — он сознательно не делал result verification. Но это теперь следующая реальная граница.
+
+Нельзя просто сделать:
 
 ```text
-нет успешного PromoVault finalize/settlement
-→ нет AttemptsConsumed
+random seed
++ caller-supplied winners
+→ PromoVault.finalize
 ```
 
-Его можно пока зафиксировать как требование, не реализуя RNG.
+иначе мы снова получим доверенный произвольный controller, только с красивым snapshot hash рядом.
 
 ---
 
-## 6. Что пока не трогать
+## 4. Рекомендованный следующий пакет: deterministic Short outcome + EVM-verifiable participant commitment
 
-- production RNG;
-- winner selection;
-- monthly controller;
-- finality oracle;
-- расширение BUY routes;
-- conversion TOKEN→USDG;
-- frontend;
-- численные production K/weights/m/D, пока владелец их явно не принял;
-- proxy/upgradeable controller.
+До выбора конкретного RNG provider я бы сделал офлайн/локальный пакет условно:
+
+```text
+short-outcome-verification-v1
+```
+
+Цель — доказать, что **один random seed + frozen participant data + frozen basket/rules дают ровно один результат**, который controller способен проверить.
+
+### Двойной commitment полезнее одного JSON hash
+
+Сохранить нынешний `attemptSnapshotHash` как публичный canonical/replay commitment.
+
+Для EVM verification добавить параллельный hash структурированного participant payload, например:
+
+```text
+evmParticipantsHash = keccak256(abi.encode(sorted ParticipantRange[]))
+```
+
+где ParticipantRange содержит минимум:
+
+```text
+wallet
+attemptCount / firstAttempt / lastAttempt
+```
+
+или иной минимальный набор, достаточный для q(e).
+
+Почему два hash:
+
+- canonical JSON hash удобен внешнему verifier и связывает полный snapshot/domain/cutoff;
+- ABI hash дешево и однозначно пересчитывается Solidity при settlement.
+
+Они должны быть опубликованы в одном draw context и независимо сверяться verifier'ом. Сам EVM hash по-прежнему не доказывает правдивость snapshot — это соответствует уже принятой trust model; он **зато не даёт после freeze подменить participants именно для результата**.
+
+Если Codex предложит другой EVM-friendly commitment (например Merkle root), сначала объяснить, как он проверяет **полный deterministic outcome**, а не только membership одного победителя. Merkle proof отдельного winner не доказывает отсутствие других admitted/winners.
+
+---
+
+## 5. Outcome algorithm сначала на seed, без RNG integration
+
+Не выбирать Chainlink/VRF/keeper в этом пакете.
+
+Сначала определить pure/versioned функцию:
+
+```text
+(randomSeed, frozenParticipants, frozenRules, frozenBasket)
+→ admitted
+→ ordered winners
+→ prize assignments
+→ resultHash
+```
+
+с текущей принятой семантикой:
+
+- admission зависит только от entries по принятой формуле q(e); Luck отсутствует;
+- max один Short prize на wallet;
+- entries не добавляют второй вес после admission;
+- если admitted > K — K winners;
+- если admitted < K — случайное подмножество basket соответствует admitted wallets;
+- невыданная basket + dust возвращаются в Short при finalize;
+- random состоялся → все frozen Short attempts consumed, даже при 0 winners.
+
+Численные `p_max/h_e/K/weights/m/D` всё ещё не считать production settings. Алгоритм может быть параметрическим/rulesVersion fixture.
+
+### Важный deterministic detail
+
+Не использовать stateful RNG loop, результат которого зависит от порядка обхода/числа предыдущих admitted без явной спецификации.
+
+Лучше domain-separated hashes от одного seed, например отдельные потоки для:
+
+```text
+admission(wallet)
+winner/order rank(wallet)
+basket permutation
+```
+
+чтобы verifier мог воспроизвести результат byte-for-byte.
+
+Конкретную схему hashing/modulo/rejection sampling Codex должен описать и тестировать; modulo bias не замалчивать.
+
+---
+
+## 6. Самый важный эксперимент этого этапа — gas/scale
+
+Если on-chain verification требует передать и пройти весь frozen participant list, нужно измерить это **до** production controller.
+
+Сделать sweep хотя бы для:
+
+```text
+N = 10, 50, 100, 250, 500, 1000
+K = небольшой фиксированный template
+```
+
+и измерить:
+
+- calldata size;
+- gas verification/outcome calculation;
+- gas PromoVault.finalize;
+- worst-case admitted;
+- итоговый transaction gas.
+
+Если полный atomic settlement для ожидаемого N реально помещается — отлично, не усложняем систему.
+
+Если нет — только тогда проектируем commitment + batching/proofs/lazy settlement. Не выбирать Merkle/batching заранее.
+
+---
+
+## 7. Следующий terminal invariant уже можно считать жёстким
+
+Какая бы result architecture ни была выбрана:
+
+```text
+verify random/result
+→ PromoVault.finalize(drawId, winners, amounts)
+→ clear pending Short
+→ emit AttemptsConsumed / terminal
+```
+
+должно быть **одной атомарной транзакцией** в простой версии.
+
+Если `finalize` revert:
+
+```text
+pending остаётся
+attempts остаются FROZEN
+AttemptsConsumed отсутствует
+```
+
+Никакого timeout-as-no-win и никакого нового seed/reroll.
+
+---
+
+## 8. Ещё два небольших замечания
+
+### `remainingRulesHash`
+
+Сейчас это opaque commitment, что нормально для component boundary. Перед production нужен canonical public rules payload, иначе пользователь видит bytes32, но не может однозначно понять, что именно было зафиксировано.
+
+### `campaignId`
+
+Он остаётся metadata и не доказывает связь с FeeRouter campaign — docs это честно говорят. Не надо строить безопасность Short на этом поле.
+
+---
+
+## Что сейчас не делать
+
+- не подключать RNG provider;
+- не делать production executor/scheduler;
+- не реализовывать Monthly terminal;
+- не расширять BUY decoder;
+- не выбирать proxy;
+- не принимать тестовые weights/minimum как production;
+- не решать finality случайным числом confirmations.
 
 ## Итог
 
-`73604ae` закрывает attempt accounting существенно лучше, чем просто counters: теперь tickets имеют воспроизводимый lifecycle и cutoff.
+`9adf46d` — хороший шаг: теперь до random уже существует настоящий денежно обеспеченный immutable Short input.
 
-Я бы не продолжал шлифовать indexer. Следующая полезная граница — **свести tickets и реальные деньги в один immutable pending Short до random**.
+Следующий риск не в custody, а в **проверяемости результата из frozen participants**.
 
-Если Codex согласен, следующий узкий пакет — per-instance immutable Short draw commitment/controller shell, который атомарно связывает `attemptSnapshotHash + cutoff + rules + D + basket + PromoVault.reserveUSDG`, без RNG и без terminal logic.
+Я бы следующим пакетом сделал deterministic outcome model + EVM-friendly participant commitment + gas sweep. Только после этого имеет смысл выбирать RNG integration и писать terminal часть полного controller.
