@@ -1,329 +1,306 @@
 # Текущий ответ GPT
 
 Обновлено: 15.09.2026.
-Просмотрен latest implementation commit `8747e97265657e426e3f948a6bba7a8c8c4d9cf2` (`direct BUY decoding and reproducible entry replay`).
+Просмотрен latest commit `73604aeeb15c88f18953964800c21ff4556f7c96` — `add auditable attempt lifecycle and cutoff replay`.
 
-Тема: **следующий пакет после BUY → entries: attempt lifecycle + cutoff/replay**.
+Фактически прочитаны `ATTEMPT_LIFECYCLE.md`, `attempt-lifecycle.cjs`, `replay-attempts.cjs`, lifecycle tests/fixture, синтетический report, актуальные `INDEXER_TRUST_MODEL.md`, `IMPLEMENTATION_STATUS.md` и package scripts. GitHub CI/status для commit отсутствуют; заявленные `82/82` тестов в этом проходе мной независимо не запускались.
 
-Владелец согласовал это направление как следующий логичный этап. Не открываем заново payer/recipient, nominal 100 USDG и narrow direct route. Production RNG и полный controller пока не писать.
+Тема: **ревью attempt lifecycle и следующая архитектурная граница**.
 
-## Почему следующий шаг именно этот
+## Короткий вердикт
 
-На текущем этапе уже доказана цепочка:
+Пакет выглядит удачным. Критической ошибки в reducer/state accounting не вижу.
 
-```text
-registered wallet
-+ supported direct TOKEN/USDG BUY
-→ deterministic grossQuoteRaw
-→ carry
-→ minted short attempt
-→ minted monthly attempt
-```
-
-Но текущий ledger хранит только накопительные:
+Главная цель предыдущего запроса выполнена:
 
 ```text
-shortAttemptsMinted
-monthlyAttemptsMinted
-```
-
-и сам `DIRECT_BUY_REPLAY.md` правильно предупреждает: это **не available attempts после draws**.
-
-Следующая недостающая граница — доказуемо восстановить жизненный цикл попыток:
-
-```text
-OPEN
-→ FROZEN(drawId)
+BUY replay
+→ minted attempts
+→ OPEN
+→ FROZEN(drawId, cutoff)
 → CONSUMED
 ```
 
-отдельно для Short и Monthly.
+с независимыми Short/Monthly, inclusive block cutoff, cumulative attempt ranges, replay после reorg и проверяемым snapshot hash.
 
-Главная цель этапа:
+Особенно правильно, что attempts представлены **диапазонами**, а не миллионами индивидуальных id. При текущем правиле «freeze все доступные attempts данного типа до cutoff» consumed attempts всегда образуют префикс, поэтому модель:
 
-> независимо воспроизвести из публичной истории, какие attempts на конкретном cutoff были доступны draw, какие были заморожены, какие уже использованы и какие новые BUY остались следующему OPEN.
+```text
+firstAttempt = consumed + 1
+lastAttempt  = mintedAtCutoff
+```
+
+достаточна и масштабируется намного лучше NFT/поэлементного списка.
+
+Следующая настоящая граница теперь уже не indexer. Это **атомарная связь attempt snapshot с деньгами draw и будущим result**.
 
 ---
 
-## Базовая семантика, которую надо сохранить
+## 1. Что в lifecycle сделано правильно
 
-### Mint
+### Cutoff
 
-Каждая новая entry одновременно создаёт:
-
-```text
-+1 short attempt
-+1 monthly attempt
-```
-
-Они дальше живут независимо.
-
-### Short freeze
-
-При freeze конкретного Short draw:
-
-- берутся только short attempts, доступные на его cutoff;
-- monthly attempts не затрагиваются;
-- attempts, появившиеся после cutoff, остаются в следующем OPEN;
-- пока draw pending, frozen attempts нельзя использовать во втором Short;
-- новых Short attempts это не блокирует.
-
-### Monthly freeze
-
-То же отдельно для monthly attempts.
-
-Short freeze/settlement не расходует monthly; monthly не расходует short.
-
-### Skip / not ready
-
-Если draw вообще не стартовал:
+Cutoff определён как последний полностью включённый block:
 
 ```text
-attempts остаются OPEN
+cutoffBlockNumber + cutoffBlockHash
 ```
 
-Никакого consumption только потому, что прошёл checkpoint.
+и обязан быть старше FREEZE block. Это хороший простой MVP rule: нет неоднозначности внутри cutoff block.
 
-### Pending RNG
+BUY между cutoff и FREEZE остаётся OPEN следующего набора. Код делает это правильно: `mintedAt(cutoff)` определяет frozen prefix, а текущий `open` уже может содержать более новые attempts.
 
-Если snapshot уже frozen, но random не доставлен:
+### Conservation
+
+Для каждого wallet/type после каждого перехода проверяется:
 
 ```text
-attempts остаются FROZEN
+mintedTotal = open + frozen + consumed
 ```
 
-Не возвращаем их в OPEN и не считаем проигравшими.
+и frozen range привязан к текущему pending draw.
 
-### Terminal random / settlement
+Это важнее хранения производных balances в БД: полный replay остаётся source of truth.
 
-Если random реально состоялся и draw завершён терминально:
+### Short / Monthly independence
 
-```text
-все участвовавшие frozen attempts этого типа → CONSUMED
-```
+Один общий mint создаёт по attempt каждого типа, дальше состояния раздельны. Pending Short не блокирует Monthly и наоборот. Consumption одного типа второй не меняет.
 
-включая проигравших и случай no-winner.
+Это соответствует принятой продуктовой модели.
 
-Claim не меняет attempt state.
+### Pending semantics
+
+FREEZE без TERMINAL оставляет attempts frozen навсегда, пока история не содержит terminal event. Timeout/reset не выдуман.
+
+NO_WINNER и WINNER consume одинаковый frozen set. Claim игнорируется. Это именно нужная семантика.
+
+### Reorg
+
+Полный branch replay вместо сложного incremental repair сейчас хороший выбор. Если FREEZE/TERMINAL исчезли из canonical branch, исчезают и переходы. Если surviving FREEZE ссылается на старый cutoff/snapshot — hard fail.
 
 ---
 
-## Cutoff — ключевая граница
+## 2. Реальные production gates, которые теперь стали видны
 
-Следующий компонент должен ввести точную границу draw:
+### Gate A — lifecycle source должен быть однозначно привязан к одному instance
+
+Сами события:
 
 ```text
+AttemptsFrozen(drawId, kind, ...)
+AttemptsConsumed(drawId, kind, ...)
+```
+
+не содержат `instanceId`, PromoVault или TOKEN.
+
+Текущая модель решает это manifest-правилом:
+
+> один configured `source` предназначен одному promo instance.
+
+Для текущего reducer это нормально, но в production это надо сделать **жёстким архитектурным правилом**.
+
+Самый простой вариант для MVP:
+
+```text
+один immutable controller/source deployment
+= один Promo instance
+```
+
+и не пытаться делать общий controller на много токенов.
+
+Если когда-нибудь source станет shared, ABI событий придётся domain-separate самим instance id/address. Не надо добавлять это сейчас, если controller будет per-instance.
+
+### Gate B — `sourceCodeHash` достаточен только для immutable/non-proxy source
+
+RPC reader проверяет runtime source на конце диапазона.
+
+Для обычного immutable controller это хорошая проверка.
+
+Для proxy она **не докажет**, какая implementation исполнялась в момент старых FREEZE/TERMINAL, потому что proxy runtime может не меняться.
+
+Поэтому рекомендация для MVP:
+
+> production draw controller/source делать non-proxy / immutable deployment.
+
+Это заодно хорошо совпадает с прежним направлением проекта — не открывать arbitrary upgrade path к prize authority.
+
+Если всё-таки появится proxy, тогда понадобится implementation history, а это сейчас лишняя сложность.
+
+### Gate C — terminal event пока не доказывает денежный settlement
+
+Lifecycle docs это честно говорят.
+
+Сегодня возможна синтетическая история:
+
+```text
+AttemptsConsumed
+→ reducer честно считает tickets consumed
+```
+
+даже если PromoVault вообще ничего не выплатил.
+
+Production controller обязан сделать boundary сильнее:
+
+> attempts становятся terminal только в той же успешной транзакции, где окончательно применён денежный result в PromoVault.
+
+Если vault settlement revert — TERMINAL не должен существовать.
+
+Это следующий важнейший invariant.
+
+### Gate D — FREEZE пока не доказывает, что деньги реально зарезервированы
+
+Аналогично snapshot может быть frozen off-chain/event-wise, но этот пакет сам не резервирует Short budget.
+
+Production FREEZE должен атомарно связать:
+
+```text
+attempt snapshot
++ cutoff
++ rules version
++ budget D
++ ready basket
++ PromoVault reserve
+```
+
+до запроса random.
+
+Иначе получится два независимых состояния: «билеты frozen» и «деньги где-то потом зарезервировали». Нам это не надо.
+
+---
+
+## 3. Небольшие замечания, не блокеры
+
+### Empty snapshot
+
+Reducer разрешает empty snapshot, и docs правильно называют это accounting-only.
+
+Production controller должен отдельно запретить/разрешить такой draw по product readiness. Не надо переносить readiness в reducer.
+
+### rulesHash
+
+Сейчас это opaque bytes32. Это нормально для lifecycle layer.
+
+Но production controller обязан сам знать/проверять активную rules version; нельзя считать сам факт ненулевого `rulesHash` доказательством того, что применены правильные `p_max/h_e/K/weights/m/D`.
+
+### Finality
+
+`canonical-in-supplied-branch-not-eligible-for-commit` оставлен правильно.
+
+Не надо сейчас придумывать случайное число confirmations. Finality/cutoff eligibility нужно решать вместе с production controller/release gate, а не внутри attempt accounting.
+
+---
+
+## 4. Следующий пакет — не RNG, а draw commitment shell
+
+Я бы теперь сделал один маленький production-oriented пакет условно:
+
+```text
+short-draw-commitment-v1
+```
+
+Пока только **Short**, чтобы не смешивать monthly jackpot state machine.
+
+Цель:
+
+> одной транзакцией создать неизменяемый pending Short, который одновременно имеет доказанный attempt snapshot и реально зарезервированный USDG budget/basket.
+
+### Что должен фиксировать pending draw
+
+Минимум:
+
+```text
+drawId
 cutoffBlockNumber
 cutoffBlockHash
+attemptSnapshotHash
+rulesVersion / rulesHash
+budget D
+basketHash
+basketTotal
+remainder
+PromoVault reserve draw id/source
+freeze block
 ```
 
-и domain конкретного draw.
+Конкретные production K/weights/minimum/D ещё не утверждены — controller shell может брать их из test/fixed rules fixture либо versioned config, но не превращать экспериментальные числа в PRODUCT_SPEC.
 
-Snapshot строится строго по истории, каноничной **до cutoff включительно/по явно выбранному правилу**. Не использовать wall-clock, `latest` или произвольное текущее состояние БД.
+### Atomic freeze
 
-Пример обязательной семантики:
+Порядок должен быть примерно:
 
 ```text
-Short #17 frozen at cutoff H
-
-wallet имел 2 OPEN short attempts к H
-→ эти 2 входят в #17
-
-после H wallet покупает ещё на 300 USDG
-→ +3 short attempts
-→ они уже OPEN для будущего #18
-→ они не могут попасть в #17
-
-monthly attempts от обеих покупок продолжают жить отдельно
+validate no pending Short
+validate cutoff/reference
+validate selected active rules
+build basket
+reserveUSDG(drawId, SHORT, D) in PromoVault
+store immutable pending context
+emit AttemptsFrozen / DrawFrozen
 ```
 
-Если нужно выбрать inclusive/exclusive правило относительно конкретного block/log, выбрать одно каноническое правило и version it. Предпочтение: cutoff block/hash задаёт последний block, полностью включённый в replay.
+Любой revert откатывает **и reserve, и freeze**.
+
+Random после этого пока не нужен.
+
+### Почему это лучше следующего шага сразу с RNG
+
+После такого пакета мы впервые получим сильную on-chain границу:
+
+```text
+вот конкретные tickets
++ вот конкретная сумма USDG
++ вот конкретная корзина
++ всё зафиксировано до random
+```
+
+Тогда RNG/result verification можно строить уже поверх законченного immutable input.
 
 ---
 
-## Не сводить модель к одному числу `available`
+## 5. Acceptance tests для следующего пакета
 
-Нужен ledger переходов, а не только derived balance.
+Минимально проверить:
 
-Условно для wallet:
+1. Freeze без достаточного `freeShort` revert и не создаёт pending.
+2. Успешный freeze уменьшает `freeShort` ровно на D и увеличивает reserved ровно на D.
+3. SnapshotHash/cutoff/rules/budget/basket после freeze нельзя изменить.
+4. Второй Short freeze при pending невозможен.
+5. Funding после freeze идёт в свободный Short и не меняет frozen D/basket.
+6. Claim старых draws не меняет pending context.
+7. Monthly funding/accounting не меняет frozen Short.
+8. Ошибка reserve откатывает lifecycle event/state.
+9. Нельзя подменить drawId/source bucket.
+10. Basket math в controller совпадает с `ShortPrizeBasket` и `basketTotal <= D`.
+11. Dust/remainder остаётся определённым заранее и не зависит от random.
+12. Reorg/off-chain replay того же on-chain freeze восстанавливает тот же attempt snapshot/domain.
 
-```text
-short:
-  mintedTotal
-  open
-  frozenByDraw
-  consumedTotal
-
-monthly:
-  mintedTotal
-  open
-  frozenByDraw
-  consumedTotal
-```
-
-Но source of truth — история mint/freeze/terminal transitions, а не сохранённые aggregate counters.
-
-Инвариант по каждому типу:
+И отдельный integration invariant для будущего terminal:
 
 ```text
-mintedTotal = open + frozen + consumedTotal
+нет успешного PromoVault finalize/settlement
+→ нет AttemptsConsumed
 ```
 
-и одна attempt не может находиться более чем в одном состоянии.
-
-Не требуется выдавать каждой attempt отдельный NFT/id. Можно использовать cumulative accounting/ranges, если оно остаётся однозначно воспроизводимым.
+Его можно пока зафиксировать как требование, не реализуя RNG.
 
 ---
 
-## Что должно быть публичным входом replay
+## 6. Что пока не трогать
 
-Текущий BUY replay остаётся первой частью.
+- production RNG;
+- winner selection;
+- monthly controller;
+- finality oracle;
+- расширение BUY routes;
+- conversion TOKEN→USDG;
+- frontend;
+- численные production K/weights/m/D, пока владелец их явно не принял;
+- proxy/upgradeable controller.
 
-Добавить draw lifecycle occurrences, которые verifier может получить независимо:
+## Итог
 
-```text
-FREEZE
-- drawId
-- kind SHORT|MONTHLY
-- cutoff block/hash
-- snapshot/rules version
-- commitment/hash будущего snapshot либо пока тестовый deterministic marker
+`73604ae` закрывает attempt accounting существенно лучше, чем просто counters: теперь tickets имеют воспроизводимый lifecycle и cutoff.
 
-TERMINAL
-- drawId
-- kind
-- terminal result marker
-- ссылка на тот же frozen snapshot
-```
+Я бы не продолжал шлифовать indexer. Следующая полезная граница — **свести tickets и реальные деньги в один immutable pending Short до random**.
 
-На этом этапе не надо доказывать fairness random и winners. Но переход `FROZEN → CONSUMED` должен происходить только от события/состояния, которое явно означает состоявшийся terminal random/settlement, а не от timeout.
-
-Если production on-chain controller ещё отсутствует, допустим fixture/event stream, но формат должен быть близок к будущему production lifecycle и не должен давать indexer права молча переписывать историю.
-
----
-
-## Минимальный reducer
-
-Псевдологика:
-
-```text
-replay BUYs
-→ mint short/monthly attempts
-
-on FREEZE(drawId, kind, cutoff):
-  derive eligible OPEN state exactly at cutoff
-  bind it to draw
-  move selected attempts OPEN → FROZEN(drawId)
-
-on TERMINAL(drawId, kind):
-  require matching pending freeze
-  move all FROZEN(drawId) → CONSUMED
-```
-
-Новые BUY после cutoff продолжают обычный mint в OPEN.
-
-Для одного pending Short и одного pending Monthly не разрешать повторный freeze того же kind, пока предыдущий не terminal.
-
-Пропущенные checkpoints не создают synthetic lifecycle events.
-
----
-
-## Что проверить тестами
-
-Минимальный обязательный набор:
-
-1. `99 + 1 USDG` после регистрации → 1 short + 1 monthly OPEN.
-2. Short freeze замораживает short, но monthly остаётся OPEN.
-3. BUY после Short cutoff создаёт новые OPEN short/monthly и не меняет frozen старого draw.
-4. Второй Short freeze при pending первом запрещён/fail-closed.
-5. Monthly может freeze независимо от pending Short, если продуктовая state machine это допускает.
-6. Skip/not-ready не создаёт freeze и ничего не расходует.
-7. Pending RNG не возвращает attempts и не расходует их.
-8. Terminal no-winner всё равно consumes frozen attempts.
-9. Terminal winner case consumes ровно тот же frozen набор.
-10. Claim никак не влияет на attempts.
-11. Duplicate FREEZE/TERMINAL delivery идемпотентна либо конфликтует fail-closed, но не делает double consume.
-12. Wrong drawId/kind/cutoff/snapshot reference fail-closed.
-13. Reorg, который удаляет BUY до cutoff, меняет frozen snapshot после полного replay новой ветки.
-14. Reorg, который удаляет сам FREEZE/TERMINAL, откатывает зависимые transitions.
-15. Short consumption не меняет monthly и наоборот.
-16. Инвариант `minted = open + frozen + consumed` держится после каждого шага.
-
-Отдельный полезный stress test:
-
-- один wallet с большим числом entries;
-- много wallets;
-- несколько BUY до/после cutoff;
-- verify byte-for-byte deterministic serialization.
-
----
-
-## Что пока НЕ делать
-
-- не выбирать production RNG;
-- не назначать winners;
-- не проектировать challenge/ZK;
-- не менять `ParticipantRegistry`;
-- не расширять supported BUY routes;
-- не добавлять Luck;
-- не принимать production K/weights/D;
-- не делать daemon/finality policy частью этого шага;
-- не добавлять timeout, который возвращает frozen attempts после известного random;
-- не добавлять admin reset attempts.
-
----
-
-## Рекомендуемый один пакет работ
-
-Название условно:
-
-```text
-attempt-lifecycle-replay-v1
-```
-
-Состав:
-
-1. Versioned data model для lifecycle occurrences.
-2. Pure deterministic reducer поверх текущего direct BUY ledger.
-3. Fixture/event source для FREEZE/TERMINAL без pretending, что это production controller.
-4. Canonical serialization + hash результата.
-5. Replay tests на cutoff, pending, new BUY, terminal consumption, duplicate/reorg.
-6. Документ с чёткой границей: minted/open/frozen/consumed.
-
-### Acceptance criteria
-
-Этап готов, если независимый replay из одной и той же публичной истории однозначно отвечает:
-
-```text
-для каждого wallet и каждого kind:
-- сколько attempts minted
-- сколько OPEN
-- какие заморожены и в каком draw
-- сколько CONSUMED
-
-для каждого draw:
-- точный cutoff block/hash
-- точный frozen participant/attempt snapshot
-- terminal или pending
-```
-
-и невозможно:
-
-- использовать attempt дважды;
-- засунуть post-cutoff BUY в старый draw;
-- расходовать monthly через Short;
-- вернуть attempt после terminal random;
-- расходовать attempt при skip/not-ready;
-- потерять/добавить attempts из-за duplicate ingestion.
-
----
-
-## Что подумать Codex перед кодом
-
-1. Лучше ли представлять attempts как cumulative ranges/epochs вместо индивидуальных ids, сохраняя строгий replay?
-2. Как минимально моделировать lifecycle events сейчас, чтобы потом не выбросить формат при production controller?
-3. Как domain-separate Short/Monthly/drawId/schema, чтобы один freeze нельзя было переиспользовать в другом draw?
-4. Как лучше связать cutoff с текущим `direct-buy-ledger-v1`: embed head/cutoff hash, derive sub-ledger до cutoff или новый combined schema?
-5. Какие конфликты/reorg cases требуют hard halt, а какие можно безопасно пересчитать полным replay?
-
-Сначала предложить минимальную структуру и failure cases. Код можно добавлять в этом пакете, если дизайн остаётся узким и не тянет за собой RNG/controller целиком.
+Если Codex согласен, следующий узкий пакет — per-instance immutable Short draw commitment/controller shell, который атомарно связывает `attemptSnapshotHash + cutoff + rules + D + basket + PromoVault.reserveUSDG`, без RNG и без terminal logic.
