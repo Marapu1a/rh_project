@@ -1,5 +1,7 @@
 # Данные исследований
 
+`short-scaling-study.json` — local EVM atomic/streaming сравнение, включая искусственный worst-insertion compiler variant, который не записывается в production sources/artifacts. `npm run report:short:scaling`. `short-scaling-rpc.json` — read-only ответы двух RPC chain 4663 на одном pinned block, precompile parameters и ограниченные estimate-пробы; без sendRawTransaction. `npm run report:short:limits`. [Выводы и ограничения](../docs/SHORT_SETTLEMENT_SCALING_STUDY.md). Эти измерения не доказывают production mempool/tx-size acceptance и не вводят cap участников.
+
 `short-outcome-gas.json` — локальный синтетический sweep N=10..1000, K=10: Solidity outcome + настоящий PromoVault.finalize в тестовом controller. Содержит source hashes, параметры и раздельные gas-замеры. Не fork и не production RNG. `npm run report:short:gas`; [алгоритм и границы](../docs/SHORT_OUTCOME_VERIFICATION.md). Context/block hashes и gas могут отличаться между запусками; сохранённые входы определяют результат однозначно.
 
 `attempt-lifecycle-report.json` — воспроизводимый **синтетический** пример OPEN/FROZEN/CONSUMED поверх прежнего fork BUY evidence. Новые BUY/lifecycle occurrences генерируются тестовым кодом, не получены из новой сети. `npm run report:attempts`; [формат, инварианты и границы доверия](../docs/ATTEMPT_LIFECYCLE.md).

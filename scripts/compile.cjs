@@ -1,13 +1,19 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const solc = require('solc');
-function compile() {
+function compile({sourceOverrides = {}, writeArtifacts = true} = {}) {
   const sources = {};
   for (const dir of ['contracts', 'test/contracts']) {
     if (!fs.existsSync(dir)) continue;
     for (const name of fs.readdirSync(dir)) {
       if (name.endsWith('.sol')) sources[`${dir}/${name}`] = {content: fs.readFileSync(`${dir}/${name}`, 'utf8')};
     }
+  }
+  // Research can compile an in-memory stress variant without editing contract files
+  // or replacing normal artifacts. Ordinary compile() remains unchanged.
+  for (const [file, content] of Object.entries(sourceOverrides)) {
+    if (!sources[file] || typeof content !== 'string') throw new Error(`Invalid source override: ${file}`);
+    sources[file] = {content};
   }
   const result = JSON.parse(solc.compile(JSON.stringify({language: 'Solidity', sources, settings: {
     optimizer: {enabled: true, runs: 200}, evmVersion: 'cancun',
@@ -18,13 +24,13 @@ function compile() {
   }}));
   const errors = (result.errors || []).filter(e => e.severity === 'error');
   if (errors.length) throw new Error(errors.map(e => e.formattedMessage).join('\n'));
-  fs.mkdirSync('artifacts', {recursive: true});
+  if (writeArtifacts) fs.mkdirSync('artifacts', {recursive: true});
   const artifacts = {};
   for (const [file, contracts] of Object.entries(result.contracts)) {
     if (!sources[file]) continue;
     for (const [name, contract] of Object.entries(contracts)) artifacts[name] = contract;
   }
-  fs.writeFileSync('artifacts/compiled.json', JSON.stringify(artifacts, null, 2));
+  if (writeArtifacts) fs.writeFileSync('artifacts/compiled.json', JSON.stringify(artifacts, null, 2));
   return artifacts;
 }
 module.exports = {compile};

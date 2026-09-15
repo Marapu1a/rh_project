@@ -1,38 +1,43 @@
 # Текущее обращение к GPT
 
-Обновлено 15.09.2026 после реализации Short outcome verification. Пожалуйста, прочитай код и разберись с конкретными рисками ниже. Ответ можно обновить в GPT_REVIEW_RESPONSE.md. Предыдущие обсуждения сохранены в Git; этот файл — запрос ревью, не дополнительная спецификация.
+15.09.2026. Завершён исследовательский пакет `short-settlement-scaling-study-v1`. Просьба проверить выводы и небольшой следующий шаг. Это ревью, не самостоятельное разрешение менять продуктовые правила.
 
-## Что принято владельцем
+## Что сохраняем
 
-Везде, где гибкость не нарушает доверие, её нужно сохранять. Неизменяемы ограничения полномочий, уже возникшие обязательства, frozen inputs и назначенные prizes; возможны ограниченные публичные версии параметров будущих периодов. Пожизненно одна Short rules version на весь deployment не принята. Proxy, arbitrary code/controller replacement, withdrawals призовых средств, reroll и отмена prizes не допускаются. T=100 USDG остаётся ранее принятым immutable исключением.
+Все eligible OPEN wallets на cutoff участвуют в одном Short; MAX_N/FIFO/cohorting не вводим. Один snapshot, один authenticated seed, тот же admission q(e) и global top-K, одна корзина, без reroll/timeout-no-win. Гибкость будущих параметров не должна переписывать уже возникшие обязательства. Production contracts в этом пакете не менялись.
 
-Новые настройки не должны задним числом ухудшать условия OPEN attempts и BUY carry. Точные полномочия активации, пределы параметров и срок предупреждения ещё не выбраны. Мы не реализовали простой owner setter, который молча решал бы эти вопросы.
+## Главный результат
 
-## Что изменилось
+Permissionless streaming прототип работает на настоящем PromoVault, только в test/contracts. Данные публикуются и canonical-валидируются порциями **до reserve**. При seal контракт проверяет вычисленные count/root против заранее заявленных; count не доверенный. После mock seed delivery любой обрабатывает следующий chunk. Global top-K продолжается, finalize и terminal event атомарны в конце.
 
-1. ShortDrawCommitment теперь принимает BasketRules внутренним вызовом и хранит payload отдельно на каждый draw. Нет lifetime singleton, нет production entrypoint выбора/активации правил. Новый request включает evmParticipantsHash, домен денежного commitment повышен до SHORT_COMMITMENT_V2. Старый frozen payload нельзя изменить, следующему draw можно передать другой. Публичных deployments V1 нет.
-2. ShortOutcome.sol вычисляет результат из context + seed + отсортированных Participant ranges + Rules + basket. Допуск по q(e), отдельные hash domains для admission/order/prize order, максимум один prize на wallet, случайное подмножество корзины при M<K. Никаких caller-supplied winners в тестовом settlement пути.
-3. JS verifier использует независимую полную сортировку против bounded top-K в Solidity. Оба commitment участников строятся из одного snapshot и сверяются verifier-функцией. Lifecycle CLI отдельно по-прежнему проверяет только canonical JSON.
-4. Тестовый controller проверяет ABI hash, пересчитывает outcome, вызывает настоящий finalize, очищает pending и emits AttemptsConsumed атомарно. Он unrestricted и принимает seed от теста: **не production RNG/terminal**.
-5. Gas sweep N=10,50,100,250,500,1000 при K=10, обычный и all-admitted профили. Зафиксированы calldata, verification, finalize и полный transaction gas. Нет нового fork или внешних транзакций.
+Для 5000 участников/K10: все обработаны, максимальная отдельная tx 1,037,407 gas; весь путь 74,908,186 gas, 162 tx. Для 1000/K64: max 4,771,017, total 52,962,008. Это local Cancun, не production ArbOS fee measurement. Полный список восстановлен третьей стороной из transaction calldata. Разные transport partitions дают одинаковый study outcome/hash при том же context/seed.
 
-## Что прочитать
+Проверки: 110/110 npm tests прошли, Solidity compilation успешно; 10 atomic/stress scenarios и 3 streaming scenarios, с двумя ожидаемыми OOG старого пути. Production contract diff пуст.
 
-- [PRODUCT_SPEC](PRODUCT_SPEC.md), особенно разделы 8, 9 и 13; [IMPLEMENTATION_STATUS](IMPLEMENTATION_STATUS.md).
-- [ShortDrawCommitment.sol](../contracts/ShortDrawCommitment.sol), [описание V2](SHORT_DRAW_COMMITMENT.md).
-- [ShortOutcome.sol](../contracts/ShortOutcome.sol), [JS verifier](../scripts/short-outcome.cjs), [полная схема форматов/хешей/округления](SHORT_OUTCOME_VERIFICATION.md).
-- [Тесты](../test/short-outcome.test.cjs), [test-only интеграция](../test/contracts/ShortOutcomeFixture.sol), [общая fixture](../test/fixtures/short-outcome.cjs).
-- [Gas script](../scripts/short-outcome-gas.cjs) и [отчёт](../research/short-outcome-gas.json).
+Atomic path: реальные hashes N5000/K10 не завершились при бюджете 32M. Искусственный forced-worst insertion N1000/K64 также OOG при 32M; N2000/K10 требует 26,866,346. Stress variant существует только в compiler memory; это не найденный seed и не версия алгоритма продукта.
 
-Проверено локально: 103/103 npm tests, Solidity compilation, 12 успешных gas-сценариев. На N=1000: около 6.26M gas обычный профиль и 7.36M при всех допущенных; calldata 96,132 bytes. Это наблюдаемые fixture-цифры, без production RNG verification и L1 data fees. All-admitted не доказывает худший порядок вставок; K=64 не измерен. Не называем это подтверждением production-лимитов сети.
+Два RPC на pinned block 63,945,627 вернули getMaxTxGasLimit=32M. Header gasLimit огромен и не является практическим tx budget. Точный Robinhood sequencer/provider transaction-size limit не установлен: успешные estimate-пробы не доказывают sendRawTransaction acceptance, публичных tx не отправляли. Поэтому «single-tx точно безопасен до N=1000» не утверждаем.
 
-## Вопросы ревью
+## Прочитать
 
-1. Есть ли ошибка в exact admission threshold, пределах uint128/uint32, top-K insertion, tie-break, prize ordering или resultHash? В Result при хешировании resultHash явно равен zero, формат описан; нет ли неоднозначности между JS/Solidity?
-2. Достаточна ли связь двух participant commitments и frozen rules с outcome при принятой модели независимого replay? Мы явно признаём: on-chain ABI hash не доказывает правдивость snapshot или его соответствие JSON, эту ложь обнаруживает verifier. Что конкретно нужно публиковать/автоматизировать следующим минимальным шагом?
-3. Gas: какие проверки худшего случая действительно нужны перед выбором pre-freeze N/calldata/work limits? Есть ли веская причина уже сейчас отказаться от атомарного settlement, учитывая измерения? Не предлагать batching/Merkle заранее без конкретного ограничения.
-4. Самый важный следующий дизайн: как ограниченно активировать версии **без переписывания OPEN attempts/carry** и без чрезмерной очереди старых epochs? Предложи минимальную state machine, конкретно указав, когда правила становятся обязательством перед накопившим билеты человеком. Просто «фиксируем при freeze» эту задачу не решает.
-5. Какие параметры реально безопасно версионировать, какие bounds надо навсегда зафиксировать? Как не превратить гибкость q(e)/K/D в скрытую возможность направить prize funds связанным кошелькам? Без обещания устранить Sybil, identity/KYC не добавляем.
-6. Какой один следующий ограниченный пакет даст больше пользы: правила активации/публичный rules payload, усиление автоматического verifier или подготовка seed authentication? Не объединять всё в очередной незаканчиваемый controller.
+1. [Полный отчёт и сравнение A/B/C/D](SHORT_SETTLEMENT_SCALING_STUDY.md).
+2. [Исследовательский контракт](../test/contracts/ShortStreamingStudy.sol), [7 integration tests](../test/short-streaming.test.cjs), [RPC восстановление chunks](../test/fixtures/short-streaming.cjs).
+3. [Gas/stress script](../scripts/short-scaling-study.cjs), [результаты](../research/short-scaling-study.json).
+4. [Read-only RPC script](../scripts/short-scaling-rpc.cjs), [сырые ответы](../research/short-scaling-rpc.json).
+5. [Текущий статус](IMPLEMENTATION_STATUS.md); `contracts/` остался без изменений.
 
-RNG provider, Monthly terminal, conversion, дополнительные BUY routes, frontend и численные production-настройки этим пакетом не выбирались. Просим явно отличать ошибки нынешней реализации от требований к ещё не реализованному production controller.
+## Вопросы по существу
+
+- Правильны ли completeness и индукция global top-K через local top-K? Есть ли простой сценарий пропуска/повтора/подмены, который не закрыт индексом, chunk hash, canonical order и ожидаемыми count/root?
+- Достаточна ли publication calldata + chunkHashes как минимальная схема DA для независимого продолжения? Какие требования к архиву/зеркалам действительно обязательны, без притворства, что root гарантирует availability?
+- Прототип использует ordered rolling root, а не flat ABI hash V2: `root=keccak256(abi.encode(prev,wallet,first,last))`. Это новый commitment/result domain. Верно ли отказаться от обещания drop-in совместимости, сохранив probability semantics, и подготовить новый формат до deployment?
+- Cutoff якорится в begin, поэтому завершение подготовки после 256 блоков не ломается. Какие проверки finality/BEGIN→SEAL нужны в следующем пакете, чтобы не смешать это с ретроактивной активацией правил?
+- Есть ли смысл в Merkle для нашего последовательного scan, если все data уже валидируются на публикации, chunks ограничены, а storage хешей составляет O(chunks)? Просьба обосновать конкретную выгоду, не добавлять его по умолчанию.
+- Прототип не интегрирован с full BUY/lifecycle replay и не доказывает правдивость списка. Следующий модуль обязан отдать один проверяемый manifest/root/count и сохранить прежнюю границу доверия — что минимум требуется в verifier?
+- Экономика исполнения: для 5000/K10 около 74.9M суммарного gas. Исполнитель проекта оплачивает это отдельно от призовой казны; permissionless completion не гарантирует бесплатного исполнителя. Нужен ли на этом этапе ещё механизм, кроме нормального keeper и публичного recovery runner?
+
+## Рекомендуемый следующий кусок
+
+Полноценная подготовка canonical dataset до reserve: публичная proposal/manifest, anchored cutoff, bounded publish, фактические root/count, независимая проверка и явная готовность к seal. Разобрать namespace и брошенную **незарезервированную** подготовку, не вводя отмену frozen draw. Без RNG provider, rules activation, Monthly и frontend в этом же пакете.
+
+Не разворачивать исследовательский single-draw fixture с казной. Не предлагать «потом заменим verifier/controller»: у vault immutable controller. Если быстрый single-tx и streaming нужны одному экземпляру, оба пути должны быть предусмотрены и проверены до deployment.
