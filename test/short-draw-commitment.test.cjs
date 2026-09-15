@@ -5,6 +5,7 @@ const hre=require('hardhat');
 const {compile}=require('../scripts/compile.cjs');
 const {domainFor,snapshotFor,replayAttempts}=require('../scripts/attempt-lifecycle.cjs');
 const {hash}=require('../scripts/direct-buy.cjs');
+const {participantsHash,verifySnapshotCommitments}=require('../scripts/short-outcome.cjs');
 const compiled=compile(),id=ethers.id;
 const rpc=(method,params=[])=>hre.network.provider.send(method,params);
 const sent=async p=>(await p).wait();
@@ -25,7 +26,7 @@ async function fixture({quoteName='MockToken',binding='correct',weights=[7,5,3],
   await sent(quote.mint(await admin.getAddress(),10000));
   await sent(quote.approve(vault.target,10000));
   const fund=(amount,destination=1)=>sent(vault.fundUSDG(amount,destination));
-  async function request(overrides={}){const b=await rpc('eth_getBlockByNumber',['latest',false]);return {drawId:id('short'),campaignId:1,cutoffBlockNumber:Number(BigInt(b.number)),cutoffBlockHash:b.hash,attemptSnapshotHash:id('fixture snapshot assertion'),expectedRulesHash:await source.shortRulesHash(),budget:101,...overrides};}
+  async function request(overrides={}){const b=await rpc('eth_getBlockByNumber',['latest',false]);return {drawId:id('short'),campaignId:1,cutoffBlockNumber:Number(BigInt(b.number)),cutoffBlockHash:b.hash,attemptSnapshotHash:id('fixture snapshot assertion'),evmParticipantsHash:id('fixture EVM snapshot assertion'),expectedRulesHash:await source.shortRulesHash(),budget:101,...overrides};}
   return {anchor,provider,admin,alice,deploy,token,quote,registry,source,vault,fund,request};
 }
 async function state(f){return {
@@ -47,9 +48,9 @@ test('atomic freeze commits the complete context, basket and actual SHORT reserv
   assert.equal(c.basketHash,ethers.keccak256(coder.encode(['uint256[]'],[basket.prizes])));
   const rules=ethers.keccak256(coder.encode(['bytes32','uint256[]','uint256','bytes32'],[id('SHORT_RULES_V1'),[7,5,3],2,id('remaining fixture policy')]));
   assert.equal(r.expectedRulesHash,rules);
-  const tuple='tuple(tuple(bytes32,uint64,uint256,bytes32,bytes32,bytes32,uint256),bytes32,uint256,uint256,uint256)';
+  const tuple='tuple(tuple(bytes32,uint64,uint256,bytes32,bytes32,bytes32,bytes32,uint256),bytes32,uint256,uint256,uint256)';
   const digest=ethers.keccak256(coder.encode(['bytes32','uint256','address','bytes32','address','address','address',tuple],
-    [id('SHORT_COMMITMENT_V1'),31337,f.source.target,id('instance'),f.registry.target,f.vault.target,f.quote.target,c]));
+    [id('SHORT_COMMITMENT_V2'),31337,f.source.target,id('instance'),f.registry.target,f.vault.target,f.quote.target,c]));
   assert.equal(await f.source.shortCommitmentHash(r.drawId),digest);
   assert.equal(await f.vault.freeShort(),99n);assert.equal(await f.vault.reserved(f.quote.target),101n);
   assert.equal((await f.vault.draws(r.drawId)).budget,101n);
@@ -77,7 +78,7 @@ test('failed reserve rolls back donation recognition, phase, commitment and all 
 test('malformed requests and stale/noncanonical cutoffs cannot create a reserve',async()=>{
   const f=await fixture();await f.fund(200);
   const before=await state(f);
-  for(const override of [{drawId:ethers.ZeroHash},{campaignId:0},{attemptSnapshotHash:ethers.ZeroHash},
+  for(const override of [{drawId:ethers.ZeroHash},{campaignId:0},{attemptSnapshotHash:ethers.ZeroHash},{evmParticipantsHash:ethers.ZeroHash},
     {expectedRulesHash:id('wrong')},{budget:0},{budget:29},{cutoffBlockHash:ethers.ZeroHash},
     {cutoffBlockHash:id('other branch')},{cutoffBlockNumber:1000000}]){
     await rejects(async()=>f.source.freeze(await f.request(override)));
@@ -164,6 +165,7 @@ test('actual atomic freeze replays as FROZEN; a local reorg removes both ledger 
   const r=await f.request();
   r.attemptSnapshotHash=hash(snapshotFor(domainFor(manifest,config),r.drawId,'SHORT',
     {blockNumber:r.cutoffBlockNumber,blockHash:r.cutoffBlockHash},r.expectedRulesHash,[]));
+  r.evmParticipantsHash=participantsHash([]);
   const checkpoint=await rpc('evm_snapshot');await sent(f.source.freeze(r));
   async function replay(){const blocks=[],latest=BigInt(await rpc('eth_blockNumber'));
     for(let n=BigInt(f.anchor.number)+1n;n<=latest;n++){
@@ -174,6 +176,7 @@ test('actual atomic freeze replays as FROZEN; a local reorg removes both ledger 
     return replayAttempts(manifest,config,blocks);
   }
   const ledger=await replay();assert.equal(ledger.draws[0].status,'FROZEN');assert.equal(ledger.draws[0].totalAttempts,'0');
+  verifySnapshotCommitments(ledger.draws[0].snapshot,r);
   assert.equal(await f.vault.reserved(f.quote.target),101n);
   await rpc('evm_revert',[checkpoint]);await rpc('evm_mine');
   const replacement=await replay();assert.equal(replacement.draws.length,0);assert.equal(replacement.pending.SHORT,null);

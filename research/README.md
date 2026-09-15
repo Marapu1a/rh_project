@@ -1,5 +1,7 @@
 # Данные исследований
 
+`short-outcome-gas.json` — локальный синтетический sweep N=10..1000, K=10: Solidity outcome + настоящий PromoVault.finalize в тестовом controller. Содержит source hashes, параметры и раздельные gas-замеры. Не fork и не production RNG. `npm run report:short:gas`; [алгоритм и границы](../docs/SHORT_OUTCOME_VERIFICATION.md). Context/block hashes и gas могут отличаться между запусками; сохранённые входы определяют результат однозначно.
+
 `attempt-lifecycle-report.json` — воспроизводимый **синтетический** пример OPEN/FROZEN/CONSUMED поверх прежнего fork BUY evidence. Новые BUY/lifecycle occurrences генерируются тестовым кодом, не получены из новой сети. `npm run report:attempts`; [формат, инварианты и границы доверия](../docs/ATTEMPT_LIFECYCLE.md).
 
 `direct-buy/` — свежий local-fork evidence исполнения native PAIR launch и настоящего Robinhood Universal Router, manifest/code hashes, выбранные внешние MIT/GPL источники и воспроизводимый ledger. Офлайн: `npm run report:direct-buy`; новый fork: `npm run test:fork:direct-buy`. Это локальные транзакции, не публичные сделки. [Доказательства и ограничения](../docs/DIRECT_BUY_REPLAY.md).

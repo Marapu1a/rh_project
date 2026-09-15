@@ -28,6 +28,8 @@ Direct BUY → билеты: [decoder, replay и fork-проверка](DIRECT_B
 
 Связь снимка с деньгами: [атомарный Short commitment](SHORT_DRAW_COMMITMENT.md), 15.09 — внутренний компонент будущего общего controller, реальный reserveUSDG и receipt replay. Нет публичного запуска, readiness или terminal.
 
+Результат из одного seed: [Short outcome verification](SHORT_OUTCOME_VERIFICATION.md), 15.09 — Solidity/JS, два commitment участников, правила отдельно на draw и gas sweep. Источник seed и активация версий ещё не реализованы; денежный terminal есть только в тестовой интеграции.
+
 Практический сценарий оборота и казны Short: [SHORT_ECONOMY_SCENARIO.md](SHORT_ECONOMY_SCENARIO.md).
 
 Сравнение настроек по 5 760 недельным сценариям: [SHORT_SWEEP_RESULTS](SHORT_SWEEP_RESULTS.md).

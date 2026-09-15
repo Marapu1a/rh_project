@@ -11,7 +11,7 @@
 
 Утверждено внешнее общее пополнение без project fee: Short/Current/Next = 3:2:1, после заполнения Next — 50:50 между Short и Current. Излишки Next, включая целевое пополнение, идут в Current. Призовой фонд невозвратен проекту/спонсорам. Концепция Short: допуск на основе entries без Luck, случайная раздача заранее обеспеченной корзины, не больше одного приза кошельку. Допуск не является выигрышем; полный розыгрыш ещё не реализован.
 
-Это **не полностью реализованный продукт**. Есть прототипы [FeeRouter](contracts/FeeRouter.sol) и [PromoVault](contracts/PromoVault.sol), unit tests и исследования. USDG funding, три свободных резерва и Monthly accounting реализованы. Есть регистрация, BUY/attempt replay, расчёт корзины и [атомарная фиксация Short с резервом](docs/SHORT_DRAW_COMMITMENT.md). Конвертация, календарь и полный production controller/RNG ещё не реализованы. Публичного deployment нет.
+Это **не полностью реализованный продукт**. Есть прототипы [FeeRouter](contracts/FeeRouter.sol) и [PromoVault](contracts/PromoVault.sol), unit tests и исследования. USDG funding, три свободных резерва и Monthly accounting реализованы. Есть регистрация, BUY/attempt replay, [атомарная фиксация Short с резервом](docs/SHORT_DRAW_COMMITMENT.md) и [проверяемый расчёт результата](docs/SHORT_OUTCOME_VERIFICATION.md). Конвертация, активация версий правил, календарь и полный production controller/RNG ещё не реализованы. Публичного deployment нет.
 
 ## Локальные проверки
 

@@ -4,6 +4,8 @@
 
 Следующий пакет 15.09: [ShortDrawCommitment](SHORT_DRAW_COMMITMENT.md) связывает этот же AttemptsFrozen ABI с настоящим резервированием USDG атомарно. Есть проверка raw receipts и локального reorg. Он не доказывает правильность snapshot и не добавляет terminal; описанный ниже синтетический пример остаётся примером, а не production history.
 
+Обновление V2: [Short outcome verifier](SHORT_OUTCOME_VERIFICATION.md) дополнительно сверяет ABI hash диапазонов с тем же replay snapshot и пересчитывает результат по seed. Lifecycle reducer/CLI сам по себе эту дополнительную проверку не выполняет. Test-only terminal с настоящим finalize проверен на локальных receipts; это не production RNG.
+
 ## Проверяемая история
 
 Каждая entry создаёт по одной Short и Monthly attempt. Replay сохраняет исходный BUY ledger, историю MINT/FREEZE/TERMINAL с блоками/транзакциями/логами и состояние каждого кошелька отдельно по типам:

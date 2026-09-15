@@ -6,10 +6,15 @@ import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 /// @dev UNRESTRICTED test adapter. Never deploy this as a production controller.
 contract ShortDrawCommitmentFixture is ShortDrawCommitment {
+    BasketRules private fixtureRules;
+    bytes32 public shortRulesHash;
     constructor(address vault, address registry, bytes32 instance, uint256[] memory weights,
         uint256 minUnit, bytes32 remainingRulesHash)
-        ShortDrawCommitment(vault, registry, instance, weights, minUnit, remainingRulesHash) {}
-    function freeze(FreezeRequest calldata request) external { _freezeShort(request); }
+        ShortDrawCommitment(vault, registry, instance) {
+        fixtureRules = BasketRules(weights, minUnit, remainingRulesHash);
+        shortRulesHash = basketRulesHash(fixtureRules);
+    }
+    function freeze(FreezeRequest calldata request) external { _freezeShort(request, fixtureRules); }
     function prepareCredit(bytes32 drawId, address winner, uint256 amount) external nonReentrant {
         promoVault.reserveUSDG(drawId, 1, PromoVault.ReserveSource.SHORT, amount);
         address[] memory winners = new address[](1); winners[0] = winner;

@@ -35,4 +35,4 @@ remainder = budget − total
 
 Результат 15.09: **51/51 tests passed** (45 существующих и 6 новых), включая Solidity compilation.
 
-Фиксация snapshot и корзины с настоящим резервом теперь реализована отдельным внутренним [ShortDrawCommitment](SHORT_DRAW_COMMITMENT.md). Там weights/minimumUnit неизменяемы, есть технический предел 64 места; сама pure-библиотека не менялась. Полный жизненный цикл controller, подтверждение entries/random и terminal ещё не реализованы; MVP не готов к запуску.
+Фиксация snapshot и корзины с настоящим резервом теперь реализована отдельным внутренним [ShortDrawCommitment](SHORT_DRAW_COMMITMENT.md). Там weights/minimumUnit неизменяемы для уже frozen draw; будущий может получить другую версию. Есть технический предел 64 места; сама pure-библиотека не менялась. [Outcome](SHORT_OUTCOME_VERIFICATION.md) рассчитывается на Solidity/JS и проверен с test-only terminal. Полный production controller и подтверждение entries/random ещё не реализованы; MVP не готов к запуску.
