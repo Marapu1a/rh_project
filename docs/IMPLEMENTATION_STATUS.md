@@ -10,7 +10,8 @@
 | Внешнее funding 3:2:1 / targeted / overflow | Реализовано, direct USDG — GENERAL, дробление учитывается общей фазой |
 | Monthly accounting | start/settle win/no-win, один pending, cycleId, независимый claim; без календаря/RNG/attempts |
 | Конвертация TOKEN → USDG | Не реализована |
-| Indexer, регистрация и entries | Production-реализации нет |
+| Публичная регистрация | 15.09 реализован ParticipantRegistry: самостоятельный opt-in, публичное событие, без admin/backdating. Пока не подключён к indexer/controller. [Описание](PARTICIPANT_REGISTRY.md) |
+| Indexer и entries | Production-реализации нет. Принята архитектура публичного воспроизводимого indexer с явно ограниченным доверием. [Требования](INDEXER_TRUST_MODEL.md) |
 | Production controller, capped odds, RNG | Нет; DrawControllerFixture — неограниченная тестовая заглушка |
 | Short без Luck и корзина призов | 14.09 реализована локальная Python-модель полного short; параметры открыты, production-реализации нет. [Описание и результаты](SHORT_MODEL.md) |
 | Расчёт корзины на Solidity | 15.09 реализована pure-библиотека ShortPrizeBasket: положительные призы, порог базовой единицы, точный остаток. Проверена с PromoVault; production controller пока не подключён. [API и границы](SHORT_PRIZE_BASKET.md) |

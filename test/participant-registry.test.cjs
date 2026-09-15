@@ -1,0 +1,89 @@
+const {test,before}=require('node:test');
+const assert=require('node:assert/strict');
+const {ethers}=require('ethers');
+const hre=require('hardhat');
+const {compile}=require('../scripts/compile.cjs');
+const compiled=compile();
+let provider,alice,bob;
+async function deploy(name,args=[]) {
+  const a=compiled[name];
+  const c=await new ethers.ContractFactory(a.abi,a.evm.bytecode.object,alice).deploy(...args);
+  await c.waitForDeployment();return c;
+}
+before(async()=>{
+  await hre.network.provider.send('hardhat_reset');
+  provider=new ethers.BrowserProvider(hre.network.provider,undefined,{cacheTimeout:-1});
+  [alice,bob]=await Promise.all([0,1].map(i=>provider.getSigner(i)));
+});
+
+test('opt-in records the caller in a public event and leaves other wallets unregistered',async()=>{
+  const registry=await deploy('ParticipantRegistry');
+  const who=await bob.getAddress();
+  assert.equal(await registry.registered(who),false);
+  const receipt=await (await registry.connect(bob).register()).wait();
+  const event=registry.interface.parseLog(receipt.logs[0]);
+  assert.equal(event.name,'Registered');
+  assert.equal(event.args.participant,who);
+  assert.equal(receipt.logs.length,1);
+  assert.equal(await registry.registered(who),true);
+  assert.equal(await registry.registered(await alice.getAddress()),false);
+  assert.equal(await registry.registered(ethers.ZeroAddress),false);
+});
+
+test('repeat opt-in reverts without changing the first registration or emitting another event',async()=>{
+  const registry=await deploy('ParticipantRegistry');
+  const receipt=await (await registry.register()).wait();
+  await assert.rejects(registry.register.staticCall(),e=>
+    e.code==='CALL_EXCEPTION' && e.data===ethers.id('AlreadyRegistered()').slice(0,10));
+  const events=await registry.queryFilter(registry.filters.Registered());
+  assert.equal(events.length,1);
+  assert.equal(events[0].transactionHash,receipt.hash);
+  assert.equal(await registry.registered(await alice.getAddress()),true);
+});
+
+test('history can be independently reconstructed from canonical logs, not current membership',async()=>{
+  const registry=await deploy('ParticipantRegistry');
+  const first=await (await registry.register()).wait();
+  const second=await (await registry.connect(bob).register()).wait();
+  const historical=await registry.queryFilter(registry.filters.Registered(),0,first.blockNumber);
+  assert.equal(historical.length,1);
+  assert.equal(historical[0].args.participant,await alice.getAddress());
+  assert.equal(await registry.registered(await bob.getAddress(),{blockTag:first.blockNumber}),false);
+  const all=await registry.queryFilter(registry.filters.Registered(),0,second.blockNumber);
+  assert.deepEqual(all.map(e=>e.args.participant),[await alice.getAddress(),await bob.getAddress()]);
+});
+
+test('smart wallet registers itself; event order distinguishes before/after in one transaction',async()=>{
+  const registry=await deploy('ParticipantRegistry');
+  const wallet=await deploy('RegistrationWalletFixture');
+  const receipt=await (await wallet.registerBetweenMarkers(registry.target)).wait();
+  assert.equal(receipt.logs.length,3);
+  const [before,registration,after]=receipt.logs;
+  assert.equal(wallet.interface.parseLog(before).args.sequence,1n);
+  assert.equal(registration.address.toLowerCase(),registry.target.toLowerCase());
+  assert.equal(registry.interface.parseLog(registration).args.participant,wallet.target);
+  assert.equal(wallet.interface.parseLog(after).args.sequence,2n);
+  assert.ok(before.index<registration.index && registration.index<after.index);
+  assert.equal(await registry.registered(wallet.target),true);
+  assert.equal(await registry.registered(await alice.getAddress()),false);
+});
+
+test('separate instances do not inherit registrations and registry grants no administrative API',async()=>{
+  const first=await deploy('ParticipantRegistry'),second=await deploy('ParticipantRegistry');
+  await (await first.register()).wait();
+  assert.equal(await second.registered(await alice.getAddress()),false);
+  const functions=first.interface.fragments.filter(f=>f.type==='function').map(f=>f.format('sighash')).sort();
+  assert.deepEqual(functions,['register()','registered(address)']);
+});
+
+test('canonical reorg rollback removes orphaned registration and allows a new opt-in',async()=>{
+  const registry=await deploy('ParticipantRegistry');
+  const snapshot=await hre.network.provider.send('evm_snapshot');
+  await (await registry.register()).wait();
+  assert.equal(await registry.registered(await alice.getAddress()),true);
+  assert.equal(await hre.network.provider.send('evm_revert',[snapshot]),true);
+  assert.equal(await registry.registered(await alice.getAddress()),false);
+  assert.equal((await registry.queryFilter(registry.filters.Registered())).length,0);
+  await (await registry.register()).wait();
+  assert.equal((await registry.queryFilter(registry.filters.Registered())).length,1);
+});

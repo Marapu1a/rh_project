@@ -20,6 +20,8 @@
 
 Первый Solidity-компонент Short: [расчёт обеспеченной корзины](SHORT_PRIZE_BASKET.md), 15.09. Это библиотека будущего controller, не полный розыгрыш.
 
+Проверяемый собственный indexer: [принятая архитектура](INDEXER_TRUST_MODEL.md). Первый реализованный компонент — [публичная регистрация](PARTICIPANT_REGISTRY.md), 15.09.
+
 Практический сценарий оборота и казны Short: [SHORT_ECONOMY_SCENARIO.md](SHORT_ECONOMY_SCENARIO.md).
 
 Сравнение настроек по 5 760 недельным сценариям: [SHORT_SWEEP_RESULTS](SHORT_SWEEP_RESULTS.md).

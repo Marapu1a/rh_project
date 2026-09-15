@@ -3,7 +3,8 @@
   "private": true,
   "version": "0.0.0",
   "scripts": {
-    "test": "node --test --test-concurrency=1 test/fee-router.test.cjs test/promo-vault.test.cjs test/short-prize-basket.test.cjs",
+    "test": "node --test --test-concurrency=1 test/fee-router.test.cjs test/promo-vault.test.cjs test/short-prize-basket.test.cjs test/participant-registry.test.cjs",
+    "test:registration": "node --test test/participant-registry.test.cjs",
     "test:short:basket": "node --test test/short-prize-basket.test.cjs",
     "test:fork": "node scripts/economics-fork.cjs",
     "test:fork:farming": "node scripts/economics-fork.cjs --farming",
