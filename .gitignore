@@ -19,6 +19,8 @@ research/*
 !research/README.md
 !research/pair-source-audit/
 !research/pair-source-audit/**
+!research/direct-buy/
+!research/direct-buy/**
 !research/short-model-report.json
 !research/short-economy-report.json
 !research/pair-dependency-audit-2026-09-15.json

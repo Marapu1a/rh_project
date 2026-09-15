@@ -1,0 +1,150 @@
+// Pure, versioned decoder/replay. No DB, RPC, signing, floating point or winner selection.
+const {AbiCoder,Interface,keccak256,toUtf8Bytes,isAddress}=require('ethers');
+const coder=AbiCoder.defaultAbiCoder();
+const SWAP_ABI=new Interface(['event Swap(bytes32 indexed id,address indexed sender,int128 amount0,int128 amount1,uint160 sqrtPriceX96,uint128 liquidity,int24 tick,uint24 fee)']);
+const TRANSFER_ABI=new Interface(['event Transfer(address indexed from,address indexed to,uint256 value)']);
+const REGISTER_ABI=new Interface(['event Registered(address indexed participant)']);
+const EXECUTE_ABI=new Interface(['function execute(bytes commands,bytes[] inputs,uint256 deadline) payable']);
+const SWAP_TYPE='((address,address,uint24,int24,address),bool,uint128,uint128,uint256,bytes)';
+const low=x=>x.toLowerCase();
+const number=x=>{const n=Number(BigInt(x));if(!Number.isSafeInteger(n)||n<0)throw Error('Invalid index');return n;};
+function ensure(condition,message){if(!condition)throw Error(message);}
+function canonical(value){
+  if(Array.isArray(value))return '['+value.map(canonical).join(',')+']';
+  if(value&&typeof value==='object')return '{'+Object.keys(value).sort().map(k=>JSON.stringify(k)+':'+canonical(value[k])).join(',')+'}';
+  return JSON.stringify(value);
+}
+function hash(value){return keccak256(toUtf8Bytes(canonical(value)));}
+function validateManifest(m){
+  ensure(m.schema==='direct-buy-v1'&&m.routeVersion==='rh-ur-10-060b0e-v1','Unsupported schema/route');
+  ensure(m.quoteDecimals===6&&m.entryThresholdRaw==='100000000','Expected 100 nominal USDG (6 decimals)');
+  for(const field of ['router','manager','token','quote','registry','hook'])ensure(isAddress(m[field]),'Invalid '+field);
+  ensure(low(m.token)!==low(m.quote),'Identical assets');
+  ensure(m.poolKey.length===5,'Invalid pool key');
+  const key=m.poolKey;
+  ensure(BigInt(key[0])<BigInt(key[1]),'Unsorted currencies');
+  ensure(key.slice(0,2).map(low).sort().join() === [m.token,m.quote].map(low).sort().join(),'Wrong pool assets');
+  ensure(low(key[4])===low(m.hook),'Wrong hook');
+  ensure(keccak256(coder.encode(['address','address','uint24','int24','address'],key))===low(m.poolId),'Wrong pool id');
+  number(m.chainId);number(m.anchor.number);
+}
+function decodeCanonical(types,data){
+  const result=coder.decode(types,data);
+  ensure(low(coder.encode(types,result))===low(data),'Non-canonical calldata');
+  return result;
+}
+function swapLogs(m,receipt){
+  return receipt.logs.filter(l=>low(l.address)===low(m.manager)&&low(l.topics[0])===low(SWAP_ABI.getEvent('Swap').topicHash))
+    .map(log=>({log,swap:SWAP_ABI.parseLog(log).args}));
+}
+function decodeTransaction(m,tx,receipt){
+  const all=swapLogs(m,receipt);
+  return all.filter(x=>low(x.swap.id)===low(m.poolId)).map(({log,swap})=>{
+    const base={candidateId:[m.chainId,low(log.blockHash),low(log.transactionHash),number(log.logIndex)].join(':'),
+      blockNumber:number(log.blockNumber),blockHash:low(log.blockHash),transactionHash:low(log.transactionHash),
+      transactionIndex:number(log.transactionIndex),logIndex:number(log.logIndex),poolId:low(m.poolId),
+      payer:null,recipient:null,grossQuoteRaw:null,evidenceLogIndexes:[number(log.logIndex)]};
+    const result=(status,reason,extra={})=>({...base,...extra,status,reason});
+    const quote0=low(m.poolKey[0])===low(m.quote);
+    const q=quote0?swap.amount0:swap.amount1,t=quote0?swap.amount1:swap.amount0;
+    if(q>0n&&t<0n)return result('INELIGIBLE','SELL');
+    if(q>=0n||t<=0n)return result('AMBIGUOUS','INVALID_BUY_DELTAS');
+    if(!tx.to||low(tx.to)!==low(m.router))return result('UNSUPPORTED_ROUTE','NOT_DIRECT_ROUTER_CALL');
+    if(all.length!==1)return result('UNSUPPORTED_ROUTE','MULTIPLE_POOL_SWAPS');
+    try{
+      ensure(BigInt(receipt.status)===1n,'Failed transaction');
+      const parsed=EXECUTE_ABI.parseTransaction({data:tx.input});
+      if(!parsed||parsed.args.commands!=='0x10'||parsed.args.inputs.length!==1)return result('UNSUPPORTED_ROUTE','COMMAND_SEQUENCE');
+      if(low(EXECUTE_ABI.encodeFunctionData('execute',parsed.args))!==low(tx.input))return result('UNSUPPORTED_ROUTE','NON_CANONICAL_CALLDATA');
+      const [actions,parameters]=decodeCanonical(['bytes','bytes[]'],parsed.args.inputs[0]);
+      if(actions!=='0x060b0e'||parameters.length!==3)return result('UNSUPPORTED_ROUTE','ACTION_SEQUENCE');
+      const [spec]=decodeCanonical([SWAP_TYPE],parameters[0]);
+      const [key,zeroForOne,amountIn,minimum,price,hookData]=spec;
+      if(keccak256(coder.encode(['address','address','uint24','int24','address'],key))!==low(m.poolId))return result('AMBIGUOUS','CALLDATA_POOL_MISMATCH');
+      if(zeroForOne!==quote0||amountIn===0n||price!==0n||hookData!=='0x')return result('UNSUPPORTED_ROUTE','SWAP_PARAMETERS');
+      const [settleCurrency,settleAmount,payerIsUser]=decodeCanonical(['address','uint256','bool'],parameters[1]);
+      const [takeCurrency,takeRecipient,takeAmount]=decodeCanonical(['address','address','uint256'],parameters[2]);
+      if(low(settleCurrency)!==low(m.quote)||low(takeCurrency)!==low(m.token)||settleAmount!==0n||takeAmount!==0n||!payerIsUser)
+        return result('UNSUPPORTED_ROUTE','SETTLEMENT_PARAMETERS');
+      // Proven only for a top-level execute call to the pinned router: its lock stores
+      // msg.sender, and payerIsUser resolves to that locker. Nested wallet calls excluded.
+      const payer=low(tx.from),recipient=BigInt(takeRecipient)===1n?payer:low(takeRecipient);
+      const attributed={payer,recipient,grossQuoteRaw:String(-q)};
+      if(payer!==recipient)return result('UNSUPPORTED_ROUTE','PAYER_RECIPIENT_DIFFER',attributed);
+      if(low(swap.sender)!==low(m.router)||BigInt(tx.value)!==0n||-q>amountIn||t<minimum)
+        return result('AMBIGUOUS','SWAP_EXECUTION_MISMATCH',attributed);
+      const transfers=receipt.logs.filter(l=>[low(m.token),low(m.quote)].includes(low(l.address))&&low(l.topics[0])===low(TRANSFER_ABI.getEvent('Transfer').topicHash))
+        .map(l=>({log:l,...TRANSFER_ABI.parseLog(l).args.toObject()}));
+      const payment=transfers.filter(x=>low(x.log.address)===low(m.quote)&&low(x.from)===payer&&low(x.to)===low(m.manager)&&x.value===-q);
+      const delivery=transfers.filter(x=>low(x.log.address)===low(m.token)&&low(x.from)===low(m.manager)&&low(x.to)===recipient&&x.value===t);
+      // Intentionally narrow: unexpected service fees/transfers are visible, not guessed.
+      if(transfers.length!==2||payment.length!==1||delivery.length!==1||number(payment[0].log.logIndex)<=number(log.logIndex)||number(delivery[0].log.logIndex)<=number(payment[0].log.logIndex))
+        return result('AMBIGUOUS','SETTLEMENT_TRANSFER_MISMATCH',attributed);
+      return result('ELIGIBLE','SUPPORTED_BUY', {...attributed,evidenceLogIndexes:[number(log.logIndex),number(payment[0].log.logIndex),number(delivery[0].log.logIndex)]});
+    }catch{return result('AMBIGUOUS','MALFORMED_OR_INCONSISTENT_EVIDENCE');}
+  });
+}
+
+// Replay a complete branch from the anchor before registration deployment.
+// Branch replacement is full replay; stale committed draws are NOT repaired here.
+function replay(m,deliveredBlocks){
+  validateManifest(m);
+  const byNumber=new Map();
+  for(const b of deliveredBlocks){const n=number(b.number);if(byNumber.has(n))ensure(canonical(byNumber.get(n))===canonical(b),'Conflicting block delivery');else byNumber.set(n,b);}
+  const blocks=[...byNumber.values()].sort((a,b)=>number(a.number)-number(b.number));
+  let parent=low(m.anchor.hash),height=number(m.anchor.number);
+  const registrations=new Map(),wallets=new Map(),decisions=[];
+  let registryDeployed=false;
+  const txHashes=new Set();
+  for(const b of blocks){
+    ensure(number(b.number)===height+1&&low(b.parentHash)===parent,'Non-contiguous canonical branch');
+    const events=[],logIndexes=new Set();
+    const txs=[...b.transactions].sort((a,c)=>number(a.tx.transactionIndex)-number(c.tx.transactionIndex));
+    for(let i=0;i<txs.length;i++){
+      const {tx,receipt}=txs[i];
+      ensure(number(tx.transactionIndex)===i,'Missing/duplicate transaction index');
+      ensure(!txHashes.has(low(tx.hash)),'Duplicate canonical transaction');txHashes.add(low(tx.hash));
+      ensure(low(tx.blockHash)===low(b.hash)&&number(tx.blockNumber)===number(b.number),'Transaction block mismatch');
+      ensure(low(receipt.transactionHash)===low(tx.hash)&&low(receipt.blockHash)===low(b.hash)&&number(receipt.blockNumber)===number(b.number)&&number(receipt.transactionIndex)===i,'Receipt mismatch');
+      ensure(low(receipt.from)===low(tx.from)&&low(receipt.to||'0x')===low(tx.to||'0x'),'Receipt sender/target mismatch');
+      ensure(BigInt(tx.chainId)===BigInt(m.chainId),'Transaction chain mismatch');
+      ensure(BigInt(receipt.status)===1n||receipt.logs.length===0,'Failed transaction has logs');
+      if(receipt.contractAddress&&low(receipt.contractAddress)===low(m.registry)&&BigInt(receipt.status)===1n)registryDeployed=true;
+      const unique=new Map();
+      for(const l of receipt.logs){
+        ensure(!l.removed&&low(l.blockHash)===low(b.hash)&&number(l.blockNumber)===number(b.number)&&low(l.transactionHash)===low(tx.hash)&&number(l.transactionIndex)===i,'Log provenance mismatch');
+        const index=number(l.logIndex);
+        if(unique.has(index)){ensure(canonical(unique.get(index))===canonical(l),'Conflicting log delivery');continue;}
+        ensure(!logIndexes.has(index),'Duplicate log index across transactions');logIndexes.add(index);unique.set(index,l);
+        if(low(l.address)===low(m.registry)&&low(l.topics[0])===low(REGISTER_ABI.getEvent('Registered').topicHash)){
+          ensure(registryDeployed,'Registration before deployment');
+          events.push({kind:'register',index,participant:low(REGISTER_ABI.parseLog(l).args.participant),blockNumber:number(b.number),blockHash:low(b.hash),transactionHash:low(tx.hash),transactionIndex:i});
+        }
+      }
+      for(const d of decodeTransaction(m,tx,{...receipt,logs:[...unique.values()].sort((a,c)=>number(a.logIndex)-number(c.logIndex))}))events.push({kind:'swap',index:d.logIndex,decision:d});
+    }
+    ensure([...logIndexes].sort((a,b)=>a-b).every((index,i)=>index===i),'Missing receipt log index');
+    for(const e of events.sort((a,b)=>a.index-b.index)){
+      if(e.kind==='register'){
+        ensure(!registrations.has(e.participant),'Duplicate registration in canonical history');
+        const {kind,index,...record}=e;registrations.set(e.participant,{...record,logIndex:index});
+      }else{
+        const d=e.decision;
+        if(d.status==='ELIGIBLE'&&!registrations.has(d.payer)){d.status='INELIGIBLE';d.reason='NOT_REGISTERED_AT_SWAP';}
+        if(d.status==='ELIGIBLE'){
+          const w=wallets.get(d.payer)||{carryRaw:0n,entriesMinted:0n};
+          const x=w.carryRaw+BigInt(d.grossQuoteRaw),threshold=BigInt(m.entryThresholdRaw);
+          d.entriesMinted=String(x/threshold);w.entriesMinted+=x/threshold;w.carryRaw=x%threshold;wallets.set(d.payer,w);
+        }else d.entriesMinted='0';
+        decisions.push(d);
+      }
+    }
+    height=number(b.number);parent=low(b.hash);
+  }
+  ensure(registryDeployed,'Range must include registry deployment; imported carry is not supported');
+  return {schema:'direct-buy-ledger-v1',manifestHash:hash(m),head:{number:height,hash:parent},
+    finality:'canonical-in-supplied-branch-not-eligible-for-commit',
+    registrations:[...registrations.values()].sort((a,b)=>a.participant.localeCompare(b.participant)),decisions,
+    wallets:[...wallets].sort(([a],[b])=>a.localeCompare(b)).map(([wallet,w])=>({wallet,carryRaw:String(w.carryRaw),entriesMinted:String(w.entriesMinted),shortAttemptsMinted:String(w.entriesMinted),monthlyAttemptsMinted:String(w.entriesMinted)}))};
+}
+module.exports={replay,decodeTransaction,canonical,hash,validateManifest,SWAP_ABI,TRANSFER_ABI,REGISTER_ABI,EXECUTE_ABI,SWAP_TYPE};

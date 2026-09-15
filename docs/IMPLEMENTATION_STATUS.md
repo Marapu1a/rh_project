@@ -1,6 +1,6 @@
 # Состояние реализации
 
-Проверено по локальным контрактам и package.json: 13.09.2026. Это карта кода, а не утверждение реализации всей [продуктовой схемы](PRODUCT_SPEC.md).
+Обновлено по локальному коду и проверкам: 15.09.2026. Это карта кода, а не утверждение реализации всей [продуктовой схемы](PRODUCT_SPEC.md).
 
 | Часть | Фактическое состояние |
 |---|---|
@@ -11,7 +11,7 @@
 | Monthly accounting | start/settle win/no-win, один pending, cycleId, независимый claim; без календаря/RNG/attempts |
 | Конвертация TOKEN → USDG | Не реализована |
 | Публичная регистрация | 15.09 реализован ParticipantRegistry: самостоятельный opt-in, публичное событие, без admin/backdating. Пока не подключён к indexer/controller. [Описание](PARTICIPANT_REGISTRY.md) |
-| Indexer и entries | Production-реализации нет. Принята архитектура публичного воспроизводимого indexer с явно ограниченным доверием. [Требования](INDEXER_TRUST_MODEL.md) |
+| Indexer и entries | 15.09 реализованы узкий direct BUY decoder, полный replay регистраций/покупок → carry/начисленные attempts, CLI чтения блоков через свой RPC и сравнения отчёта. Проверены на настоящем router в локальном fork. Нет daemon, production finality/cutoff и расхода attempts по draws. [Результат и границы](DIRECT_BUY_REPLAY.md) |
 | Production controller, capped odds, RNG | Нет; DrawControllerFixture — неограниченная тестовая заглушка |
 | Short без Luck и корзина призов | 14.09 реализована локальная Python-модель полного short; параметры открыты, production-реализации нет. [Описание и результаты](SHORT_MODEL.md) |
 | Расчёт корзины на Solidity | 15.09 реализована pure-библиотека ShortPrizeBasket: положительные призы, порог базовой единицы, точный остаток. Проверена с PromoVault; production controller пока не подключён. [API и границы](SHORT_PRIZE_BASKET.md) |

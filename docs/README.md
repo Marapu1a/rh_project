@@ -22,6 +22,8 @@
 
 Проверяемый собственный indexer: [принятая архитектура](INDEXER_TRUST_MODEL.md). Первый реализованный компонент — [публичная регистрация](PARTICIPANT_REGISTRY.md), 15.09.
 
+Direct BUY → билеты: [decoder, replay и fork-проверка](DIRECT_BUY_REPLAY.md), 15.09. Поддержан один точный маршрут; production cutoff/finality и расход попыток пока отсутствуют.
+
 Практический сценарий оборота и казны Short: [SHORT_ECONOMY_SCENARIO.md](SHORT_ECONOMY_SCENARIO.md).
 
 Сравнение настроек по 5 760 недельным сценариям: [SHORT_SWEEP_RESULTS](SHORT_SWEEP_RESULTS.md).

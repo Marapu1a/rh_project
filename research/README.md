@@ -1,5 +1,7 @@
 # Данные исследований
 
+`direct-buy/` — свежий local-fork evidence исполнения native PAIR launch и настоящего Robinhood Universal Router, manifest/code hashes, выбранные внешние MIT/GPL источники и воспроизводимый ledger. Офлайн: `npm run report:direct-buy`; новый fork: `npm run test:fork:direct-buy`. Это локальные транзакции, не публичные сделки. [Доказательства и ограничения](../docs/DIRECT_BUY_REPLAY.md).
+
 `pair-source-audit/` — выбранные публичные MIT-исходники PAIR и manifest их Sourcify/RPC-проверки. Внешние лицензии сохранены; эти файлы не включаются в сборку наших contracts. Обновление: `node scripts/pair-source-audit.cjs` (read-only сеть, перезаписывает snapshot). Полные временные ответы API остаются вне Git. Границы проверки: [исходники и переносимость](../docs/PAIR_PORTABILITY_AND_SOURCES_2026-09-15.md).
 
 В Git включены исходные данные для скриптов и evidence, на которые ссылаются Markdown-отчёты. Адреса и transaction hashes в них относятся к публичным наблюдениям либо локальному fork; приватных ключей для запуска не требуется.

@@ -3,7 +3,10 @@
   "private": true,
   "version": "0.0.0",
   "scripts": {
-    "test": "node --test --test-concurrency=1 test/fee-router.test.cjs test/promo-vault.test.cjs test/short-prize-basket.test.cjs test/participant-registry.test.cjs",
+    "test": "node --test --test-concurrency=1 test/fee-router.test.cjs test/promo-vault.test.cjs test/short-prize-basket.test.cjs test/participant-registry.test.cjs test/direct-buy.test.cjs",
+    "test:direct-buy": "node --test test/direct-buy.test.cjs",
+    "report:direct-buy": "node scripts/replay-direct-buy.cjs --evidence research/direct-buy/evidence.json --output research/direct-buy/ledger.json",
+    "test:fork:direct-buy": "node scripts/direct-buy-evidence.cjs",
     "test:registration": "node --test test/participant-registry.test.cjs",
     "test:short:basket": "node --test test/short-prize-basket.test.cjs",
     "test:fork": "node scripts/economics-fork.cjs",
