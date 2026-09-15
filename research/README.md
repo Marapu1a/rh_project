@@ -13,3 +13,5 @@
 `short-economy-report.json` — условный трёхдневный сценарий оборота, комиссионного дохода, резервов и выплат. Допущения и воспроизведение: [SHORT_ECONOMY_SCENARIO](../docs/SHORT_ECONOMY_SCENARIO.md). Ставки не являются подтверждёнными комиссиями PAIR.
 
 `short-sweep.json` генерируется локально и не включён в Git. Команда воспроизведения, допущения и итоговые таблицы — в [SHORT_SWEEP_RESULTS](../docs/SHORT_SWEEP_RESULTS.md).
+
+`pair-dependency-audit-2026-09-15.json` — read-only snapshot chain 4663, pinned block, bytecode/storage/getters и HTTP readiness. Границы доказательств: [PAIR audit](../docs/PAIR_DEPENDENCY_AUDIT_2026-09-15.md).

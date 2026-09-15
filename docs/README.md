@@ -25,3 +25,5 @@
 Проверка необходимости Luck: [SHORT_LUCK_REVIEW](SHORT_LUCK_REVIEW.md), 1 440 парных недельных прогонов и точный контроль вероятности.
 
 Актуальное решение 14.09: Luck удалён. Основной `short_model.py` и `report:short` работают без истории проигрышей; legacy и сравнительные отчёты сохранены только как исследования.
+
+PAIR dependencies и pre-launch canary: [аудит 15.09](PAIR_DEPENDENCY_AUDIT_2026-09-15.md). Частично подтверждено; внешние vault/locker authority ещё требуют source verification.

@@ -4,6 +4,33 @@ const {ethers} = require('ethers');
 const hre = require('hardhat');
 const {compile} = require('../scripts/compile.cjs');
 const compiled = compile();
+
+test('dependency audit: failed external collection blocks rollover but not old credits or direct income',async()=>{
+  const {router,source,quote,promo,endsAt,recipients}=await fixture();
+  await (await quote.mint(router.target,70)).wait();
+  await (await router.sync(quote.target)).wait();
+  await (await source.setFailures(true,quote.target,false)).wait();
+  await nextTime(endsAt);
+  await rejects(()=>router.rollCampaign(1,[endsAt+2000,recipients,[10000,0,0]]));
+  assert.equal(await router.campaignId(),1n);
+  await (await quote.mint(router.target,30)).wait();
+  await (await router.connect(keeper).sync(quote.target)).wait();
+  await (await router.connect(keeper).pay(quote.target,promo.target)).wait();
+  assert.equal(await quote.balanceOf(promo.target),100n);
+  assert.equal(await router.received(1,quote.target),100n);
+});
+
+test('dependency audit: epoch drift blocks rollover while old-epoch harvest remains usable if vault permits',async()=>{
+  const {router,source,quote,promo,endsAt,recipients}=await fixture();
+  await (await source.fund(quote.target,31)).wait();
+  await (await source.setEpoch(2)).wait();
+  await nextTime(endsAt);
+  await rejects(()=>router.rollCampaign(1,[endsAt+2000,recipients,[10000,0,0]]));
+  await (await router.connect(keeper).harvest(quote.target,1)).wait();
+  await (await router.connect(keeper).pay(quote.target,promo.target)).wait();
+  assert.equal(await quote.balanceOf(promo.target),31n);
+  assert.equal(await router.campaignId(),1n);
+});
 let provider, admin, keeper, investor, treasury;
 async function deploy(name, args = []) {
   const a = compiled[name];
