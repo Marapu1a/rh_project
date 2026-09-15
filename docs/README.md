@@ -18,6 +18,8 @@
 
 Локальная модель короткого розыгрыша, команды и результаты: [SHORT_MODEL.md](SHORT_MODEL.md).
 
+Первый Solidity-компонент Short: [расчёт обеспеченной корзины](SHORT_PRIZE_BASKET.md), 15.09. Это библиотека будущего controller, не полный розыгрыш.
+
 Практический сценарий оборота и казны Short: [SHORT_ECONOMY_SCENARIO.md](SHORT_ECONOMY_SCENARIO.md).
 
 Сравнение настроек по 5 760 недельным сценариям: [SHORT_SWEEP_RESULTS](SHORT_SWEEP_RESULTS.md).

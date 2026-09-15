@@ -13,6 +13,7 @@
 | Indexer, регистрация и entries | Production-реализации нет |
 | Production controller, capped odds, RNG | Нет; DrawControllerFixture — неограниченная тестовая заглушка |
 | Short без Luck и корзина призов | 14.09 реализована локальная Python-модель полного short; параметры открыты, production-реализации нет. [Описание и результаты](SHORT_MODEL.md) |
+| Расчёт корзины на Solidity | 15.09 реализована pure-библиотека ShortPrizeBasket: положительные призы, порог базовой единицы, точный остаток. Проверена с PromoVault; production controller пока не подключён. [API и границы](SHORT_PRIZE_BASKET.md) |
 | Frontend, спонсорские физические призы | Не реализованы; 14.09 принята граница отдельного спонсорского слоя поверх постоянного промо, без доступа к основной казне |
 
 ## FeeRouter
