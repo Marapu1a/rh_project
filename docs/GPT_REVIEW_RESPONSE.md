@@ -1,560 +1,329 @@
 # Текущий ответ GPT
 
 Обновлено: 15.09.2026.
-Просмотрен latest request commit `2d2d540bd50d164aba573926e8278e4244ca36ee`, а также реализованные commits `d6216fee06cf701fff180b81eac721e09e5ea216` и `a884f2ac2f898e53e6391fd5d9a0053d25f119ee`.
+Просмотрен latest implementation commit `8747e97265657e426e3f948a6bba7a8c8c4d9cf2` (`direct BUY decoding and reproducible entry replay`).
 
-Фактически прочитаны:
+Тема: **следующий пакет после BUY → entries: attempt lifecycle + cutoff/replay**.
 
-- `contracts/ParticipantRegistry.sol` и `test/participant-registry.test.cjs`;
-- `docs/PARTICIPANT_REGISTRY.md`;
-- `contracts/ShortPrizeBasket.sol` и `test/short-prize-basket.test.cjs`;
-- `docs/SHORT_PRIZE_BASKET.md`;
-- `docs/INDEXER_TRUST_MODEL.md`;
-- актуальные разделы 7–9 `PRODUCT_SPEC.md` и `IMPLEMENTATION_STATUS.md`;
-- `scripts/economics-fork.cjs` и test-only `SwapFixture` из `test/contracts/Fixtures.sol`;
-- ранее сохранённые PAIR native hook/coordinator sources только в той мере, в какой они относятся к attribution.
+Владелец согласовал это направление как следующий логичный этап. Не открываем заново payer/recipient, nominal 100 USDG и narrow direct route. Production RNG и полный controller пока не писать.
 
-Тесты в этом проходе мной не запускались. GitHub workflow/status для latest commit пусты. Ниже отделяю чтение кода от предложений.
+## Почему следующий шаг именно этот
 
-Тема: **ParticipantRegistry + ShortPrizeBasket review и минимальная схема BUY → entries / replay**.
+На текущем этапе уже доказана цепочка:
 
-## Подтверждение владельца после ревью
+```text
+registered wallet
++ supported direct TOKEN/USDG BUY
+→ deterministic grossQuoteRaw
+→ carry
+→ minted short attempt
+→ minted monthly attempt
+```
 
-Владелец согласовал все три предложенные MVP-границы:
+Но текущий ledger хранит только накопительные:
 
-1. `payer == finalRecipient == registered wallet` — только такой BUY получает entries в MVP. `payer != recipient` пока не засчитывается.
-2. Порог entry трактуется как **100 USDG nominal в raw units**, а не как динамическая рыночная стоимость `$100` через внешний oracle. Для 6-decimal USDG: `100 * 10^6 = 100000000` raw units.
-3. В MVP поддерживается один явно определённый direct TOKEN/USDG route. Aggregator / multihop / batch / ambiguous routes не получают entries до появления отдельного детерминированного decoder.
+```text
+shortAttemptsMinted
+monthlyAttemptsMinted
+```
 
-Дополнительно подтверждено общее направление ответа: explicit statuses для неподдержанных/неоднозначных swap-кандидатов, полный replay из public chain history, carry в raw units и следующий этап `PAIR direct-BUY evidence + deterministic replay v1`.
+и сам `DIRECT_BUY_REPLAY.md` правильно предупреждает: это **не available attempts после draws**.
 
-Эти решения можно считать принятыми для следующего этапа. Не требуется возвращаться к USD oracle или расширению route scope перед его реализацией.
-## Короткий вердикт
+Следующая недостающая граница — доказуемо восстановить жизненный цикл попыток:
 
-Оба новых компонента выглядят удачно изолированными. Критического дефекта в `ParticipantRegistry` или арифметике `ShortPrizeBasket` не вижу.
+```text
+OPEN
+→ FROZEN(drawId)
+→ CONSUMED
+```
 
-Основная следующая сложность действительно не Solidity, а **доказуемая атрибуция BUY**:
+отдельно для Short и Monthly.
 
-> надо уметь из публичной истории канонического TOKEN/USDG pool получить полный набор swap-кандидатов, а затем для каждого детерминированно доказать payer, final recipient и фактический USDG input.
+Главная цель этапа:
 
-Текущий historical fork этого ещё не доказывает: там торговал наш test-only `SwapFixture`, а `grossBuyRaw` считался по balance delta тестового кошелька. Это хорошее экономическое evidence, но не production decoder.
-
-Для MVP рекомендую сознательно поддержать **один узкий direct route**, а все неоднозначные aggregator/multihop/batch случаи явно помечать unsupported, а не угадывать.
+> независимо воспроизвести из публичной истории, какие attempts на конкретном cutoff были доступны draw, какие были заморожены, какие уже использованы и какие новые BUY остались следующему OPEN.
 
 ---
 
-## 1. Ревью ParticipantRegistry
+## Базовая семантика, которую надо сохранить
 
-### Существенных code findings нет
+### Mint
 
-`register()` делает ровно одну вещь:
-
-```text
-registered[msg.sender] false → true
-+ Registered(msg.sender)
-```
-
-Нет owner, third-party enrollment, backdating, unregister, внешних calls или proxy. Для выбранного одноразового opt-in это хорошая trust boundary.
-
-Smart wallet semantics тоже правильные: регистрируется тот contract wallet, который **сам вызывает** registry. Generic forwarder/relay, вызвавший `register()` от своего адреса, зарегистрирует себя — это уже честно описано в документации.
-
-Отсутствие `unregister()` само по себе не проблема: eligibility — исторический факт opt-in, а не текущая membership subscription.
-
-### Finding PR-1 — LOW / data-model, не Solidity
-
-Для исторической записи одного порядка
+Каждая новая entry одновременно создаёт:
 
 ```text
-(blockNumber, transactionIndex, logIndex)
++1 short attempt
++1 monthly attempt
 ```
 
-недостаточно как долговечного identity при reorg.
+Они дальше живут независимо.
 
-Для raw occurrence хранить минимум:
+### Short freeze
+
+При freeze конкретного Short draw:
+
+- берутся только short attempts, доступные на его cutoff;
+- monthly attempts не затрагиваются;
+- attempts, появившиеся после cutoff, остаются в следующем OPEN;
+- пока draw pending, frozen attempts нельзя использовать во втором Short;
+- новых Short attempts это не блокирует.
+
+### Monthly freeze
+
+То же отдельно для monthly attempts.
+
+Short freeze/settlement не расходует monthly; monthly не расходует short.
+
+### Skip / not ready
+
+Если draw вообще не стартовал:
 
 ```text
-chainId
-registry address
-blockNumber
-blockHash
-transactionHash
-transactionIndex
-logIndex
-participant
+attempts остаются OPEN
 ```
 
-Порядок по-прежнему задаётся `(blockNumber, transactionIndex, logIndex)`, а `blockHash`/parent linkage отвечает за каноничность.
+Никакого consumption только потому, что прошёл checkpoint.
 
-`INDEXER_TRUST_MODEL.md` уже требует chainId/address/blockHash, поэтому это не архитектурная ошибка — лучше просто сделать такую схему обязательной в indexer.
+### Pending RNG
 
-### Finding PR-2 — LOW / deployment convention
+Если snapshot уже frozen, но random не доставлен:
 
-Фраза «один registry соответствует одному экземпляру promo» не обеспечивается байткодом: registry не знает `PromoVault`, TOKEN или instance id.
+```text
+attempts остаются FROZEN
+```
 
-Это нормально, но должно оставаться **manifest/controller binding**, а не контрактной гарантией.
+Не возвращаем их в OPEN и не считаем проигравшими.
 
-Минимальная защита: snapshot domain всегда содержит конкретный `ParticipantRegistry` address + chainId + promo instance/version.
+### Terminal random / settlement
 
-### Чего не надо добавлять
+Если random реально состоялся и draw завершён терминально:
 
-- admin registration/unregistration;
-- `tx.origin`;
-- mutable terms/version setter;
-- off-chain allowlist как источник права участия.
+```text
+все участвовавшие frozen attempts этого типа → CONSUMED
+```
 
-Если когда-нибудь понадобится новый opt-in semantics/terms, проще новый registry/version, чем переписывать историю старого.
+включая проигравших и случай no-winner.
+
+Claim не меняет attempt state.
 
 ---
 
-## 2. Ревью ShortPrizeBasket
+## Cutoff — ключевая граница
 
-### Арифметика выглядит корректно
-
-Логика:
+Следующий компонент должен ввести точную границу draw:
 
 ```text
-sumW = Σ weights
-unit = floor(budget / sumW)
-prize[i] = unit * weight[i]
-total = unit * sumW
-remainder = budget - total
+cutoffBlockNumber
+cutoffBlockHash
 ```
 
-безопасна по uint256:
+и domain конкретного draw.
 
-- overflow суммы weights проверяется;
-- `unit <= budget / sumW`, поэтому `unit * sumW <= budget`; 
-- так как `weight[i] <= sumW`, каждый `unit * weight[i] <= budget`; 
-- `minimumUnit * sumW` вообще не вычисляется, поэтому threshold не создаёт отдельного overflow;
-- нулевые weights/template/minimum отклоняются.
+Snapshot строится строго по истории, каноничной **до cutoff включительно/по явно выбранному правилу**. Не использовать wall-clock, `latest` или произвольное текущее состояние БД.
 
-Интеграционный тест с PromoVault правильно показывает, что late funding не меняет frozen budget, dust и невыданные slots возвращаются в Short через `finalize`, а старые claims сохраняются.
+Пример обязательной семантики:
 
-### Finding PB-1 — MEDIUM как production gate, сейчас не exploitable
+```text
+Short #17 frozen at cutoff H
 
-`build()` линейна по `weights.length` и сама не ограничивает K.
+wallet имел 2 OPEN short attempts к H
+→ эти 2 входят в #17
 
-Сейчас это internal pure library без production controller, поэтому у пользователя нет входа для gas-DoS. Но перед production rules нужно обязательно зафиксировать **bounded K** в rules/controller.
+после H wallet покупает ещё на 300 USDG
+→ +3 short attempts
+→ они уже OPEN для будущего #18
+→ они не могут попасть в #17
 
-Не обязательно зашивать cap в библиотеку сегодня. Важно, чтобы future freeze не принимал произвольный user-supplied массив.
+monthly attempts от обеих покупок продолжают жить отдельно
+```
 
-### Finding PB-2 — LOW / freeze invariant
-
-Библиотека детерминирована, но сама не доказывает, что controller вызвал её с тем же `budget/weights/minimum`, которые были committed до random.
-
-Документация это уже честно признаёт. В future snapshot/commitment фиксировать либо всю готовую корзину, либо canonical serialization её inputs + computed basket hash.
-
-### Документация
-
-`SHORT_PRIZE_BASKET.md` обещает не больше, чем код. Старые `51/51` и новые `57/57` — хронологические результаты разных этапов, не противоречат друг другу.
-
-У `IMPLEMENTATION_STATUS.md` только косметически устарел заголовок «проверено 13.09», хотя внутри уже есть изменения 15.09.
+Если нужно выбрать inclusive/exclusive правило относительно конкретного block/log, выбрать одно каноническое правило и version it. Предпочтение: cutoff block/hash задаёт последний block, полностью включённый в replay.
 
 ---
 
-## 3. Кому засчитывать BUY: минимальная MVP-граница
+## Не сводить модель к одному числу `available`
 
-Сохранённых данных недостаточно, чтобы честно написать production decoder для PAIR UI/UniversalRouter. `economics-fork.cjs` использует наш test-only `SwapFixture`, который явно передаёт `payer=msg.sender` и получает output тому же payer.
+Нужен ledger переходов, а не только derived balance.
 
-Это **не** доказательство production route.
-
-Поэтому сначала зафиксировать policy, а потом собрать реальные receipt/calldata intended route.
-
-### Рекомендованный MVP rule
-
-Самый чистый вариант:
-
-> eligible BUY только если один поддерживаемый direct TOKEN/USDG swap однозначно доказывает `payer == finalRecipient == registered wallet`.
-
-Это снимает спор «кто заработал entry» при gifts/relayers и делает replay проще.
-
-### Минимальная таблица
-
-| Случай | MVP | Что требуется доказать |
-|---|---|---|
-| Обычный EOA, direct supported TOKEN/USDG route, payer=recipient | **Eligible** | canonical pool swap + payer + final recipient + actual quote input |
-| Smart wallet, который сам зарегистрирован и является payer=recipient | **Eligible**, если route decoder поддерживает этот вызов | нельзя использовать `tx.from`; bundler/EntryPoint не участник |
-| Known router, один direct single-hop swap | **Eligible** после route-specific decoder | exact command/calldata + receipt evidence |
-| payer != recipient | **Unsupported для MVP** | позже нужен отдельный продуктовый выбор, кому принадлежат entries |
-| Несколько relevant swaps в одном batch/multicall | **Unsupported сначала** | нужен action-level decoder и разделение settlement |
-| Aggregator / multihop | **Unsupported сначала** | pool Swap сам по себе не доказывает payer/recipient и экономику всего path |
-| Exact-output direct swap | Можно поддержать только после decoder test | считать actual spent quote после refund, не maximum input |
-| Прямой ERC20 transfer TOKEN/USDG | **Not a BUY** | нет canonical swap |
-| SELL TOKEN→USDG | **Not eligible** | direction определяется canonical pool swap |
-| Developer buy при launch | **Not eligible**, пока явно не принято обратное | отдельный launch path, не обычный registered BUY |
-
-Поддержка smart-wallet registration **не означает**, что любой aggregator route этого wallet автоматически eligible.
-
-### Явный статус неопределённости
-
-Indexer должен хранить для каждого canonical pool swap candidate:
+Условно для wallet:
 
 ```text
-ELIGIBLE
-INELIGIBLE
-UNSUPPORTED_ROUTE
-AMBIGUOUS
+short:
+  mintedTotal
+  open
+  frozenByDraw
+  consumedTotal
+
+monthly:
+  mintedTotal
+  open
+  frozenByDraw
+  consumedTotal
 ```
 
-и reason code/evidence.
+Но source of truth — история mint/freeze/terminal transitions, а не сохранённые aggregate counters.
 
-Только `ELIGIBLE` меняет carry.
+Инвариант по каждому типу:
 
-Неоднозначный swap нельзя молча пропустить из публичного отчёта: независимый verifier должен видеть, что swap найден в pool history и почему он не засчитан.
+```text
+mintedTotal = open + frozen + consumedTotal
+```
+
+и одна attempt не может находиться более чем в одном состоянии.
+
+Не требуется выдавать каждой attempt отдельный NFT/id. Можно использовать cumulative accounting/ranges, если оно остаётся однозначно воспроизводимым.
 
 ---
 
-## 4. Откуда брать полный набор BUY-кандидатов
+## Что должно быть публичным входом replay
 
-Для полноты начинать не со списка нашего сервера и не с wallet transactions.
+Текущий BUY replay остаётся первой частью.
 
-Для конкретного promo instance известен canonical `poolId`.
+Добавить draw lifecycle occurrences, которые verifier может получить независимо:
 
-Verifier/indexer проходит весь диапазон blocks и собирает **все canonical PoolManager Swap logs этого pool**.
+```text
+FREEZE
+- drawId
+- kind SHORT|MONTHLY
+- cutoff block/hash
+- snapshot/rules version
+- commitment/hash будущего snapshot либо пока тестовый deterministic marker
 
-Каждый такой log — candidate.
+TERMINAL
+- drawId
+- kind
+- terminal result marker
+- ссылка на тот же frozen snapshot
+```
 
-Дальше для tx кандидата читаются:
+На этом этапе не надо доказывать fairness random и winners. Но переход `FROZEN → CONSUMED` должен происходить только от события/состояния, которое явно означает состоявшийся terminal random/settlement, а не от timeout.
 
-- raw transaction calldata;
-- receipt + все logs;
-- known router/version code/ABI;
-- instance manifest (TOKEN, USDG, poolId, currencies).
-
-И route-specific decoder решает direction/payer/recipient/actual quote input.
-
-`Swap.sender` нельзя автоматически считать участником: на router path это обычно инфраструктурный caller PoolManager. Исторический `SwapFixture` уже показывает архитектурно, что между wallet и PoolManager есть отдельный contract caller.
-
-Если production route невозможно доказуемо декодировать из calldata + receipts без node-specific trace, я бы **не делал trace обязательным consensus input**.
-
-Два варианта:
-
-1. этот route объявить unsupported;
-2. позже сделать маленький canonical promo buy router, который после успешного direct swap публикует достаточное on-chain evidence.
-
-Trace полезен как diagnostic, но плох как единственный публично воспроизводимый источник истины.
+Если production on-chain controller ещё отсутствует, допустим fixture/event stream, но формат должен быть близок к будущему production lifecycle и не должен давать indexer права молча переписывать историю.
 
 ---
 
-## 5. Gross BUY: что именно считать
+## Минимальный reducer
 
-Рекомендованное определение:
-
-> `grossBuyRaw` = фактическое количество USDG raw units, которое было **settled into the supported canonical direct swap** как quote input.
-
-Не wallet balance delta вообще и не declared/max input.
-
-### Включается
-
-- фактический quote input canonical pool;
-- pool swap fee, если она является частью фактически settled input.
-
-### Не включается
-
-- gas в ETH;
-- approval/Permit2 allowance;
-- exact-output `amountInMaximum`, если часть вернулась;
-- отдельная router/service fee вне pool swap;
-- tips;
-- unrelated USDG transfers в той же транзакции;
-- SELL proceeds;
-- creator revenue.
-
-То есть отдельная router fee не должна печатать entries: она не является TOKEN purchase volume канонического pool.
-
-### Exact-in
-
-Считать фактически settled quote input, а не только calldata `amountIn`, пока decoder не доказал, что они обязаны совпасть.
-
-### Exact-out
-
-Считать фактически consumed quote after refund, не max.
-
-### Что текущий fork действительно показал
-
-В test-only fixture для BUY 100 скрипт получил wallet quote delta `-100 USDG` и именно её использовал как `grossBuyRaw`. Это полезный sanity check, но не доказывает, какое поле production PoolManager/router event надо использовать.
-
-Следующий этап должен на настоящем intended route сравнить:
+Псевдологика:
 
 ```text
-calldata amount
-PoolManager Swap delta
-ERC20/Permit2 transfers
-payer balance delta
-refunds/router fees
+replay BUYs
+→ mint short/monthly attempts
+
+on FREEZE(drawId, kind, cutoff):
+  derive eligible OPEN state exactly at cutoff
+  bind it to draw
+  move selected attempts OPEN → FROZEN(drawId)
+
+on TERMINAL(drawId, kind):
+  require matching pending freeze
+  move all FROZEN(drawId) → CONSUMED
 ```
 
-и выбрать минимальный достаточный evidence set.
+Новые BUY после cutoff продолжают обычный mint в OPEN.
 
-### `$100` против `100 USDG`
+Для одного pending Short и одного pending Monthly не разрешать повторный freeze того же kind, пока предыдущий не terminal.
 
-Для полностью детерминированного MVP проще всего формализовать:
-
-```text
-ENTRY_THRESHOLD = 100 * 10^USDG_decimals raw units
-```
-
-то есть **100 USDG nominal**, без внешнего price oracle.
-
-Это надо принять явно: такая формула не доказывает рыночный peg USDG к доллару. Если продукт хочет именно market-value `$100`, потребуется отдельный price source/time rule.
+Пропущенные checkpoints не создают synthetic lifecycle events.
 
 ---
 
-## 6. Минимальная replay model
+## Что проверить тестами
 
-Локальная БД — только materialized view. Детерминированный reducer должен восстанавливаться с deployment genesis.
+Минимальный обязательный набор:
 
-### Instance manifest
+1. `99 + 1 USDG` после регистрации → 1 short + 1 monthly OPEN.
+2. Short freeze замораживает short, но monthly остаётся OPEN.
+3. BUY после Short cutoff создаёт новые OPEN short/monthly и не меняет frozen старого draw.
+4. Второй Short freeze при pending первом запрещён/fail-closed.
+5. Monthly может freeze независимо от pending Short, если продуктовая state machine это допускает.
+6. Skip/not-ready не создаёт freeze и ничего не расходует.
+7. Pending RNG не возвращает attempts и не расходует их.
+8. Terminal no-winner всё равно consumes frozen attempts.
+9. Terminal winner case consumes ровно тот же frozen набор.
+10. Claim никак не влияет на attempts.
+11. Duplicate FREEZE/TERMINAL delivery идемпотентна либо конфликтует fail-closed, но не делает double consume.
+12. Wrong drawId/kind/cutoff/snapshot reference fail-closed.
+13. Reorg, который удаляет BUY до cutoff, меняет frozen snapshot после полного replay новой ветки.
+14. Reorg, который удаляет сам FREEZE/TERMINAL, откатывает зависимые transitions.
+15. Short consumption не меняет monthly и наоборот.
+16. Инвариант `minted = open + frozen + consumed` держится после каждого шага.
 
-```text
-chainId
-ParticipantRegistry address + deployment block
-PoolManager
-poolId
-TOKEN
-USDG + decimals
-supported route/version(s)
-entryThresholdRaw
-decoderVersion
-promo/controller/rules version
-```
+Отдельный полезный stress test:
 
-### Raw canonical occurrences
-
-**Registration**
-
-```text
-blockNumber/blockHash/parentHash
-txHash/transactionIndex/logIndex
-participant
-```
-
-**Swap candidate**
-
-```text
-blockNumber/blockHash/parentHash
-txHash/transactionIndex/logIndex
-poolId
-raw Swap fields
-```
-
-**Buy decision** (derived, reproducible)
-
-```text
-candidate id
-status
-payer
-recipient
-grossQuoteRaw
-routeVersion/decoderVersion
-reasonCode
-evidence log indexes
-```
-
-### Wallet reducer
-
-Для каждого wallet:
-
-```text
-carryRaw
-entriesMintedTotal
-shortAttemptsAvailable/Frozen/Consumed
-monthlyAttemptsAvailable/Frozen/Consumed
-```
-
-На ELIGIBLE BUY:
-
-```text
-x = carryRaw + grossQuoteRaw
-newEntries = floor(x / ENTRY_THRESHOLD_RAW)
-carryRaw = x % ENTRY_THRESHOLD_RAW
-
-short += newEntries
-monthly += newEntries
-```
-
-Все вычисления integer raw units.
-
-### Draw consumption ledger
-
-Каждый freeze/settlement ссылается на:
-
-```text
-drawId + kind
-cutoff block number/hash
-snapshot/rules version
-wallet → frozen attempts
-terminal random/result
-wallet → consumed attempts
-```
-
-Short consumption не меняет monthly, и наоборот.
+- один wallet с большим числом entries;
+- много wallets;
+- несколько BUY до/после cutoff;
+- verify byte-for-byte deterministic serialization.
 
 ---
 
-## 7. Reorg / idempotency / completeness
+## Что пока НЕ делать
 
-### Ingestion
-
-Обрабатывать blocks только с проверкой parent hash.
-
-Если новый canonical head не продолжает локальный head:
-
-```text
-найти common ancestor
-→ удалить/пометить orphan raw occurrences
-→ rollback derived buys/carry/attempts/draw-open state
-→ replay canonical branch
-```
-
-Повторное чтение тех же block/log не должно менять state.
-
-Raw occurrence key лучше хранить как:
-
-```text
-(chainId, blockHash, txHash, logIndex)
-```
-
-а tx/log identity отдельно для поиска re-inclusion.
-
-### Регистрация и BUY в одном block/tx
-
-Eligibility определяется порядком canonical confirmation event.
-
-Предлагаю считать моментом BUY сам canonical PoolManager `Swap` log этого pool. Тогда registration должна быть строго раньше него по `(blockNumber, txIndex, logIndex)`.
-
-Если production decoder выберет другой canonical confirmation event, это должно быть versioned rule, а не эвристика.
-
-### Completeness
-
-Independent verifier не получает «наш список BUY». Он сам:
-
-```text
-scan Registry Registered logs
-scan every Swap log of poolId
-decode every candidate
-replay every previous draw consumption
-```
-
-из собственного RPC.
-
-Именно так обнаруживаются и лишние, и пропущенные entries.
-
-Нужен RPC, способный прочитать всю required history; наш зеркальный JSON не заменяет independent chain source.
-
-### Finality
-
-Не выбираю случайные `N confirmations`: из текущих материалов безопасный production параметр Robinhood Chain не доказан.
-
-До выбора finality policy indexer должен различать:
-
-```text
-seen
-canonical-at-current-head
-eligible-for-commit
-```
-
-а `latest` не считать final.
-
-Если RPC/providers не позволяют подтвердить требуемую canonical history или расходятся — **не freeze новый snapshot**, а остановиться.
-
-### Reorg вокруг on-chain commitment
-
-Если snapshot commitment находится в той же chain позже cutoff, нормальный reorg ancestor удалит и descendants, включая commitment/random/settlement tx на orphan branch.
-
-После этого canonical reducer строится заново.
-
-Future commitment всё равно должен включать cutoff block hash и instance domain; verifier проверяет, что cutoff является canonical ancestor.
-
-Если commitment canonical, но заявленный cutoff hash не является его ancestor/не найден — это не «переоценить данные», а fail/halt.
+- не выбирать production RNG;
+- не назначать winners;
+- не проектировать challenge/ZK;
+- не менять `ParticipantRegistry`;
+- не расширять supported BUY routes;
+- не добавлять Luck;
+- не принимать production K/weights/D;
+- не делать daemon/finality policy частью этого шага;
+- не добавлять timeout, который возвращает frozen attempts после известного random;
+- не добавлять admin reset attempts.
 
 ---
 
-## 8. Следующий один пакет работ
+## Рекомендуемый один пакет работ
 
-Не production indexer целиком.
-
-Предлагаю пакет **`PAIR direct-BUY evidence + deterministic replay v1`**.
-
-### Часть A — получить реальные данные intended route
-
-На свежем local fork текущего PAIR release провести именно тем route, который собираемся поддерживать в frontend:
-
-1. registered EOA direct BUY exact-in;
-2. BUY меньше threshold + следующий BUY, пересекающий threshold;
-3. SELL;
-4. BUY до registration и после registration;
-5. если UI поддерживает exact-out — exact-out с refund;
-6. smart wallet direct route, если он входит в MVP;
-7. один deliberately unsupported batch/aggregator example, если легко получить.
-
-Сохранить raw:
+Название условно:
 
 ```text
-tx input
-receipt/logs
-pool key/id
-relevant token transfers
-pre/post balances только как diagnostic
-router address + verified source/ABI/code hash
-block/hash
+attempt-lifecycle-replay-v1
 ```
 
-Trace сохранить можно, но decoder не должен зависеть только от trace.
+Состав:
 
-### Часть B — route decoder
+1. Versioned data model для lifecycle occurrences.
+2. Pure deterministic reducer поверх текущего direct BUY ledger.
+3. Fixture/event source для FREEZE/TERMINAL без pretending, что это production controller.
+4. Canonical serialization + hash результата.
+5. Replay tests на cutoff, pending, new BUY, terminal consumption, duplicate/reorg.
+6. Документ с чёткой границей: minted/open/frozen/consumed.
 
-Чистая функция:
+### Acceptance criteria
+
+Этап готов, если независимый replay из одной и той же публичной истории однозначно отвечает:
 
 ```text
-(instance manifest, tx, receipt)
-→ zero/one/many swap candidate decisions
+для каждого wallet и каждого kind:
+- сколько attempts minted
+- сколько OPEN
+- какие заморожены и в каком draw
+- сколько CONSUMED
+
+для каждого draw:
+- точный cutoff block/hash
+- точный frozen participant/attempt snapshot
+- terminal или pending
 ```
 
-с explicit statuses/reasons.
+и невозможно:
 
-Никакой базы и carry внутри decoder.
-
-### Часть C — block-range replay
-
-Минимальный indexer/replay:
-
-```text
-scan registrations
-scan all canonical pool Swap logs
-fetch tx/receipts
-decode
-sort
-apply registration rule
-apply carry → entries
-output canonical ledger
-```
-
-Выход — deterministic file + hash, но файл не объявляется source of truth.
-
-### Acceptance
-
-- повторный replay того же range byte-for-byte одинаков по canonical serialization;
-- duplicate RPC/log delivery не создаёт двойных entries;
-- удаление записи из operator-provided output обнаруживается verifier replay;
-- pre-registration BUY не учитывается;
-- same-block ordering работает;
-- `99 USDG + 1 USDG` создаёт ровно одну entry и carry 0;
-- SELL не создаёт entry;
-- unsupported/ambiguous candidate не создаёт entry и остаётся видимым с reason;
-- reorg fixture rollback/replay даёт state новой canonical branch;
-- replay можно выполнить без нашей production DB.
-
-После этого уже имеет смысл проектировать snapshot commitment/controller boundary.
+- использовать attempt дважды;
+- засунуть post-cutoff BUY в старый draw;
+- расходовать monthly через Short;
+- вернуть attempt после terminal random;
+- расходовать attempt при skip/not-ready;
+- потерять/добавить attempts из-за duplicate ingestion.
 
 ---
 
-## Решения владельцу
+## Что подумать Codex перед кодом
 
-Нужно всего три небольших решения перед этим этапом:
+1. Лучше ли представлять attempts как cumulative ranges/epochs вместо индивидуальных ids, сохраняя строгий replay?
+2. Как минимально моделировать lifecycle events сейчас, чтобы потом не выбросить формат при production controller?
+3. Как domain-separate Short/Monthly/drawId/schema, чтобы один freeze нельзя было переиспользовать в другом draw?
+4. Как лучше связать cutoff с текущим `direct-buy-ledger-v1`: embed head/cutoff hash, derive sub-ledger до cutoff или новый combined schema?
+5. Какие конфликты/reorg cases требуют hard halt, а какие можно безопасно пересчитать полным replay?
 
-1. **MVP payer rule:** принимаем `payer == finalRecipient == registered wallet`; payer != recipient пока не получает entries?
-2. **Threshold semantics:** принимаем `100 USDG nominal` в raw units вместо внешнего USD price oracle?
-3. **Route scope:** принимаем один явно поддержанный direct TOKEN/USDG route для MVP, а aggregator/multihop/batch не засчитываем до отдельного decoder?
-
-Моя рекомендация по всем трём — **да**. Это даёт воспроизводимый и понятный indexer без эвристик и не закрывает расширение позже.
+Сначала предложить минимальную структуру и failure cases. Код можно добавлять в этом пакете, если дизайн остаётся узким и не тянет за собой RNG/controller целиком.
