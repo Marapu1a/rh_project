@@ -1,0 +1,755 @@
+{
+  "assumptions": {
+    "days": 90,
+    "initialOps": 100,
+    "initialPrizes": 200,
+    "buyFraction": 0.5,
+    "entryUSD": 100,
+    "entriesPerWallet": 5,
+    "creatorRates": [
+      0.002,
+      0.005
+    ],
+    "opsShare": 0.2,
+    "shortFractionOfPrizes": 0.5,
+    "minShort": 100,
+    "maxDrawsPerDay": 4,
+    "gasGwei": 0.065,
+    "ethUSD": 2400,
+    "executionMargin": 1.5,
+    "extraPerDrawUSD": 1,
+    "infrastructurePerDayUSD": 1,
+    "monthlyExecutionUSD": 5,
+    "gate": {
+      "absoluteUSD": 20,
+      "relative": 0.1,
+      "remainingOpsUSD": 10
+    },
+    "fit": {
+      "intercept": 2029137.25,
+      "slope": 14575.80975
+    }
+  },
+  "results": [
+    {
+      "volume": 1000,
+      "rate": 0.002,
+      "share": 0.2,
+      "entriesPerWallet": 5,
+      "spike": 1,
+      "stop": false,
+      "draws": 1,
+      "waitSlots": 0,
+      "opsEnd": 29.52,
+      "opsMin": 29.22,
+      "expenses": 106.48,
+      "prizesAssigned": 100.2,
+      "freePrizes": 243.8,
+      "openEntries": 449,
+      "unpaidInfra": 0,
+      "months": [
+        {
+          "day": 30,
+          "ops": 75.52,
+          "draws": 1,
+          "paid": 100.2,
+          "unpaidInfra": 0
+        },
+        {
+          "day": 60,
+          "ops": 52.52,
+          "draws": 1,
+          "paid": 100.2,
+          "unpaidInfra": 0
+        },
+        {
+          "day": 90,
+          "ops": 29.52,
+          "draws": 1,
+          "paid": 100.2,
+          "unpaidInfra": 0
+        }
+      ]
+    },
+    {
+      "volume": 5000,
+      "rate": 0.002,
+      "share": 0.2,
+      "entriesPerWallet": 5,
+      "spike": 1,
+      "stop": false,
+      "draws": 4,
+      "waitSlots": 0,
+      "opsEnd": 167.81,
+      "opsMin": 98.02,
+      "expenses": 112.19,
+      "prizesAssigned": 401,
+      "freePrizes": 519,
+      "openEntries": 369,
+      "unpaidInfra": 0,
+      "months": [
+        {
+          "day": 30,
+          "ops": 121.62,
+          "draws": 2,
+          "paid": 201,
+          "unpaidInfra": 0
+        },
+        {
+          "day": 60,
+          "ops": 144.72,
+          "draws": 3,
+          "paid": 301,
+          "unpaidInfra": 0
+        },
+        {
+          "day": 90,
+          "ops": 167.81,
+          "draws": 4,
+          "paid": 401,
+          "unpaidInfra": 0
+        }
+      ]
+    },
+    {
+      "volume": 10000,
+      "rate": 0.002,
+      "share": 0.2,
+      "entriesPerWallet": 5,
+      "spike": 1,
+      "stop": false,
+      "draws": 8,
+      "waitSlots": 0,
+      "opsEnd": 340.21,
+      "opsMin": 98.51,
+      "expenses": 119.79,
+      "prizesAssigned": 802,
+      "freePrizes": 838,
+      "openEntries": 113,
+      "unpaidInfra": 0,
+      "months": [
+        {
+          "day": 30,
+          "ops": 179.71,
+          "draws": 3,
+          "paid": 302,
+          "unpaidInfra": 0
+        },
+        {
+          "day": 60,
+          "ops": 260.91,
+          "draws": 5,
+          "paid": 502,
+          "unpaidInfra": 0
+        },
+        {
+          "day": 90,
+          "ops": 340.21,
+          "draws": 8,
+          "paid": 802,
+          "unpaidInfra": 0
+        }
+      ]
+    },
+    {
+      "volume": 25000,
+      "rate": 0.002,
+      "share": 0.2,
+      "entriesPerWallet": 5,
+      "spike": 1,
+      "stop": false,
+      "draws": 18,
+      "waitSlots": 0,
+      "opsEnd": 861.18,
+      "opsMin": 100,
+      "expenses": 138.82,
+      "prizesAssigned": 1805,
+      "freePrizes": 1995,
+      "openEntries": 594,
+      "unpaidInfra": 0,
+      "months": [
+        {
+          "day": 30,
+          "ops": 354,
+          "draws": 6,
+          "paid": 605,
+          "unpaidInfra": 0
+        },
+        {
+          "day": 60,
+          "ops": 607.59,
+          "draws": 12,
+          "paid": 1205,
+          "unpaidInfra": 0
+        },
+        {
+          "day": 90,
+          "ops": 861.18,
+          "draws": 18,
+          "paid": 1805,
+          "unpaidInfra": 0
+        }
+      ]
+    },
+    {
+      "volume": 50000,
+      "rate": 0.002,
+      "share": 0.2,
+      "entriesPerWallet": 5,
+      "spike": 1,
+      "stop": false,
+      "draws": 36,
+      "waitSlots": 0,
+      "opsEnd": 1726.94,
+      "opsMin": 100,
+      "expenses": 173.06,
+      "prizesAssigned": 3610,
+      "freePrizes": 3790,
+      "openEntries": 563,
+      "unpaidInfra": 0,
+      "months": [
+        {
+          "day": 30,
+          "ops": 642.57,
+          "draws": 12,
+          "paid": 1210,
+          "unpaidInfra": 0
+        },
+        {
+          "day": 60,
+          "ops": 1184.75,
+          "draws": 24,
+          "paid": 2410,
+          "unpaidInfra": 0
+        },
+        {
+          "day": 90,
+          "ops": 1726.94,
+          "draws": 36,
+          "paid": 3610,
+          "unpaidInfra": 0
+        }
+      ]
+    },
+    {
+      "volume": 100000,
+      "rate": 0.002,
+      "share": 0.2,
+      "entriesPerWallet": 5,
+      "spike": 1,
+      "stop": false,
+      "draws": 72,
+      "waitSlots": 0,
+      "opsEnd": 3458.46,
+      "opsMin": 100,
+      "expenses": 241.54,
+      "prizesAssigned": 7220,
+      "freePrizes": 7380,
+      "openEntries": 500,
+      "unpaidInfra": 0,
+      "months": [
+        {
+          "day": 30,
+          "ops": 1219.71,
+          "draws": 24,
+          "paid": 2420,
+          "unpaidInfra": 0
+        },
+        {
+          "day": 60,
+          "ops": 2339.09,
+          "draws": 48,
+          "paid": 4820,
+          "unpaidInfra": 0
+        },
+        {
+          "day": 90,
+          "ops": 3458.46,
+          "draws": 72,
+          "paid": 7220,
+          "unpaidInfra": 0
+        }
+      ]
+    },
+    {
+      "volume": 1000,
+      "rate": 0.005,
+      "share": 0.2,
+      "entriesPerWallet": 5,
+      "spike": 1,
+      "stop": false,
+      "draws": 2,
+      "waitSlots": 0,
+      "opsEnd": 81.88,
+      "opsMin": 81.13,
+      "expenses": 108.12,
+      "prizesAssigned": 200.5,
+      "freePrizes": 359.5,
+      "openEntries": 199,
+      "unpaidInfra": 0,
+      "months": [
+        {
+          "day": 30,
+          "ops": 93.52,
+          "draws": 1,
+          "paid": 100.5,
+          "unpaidInfra": 0
+        },
+        {
+          "day": 60,
+          "ops": 86.88,
+          "draws": 2,
+          "paid": 200.5,
+          "unpaidInfra": 0
+        },
+        {
+          "day": 90,
+          "ops": 81.88,
+          "draws": 2,
+          "paid": 200.5,
+          "unpaidInfra": 0
+        }
+      ]
+    },
+    {
+      "volume": 5000,
+      "rate": 0.005,
+      "share": 0.2,
+      "entriesPerWallet": 5,
+      "spike": 1,
+      "stop": false,
+      "draws": 9,
+      "waitSlots": 0,
+      "opsEnd": 430.36,
+      "opsMin": 98.77,
+      "expenses": 119.64,
+      "prizesAssigned": 902.5,
+      "freePrizes": 1097.5,
+      "openEntries": 244,
+      "unpaidInfra": 0,
+      "months": [
+        {
+          "day": 30,
+          "ops": 210.23,
+          "draws": 3,
+          "paid": 302.5,
+          "unpaidInfra": 0
+        },
+        {
+          "day": 60,
+          "ops": 320.29,
+          "draws": 6,
+          "paid": 602.5,
+          "unpaidInfra": 0
+        },
+        {
+          "day": 90,
+          "ops": 430.36,
+          "draws": 9,
+          "paid": 902.5,
+          "unpaidInfra": 0
+        }
+      ]
+    },
+    {
+      "volume": 10000,
+      "rate": 0.005,
+      "share": 0.2,
+      "entriesPerWallet": 5,
+      "spike": 1,
+      "stop": false,
+      "draws": 18,
+      "waitSlots": 0,
+      "opsEnd": 865.54,
+      "opsMin": 100,
+      "expenses": 134.46,
+      "prizesAssigned": 1805,
+      "freePrizes": 1995,
+      "openEntries": 238,
+      "unpaidInfra": 0,
+      "months": [
+        {
+          "day": 30,
+          "ops": 355.29,
+          "draws": 6,
+          "paid": 605,
+          "unpaidInfra": 0
+        },
+        {
+          "day": 60,
+          "ops": 610.42,
+          "draws": 12,
+          "paid": 1205,
+          "unpaidInfra": 0
+        },
+        {
+          "day": 90,
+          "ops": 865.54,
+          "draws": 18,
+          "paid": 1805,
+          "unpaidInfra": 0
+        }
+      ]
+    },
+    {
+      "volume": 25000,
+      "rate": 0.005,
+      "share": 0.2,
+      "entriesPerWallet": 5,
+      "spike": 1,
+      "stop": false,
+      "draws": 45,
+      "waitSlots": 0,
+      "opsEnd": 2171.11,
+      "opsMin": 100,
+      "expenses": 178.89,
+      "prizesAssigned": 4512.5,
+      "freePrizes": 4687.5,
+      "openEntries": 219,
+      "unpaidInfra": 0,
+      "months": [
+        {
+          "day": 30,
+          "ops": 790.47,
+          "draws": 15,
+          "paid": 1512.5,
+          "unpaidInfra": 0
+        },
+        {
+          "day": 60,
+          "ops": 1480.79,
+          "draws": 30,
+          "paid": 3012.5,
+          "unpaidInfra": 0
+        },
+        {
+          "day": 90,
+          "ops": 2171.11,
+          "draws": 45,
+          "paid": 4512.5,
+          "unpaidInfra": 0
+        }
+      ]
+    },
+    {
+      "volume": 50000,
+      "rate": 0.005,
+      "share": 0.2,
+      "entriesPerWallet": 5,
+      "spike": 1,
+      "stop": false,
+      "draws": 90,
+      "waitSlots": 0,
+      "opsEnd": 4347.04,
+      "opsMin": 100,
+      "expenses": 252.96,
+      "prizesAssigned": 9025,
+      "freePrizes": 9175,
+      "openEntries": 188,
+      "unpaidInfra": 0,
+      "months": [
+        {
+          "day": 30,
+          "ops": 1515.77,
+          "draws": 30,
+          "paid": 3025,
+          "unpaidInfra": 0
+        },
+        {
+          "day": 60,
+          "ops": 2931.4,
+          "draws": 60,
+          "paid": 6025,
+          "unpaidInfra": 0
+        },
+        {
+          "day": 90,
+          "ops": 4347.04,
+          "draws": 90,
+          "paid": 9025,
+          "unpaidInfra": 0
+        }
+      ]
+    },
+    {
+      "volume": 100000,
+      "rate": 0.005,
+      "share": 0.2,
+      "entriesPerWallet": 5,
+      "spike": 1,
+      "stop": false,
+      "draws": 180,
+      "waitSlots": 0,
+      "opsEnd": 8698.92,
+      "opsMin": 100,
+      "expenses": 401.08,
+      "prizesAssigned": 18050,
+      "freePrizes": 18150,
+      "openEntries": 125,
+      "unpaidInfra": 0,
+      "months": [
+        {
+          "day": 30,
+          "ops": 2966.36,
+          "draws": 60,
+          "paid": 6050,
+          "unpaidInfra": 0
+        },
+        {
+          "day": 60,
+          "ops": 5832.64,
+          "draws": 120,
+          "paid": 12050,
+          "unpaidInfra": 0
+        },
+        {
+          "day": 90,
+          "ops": 8698.92,
+          "draws": 180,
+          "paid": 18050,
+          "unpaidInfra": 0
+        }
+      ]
+    },
+    {
+      "volume": 5000,
+      "rate": 0.002,
+      "share": 0.1,
+      "entriesPerWallet": 5,
+      "spike": 1,
+      "stop": false,
+      "draws": 5,
+      "waitSlots": 0,
+      "opsEnd": 76.09,
+      "opsMin": 75.34,
+      "expenses": 113.91,
+      "prizesAssigned": 501.63,
+      "freePrizes": 508.38,
+      "openEntries": 19,
+      "unpaidInfra": 0,
+      "months": [
+        {
+          "day": 30,
+          "ops": 91.66,
+          "draws": 2,
+          "paid": 201.25,
+          "unpaidInfra": 0
+        },
+        {
+          "day": 60,
+          "ops": 84.8,
+          "draws": 3,
+          "paid": 301.38,
+          "unpaidInfra": 0
+        },
+        {
+          "day": 90,
+          "ops": 76.09,
+          "draws": 5,
+          "paid": 501.63,
+          "unpaidInfra": 0
+        }
+      ]
+    },
+    {
+      "volume": 5000,
+      "rate": 0.002,
+      "share": 0.2,
+      "entriesPerWallet": 1,
+      "spike": 1,
+      "stop": false,
+      "draws": 4,
+      "waitSlots": 0,
+      "opsEnd": 162.69,
+      "opsMin": 98,
+      "expenses": 117.31,
+      "prizesAssigned": 401,
+      "freePrizes": 519,
+      "openEntries": 369,
+      "unpaidInfra": 0,
+      "months": [
+        {
+          "day": 30,
+          "ops": 119.9,
+          "draws": 2,
+          "paid": 201,
+          "unpaidInfra": 0
+        },
+        {
+          "day": 60,
+          "ops": 141.29,
+          "draws": 3,
+          "paid": 301,
+          "unpaidInfra": 0
+        },
+        {
+          "day": 90,
+          "ops": 162.69,
+          "draws": 4,
+          "paid": 401,
+          "unpaidInfra": 0
+        }
+      ]
+    },
+    {
+      "volume": 50000,
+      "rate": 0.002,
+      "share": 0.2,
+      "entriesPerWallet": 5,
+      "spike": 10,
+      "stop": false,
+      "draws": 36,
+      "waitSlots": 3,
+      "opsEnd": 1701.28,
+      "opsMin": 100,
+      "expenses": 198.72,
+      "prizesAssigned": 3640,
+      "freePrizes": 3760,
+      "openEntries": 375,
+      "unpaidInfra": 0,
+      "months": [
+        {
+          "day": 30,
+          "ops": 642.57,
+          "draws": 12,
+          "paid": 1210,
+          "unpaidInfra": 0
+        },
+        {
+          "day": 60,
+          "ops": 1159.09,
+          "draws": 24,
+          "paid": 2440,
+          "unpaidInfra": 0
+        },
+        {
+          "day": 90,
+          "ops": 1701.28,
+          "draws": 36,
+          "paid": 3640,
+          "unpaidInfra": 0
+        }
+      ]
+    },
+    {
+      "volume": 50000,
+      "rate": 0.002,
+      "share": 0.2,
+      "entriesPerWallet": 5,
+      "spike": 50,
+      "stop": false,
+      "draws": 34,
+      "waitSlots": 28,
+      "opsEnd": 1729.55,
+      "opsMin": 100,
+      "expenses": 170.45,
+      "prizesAssigned": 3690,
+      "freePrizes": 3710,
+      "openEntries": 63,
+      "unpaidInfra": 0,
+      "months": [
+        {
+          "day": 30,
+          "ops": 642.57,
+          "draws": 12,
+          "paid": 1210,
+          "unpaidInfra": 0
+        },
+        {
+          "day": 60,
+          "ops": 1187.36,
+          "draws": 22,
+          "paid": 2490,
+          "unpaidInfra": 0
+        },
+        {
+          "day": 90,
+          "ops": 1729.55,
+          "draws": 34,
+          "paid": 3690,
+          "unpaidInfra": 0
+        }
+      ]
+    },
+    {
+      "volume": 5000,
+      "rate": 0.002,
+      "share": 0.2,
+      "entriesPerWallet": 5,
+      "spike": 1,
+      "stop": true,
+      "draws": 2,
+      "waitSlots": 0,
+      "opsEnd": 51.62,
+      "opsMin": 51.62,
+      "expenses": 108.38,
+      "prizesAssigned": 201,
+      "freePrizes": 239,
+      "openEntries": 119,
+      "unpaidInfra": 0,
+      "months": [
+        {
+          "day": 30,
+          "ops": 121.62,
+          "draws": 2,
+          "paid": 201,
+          "unpaidInfra": 0
+        },
+        {
+          "day": 60,
+          "ops": 86.62,
+          "draws": 2,
+          "paid": 201,
+          "unpaidInfra": 0
+        },
+        {
+          "day": 90,
+          "ops": 51.62,
+          "draws": 2,
+          "paid": 201,
+          "unpaidInfra": 0
+        }
+      ]
+    },
+    {
+      "volume": 0,
+      "rate": 0.002,
+      "share": 0.2,
+      "entriesPerWallet": 5,
+      "spike": 1,
+      "stop": false,
+      "draws": 0,
+      "waitSlots": 0,
+      "opsEnd": 0,
+      "opsMin": 0,
+      "expenses": 100,
+      "prizesAssigned": 0,
+      "freePrizes": 200,
+      "openEntries": 0,
+      "unpaidInfra": 5,
+      "months": [
+        {
+          "day": 30,
+          "ops": 65,
+          "draws": 0,
+          "paid": 0,
+          "unpaidInfra": 0
+        },
+        {
+          "day": 60,
+          "ops": 30,
+          "draws": 0,
+          "paid": 0,
+          "unpaidInfra": 0
+        },
+        {
+          "day": 90,
+          "ops": 0,
+          "draws": 0,
+          "paid": 0,
+          "unpaidInfra": 5
+        }
+      ]
+    }
+  ]
+}

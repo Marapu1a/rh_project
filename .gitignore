@@ -25,6 +25,7 @@ research/*
 !research/attempt-lifecycle-report.json
 !research/short-outcome-gas.json
 !research/short-scaling-study.json
+!research/execution-economics.json
 !research/short-scaling-rpc.json
 !research/short-economy-report.json
 !research/pair-dependency-audit-2026-09-15.json
