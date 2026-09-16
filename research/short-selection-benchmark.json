@@ -1,0 +1,240 @@
+{
+  "schema": "short-selection-benchmark-v1",
+  "baselineCommit": "2586de843b8ea81c62fecaa250285dca8b42f494",
+  "environment": {
+    "solc": "0.8.37+commit.f401782d.Emscripten.clang",
+    "optimizerRuns": 200,
+    "hardfork": "cancun",
+    "chainId": 31337,
+    "transactionGasBudget": 32000000
+  },
+  "method": "Deploy both versions at identical addresses and timestamps; capture optimized runtime. Prepare baseline frozen state once, snapshot, run baseline, revert, inject captured optimized runtime with local hardhat_setCode, run same chunks/seed. No public transactions.",
+  "scope": "Runtime size and process/finish receipt gas only. Excludes deployment, publication, RNG provider, claims, L1 DA and fiat pricing. Cases are measurements, not worst-case bounds.",
+  "sourceHashes": {
+    "contracts/ShortOutcome.sol": {
+      "before": "0xea1da2b2f5fba3b887cb9e32d62c66252260024f12d3485c0eb60e697ace1e3e",
+      "after": "0x7f14ed1ac920113c4908259324568fa63875cf699c43a1f9aa4cef24a21a0d17"
+    },
+    "contracts/ShortSettlement.sol": {
+      "before": "0x05d805eea40778c275ead8b662747a5b684aa4f509cee05cf87bd7d19367f75a",
+      "after": "0x91dd6a535c7af2811113c1d98bc416e2aef1fd29e0fc0764f91c762a6fd73f5f"
+    },
+    "test/contracts/ShortOutcomeFixture.sol": {
+      "before": "0x61424f89f9c594e59af4e9ec3007933b7b4b3ee6f04d70c696bd09e2d81c6e3d",
+      "after": "0x57273b58b2314ecb6e003cc84ed8de4b31c5e242a834c2d3f8563cd1a4e0f9fc"
+    }
+  },
+  "runtimeBytes": {
+    "before": 20340,
+    "after": 18497,
+    "limit": 24576
+  },
+  "cases": [
+    {
+      "n": 128,
+      "k": 1,
+      "profile": "normal",
+      "chunkSize": 64,
+      "context": "0x0213e2e308851ccea67e4919ebbbb4080909916bcdf69e42652740e2d147b671",
+      "seed": "0x416aec37dc7f529425892a53f9fd289829ccb0e12e8d7221dd8f7620f7e45e06",
+      "resultHash": "0xa25d8724910c2d739ed1e6854c0897a1cc05b6f72701809fe291ac9f3c46a356",
+      "admitted": "52",
+      "before": {
+        "processing": [
+          "508490",
+          "400086"
+        ],
+        "processingTotal": "908576",
+        "maxProcess": "508490",
+        "finish": "251866",
+        "total": "1160442"
+      },
+      "after": {
+        "processing": [
+          "487252",
+          "378873"
+        ],
+        "processingTotal": "866125",
+        "maxProcess": "487252",
+        "finish": "251895",
+        "total": "1118020"
+      }
+    },
+    {
+      "n": 128,
+      "k": 10,
+      "profile": "normal",
+      "chunkSize": 64,
+      "context": "0xfcf44991e35879a48a828266e5df73bd1b5b508adc8483319caf5b098a758e34",
+      "seed": "0x416aec37dc7f529425892a53f9fd289829ccb0e12e8d7221dd8f7620f7e45e06",
+      "resultHash": "0x146f6eeae95501b89d31ea2bb987384320503cc48eb767a91264fd298a8fc676",
+      "admitted": "47",
+      "before": {
+        "processing": [
+          "1019514",
+          "607182"
+        ],
+        "processingTotal": "1626696",
+        "maxProcess": "1019514",
+        "finish": "582986",
+        "total": "2209682"
+      },
+      "after": {
+        "processing": [
+          "964170",
+          "551747"
+        ],
+        "processingTotal": "1515917",
+        "maxProcess": "964170",
+        "finish": "583015",
+        "total": "2098932"
+      }
+    },
+    {
+      "n": 128,
+      "k": 64,
+      "profile": "near-certain",
+      "chunkSize": 64,
+      "context": "0xc903626d4824d1429787494a2c66d50abb510861e85ab2cb77f193bbdfead28f",
+      "seed": "0x416aec37dc7f529425892a53f9fd289829ccb0e12e8d7221dd8f7620f7e45e06",
+      "resultHash": "0x5f35418270318e9b83d3508a06900529f89dda0f46edd2dd9e4dc1f0426b362d",
+      "admitted": "128",
+      "before": {
+        "processing": [
+          "5120606",
+          "2869239"
+        ],
+        "processingTotal": "7989845",
+        "maxProcess": "5120606",
+        "finish": "3051100",
+        "total": "11040945"
+      },
+      "after": {
+        "processing": [
+          "4253216",
+          "2001215"
+        ],
+        "processingTotal": "6254431",
+        "maxProcess": "4253216",
+        "finish": "3051129",
+        "total": "9305560"
+      }
+    },
+    {
+      "n": 1000,
+      "k": 10,
+      "profile": "normal",
+      "chunkSize": 64,
+      "context": "0x04a2f699a959c2b854207c6d15fc5c7132f398813344e6a1a55a8f7343f83c1b",
+      "seed": "0x416aec37dc7f529425892a53f9fd289829ccb0e12e8d7221dd8f7620f7e45e06",
+      "resultHash": "0x2ffbe60994a075d2b7ac23995c84172e4c610ad93b79a65726cc403a410325fd",
+      "admitted": "392",
+      "before": {
+        "processing": [
+          "1031847",
+          "634230",
+          "616009",
+          "593325",
+          "557951",
+          "619729",
+          "611532",
+          "624524",
+          "593280",
+          "563854",
+          "606390",
+          "597458",
+          "555180",
+          "613771",
+          "597738",
+          "485569"
+        ],
+        "processingTotal": "9902387",
+        "maxProcess": "1031847",
+        "finish": "585498",
+        "total": "10487885"
+      },
+      "after": {
+        "processing": [
+          "973913",
+          "576256",
+          "558025",
+          "535358",
+          "500003",
+          "561765",
+          "553620",
+          "566493",
+          "535338",
+          "505918",
+          "548445",
+          "539590",
+          "497295",
+          "555800",
+          "539703",
+          "433958"
+        ],
+        "processingTotal": "8981480",
+        "maxProcess": "973913",
+        "finish": "585527",
+        "total": "9567007"
+      }
+    },
+    {
+      "n": 1000,
+      "k": 64,
+      "profile": "near-certain",
+      "chunkSize": 64,
+      "context": "0xe404a97d5ac813f7de4ee22de188e3fe33ac2b71c37be7b327e0e6b6d7c018f6",
+      "seed": "0x416aec37dc7f529425892a53f9fd289829ccb0e12e8d7221dd8f7620f7e45e06",
+      "resultHash": "0x9bd6910d494a20f69c89e3cb879c1d5cd2e03f21013a178b5176a5fb449011ea",
+      "admitted": "1000",
+      "before": {
+        "processing": [
+          "5113886",
+          "2862210",
+          "2867512",
+          "2852571",
+          "2863718",
+          "2864110",
+          "2799744",
+          "2816269",
+          "2775203",
+          "2825271",
+          "2785316",
+          "2733072",
+          "2888590",
+          "2816614",
+          "2815738",
+          "2038111"
+        ],
+        "processingTotal": "46717935",
+        "maxProcess": "5113886",
+        "finish": "3074104",
+        "total": "49792039"
+      },
+      "after": {
+        "processing": [
+          "4223492",
+          "1971210",
+          "1976360",
+          "1961308",
+          "1972399",
+          "1972888",
+          "1908425",
+          "1924895",
+          "1883857",
+          "1933897",
+          "1893915",
+          "1841657",
+          "1997161",
+          "1925185",
+          "1924323",
+          "1195827"
+        ],
+        "processingTotal": "32506799",
+        "maxProcess": "4223492",
+        "finish": "3074133",
+        "total": "35580932"
+      }
+    }
+  ]
+}

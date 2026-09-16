@@ -21,11 +21,15 @@ library ShortOutcome {
     bytes32 private constant PRIZE = keccak256("SHORT_PRIZE_ORDER_V1");
 
     function rulesHash(Rules memory r) internal pure returns (bytes32) {
+        _validateRules(r);
+        return keccak256(abi.encode(keccak256("SHORT_OUTCOME_RULES_V1"), r));
+    }
+
+    function _validateRules(Rules memory r) private pure {
         if (r.version != 1 || r.pNumerator == 0 || r.pNumerator >= r.pDenominator
             || r.hNumerator == 0 || r.hDenominator == 0
             || _gcd(r.pNumerator, r.pDenominator) != 1 || _gcd(r.hNumerator, r.hDenominator) != 1)
             revert InvalidOutcomeInput();
-        return keccak256(abi.encode(keccak256("SHORT_OUTCOME_RULES_V1"), r));
     }
 
     function _gcd(uint256 a, uint256 b) private pure returns (uint256) {
@@ -34,6 +38,11 @@ library ShortOutcome {
     }
 
     function participantsHash(Participant[] memory participants) internal pure returns (bytes32) {
+        _validateParticipants(participants);
+        return keccak256(abi.encode(participants));
+    }
+
+    function _validateParticipants(Participant[] memory participants) private pure {
         address previous;
         for (uint256 i; i < participants.length; ++i) {
             Participant memory p = participants[i];
@@ -41,7 +50,6 @@ library ShortOutcome {
                 revert InvalidOutcomeInput();
             previous = p.wallet;
         }
-        return keccak256(abi.encode(participants));
     }
 
     /// floor(2^256 * p * e/(e+h)); downward error < 2^-256.
@@ -59,15 +67,13 @@ library ShortOutcome {
         Rules memory rules, uint256[] memory prizes) internal pure returns (Result memory result)
     {
         if (context == bytes32(0) || prizes.length == 0 || prizes.length > 64) revert InvalidOutcomeInput();
-        bytes32 rh = rulesHash(rules);
-        bytes32 ph = participantsHash(participants);
         uint256 total;
         for (uint256 i; i < prizes.length; ++i) {
             if (prizes[i] == 0) revert InvalidOutcomeInput();
             total += prizes[i]; // Reject overflowing baskets, even outside custody integration.
         }
         Candidate[] memory selected;
-        (selected, result.admittedCount) = _select(context, seed, participants, rules, prizes.length);
+        (selected, result.admittedCount) = selectTopK(context, seed, participants, rules, prizes.length);
         uint256 count = Math.min(result.admittedCount, prizes.length);
         uint256[] memory slots = _slots(context, seed, prizes.length);
         result.winners = new address[](count);
@@ -79,13 +85,22 @@ library ShortOutcome {
             result.amounts[i] = prizes[slots[i]];
         }
         // The pre-hash Result has resultHash == 0 by construction; explicit schema.
+        // selectTopK has validated these exact rules and participants already.
+        bytes32 rh = keccak256(abi.encode(keccak256("SHORT_OUTCOME_RULES_V1"), rules));
+        bytes32 ph = keccak256(abi.encode(participants));
         result.resultHash = keccak256(abi.encode(keccak256("SHORT_RESULT_V1"), context, seed,
             ph, rh, keccak256(abi.encode(prizes)), result));
     }
 
-    function _select(bytes32 context, bytes32 seed, Participant[] memory participants,
-        Rules memory rules, uint256 k) private pure returns (Candidate[] memory best, uint256 admitted)
+    /// Validated selection shared by atomic and streaming paths. Only the first
+    /// min(admitted, k) elements are populated; the remaining allocated slots are zero.
+    /// Does not assign prizes or compute a result hash. Candidate ranks are reusable.
+    function selectTopK(bytes32 context, bytes32 seed, Participant[] memory participants,
+        Rules memory rules, uint256 k) internal pure returns (Candidate[] memory best, uint256 admitted)
     {
+        if (context == bytes32(0) || k == 0 || k > 64) revert InvalidOutcomeInput();
+        _validateRules(rules);
+        _validateParticipants(participants);
         best = new Candidate[](k);
         for (uint256 i; i < participants.length; ++i) {
             Participant memory p = participants[i];

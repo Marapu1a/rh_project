@@ -11,6 +11,8 @@
 
 ## Правила актуальности
 
+[Оптимизация Short selection](SHORT_SELECTION_OPTIMIZATION.md), 17.09 — общий отбор кандидатов, размер 18 497 байт, сравнение газа на одинаковом frozen state/seed. Без новых контрактов/helpers.
+
 [Canonical Short settlement](SHORT_SETTLEMENT.md), 16.09 — единый dataset context, обработка порциями, атомарное начисление/consume и восстановление другим исполнителем. Настоящий RNG пока отсутствует.
 
 [Версии Short и переход старого набора](SHORT_RULES_EPOCHS.md), 16.09 — announcement/notice, mint boundary B+1, fresh snapshot cutoff, empty assertion с replay, lifecycle v2. Внутренний компонент, без production RNG/keeper.

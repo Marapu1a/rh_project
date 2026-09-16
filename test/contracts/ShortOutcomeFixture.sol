@@ -19,6 +19,9 @@ contract ShortOutcomeFixture is ShortDrawCommitment {
     function calculate(bytes32 context, bytes32 seed, ShortOutcome.Participant[] calldata participants,
         ShortOutcome.Rules calldata rules, uint256[] calldata prizes) external pure returns (ShortOutcome.Result memory)
     { return ShortOutcome.compute(context, seed, participants, rules, prizes); }
+    function selectCandidates(bytes32 context, bytes32 seed, ShortOutcome.Participant[] calldata participants,
+        ShortOutcome.Rules calldata rules, uint256 k) external pure returns (ShortOutcome.Candidate[] memory, uint256)
+    { return ShortOutcome.selectTopK(context, seed, participants, rules, k); }
     function probabilityThreshold(uint128 entries, ShortOutcome.Rules calldata rules) external pure returns (uint256) {
         ShortOutcome.rulesHash(rules);
         return ShortOutcome.threshold(entries, rules);

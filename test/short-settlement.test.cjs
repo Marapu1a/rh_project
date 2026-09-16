@@ -47,6 +47,29 @@ test('canonical result independent of partition and executor; real awards, round
     await rpc('evm_revert',[checkpoint]);checkpoint=await rpc('evm_snapshot');
   }
 });
+test('partial admission across chunks ignores unused candidates and awards a random subset of prizes',async()=>{
+  const f=await fixture(participants(12,1)),r=await f.request(),checkpoint=await rpc('evm_snapshot');
+  const {pid,chunks}=await f.prepare(r,4);const context=(await f.source.datasetProposal(pid)).context;
+  const basket=Array.from(await f.source.datasetBasket(pid));let seed,expected;
+  // Deterministic fixture seed search only; production never selects/retries seeds.
+  for(let i=0;i<1000;i++){
+    seed=id('partial admission '+i);expected=model.compute(context,seed,f.ps,f.rules,basket);
+    const chunkIds=new Set(expected.winners.map(w=>Math.floor(f.ps.findIndex(p=>p.wallet.toLowerCase()===w)/4)));
+    if(expected.admittedCount===2n&&chunkIds.size===2&&!expected.prizeIndices.includes(0n))break;
+  }
+  assert.equal(expected.admittedCount,2n);assert(!expected.prizeIndices.includes(0n));
+  assert.equal(new Set(expected.winners.map(w=>Math.floor(f.ps.findIndex(p=>p.wallet.toLowerCase()===w)/4))).size,2);
+  await sent(f.source.supplySeed(r.drawId,seed));await processAll(f,r,chunks);
+  let actual=await f.source.shortResult(r.drawId);assert.equal(actual.resultHash,expected.resultHash);
+  assert.deepEqual(normalize(actual),normalize(expected));assert(!actual.winners.includes(ethers.ZeroAddress));
+  await sent(f.source.finishShort(r.drawId));assert.equal(await f.vault.claimable(f.quote.target),expected.amounts.reduce((a,b)=>a+b,0n));
+  await rpc('evm_revert',[checkpoint]);const again=await f.prepare(r,1,id('partial repartition'));
+  assert.equal((await f.source.datasetProposal(again.pid)).context,context);
+  await sent(f.source.supplySeed(r.drawId,seed));await processAll(f,r,again.chunks);
+  actual=await f.source.shortResult(r.drawId);assert.equal(actual.resultHash,expected.resultHash);
+  await sent(f.source.finishShort(r.drawId));
+});
+
 test('public calldata recovery resumes after interruption; ordered authenticated chunks only',async()=>{
   const f=await fixture(),r=await f.request(),{pid,chunks}=await f.prepare(r);
   assert.equal((await model.recover(f.provider,f.source,r.drawId)).nextAction,'waitSeed');

@@ -1,12 +1,14 @@
 # Состояние реализации
 
-Обновлено по локальному коду и проверкам: 16.09.2026. Это карта кода, а не утверждение реализации всей [продуктовой схемы](PRODUCT_SPEC.md).
+Обновлено по локальному коду и проверкам: 17.09.2026. Это карта кода, а не утверждение реализации всей [продуктовой схемы](PRODUCT_SPEC.md).
 
-Последний полный запуск после canonical Short settlement: `npm test`, **136/136 passed**,
-включая 8 новых integration tests. Предыдущие числа ниже относятся к прежним этапам.
+Последний полный запуск 17.09 после оптимизации selection: `npm test`, **138/138 passed**.
+Два новых теста дополняют проверки canonical settlement; отдельно выполнены пять
+сравнений газа/результата с baseline. Предыдущие числа ниже относятся к прежним этапам.
 
 | Часть | Фактическое состояние |
 |---|---|
+| Оптимизация Short selection | 17.09 общий validated primitive, повторное использование ranks; runtime fixture 18 497 байт вместо 20 340. Пять сравнений газа на одинаковом state/seed с exact resultHash и vault accounting. Новых внешних helpers нет. [Результаты](SHORT_SELECTION_OPTIMIZATION.md) |
 | Canonical Short settlement | 16.09 внутренний ShortSettlement соединяет dataset + epochs + streaming top K + реальный finalize/consume. Один seed, permissionless process/finish, независимый JS result/recovery. Seed вручную только в fixture; настоящий RNG/readiness/keeper ещё отсутствуют. [Границы](SHORT_SETTLEMENT.md) |
 | Версии правил Short | 16.09 внутренний ShortRulesEpochs + lifecycle v2: notice, B+1 mint boundary, обслуживание старой версии, fresh cutoff после задержки, проверяемое empty assertion. Нет production economic/finality policy или authenticated terminal. [Описание](SHORT_RULES_EPOCHS.md) |
 | Подготовка Short dataset | 16.09 внутренний ShortDatasetPreparation: Publishing/Ready/Superseded/Sealed, фактические root/count/attempts, atomic reserve, новый единый context без partition/executor. Replay-builder и CLI сверки публикации. Нет production authorization/activation/terminal. [Границы](SHORT_DATASET_PREPARATION.md) |

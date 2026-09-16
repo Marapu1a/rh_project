@@ -47,26 +47,23 @@ abstract contract ShortSettlement is ShortRulesEpochs {
         require(chunk.length > 0 && chunk.length <= MAX_DATASET_CHUNK
             && keccak256(abi.encode(chunk)) == datasetChunkHash(s.proposalId, index), "chunk");
         Proposal memory p = datasetProposal(s.proposalId);
-        uint256[] memory prizes = datasetBasket(s.proposalId);
-        ShortOutcome.Result memory local = ShortOutcome.compute(p.context, s.seed, chunk,
-            shortEpochPolicy(p.request.rulesEpoch).outcome, prizes);
-        _merge(drawId, p.context, s.seed, local.winners, prizes.length);
-        s.admitted += local.admittedCount; s.processed += chunk.length; ++s.nextChunk;
+        uint256 k = datasetBasket(s.proposalId).length;
+        (ShortOutcome.Candidate[] memory candidates, uint256 admitted) = ShortOutcome.selectTopK(
+            p.context, s.seed, chunk, shortEpochPolicy(p.request.rulesEpoch).outcome, k);
+        _merge(drawId, candidates, admitted < k ? admitted : k, k);
+        s.admitted += admitted; s.processed += chunk.length; ++s.nextChunk;
         emit ShortProgress(drawId, s.nextChunk, s.processed, s.admitted);
     }
 
     // A participant outside its chunk's top K cannot belong to the global top K.
-    function _merge(bytes32 drawId, bytes32 context, bytes32 seed, address[] memory candidates, uint256 k) private {
+    function _merge(bytes32 drawId, ShortOutcome.Candidate[] memory fresh, uint256 freshCount, uint256 k) private {
         ShortOutcome.Candidate[] storage previous = best[drawId];
-        uint256 length = previous.length + candidates.length;
+        uint256 length = previous.length + freshCount;
         if (length > k) length = k;
-        ShortOutcome.Candidate[] memory fresh = new ShortOutcome.Candidate[](candidates.length);
-        for (uint256 i; i < candidates.length; ++i) fresh[i] = ShortOutcome.Candidate(candidates[i],
-            uint256(keccak256(abi.encode(keccak256("SHORT_ORDER_V1"), context, seed, candidates[i]))));
         ShortOutcome.Candidate[] memory merged = new ShortOutcome.Candidate[](length);
         uint256 a; uint256 b;
         for (uint256 i; i < length; ++i) {
-            if (a < previous.length && (b == fresh.length || previous[a].rank < fresh[b].rank
+            if (a < previous.length && (b == freshCount || previous[a].rank < fresh[b].rank
                 || (previous[a].rank == fresh[b].rank && previous[a].wallet < fresh[b].wallet))) merged[i] = previous[a++];
             else merged[i] = fresh[b++];
         }

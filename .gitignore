@@ -25,6 +25,7 @@ research/*
 !research/attempt-lifecycle-report.json
 !research/short-outcome-gas.json
 !research/short-scaling-study.json
+!research/short-selection-benchmark.json
 !research/execution-economics.json
 !research/short-scaling-rpc.json
 !research/short-economy-report.json

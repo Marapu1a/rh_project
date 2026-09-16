@@ -25,6 +25,28 @@ test('independent full-sort reference matches Solidity bounded selection across 
   }
 });
 
+test('selection primitive validates inputs and returns reusable ranks with explicit unused tail',async()=>{
+  const f=await fixture(compiled),seed=ethers.id('selection'),coder=ethers.AbiCoder.defaultAbiCoder();
+  for(const n of [0,1,12,80])for(const k of [1,3,64]){
+    const ps=participants(n),expected=model.compute(context,seed,ps,normalRules,Array(k).fill(1));
+    const [candidates,admitted]=await f.source.selectCandidates(context,seed,ps,normalRules,k);
+    assert.equal(admitted,expected.admittedCount);assert.equal(candidates.length,k);
+    assert.deepEqual(Array.from(candidates.slice(0,expected.winners.length),c=>c.wallet.toLowerCase()),expected.winners);
+    for(let i=0;i<candidates.length;i++){
+      const c=candidates[i];
+      if(i<expected.winners.length)assert.equal(c.rank,BigInt(ethers.keccak256(coder.encode(
+        ['bytes32','bytes32','bytes32','address'],[ethers.id('SHORT_ORDER_V1'),context,seed,c.wallet]))));
+      else {assert.equal(c.wallet,ethers.ZeroAddress);assert.equal(c.rank,0n);}
+    }
+  }
+  for(const k of [0,65])await rejects(()=>f.source.selectCandidates(context,seed,participants(1),normalRules,k));
+  await rejects(()=>f.source.selectCandidates(ethers.ZeroHash,seed,[],normalRules,1));
+  await rejects(()=>f.source.selectCandidates(context,seed,[],{...normalRules,pNumerator:0},1));
+  for(const ps of [[...participants(2)].reverse(),[participants(1)[0],participants(1)[0]],
+    [{...participants(1)[0],firstAttempt:0}],[{...participants(1)[0],lastAttempt:0}]])
+    await rejects(()=>f.source.selectCandidates(context,seed,ps,normalRules,1));
+});
+
 test('admission threshold matches exact rational flooring at zero, fractions and uint128 boundaries',async()=>{
   const f=await fixture(compiled);
   for(const r of [normalRules,nearCertainRules,{...normalRules,pNumerator:1,pDenominator:4294967295,hNumerator:4294967295,hDenominator:1}]){
