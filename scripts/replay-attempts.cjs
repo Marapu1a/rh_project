@@ -24,6 +24,11 @@ async function main(){
     const config=JSON.parse(fs.readFileSync(options['--manifest'],'utf8'));
     domainFor(config.manifest,config.lifecycle);
     const raw=await scan(config.manifest,options['--rpc'],options['--to-block'],config.lifecycle);
+    if(config.lifecycle.schema==='attempt-lifecycle-v2'){
+      const {JsonRpcProvider}=require('ethers');
+      await require('./short-dataset.cjs').verifyEpochGenesis(new JsonRpcProvider(options['--rpc']),
+        config.lifecycle.source,domainFor(config.manifest,config.lifecycle));
+    }
     input={...raw,lifecycle:config.lifecycle};inputMode='Read through selected RPC; finality/RNG correctness not certified';
   }
   const ledger=replayAttempts(input.manifest,input.lifecycle,input.blocks);

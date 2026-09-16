@@ -96,8 +96,9 @@ test('verified fixture settlement assigns basket prizes, preserves dust and allo
   const before=await f.source.shortCommitment(draw.request.drawId),oldRules=await f.source.shortBasketRules(draw.request.drawId);
   const next=await f.freeze(participants(3),normalRules,[2,1],60n);
   assert.notEqual(next.request.expectedRulesHash,draw.request.expectedRulesHash);
-  assert.deepEqual(await f.source.shortCommitment(draw.request.drawId),before);
-  assert.deepEqual(await f.source.shortBasketRules(draw.request.drawId),oldRules);
+  // Compare all decoded values without ethers Result proxy identity (Node 24).
+  assert.deepEqual((await f.source.shortCommitment(draw.request.drawId)).toArray(true),before.toArray(true));
+  assert.deepEqual((await f.source.shortBasketRules(draw.request.drawId)).toArray(true),oldRules.toArray(true));
   await sent(f.vault.claim(draw.request.drawId,expected.winners[0]));
   assert.equal(await f.quote.balanceOf(expected.winners[0]),expected.amounts[0]);
   assert.equal(await f.source.pendingShortDrawId(),next.request.drawId);

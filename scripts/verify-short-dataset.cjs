@@ -4,7 +4,7 @@ const fs=require('node:fs');
 const {ethers}=require('ethers');
 const {scan}=require('./replay-direct-buy.cjs');
 const {canonical,hash}=require('./direct-buy.cjs');
-const {buildFromHistory,verifyPublication}=require('./short-dataset.cjs');
+const {buildFromHistory,verifyPublication,verifyEpochGenesis}=require('./short-dataset.cjs');
 async function main(){
   const args=process.argv.slice(2),options={};
   for(let i=0;i<args.length;i+=2){
@@ -17,15 +17,21 @@ async function main(){
     const raw=await scan(input.manifest,options['--rpc'],String(input.request.cutoffBlockNumber),input.lifecycle);input.blocks=raw.blocks;
   }
   const artifact=buildFromHistory(input);
+  if(options['--rpc']&&input.lifecycle.schema==='attempt-lifecycle-v2')
+    await verifyEpochGenesis(new ethers.JsonRpcProvider(options['--rpc']),input.lifecycle.source,artifact.snapshot?.domain||artifact.domain);
   let publication=null;
   if(options['--proposal']){
+    if(artifact.schema==='short-empty-epoch-artifact-v1')throw Error('Empty epoch has no dataset proposal');
     if(!options['--rpc'])throw Error('Publication verification requires --rpc');
     const provider=new ethers.JsonRpcProvider(options['--rpc']);
     const compiled=JSON.parse(fs.readFileSync('artifacts/compiled.json','utf8'));
-    const source=new ethers.Contract(input.lifecycle.source,compiled.ShortDatasetFixture.abi,provider);
+    const source=new ethers.Contract(input.lifecycle.source,
+      compiled[input.lifecycle.schema==='attempt-lifecycle-v2'?'ShortEpochFixture':'ShortDatasetFixture'].abi,provider);
     publication=await verifyPublication(provider,source,options['--proposal'],artifact);
   }
-  fs.writeFileSync(options['--output'],canonical({artifact,artifactHash:hash(artifact),publication,
+  const nextAction=artifact.schema==='short-empty-epoch-artifact-v1'
+    ?{method:'closeEmpty',args:[artifact.cutoff.blockNumber,artifact.cutoff.blockHash,artifact.snapshotHash]}:null;
+  fs.writeFileSync(options['--output'],canonical({artifact,artifactHash:hash(artifact),publication,nextAction,
     provenance:options['--rpc']?'Replayed through selected RPC; finality not certified':'Offline evidence; authenticity not certified'})+'\n');
   console.log('Dataset artifact verified and written');
 }

@@ -11,6 +11,8 @@
 
 ## Правила актуальности
 
+[Версии Short и переход старого набора](SHORT_RULES_EPOCHS.md), 16.09 — announcement/notice, mint boundary B+1, fresh snapshot cutoff, empty assertion с replay, lifecycle v2. Внутренний компонент, без production RNG/keeper.
+
 [Быстрая экономика исполнения](EXECUTION_ECONOMICS_QUICK_CHECK.md), 16.09 — 18 локальных сценариев на 90 дней со стартовыми $300. Сценарные ставки, стоимость и доли; production-параметры не утверждены.
 
 Новое обсуждение 16.09: [автоматическая оплата исполнения](EXECUTION_FUNDING_DISCUSSION.md) — обеспечение gas и ожидание приемлемых комиссий. Это направление пересмотра политики расходов, не реализованное разрешение тратить prize reserves.

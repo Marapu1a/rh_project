@@ -60,13 +60,13 @@ abstract contract ShortDatasetPreparation is ReentrancyGuard {
         require(vault != address(0) && registry.code.length > 0 && instance != bytes32(0), "binding");
         datasetVault = PromoVault(vault); datasetRegistry = registry; datasetInstance = instance;
     }
-    function datasetProposal(bytes32 id) external view returns (Proposal memory) { return proposals[id]; }
+    function datasetProposal(bytes32 id) public view returns (Proposal memory) { return proposals[id]; }
     function datasetChunkCount(bytes32 id) external view returns (uint256) { return chunks[id].length; }
     function datasetChunkHash(bytes32 id, uint256 index) external view returns (bytes32) { return chunks[id][index]; }
     function datasetBasket(bytes32 id) external view returns (uint256[] memory) { return baskets[id]; }
 
-    function _beginDataset(bytes32 id, Request calldata r, ShortOutcome.Rules calldata rules,
-        uint256[] calldata weights, uint256 minimumUnit) internal nonReentrant {
+    function _beginDataset(bytes32 id, Request calldata r, ShortOutcome.Rules memory rules,
+        uint256[] memory weights, uint256 minimumUnit) internal nonReentrant {
         require(activeProposal == bytes32(0) && pendingDatasetDraw == bytes32(0), "active");
         require(id != bytes32(0) && proposals[id].status == Status.None && r.drawId != bytes32(0)
             && !sealedDraws[r.drawId] && r.campaignId > 0 && r.rulesEpoch > 0, "identity");

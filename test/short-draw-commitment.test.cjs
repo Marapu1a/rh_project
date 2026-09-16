@@ -97,7 +97,8 @@ test('one pending Short rejects duplicate and different draw IDs; late funding l
   await rejects(()=>f.source.freeze(r));await rejects(async()=>f.source.freeze(await f.request({drawId:id('second')})));
   await f.fund(100);await sent(f.quote.mint(f.vault.target,60));await sent(f.vault.syncUSDG());
   assert.equal(await f.source.shortCommitmentHash(r.drawId),digest);
-  assert.deepEqual(await f.source.shortCommitment(r.drawId),c);
+  // Compare decoded values, not ethers Result proxy identity (Node 24).
+  assert.deepEqual((await f.source.shortCommitment(r.drawId)).toArray(true),c.toArray(true));
   assert.equal(await f.vault.reserved(f.quote.target),101n);
   assert.equal(await f.vault.freeShort(),229n);
 });
@@ -122,7 +123,7 @@ test('old unpaid credits stay claimable and Monthly settlement does not alter pe
   assert.equal(await f.quote.balanceOf(await f.alice.getAddress()),50n);
   assert.equal(await f.vault.claimable(f.quote.target),0n);
   assert.equal(await f.vault.reserved(f.quote.target),101n);
-  assert.deepEqual(await f.source.shortCommitment(r.drawId),c);
+  assert.deepEqual((await f.source.shortCommitment(r.drawId)).toArray(true),c.toArray(true));
 });
 
 test('already used vault ID fails atomically even with no pending Short',async()=>{

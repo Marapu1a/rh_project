@@ -1,94 +1,32 @@
-# GPT: автономное финансирование gas и экономическая готовность розыгрышей
+# Ревью Short rules epochs и fresh cutoff
 
-16.09.2026. Предыдущий dataset review прочитан. Сейчас нужна совместная архитектурная и экономическая проработка, **не немедленная реализация**. Просим исследовать реальные кейсы/best practices по первичным источникам и проверить применимость к нашему MVP.
+16.09.2026. После краткой [экономической проверки](EXECUTION_ECONOMICS_QUICK_CHECK.md) владелец одобрил возврат к проекту. Доли/пороги/автопополнение gas ещё не production policy. В этом пакете реализованы версии Short и replay, без RNG/аварийных resets.
 
-## Задача и границы решения
+## Код
 
-Мемный TOKEN с постоянным промо: Short USDG-розыгрыши не чаще чем через 6 часов после предыдущего settlement и месячный jackpot. Билеты из eligible BUY по 100 USDG nominal, carry сохраняется. Нет Luck и продуктового MAX_N/FIFO; все положенные участники входят в snapshot, вычисление может идти порциями.
+- `contracts/ShortRulesEpochs.sol` поверх `ShortDatasetPreparation.sol`.
+- `scripts/attempt-lifecycle.cjs`: opt-in lifecycle v2, epoch events, Short snapshot v2, byEpoch и conservation; прежний v1 сохранён для исторических evidence.
+- `scripts/short-dataset.cjs`, `scripts/verify-short-dataset.cjs`: выбор целевой epoch, empty artifact/action и сверка on-chain genesis/policy.
+- `test/short-epochs.test.cjs`, `test/contracts/ShortEpochFixture.sol`.
+- Подробная спецификация: [SHORT_RULES_EPOCHS.md](SHORT_RULES_EPOCHS.md); результаты запуска — IMPLEMENTATION_STATUS.
 
-Владелец требует автоматической работы: никто вручную не следит за балансом keeper, не докидывает ETH перед каждым draw и не выбирает удобные границы. Ручное объявление будущих правил допустимо; ручное обслуживание каждого цикла — нет.
+## Основные решения
 
-Новое поддержанное направление: **до freeze автоматически обеспечивать бюджет исполнения из средств для розыгрышей**. При неадекватной цене gas относительно банка новый draw можно отложить по публичному правилу. Деньги и attempts сохраняются.
+Genesis, один announced payload с immutable notice, одна draining epoch. Activation только после notice/6h и без active preparation/pending draw. Если вызов в B, mint до B включительно старый, начиная с B+1 новый. Payload старых билетов не меняется. Carry без собственной epoch; версия назначается при mint. Пока старый набор не закрыт, V3 объявить нельзя.
 
-Это пересмотр прежнего запрета расходовать признанные призовые деньги иначе чем на призы. Конкретная схема, источник внутри резервов, пределы и переход старых обязательств НЕ приняты. Существующий vault такой функции не имеет. Frozen prize budget и claimable не уменьшаются ради gas. Публичного deployment ещё нет: условия можно правильно определить до запуска.
+**Отличие от прежнего предложения GPT:** snapshot cutoff не обязан быть блоком B. Иначе через 256 блоков после activation существующий BEGIN перестаёт принимать старую границу. Теперь выбираем свежий C >= B+1; replay до C отбирает все OPEN старой epoch, то есть mint <= B. Номер границы закреплён activation state/event, старый blockhash(B) для BEGIN не нужен. После BEGIN фиксированы C/root/context, дальнейшая задержка не требует re-anchor.
 
-## Что прочитать в репозитории
+Пустой старый набор закрывается без draw/денег/AttemptsConsumed/reset clock. Это **авторизованное assertion**, честность которого проверяет independent replay; не выдаём его за on-chain proof. CLI формирует empty artifact + closeEmpty arguments из пересчитанной истории. Permissionless ложное empty не разрешено.
 
-- [PRODUCT_SPEC.md](PRODUCT_SPEC.md), [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md).
-- `contracts/PromoVault.sol`: free Short/Current/Next, отдельные reserved/claimable, immutable controller, нет admin withdrawals. Claim может вызвать любой, получатель фиксирован.
-- External GENERAL funding: Short=1/2, Next до target=1/6, Current=remainder; targeted funding и exact rounding уже реализованы. External funding не создаёт project fee. Не менять эти правила молча.
-- FeeRouter recipient slots НЕ являются Short/Current/Next или готовым operational accounting. Creator allocation и TOKEN→USDG ещё не интегрированы.
-- [SHORT_DATASET_PREPARATION.md](SHORT_DATASET_PREPARATION.md), `contracts/ShortDatasetPreparation.sol`: полный dataset проверяется до reserve; supersede только до freeze; actual root/count/attempts; atomic seal. Это внутренний компонент, не полный controller.
-- [SHORT_SETTLEMENT_SCALING_STUDY.md](SHORT_SETTLEMENT_SCALING_STUDY.md), `test/contracts/ShortStreamingStudy.sol`: возобновляемый permissionless scan одного snapshot/seed; test-only, без настоящего RNG.
-- Production keeper, authenticated RNG, epochs, полный Short/Monthly terminal, operational ETH mechanism отсутствуют. Dataset-пакет прошёл 120/120 локальных tests; это не доказательство экономической автономности.
+Completion hook требует реального vault Finalized и соответствия win/no-win awarded сумме, затем очищает pending/draining и запускает 6h. Вызывается только внутри будущего authenticated terminal. Fixture intentionally принимает тестовых winners: production так делать нельзя.
 
-## Числа для начала, не обещание стоимости
+## Что проверить
 
-`research/short-scaling-study.json` содержит local EVM gas streaming-прототипа:
+1. Сохраняет ли отделение rules boundary от fresh snapshot cutoff полноту старого набора без зависания после 256 блоков? Нет ли проблем при same-block BUY, reorg и позднем terminal?
+2. Есть ли простой путь смешать эпохи, пропустить старые OPEN, изменить правила старого draw либо обойти schedule через empty/supersede?
+3. Достаточно ли snapshot v2/domain genesis hash и проверки on-chain policy для заявленной проверяемости? Отдельно отметьте оставшиеся publisher assertions.
+4. Empty transition: не усиливает ли эта capability доверие к publisher существенно относительно существующего snapshot? Какие минимальные ограничения нужны перед production, без ZK/governance-комбайна?
+5. Корректны ли cumulative ranges/byEpoch при несколько BUY, freeze, новой активности во время pending и отдельном Monthly consumption?
+6. Какой следующий один пакет наиболее полезен: связка canonical context с streaming terminal или authenticated seed? Учитывайте, что полный controller обязан поддерживать Monthly до immutable deployment.
 
-| Участники / места | Суммарный gas |
-|---|---:|
-| 1000 / 10 | 16,604,947 |
-| 5000 / 10 | 74,908,186 |
-
-Это begin/publication/seal/mock seed/process/finalize, без deployment/funding/реального RNG/swaps/claims. Не окончательный production pipeline.
-
-В недавнем read-only запросе два RPC вернули eth_gasPrice 0.064936 и 0.065266 gwei. При **условном** ETH=$2400 умножение local gas на 0.065 gwei даёт $2.59/$11.69. Это иллюстрация execution cost, не полный сетевой счёт: локальная EVM не воспроизводит все DA costs. Свежие тарифы перепроверить.
-
-Официальное описание L2 execution + L1 data fee: https://docs.robinhood.com/chain/gas-and-fees/ . Сетевая eth_estimateGas включает оба; не прибавляйте DA повторно к такой оценке.
-
-## Направление для сравнения
-
-```text
-общие доступные средства цикла
-→ оценка полного исполнения и проверка экономических пределов
-→ обеспечение ETH
-→ отдельные net prize budget и execution budget
-→ freeze → один seed → bounded processing → finalize → claims
-```
-
-Сравните с постоянным ETH buffer, заранее пополняемым ограниченной долей будущих поступлений. Возможно, комбинация проще покупки ETH перед каждым draw. Это набросок, не утверждённая архитектура. Остаток execution budget не должен автоматически становиться доходом администратора.
-
-## Вопросы
-
-### Деньги и автоматизация
-
-1. Из какого free reserve оплачивать Short и Monthly? Как сохранить смысл targeted/sponsor funding? Лучше выделять расходы при поступлении USDG или перед draw? Покажите gross funding / costs / net prizes.
-2. Как учитывать общий ETH buffer и резерв отдельного draw без двойного учёта? Судьба остатка, переоценка ETH/USDG, доплата после freeze.
-3. Какие расходы покрываются: publication, supersede, RNG, process, finalize, claims, swaps, failed tx? Серверы/RPC желательно оставить project expenses; разделите явно.
-4. **Для покупки ETH за USDG уже нужен gas.** Кто оплачивает bootstrap и автопополнение? Разовое стартовое финансирование допустимо; постоянное ручное — нет. Где low-watermark и запас на пополнение?
-5. Сравните keeper с ограниченным ETH buffer, reimbursement, permissionless executor и paymaster/automation services. Кто авансирует gas, какие депозиты и зависимости возникают? ETH в контракте сам по себе не отправляет транзакции.
-6. Если keeper исчез с ключом своего кошелька, как другой исполнитель получает экономически реализуемый способ продолжить?
-
-### Оценка и защита казны
-
-7. Оценка **всего оставшегося цикла** по N/K/chunks с запасом, включая DA и RNG. Что проверяет контракт, что только keeper? RPC estimate — не on-chain доказательство.
-8. Как не дать вывести средства завышенной gas price/estimate, дроблением chunks, бесполезными вызовами, повторным reimbursement, намеренными revert и гонками исполнителей? Разделите actual costs и bounded payment за полезный прогресс.
-9. USDG→ETH: ограничения asset/route/recipient, slippage, источник цены, защита от манипуляции. Без arbitrary calls и произвольного swap target.
-10. Нужны ли одновременно процентный потолок от net prizes и абсолютный потолок? Числа пока сценарные, не принятые. Не создаст ли лимит запрет разыгрывать малые банки?
-
-### Дорогая сеть и отсутствие тупиков
-
-11. До freeze можно ждать, после freeze конечного запаса может не хватить при росте gas. Как отличаются ожидание/пополнение, без смены seed, списка и призов?
-12. **Publication уже стоит денег до READY/SEAL.** Нужен первый economic gate до неё. Как ограничить траты на бесконечные подготовки/supersede? Какие расходы уже sunk при последней проверке?
-13. Пока ждём, растёт N и стоимость scan. Не получится ли вечное «ещё слишком дорого»? Разберите низкий бюджет, много кошельков, длительный gas spike и хронически дорогую сеть. Не исключайте участников через MAX_N/FIFO.
-14. Согласуйте ожидание с recent cutoff/256-block window, эпохами и 6h schedule. Нельзя выбрать границу и потерять возможность её принять из-за задержки.
-15. Автовыплату можно задержать, но назначенный claim остаётся доступен самому победителю. Как ограничить sponsored claims, не блокируя остальных одним проблемным адресом?
-
-## Кейсы / best practices: просьба исследовать
-
-Найдите 3–5 подходящих реальных примеров: lotteries, keeper liquidation/rebalance/automation, paymasters, executor reimbursement. Для каждого нужны первичные документация/код: кто платит, кто авансирует, как пополняется запас, как ограничены полномочия, что при дорогом gas/пустом балансе/исчезновении исполнителя. Подтверждённые инциденты liveness/funding полезны с первичным postmortem; не выдумывайте их.
-
-Возможные направления: Chainlink Automation/VRF, Gelato, ERC-4337 и публичные keeper-протоколы. Это кандидаты для сравнения, не выбранные зависимости. **Проверить актуальную поддержку Robinhood Chain**, не переносить доступность с другой EVM-сети по умолчанию.
-
-Нужны прямые ссылки и дата проверки. Отделите факты, выводы и допущения. Без веб-доступа прямо укажите, что сведения не проверены.
-
-## Ожидаемый ответ
-
-1. Одна минимальная рекомендуемая MVP-схема + короткое сравнение альтернатив.
-2. Потоки USDG/ETH и состояния до подготовки / до freeze / после freeze / после finalize.
-3. Полномочия, accounting invariants и оставшиеся зависимости.
-4. Сценарии банков $100/$1000, N=1000/5000, gas обычный и x10/x50. Проверить несколько циклов подряд, а не только процент расходов одного draw. Параметры пометить как допущения.
-5. Неразрешённые продуктовые решения и один следующий ограниченный пакет; сначала локальная модель, если для контракта ещё мало данных.
-
-Не нужен governance-комбайн, proxy или ручной диспетчер. Аварийную изоляцию draw обсуждали отдельно: сейчас не реализуем, возвращаемся до immutable deployment. Главная тема этого запроса — нормальная автономная экономика исполнения.
+Не принимайте из fixture численные notice/параметры или произвольный terminal за утверждённый продукт. Funding/finality readiness, роли, daemon, gas buffer, RNG и аварийная изоляция остаются отдельными незавершёнными частями. Просим конкретные сценарии и независимую оценку, не только подтверждение описания.

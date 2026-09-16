@@ -2,6 +2,8 @@
 
 Обновлено: 16.09.2026.
 
+Дополнение следующего пакета: [ShortRulesEpochs](SHORT_RULES_EPOCHS.md) расширяет этот компонент сохранёнными версиями и epoch-aware begin/seal. Ниже описан исходный dataset-слой; отсутствие activation относится к нему отдельно, а не к новому расширению. Production controller всё ещё не завершён.
+
 Реализован `contracts/ShortDatasetPreparation.sol`: **внутренний компонент**, не deployable production controller. Единственные публичные методы компонента — чтение. Внешние управляющие методы находятся в test-only `ShortDatasetFixture`. Не развёртывать fixture с реальными призовыми деньгами: terminal/RNG отсутствуют.
 
 ## Решение о правилах и границе этого пакета

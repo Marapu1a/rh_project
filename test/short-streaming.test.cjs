@@ -20,7 +20,7 @@ test('one frozen dataset/seed gives identical outcome and study hash for 1/7/64-
   for(const size of [1,7,64]){
     await publish(f,ps,size);assert.equal(await f.vault.reserved(f.quote.target),0n);
     await start(f);await process(f,split(ps,size));const expected=await compare(f,ps);
-    const actual=await f.source.result();if(first)assert.deepEqual(actual,first);else first=actual;
+    const actual=await f.source.result();if(first)assert.deepEqual(actual.toArray(true),first.toArray(true));else first=actual;
     await sent(f.source.connect(f.third).finish());
     assert.equal(await f.vault.claimable(f.quote.target),expected.amounts.reduce((a,b)=>a+b,0n));
     assert.equal(await f.vault.reserved(f.quote.target),0n);
@@ -78,7 +78,7 @@ test('finalize failure retains complete progress/seed/reserve, and recovery does
   const before=await f.source.result();
   await sent(f.quote.blockRecipient('0x000000000000000000000000000000000000dEaD'));await sent(f.quote.burn(f.vault.target,1));
   await rejects(()=>f.source.finish({gasLimit:5000000}));
-  assert.equal(await f.source.phase(),3n);assert.deepEqual(await f.source.result(),before);
+  assert.equal(await f.source.phase(),3n);assert.deepEqual((await f.source.result()).toArray(true),before.toArray(true));
   assert.equal((await f.source.queryFilter(f.source.filters.AttemptsConsumed())).length,0);
   await sent(f.quote.mint(f.vault.target,1));await sent(f.source.connect(f.other).finish());
   assert.equal((await f.source.queryFilter(f.source.filters.AttemptsConsumed())).length,1);
