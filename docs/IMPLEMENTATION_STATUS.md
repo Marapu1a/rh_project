@@ -1,9 +1,10 @@
 # Состояние реализации
 
-Обновлено по локальному коду и проверкам: 15.09.2026. Это карта кода, а не утверждение реализации всей [продуктовой схемы](PRODUCT_SPEC.md).
+Обновлено по локальному коду и проверкам: 16.09.2026. Это карта кода, а не утверждение реализации всей [продуктовой схемы](PRODUCT_SPEC.md).
 
 | Часть | Фактическое состояние |
 |---|---|
+| Подготовка Short dataset | 16.09 внутренний ShortDatasetPreparation: Publishing/Ready/Superseded/Sealed, фактические root/count/attempts, atomic reserve, новый единый context без partition/executor. Replay-builder и CLI сверки публикации. Нет production authorization/activation/terminal. [Границы](SHORT_DATASET_PREPARATION.md) |
 | FeeRouter | Прототип TOKEN/USDG accounting, фиксированный PAIR source, recipient credits, атомарный rollover |
 | PromoVault | Резервирование draw, назначение обеспеченных призов и claim; поддерживает оба актива |
 | Три продуктовых USDG-резерва | Реализованы free Short/Current/Next; target immutable; monthly win переносит Next → Current |
@@ -35,11 +36,11 @@
 
 Пустой finalize разрешён бухгалтерски, но контракт не доказывает, что random действительно дал no winners. `campaignId` — metadata, не проверенная связь с policy FeeRouter. Controller может назначать winners в пределах бюджета; безопасность production rules этим не обеспечена.
 
-Полная финализация списком O(N), максимальный production размер не установлен. Нельзя заменять gas-проблему произвольным исключением уже назначенных winners. [Подробности](PROMO_VAULT_DESIGN.md).
+Полная финализация списком O(K), где K — количество winners, не всех участников N. Максимальный production размер не установлен. Нельзя заменять gas-проблему произвольным исключением уже назначенных winners. [Подробности](PROMO_VAULT_DESIGN.md).
 
 ## Проверки и воспроизведение
 
-Текущая проверка 15.09: **110/110 tests в npm test прошли**, включая 7 новых streaming-study tests. Компиляция Solidity прошла. [Scaling study](SHORT_SETTLEMENT_SCALING_STUDY.md): 10 atomic/stress сценариев (два ожидаемо OOG при 32M) и 3 завершённых streaming сценария до N=5000; read-only параметры двух RPC сохранены отдельно. Production contracts не менялись. Предыдущие пакеты: outcome 103/103 и 12 gas-сценариев, commitment 93/93, lifecycle 82/82. Настоящий PAIR/router на local fork проверен этапом [direct BUY](DIRECT_BUY_REPLAY.md); новый fork в scaling study не запускался.
+Текущая проверка 16.09: **120/120 tests в npm test прошли**, включая 10 новых dataset tests. Solidity компилируется штатно; новый пакет проверен локально, без публичных транзакций/нового fork. Предыдущий streaming пакет: 110/110. [Scaling study](SHORT_SETTLEMENT_SCALING_STUDY.md): 10 atomic/stress сценариев (два ожидаемо OOG при 32M) и 3 завершённых streaming сценария до N=5000; read-only параметры двух RPC сохранены отдельно. Эти числа относятся к study, а не новому dataset-компоненту. Предыдущие пакеты: outcome 103/103 и 12 gas-сценариев, commitment 93/93, lifecycle 82/82. Настоящий PAIR/router на local fork проверен этапом [direct BUY](DIRECT_BUY_REPLAY.md).
 
 Проверка 14.09: 43 контрактных tests (16 FeeRouter + 27 PromoVault), 9 offline farming tests и 11 новых Short tests прошли. Сохранённый Short-отчёт воспроизведён с точным совпадением. Новые тесты funding и monthly accounting включены в npm test. Новый сетевой fork не запускался.
 
@@ -69,6 +70,6 @@ PAIR route и доступность блока могут измениться;
 
 ## Следующий этап
 
-USDG funding/monthly accounting, регистрация, basket math, BUY/attempt replay, атомарный Short commitment и deterministic outcome реализованы отдельными компонентами. Target для MVP deployment — 100 USDG. По итогам [scaling study](SHORT_SETTLEMENT_SCALING_STUDY.md) рекомендуемый следующий небольшой пакет — полноценная подготовка canonical dataset порциями до reserve, публичный verifier/root/count и bounded work на вызов, без продуктового MAX_N/FIFO. Streaming пока только test-only и не исправляет старый production abstract-компонент автоматически. Затем нужны активация версий с защитой OPEN attempts/carry, авторизация snapshot, readiness/расписание/выбор D, finality и аутентификация единственного seed. Production terminal ещё нужен. Один immutable controller должен поддерживать также Monthly до deployment. Численные настройки, размер/стоимость порций и конвертация остаются открыты. Lifecycle replay отдельно не проверяет outcome; verifier пересчитывает его по заданному seed, но не доказывает честность/доставку seed. Публичный запуск не готов.
+USDG funding/monthly accounting, регистрация, basket math, BUY/attempt replay, атомарный Short commitment, deterministic outcome и новая [подготовка dataset](SHORT_DATASET_PREPARATION.md) реализованы отдельными компонентами. Target для MVP deployment — 100 USDG. Dataset-компонент проверяет все порции до reserve и фиксирует новый единый context; независимый CLI пересчитывает историю и сверяет опубликованный список. Production controller ещё не собран: старый V2-компонент и streaming study не переключаются на новый формат автоматически. Следующий пакет — активация версий с защитой OPEN attempts/carry и её replay; затем авторизация snapshot, readiness/расписание/выбор D, finality и аутентификация единственного seed. Production streaming terminal ещё нужен. Один immutable controller должен поддерживать также Monthly до deployment. Численные настройки, размер/стоимость порций и конвертация остаются открыты. Lifecycle replay отдельно не проверяет outcome; verifier пересчитывает его по заданному seed, но не доказывает честность/доставку seed. Публичный запуск не готов.
 
 14.09: Luck удалён из принятой схемы и `short_model.py`; `short_economy.py` использует только entries (рабочий допуск первого билета 20%). Исторические модели изолированы в `short_model_legacy.py` / `short_economy_legacy.py`. Прошли 6 текущих модельных, 5 economy и 19 исторических/сравнительных тестов.

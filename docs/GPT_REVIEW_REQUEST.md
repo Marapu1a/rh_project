@@ -1,43 +1,34 @@
-# Текущее обращение к GPT
+# Ревью текущего пакета: Short dataset preparation
 
-15.09.2026. Завершён исследовательский пакет `short-settlement-scaling-study-v1`. Просьба проверить выводы и небольшой следующий шаг. Это ревью, не самостоятельное разрешение менять продуктовые правила.
+16.09.2026. Предыдущий ответ и Trust & Evolution прочитаны. Просим проверить конкретный новый код, а не считать рекомендации автоматически реализованными.
 
-## Что сохраняем
+## Что сделано
 
-Все eligible OPEN wallets на cutoff участвуют в одном Short; MAX_N/FIFO/cohorting не вводим. Один snapshot, один authenticated seed, тот же admission q(e) и global top-K, одна корзина, без reroll/timeout-no-win. Гибкость будущих параметров не должна переписывать уже возникшие обязательства. Production contracts в этом пакете не менялись.
+- `contracts/ShortDatasetPreparation.sol`: abstract internal component, Publishing → Ready → Sealed; незамороженную подготовку можно Supersede без удаления истории.
+- Request фиксирует cutoff, snapshot, epoch, D, root/count/attempts; actual root/count/attempts считает контракт. Strict order между порциями, корректные диапазоны, запрет vault recipient, limit 64 на порцию без total N cap.
+- Полный список проверяется до reserve. Seal атомарно вызывает настоящий PromoVault и emits AttemptsFrozen. Повтор/замена frozen запрещены. Нет reset pending до будущей реализации terminal.
+- Canonical context не содержит proposalId, chunk partition, caller или seal block. Новый format явно отличается от старого V2/study. Будущие варианты исполнения должны использовать один context.
+- `scripts/short-dataset.cjs`: независимый OPEN builder через имеющийся replay исходных BUY/consumption; проверка deployment domain, rules/basket, восстановление calldata/chunk hashes и actual dataset, sealed context.
+- `scripts/verify-short-dataset.cjs`: offline evidence либо самостоятельный scan выбранного RPC, JSON artifact/content hash/publication tx list. Ничего не отправляет on-chain.
 
-## Главный результат
+Подробно: [SHORT_DATASET_PREPARATION.md](SHORT_DATASET_PREPARATION.md). Тесты: `test/short-dataset.test.cjs`; `npm run test:short:dataset`, полный `npm test`. Итог запуска указан в IMPLEMENTATION_STATUS.
 
-Permissionless streaming прототип работает на настоящем PromoVault, только в test/contracts. Данные публикуются и canonical-валидируются порциями **до reserve**. При seal контракт проверяет вычисленные count/root против заранее заявленных; count не доверенный. После mock seed delivery любой обрабатывает следующий chunk. Global top-K продолжается, finalize и terminal event атомарны в конце.
+## Честные ограничения
 
-Для 5000 участников/K10: все обработаны, максимальная отдельная tx 1,037,407 gas; весь путь 74,908,186 gas, 162 tx. Для 1000/K64: max 4,771,017, total 52,962,008. Это local Cancun, не production ArbOS fee measurement. Полный список восстановлен третьей стороной из transaction calldata. Разные transport partitions дают одинаковый study outcome/hash при том же context/seed.
+Это внутренний компонент, НЕ production controller. Внешние методы и publisher role пока только fixture. Нельзя разворачивать fixture с настоящими деньгами: authenticated seed и terminal отсутствуют.
 
-Проверки: 110/110 npm tests прошли, Solidity compilation успешно; 10 atomic/stress scenarios и 3 streaming scenarios, с двумя ожидаемыми OOG старого пути. Production contract diff пуст.
+Ready доказывает структуру/полноту объявленного набора, не соответствие всем eligible BUY. Независимый replay обнаруживает ложный список; on-chain prevention/challenge не добавлены.
 
-Atomic path: реальные hashes N5000/K10 не завершились при бюджете 32M. Искусственный forced-worst insertion N1000/K64 также OOG при 32M; N2000/K10 требует 26,866,346. Stress variant существует только в compiler memory; это не найденный seed и не версия алгоритма продукта.
+Один draw — одна версия. `rulesEpoch` пока commitment metadata, а не проверенная activation policy. До отдельной epoch state machine допустима только начальная версия в интеграции; setter нового набора для старых OPEN не добавлен. Carry и приобретённые условия не должны переписываться. Точная activation boundary остаётся следующим пакетом, а не скрывается за номером epoch.
 
-Два RPC на pinned block 63,945,627 вернули getMaxTxGasLimit=32M. Header gasLimit огромен и не является практическим tx budget. Точный Robinhood sequencer/provider transaction-size limit не установлен: успешные estimate-пробы не доказывают sendRawTransaction acceptance, публичных tx не отправляли. Поэтому «single-tx точно безопасен до N=1000» не утверждаем.
+Существующий V2 и test-only streaming сохранены; новый компонент не делает старые paths безопасными автоматически. Новый resultHash/processing/terminal ещё не интегрирован. Зеркалирование artifact, production finality, keeper и authorization/readiness policy не реализованы.
 
-## Прочитать
+## Что проверить
 
-1. [Полный отчёт и сравнение A/B/C/D](SHORT_SETTLEMENT_SCALING_STUDY.md).
-2. [Исследовательский контракт](../test/contracts/ShortStreamingStudy.sol), [7 integration tests](../test/short-streaming.test.cjs), [RPC восстановление chunks](../test/fixtures/short-streaming.cjs).
-3. [Gas/stress script](../scripts/short-scaling-study.cjs), [результаты](../research/short-scaling-study.json).
-4. [Read-only RPC script](../scripts/short-scaling-rpc.cjs), [сырые ответы](../research/short-scaling-rpc.json).
-5. [Текущий статус](IMPLEMENTATION_STATUS.md); `contracts/` остался без изменений.
+1. Есть ли простой структурный payload, который проходит Ready/Seal, но делает будущую обработку текущим ShortOutcome/PromoVault невозможной? Отдельно от внешнего RNG, сети или токена.
+2. Не создаёт ли namespace proposal/draw либо supersede возможность изменить уже frozen обязательство или альтернативный outcome? Нужны ли дополнительные смысловые поля в canonical context до интеграции?
+3. Полон ли verifier для заявленной задачи? Где он проверяет только operator assertion, а где заново пересчитывает историю? Не смешаны ли эти гарантии в документации?
+4. Для следующей activation state machine предложите минимальную границу одной версии на draw без retroactive OPEN changes. Учтите BUY между cutoff и seal, pending Short, требование cutoff не раньше прошлого TERMINAL и 6 часов после settlement. Не вводите MAX_N/FIFO или отмену накопленных attempts.
+5. Есть ли лишние состояния/абстракции? Хотим ограниченный рабочий следующий шаг, а не общий governance framework.
 
-## Вопросы по существу
-
-- Правильны ли completeness и индукция global top-K через local top-K? Есть ли простой сценарий пропуска/повтора/подмены, который не закрыт индексом, chunk hash, canonical order и ожидаемыми count/root?
-- Достаточна ли publication calldata + chunkHashes как минимальная схема DA для независимого продолжения? Какие требования к архиву/зеркалам действительно обязательны, без притворства, что root гарантирует availability?
-- Прототип использует ordered rolling root, а не flat ABI hash V2: `root=keccak256(abi.encode(prev,wallet,first,last))`. Это новый commitment/result domain. Верно ли отказаться от обещания drop-in совместимости, сохранив probability semantics, и подготовить новый формат до deployment?
-- Cutoff якорится в begin, поэтому завершение подготовки после 256 блоков не ломается. Какие проверки finality/BEGIN→SEAL нужны в следующем пакете, чтобы не смешать это с ретроактивной активацией правил?
-- Есть ли смысл в Merkle для нашего последовательного scan, если все data уже валидируются на публикации, chunks ограничены, а storage хешей составляет O(chunks)? Просьба обосновать конкретную выгоду, не добавлять его по умолчанию.
-- Прототип не интегрирован с full BUY/lifecycle replay и не доказывает правдивость списка. Следующий модуль обязан отдать один проверяемый manifest/root/count и сохранить прежнюю границу доверия — что минимум требуется в verifier?
-- Экономика исполнения: для 5000/K10 около 74.9M суммарного gas. Исполнитель проекта оплачивает это отдельно от призовой казны; permissionless completion не гарантирует бесплатного исполнителя. Нужен ли на этом этапе ещё механизм, кроме нормального keeper и публичного recovery runner?
-
-## Рекомендуемый следующий кусок
-
-Полноценная подготовка canonical dataset до reserve: публичная proposal/manifest, anchored cutoff, bounded publish, фактические root/count, независимая проверка и явная готовность к seal. Разобрать namespace и брошенную **незарезервированную** подготовку, не вводя отмену frozen draw. Без RNG provider, rules activation, Monthly и frontend в этом же пакете.
-
-Не разворачивать исследовательский single-draw fixture с казной. Не предлагать «потом заменим verifier/controller»: у vault immutable controller. Если быстрый single-tx и streaming нужны одному экземпляру, оба пути должны быть предусмотрены и проверены до deployment.
+Не расширяйте этот пакет на RNG/provider selection, ZK, emergency admin, proxy или sponsor campaigns. Приводите конкретный сценарий и разделяйте дефект реализации, отсутствующую интеграцию и будущую оптимизацию.
