@@ -61,9 +61,9 @@ abstract contract ShortDatasetPreparation is ReentrancyGuard {
         datasetVault = PromoVault(vault); datasetRegistry = registry; datasetInstance = instance;
     }
     function datasetProposal(bytes32 id) public view returns (Proposal memory) { return proposals[id]; }
-    function datasetChunkCount(bytes32 id) external view returns (uint256) { return chunks[id].length; }
-    function datasetChunkHash(bytes32 id, uint256 index) external view returns (bytes32) { return chunks[id][index]; }
-    function datasetBasket(bytes32 id) external view returns (uint256[] memory) { return baskets[id]; }
+    function datasetChunkCount(bytes32 id) public view returns (uint256) { return chunks[id].length; }
+    function datasetChunkHash(bytes32 id, uint256 index) public view returns (bytes32) { return chunks[id][index]; }
+    function datasetBasket(bytes32 id) public view returns (uint256[] memory) { return baskets[id]; }
 
     function _beginDataset(bytes32 id, Request calldata r, ShortOutcome.Rules memory rules,
         uint256[] memory weights, uint256 minimumUnit) internal nonReentrant {
@@ -126,6 +126,6 @@ abstract contract ShortDatasetPreparation is ReentrancyGuard {
             p.request.cutoffBlockHash, p.rulesHash, p.request.snapshotHash);
         emit DatasetSealed(id, p.request.drawId, context);
     }
-    // Intentionally no terminal/reset hook: introduced with authenticated settlement,
-    // never expose a method that clears a frozen draw without vault finalization.
+    // Terminal integration lives in ShortRulesEpochs/ShortSettlement. Never expose
+    // a method that clears a frozen draw without vault finalization.
 }

@@ -2,8 +2,12 @@
 
 Обновлено по локальному коду и проверкам: 16.09.2026. Это карта кода, а не утверждение реализации всей [продуктовой схемы](PRODUCT_SPEC.md).
 
+Последний полный запуск после canonical Short settlement: `npm test`, **136/136 passed**,
+включая 8 новых integration tests. Предыдущие числа ниже относятся к прежним этапам.
+
 | Часть | Фактическое состояние |
 |---|---|
+| Canonical Short settlement | 16.09 внутренний ShortSettlement соединяет dataset + epochs + streaming top K + реальный finalize/consume. Один seed, permissionless process/finish, независимый JS result/recovery. Seed вручную только в fixture; настоящий RNG/readiness/keeper ещё отсутствуют. [Границы](SHORT_SETTLEMENT.md) |
 | Версии правил Short | 16.09 внутренний ShortRulesEpochs + lifecycle v2: notice, B+1 mint boundary, обслуживание старой версии, fresh cutoff после задержки, проверяемое empty assertion. Нет production economic/finality policy или authenticated terminal. [Описание](SHORT_RULES_EPOCHS.md) |
 | Подготовка Short dataset | 16.09 внутренний ShortDatasetPreparation: Publishing/Ready/Superseded/Sealed, фактические root/count/attempts, atomic reserve, новый единый context без partition/executor. Replay-builder и CLI сверки публикации. Нет production authorization/activation/terminal. [Границы](SHORT_DATASET_PREPARATION.md) |
 | FeeRouter | Прототип TOKEN/USDG accounting, фиксированный PAIR source, recipient credits, атомарный rollover |
@@ -71,6 +75,6 @@ PAIR route и доступность блока могут измениться;
 
 ## Следующий этап
 
-USDG funding/monthly accounting, регистрация, basket math, BUY/attempt replay, commitment, deterministic outcome, [dataset preparation](SHORT_DATASET_PREPARATION.md) и [Short epochs](SHORT_RULES_EPOCHS.md) реализованы отдельными компонентами. Target для MVP deployment — 100 USDG. Новый epoch-aware путь фиксирует политику и отбирает старые OPEN независимо от задержки подготовки; CLI воспроизводит списки и проверяет публикацию. Production controller ещё не собран: старый V2-компонент и streaming study не переключаются на новый context автоматически. Следующий связанный шаг — canonical streaming terminal и authenticated seed, с выбором порядка после ревью. Остаются production authorization, economic/finality readiness, выбор D/notice/полномочий, keeper и bounded gas funding. Один immutable controller должен поддерживать также Monthly до deployment. Lifecycle replay проверяет историю/epochs, но не честность RNG или entitlement winners; terminal fixture не является production RNG. Конвертация и численные настройки открыты. Публичный запуск не готов.
+USDG funding/monthly accounting, регистрация, basket math, BUY/attempt replay, commitment, deterministic outcome, [dataset preparation](SHORT_DATASET_PREPARATION.md), [Short epochs](SHORT_RULES_EPOCHS.md) и [canonical Short settlement](SHORT_SETTLEMENT.md) реализованы компонентами. Новый путь соединяет dataset, immutable policy, streaming outcome и атомарное денежное завершение/consume. Старый V2 и streaming study остаются историческими тестовыми путями. Следующий связанный шаг — authenticated seed: выбрать и привязать источник случайности, определить готовность до freeze. Production controller ещё не собран. Остаются authorization, economic/finality readiness, D/notice/полномочия, keeper и gas funding. Immutable controller должен поддерживать Monthly до deployment. Lifecycle replay не доказывает честность RNG; новый full-sort verifier проверяет результат при заданных dataset/seed, а не истинность BUY history. Target MVP — 100 USDG; конвертация и остальные численные настройки открыты. Публичный запуск не готов.
 
 14.09: Luck удалён из принятой схемы и `short_model.py`; `short_economy.py` использует только entries (рабочий допуск первого билета 20%). Исторические модели изолированы в `short_model_legacy.py` / `short_economy_legacy.py`. Прошли 6 текущих модельных, 5 economy и 19 исторических/сравнительных тестов.

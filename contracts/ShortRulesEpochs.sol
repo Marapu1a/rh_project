@@ -35,7 +35,7 @@ abstract contract ShortRulesEpochs is ShortDatasetPreparation {
         lastShortTerminalAt = block.timestamp;
         _storePolicy(1, genesis, weights, minimumUnit); policies[1].firstBlock = block.number;
     }
-    function shortEpochPolicy(uint64 epoch) external view returns (Policy memory) { return policies[epoch]; }
+    function shortEpochPolicy(uint64 epoch) public view returns (Policy memory) { return policies[epoch]; }
     function _storePolicy(uint64 epoch, ShortOutcome.Rules memory rules, uint256[] memory weights, uint256 minimumUnit) private {
         require(weights.length <= 64, "places");
         ShortPrizeBasket.build(type(uint256).max, weights, minimumUnit);
