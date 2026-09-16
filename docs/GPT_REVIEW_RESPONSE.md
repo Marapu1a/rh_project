@@ -2,303 +2,312 @@
 
 Обновлено: 16.09.2026.
 
-Просмотрен latest commit `15b248eed6db0a2013107c8de6ee5eb69cb7597f` — `bind Short attempts to immutable rules epochs`, а также предыдущий `46d2ab61f974028a3626e442a9a31afda19404bc` — `check 90-day execution economics scenarios`.
+Просмотрен latest commit `2586de843b8ea81c62fecaa250285dca8b42f494` — `integrate canonical Short streaming settlement`.
 
-Прочитаны `ShortRulesEpochs.sol`, epoch-aware replay/dataset builder/verifier, `SHORT_RULES_EPOCHS.md`, тесты/fixture, текущий `PRODUCT_SPEC.md`, `IMPLEMENTATION_STATUS.md` и экономическая модель. GitHub CI/status для latest commit пусты; заявленные `128/128` tests в этом проходе мной независимо не запускались.
+Прочитаны `ShortSettlement.sol`, `SHORT_SETTLEMENT.md`, independent JS verifier/recovery, новые integration tests, а также связанные `ShortOutcome`, `ShortRulesEpochs`, `ShortDatasetPreparation` и `PromoVault`. GitHub CI/status для latest commit пусты; заявленные `136/136` tests в этом проходе мной независимо не запускались.
 
 ## Короткий вердикт
 
-Оба ответвления полезные.
+Пакет хороший: canonical Short теперь действительно собран почти полностью от SEALED dataset до атомарного terminal.
 
-Экономический quick-check сделал ровно то, что должен: не доказал автономность, но показал, что отдельный operations budget выглядит жизнеспособно при умеренном обороте и что на тихом старте фиксированная инфраструктура опаснее обычного gas. Это хороший research artifact, а не production policy.
+В текущем коде я не нашёл нового пути, где корректно опубликованный dataset + один фиксированный seed дают неправильный global top-K или альтернативный result из-за partition/executor.
 
-Epoch package в целом тоже выглядит корректно и заметно лучше моей предыдущей грубой схемы `cutoff = activation block`.
-
-Ключевое исправление правильное:
+Основная цепочка выглядит согласованно:
 
 ~~~text
-activation в B
-V1 mint: <= B
-V2 mint: >= B+1
-
-старый draw может взять свежий cutoff C >= B+1
-но replay фильтрует только V1 attempts
+SEALED dataset
+→ WaitingSeed
+→ seed принимается один раз
+→ permissionless sequential chunks
+→ global top-K
+→ canonical SHORT_DATASET_RESULT_V1
+→ PromoVault.finalize
+→ AttemptsConsumed / epoch completion
 ~~~
 
-Так правила и snapshot anchor перестают быть одной и той же сущностью, и 256-block `blockhash` window больше не превращает переход rules в дедлайн.
+Reserve и terminal атомарны; failed finalize не меняет seed/progress/result, reroll отсутствует.
 
-Явной ошибки, которая позволяла бы честному replay смешать V1/V2 или потерять старые attempts, не нашёл.
-
-Но есть несколько важных границ, которые я бы не потерял перед production.
+Но перед следующим большим слоем есть два важных архитектурных предупреждения и одна полезная оптимизация.
 
 ---
 
-## 1. Fresh cutoff после activation — корректная модель
+## 1. Local top-K → global top-K: логика корректна
 
-Предыдущее предложение фиксировать old cutoff ровно на B действительно было слишком жёстким. Если подготовка началась поздно, `_beginDataset` уже не смог бы проверить `blockhash(B)`.
+`ShortOutcome.compute()` на каждом chunk возвращает первые `min(local admitted, K)` кандидатов, отсортированных тем же `(SHORT_ORDER_V1 rank, wallet)`.
 
-Новая модель разделяет:
+`_merge()` сливает два уже отсортированных списка тем же comparator и оставляет первые K.
+
+Кандидат, не попавший в local top-K, действительно не может попасть в global top-K: внутри собственного chunk уже есть K admitted кандидатов лучше него.
+
+Поэтому композиция индуктивна и не зависит от partition.
+
+Prize assignment выполняется только после полного scan, через тот же `SHORT_PRIZE_ORDER_V1`. Equal prize-rank сохраняет меньший исходный index первым, как и `ShortOutcome._slots()`.
+
+Canonical result hash также выглядит однозначно: `context + seed + ordered root + outcome rules hash + basketHash + Result(resultHash=0)`. Context уже связывает полный dataset rules hash, budget/request и basket, поэтому отдельное повторение только outcome-rules hash не ослабляет commitment.
+
+### Маленький пробел в тестах
+
+Я бы добавил один targeted test:
 
 ~~~text
-rules boundary = B / B+1
-snapshot cutoff = свежий C
+0 < global admitted < K
+и admitted лежат в разных chunks
 ~~~
 
-и это нормально.
+Сейчас хорошо покрыты `0 winners` и обычный случай `>=K`, но именно частичный случай `1..K-1` полезно зафиксировать отдельно: winners должны совпасть full-sort, а prize slots должны быть случайным подмножеством корзины, а не первыми исходными prizes.
 
-При draining V1 replay считает participant upper bound как `firstBlock(V2)-1`, а сам C нужен только как canonical history anchor. Поэтому BUY V2 между B+1 и C видны replay, но не попадают в V1 participant set.
-
-Same-block семантика тоже однозначна: все BUY блока activation остаются V1, даже если транзакция BUY идёт после activation transaction. Это сознательная block-level boundary, а не ошибка ordering.
-
-Reorg естественно откатывает activation event и связанные последующие mint вместе с веткой; тест это покрывает.
+Это test coverage, не найденный defect.
 
 ---
 
-## 2. Cumulative ranges / byEpoch выглядят согласованно
+## 2. Пропуск/повтор/ранний finish/повтор seed закрыты
 
-Глобальные attempt numbers остаются непрерывными по кошельку, а epoch — только разбиение этого диапазона.
+По state machine:
 
-При монотонных epochs и обязательном обслуживании oldest outstanding epoch consumption остаётся prefix-like:
+- seed принимается только из `WaitingSeed`; даже `bytes32(0)` однозначен благодаря phase;
+- process требует `index == nextChunk`;
+- payload chunk обязан совпасть с сохранённым ABI hash;
+- duplicate/skipped/out-of-order chunk не проходят;
+- finish требует все chunks и `processed == proposal.count`;
+- sealed proposal уже нельзя supersede/reseal;
+- rules/basket/D/context после seal читаются только из зафиксированного proposal/epoch;
+- drawId повторно не seal'ится;
+- terminal переводит phase только после успешного vault.finalize + completion.
 
-~~~text
-1..5  V1
-6..9  V2
+Если `PromoVault.finalize` revert, вся terminal tx откатывается: settlement остаётся Processing, pending draw остаётся тем же, reserve остаётся frozen, result детерминирован тем же seed. Повторный finish должен дать тот же результат.
 
-сначала расходуется V1
-потом V2
-~~~
-
-Поэтому текущая реконструкция `consumed/open/frozen` по epoch через cumulative totals математически согласуется с основной conservation.
-
-Monthly остаётся отдельным ledger того же mintedTotal и не наследует Short epoch. Это соответствует текущему продукту.
-
----
-
-## 3. Важнейшая оставшаяся trust boundary: ложный snapshot / ложный EMPTY всё ещё возможны on-chain
-
-Это не новый дефект этого commit, но теперь стало особенно видно.
-
-Авторизованный publisher технически может:
-
-~~~text
-иметь реальные старые V1 OPEN attempts
-→ вызвать closeEmpty с ложным assertion
-→ закрыть draining V1 on-chain
-~~~
-
-Независимый replay это обнаружит и отвергнет, но контракт сам не остановит.
-
-То же самое по сути уже было возможно через структурно корректный, но ложный participant dataset: publisher мог пропустить старые attempts, а внешний verifier это заметил бы.
-
-Поэтому `closeEmpty` **не создаёт новый класс доверия**, но делает существующую accepted boundary более очевидной.
-
-Для текущего этапа я не предлагаю ZK/challenge/governance. Минимум перед public deployment:
-
-- отдельная узкая publisher capability, не общий owner;
-- публичный artifact до `closeEmpty`;
-- monitoring события `ShortEpochEmpty`;
-- verifier, который в один вызов говорит `VALID EMPTY / FALSE EMPTY` из собственного RPC;
-- UI/audit feed не должен скрывать empty transition;
-- документация должна прямо говорить: false snapshot/empty detectable, но пока не cryptographically prevented.
-
-Если позже захотим поднять гарантию с detectability до prevention, это отдельная архитектурная задача. Не надо притворяться, что текущий replay уже делает это on-chain.
+Это именно нужная no-reroll semantics.
 
 ---
 
-## 4. Rules epoch пока НЕ означает полную экономическую policy draw
+## 3. Старые unpaid credits не смешиваются с новым draw
 
-Сейчас epoch immutable payload содержит:
+Новый terminal использует стандартный PromoVault accounting:
 
 ~~~text
-ShortOutcome rules
-weights
-minimumUnit
+reserved текущего draw
+→ его own reward[] / claimable
+
+старые reward[]
+→ остаются отдельными долгами старых drawId
 ~~~
 
-Но `budget D` остаётся caller-supplied в `Request`.
-
-Это соответствует границе текущего пакета и не является багом `ShortRulesEpochs`, однако для пользователя слово «rules version» легко понять шире, чем реализовано.
-
-До production нужно отдельно решить:
-
-> может ли оператор произвольно выбирать D у каждого draw, или D вычисляется по публичной budget policy версии?
-
-С учётом нашей Trust & Evolution позиции я по-прежнему предпочитаю второе: epoch либо связанная public policy задаёт deterministic/bounded способ получить D из on-chain reserve state. Тогда publisher не может после просмотра dataset выбрать удобную сумму.
-
-Пока этого нет, в docs/UI лучше называть нынешний payload именно `outcome/basket policy`, а не делать вид, что вся экономика Short уже version-bound.
+Claim failure одного старого winner не мешает следующему Short и не меняет `freeShort` нового draw. Тест epoch transition это покрывает.
 
 ---
 
-## 5. Announcement semantics надо сформулировать точно
+## 4. Recovery сейчас корректен только для direct-call transport — и это уже конфликтует с нашим вероятным AA keeper
 
-Текущий код разрешает:
+Это не ошибка settlement contract, но важная интеграционная граница.
+
+`recover()` сейчас требует:
 
 ~~~text
-announce V2
-notice уже прошёл
-но V2 ещё не activated
-→ продолжать начинать V1 draw
+DatasetChunk event tx
+→ tx.to == Short controller
+→ tx.data напрямую decode как publish(proposalId, chunk)
 ~~~
 
-потому что `eligibleAt` — earliest activation, а не автоматический effective time.
+То есть текущий recovery **не восстановит publication**, если production keeper публикует через ERC-4337 smart account / EntryPoint / bundled call.
 
-Это может быть нормальной моделью, но её надо назвать именно так.
+А в предыдущем execution-funding исследовании именно sponsored AA через Alchemy был основным кандидатом для автоматического keeper.
 
-Если frontend скажет пользователю «V2 вступит в силу в 12:00», текущий контракт этого не гарантирует.
+При AA данные, скорее всего, всё ещё публичны внутри UserOperation / nested calldata, но нужен другой decoder/recovery path.
 
-Он гарантирует только:
+Поэтому до production надо выбрать одно из двух:
 
-> V2 нельзя активировать раньше 12:00; фактическая activation будет отдельной on-chain transaction.
+1. publication намеренно остаётся direct EOA transaction transport; или
+2. verifier/recovery получает canonical decoder фактического AA transport.
 
-Для MVP это проще и приемлемо. Если позже захотим deterministic scheduled activation, state machine надо менять отдельно.
+Я бы предпочёл второй вариант, если AA остаётся основным execution path. Нельзя запускать с обещанием permissionless recovery, если production transport сам recovery tool не понимает.
+
+Это пока integration blocker, не изменение Short math.
 
 ---
 
-## 6. Нет cancellation announced rules — безопасно, но это сознательная потеря flexibility
+## 5. Самое важное: code-size budget уже становится архитектурным риском
 
-Сейчас валидный, но ошибочно объявленный payload нельзя отменить:
+Документация фиксирует runtime `ShortSettlementFixture` около **20 340 bytes** при локальном EIP-170 check.
 
-~~~text
-announce плохую V2
-→ либо никогда больше не обновлять rules
-→ либо активировать V2, drain, потом V3
-~~~
+Лимит, против которого тестируется fixture: 24 576 bytes.
 
-Это trust-conservative решение, но operationally жёсткое.
-
-Я бы НЕ добавлял cancel прямо сейчас. Но перед production стоит решить, нужна ли прозрачная pre-activation replacement:
+Остаётся примерно:
 
 ~~~text
-replace/cancel только до activation
-→ публичное событие
-→ новый notice начинается заново
+24 576 - 20 340 = 4 236 bytes
 ~~~
 
-Такое действие не переписывает уже minted attempts, но влияет на ожидания пользователей, поэтому не должно быть мгновенным и тихим.
+При этом полного immutable controller ещё нет, а в него по текущему плану всё ещё должны войти:
 
-Отдельно можно запретить no-op update `newPolicyHash == currentPolicyHash`, чтобы не плодить бессмысленные epochs. Это low priority.
+- authenticated RNG/request binding;
+- production authorization;
+- economic/finality readiness;
+- возможно budget D policy;
+- keeper-facing hooks;
+- **Monthly production state machine**, которую мы договорились иметь до immutable deployment.
+
+Fixture содержит тестовые wrappers, поэтому нельзя утверждать, что production controller уже гарантированно не влезет. Но 4.2 KB headroom — достаточно мало, чтобы **не продолжать слепо наращивать один контракт**.
+
+Я бы считал это HIGH architectural warning до следующей крупной интеграции.
+
+Не нужен proxy или replaceable module. Можно сохранить immutable trust model и при этом заранее спроектировать фиксированную composition:
+
+~~~text
+immutable root controller
+    ├── fixed Short calculation/helper contract
+    ├── fixed Monthly helper
+    └── fixed RNG adapter / verifier
+~~~
+
+где addresses задаются один раз в constructor и никогда не заменяются, а только root controller имеет право двигать PromoVault money.
+
+Другой вариант — вынести pure/view-heavy computation в linked/fixed helper contract, оставив custody/state transitions в root.
+
+Но это надо измерить до того, как RNG + Monthly заставят нас переделывать уже сшитый controller.
+
+### Что попросил бы сделать сейчас
+
+Небольшой `controller-size-composition-study`, без product changes:
+
+- собрать realistic skeleton будущего root controller;
+- добавить stubs interfaces для Short, Monthly, RNG auth, readiness/auth roles;
+- измерить runtime bytecode;
+- сравнить monolith vs fixed immutable helpers;
+- проверить, какие внешние helper calls меняют trust surface;
+- оставить PromoVault controller immutable и один;
+- никакого delegatecall/proxy/arbitrary module replacement.
+
+Если monolith спокойно влезает с большим запасом — отлично, продолжаем. Если нет — мы поймаем это сейчас, а не перед deployment.
 
 ---
 
-## 7. Completion hook scoped правильно
+## 6. Есть ещё очевидная gas-оптимизация в processing
 
-`_completeEpochDraw` не принимает просто заявление `terminal`.
+`processShort()` сейчас вызывает полный `ShortOutcome.compute()` **на каждом chunk**.
 
-Он требует:
+А полный compute помимо admission/top-K каждый раз ещё:
 
-- тот же pending draw;
-- PromoVault уже `Finalized`;
-- win/no-win согласован с `awarded`; 
-- nonzero resultHash.
+- строит prize permutation;
+- создаёт amounts/prizeIndices;
+- считает local resultHash;
+- валидирует basket.
 
-И только после этого снимает pending, закрывает draining и запускает новый 6h interval.
+Но `processShort` использует из результата только:
 
-Это хорошая граница.
+~~~text
+local.winners
+local.admittedCount
+~~~
 
-Но она пока не доказывает, что winners соответствуют canonical context + seed. Fixture намеренно caller-controlled; production wrapper обязан сначала завершить deterministic streaming outcome и только в той же транзакции вызвать vault.finalize + completion.
+Остальное выбрасывается.
+
+При K=64 повторный `_slots()` O(K²) на каждом chunk особенно дорог.
+
+Перед финальными gas/economic оценками разумно рефакторнуть `ShortOutcome` так, чтобы был общий internal primitive вроде:
+
+~~~text
+selectTopK(context, seed, participants, rules, K)
+→ Candidate[] + admittedCount
+~~~
+
+а полный `compute()` и streaming process использовали один и тот же primitive.
+
+Это не меняет probability semantics и даже уменьшает риск расхождения двух реализаций.
+
+Я бы не делал отдельный алгоритм — именно вынес общий selection primitive.
 
 ---
 
-## 8. Экономическая ветка 46d2ab6: полезная, но не переносить числа в policy
+## 7. Publisher truth boundary не изменилась
 
-`EXECUTION_ECONOMICS_QUICK_CHECK.md` аккуратно маркирует assumptions, и это важно.
+Settlement recovery доказывает:
 
-Модель показывает, например:
+> processed exactly the published canonical dataset.
 
-~~~text
-$5k/day, 0.2% creator revenue, 20% ops
-→ ops reserve растёт в 90-дневном сценарии
+Он не доказывает:
 
-$1k/day при тех же assumptions
-→ стартовый ops reserve постепенно проедается
-~~~
+> published dataset == all true eligible BUY attempts.
 
-Также x10/x50 spike в модели в основном превращается в ожидание до BEGIN, а prize reserve не затрагивается.
+Полнота BUY history по-прежнему проверяется отдельным full replay.
 
-Но модель сознательно грубая:
+Документация это не смешивает, что хорошо.
 
-- Short условно раздаёт весь накопленный bank;
-- N получен из упрощённого `entriesPerWallet`;
-- gas линейно аппроксимирован по двум точкам;
-- RNG/DA/conversion/provider billing не измерены;
-- операции ведутся в USD-equivalent, а не отдельными ETH/USDG balances.
-
-Поэтому вывод из неё только один: **отдельный pre-prize operations share стоит продолжать исследовать; 10%/20% и gates не приняты**.
-
-PromoVault ради этого менять по-прежнему не требуется.
+False snapshot / false empty остаются detectable-not-prevented до отдельного future challenge/proof слоя.
 
 ---
 
-## 9. Что я бы делал следующим
+## 8. Что минимально нужно перед authenticated RNG
 
-Из двух вариантов в текущем запросе:
+После code-size/composition проверки RNG boundary уже довольно узкая.
 
-~~~text
-A. canonical streaming terminal
-B. authenticated seed
-~~~
-
-я бы выбрал **A — canonical streaming terminal**.
-
-Причина простая: RNG provider на Robinhood пока не выбран и это внешняя зависимость, а у нас уже есть всё внутреннее для завершения Short:
+Нужны:
 
 ~~~text
-epoch-aware canonical dataset
-+ canonical context
-+ deterministic ShortOutcome
-+ proven streaming top-K composition
-+ PromoVault finalize
-+ AttemptsConsumed
+requestRandom(drawId, context)
+→ immutable requestId ↔ drawId/context binding
+
+provider callback(requestId, randomness)
+→ проверка sender/provider
+→ ровно один seed
+→ _acceptShortSeed(drawId, seed)
 ~~~
 
-Нужно теперь сшить их в один production-oriented internal state machine, пока ещё с test-only seed delivery hook.
+Критичные invariants:
 
-Acceptance следующего пакета:
+- request создаётся только для SEALED/WaitingSeed draw;
+- один draw не имеет двух requestId;
+- requestId нельзя перепривязать;
+- callback другого draw отвергается;
+- duplicate callback идемпотентно reject/ignore без нового seed;
+- timeout не создаёт новый request/random;
+- никакого owner `setSeed`; 
+- provider failure оставляет тот же pending obligation;
+- context/dataset/rules/D уже immutable до request.
 
-1. Используется только `SHORT_DATASET_CONTEXT_V1`, без legacy/study random domain.
-2. Один sealed draw принимает seed ровно один раз через **internal authenticated-seed hook**; fixture может мокать auth, production нет.
-3. Processing chunks permissionless и strictly sequential.
-4. Chunk data обязаны совпадать с already-published dataset hashes/root.
-5. Streaming top-K даёт тот же winners/amounts/admitted, что independent full-sort JS для того же context+seed.
-6. `finish` единственным вызовом делает `PromoVault.finalize` + `_completeEpochDraw`; revert откатывает оба.
-7. No-winner — terminal того же seed, не reroll.
-8. После seed нельзя supersede/change dataset/rules/D.
-9. Новый Short не стартует до terminal + 6h.
-10. Старый draining epoch закрывается только terminal этого draw или verified empty path.
-11. Recovery executor может продолжить по public chunks/progress без исходного keeper.
-12. Result hash/domain становится будущим canonical Short result format и не зависит от chunk partition/executor.
+Pre-freeze readiness остаётся отдельной policy: наличие RNG provider/operations capacity надо проверять **до seal**, но оно не даёт права cancel после seal.
 
-После этого authenticated RNG становится очень узким последним входом:
+---
+
+## 9. Какой следующий шаг
+
+С учётом нового code-size факта я бы немного поменял прежний порядок.
+
+Не сразу писать provider-specific RNG.
+
+Сначала маленький технический пакет:
 
 ~~~text
-какой внешний механизм имеет право вызвать internal deliverSeed(drawId, seed)
+controller-composition-and-selection-refactor
 ~~~
 
-и его уже можно выбирать/аудировать отдельно.
+В нём:
 
-### Monthly
+1. измерить production-like bytecode budget и выбрать monolith или fixed immutable helpers;
+2. вынести общий Short selection primitive, чтобы streaming не считал ненужную prize permutation каждый chunk;
+3. добавить test `0 < admitted < K` across chunks;
+4. решить recovery transport для будущего AA keeper хотя бы на уровне documented interface/decoder boundary.
 
-Полный immutable controller обязан поддерживать Monthly до deployment, но я бы не тащил Monthly terminal в этот следующий Short package.
+После этого — authenticated RNG binding.
 
-Зато новый seed/storage interface надо проектировать так, чтобы позже Monthly мог использовать тот же authentication layer без replaceable module/proxy.
+Это не новая продуктовая ветка; это снижение риска перед последними внешними интеграциями.
 
 ---
 
 ## Итог
 
-`15b248e` хорошо закрывает важную проблему: **правила теперь принадлежат attempts с момента mint, а не назначаются задним числом при freeze**.
+`2586de8` — сильный шаг. Canonical Short terminal уже не исследование: это цельная внутренняя state machine с одним seed, permissionless continuation и реальным atomic vault settlement.
 
-Fresh cutoff C вместо старого activation block B — правильное улучшение и не меняет cohort.
+Нового correctness blocker в самом top-K/terminal я не вижу.
 
-Главные незакрытые вещи теперь хорошо видны:
+Главное, что всплыло на этом этапе:
 
 ~~~text
-truth of publisher snapshot/empty   → detectable, not prevented
-budget D policy                     → ещё не version-bound
-canonical streaming terminal        → следующий логичный слой
-authenticated RNG                   → после terminal wiring
-production roles/finality/economics → ещё отдельно
-Monthly production path             → обязательно до deployment
+Short algorithm/state machine       → выглядит хорошо
+AA recovery transport               → ещё не совместим
+per-chunk gas                       → можно заметно упростить
+full-controller bytecode headroom   → проверить СЕЙЧАС
+authenticated RNG                   → следующий внешний trust boundary
+Monthly                             → всё ещё обязан попасть в immutable deployment design
 ~~~
 
-Я бы двигался дальше именно через canonical streaming terminal, не меняя сейчас ни prize custody, ни epoch model.
+То есть уже можно двигаться к RNG, но сначала я бы потратил один короткий пакет на composition/code-size и убрать очевидный processing overhead.
