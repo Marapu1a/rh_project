@@ -2,419 +2,605 @@
 
 Обновлено: 16.09.2026.
 
-Просмотрен latest commit `5aeeeaf773e4273d74d79a7e50616242353eea58` — `prepare canonical Short datasets before atomic reserve`.
+Просмотрен latest commit `8cbccd26e4ec5bb1c6df6298d8e3138e0ecb1dac` — `request review of autonomous execution funding`.
 
-Фактически прочитаны новый `ShortDatasetPreparation.sol`, dataset verifier/builder, CLI, тесты/fixture, `SHORT_DATASET_PREPARATION.md`, актуальные `PRODUCT_SPEC.md`, `IMPLEMENTATION_STATUS.md`, `GPT_REVIEW_REQUEST.md`, а также существующие `ShortOutcome`, `PromoVault` и attempt replay, с которыми новый слой должен быть совместим. GitHub CI/status для commit пусты; заявленные `120/120` tests в этом проходе мной независимо не запускались.
+Текущая ветка действительно стоит небольшого отклонения от rules epochs: до immutable controller лучше понять, **кто и из каких денег гарантированно оплачивает длинный Short pipeline**, иначе технически permissionless система может оказаться операционно ручной.
 
-Тема: **ревью canonical dataset preparation и минимальная следующая state machine версий Short**.
+Ниже — исследование по состоянию на 16.09.2026. Код менять пока не предлагаю.
 
-## Короткий вердикт
+## Короткий вывод
 
-Пакет в целом удачный. Он закрывает именно ту дыру, ради которой делался scaling study:
+Самый полезный внешний факт оказался сильнее первоначальной постановки задачи:
+
+> **Robinhood Chain уже имеет официальную инфраструктуру account abstraction / gas sponsorship, и Alchemy прямо заявляет Gas Sponsorship + Bundler + ERC-20 Gas Payments + BSO для Robinhood Mainnet.**
+
+Поэтому для MVP я бы **не ломал прежний trust invariant PromoVault и не учил prize vault покупать ETH / reimbursить gas**.
+
+Предпочтительная схема:
 
 ~~~text
-canonical OPEN snapshot
-→ publish/validate ВСЕ participants
-→ READY
-→ только потом reserve/freeze
+gross promo / creator revenue
+        │
+        ├── project / operations share
+        │       └── оплачивает execution
+        │
+        └── recognized prize share
+                ↓
+          PromoVault
+          Short / Current / Next
 ~~~
 
-То есть ошибочный порядок, дубликат, плохой диапазон, vault-recipient, неправильные root/count/attempt total теперь не могут сначала заморозить деньги, а уже потом обнаружиться на settlement.
+То есть расходы на исполнение отделяются **до признания денег призовыми**. После входа в PromoVault старое правило сохраняется:
 
-Существенного структурного payload, который проходит текущие проверки READY/SEAL и при этом сам по себе несовместим с `ShortOutcome` / `PromoVault.finalize`, я не нашёл.
+> recognized prize money stays prize money.
 
-Особенно хорошо:
+Для внешнего targeted funding текущая семантика также сохраняется: если пользователь/спонсор отправил `SHORT`, `CURRENT`, `NEXT` или существующий `GENERAL` prize funding, мы не начинаем молча откусывать из него gas. Если будущая sponsor campaign хочет бюджет «всё включено», она заранее и явно декларирует отдельно `execution contribution` и `net prize funding`.
 
-- actual root/count/attempts вычисляет контракт, а не принимает их как доверенные assertions;
-- границы chunks не входят в canonical context;
-- proposalId тоже не влияет на random context;
-- supersede существует только до reserve;
-- reserve + frozen event атомарны;
-- после seal reset пока намеренно отсутствует;
-- verifier действительно умеет строить expected dataset из replay, а не только перечитывать JSON оператора.
+Первичный исполнитель — наш автоматический keeper/smart account через Alchemy Gas Manager / Bundler Sponsored Operations. Alchemy авансирует native ETH; постоянный ручной ETH top-up на каждый draw не нужен. При этом core остаётся provider-neutral: если Alchemy исчез, тот же разрешённый on-chain progress может продолжить другой executor со своим ETH.
 
-Следующий большой риск теперь уже не dataset structure, а **корректная привязка rules epoch к моменту mint attempts**. Именно туда логично идти дальше.
+Это позволяет решить операционную задачу **без новой административной лазейки в prize custody**.
 
 ---
 
-## 1. Structural payload: явного settlement-blocker не вижу
+## 1. Что реально поддерживает Robinhood Chain сейчас
 
-Текущая publication validation покрывает все ограничения, которые затем требует `ShortOutcome.participantsHash()`:
+### Robinhood / Alchemy
+
+Robinhood Chain официально описывает себя как Arbitrum L2 с ETH как native gas token и first-class ERC-4337 account abstraction. В официальной документации Alchemy указан как рекомендуемый RPC/AA provider и отдельно перечислена `Gasless Transaction Infrastructure` с sponsorship, batching, policies и spending controls.
+
+Alchemy в актуальной таблице supported chains прямо показывает для **Robinhood Mainnet и Testnet**:
 
 ~~~text
-wallet > previous
-firstAttempt > 0
-lastAttempt >= firstAttempt
+Bundler              ✅
+Gas Sponsorship      ✅
+ERC20 Gas Payments   ✅
+BSO                  ✅
 ~~~
 
-Дополнительно dataset layer запрещает `wallet == PromoVault`, что необходимо, потому что `PromoVault.finalize()` такой winner отвергает.
+Gas Manager может front gas без предварительного пополнения native token: стоимость добавляется в billing. Для PAYG документация сейчас указывает 8% fee от покрытых gas fees; mainnet sponsorship требует платный tier. Policies поддерживают spend/transaction/access limits. Alchemy отдельно предупреждает, что из-за batch processing фактический spend в редких случаях может кратковременно немного превысить установленный limit — поэтому provider policy нельзя считать нашим on-chain hard invariant.
 
-Zero address отдельно проверять не требуется: первый `wallet > address(0)` его уже исключает.
+Bundler Sponsored Operations работают на bundler level и не требуют отдельного on-chain paymaster call для каждой операции. Для нашей задачи это особенно интересно: execution wallet может быть smart account, а Promo contracts не обязаны становиться Alchemy-specific.
 
-Basket строится через тот же `ShortPrizeBasket` и поэтому K непустой, K <= 64, все prizes ненулевые, basketTotal <= D и суммы не overflow.
+Источники, проверены 16.09.2026:
 
-Rules проходят настоящий `ShortOutcome.rulesHash()`, то есть malformed fractions/version также не могут стать READY input.
+- Robinhood Chain overview: https://docs.robinhood.com/chain/
+- Robinhood connection / Gasless Transaction Infrastructure: https://docs.robinhood.com/chain/connecting/
+- Alchemy Wallet supported chains: https://www.alchemy.com/docs/wallets/supported-chains
+- Alchemy Gas Manager FAQ / pricing: https://www.alchemy.com/docs/wallets/reference/gas-manager-faqs
+- Alchemy sponsorship policies: https://www.alchemy.com/docs/wallets/transactions/sponsor-gas/sponsorship-policy-management
+- Alchemy BSO: https://www.alchemy.com/docs/wallets/transactions/sponsor-gas/bundler-sponsored-operations
 
-Диапазон Participant хранится uint128, а максимальный допустимый count `last-first+1` при `first>=1` помещается в uint128 и совместим с `ShortOutcome.threshold()`.
+### Важное уточнение про ERC-20 gas payment
 
-### Что всё ещё можно соврать
+Alchemy действительно позволяет настроить custom ERC-20. Native gas авансируется, а ERC-20 списывается со smart account на настроенный policy recipient.
 
-Publisher всё ещё может объявить **структурно корректный, но ложный** список eligible wallets, либо неправильный `snapshotHash`.
+Но это **не означает**, что мы уже нашли trustless USDG→gas расчёт для самого проекта. Документация прямо говорит, что equivalent USD amount + admin fee всё равно попадают в monthly invoice policy owner. Поэтому если executor и policy owner — мы сами, ERC-20 mode не магически отменяет внешний billing.
 
-Это не новый defect: это ровно принятая trust boundary.
+USDG также надо отдельно проверить как custom token/price reference на Robinhood; из общей поддержки custom ERC-20 нельзя делать вывод, что наша конкретная конфигурация уже работает.
 
-Контракт доказывает: «я обработаю именно тот полный canonical dataset, который был опубликован».
+Источник: https://www.alchemy.com/docs/wallets/transactions/pay-gas-with-any-token
 
-Независимый replay доказывает: «этот dataset соответствует registrations/BUY/carry/attempt history».
-
-Текущий пакет эти гарантии не смешивает, и документация это формулирует правильно.
+Вывод: **для MVP sponsorship/BSO полезнее ERC-20 paymaster path**. USDG→ETH/paymaster можно оставить как альтернативу, а не фундамент core.
 
 ---
 
-## 2. Proposal / draw namespace и supersede
+## 2. Что с другими кандидатами
 
-Текущая модель выглядит безопасно:
+### Chainlink
 
-~~~text
-proposalId
-    ↓
-Publishing / Ready
-    ↓
-можно Supersede
+Chainlink Automation сейчас плохой кандидат именно для этой задачи: legacy Automation v1.x sunset 30.06.2026, v2.1 — 31.07.2026; Chainlink направляет пользователей в CRE. В текущем списке Automation networks Robinhood нет.
 
-drawId
-    ↓
-становится необратимым только при SEAL
-~~~
+В актуальном Chainlink VRF v2.5 supported-networks Robinhood также не указан. Поэтому нельзя строить MVP-план на предположении «Robinhood EVM → значит VRF/Automation есть». RNG для нашего production controller остаётся отдельным открытым вопросом.
 
-До SEAL USDG не reserved, `AttemptsFrozen` не существует, proposalId можно закрыть, тот же смысловой drawId можно подготовить заново, история старой proposal остаётся публичной.
+Источники, проверены 16.09.2026:
 
-После SEAL `sealedDraws[drawId]` закрывает повтор, PromoVault уже имеет Reserved draw, `pendingDatasetDraw` блокирует следующий Short, supersede невозможен.
+- https://automation.chain.link/
+- https://docs.chain.link/chainlink-automation/overview/supported-networks
+- https://docs.chain.link/vrf/v2-5/supported-networks
 
-Это соответствует Trust & Evolution принципу: **можно исправлять подготовку до возникновения обязательства, но не после него**.
+### Gelato
 
-ProposalId правильно исключён из context. Два оператора/две попытки подготовки одного и того же draw/cutoff/dataset/rules/D/basket должны приводить к одному random context.
+Gelato — полезный пример модели sponsored relay / Gas Tank, но в текущей официальной странице supported Relay networks Robinhood не найден. Поэтому это benchmark архитектуры, а не зависимость MVP.
 
-Прямо сейчас критично недостающего смыслового поля в context не вижу. Он уже связывает chainId, controller, instance, registry, vault, quote asset, drawId/campaignId/rulesEpoch, cutoff, snapshotHash, root/count/attempts, D, rulesHash и basketHash.
+Источник: https://docs.gelato.cloud/relay/additional-resources/supported-networks
 
-Не нужно включать proposalId, publisher, chunk size, seal block или executor.
+### OpenZeppelin Relayer
 
----
+OpenZeppelin Relayer умеет custom EVM network через chainId/RPC и даёт полезные safety knobs: `gas_price_cap`, receiver whitelist, min balance, estimate + safety buffer, retry/failover.
 
-## 3. Один важный invariant на будущее: новый context должен стать ЕДИНСТВЕННЫМ Short context
+Но self-hosted relayer всё равно требует native ETH balance. Поэтому это хороший fallback/recovery runner, а не решение circular bootstrap само по себе.
 
-Старый V2 и streaming study остаются в репозитории как этапы разработки, что нормально.
+Источники:
 
-Но production controller не должен иметь legacy context для fast path и новый context для streaming path, если из них получаются разные admission/order hashes.
-
-Новый dataset context уже выглядит подходящим кандидатом на canonical production context.
-
-Следующий terminal/processing пакет должен исходить из:
-
-~~~text
-same dataset root
-+ same rules
-+ same D/basket
-+ same seed
-→ same winners/result
-
-независимо от того,
-был ли весь scan выполнен одним вызовом
-или chunks.
-~~~
-
-Byte-for-byte совместимость со старым исследовательским V2 не нужна, потому что публичных frozen V2 obligations ещё нет.
+- https://docs.openzeppelin.com/relayer
+- https://docs.openzeppelin.com/relayer/1.2.x/evm
 
 ---
 
-## 4. Verifier: где он реально независим, а где нет
+## 3. Рекомендуемая MVP-модель денег
 
-### Что он пересчитывает самостоятельно
+Я бы **не пересматривал** формулировку «признанные prize funds нельзя тратить на ops». Вместо этого уточнил бы момент признания.
 
-В RPC mode цепочка хорошая:
+### Creator revenue / собственный promo budget
 
 ~~~text
-выбранный RPC
-→ raw blocks/receipts
-→ registration + supported BUY replay
-→ carry / minted attempts
-→ lifecycle consumption
-→ exact OPEN Short at cutoff
-→ Participant[]
-→ snapshotHash
-→ root/count/attempts
+gross received value
+      ↓
+policy split ДО PromoVault
+      ├── PROJECT / OPERATIONS
+      └── PRIZE
+             ↓
+      Short / Current / Next
 ~~~
 
-Затем `verifyPublication` независимо сравнивает это с on-chain Request, on-chain rulesHash, basket, published calldata chunks, event indices/hashes, actual root/count/attempts и sealed context.
+Execution — нормальный operational expense проекта. Он может иметь отдельный публичный accounting/budget, но не должен откусываться из уже признанного `freeShort/freeCurrent/freeNext`, а тем более reserved/claimable.
 
-То есть опубликованный Participant[] не принимается за исходную истину.
+Это очень хорошо ложится на наш Trust & Evolution принцип: гибкость экономики остаётся, custody обещание пользователю не ослабляется.
 
-### Что verifier НЕ доказывает сам
+### External funding
 
-Он проверяет историю **относительно входного deployment manifest/config**. Он сам не открывает «официальный адрес Promo» из какого-то внешнего trust registry.
+Существующие значения должны продолжить значить то, что уже значат:
 
-Входными policy assertions пока остаются:
+~~~text
+targeted SHORT   → 100% prize Short
+targeted CURRENT → 100% prize Current
+targeted NEXT    → 100% prize Next/overflow по принятым правилам
+GENERAL          → 100% prize allocation 3:2:1
+~~~
 
-- какой deployment/instance считать нужным;
-- `campaignId`;
-- `rulesEpoch`;
-- сами rules/weights/minimumUnit;
-- budget D;
-- допустимость cutoff/finality;
-- шестичасовая readiness policy.
+Не надо задним числом превращать их в «95% prize + 5% gas».
 
-Verifier проверяет, что on-chain proposal соответствует этим данным и что dataset честно пересчитан. Он пока не доказывает, что оператор **имел право выбрать именно эти rules/D/cutoff**.
+Для будущей sponsor campaign можно заранее объявить:
 
-Это не дефект verifier: именно следующие controller/policy слои должны сделать такие решения bounded и воспроизводимыми.
+~~~text
+gross campaign budget = 1050 USDG
+execution contribution = 50
+net funded prize = 1000
+~~~
 
-Также верно отмечено: offline blocks = evidence, не независимая chain authenticity; RPC mode не сертифицирует finality; current publication decoder привязан к test-wrapper transport; automatic artifact mirrors ещё отсутствуют.
+или спонсор может дать `1000 prize + execution separately`.
+
+Тогда аудитор не должен гадать, сколько из заявленного приза съели расходы.
 
 ---
 
-## 5. Небольшая liveness-граница proposal preparation
+## 4. Кто физически посылает транзакции
 
-Это не blocker текущего internal component, но важно при production wrapper.
+### Primary path
 
-Сейчас `activeProposal != 0` блокирует новую preparation. Если production publisher исчез после BEGIN/PUBLISH и никто не имеет права вызвать supersede, Short preparation может зависнуть **до reserve**.
+~~~text
+keeper daemon
+   ↓ signs deterministic allowed calls
+dedicated execution smart account
+   ↓
+Alchemy Bundler / Gas Manager
+   ↓ fronts native ETH
+Robinhood Chain
+~~~
 
-Это безопасно для денег, но плохо для liveness.
+Keeper не должен иметь полномочия выбрать winner или передать деньги произвольному адресу.
 
-Не нужен admin cancel frozen draw. Достаточно в будущем policy wrapper определить прозрачное правило только для незарезервированной proposal, например authorized publisher может supersede либо permissionless expiry после объективного preparation deadline.
+On-chain архитектура по возможности остаётся permissionless:
 
-История proposal остаётся, draw ещё не frozen, prize obligations не нарушаются. Точный timeout сейчас выбирать не надо.
+- `seal` после READY — permissionless;
+- `process(nextChunk)` — permissionless;
+- `finish` — permissionless;
+- `claim` уже permissionless к фиксированному recipient;
+- begin/publish/supersede, если им нужен privileged publisher, получают только узкую capability.
+
+Таким образом Alchemy и наш keeper — **liveness dependencies, не trust dependencies outcome**.
+
+Если provider умер, другой executor может отправить ту же следующую транзакцию обычным способом, оплатив ETH сам. Никакой migration draw, reset или новый seed не требуется.
+
+### Экономическая защита provider account
+
+Gas Manager policies полезно использовать как второй operational perimeter:
+
+- разрешён только Robinhood;
+- allowlist только наших controller/related addresses;
+- max spend per operation;
+- total/day/month limits;
+- отдельная policy для production executor;
+- monitoring/alerts.
+
+Но критические ограничения всё равно должны быть в контрактах. Компрометация provider API key не должна превращаться в возможность украсть prize funds.
 
 ---
 
-## 6. ReentrancyGuard: работает, но не надо тащить лишнюю сложность дальше
+## 5. Economic readiness лучше разделить на две стадии
 
-Тест reserve callback полезный: SEAL действительно защищён от reentry.
+Repo правильно заметил две проблемы:
 
-Небольшое инженерное замечание: `_beginDataset`, `_publishDataset`, `_supersedeDataset` сами не делают опасных внешних calls, а modifier стоит на internal functions.
+1. publication уже стоит gas до SEAL;
+2. если просто «ждём дешёвый gas», N продолжает расти и следующий draw дорожает.
 
-Это не vulnerability, но создаёт composition constraint: будущий external wrapper не может бездумно иметь свой `nonReentrant` и затем вызвать эти методы тем же guard.
+Я бы не оставлял одну проверку только перед SEAL.
 
-Документация это уже предупреждает. Я бы пока не переписывал пакет ради косметики. При сборке общего controller просто ещё раз проверить guard topology. Критичный guard — SEAL и будущий settlement, где реально есть external vault calls.
+### Gate A — до BEGIN
+
+Проверяем:
+
+- 6h schedule / отсутствие pending Short;
+- текущий execution sponsorship/provider доступен;
+- есть operational capacity/лимит;
+- примерная полная стоимость draw при текущих N/K находится в допустимой зоне.
+
+Если совсем не готово — BEGIN не делаем, attempts остаются OPEN.
+
+### BEGIN фиксирует свежий cutoff
+
+Когда Gate A прошёл:
+
+~~~text
+BEGIN at fresh finalized/recent cutoff
+→ cutoff + N этого draw зафиксированы
+~~~
+
+После этого **рост новых BUY больше не увеличивает стоимость этого draw**: новые attempts уже относятся к следующему.
+
+Текущий dataset component как раз полезен тем, что проверяет recent blockhash в BEGIN, а затем может дожить до SEAL спустя >256 блоков — повторно старый blockhash не требуется.
+
+### Gate B — перед дорогой publication / дальнейшими этапами
+
+После BEGIN считаем уже конкретный полный remaining path и убеждаемся, что execution capacity с safety margin достаточна.
+
+Если gas внезапно вырос:
+
+~~~text
+не supersede
+не меняем cutoff
+не меняем participants
+просто ждём
+~~~
+
+Так мы разрываем неприятную петлю:
+
+~~~text
+gas дорогой → ждём → N растёт → draw ещё дороже → ждём ещё
+~~~
+
+После BEGIN N текущего draw уже фиксирован.
+
+Важно: production policy supersede потом стоит отдельно ограничить/описать. Высокий gas сам по себе не должен быть поводом менять cutoff ради более удобного participant set.
 
 ---
 
-# 7. Следующая state machine: rules должны принадлежать attempts с момента mint
+## 6. После SEAL правило ещё проще
 
-Это сейчас главный вопрос.
-
-Требование владельца: правила можно менять между периодами, но нельзя задним числом менять условия уже заработанного OPEN participation.
-
-Поэтому `rulesEpoch` нельзя определять в момент dataset begin/seal. Он должен быть производным от **момента появления attempt**.
-
-## Минимальная модель без governance-комбайна
-
-Состояние:
+После SEAL никакой экономический кризис уже не должен менять obligation.
 
 ~~~text
-currentEpoch
-pendingRules?          // максимум одна будущая версия
-noticeSatisfied
-transition?            // максимум один незавершённый переход old → new
+frozen dataset
+frozen prize D
+frozen rules
+one seed
+progress
 ~~~
 
-Каждая epoch содержит immutable после объявления payload/hash: epochId, outcome rules, basket template, budget policy identifier/data и другие разрешённые versioned параметры. Hard bounds остаются в immutable controller code.
+Если gas x50 или Alchemy временно недоступен — processing стоит и затем продолжается с того же `nextChunk`.
 
-## 7.1 Announce
+Дополнительное project/ops funding можно добавить в execution infrastructure, но:
 
-Новая версия публикуется заранее. Она ещё не влияет ни на один attempt. Нужен minimum notice, конкретное значение позже.
+- нельзя уменьшить frozen D;
+- нельзя вернуть reserved в project;
+- нельзя новый seed;
+- нельзя новый participant list;
+- нельзя объявить timeout=no-win.
 
-Пока существует незавершённый transition V1→V2, нельзя объявить V3. Так в системе максимум два соседних epochs.
-
-## 7.2 Activation — не SEAL и не задним числом выбранный cutoff
-
-Самая чистая минимальная граница для block-based dataset:
-
-~~~text
-после notice вызывается activateRules()
-
-activationBlock = block.number + 1
-oldEpochLastBlock = block.number
-~~~
-
-Почему `+1 блок` важно:
-
-- все BUY внутри блока activation transaction однозначно остаются old epoch;
-- все BUY начиная со следующего блока однозначно получают new epoch;
-- не нужен transactionIndex cutoff;
-- activation нельзя задним числом поставить раньше уже увиденных BUY;
-- BUY между old cutoff и будущим SEAL уже автоматически принадлежат new epoch и не «проваливаются».
-
-Activation event должен публично фиксировать oldEpoch, newEpoch, oldEpochLastBlock и newEpochFirstBlock.
-
-Replay присваивает Short attempt epoch по блоку BUY, который реально mint'ит entry.
-
-### Carry
-
-Carry не получает epoch.
-
-~~~text
-99 USDG накоплено при V1
-+ 1 USDG BUY уже в V2
-→ entry/Short attempt mintится в V2
-~~~
-
-При этом 99 USDG не теряются и threshold 100 USDG nominal не меняется.
-
-## 7.3 Boundary draw старой версии
-
-После activation старые OPEN attempts не превращаются в V2.
-
-Создаётся переходное состояние:
-
-~~~text
-old V1 OPEN ≤ oldEpochLastBlock
-new V2 OPEN ≥ newEpochFirstBlock
-~~~
-
-Следующий Short обязан обслужить **oldest outstanding epoch**, то есть V1.
-
-Его canonical cutoff:
-
-~~~text
-cutoff = oldEpochLastBlock
-rulesEpoch = V1
-~~~
-
-Dataset builder должен получить все V1 OPEN attempts и ни одного V2.
-
-После terminal V1 cohort consumed. Только после этого V2 становится единственной обслуживаемой epoch.
-
-Таким образом новая версия не переписывает OPEN, но и не требует вечного списка epochs.
-
-## 7.4 Связь с 6 часами и предыдущим terminal
-
-Activation не должна обходить Short schedule.
-
-Минимально:
-
-~~~text
-нет pending Short
-block.timestamp >= lastShortTerminalAt + 6 hours
-notice новой версии уже выполнен
-old rules/budget policy READY для boundary draw
-~~~
-
-Тогда activation фактически открывает следующий допустимый old-rules boundary Short.
-
-После terminal boundary draw следующий V2 Short всё равно ждёт обычные 6 часов согласно уже принятому правилу.
-
-Cutoff старого transition draw автоматически не раньше предыдущего terminal, потому что activation разрешён только после него.
-
-## 7.5 Что делать с BUY между activation и SEAL
-
-В предложенной модели ничего специального делать не надо:
-
-~~~text
-activation tx в block B
-old cutoff = B
-
-BUY в block B      → V1
-BUY в block B+1...  → V2
-
-dataset V1 может публиковаться и seal хоть позже
-~~~
-
-Поэтому seal timing не способен переназначить уже minted attempt.
-
-## 7.6 Что надо изменить в replay
-
-Current attempt ledger хранит один cumulative Short OPEN balance. Для epochs потребуется явная принадлежность mint к epoch.
-
-Поскольку epochs активируются монотонно во времени, ranges одного wallet естественно остаются последовательными:
-
-~~~text
-attempts 1..5  → V1
-attempts 6..9  → V2
-...
-~~~
-
-Нужен replay вида `SHORT.byEpoch[V] = open/consumed/frozen` или эквивалентное компактное представление.
-
-Dataset builder получает target rulesEpoch + cutoff и строит только OPEN диапазон этой epoch. Conservation по-прежнему должна выполняться по всем epochs вместе.
-
-Monthly пока не надо затягивать в этот пакет автоматически; его versioning можно решить отдельно, используя тот же общий принцип.
+Это ещё один аргумент за streaming: expensive period ухудшает latency, а не correctness.
 
 ---
 
-## 8. Важная граница flexibility
+## 7. Какие расходы считать execution
 
-Новая rules version не должна содержать wallet-specific material: никаких specialRecipients, walletMultipliers, allowList winners или custom winner addresses.
-
-Versionable payload — глобальная экономика будущих attempts.
-
-И особенно budget D: оператор не должен после просмотра dataset произвольно выбирать любую сумму в допустимом диапазоне.
-
-Production rules желательно связывают D с публичной детерминированной policy от on-chain reserve state / bounded параметров.
-
-Тогда порядок остаётся:
+Для MVP я бы гарантированно финансировал только **critical path до terminal**:
 
 ~~~text
-rules заранее известны
-→ attempts получают epoch
-→ dataset фиксируется
-→ D вычисляется по policy
-→ reserve
-→ только потом random
+BEGIN / proposal setup
+dataset publication
+SEAL
+RNG request/delivery cost — когда provider выбран
+PROCESS chunks
+FINISH / PromoVault.finalize / AttemptsConsumed
 ~~~
+
+Не включал бы автоматически в prize economics:
+
+- серверы / RPC subscriptions;
+- разработку / monitoring;
+- TOKEN→USDG swap execution — это отдельная revenue/conversion экономика;
+- бесконечные failed tx;
+- произвольные supersede;
+- обычные user claims.
+
+Claim уже permissionless. Победитель может вызвать его сам и оплатить gas. Optional sponsored claim — UX-слой с отдельным capped policy, а не условие корректного terminal.
+
+Это важно: один странный winner/claim не должен удерживать весь draw в pending.
 
 ---
 
-## 9. Что бы я делал следующим пакетом
+## 8. Почему не делать generic gas reimbursement в контракте
 
-Не RNG.
-
-Следующий ограниченный пакет:
+Схема:
 
 ~~~text
-short-rules-epochs-v1
+кто угодно вызывает process()
+→ contract возвращает msg.sender фактический gas
 ~~~
 
-Acceptance примерно такой:
+выглядит красиво, но для MVP создаёт больше проблем, чем решает:
 
-1. Genesis epoch существует и immutable как payload.
-2. Можно иметь максимум одну announced future epoch.
-3. Future epoch не влияет на attempts до activation.
-4. Activation не может быть поставлена задним числом.
-5. Чистая block boundary: old through B, new from B+1.
-6. BUY crossing 100 USDG carry после boundary mint'ит attempt новой epoch.
-7. Старые OPEN сохраняют old epoch.
-8. Dataset old epoch не включает new attempts.
-9. Пока old boundary cohort не terminal, следующая rules update запрещена.
-10. Один pending Short остаётся общим.
-11. Cutoff boundary не раньше previous terminal.
-12. 6h rule не обходится update'ом.
-13. Reorg replay корректно откатывает activation/mints вместе.
-14. Independent verifier воспроизводит epoch каждого attempt из публичной chain history.
-15. Нет owner setter, способного назначить epoch уже существующему attempt.
+- какой gas price считать допустимым;
+- как учитывать L2 execution + L1 data component;
+- как не платить за revert;
+- как не платить повторно за один progress;
+- как не стимулировать искусственное дробление work;
+- что делать с конкурентными executors;
+- как ограничить выплаты связанному адресу;
+- как не превратить reimbursement в disguised withdrawal.
 
-Численные rules, notice duration и production D formula можно оставить fixture/test candidates, не утверждая их в PRODUCT_SPEC.
+На первом запуске это не нужно.
+
+Если позже потребуется экономически стимулировать recovery executors, безопаснее рассматривать **фиксированную bounded bounty за доказанный state progress** (`chunk i → i+1`) из отдельного execution budget, а не reimbursement произвольного `gasUsed * gasPrice`.
 
 ---
 
-## 10. Лишних абстракций в текущем dataset package почти нет
+## 9. USDG→ETH buffer: рабочая альтернатива, но не MVP-first
 
-`Publishing → Ready → Superseded/Sealed` оправданы разными trust states.
+Self-funded native buffer можно построить:
 
-`expectedCount` и `expectedAttempts` не выглядят лишними: они позволяют доказать завершённость публикации и не полагаться только на невозможность случайно попасть в root.
+~~~text
+execution USDG
+→ fixed swap route
+→ ETH buffer
+→ keeper
+~~~
 
-`sealedDraws` частично дублирует будущий PromoVault status, но как локальный explicit no-reuse invariant вполне разумен и дешёв.
+Но тогда сразу появляются:
 
-`activeProposal` тоже подходит текущему правилу «один Short pipeline за раз». Если позже потребуется готовить следующий draw параллельно pending draw, это будет уже отдельное product/liveness решение; сейчас усложнять не нужно.
+- bootstrap ETH для первого refill;
+- low-watermark;
+- ETH/USDG price source;
+- slippage/max price;
+- fixed recipient;
+- signer custody;
+- swap failure;
+- overfund/leftover semantics;
+- refill во время gas spike.
+
+Один bootstrap deposit всё равно неизбежен: чтобы купить первый ETH on-chain, уже нужен ETH.
+
+Alchemy sponsorship убирает почти весь этот слой из MVP. Native buffer можно оставить provider-independent fallback и реализовать позже, если реальная стоимость/надёжность SaaS не устроит.
+
+---
+
+## 10. Сценарные числа из нашего study
+
+Использую только repo assumption:
+
+~~~text
+gas price = 0.065 gwei
+ETH = $2400
+~~~
+
+Это **не прогноз текущей цены**, а сценарная база из запроса. Реальный production pipeline и Robinhood estimate надо измерять отдельно.
+
+Study gas:
+
+~~~text
+N=1000 K=10 → 16,604,947 gas
+N=5000 K=10 → 74,908,186 gas
+~~~
+
+| N / K | base x1 | gas x10 | gas x50 |
+|---|---:|---:|---:|
+| 1000 / 10 | $2.59 | $25.90 | $129.52 |
+| 5000 / 10 | $11.69 | $116.86 | $584.28 |
+
+Если чисто иллюстративно добавить текущие документированные 8% Alchemy PAYG Gas Manager fee, получается примерно:
+
+| N / K | x1 | x10 | x50 |
+|---|---:|---:|---:|
+| 1000 / 10 | $2.80 | $27.98 | $139.88 |
+| 5000 / 10 | $12.62 | $126.21 | $631.03 |
+
+Это всё ещё не invoice forecast: здесь нет настоящего RNG, production controller overhead, реального `eth_estimateGas`, provider tier specifics, claims и conversion.
+
+### Сравнение с банком
+
+Для gross/net prize reference $100:
+
+~~~text
+N1000:  2.6% / 25.9% / 129.5%
+N5000: 11.7% / 116.9% / 584.3%
+~~~
+
+Для $1000:
+
+~~~text
+N1000:  0.26% / 2.59% / 12.95%
+N5000: 1.17% / 11.69% / 58.43%
+~~~
+
+Поэтому fixed «5% всегда хватает на gas» — плохая policy. Малый банк + большой N легко делает draw экономически бессмысленным.
+
+### Несколько циклов
+
+При десяти одинаковых циклах raw local proxy:
+
+~~~text
+N1000:
+x1  ≈ $25.90
+x10 ≈ $259.04
+x50 ≈ $1295.19
+
+N5000:
+x1  ≈ $116.86
+x10 ≈ $1168.57
+x50 ≈ $5842.84
+~~~
+
+Процент на цикл не меняется, но любой недостаточно финансируемый execution reserve линейно уходит вниз. Поэтому модель должна смотреть **reserve trajectory**, а не только «этот draw вроде дешёвый».
+
+---
+
+## 11. Absolute + relative gate — кандидат, не принятое правило
+
+Для локальной модели стоит проверить readiness типа:
+
+~~~text
+estimatedRemainingCost <= executionCapacity
+AND
+estimatedRemainingCost <= absoluteDrawCap
+AND
+estimatedRemainingCost <= relativeCap * plannedNetPrize
+~~~
+
+Но параметры пока нельзя переносить в PRODUCT_SPEC.
+
+Relative cap защищает маленький prize от абсурда.
+
+Absolute cap защищает operations budget при большом prize.
+
+Execution capacity отвечает за реальную способность закончить draw.
+
+Если gate не проходит **до BEGIN**, attempts сохраняются. Если Gate A прошёл и BEGIN уже зафиксировал cutoff, дальнейший gas spike не должен менять cohort: proposal просто ждёт.
+
+При хронически дорогой сети нет волшебства: кто-то всё равно должен оплатить вычисление. Система может накопить operations budget, дождаться удешевления или получить дополнительное project/sponsor execution funding. Нельзя превращать нехватку gas в исключение участников/no-win/reroll.
+
+---
+
+## 12. Liveness и исчезновение keeper
+
+Разделить две вещи:
+
+### Кто обычно платит
+
+Primary keeper через Alchemy sponsorship.
+
+### Кто способен продолжить
+
+Любой executor для permissionless этапов.
+
+Recovery package должен содержать:
+
+- current draw/proposal id;
+- next required action;
+- canonical artifact/chunks;
+- seed после fulfillment;
+- CLI, который вычисляет следующий calldata;
+- public contract addresses.
+
+Тогда потеря нашего daemon/key/provider не делает состояние логически зависимым от него.
+
+OpenZeppelin Relayer на custom Robinhood RPC может быть одним из self-hosted fallback инструментов, но его ETH funding остаётся operational concern.
+
+---
+
+## 13. Что это значит для Trust & Evolution
+
+Я бы **не принимал** формулировку из discussion буквально как «теперь prize funds можно тратить на gas».
+
+Более безопасная формулировка:
+
+> **gross campaign/promo economics may allocate a bounded execution share before prize recognition; funds already recognized as prize reserves, frozen budgets or claims are never execution funds.**
+
+Так мы получаем автономность, не создавая дыру:
+
+~~~text
+admin says: это gas
+→ забирает freeShort
+~~~
+
+которой сейчас нет.
+
+Если когда-нибудь execution allocation меняется, это future-facing policy. Уже поступивший targeted prize funding не переклассифицируется.
+
+---
+
+## 14. Что пока остаётся продуктовым решением
+
+Не принимать автоматически из этого ревью:
+
+1. размер execution/project share из creator revenue;
+2. должен ли GENERAL external funding когда-нибудь иметь отдельный execution-aware вариант;
+3. absolute/relative economic caps;
+4. сколько циклов operations runway держать;
+5. что считать допустимой задержкой Short при gas spike;
+6. оплачиваем ли sponsored claims;
+7. используем ли Alchemy PAYG/Enterprise или собственный native buffer;
+8. конкретный RNG provider.
+
+Особенно пункт 2: текущий GENERAL уже имеет принятую prize семантику. Для другого поведения лучше новый явно названный funding mode/campaign budget, а не изменение старого.
+
+---
+
+## 15. Следующий ограниченный пакет
+
+Я бы **не возвращался прямо сейчас к rules epochs** и не писал ExecutionTreasury contract.
+
+Следующий пакет:
+
+~~~text
+execution-economics-v1
+локальная модель + report, без production contract
+~~~
+
+Входы:
+
+- gross creator/promo inflow;
+- candidate execution allocation;
+- net prize inflow;
+- N / K / chunk size;
+- measured gas по каждой стадии;
+- gas multipliers/distribution;
+- provider surcharge;
+- initial operations runway;
+- relative/absolute gates;
+- growth attempts во время ожидания;
+- Alchemy sponsorship availability/limits как external dependency.
+
+Выходы:
+
+- net Short/Monthly prize flow;
+- execution cost per cycle;
+- operations reserve/billing trajectory;
+- сколько draws проходят/ждут;
+- время до readiness;
+- что происходит при x10/x50 spike;
+- сколько циклов выдерживает bootstrap;
+- сценарий N growth до BEGIN;
+- сценарий fixed N после BEGIN;
+- provider outage/recovery.
+
+Сравнить минимум три модели:
+
+~~~text
+A. pre-prize project/operations share + Alchemy sponsorship   ← основной кандидат
+B. dedicated native ETH buffer + constrained auto-refill
+C. permissionless bounty/reimbursement                       ← future option
+~~~
+
+После чисел уже решить, нужен ли вообще новый on-chain execution accounting.
+
+Только затем вернуться к rules epochs. Это логично, потому что epoch activation/readiness тоже должна понимать: «мы можем начать boundary draw и гарантированно его довести».
 
 ---
 
 ## Итог
 
-`5aeeeaf` — хороший переход от исследовательского streaming к production-oriented input layer.
+Ответ на главный вопрос ветки получился неожиданно простым:
 
-Самое важное изменение по сравнению с предыдущими этапами:
+> **автономность исполнения не требует давать PromoVault право тратить призовые деньги на gas.**
 
-> теперь деньги не frozen, пока весь объявленный participant dataset не прошёл canonical structural validation.
+Robinhood уже имеет подходящую sponsored-transaction инфраструктуру. Для MVP можно держать keeper без постоянного ETH balance, финансировать execution из заранее отделённой operations economics, а prize custody оставить такой же жёсткой, как мы её проектировали.
 
-Следующая архитектурная задача уже не про список участников. Она про **время возникновения обязательства rules version**.
+Это сохраняет одновременно три свойства:
 
-Я бы продолжил через небольшой `short-rules-epochs-v1`, где epoch присваивается attempt при mint через заранее объявленную block boundary, а старый cohort гарантированно доживает по старым правилам.
+~~~text
+автоматическая работа
+гибкая экономика будущих периодов
+отсутствие новой лазейки в prize funds
+~~~
+
+И я бы именно это проверил следующей локальной экономической моделью до любого изменения контрактов.
