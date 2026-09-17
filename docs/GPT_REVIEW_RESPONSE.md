@@ -2,497 +2,389 @@
 
 Обновлено: 17.09.2026.
 
-Просмотрен latest commit `80976bd09780c623dc6b13cb44c3443a389f4bff` — `Isolate Short and Monthly draw ID namespaces before preparation and reserve`.
+Просмотрен latest commit `198e8dd1c28c649ddcf1c9525d54f628d4e778d2` — `Add forward-only Monthly admission epochs and independent v4 replay`.
 
-Прочитаны diff, актуальный `GPT_REVIEW_REQUEST.md`, `DualControllerPromoVault.sol`, изменения `PromoVault.sol` / `ShortDatasetPreparation.sol` / `MonthlySettlement.sol`, `draw-id.cjs`, lifecycle v3 и новые dual tests. GitHub CI/status для commit пусты; заявленные `154/154` и отдельный dual size/deployment check в этом проходе мной независимо не запускались.
+Прочитаны `MONTHLY_RULES_EPOCHS.md`, `MonthlySettlement.sol`, lifecycle v4, `monthly-dataset.cjs`, dual binding checks, epoch/replay tests, актуальные `PRODUCT_SPEC.md`, `IMPLEMENTATION_STATUS.md` и `GPT_REVIEW_REQUEST.md`. GitHub CI/status для commit пусты; заявленные локальные `164/164`, дополнительные replay/CLI `6/6`, RPC publication `1/1` и size/deployment check в этом проходе мной независимо не запускались.
 
 ## Короткий вердикт
 
-Правка закрывает найденный pre-seal cross-kind DoS чисто и дешевле, чем мой предыдущий hash-derived вариант.
-
-Схема:
+Пакет выглядит цельным. После принятых продуктовых уточнений Monthly теперь делает ровно то, что хотелось:
 
 ~~~text
-bit 255 = 0 → Short
-bit 255 = 1 → Monthly
-low 255 bits != 0
+q можно менять только вперёд
+interval и notice immutable
+старые attempts не меняют policy
+activation: old <= B, new >= B+1
+максимум один draining + один current
+empty не является draw и не двигает clock
 ~~~
 
-хороша именно тем, что не создаёт вторую сущность `logicalDrawId → vaultDrawId`. Один и тот же bytes32 теперь проходит через request, snapshot, context, events, vault, replay и claim.
+Нового correctness blocker в самой epoch state machine я не нашёл.
 
-Я не нашёл оставшейся точки входа в **новом dual deployment**, через которую один controller может создать/зарезервировать draw в namespace другого типа.
+Особенно важно: Кодекс правильно **не скопировал буквально прошлое предложение GPT**. В `PRODUCT_SPEC` теперь принято, что Monthly interval не versionable, а verified-empty не начинает новый clock. Текущий код и replay этой принятой версии соответствуют.
 
-Основной следующий вопрос действительно уже не drawId, а безопасная forward-only эволюция Monthly q/interval.
+До исследования настоящего RNG я бы добавил только один дешёвый multi-epoch regression test и явно сохранил два известных trust/integration debt, описанных ниже.
 
 ---
 
-## 1. Где namespace реально защищается
+## 1. Старые attempts действительно не могут тихо получить новую q
 
-Защита стоит на двух уровнях, и это правильно.
-
-### Preparation boundary
-
-Short:
+On-chain policy history хранится отдельно:
 
 ~~~text
-ShortDatasetPreparation._beginDataset
-→ datasetVault.validateDrawId(drawId, SHORT)
+policies[epoch] = {
+  outcome,
+  hash,
+  firstBlock
+}
 ~~~
 
-Monthly:
+После announcement payload уже не переписывается. Следующая версия получает новый epoch; старую mapping entry setter не меняет.
+
+При begin draw выбирается только:
 
 ~~~text
-MonthlySettlement._beginMonth
-→ monthlyVault.validateDrawId(drawId, MONTHLY)
+target = drainingMonthlyEpoch != 0
+       ? drainingMonthlyEpoch
+       : currentMonthlyEpoch
 ~~~
 
-Поэтому hostile/buggy publisher уже **не может даже подготовить READY dataset** с ID чужого типа.
+и `Input.rulesEpoch` обязан совпасть с target.
 
-### Custody boundary
-
-Short real reserve:
+После этого draw сам несёт epoch в immutable preparation input, context V2 содержит весь Input + exact policy hash, а processing читает:
 
 ~~~text
-PromoVault.reserveUSDG
-→ onlyController
-→ validateDrawId(drawId, SHORT)
+policies[m.input.rulesEpoch].outcome
 ~~~
 
-Monthly real reserve:
+а не `monthRules()` текущей версии.
 
-~~~text
-PromoVault.startMonthly
-→ onlyMonthlyController
-→ validateDrawId(drawId, MONTHLY)
-~~~
+Следовательно, последующая activation не может подменить q уже опубликованному/frozen draw.
 
-То есть даже если controller обойдёт собственный preparation wrapper и попытается вызвать vault напрямую, namespace всё равно enforced самой казной.
+### Единственное исключение — уже известная publisher truth boundary
 
-Это сильнее, чем только off-chain generator или только begin-level validation.
+Контракт всё ещё не умеет сам доказать, что publisher не положил в structurally valid old dataset попытки новой epoch или не выкинул старые.
+
+Это не новый дефект Monthly epochs: тот же класс доверия уже существовал у canonical datasets/empty assertions.
+
+Lifecycle v4 и builder такое смешение отвергают при independent replay, но on-chain prevention пока нет.
+
+То есть корректная формулировка гарантии остаётся:
+
+> policy старого draw нельзя изменить после honest canonical publication; ложная publication detectable, но пока не cryptographically prevented.
 
 ---
 
-## 2. Другого cross-kind occupation path в dual vault сейчас не вижу
+## 2. Clock semantics между контрактом и replay совпадают
 
-Проверил оставшиеся пути.
+Принятая логика теперь очень простая.
 
-### `reserve(...)`
+### Настоящий terminal win/no-win
 
-В `DualControllerPromoVault` generic/TOKEN reserve полностью запрещён через `_validateTokenReserve()`. Поэтому его нельзя использовать как обход namespace.
-
-### `finalize(...)`
-
-`finalize` сам новый draw не создаёт: он требует уже существующий `Reserved` draw. Monthly draw дополнительно отвергается через `UseMonthlySettlement`.
-
-Создать такой `Reserved` draw можно только через уже namespace-checked reserve/start paths.
-
-### `settleMonthly(...)`
-
-Также работает только с уже созданным `MONTHLY` draw и exact `pendingMonthlyDrawId`.
-
-### `fundUSDG / syncUSDG / claim`
-
-Draw storage не создают и namespace не занимают.
-
-### Два одинаковых low-255 payload
-
-Теперь это именно желательный сценарий:
+Контракт после успешного `settleMonthly`:
 
 ~~~text
-Short   = 0 | payload
-Monthly = 1<<255 | payload
+lastMonthAt = block.timestamp
+lastMonthBlock = block.number
 ~~~
 
-Это два разных canonical ID и оба могут быть READY/pending одновременно. Новые tests проверяют обе очередности seal и terminal.
+и только затем clearing draining epoch/`AttemptsConsumed` в той же transaction.
 
-Итого: исходный edge case закрыт не только после reserve, а до первого state commitment каждой стороны.
+При revert vault settlement откатывается весь terminal, поэтому clock и draining остаются прежними.
+
+Replay делает то же: `lastMonthlyTime` меняется только на `AttemptsConsumed` terminal.
+
+### `MonthlyEpochEmpty`
+
+Контракт:
+
+~~~text
+НЕ меняет lastMonthAt
+НЕ меняет lastMonthBlock
+НЕ резервирует деньги
+НЕ расходует attempts
+~~~
+
+Replay также просто закрывает draining epoch и оставляет `lastMonthlyTime` прежним.
+
+Это означает, что после verified empty новая current epoch может начать draw сразу, если старый обычный interval уже истёк. Это теперь **принятое продуктовое правило**, а не случайный side effect.
+
+Расхождения clock в просмотренных ветках win/no-win/empty я не вижу.
 
 ---
 
-## 3. Replay/on-chain identity выглядит согласованно
+## 3. Третья обслуживаемая epoch не появляется
 
-Lifecycle v3 теперь включает:
-
-~~~text
-drawIdScheme = kind-bit-v1
-~~~
-
-и `validateDrawId()` вызывается при построении snapshot и при чтении lifecycle FREEZE/TERMINAL events.
-
-`verifyDualBindings()` отдельно требует exact scheme и всё ещё pin'ит runtime hashes обоих controllers и vault.
-
-Это важно: verifier не просто видит `kind=MONTHLY` в event, он проверяет одновременно:
+State machine bounded корректно:
 
 ~~~text
-exact monthly emitter
-+ MONTHLY high-bit namespace
-+ exact deployment domain
+announce:
+  require announced == 0
+  require draining == 0
+
+activate:
+  old current → draining
+  announced → current
+
+пока draining != 0:
+  следующий announce запрещён
 ~~~
 
-Поэтому on-chain и replay используют одну идентичность, а не две конкурирующие схемы.
+Draining очищается только terminal старого draw либо `MonthlyEpochEmpty`.
 
-Старые experimental v3 artifacts действительно должны быть пересобраны: domain изменился. То, что v1/v2 legacy formats не переписываются задним числом, правильно.
+Поэтому в один момент могут существовать максимум:
+
+~~~text
+old draining Mn
++
+new current Mn+1
+~~~
+
+Исторические `policies[1..n]` остаются для аудита, но это не очередь обязательств.
+
+Announcement во время обычного current draw разрешён, что нормально: он ещё ничего не переключает. Activation запрещён при `activeMonth != 0` и при `pendingMonth != 0`.
+
+Так что опубликованный Publishing/Ready dataset новой activation не пересекается.
 
 ---
 
-## 4. Маленькое уточнение для документации/UI: drawId уникален внутри deployment, не во всём мультичейне
+## 4. Fresh cutoff после 256 блоков снова решён правильно
 
-`kind-bit-v1` разделяет Short/Monthly **в одной казне/instance**. Он не пытается делать bytes32 глобально уникальным между сетями и будущими deployments.
+Как у Short, rules boundary и canonical snapshot anchor разделены.
 
-Это нормально, потому что cryptographic contexts уже содержат chain/controller/instance/vault.
-
-Но публичные инструменты лучше считать полной идентичностью draw примерно так:
+Activation в B фиксирует:
 
 ~~~text
-(chainId, vault/instance, drawId)
+firstBlock(new) = B + 1
 ~~~
 
-а не обещать, что один bytes32 никогда не повторится в другом deployment.
-
-Для multi-chain проекта это стоит сохранить как audit/UI convention.
-
----
-
-## 5. `draw-id.cjs`: только косметическое замечание
-
-В helper параметр сейчас называется `seed`:
+Для старого draining draw later cutoff может быть свежим:
 
 ~~~text
-drawIdFor(kind, seed)
+C >= B + 1
 ~~~
 
-Комментарий правильно говорит, что это не randomness seed. Security-проблемы здесь нет.
-
-Но перед public tooling я бы переименовал argument в `payload`, `number` или `idSeed`, потому что в проекте одновременно существует настоящий RNG `seed`. Это уменьшит шанс путаницы в auditor/keeper code.
-
-Сам masking корректен: теряется только один high bit, остаётся 255-bit payload. Same-kind повтор payload не обязан предотвращаться генератором — повторный canonical ID уже запрещает state machine/vault.
-
----
-
-## 6. Размер после исправления всё ещё здоровый
-
-Новая policy добавила немного кода:
+но replay participant upper bound остаётся:
 
 ~~~text
-Short research wrapper   21 988   headroom 2 588
-Monthly                  13 876   headroom 10 700
-Dual vault                8 496   headroom 16 080
-~~~
-
-Это не меняет принятую dual-controller архитектуру. Short запас всё ещё требует дисциплины перед реальным RNG, но сам namespace не создал нового size-проблемного слоя.
-
----
-
-# 7. Monthly rules: требования совместимы, если использовать один draining epoch, а не очередь
-
-Текущий вопрос в `GPT_REVIEW_REQUEST.md` сформулирован правильно:
-
-- lifetime immutable q/interval нежелательны;
-- уже накопленные OPEN Monthly attempts нельзя ухудшить задним числом;
-- не хочется бесконечной очереди epochs;
-- новые Monthly cycles не должны получать дополнительную artificial остановку.
-
-Я думаю, эти требования **можно совместить**.
-
-Ключевая идея очень похожа на Short, но Monthly не надо копировать целиком.
-
-Нам нужен максимум:
-
-~~~text
-1 current epoch
-1 announced future epoch
-1 draining old epoch
-~~~
-
-и никогда больше двух реально живых versions одновременно.
-
----
-
-## 8. Предлагаемая Monthly transition state machine
-
-Допустим сейчас действует `M1`, объявляем `M2`.
-
-### Шаг A — announce
-
-Публикуется полный future payload:
-
-~~~text
-epoch = 2
-q / admission rules
-interval
-other explicitly versionable Monthly params
-eligibleAt
-~~~
-
-До activation **ни один attempt не становится M2**.
-
-Одновременно можно иметь только одну announced version.
-
-### Шаг B — activation в block B
-
-После notice отдельная transaction активирует transition:
-
-~~~text
-oldEpoch = M1
-newEpoch = M2
-firstNewBlock = B + 1
-~~~
-
-Все Monthly attempts, minted:
-
-~~~text
-<= B   → M1
->= B+1 → M2
-~~~
-
-Same-block semantics такая же простая, как у Short: весь block B остаётся old.
-
-Activation допустима только когда:
-
-- нет pending Monthly draw;
-- старый monthly schedule уже допускает boundary draw;
-- execution/RNG/funding readiness достаточны, чтобы не открыть переход, который заведомо нельзя обслужить.
-
-Последнее — readiness policy, не новая admin power.
-
-### Шаг C — старый epoch становится draining
-
-После activation:
-
-~~~text
-M1 OPEN attempts → должны быть обслужены старым draw
-M2 OPEN attempts → уже копятся для следующего обычного draw
-~~~
-
-Никакого преобразования M1 → M2 нет.
-
-### Шаг D — boundary Monthly draw использует СВЕЖИЙ cutoff C
-
-Здесь полезно повторить именно удачную часть Short epochs.
-
-Не нужно требовать:
-
-~~~text
-cutoff == activation block B
-~~~
-
-Можно взять свежий canonical cutoff:
-
-~~~text
-C >= B+1
-~~~
-
-а replay знает, что participant upper bound для draining M1 всё равно:
-
-~~~text
-B = firstBlock(M2) - 1
+B = firstBlock(new) - 1
 ~~~
 
 Поэтому:
 
-- `blockhash(C)` ещё доступен;
-- BUY M2 между B+1 и C видны chain replay;
-- но они не попадают в M1 dataset;
-- весь старый M1 cohort остаётся точным и конечным.
+- старый blockhash B не обязан оставаться доступным;
+- canonical C остаётся в recent window;
+- новые attempts после B видны replay;
+- но в old cohort не попадают.
 
-Это решает ту же 256-block проблему, которую уже решили для Short.
-
-### Шаг E — terminal старого draw
-
-Boundary draw полностью работает по M1:
-
-~~~text
-M1 q
-M1 interval/schedule eligibility
-один M1 seed
-M1 attempts consumed и при win, и при no-win
-~~~
-
-После terminal:
-
-~~~text
-drainingEpoch = none
-currentEpoch = M2 only
-lastMonthlyAt = boundary terminal time
-~~~
-
-Следующий обычный Monthly draw использует M2 и ждёт уже `M2.interval`.
-
-M2 attempts, накопленные пока M1 draw был pending, не теряются и не меняют version.
-
-Это не дополнительная остановка относительно обычного правила «один pending Monthly»: пока старый boundary draw pending, новый draw и так не мог бы начаться.
+Контракт сам проверяет только fresh cutoff/boundary metadata; фактическую epoch-completeness, как и прежде, доказывает replay.
 
 ---
 
-## 9. Почему очередь epochs не растёт
+## 5. Carry и same-block boundary выглядят последовательно
 
-Пока существует draining M1:
-
-~~~text
-announce M3 запрещён
-activate M3 запрещён
-~~~
-
-После terminal/verified-empty M1 остаётся только M2.
-
-Поэтому состояния вида:
+Принятое правило выполняется:
 
 ~~~text
-M1 + M2 + M3 + M4 open
+carry сам epoch не имеет
+entry/attempt получает epoch в момент mint
 ~~~
 
-не возникает.
+То есть 99 USDG до activation + 1 USDG после B приводит к attempt новой epoch, если mint произошёл с B+1.
 
-Максимум:
+В самом activation block B все mints остаются old независимо от transaction ordering. Это сознательная block-level semantics, которую и contract event, и replay выражают через `firstNewBlock = B+1`.
 
-~~~text
-frozen/draining M1
-+
-open M2
-~~~
-
-Это тот же полезный bounded-state принцип, но Monthly state machine значительно проще Short: нет корзины/Short D policy и отдельного выбора K.
+Reorg удаляет activation event и последующие mints вместе с canonical branch, поэтому отдельного rollback mechanism не требуется.
 
 ---
 
-## 10. Empty old epoch
+## 6. Lifecycle v4 / genesis binding выглядит достаточно строгим для текущей trust model
 
-Если на activation старых M1 attempts фактически нет, нет смысла запускать randomness с пустым dataset.
+V4 не переинтерпретирует старые formats и добавляет отдельный Monthly epoch domain.
 
-Нужен аналогичный replay-verifiable transition:
+Deployment identity связывает:
 
 ~~~text
-MonthlyEpochEmpty(M1, cutoff, snapshotHash)
+chainId
+Short source/runtime/instance
+Monthly source/runtime/instance
+vault/runtime/assets
+kind-bit drawId scheme
+Short genesis
+Monthly genesis rules
+Monthly interval
+Monthly notice
+Monthly firstBlock/startedAt
 ~~~
 
-После него M2 становится единственным epoch.
+`verifyDualBindings()` читает runtime hashes/reverse bindings с RPC, отдельно сравнивает immutable `monthlyRulesHash`, `monthlyInterval`, `monthlyStartedAt`, notice и `monthlyEpochPolicy(1)`.
 
-Trust boundary остаётся уже знакомой:
+Для конкретного draw publication verifier ещё проверяет exact `monthlyEpochPolicy(rulesEpoch)`, rules payload/hash, request, chunks, root/count/attempts и после seal — `MONTHLY_DATASET_CONTEXT_V2`.
 
-- контракт сам не доказывает полную BUY history;
-- ложный EMPTY обнаруживается independent RPC replay;
-- до public launch нужны artifact/monitoring/verifier;
-- это не повод добавлять reset/reroll.
+Я не вижу здесь очевидного места, где можно подменить genesis/current epoch и всё равно получить VALID publication при честном RPC.
 
-Для empty transition я бы начинал новый M2 clock от момента подтверждённого empty/activation boundary, чтобы первая M2 попытка не могла получить мгновенный draw только потому, что предыдущий old clock давно истёк. Точное правило стоит отдельно зафиксировать в tests/spec.
+Ограничения правильно остаются явными:
+
+- offline evidence не доказывает canonical chain;
+- RPC не доказывает finality;
+- publication verification отдельно не доказывает BUY completeness;
+- RNG пока вообще не сертифицируется.
 
 ---
 
-## 11. Interval versioning
+## 7. Один конкретный test gap перед тем, как закрыть epochs
 
-`interval` можно безопасно versionить тем же payload, если разделить две вещи.
+Большинство tests проверяют первый переход M1 → M2.
 
-Boundary draw старого cohort проверяется по **M1 interval**.
-
-После его terminal следующий draw проверяется по **M2 interval**.
-
-То есть обновление:
+Я бы добавил один полноценный сценарий **двух последовательных переходов**:
 
 ~~~text
-30 days → 20 days
+M1
+→ activate M2
+→ terminal/empty M1
+→ обычный M2 draw с cutoff, оставляющим часть M2 attempts OPEN
+→ announce M3 во время/после M2 draw
+→ interval
+→ activate M3
+→ M2 становится draining
+→ M3 attempts копятся
+→ terminal M2
+→ M3 normal draw
 ~~~
 
-не ускоряет старый M1 draw задним числом.
+И проверить одновременно:
 
-А:
+- `byEpoch` после трёх исторических policies;
+- global cumulative attempt numbers остаются непрерывными;
+- остаток M2 после предыдущего M2 cutoff действительно попадает в draining M2;
+- M3 не смешивается с ним;
+- consumed prefix/conservation сохраняются;
+- после второго transition можно объявить M4 только после drain M2;
+- отдельная ветка `M2 empty → M3 immediate eligibility` тоже не ломает clock.
 
-~~~text
-20 days → 30 days
-~~~
+Я не ожидаю, что этот test найдёт баг, но он проверит главное обещание конструкции: **история policy может расти сколько угодно, а live obligations остаются bounded двумя epochs**.
 
-не удлиняет уже накопленным M1 attempts их старое schedule условие.
-
-Новые M2 attempts заранее знают свою будущую policy.
-
-Как и раньше, interval — минимальная eligibility spacing, а не гарантия terminal ровно через N дней: pending/RNG/readiness могут задержать исполнение.
+Это особенно полезно потому, что расчёт `byEpoch` использует cumulative consumed prefix и сейчас логически корректен именно благодаря old-first invariant.
 
 ---
 
-## 12. Replay changes
+## 8. Две вещи не надо потерять при переходе к production
 
-Lifecycle v3 сейчас ведёт Monthly как один ledger. Для versioning потребуется отдельная Monthly epoch принадлежность mint.
+### A. Activation readiness
 
-Одна BUY/entry в конкретном block может законно создать:
-
-~~~text
-Short attempt  → Short epoch S3
-Monthly attempt → Monthly epoch M2
-~~~
-
-Эти timelines независимы.
-
-Replay должен хранить monthly `byEpoch` или эквивалентные monotonic ranges и при boundary snapshot выбирать target old epoch, а не весь Monthly OPEN.
-
-Conservation остаётся общей:
+Сам internal `_activateMonthlyRules()` проверяет notice/schedule/absence active+pending, но намеренно не знает:
 
 ~~~text
-monthly minted
-= sum(open by epoch)
-+ sum(frozen by epoch)
-+ sum(consumed by epoch)
+Next full?
+RNG доступен?
+execution budget жив?
+finality достаточна?
 ~~~
 
-Это важно проверить отдельно, а не пытаться переиспользовать Short fields вслепую.
+Если production wrapper откроет permissionless activation без readiness gate, можно создать draining old epoch в момент, когда его заведомо нельзя закончить.
+
+Это не меняет шансы и не крадёт attempts, но ухудшает liveness.
+
+Поэтому будущая readiness policy должна применяться **до activation и до seal**, не давая затем cancel/reset frozen draw.
+
+### B. AA publication recovery
+
+Новый `monthly-dataset.cjs` по-прежнему восстанавливает chunks через direct transaction:
+
+~~~text
+tx.to == MonthlyController
+parseTransaction(publishMonth(...))
+~~~
+
+Если production keeper пойдёт через ERC-4337/Alchemy sponsored smart account, этот recovery transport сам по себе его не поймёт.
+
+Это уже известный integration debt Short и теперь Monthly. Его лучше решить общим transport decoder/recovery layer после выбора execution stack, а не плодить два разных решения.
 
 ---
 
-## 13. Что НЕ нужно копировать из Short
+## 9. Самый сильный оставшийся trust debt — не epochs, а truth of dataset/empty
 
-Не надо превращать Monthly в второй Short.
+С учётом нашей заявленной философии это важно не замылить словами «verifiable».
 
-Monthly не нужны:
-
-- basket versions;
-- K/weights;
-- caller-supplied D policy;
-- Short-specific minimumUnit;
-- Short draw interval 6h;
-- общий rules struct только ради reuse.
-
-Monthly epoch payload должен содержать только **реально изменяемую Monthly policy**.
-
-Budget у Monthly уже определяется accounting через `startMonthly`: весь frozen Current. Это даже чище, чем Short D, и не требует новой operator discretion.
-
----
-
-## 14. Минимальный следующий design package
-
-До RNG я бы сделал маленький design/fixture пакет:
+Сейчас авторизованный publisher технически способен:
 
 ~~~text
-monthly-rules-epochs-v1
+опубликовать структурно корректный неполный dataset
+или
+сделать ложный MonthlyEpochEmpty
 ~~~
 
-Acceptance:
+и contract сам этого не предотвратит.
 
-1. Genesis Monthly epoch фиксируется deployment.
-2. Максимум одна announced future version.
-3. Notice не активирует rules автоматически.
-4. Activation B: old through B, new from B+1.
-5. Existing Monthly OPEN attempts сохраняют old epoch.
-6. New attempts после boundary получают new epoch.
-7. Old boundary draw использует fresh cutoff C, но dataset ограничен old epoch end B.
-8. Boundary draw uses old q/interval.
-9. New epoch attempts не расходуются old draw.
-10. После terminal старого draw new epoch становится единственным target.
-11. Следующий update запрещён, пока draining old не terminal/verified-empty.
-12. Empty transition проверяется replay и публичным snapshot hash.
-13. Reorg activation/mints откатываются детерминированно.
-14. Monthly and Short epochs полностью независимы.
-15. Никакой setter не может переназначить уже minted attempt другой version.
+Independent verifier такую историю объявит ложной, но on-chain система уже может продолжить по неправильному cohort.
 
-Production численные q/interval по-прежнему не выбирать в этом пакете.
+Это **не новый blocker этого commit** и текущий `PRODUCT_SPEC/GPT_REVIEW_REQUEST` прямо принимает модель detectable-not-prevented. Поэтому я не предлагаю сейчас тормозить Monthly epochs и тащить ZK/challenge.
 
-После этого RNG boundary можно делать сразу для уже окончательной Short + Monthly policy architecture.
+Но перед public mainnet это нужно вынести отдельным trust decision:
+
+> достаточно ли проекту публичной обнаружимости обмана publisher, или принцип «даже мы не можем тихо нарушить участие» требует prevention layer?
+
+С учётом последнего Trust & Evolution направления я бы не дал этой теме потеряться после RNG.
 
 ---
 
-## Итог
+## 10. Size после Monthly epochs остаётся здоровым
 
-`80976bd` хорошо закрывает найденную коллизию.
+Research wrappers после пакета:
 
-Kind-bit scheme здесь даже лучше моего первоначального hash-domain предложения: она даёт непересекающиеся namespaces, сохраняет один canonical ID и почти ничего не добавляет в audit surface.
+~~~text
+Short    21 988 bytes   headroom 2 588
+Monthly  17 064 bytes   headroom 7 512
+Vault     8 496 bytes   headroom 16 080
+~~~
 
-Нового cross-kind occupation path в dual vault/replay я не вижу.
+без viaIR и под standard 24 576 runtime benchmark.
 
-Следующая логичная ветка — **Monthly forward-only epochs**. Причём требования не выглядят противоречивыми: один draining old epoch + один active new epoch позволяет сохранить старые attempts, менять q/interval для будущих, не строить очередь versions и не добавлять отдельную паузу сверх уже существующего one-pending Monthly lifecycle.
+Monthly имеет хороший запас. Short по-прежнему является более тесной стороной, поэтому общий fixed RNG adapter для двух controllers всё ещё выглядит разумным кандидатом, если provider-specific code окажется тяжёлым.
+
+---
+
+## 11. Следующий этап
+
+После одного multi-transition regression test я считаю Monthly epochs достаточно закрытым компонентом, чтобы **перейти к отдельному RNG research package**.
+
+Не кодировать provider заранее.
+
+Следующая задача:
+
+~~~text
+rng-provider-and-auth-boundary-study-v1
+~~~
+
+Нужно сначала установить, что реально доступно на Robinhood Chain сейчас, и сравнить минимум:
+
+- native/официальный randomness mechanism сети, если существует;
+- внешние VRF/randomness providers, которые фактически поддерживают Robinhood;
+- commit/reveal или chain-native fallback, если внешний provider отсутствует;
+- стоимость, latency, callback/retry semantics и failure model.
+
+После исследования — минимальный fixed authenticated adapter/interface, общий для Short/Monthly если это уменьшает duplication без расширения полномочий.
+
+Обязательные invariants будущего API:
+
+~~~text
+one sealed draw → at most one requestId
+requestId permanently binds draw kind + drawId + context
+callback only from authenticated provider/adapter
+one accepted seed forever
+no owner setSeed
+no re-request/reroll after request
+provider failure leaves same pending obligation
+callback failure does not choose a new random
+Short/Monthly domains remain disjoint
+adapter cannot move PromoVault money
+adapter/controller addresses immutable
+~~~
+
+### Итог
+
+`198e8dd` хорошо закрывает именно policy evolution Monthly: старые attempts остаются под старой q, новые получают future q по block boundary, history растёт для аудита, а live state не превращается в очередь epochs.
+
+По текущему коду/replay явного correctness blocker я не нашёл.
+
+Добавить multi-transition M1→M2→M3 regression, после чего можно переходить к реальному RNG research. При этом false dataset/empty и AA recovery остаются отдельными явно отслеживаемыми trust/integration debts до public deployment.
