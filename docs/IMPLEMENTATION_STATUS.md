@@ -2,12 +2,17 @@
 
 Обновлено по локальному коду и проверкам: 17.09.2026. Это карта кода, а не утверждение реализации всей [продуктовой схемы](PRODUCT_SPEC.md).
 
-Последний полный запуск 17.09 после оптимизации selection: `npm test`, **138/138 passed**.
-Два новых теста дополняют проверки canonical settlement; отдельно выполнены пять
-сравнений газа/результата с baseline. Предыдущие числа ниже относятся к прежним этапам.
+Текущий этап 17.09: [два фиксированных контроллера](DUAL_CONTROLLER_ARCHITECTURE.md).
+Полный `npm test`: **151/151 passed**. Отдельный dual size/readiness check также passed.
+К прежним 138 unit tests добавлены 13 проверок раздельных полномочий, Monthly settlement
+и replay v3. Отдельно проверяется deployment с исследовательскими RNG wrappers
+командой `node scripts/dual-controller-check.cjs`. Старые числа ниже — предыдущие этапы.
 
 | Часть | Фактическое состояние |
 |---|---|
+| Два контроллера / новая казна | DualControllerPromoVault: immutable Short/Monthly capabilities, общая бухгалтерия, USDG-only prizes. Старый PromoVault сохранён. Research wrappers 21 866 / 13 753 байта, vault 8 331; стандартный deploy прошёл без viaIR |
+| Внутренний Monthly settlement | MonthlySettlement: публикация chunks, один seed, permissionless process/finish, атомарный start/settle/consume, независимый clock. Без production RNG; immutable interval/q — deployment inputs, не выбранные значения |
+| Replay v3 | Два source, kind-specific events, deployment domain связывает controllers/vault/assets/policy, RPC reverse-binding verification. Offline authenticity не доказывается |
 | Исследование полного controller | 17.09 отдельный исполняемый макет RNG/roles/readiness/Monthly, шесть compile profiles. Обычный root 28 475 байт; viaIR+fixed helper+runs=1 — 24 444, лишь 132 байта запаса. Production contracts/settings не менялись. [Измерения и ограничения](CONTROLLER_SIZE_STUDY.md) |
 | Оптимизация Short selection | 17.09 общий validated primitive, повторное использование ranks; runtime fixture 18 497 байт вместо 20 340. Пять сравнений газа на одинаковом state/seed с exact resultHash и vault accounting. Новых внешних helpers нет. [Результаты](SHORT_SELECTION_OPTIMIZATION.md) |
 | Canonical Short settlement | 16.09 внутренний ShortSettlement соединяет dataset + epochs + streaming top K + реальный finalize/consume. Один seed, permissionless process/finish, независимый JS result/recovery. Seed вручную только в fixture; настоящий RNG/readiness/keeper ещё отсутствуют. [Границы](SHORT_SETTLEMENT.md) |

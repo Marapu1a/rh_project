@@ -1,67 +1,48 @@
-# Ревью замера полного controller
+# Ревью двух фиксированных контроллеров
 
-17.09.2026. После оптимизации Short до 18 497 байт измерили содержательный макет
-оставшихся частей. Production contracts, compiler settings и основной test suite
-не меняли. Исходники, настройки и evidence находятся в research/controller-size.
+17.09.2026. Выбрали вариант Short + Monthly + общая казна с раздельными immutable
+полномочиями. Реализовали ограниченный локальный шаг; production RNG ещё не выбран.
 
-## Результат
+Начать с [DUAL_CONTROLLER_ARCHITECTURE.md](DUAL_CONTROLLER_ARCHITECTURE.md), затем:
 
-- Short + RNG request binding + роли + простые readiness checks: **21 866 байт**.
-- С отдельной полной Monthly state machine: **28 475**, превышение **3 899**.
-- Вынос только selectTopK в immutable external pure helper: **27 452** — мало.
-- viaIR без helper: **26 288**, всё ещё выше лимита.
-- viaIR + helper: **24 529**, запас **47**.
-- viaIR + helper + runs=1: **24 444**, запас **132**.
+- `contracts/DualControllerPromoVault.sol` и три узких policy hooks в `PromoVault.sol`;
+- `contracts/MonthlySettlement.sol`, существующий `ShortSettlement.sol`;
+- `test/dual-controller.test.cjs`, `test/attempt-lifecycle-dual.test.cjs`;
+- `scripts/dual-bindings.cjs`, lifecycle v3 в `scripts/attempt-lifecycle.cjs`;
+- [измерения](../research/controller-size/dual-check.json) и воспроизводимый
+  `node scripts/dual-controller-check.cjs`.
 
-Самая компактная сборка действительно развёрнута при стандартном лимите Hardhat
-и прошла сценарии. Большой монолит проверен отдельно: стандартная конфигурация
-отвергает deployment, специальная исследовательская конфигурация с отключённым
-size limit позволяет проверить только его поведение. Не смешиваем эти результаты.
+Runtime под стандартным лимитом 24 576, без viaIR: Short + research RNG/roles
+21 866; Monthly + research RNG/roles 13 753; vault 8 331. Проверено реальным локальным
+deployment. Это проверка переносимости, не утверждение лимита Robinhood в 24 KiB.
+Конкретные chain limits проверим отдельно перед запуском.
 
-[Полный отчёт](CONTROLLER_SIZE_STUDY.md),
-[размеры/source hashes](../research/controller-size/sizes.json),
-[исходник макета](../research/controller-size/ControllerSizeStudy.sol).
+Short может резервировать только Short и finalize его generic draws; Monthly может
+только start/settle jackpot. Общий namespace drawId. Generic reserve и TOKEN prizes
+в новом vault запрещены. Прямой TOKEN здесь застрянет: conversion нужен до funding.
+Все старые USDG credits, rounding и direct GENERAL sync сохранены. Старый single-
+controller PromoVault не удалён и не изменил default-поведение.
 
-## Насколько модель содержательная
+MonthlySettlement — внутренний компонент, с параметризованным immutable interval/q,
+публичной публикацией chunks, одним seed, permissionless process/finish, atomic
+settle/consume. Test fixtures с ручным seed и research wrappers с mock provider
+не выдаём за production. Алгоритм — capped admission, затем минимальный uniform rank,
+один winner или no-win. Production значения не утверждали.
 
-Есть реальная публикация/валидация Monthly root/count/attempts/chunks до reserve,
-отдельные pending Short/Monthly, общий immutable provider с request↔draw/context/kind,
-один callback, настоящие PromoVault startMonthly/settleMonthly, обработка порциями,
-win/no-win/AttemptsConsumed, сохранение старых claims. Freeze и request failure
-атомарны. Нормальные и ошибочные сценарии проверены на локальном EVM.
+Просим проверить конкретные вопросы:
 
-30 дней, фиксированные monthly q, бюджетный ceiling, confirmations и native floor
-— исследовательские допущения. Production finality, полный gas funding/keeper,
-реальный RNG protocol и окончательная policy не реализованы. Параметры/архитектура
-этим макетом не утверждены. Monthly algorithm/context domains здесь study-only.
+1. Есть ли обход capability matrix через унаследованный API, generic draw kind,
+   sync или комбинацию двух controllers? Особенно важно не расширить права Short.
+2. Не нарушает ли одновременное исполнение обоих draws бухгалтерию Next/Current,
+   старые claimable, direct transfers и независимые attempts/clocks?
+3. Достаточны ли domain и reverse-binding проверки lifecycle v3 для двух sources?
+   Где локальный verifier может принять несовместимый deployment или пропустить events?
+4. Есть ли практический путь заморозить корректно опубликованный Monthly dataset,
+   который нельзя закончить после единственного валидного seed? Отличайте внутренний
+   баг от недоставленного RNG, недостоверного publisher и внешнего USDG deficit.
+5. Какой **один следующий ограниченный этап** выбрать для реальной RNG/readiness
+   интеграции, учитывая оставшиеся 2.7 KiB Short и автоматизацию без ручного оператора?
 
-## Наша оценка
-
-132 байта — неприемлемо малый запас для ещё незаконченного контроллера. Поэтому
-не переключаем основной compile на viaIR и не объявляем этот макет готовым MVP.
-Однако размер конкретного макета не доказывает невозможность любого монолита:
-в нём Monthly publication/chunk accounting частично повторяет Short.
-
-Нужен один следующий пакет, который уберёт архитектурное давление, не сократит
-гарантии ради байтов. Выбор пока не сделан.
-
-## Вопросы
-
-1. Что рациональнее первым измерить: общий typed dataset/commitment слой для двух
-   draw kinds в root, или отдельный фиксированный Monthly state component?
-   Назовите конкретный переносимый код и состояния, не просто общий паттерн.
-2. Если общий слой: как сохранить два независимых pending, Short epoch draining,
-   отдельные clocks/attempt consumption, domain separation и полноту snapshots?
-3. Если внешний компонент: root должен оставаться единственным controller PromoVault,
-   компоненты immutable без proxy/delegatecall/replaceable modules. Как обеспечить
-   атомарность terminal и не дать внешнему компоненту назначать произвольных winners?
-4. Насколько наш макет завышает/занижает размер: большие getters/ABI, дублирование
-   Monthly preparation, Ownable2Step, невыбранный реальный RNG и readiness policy?
-5. Какой практический запас оставить перед внешними интеграциями? Какие оценки
-   можно сделать без фиктивных пустых stubs и без бесконечного code golf?
-6. Достаточно ли зафиксированных behavioral checks для архитектурного эксперимента?
-   Нужны конкретные новые пробелы, а не заявление production readiness.
-
-Отдельный pure selection helper уже измерен и сам по себе недостаточен.
-Gas этих новых compile/composition profiles пока не сравнивался; прежде чем
-принимать viaIR или fixed helpers в рабочий код, нужны отдельные regression/gas tests.
+Не предлагаем proxy, заменяемые controllers, вывод призов или универсальный reset.
+Не просим перепроектировать всю механику. Приоритет — конкретный воспроизводимый
+пробел в текущем коде и минимальное исправление. Ответ по-прежнему в GPT_REVIEW_RESPONSE.md.

@@ -82,6 +82,15 @@ contract PromoVault is ReentrancyGuard {
         _;
     }
 
+    // Extension points preserve the legacy single-controller behavior by default.
+    // The dual-controller vault narrows reserve capabilities and monthly authority.
+    modifier onlyMonthlyController() { _authorizeMonthly(); _; }
+    function _authorizeMonthly() internal view virtual {
+        if (msg.sender != drawController) revert OnlyController();
+    }
+    function _validateTokenReserve() internal pure virtual {}
+    function _validateUSDGSource(ReserveSource) internal pure virtual {}
+
     /// Total uncommitted balance, NOT the amount available from an individual USDG reserve.
     /// USDG includes unrecognized direct funding; reserveUSDG synchronizes it as GENERAL.
     function available(address asset) public view returns (uint256) {
@@ -152,6 +161,7 @@ contract PromoVault is ReentrancyGuard {
     function reserve(bytes32 drawId, uint64 campaignId, address asset, uint256 budget)
         external onlyController nonReentrant
     {
+        _validateTokenReserve();
         if (asset == quoteToken) revert UseUSDGReserve();
         _reserve(drawId, campaignId, asset, budget);
     }
@@ -159,6 +169,7 @@ contract PromoVault is ReentrancyGuard {
     function reserveUSDG(bytes32 drawId, uint64 campaignId, ReserveSource source, uint256 budget)
         external onlyController nonReentrant
     {
+        _validateUSDGSource(source);
         // While monthly is pending, new Current belongs to the following accounting outcome.
         if (source == ReserveSource.CURRENT && pendingMonthlyDrawId != bytes32(0)) revert MonthlyPending();
         _syncUSDG();
@@ -175,7 +186,7 @@ contract PromoVault is ReentrancyGuard {
     }
 
     /// Accounting only. Eligibility, checkpoints and random authentication belong to controller.
-    function startMonthly(bytes32 drawId, uint64 campaignId) external onlyController nonReentrant {
+    function startMonthly(bytes32 drawId, uint64 campaignId) external onlyMonthlyController nonReentrant {
         _syncUSDG();
         if (pendingMonthlyDrawId != bytes32(0)) revert MonthlyPending();
         if (freeNext != nextStartTarget) revert NextStartNotReady();
@@ -191,7 +202,7 @@ contract PromoVault is ReentrancyGuard {
     }
 
     /// Zero winner means a terminal no-win, never a timeout or a request for another random.
-    function settleMonthly(bytes32 drawId, address winner) external onlyController nonReentrant {
+    function settleMonthly(bytes32 drawId, address winner) external onlyMonthlyController nonReentrant {
         Draw storage d = draws[drawId];
         if (drawId == bytes32(0) || pendingMonthlyDrawId != drawId ||
             drawKind[drawId] != DrawKind.MONTHLY || d.status != Status.Reserved ||

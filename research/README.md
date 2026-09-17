@@ -1,5 +1,10 @@
 # Данные исследований
 
+`controller-size/dual-check.json` — deployment двух отдельных controllers и новой казны
+при стандартном runtime limit, с mock async RNG/roles/readiness, source hashes и gas.
+Воспроизведение: `node scripts/dual-controller-check.cjs`. Обычные optimizer settings,
+без viaIR или отключения лимита. [Выбранная архитектура](../docs/DUAL_CONTROLLER_ARCHITECTURE.md).
+
 `controller-size/` — отдельный исследовательский Solidity-макет полного controller, размеры шести сборок, standard-limit и behavioral checks. `npm run report:controller:size`, `npm run check:controller:size`. Только специальный behavioral профиль отключает локальный code-size limit; обычная конфигурация не меняется. [Методика](../docs/CONTROLLER_SIZE_STUDY.md). Не production contracts.
 
 `short-selection-benchmark.json` — сравнение baseline 2586de8 и оптимизированного canonical Short на одинаковом frozen state/context/seed. Только local Hardhat snapshot/setCode, без изменения production trust model. `npm run report:short:selection`; [методика и ограничения](../docs/SHORT_SELECTION_OPTIMIZATION.md). Старые scaling/economics evidence не заменяет.

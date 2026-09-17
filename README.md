@@ -11,7 +11,12 @@
 
 Утверждено внешнее общее пополнение без project fee: Short/Current/Next = 3:2:1, после заполнения Next — 50:50 между Short и Current. Излишки Next, включая целевое пополнение, идут в Current. Призовой фонд невозвратен проекту/спонсорам. Концепция Short: допуск на основе entries без Luck, случайная раздача заранее обеспеченной корзины, не больше одного приза кошельку. Допуск не является выигрышем; полный розыгрыш ещё не реализован.
 
-Это **не полностью реализованный продукт**. Есть прототипы [FeeRouter](contracts/FeeRouter.sol) и [PromoVault](contracts/PromoVault.sol), unit tests и исследования. USDG funding, три свободных резерва и Monthly accounting реализованы. Есть регистрация, BUY/attempt replay, [атомарная фиксация Short с резервом](docs/SHORT_DRAW_COMMITMENT.md) и [проверяемый расчёт результата](docs/SHORT_OUTCOME_VERIFICATION.md). Конвертация, активация версий правил, календарь и полный production controller/RNG ещё не реализованы. Публичного deployment нет.
+Это **не полностью реализованный продукт**. Есть прототипы [FeeRouter](contracts/FeeRouter.sol) и [PromoVault](contracts/PromoVault.sol), unit tests и исследования. USDG funding, три свободных резерва и Monthly accounting реализованы. Есть регистрация, BUY/attempt replay, [атомарная фиксация Short с резервом](docs/SHORT_DRAW_COMMITMENT.md) и [проверяемый расчёт результата](docs/SHORT_OUTCOME_VERIFICATION.md). Полный production controller/RNG, конвертация и автоматическое исполнение ещё не реализованы. Публичного deployment нет.
+
+17.09: выбрана и реализована локальная [архитектура двух фиксированных контроллеров](docs/DUAL_CONTROLLER_ARCHITECTURE.md):
+общая USDG-казна с раздельными полномочиями, Short и Monthly settlement, replay из двух
+источников. Версии правил Short уже реализованы внутренним компонентом. Production
+RNG/readiness/keeper и конвертация ещё предстоят; ручной seed разрешён только в тестах.
 
 ## Локальные проверки
 

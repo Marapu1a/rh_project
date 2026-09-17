@@ -1,0 +1,60 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.24;
+import {MonthlySettlement} from "../../contracts/MonthlySettlement.sol";
+import {ShortOutcome} from "../../contracts/ShortOutcome.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {Ownable2Step} from "@openzeppelin/contracts/access/Ownable2Step.sol";
+import {IStudyRandom} from "./ControllerSizeStudy.sol";
+
+/// Research wrapper ONLY: mock provider/readiness, not a production RNG adapter.
+contract MonthlyRngSizeStudy is MonthlySettlement, Ownable2Step {
+    struct Setup { address vault; address registry; bytes32 instance; address governor; address publisher; address provider;
+        uint256 interval; uint256 confirmations; uint256 maxGasPrice; uint256 nativeFloor; }
+    struct Binding { bytes32 drawId; bytes32 context; bool delivered; }
+    IStudyRandom public immutable randomProvider;
+    uint256 public immutable confirmations;
+    uint256 public immutable maxGasPrice;
+    uint256 public immutable nativeFloor;
+    address public publisher;
+    address public pendingPublisher;
+    bool private requesting;
+    mapping(uint256=>Binding) public requests;
+    mapping(bytes32=>uint256) public drawRequest;
+    event PublisherProposed(address candidate);
+    event PublisherAccepted(address publisher);
+    event RandomBound(uint256 indexed requestId,bytes32 indexed drawId,bytes32 context);
+    constructor(Setup memory s,ShortOutcome.Rules memory r)
+        MonthlySettlement(s.vault,s.registry,s.instance,s.interval,r) Ownable(s.governor){
+        require(s.publisher!=address(0)&&s.provider.code.length>0&&s.confirmations>0&&s.confirmations<=256&&s.maxGasPrice>0,"config");
+        publisher=s.publisher;randomProvider=IStudyRandom(s.provider);confirmations=s.confirmations;
+        maxGasPrice=s.maxGasPrice;nativeFloor=s.nativeFloor;
+    }
+    receive() external payable {}
+    modifier onlyPublisher(){require(msg.sender==publisher,"publisher");_;}
+    function proposePublisher(address next) external onlyOwner {
+        require(next!=address(0),"publisher");pendingPublisher=next;emit PublisherProposed(next);
+    }
+    function acceptPublisher() external {
+        require(msg.sender==pendingPublisher,"publisher");publisher=msg.sender;pendingPublisher=address(0);emit PublisherAccepted(msg.sender);
+    }
+    function beginMonth(Input calldata input) external onlyPublisher {
+        require(block.number>=input.cutoff+confirmations,"finality");_beginMonth(input);
+    }
+    function publishMonth(bytes32 id,ShortOutcome.Participant[] calldata chunk) external onlyPublisher {_publishMonth(id,chunk);}
+    function supersedeMonth(bytes32 id) external onlyPublisher {_supersedeMonth(id);}
+    function executionReady() public view returns(bool){
+        return !requesting&&randomProvider.ready()&&tx.gasprice<=maxGasPrice&&address(this).balance>=randomProvider.fee()+nativeFloor;
+    }
+    function sealMonth(bytes32 id) external {
+        require(executionReady()&&drawRequest[id]==0,"not ready");_sealMonth(id);
+        bytes32 context=month(id).context;requesting=true;
+        uint256 key=randomProvider.request{value:randomProvider.fee()}(context);
+        require(key!=0&&requests[key].drawId==bytes32(0),"request id");
+        requests[key]=Binding(id,context,false);drawRequest[id]=key;requesting=false;emit RandomBound(key,id,context);
+    }
+    function fulfill(uint256 key,bytes32 seed) external {
+        require(msg.sender==address(randomProvider)&&!requesting,"provider");
+        Binding storage b=requests[key];require(b.drawId!=bytes32(0)&&!b.delivered,"delivery");
+        b.delivered=true;_acceptMonthlySeed(b.drawId,seed);
+    }
+}

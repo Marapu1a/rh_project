@@ -15,24 +15,34 @@ const requireThat=(ok,message)=>{if(!ok)throw Error(message);};
 function integer(x){const n=Number(BigInt(x));requireThat(Number.isSafeInteger(n)&&n>=0,'Invalid block/index');return n;}
 function bytes32(x,label){requireThat(isHexString(x,32)&&lower(x)!==ZeroHash,'Invalid '+label);return lower(x);}
 function domainFor(manifest,config){
-  requireThat(['attempt-lifecycle-v1','attempt-lifecycle-v2'].includes(config.schema),'Unsupported lifecycle schema');
+  requireThat(['attempt-lifecycle-v1','attempt-lifecycle-v2','attempt-lifecycle-v3'].includes(config.schema),'Unsupported lifecycle schema');
+  if(config.monthlySource)requireThat(config.schema==='attempt-lifecycle-v3','Dual sources require lifecycle v3');
   requireThat(isAddress(config.source)&&lower(config.source)!==ZeroAddress,'Invalid lifecycle source');
   bytes32(config.sourceCodeHash,'source code hash');
   const instanceId=bytes32(config.instanceId,'instance id');
   const domain={schema:config.schema,chainId:BigInt(manifest.chainId).toString(),instanceId,
     registry:lower(manifest.registry),source:lower(config.source),sourceCodeHash:lower(config.sourceCodeHash),buyManifestHash:hash(manifest)};
-  if(config.schema==='attempt-lifecycle-v2'){
+  if(config.schema!=='attempt-lifecycle-v1'){
     const g=config.shortRules;requireThat(g&&integer(g.noticeSeconds)>0,'Missing epoch genesis');
     bytes32(g.rulesHash,'genesis rules');integer(g.startedAt);integer(g.firstBlock);
     domain.shortRulesGenesisHash=hash({rulesHash:lower(g.rulesHash),noticeSeconds:String(integer(g.noticeSeconds)),
       startedAt:String(integer(g.startedAt)),firstBlock:String(integer(g.firstBlock))});
   }
+  if(config.schema==='attempt-lifecycle-v3'){
+    requireThat(isAddress(config.monthlySource)&&lower(config.monthlySource)!==ZeroAddress&&lower(config.monthlySource)!==domain.source,'Invalid monthly source');
+    requireThat(isAddress(config.vault)&&lower(config.vault)!==ZeroAddress,'Invalid dual vault');
+    const m=config.monthlyPolicy;requireThat(m&&integer(m.interval)>0,'Missing monthly policy');integer(m.startedAt);
+    Object.assign(domain,{monthlySource:lower(config.monthlySource),monthlySourceCodeHash:bytes32(config.monthlySourceCodeHash,'monthly code hash'),
+      monthlyInstanceId:bytes32(config.monthlyInstanceId,'monthly instance'),vault:lower(config.vault),vaultCodeHash:bytes32(config.vaultCodeHash,'vault code hash'),
+      vaultQuote:lower(manifest.quote),vaultProjectToken:lower(manifest.token),monthlyPolicyHash:hash({rulesHash:bytes32(m.rulesHash,'monthly rules'),
+        interval:String(integer(m.interval)),startedAt:String(integer(m.startedAt))})});
+  }
   return domain;
 }
 function snapshotFor(domain,drawId,kind,cutoff,rulesHash,participants,rulesEpoch){
-  const epoch=domain.schema==='attempt-lifecycle-v2'&&kind==='SHORT';
+  const epoch=domain.schema!=='attempt-lifecycle-v1'&&kind==='SHORT';
   if(epoch)requireThat(integer(rulesEpoch)>0,'Snapshot epoch required');
-  return {schema:epoch?'attempt-snapshot-v2':'attempt-snapshot-v1',domain,drawId,kind,cutoff,rulesHash,participants,
+  return {schema:domain.schema==='attempt-lifecycle-v3'?'attempt-snapshot-v3':epoch?'attempt-snapshot-v2':'attempt-snapshot-v1',domain,drawId,kind,cutoff,rulesHash,participants,
     ...(epoch?{rulesEpoch:String(rulesEpoch)}:{})};
 }
 function emptyEpochHash(domain,epoch,cutoff,rulesHash){return hash({schema:'short-epoch-empty-v1',domain,epoch:String(epoch),cutoff,rulesHash,participants:[]});}
@@ -53,7 +63,8 @@ function replayAttempts(manifest,config,deliveredBlocks){
   const blocks=[...new Map(deliveredBlocks.map(b=>[integer(b.number),b])).values()].sort((a,b)=>integer(a.number)-integer(b.number));
   const headers=new Map([[integer(manifest.anchor.number),lower(manifest.anchor.hash)],...blocks.map(b=>[integer(b.number),lower(b.hash)])]);
   const times=new Map(blocks.map(b=>[integer(b.number),integer(b.timestamp)]));
-  const epochMode=config.schema==='attempt-lifecycle-v2';
+  const dualMode=config.schema==='attempt-lifecycle-v3',epochMode=config.schema!=='attempt-lifecycle-v1';
+  let lastMonthlyTime=dualMode?integer(config.monthlyPolicy.startedAt):0;
   const epochs=epochMode?[{epoch:1,firstBlock:integer(config.shortRules.firstBlock),rulesHash:lower(config.shortRules.rulesHash)}]:[];
   let currentEpoch=1,drainingEpoch=0,announced=null,lastShortTime=epochMode?integer(config.shortRules.startedAt):0;
   const policy=epoch=>epochs.find(e=>e.epoch===epoch);
@@ -68,17 +79,21 @@ function replayAttempts(manifest,config,deliveredBlocks){
   }
   const seen=new Set(),known=new Set(ABI.fragments.map(f=>f.topicHash));
   for(const block of blocks)for(const {receipt} of block.transactions)for(const log of receipt.logs){
-    if(lower(log.address)!==domain.source||!known.has(log.topics[0]?.toLowerCase()))continue;
+    const emitter=lower(log.address);
+    if((emitter!==domain.source&&(!dualMode||emitter!==domain.monthlySource))||!known.has(log.topics[0]?.toLowerCase()))continue;
     const ref=reference(manifest,log);
+    if(dualMode)ref.emitter=emitter;
     if(seen.has(ref.occurrenceId))continue; // Identical duplicates already checked by BUY replay.
     seen.add(ref.occurrenceId);
     const parsed=ABI.parseLog(log),encoded=ABI.encodeEventLog(parsed.fragment,parsed.args);
     requireThat(canonical(encoded.topics.map(lower))===canonical(log.topics.map(lower))&&lower(encoded.data)===lower(log.data),'Non-canonical lifecycle event');
     if(parsed.name.startsWith('Short')){
+      requireThat(emitter===domain.source,'Monthly source cannot change Short epochs');
       requireThat(epochMode,'Epoch events require lifecycle v2');
       events.push({type:parsed.name,args:parsed.args,...ref});continue;
     }
     const kind=KINDS[Number(parsed.args.kind)];requireThat(kind,'Invalid draw kind');
+    if(dualMode)requireThat(emitter===(kind==='SHORT'?domain.source:domain.monthlySource),'Wrong source for draw kind');
     events.push({type:parsed.name==='AttemptsFrozen'?'FREEZE':'TERMINAL',kind,drawId:bytes32(parsed.args.drawId,'draw id'),args:parsed.args,...ref});
   }
   const wallets=new Map(),draws=new Map(),transitions=[];
@@ -141,6 +156,8 @@ function replayAttempts(manifest,config,deliveredBlocks){
       requireThat(headers.get(cutoff.blockNumber)===cutoff.blockHash,'Cutoff is not a canonical ancestor');
       requireThat(lastTerminal[kind]===null||cutoff.blockNumber>=lastTerminal[kind],'Cutoff precedes previous terminal');
       const rulesHash=bytes32(args.rulesHash,'rules hash'),participants=[];
+      if(dualMode&&kind==='MONTHLY')requireThat(rulesHash===lower(config.monthlyPolicy.rulesHash)
+        &&times.get(event.blockNumber)>=lastMonthlyTime+integer(config.monthlyPolicy.interval),'Monthly policy/schedule');
       const targetEpoch=epochMode&&kind==='SHORT'?(drainingEpoch||currentEpoch):null;
       let participantCutoff=cutoff.blockNumber;
       if(targetEpoch){
@@ -154,6 +171,7 @@ function replayAttempts(manifest,config,deliveredBlocks){
         if(count>0n)participants.push({wallet:address,count:String(count),firstAttempt:String(s.consumed+1n),lastAttempt:String(last)});
       }
       if(targetEpoch)requireThat(participants.length>0,'Empty Short must not freeze');
+      if(dualMode&&kind==='MONTHLY')requireThat(participants.length>0,'Empty Monthly must not freeze');
       const snapshot=snapshotFor(domain,drawId,kind,cutoff,rulesHash,participants,targetEpoch),snapshotHash=hash(snapshot);
       requireThat(snapshotHash===bytes32(args.snapshotHash,'snapshot hash'),'Frozen snapshot does not match replay');
       pending[kind]=drawId;
@@ -174,6 +192,7 @@ function replayAttempts(manifest,config,deliveredBlocks){
       draw.status='CONSUMED';draw.terminal={outcome:outcome===0?'NO_WINNER':'WINNER',resultHash,source:ref};
       pending[kind]=null;lastTerminal[kind]=event.blockNumber;
       if(epochMode&&kind==='SHORT'){lastShortTime=times.get(event.blockNumber);if(drainingEpoch===Number(draw.snapshot.rulesEpoch))drainingEpoch=0;}
+      if(dualMode&&kind==='MONTHLY')lastMonthlyTime=times.get(event.blockNumber);
       transitions.push({type,drawId,kind,snapshotHash:draw.snapshotHash,outcome:draw.terminal.outcome,resultHash,totalAttempts:draw.totalAttempts,source:ref});
     }
     checkInvariants();
@@ -195,7 +214,7 @@ function replayAttempts(manifest,config,deliveredBlocks){
     if(epochMode)requireThat(balance.SHORT.byEpoch.reduce((sum,e)=>sum+BigInt(e.open),0n)===w.SHORT.open,'Open epoch total mismatch');
     return balance;
   });
-  return {schema:epochMode?'attempt-ledger-v2':'attempt-ledger-v1',domain,buyLedger,head:buyLedger.head,finality:buyLedger.finality,
+  return {schema:dualMode?'attempt-ledger-v3':epochMode?'attempt-ledger-v2':'attempt-ledger-v1',domain,buyLedger,head:buyLedger.head,finality:buyLedger.finality,
     trust:'Source terminal events are assertions; this replay does not verify RNG, prizes, budget or readiness.',
     pending,draws:[...draws.values()],wallets:balances,transitions,
     ...(epochMode?{shortRules:{currentEpoch,drainingEpoch,announced,epochs,lastTerminalAt:lastShortTime}}:{})};

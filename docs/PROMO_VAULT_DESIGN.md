@@ -1,5 +1,9 @@
 # PromoVault — USDG funding и обеспеченные призы
 
+Дополнение 17.09: для нового deployment выбрана [казна с двумя фиксированными
+контроллерами](DUAL_CONTROLLER_ARCHITECTURE.md). Ниже описан исходный single-controller
+PromoVault; его бухгалтерия сохранена, новая версия сужает полномочия и запрещает TOKEN prizes.
+
 Обновлено 13.09.2026. [Продуктовая спецификация](PRODUCT_SPEC.md), [карта реализации](IMPLEMENTATION_STATUS.md). Исходник: [PromoVault.sol](../contracts/PromoVault.sol). Это локальный прототип, не production controller и не публичный deployment.
 
 ## Граница этапа

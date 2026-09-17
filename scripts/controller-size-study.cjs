@@ -7,12 +7,13 @@ function replaceOnce(source,from,to){
   if(source.split(from).length!==2)throw Error(`Study transformation no longer matches: ${from}`);
   return source.replace(from,to);
 }
-function compileVariant({helpers=false,viaIR=false,runs=200}={}){
+function compileVariant({helpers=false,viaIR=false,runs=200,dual=false}={}){
   const sources={};
   for(const name of fs.readdirSync('contracts').filter(n=>n.endsWith('.sol'))){
     const p=`contracts/${name}`;sources[p]={content:fs.readFileSync(p,'utf8')};
   }
   for(const p of [ROOT,HELPER,'test/contracts/Fixtures.sol','test/contracts/ShortSettlementFixture.sol'])sources[p]={content:fs.readFileSync(p,'utf8')};
+  if(dual){const p='research/controller-size/MonthlyRngSizeStudy.sol';sources[p]={content:fs.readFileSync(p,'utf8')};}
   if(helpers){
     let s=sources['contracts/ShortSettlement.sol'].content;
     s=replaceOnce(s,'abstract contract ShortSettlement is ShortRulesEpochs {',
@@ -33,6 +34,7 @@ function compileVariant({helpers=false,viaIR=false,runs=200}={}){
   if(errors.length)throw Error(errors.map(e=>e.formattedMessage).join('\n'));
   const artifacts={};for(const entries of Object.values(result.contracts))Object.assign(artifacts,entries);
   const measured=['ShortSettlementFixture','ShortRngSizeStudy','FullControllerSizeStudy','ExternalSelectionSizeHelper','PromoVault'];
+  if(dual)measured.push('MonthlyRngSizeStudy','DualControllerPromoVault');
   const sizes=Object.fromEntries(measured.map(name=>{const a=artifacts[name];const runtime=a.evm.deployedBytecode.object.length/2;
     return [name,{runtime,initcode:a.evm.bytecode.object.length/2,headroom:24576-runtime,fits:runtime<=24576}];}));
   const sourceHashes=Object.fromEntries(Object.entries(inputs).sort(([a],[b])=>a.localeCompare(b))

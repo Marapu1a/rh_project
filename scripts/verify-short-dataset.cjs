@@ -17,8 +17,10 @@ async function main(){
     const raw=await scan(input.manifest,options['--rpc'],String(input.request.cutoffBlockNumber),input.lifecycle);input.blocks=raw.blocks;
   }
   const artifact=buildFromHistory(input);
-  if(options['--rpc']&&input.lifecycle.schema==='attempt-lifecycle-v2')
+  if(options['--rpc']&&input.lifecycle.schema!=='attempt-lifecycle-v1'){
     await verifyEpochGenesis(new ethers.JsonRpcProvider(options['--rpc']),input.lifecycle.source,artifact.snapshot?.domain||artifact.domain);
+    await require('./dual-bindings.cjs').verifyDualBindings(new ethers.JsonRpcProvider(options['--rpc']),artifact.snapshot?.domain||artifact.domain);
+  }
   let publication=null;
   if(options['--proposal']){
     if(artifact.schema==='short-empty-epoch-artifact-v1')throw Error('Empty epoch has no dataset proposal');
@@ -26,7 +28,7 @@ async function main(){
     const provider=new ethers.JsonRpcProvider(options['--rpc']);
     const compiled=JSON.parse(fs.readFileSync('artifacts/compiled.json','utf8'));
     const source=new ethers.Contract(input.lifecycle.source,
-      compiled[input.lifecycle.schema==='attempt-lifecycle-v2'?'ShortEpochFixture':'ShortDatasetFixture'].abi,provider);
+      compiled[input.lifecycle.schema!=='attempt-lifecycle-v1'?'ShortEpochFixture':'ShortDatasetFixture'].abi,provider);
     publication=await verifyPublication(provider,source,options['--proposal'],artifact);
   }
   const nextAction=artifact.schema==='short-empty-epoch-artifact-v1'
