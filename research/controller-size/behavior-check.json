@@ -1,0 +1,15 @@
+{
+  "schema": "controller-size-check-v1",
+  "unlimitedContractSize": true,
+  "solc": "0.8.37+commit.f401782d.Emscripten.clang",
+  "viaIR": false,
+  "runs": 200,
+  "checks": [
+    "publisher/budget/readiness checks and RNG request failure leave no frozen Short",
+    "Monthly reserves actual Current only after Next is full; Short remains independent",
+    "Monthly winner matches independent selection; failed finalize retries without reroll",
+    "same provider routes independent requests; zero Short seed and old monthly debt survive",
+    "Monthly no-win preserves jackpot/Next/new funding and old reward remains claimable",
+    "two-step publisher rotation cannot replace fixed provider or vault controller"
+  ]
+}

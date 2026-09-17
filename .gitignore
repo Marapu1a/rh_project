@@ -26,6 +26,8 @@ research/*
 !research/short-outcome-gas.json
 !research/short-scaling-study.json
 !research/short-selection-benchmark.json
+!research/controller-size/
+!research/controller-size/**
 !research/execution-economics.json
 !research/short-scaling-rpc.json
 !research/short-economy-report.json

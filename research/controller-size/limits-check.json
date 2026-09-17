@@ -1,0 +1,11 @@
+{
+  "schema": "controller-size-check-v1",
+  "unlimitedContractSize": false,
+  "solc": "0.8.37+commit.f401782d.Emscripten.clang",
+  "viaIR": false,
+  "runs": 200,
+  "checks": [
+    "standard EVM rejects oversized full controller",
+    "Short plus RNG roles readiness deploys with standard size enforcement"
+  ]
+}

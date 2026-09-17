@@ -11,6 +11,8 @@
 
 ## Правила актуальности
 
+[Размер будущего controller](CONTROLLER_SIZE_STUDY.md), 17.09 — шесть сборок Short/RNG/Monthly; обычный полный макет 28 475 байт, самый компактный 24 444, запас всего 132. Отдельное исследование, не production реализация Monthly/RNG.
+
 [Оптимизация Short selection](SHORT_SELECTION_OPTIMIZATION.md), 17.09 — общий отбор кандидатов, размер 18 497 байт, сравнение газа на одинаковом frozen state/seed. Без новых контрактов/helpers.
 
 [Canonical Short settlement](SHORT_SETTLEMENT.md), 16.09 — единый dataset context, обработка порциями, атомарное начисление/consume и восстановление другим исполнителем. Настоящий RNG пока отсутствует.

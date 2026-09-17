@@ -1,5 +1,7 @@
 # Данные исследований
 
+`controller-size/` — отдельный исследовательский Solidity-макет полного controller, размеры шести сборок, standard-limit и behavioral checks. `npm run report:controller:size`, `npm run check:controller:size`. Только специальный behavioral профиль отключает локальный code-size limit; обычная конфигурация не меняется. [Методика](../docs/CONTROLLER_SIZE_STUDY.md). Не production contracts.
+
 `short-selection-benchmark.json` — сравнение baseline 2586de8 и оптимизированного canonical Short на одинаковом frozen state/context/seed. Только local Hardhat snapshot/setCode, без изменения production trust model. `npm run report:short:selection`; [методика и ограничения](../docs/SHORT_SELECTION_OPTIMIZATION.md). Старые scaling/economics evidence не заменяет.
 
 `short-scaling-study.json` — local EVM atomic/streaming сравнение, включая искусственный worst-insertion compiler variant, который не записывается в production sources/artifacts. `npm run report:short:scaling`. `short-scaling-rpc.json` — read-only ответы двух RPC chain 4663 на одном pinned block, precompile parameters и ограниченные estimate-пробы; без sendRawTransaction. `npm run report:short:limits`. [Выводы и ограничения](../docs/SHORT_SETTLEMENT_SCALING_STUDY.md). Эти измерения не доказывают production mempool/tx-size acceptance и не вводят cap участников.

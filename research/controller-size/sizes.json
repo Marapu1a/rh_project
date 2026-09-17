@@ -1,0 +1,436 @@
+{
+  "schema": "controller-size-study-v1",
+  "solc": "0.8.37+commit.f401782d.Emscripten.clang",
+  "evmVersion": "cancun",
+  "runtimeLimit": 24576,
+  "variants": [
+    {
+      "helpers": false,
+      "viaIR": false,
+      "runs": 200,
+      "sizes": {
+        "ShortSettlementFixture": {
+          "runtime": 18497,
+          "initcode": 21502,
+          "headroom": 6079,
+          "fits": true
+        },
+        "ShortRngSizeStudy": {
+          "runtime": 21866,
+          "initcode": 25514,
+          "headroom": 2710,
+          "fits": true
+        },
+        "FullControllerSizeStudy": {
+          "runtime": 28475,
+          "initcode": 32215,
+          "headroom": -3899,
+          "fits": false
+        },
+        "ExternalSelectionSizeHelper": {
+          "runtime": 2792,
+          "initcode": 2820,
+          "headroom": 21784,
+          "fits": true
+        },
+        "PromoVault": {
+          "runtime": 8197,
+          "initcode": 8710,
+          "headroom": 16379,
+          "fits": true
+        }
+      },
+      "sourceHashes": {
+        "@openzeppelin/contracts/access/Ownable.sol": "0xff6d0bb2e285473e5311d9d3caacb525ae3538a80758c10649a4d61029b017bb",
+        "@openzeppelin/contracts/access/Ownable2Step.sol": "0xdcad8898fda432696597752e8ec361b87d85c82cb258115427af006dacf7128c",
+        "@openzeppelin/contracts/interfaces/draft-IERC6093.sol": "0x1b88b3fb3d85ba5496d7d5f396f83ee1fddcdd6762059ff65992655b67920998",
+        "@openzeppelin/contracts/interfaces/IERC1363.sol": "0xd5ea07362ab630a6a3dee4285a74cf2377044ca2e4be472755ad64d7c5d4b69d",
+        "@openzeppelin/contracts/interfaces/IERC165.sol": "0x0afcb7e740d1537b252cb2676f600465ce6938398569f09ba1b9ca240dde2dfc",
+        "@openzeppelin/contracts/interfaces/IERC20.sol": "0x1a6221315ce0307746c2c4827c125d821ee796c74a676787762f4778671d4f44",
+        "@openzeppelin/contracts/token/ERC20/ERC20.sol": "0x669464167428061ee0f8618b73b3ee90aff8405683e7ddde8cd77dadaa1afe29",
+        "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol": "0xd6fa4088198f04eef10c5bce8a2f4d60554b7ec4b987f684393c01bf79b94d9f",
+        "@openzeppelin/contracts/token/ERC20/IERC20.sol": "0x74ed01eb66b923d0d0cfe3be84604ac04b76482a55f9dd655e1ef4d367f95bc2",
+        "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol": "0x304d732678032a9781ae85c8f204c8fba3d3a5e31c02616964e75cfdc5049098",
+        "@openzeppelin/contracts/utils/Context.sol": "0x493033a8d1b176a037b2cc6a04dad01a5c157722049bbecf632ca876224dd4b2",
+        "@openzeppelin/contracts/utils/introspection/IERC165.sol": "0x8891738ffe910f0cf2da09566928589bf5d63f4524dd734fd9cedbac3274dd5c",
+        "@openzeppelin/contracts/utils/math/Math.sol": "0x59973a93b1f983f94e10529f46ca46544a9fec2b5f56fb1390bbe9e0dc79f857",
+        "@openzeppelin/contracts/utils/math/SafeCast.sol": "0xc8cae21c9ae4a46e5162ff9bf5b351d6fa6a6eba72d515f3bc1bdfeda7fdf083",
+        "@openzeppelin/contracts/utils/Panic.sol": "0xf7fe324703a64fc51702311dc51562d5cb1497734f074e4f483bfb6717572d7a",
+        "@openzeppelin/contracts/utils/ReentrancyGuard.sol": "0xa516cbf1c7d15d3517c2d668601ce016c54395bf5171918a14e2686977465f53",
+        "@openzeppelin/contracts/utils/StorageSlot.sol": "0xcf74f855663ce2ae00ed8352666b7935f6cddea2932fdf2c3ecd30a9b1cd0e97",
+        "contracts/FeeRouter.sol": "0xf9919dd2ace6da47cc5f38a0e5483fb9943201a3434b1f37e1d2aed8362457b1",
+        "contracts/ParticipantRegistry.sol": "0x9a806ea3351be266e33bfa8140f5ae9e73720ecca470a80854e8025a9d151700",
+        "contracts/PromoVault.sol": "0x00d52733e3a3d1a1172ff991c465c4528760e9c69c13d7d2e3544c5099c2f83f",
+        "contracts/ShortDatasetPreparation.sol": "0xaac595ec78d642953b6ef48c37dcd60d1e43bf25a5323c16c98d1ee5cbb1acdd",
+        "contracts/ShortDrawCommitment.sol": "0x4af59b2b3644a4ef31b2bad9653441efd74496c1e573c5b99b84b769ca5d7661",
+        "contracts/ShortOutcome.sol": "0x7f14ed1ac920113c4908259324568fa63875cf699c43a1f9aa4cef24a21a0d17",
+        "contracts/ShortPrizeBasket.sol": "0x06bff92aa2e4ce420eaa66fe8f2ead0b36d173de496adb6549fe256be702109e",
+        "contracts/ShortRulesEpochs.sol": "0x003112197a098623159fd82e10e786c2c0ef9fbd08a85c289cb6dd3261d06204",
+        "contracts/ShortSettlement.sol": "0x91dd6a535c7af2811113c1d98bc416e2aef1fd29e0fc0764f91c762a6fd73f5f",
+        "research/controller-size/ControllerSizeStudy.sol": "0xc42e812f47268bd783ee33a55d59801f989ee5842004db6bb58d467030f2eb9e",
+        "research/controller-size/FixedSelectionSizeHelper.sol": "0x6704ca6c537b2739d12c63bd0f4ff355639848cc5440f0f6c4056fe867a7e9fe",
+        "test/contracts/Fixtures.sol": "0x43e4a6f57739977065043a7fcfe3a86fd58bb895510a6ade908f48002b366639",
+        "test/contracts/ShortSettlementFixture.sol": "0xf7c6a1f19b32e6736f86640ae4fb1d3f9f5abbf7629120511587e8eb4a2e5112"
+      },
+      "warnings": [
+        "Warning: Contract code size is 28475 bytes and exceeds 24576 bytes (a limit introduced in Spurious Dragon). This contract may not be deployable on Mainnet. Consider enabling the optimizer (with a low \"runs\" value!), turning off revert strings, or using libraries.\n  --> research/controller-size/ControllerSizeStudy.sol:88:1:\n   |\n88 | contract FullControllerSizeStudy is ShortRngSizeStudy {\n   | ^ (Relevant source part starts here and spans across multiple lines).\n\n"
+      ]
+    },
+    {
+      "helpers": true,
+      "viaIR": false,
+      "runs": 200,
+      "sizes": {
+        "ShortSettlementFixture": {
+          "runtime": 17417,
+          "initcode": 23315,
+          "headroom": 7159,
+          "fits": true
+        },
+        "ShortRngSizeStudy": {
+          "runtime": 20786,
+          "initcode": 27327,
+          "headroom": 3790,
+          "fits": true
+        },
+        "FullControllerSizeStudy": {
+          "runtime": 27452,
+          "initcode": 34092,
+          "headroom": -2876,
+          "fits": false
+        },
+        "ExternalSelectionSizeHelper": {
+          "runtime": 2792,
+          "initcode": 2820,
+          "headroom": 21784,
+          "fits": true
+        },
+        "PromoVault": {
+          "runtime": 8197,
+          "initcode": 8710,
+          "headroom": 16379,
+          "fits": true
+        }
+      },
+      "sourceHashes": {
+        "@openzeppelin/contracts/access/Ownable.sol": "0xff6d0bb2e285473e5311d9d3caacb525ae3538a80758c10649a4d61029b017bb",
+        "@openzeppelin/contracts/access/Ownable2Step.sol": "0xdcad8898fda432696597752e8ec361b87d85c82cb258115427af006dacf7128c",
+        "@openzeppelin/contracts/interfaces/draft-IERC6093.sol": "0x1b88b3fb3d85ba5496d7d5f396f83ee1fddcdd6762059ff65992655b67920998",
+        "@openzeppelin/contracts/interfaces/IERC1363.sol": "0xd5ea07362ab630a6a3dee4285a74cf2377044ca2e4be472755ad64d7c5d4b69d",
+        "@openzeppelin/contracts/interfaces/IERC165.sol": "0x0afcb7e740d1537b252cb2676f600465ce6938398569f09ba1b9ca240dde2dfc",
+        "@openzeppelin/contracts/interfaces/IERC20.sol": "0x1a6221315ce0307746c2c4827c125d821ee796c74a676787762f4778671d4f44",
+        "@openzeppelin/contracts/token/ERC20/ERC20.sol": "0x669464167428061ee0f8618b73b3ee90aff8405683e7ddde8cd77dadaa1afe29",
+        "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol": "0xd6fa4088198f04eef10c5bce8a2f4d60554b7ec4b987f684393c01bf79b94d9f",
+        "@openzeppelin/contracts/token/ERC20/IERC20.sol": "0x74ed01eb66b923d0d0cfe3be84604ac04b76482a55f9dd655e1ef4d367f95bc2",
+        "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol": "0x304d732678032a9781ae85c8f204c8fba3d3a5e31c02616964e75cfdc5049098",
+        "@openzeppelin/contracts/utils/Context.sol": "0x493033a8d1b176a037b2cc6a04dad01a5c157722049bbecf632ca876224dd4b2",
+        "@openzeppelin/contracts/utils/introspection/IERC165.sol": "0x8891738ffe910f0cf2da09566928589bf5d63f4524dd734fd9cedbac3274dd5c",
+        "@openzeppelin/contracts/utils/math/Math.sol": "0x59973a93b1f983f94e10529f46ca46544a9fec2b5f56fb1390bbe9e0dc79f857",
+        "@openzeppelin/contracts/utils/math/SafeCast.sol": "0xc8cae21c9ae4a46e5162ff9bf5b351d6fa6a6eba72d515f3bc1bdfeda7fdf083",
+        "@openzeppelin/contracts/utils/Panic.sol": "0xf7fe324703a64fc51702311dc51562d5cb1497734f074e4f483bfb6717572d7a",
+        "@openzeppelin/contracts/utils/ReentrancyGuard.sol": "0xa516cbf1c7d15d3517c2d668601ce016c54395bf5171918a14e2686977465f53",
+        "@openzeppelin/contracts/utils/StorageSlot.sol": "0xcf74f855663ce2ae00ed8352666b7935f6cddea2932fdf2c3ecd30a9b1cd0e97",
+        "contracts/FeeRouter.sol": "0xf9919dd2ace6da47cc5f38a0e5483fb9943201a3434b1f37e1d2aed8362457b1",
+        "contracts/ParticipantRegistry.sol": "0x9a806ea3351be266e33bfa8140f5ae9e73720ecca470a80854e8025a9d151700",
+        "contracts/PromoVault.sol": "0x00d52733e3a3d1a1172ff991c465c4528760e9c69c13d7d2e3544c5099c2f83f",
+        "contracts/ShortDatasetPreparation.sol": "0xaac595ec78d642953b6ef48c37dcd60d1e43bf25a5323c16c98d1ee5cbb1acdd",
+        "contracts/ShortDrawCommitment.sol": "0x4af59b2b3644a4ef31b2bad9653441efd74496c1e573c5b99b84b769ca5d7661",
+        "contracts/ShortOutcome.sol": "0x7f14ed1ac920113c4908259324568fa63875cf699c43a1f9aa4cef24a21a0d17",
+        "contracts/ShortPrizeBasket.sol": "0x06bff92aa2e4ce420eaa66fe8f2ead0b36d173de496adb6549fe256be702109e",
+        "contracts/ShortRulesEpochs.sol": "0x003112197a098623159fd82e10e786c2c0ef9fbd08a85c289cb6dd3261d06204",
+        "contracts/ShortSettlement.sol": "0x87ab3db7a7bfb39ecc22c04ab5967ca5cf527f4dc0f68922b6c7658f421771dc",
+        "research/controller-size/ControllerSizeStudy.sol": "0x403036e4e4d3b74765d668152521e97142f269c6aa22b991030098194db757e0",
+        "research/controller-size/FixedSelectionSizeHelper.sol": "0x6704ca6c537b2739d12c63bd0f4ff355639848cc5440f0f6c4056fe867a7e9fe",
+        "test/contracts/Fixtures.sol": "0x43e4a6f57739977065043a7fcfe3a86fd58bb895510a6ade908f48002b366639",
+        "test/contracts/ShortSettlementFixture.sol": "0xf7c6a1f19b32e6736f86640ae4fb1d3f9f5abbf7629120511587e8eb4a2e5112"
+      },
+      "warnings": [
+        "Warning: Contract code size is 27452 bytes and exceeds 24576 bytes (a limit introduced in Spurious Dragon). This contract may not be deployable on Mainnet. Consider enabling the optimizer (with a low \"runs\" value!), turning off revert strings, or using libraries.\n  --> research/controller-size/ControllerSizeStudy.sol:88:1:\n   |\n88 | contract FullControllerSizeStudy is ShortRngSizeStudy {\n   | ^ (Relevant source part starts here and spans across multiple lines).\n\n"
+      ]
+    },
+    {
+      "helpers": false,
+      "viaIR": false,
+      "runs": 1,
+      "sizes": {
+        "ShortSettlementFixture": {
+          "runtime": 18384,
+          "initcode": 21321,
+          "headroom": 6192,
+          "fits": true
+        },
+        "ShortRngSizeStudy": {
+          "runtime": 21704,
+          "initcode": 25284,
+          "headroom": 2872,
+          "fits": true
+        },
+        "FullControllerSizeStudy": {
+          "runtime": 28206,
+          "initcode": 31878,
+          "headroom": -3630,
+          "fits": false
+        },
+        "ExternalSelectionSizeHelper": {
+          "runtime": 2791,
+          "initcode": 2819,
+          "headroom": 21785,
+          "fits": true
+        },
+        "PromoVault": {
+          "runtime": 7995,
+          "initcode": 8508,
+          "headroom": 16581,
+          "fits": true
+        }
+      },
+      "sourceHashes": {
+        "@openzeppelin/contracts/access/Ownable.sol": "0xff6d0bb2e285473e5311d9d3caacb525ae3538a80758c10649a4d61029b017bb",
+        "@openzeppelin/contracts/access/Ownable2Step.sol": "0xdcad8898fda432696597752e8ec361b87d85c82cb258115427af006dacf7128c",
+        "@openzeppelin/contracts/interfaces/draft-IERC6093.sol": "0x1b88b3fb3d85ba5496d7d5f396f83ee1fddcdd6762059ff65992655b67920998",
+        "@openzeppelin/contracts/interfaces/IERC1363.sol": "0xd5ea07362ab630a6a3dee4285a74cf2377044ca2e4be472755ad64d7c5d4b69d",
+        "@openzeppelin/contracts/interfaces/IERC165.sol": "0x0afcb7e740d1537b252cb2676f600465ce6938398569f09ba1b9ca240dde2dfc",
+        "@openzeppelin/contracts/interfaces/IERC20.sol": "0x1a6221315ce0307746c2c4827c125d821ee796c74a676787762f4778671d4f44",
+        "@openzeppelin/contracts/token/ERC20/ERC20.sol": "0x669464167428061ee0f8618b73b3ee90aff8405683e7ddde8cd77dadaa1afe29",
+        "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol": "0xd6fa4088198f04eef10c5bce8a2f4d60554b7ec4b987f684393c01bf79b94d9f",
+        "@openzeppelin/contracts/token/ERC20/IERC20.sol": "0x74ed01eb66b923d0d0cfe3be84604ac04b76482a55f9dd655e1ef4d367f95bc2",
+        "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol": "0x304d732678032a9781ae85c8f204c8fba3d3a5e31c02616964e75cfdc5049098",
+        "@openzeppelin/contracts/utils/Context.sol": "0x493033a8d1b176a037b2cc6a04dad01a5c157722049bbecf632ca876224dd4b2",
+        "@openzeppelin/contracts/utils/introspection/IERC165.sol": "0x8891738ffe910f0cf2da09566928589bf5d63f4524dd734fd9cedbac3274dd5c",
+        "@openzeppelin/contracts/utils/math/Math.sol": "0x59973a93b1f983f94e10529f46ca46544a9fec2b5f56fb1390bbe9e0dc79f857",
+        "@openzeppelin/contracts/utils/math/SafeCast.sol": "0xc8cae21c9ae4a46e5162ff9bf5b351d6fa6a6eba72d515f3bc1bdfeda7fdf083",
+        "@openzeppelin/contracts/utils/Panic.sol": "0xf7fe324703a64fc51702311dc51562d5cb1497734f074e4f483bfb6717572d7a",
+        "@openzeppelin/contracts/utils/ReentrancyGuard.sol": "0xa516cbf1c7d15d3517c2d668601ce016c54395bf5171918a14e2686977465f53",
+        "@openzeppelin/contracts/utils/StorageSlot.sol": "0xcf74f855663ce2ae00ed8352666b7935f6cddea2932fdf2c3ecd30a9b1cd0e97",
+        "contracts/FeeRouter.sol": "0xf9919dd2ace6da47cc5f38a0e5483fb9943201a3434b1f37e1d2aed8362457b1",
+        "contracts/ParticipantRegistry.sol": "0x9a806ea3351be266e33bfa8140f5ae9e73720ecca470a80854e8025a9d151700",
+        "contracts/PromoVault.sol": "0x00d52733e3a3d1a1172ff991c465c4528760e9c69c13d7d2e3544c5099c2f83f",
+        "contracts/ShortDatasetPreparation.sol": "0xaac595ec78d642953b6ef48c37dcd60d1e43bf25a5323c16c98d1ee5cbb1acdd",
+        "contracts/ShortDrawCommitment.sol": "0x4af59b2b3644a4ef31b2bad9653441efd74496c1e573c5b99b84b769ca5d7661",
+        "contracts/ShortOutcome.sol": "0x7f14ed1ac920113c4908259324568fa63875cf699c43a1f9aa4cef24a21a0d17",
+        "contracts/ShortPrizeBasket.sol": "0x06bff92aa2e4ce420eaa66fe8f2ead0b36d173de496adb6549fe256be702109e",
+        "contracts/ShortRulesEpochs.sol": "0x003112197a098623159fd82e10e786c2c0ef9fbd08a85c289cb6dd3261d06204",
+        "contracts/ShortSettlement.sol": "0x91dd6a535c7af2811113c1d98bc416e2aef1fd29e0fc0764f91c762a6fd73f5f",
+        "research/controller-size/ControllerSizeStudy.sol": "0xc42e812f47268bd783ee33a55d59801f989ee5842004db6bb58d467030f2eb9e",
+        "research/controller-size/FixedSelectionSizeHelper.sol": "0x6704ca6c537b2739d12c63bd0f4ff355639848cc5440f0f6c4056fe867a7e9fe",
+        "test/contracts/Fixtures.sol": "0x43e4a6f57739977065043a7fcfe3a86fd58bb895510a6ade908f48002b366639",
+        "test/contracts/ShortSettlementFixture.sol": "0xf7c6a1f19b32e6736f86640ae4fb1d3f9f5abbf7629120511587e8eb4a2e5112"
+      },
+      "warnings": [
+        "Warning: Contract code size is 28206 bytes and exceeds 24576 bytes (a limit introduced in Spurious Dragon). This contract may not be deployable on Mainnet. Consider enabling the optimizer (with a low \"runs\" value!), turning off revert strings, or using libraries.\n  --> research/controller-size/ControllerSizeStudy.sol:88:1:\n   |\n88 | contract FullControllerSizeStudy is ShortRngSizeStudy {\n   | ^ (Relevant source part starts here and spans across multiple lines).\n\n"
+      ]
+    },
+    {
+      "helpers": false,
+      "viaIR": true,
+      "runs": 200,
+      "sizes": {
+        "ShortSettlementFixture": {
+          "runtime": 16002,
+          "initcode": 18353,
+          "headroom": 8574,
+          "fits": true
+        },
+        "ShortRngSizeStudy": {
+          "runtime": 18911,
+          "initcode": 21879,
+          "headroom": 5665,
+          "fits": true
+        },
+        "FullControllerSizeStudy": {
+          "runtime": 26288,
+          "initcode": 29309,
+          "headroom": -1712,
+          "fits": false
+        },
+        "ExternalSelectionSizeHelper": {
+          "runtime": 2256,
+          "initcode": 2282,
+          "headroom": 22320,
+          "fits": true
+        },
+        "PromoVault": {
+          "runtime": 6848,
+          "initcode": 7341,
+          "headroom": 17728,
+          "fits": true
+        }
+      },
+      "sourceHashes": {
+        "@openzeppelin/contracts/access/Ownable.sol": "0xff6d0bb2e285473e5311d9d3caacb525ae3538a80758c10649a4d61029b017bb",
+        "@openzeppelin/contracts/access/Ownable2Step.sol": "0xdcad8898fda432696597752e8ec361b87d85c82cb258115427af006dacf7128c",
+        "@openzeppelin/contracts/interfaces/draft-IERC6093.sol": "0x1b88b3fb3d85ba5496d7d5f396f83ee1fddcdd6762059ff65992655b67920998",
+        "@openzeppelin/contracts/interfaces/IERC1363.sol": "0xd5ea07362ab630a6a3dee4285a74cf2377044ca2e4be472755ad64d7c5d4b69d",
+        "@openzeppelin/contracts/interfaces/IERC165.sol": "0x0afcb7e740d1537b252cb2676f600465ce6938398569f09ba1b9ca240dde2dfc",
+        "@openzeppelin/contracts/interfaces/IERC20.sol": "0x1a6221315ce0307746c2c4827c125d821ee796c74a676787762f4778671d4f44",
+        "@openzeppelin/contracts/token/ERC20/ERC20.sol": "0x669464167428061ee0f8618b73b3ee90aff8405683e7ddde8cd77dadaa1afe29",
+        "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol": "0xd6fa4088198f04eef10c5bce8a2f4d60554b7ec4b987f684393c01bf79b94d9f",
+        "@openzeppelin/contracts/token/ERC20/IERC20.sol": "0x74ed01eb66b923d0d0cfe3be84604ac04b76482a55f9dd655e1ef4d367f95bc2",
+        "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol": "0x304d732678032a9781ae85c8f204c8fba3d3a5e31c02616964e75cfdc5049098",
+        "@openzeppelin/contracts/utils/Context.sol": "0x493033a8d1b176a037b2cc6a04dad01a5c157722049bbecf632ca876224dd4b2",
+        "@openzeppelin/contracts/utils/introspection/IERC165.sol": "0x8891738ffe910f0cf2da09566928589bf5d63f4524dd734fd9cedbac3274dd5c",
+        "@openzeppelin/contracts/utils/math/Math.sol": "0x59973a93b1f983f94e10529f46ca46544a9fec2b5f56fb1390bbe9e0dc79f857",
+        "@openzeppelin/contracts/utils/math/SafeCast.sol": "0xc8cae21c9ae4a46e5162ff9bf5b351d6fa6a6eba72d515f3bc1bdfeda7fdf083",
+        "@openzeppelin/contracts/utils/Panic.sol": "0xf7fe324703a64fc51702311dc51562d5cb1497734f074e4f483bfb6717572d7a",
+        "@openzeppelin/contracts/utils/ReentrancyGuard.sol": "0xa516cbf1c7d15d3517c2d668601ce016c54395bf5171918a14e2686977465f53",
+        "@openzeppelin/contracts/utils/StorageSlot.sol": "0xcf74f855663ce2ae00ed8352666b7935f6cddea2932fdf2c3ecd30a9b1cd0e97",
+        "contracts/FeeRouter.sol": "0xf9919dd2ace6da47cc5f38a0e5483fb9943201a3434b1f37e1d2aed8362457b1",
+        "contracts/ParticipantRegistry.sol": "0x9a806ea3351be266e33bfa8140f5ae9e73720ecca470a80854e8025a9d151700",
+        "contracts/PromoVault.sol": "0x00d52733e3a3d1a1172ff991c465c4528760e9c69c13d7d2e3544c5099c2f83f",
+        "contracts/ShortDatasetPreparation.sol": "0xaac595ec78d642953b6ef48c37dcd60d1e43bf25a5323c16c98d1ee5cbb1acdd",
+        "contracts/ShortDrawCommitment.sol": "0x4af59b2b3644a4ef31b2bad9653441efd74496c1e573c5b99b84b769ca5d7661",
+        "contracts/ShortOutcome.sol": "0x7f14ed1ac920113c4908259324568fa63875cf699c43a1f9aa4cef24a21a0d17",
+        "contracts/ShortPrizeBasket.sol": "0x06bff92aa2e4ce420eaa66fe8f2ead0b36d173de496adb6549fe256be702109e",
+        "contracts/ShortRulesEpochs.sol": "0x003112197a098623159fd82e10e786c2c0ef9fbd08a85c289cb6dd3261d06204",
+        "contracts/ShortSettlement.sol": "0x91dd6a535c7af2811113c1d98bc416e2aef1fd29e0fc0764f91c762a6fd73f5f",
+        "research/controller-size/ControllerSizeStudy.sol": "0xc42e812f47268bd783ee33a55d59801f989ee5842004db6bb58d467030f2eb9e",
+        "research/controller-size/FixedSelectionSizeHelper.sol": "0x6704ca6c537b2739d12c63bd0f4ff355639848cc5440f0f6c4056fe867a7e9fe",
+        "test/contracts/Fixtures.sol": "0x43e4a6f57739977065043a7fcfe3a86fd58bb895510a6ade908f48002b366639",
+        "test/contracts/ShortSettlementFixture.sol": "0xf7c6a1f19b32e6736f86640ae4fb1d3f9f5abbf7629120511587e8eb4a2e5112"
+      },
+      "warnings": [
+        "Warning: Contract code size is 26288 bytes and exceeds 24576 bytes (a limit introduced in Spurious Dragon). This contract may not be deployable on Mainnet. Consider enabling the optimizer (with a low \"runs\" value!), turning off revert strings, or using libraries.\n  --> research/controller-size/ControllerSizeStudy.sol:88:1:\n   |\n88 | contract FullControllerSizeStudy is ShortRngSizeStudy {\n   | ^ (Relevant source part starts here and spans across multiple lines).\n\n"
+      ]
+    },
+    {
+      "helpers": true,
+      "viaIR": true,
+      "runs": 200,
+      "sizes": {
+        "ShortSettlementFixture": {
+          "runtime": 14984,
+          "initcode": 19686,
+          "headroom": 9592,
+          "fits": true
+        },
+        "ShortRngSizeStudy": {
+          "runtime": 17893,
+          "initcode": 23212,
+          "headroom": 6683,
+          "fits": true
+        },
+        "FullControllerSizeStudy": {
+          "runtime": 24529,
+          "initcode": 29908,
+          "headroom": 47,
+          "fits": true
+        },
+        "ExternalSelectionSizeHelper": {
+          "runtime": 2256,
+          "initcode": 2282,
+          "headroom": 22320,
+          "fits": true
+        },
+        "PromoVault": {
+          "runtime": 6848,
+          "initcode": 7341,
+          "headroom": 17728,
+          "fits": true
+        }
+      },
+      "sourceHashes": {
+        "@openzeppelin/contracts/access/Ownable.sol": "0xff6d0bb2e285473e5311d9d3caacb525ae3538a80758c10649a4d61029b017bb",
+        "@openzeppelin/contracts/access/Ownable2Step.sol": "0xdcad8898fda432696597752e8ec361b87d85c82cb258115427af006dacf7128c",
+        "@openzeppelin/contracts/interfaces/draft-IERC6093.sol": "0x1b88b3fb3d85ba5496d7d5f396f83ee1fddcdd6762059ff65992655b67920998",
+        "@openzeppelin/contracts/interfaces/IERC1363.sol": "0xd5ea07362ab630a6a3dee4285a74cf2377044ca2e4be472755ad64d7c5d4b69d",
+        "@openzeppelin/contracts/interfaces/IERC165.sol": "0x0afcb7e740d1537b252cb2676f600465ce6938398569f09ba1b9ca240dde2dfc",
+        "@openzeppelin/contracts/interfaces/IERC20.sol": "0x1a6221315ce0307746c2c4827c125d821ee796c74a676787762f4778671d4f44",
+        "@openzeppelin/contracts/token/ERC20/ERC20.sol": "0x669464167428061ee0f8618b73b3ee90aff8405683e7ddde8cd77dadaa1afe29",
+        "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol": "0xd6fa4088198f04eef10c5bce8a2f4d60554b7ec4b987f684393c01bf79b94d9f",
+        "@openzeppelin/contracts/token/ERC20/IERC20.sol": "0x74ed01eb66b923d0d0cfe3be84604ac04b76482a55f9dd655e1ef4d367f95bc2",
+        "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol": "0x304d732678032a9781ae85c8f204c8fba3d3a5e31c02616964e75cfdc5049098",
+        "@openzeppelin/contracts/utils/Context.sol": "0x493033a8d1b176a037b2cc6a04dad01a5c157722049bbecf632ca876224dd4b2",
+        "@openzeppelin/contracts/utils/introspection/IERC165.sol": "0x8891738ffe910f0cf2da09566928589bf5d63f4524dd734fd9cedbac3274dd5c",
+        "@openzeppelin/contracts/utils/math/Math.sol": "0x59973a93b1f983f94e10529f46ca46544a9fec2b5f56fb1390bbe9e0dc79f857",
+        "@openzeppelin/contracts/utils/math/SafeCast.sol": "0xc8cae21c9ae4a46e5162ff9bf5b351d6fa6a6eba72d515f3bc1bdfeda7fdf083",
+        "@openzeppelin/contracts/utils/Panic.sol": "0xf7fe324703a64fc51702311dc51562d5cb1497734f074e4f483bfb6717572d7a",
+        "@openzeppelin/contracts/utils/ReentrancyGuard.sol": "0xa516cbf1c7d15d3517c2d668601ce016c54395bf5171918a14e2686977465f53",
+        "@openzeppelin/contracts/utils/StorageSlot.sol": "0xcf74f855663ce2ae00ed8352666b7935f6cddea2932fdf2c3ecd30a9b1cd0e97",
+        "contracts/FeeRouter.sol": "0xf9919dd2ace6da47cc5f38a0e5483fb9943201a3434b1f37e1d2aed8362457b1",
+        "contracts/ParticipantRegistry.sol": "0x9a806ea3351be266e33bfa8140f5ae9e73720ecca470a80854e8025a9d151700",
+        "contracts/PromoVault.sol": "0x00d52733e3a3d1a1172ff991c465c4528760e9c69c13d7d2e3544c5099c2f83f",
+        "contracts/ShortDatasetPreparation.sol": "0xaac595ec78d642953b6ef48c37dcd60d1e43bf25a5323c16c98d1ee5cbb1acdd",
+        "contracts/ShortDrawCommitment.sol": "0x4af59b2b3644a4ef31b2bad9653441efd74496c1e573c5b99b84b769ca5d7661",
+        "contracts/ShortOutcome.sol": "0x7f14ed1ac920113c4908259324568fa63875cf699c43a1f9aa4cef24a21a0d17",
+        "contracts/ShortPrizeBasket.sol": "0x06bff92aa2e4ce420eaa66fe8f2ead0b36d173de496adb6549fe256be702109e",
+        "contracts/ShortRulesEpochs.sol": "0x003112197a098623159fd82e10e786c2c0ef9fbd08a85c289cb6dd3261d06204",
+        "contracts/ShortSettlement.sol": "0x87ab3db7a7bfb39ecc22c04ab5967ca5cf527f4dc0f68922b6c7658f421771dc",
+        "research/controller-size/ControllerSizeStudy.sol": "0x403036e4e4d3b74765d668152521e97142f269c6aa22b991030098194db757e0",
+        "research/controller-size/FixedSelectionSizeHelper.sol": "0x6704ca6c537b2739d12c63bd0f4ff355639848cc5440f0f6c4056fe867a7e9fe",
+        "test/contracts/Fixtures.sol": "0x43e4a6f57739977065043a7fcfe3a86fd58bb895510a6ade908f48002b366639",
+        "test/contracts/ShortSettlementFixture.sol": "0xf7c6a1f19b32e6736f86640ae4fb1d3f9f5abbf7629120511587e8eb4a2e5112"
+      },
+      "warnings": []
+    },
+    {
+      "helpers": true,
+      "viaIR": true,
+      "runs": 1,
+      "sizes": {
+        "ShortSettlementFixture": {
+          "runtime": 14985,
+          "initcode": 19618,
+          "headroom": 9591,
+          "fits": true
+        },
+        "ShortRngSizeStudy": {
+          "runtime": 17881,
+          "initcode": 23131,
+          "headroom": 6695,
+          "fits": true
+        },
+        "FullControllerSizeStudy": {
+          "runtime": 24444,
+          "initcode": 29754,
+          "headroom": 132,
+          "fits": true
+        },
+        "ExternalSelectionSizeHelper": {
+          "runtime": 2236,
+          "initcode": 2262,
+          "headroom": 22340,
+          "fits": true
+        },
+        "PromoVault": {
+          "runtime": 6777,
+          "initcode": 7270,
+          "headroom": 17799,
+          "fits": true
+        }
+      },
+      "sourceHashes": {
+        "@openzeppelin/contracts/access/Ownable.sol": "0xff6d0bb2e285473e5311d9d3caacb525ae3538a80758c10649a4d61029b017bb",
+        "@openzeppelin/contracts/access/Ownable2Step.sol": "0xdcad8898fda432696597752e8ec361b87d85c82cb258115427af006dacf7128c",
+        "@openzeppelin/contracts/interfaces/draft-IERC6093.sol": "0x1b88b3fb3d85ba5496d7d5f396f83ee1fddcdd6762059ff65992655b67920998",
+        "@openzeppelin/contracts/interfaces/IERC1363.sol": "0xd5ea07362ab630a6a3dee4285a74cf2377044ca2e4be472755ad64d7c5d4b69d",
+        "@openzeppelin/contracts/interfaces/IERC165.sol": "0x0afcb7e740d1537b252cb2676f600465ce6938398569f09ba1b9ca240dde2dfc",
+        "@openzeppelin/contracts/interfaces/IERC20.sol": "0x1a6221315ce0307746c2c4827c125d821ee796c74a676787762f4778671d4f44",
+        "@openzeppelin/contracts/token/ERC20/ERC20.sol": "0x669464167428061ee0f8618b73b3ee90aff8405683e7ddde8cd77dadaa1afe29",
+        "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol": "0xd6fa4088198f04eef10c5bce8a2f4d60554b7ec4b987f684393c01bf79b94d9f",
+        "@openzeppelin/contracts/token/ERC20/IERC20.sol": "0x74ed01eb66b923d0d0cfe3be84604ac04b76482a55f9dd655e1ef4d367f95bc2",
+        "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol": "0x304d732678032a9781ae85c8f204c8fba3d3a5e31c02616964e75cfdc5049098",
+        "@openzeppelin/contracts/utils/Context.sol": "0x493033a8d1b176a037b2cc6a04dad01a5c157722049bbecf632ca876224dd4b2",
+        "@openzeppelin/contracts/utils/introspection/IERC165.sol": "0x8891738ffe910f0cf2da09566928589bf5d63f4524dd734fd9cedbac3274dd5c",
+        "@openzeppelin/contracts/utils/math/Math.sol": "0x59973a93b1f983f94e10529f46ca46544a9fec2b5f56fb1390bbe9e0dc79f857",
+        "@openzeppelin/contracts/utils/math/SafeCast.sol": "0xc8cae21c9ae4a46e5162ff9bf5b351d6fa6a6eba72d515f3bc1bdfeda7fdf083",
+        "@openzeppelin/contracts/utils/Panic.sol": "0xf7fe324703a64fc51702311dc51562d5cb1497734f074e4f483bfb6717572d7a",
+        "@openzeppelin/contracts/utils/ReentrancyGuard.sol": "0xa516cbf1c7d15d3517c2d668601ce016c54395bf5171918a14e2686977465f53",
+        "@openzeppelin/contracts/utils/StorageSlot.sol": "0xcf74f855663ce2ae00ed8352666b7935f6cddea2932fdf2c3ecd30a9b1cd0e97",
+        "contracts/FeeRouter.sol": "0xf9919dd2ace6da47cc5f38a0e5483fb9943201a3434b1f37e1d2aed8362457b1",
+        "contracts/ParticipantRegistry.sol": "0x9a806ea3351be266e33bfa8140f5ae9e73720ecca470a80854e8025a9d151700",
+        "contracts/PromoVault.sol": "0x00d52733e3a3d1a1172ff991c465c4528760e9c69c13d7d2e3544c5099c2f83f",
+        "contracts/ShortDatasetPreparation.sol": "0xaac595ec78d642953b6ef48c37dcd60d1e43bf25a5323c16c98d1ee5cbb1acdd",
+        "contracts/ShortDrawCommitment.sol": "0x4af59b2b3644a4ef31b2bad9653441efd74496c1e573c5b99b84b769ca5d7661",
+        "contracts/ShortOutcome.sol": "0x7f14ed1ac920113c4908259324568fa63875cf699c43a1f9aa4cef24a21a0d17",
+        "contracts/ShortPrizeBasket.sol": "0x06bff92aa2e4ce420eaa66fe8f2ead0b36d173de496adb6549fe256be702109e",
+        "contracts/ShortRulesEpochs.sol": "0x003112197a098623159fd82e10e786c2c0ef9fbd08a85c289cb6dd3261d06204",
+        "contracts/ShortSettlement.sol": "0x87ab3db7a7bfb39ecc22c04ab5967ca5cf527f4dc0f68922b6c7658f421771dc",
+        "research/controller-size/ControllerSizeStudy.sol": "0x403036e4e4d3b74765d668152521e97142f269c6aa22b991030098194db757e0",
+        "research/controller-size/FixedSelectionSizeHelper.sol": "0x6704ca6c537b2739d12c63bd0f4ff355639848cc5440f0f6c4056fe867a7e9fe",
+        "test/contracts/Fixtures.sol": "0x43e4a6f57739977065043a7fcfe3a86fd58bb895510a6ade908f48002b366639",
+        "test/contracts/ShortSettlementFixture.sol": "0xf7c6a1f19b32e6736f86640ae4fb1d3f9f5abbf7629120511587e8eb4a2e5112"
+      },
+      "warnings": []
+    }
+  ]
+}

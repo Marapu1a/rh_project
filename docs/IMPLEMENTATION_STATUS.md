@@ -8,6 +8,7 @@
 
 | Часть | Фактическое состояние |
 |---|---|
+| Исследование полного controller | 17.09 отдельный исполняемый макет RNG/roles/readiness/Monthly, шесть compile profiles. Обычный root 28 475 байт; viaIR+fixed helper+runs=1 — 24 444, лишь 132 байта запаса. Production contracts/settings не менялись. [Измерения и ограничения](CONTROLLER_SIZE_STUDY.md) |
 | Оптимизация Short selection | 17.09 общий validated primitive, повторное использование ranks; runtime fixture 18 497 байт вместо 20 340. Пять сравнений газа на одинаковом state/seed с exact resultHash и vault accounting. Новых внешних helpers нет. [Результаты](SHORT_SELECTION_OPTIMIZATION.md) |
 | Canonical Short settlement | 16.09 внутренний ShortSettlement соединяет dataset + epochs + streaming top K + реальный finalize/consume. Один seed, permissionless process/finish, независимый JS result/recovery. Seed вручную только в fixture; настоящий RNG/readiness/keeper ещё отсутствуют. [Границы](SHORT_SETTLEMENT.md) |
 | Версии правил Short | 16.09 внутренний ShortRulesEpochs + lifecycle v2: notice, B+1 mint boundary, обслуживание старой версии, fresh cutoff после задержки, проверяемое empty assertion. Нет production economic/finality policy или authenticated terminal. [Описание](SHORT_RULES_EPOCHS.md) |
