@@ -2,395 +2,497 @@
 
 Обновлено: 17.09.2026.
 
-Просмотрен latest commit `0cb3cc1c111aef2f107ec80c590363fa8a4d6962` — `Separate Short and Monthly controller capabilities and verify dual settlement`.
+Просмотрен latest commit `80976bd09780c623dc6b13cb44c3443a389f4bff` — `Isolate Short and Monthly draw ID namespaces before preparation and reserve`.
 
-Прочитаны `DUAL_CONTROLLER_ARCHITECTURE.md`, `DualControllerPromoVault.sol`, изменённый `PromoVault.sol`, `MonthlySettlement.sol`, текущий `GPT_REVIEW_REQUEST.md`, dual controller tests, replay/binding описание и `IMPLEMENTATION_STATUS.md`. GitHub CI/status для latest commit пусты; заявленные `151/151` и отдельный dual size/readiness check в этом проходе мной независимо не запускались.
+Прочитаны diff, актуальный `GPT_REVIEW_REQUEST.md`, `DualControllerPromoVault.sol`, изменения `PromoVault.sol` / `ShortDatasetPreparation.sol` / `MonthlySettlement.sol`, `draw-id.cjs`, lifecycle v3 и новые dual tests. GitHub CI/status для commit пусты; заявленные `154/154` и отдельный dual size/deployment check в этом проходе мной независимо не запускались.
 
 ## Короткий вердикт
 
-Да — разделение получилось не просто способом обойти размер, а **архитектурно более чистой моделью полномочий**.
+Правка закрывает найденный pre-seal cross-kind DoS чисто и дешевле, чем мой предыдущий hash-derived вариант.
+
+Схема:
 
 ~~~text
-                   DualControllerPromoVault
-                    /                   \
-                   /                     \
-       ShortController               MonthlyController
-       только Short                  только jackpot
+bit 255 = 0 → Short
+bit 255 = 1 → Monthly
+low 255 bits != 0
 ~~~
 
-При этом:
+хороша именно тем, что не создаёт вторую сущность `logicalDrawId → vaultDrawId`. Один и тот же bytes32 теперь проходит через request, snapshot, context, events, vault, replay и claim.
 
-- казна и liabilities остаются общими;
-- controllers immutable и различны;
-- Short физически не может резервировать Current или запускать Monthly;
-- Monthly физически не может резервировать Short или generic-finalize;
-- TOKEN/generic reserve в новом vault полностью закрыт;
-- `fundUSDG`, `syncUSDG`, `claim` остаются permissionless, потому что не дают caller перенаправить уже признанные деньги;
-- terminal каждого типа остаётся атомарным в одной EVM transaction;
-- Short и Monthly могут быть pending одновременно и не требуют общего root-controller.
+Я не нашёл оставшейся точки входа в **новом dual deployment**, через которую один controller может создать/зарезервировать draw в namespace другого типа.
 
-Это хорошо совпадает с нашим Trust & Evolution принципом: **разделение функциональности одновременно уменьшило полномочия каждой части**.
-
-Критического обхода capability matrix через унаследованный API я не нашёл.
+Основной следующий вопрос действительно уже не drawId, а безопасная forward-only эволюция Monthly q/interval.
 
 ---
 
-## 1. Capability matrix действительно закрыта на уровне vault
+## 1. Где namespace реально защищается
 
-Наследование `PromoVault` сначала выглядело местом, где легко оставить старую лазейку, но текущие hooks достаточно узкие.
+Защита стоит на двух уровнях, и это правильно.
 
-Base `PromoVault` сохранил legacy single-controller semantics по умолчанию. `DualControllerPromoVault` переопределяет только:
-
-~~~text
-_authorizeMonthly()
-_validateTokenReserve()
-_validateUSDGSource()
-~~~
-
-В результате Short (`drawController` alias) может:
-
-~~~text
-reserveUSDG(... SHORT ...)
-finalize(non-MONTHLY draw)
-~~~
-
-но не может:
-
-~~~text
-reserve TOKEN
-a reserve Current
-startMonthly
-settleMonthly
-finalize MONTHLY draw
-~~~
-
-Monthly controller, наоборот, входит только через `startMonthly/settleMonthly`; generic `reserve/finalize` по-прежнему защищены `onlyController`, который указывает именно на Short.
-
-Permissionless `fundUSDG/syncUSDG/claim` не создают capability bypass:
-
-- funding только добавляет призовые средства;
-- sync только признаёт уже находящийся USDG по фиксированной GENERAL policy;
-- claim переводит только заранее зафиксированному winner.
-
-То есть controller не получает способ назвать произвольного recipient через эти пути.
-
-Отдельно правильно, что новый vault запрещает generic TOKEN reserve полностью. Это делает границу ясной: **TOKEN должен быть конвертирован до попадания в эту prize custody**, а не лежать вторым spendable prize asset.
-
----
-
-## 2. Общая казна + независимые pending выглядит согласованно
-
-Одновременный:
-
-~~~text
-pending Short
-+
-pending Monthly
-~~~
-
-сам по себе бухгалтерию не ломает.
-
-Short резервирует только `freeShort`. Monthly через `startMonthly` резервирует весь текущий `freeCurrent`, оставляя `freeNext` на месте до результата.
-
-Новые прямые USDG transfer во время pending по-прежнему проходят одну общую `_syncUSDG()` и поэтому не становятся «деньгами конкретного controller».
-
-Порядок вызовов Short reserve / Monthly start не должен менять признание уже лежащих средств; тесты специально проверяют обе очередности. Старые `claimable/reward[drawId][winner]` также не принадлежат controller state и переживают новые draw/cycles.
-
-Monthly win/no-win использует прежнюю принятую бухгалтерию:
-
-~~~text
-WIN:
-Current frozen → winner claimable
-old Next → new freeCurrent
-Next → 0
-cycle++
-
-NO-WIN:
-frozen Current → freeCurrent
-Next остаётся полным
-cycle не переключается
-~~~
-
-Это хорошо отделяет **draw execution state** от **денежных обязательств vault**.
-
----
-
-## 3. MonthlySettlement выглядит нормальным самостоятельным sibling Short
-
-Мне нравится, что Monthly не пытались притянуть к Short inheritance ради экономии нескольких функций.
-
-У него свой понятный lifecycle:
-
-~~~text
-Publishing
-→ Ready
-→ WaitingSeed
-→ Processing
-→ Terminal
-~~~
-
-и отдельные domains:
-
-~~~text
-MONTHLY_DATASET_V1
-MONTHLY_DATASET_CONTEXT_V1
-MONTHLY_RESULT_V1
-~~~
-
-Это лучше, чем generic `DrawEngine`, где аудитору пришлось бы доказывать, какая ветка параметров реально исполняется.
-
-После seed:
-
-- chunks только по порядку;
-- chunk обязан совпасть с опубликованным hash;
-- selection использует общий проверенный `ShortOutcome.selectTopK(..., K=1)`;
-- global winner — минимум того же `(rank, wallet)` порядка;
-- no admitted → terminal no-win;
-- `settleMonthly + local terminal + AttemptsConsumed` идут одной транзакцией;
-- любой revert откатывает всё.
-
-Нового внутреннего сценария «корректный frozen Monthly + валидный seed, но алгоритм сам завёл draw в неразрешимое состояние» я не нашёл.
-
-Внешние причины зависания остаются отдельно: недоставленный RNG, отсутствие исполнителя, chain failure или реальный USDG deficit. Они не должны лечиться reroll/reset — и текущий код такого пути не добавляет.
-
----
-
-## 4. Replay v3: направление правильное
-
-Для dual deployment старые lifecycle v1/v2 действительно уже недостаточны: два источника событий нельзя молча смешивать.
-
-Новая v3-domain связывает:
-
-~~~text
-chain
-registry
-Short source + runtime hash + instance
-Monthly source + runtime hash + instance
-vault + runtime hash
-assets
-Monthly immutable policy identity
-~~~
-
-RPC verifier дополнительно читает обе reverse bindings и policy с chain.
-
-Это правильная модель: event `AttemptsConsumed(kind=MONTHLY)` принимается не потому, что у него красивый topic, а потому что он пришёл **с exact monthly source**, закреплённого deployment domain.
-
-При этом прежняя граница остаётся: verifier подтверждает выбранный deployment и replay его истории, но сам по себе не создаёт глобальный registry «официальных deployment проекта». Эту роль позже выполняет deployment manifest / verified release package.
-
----
-
-# 5. Один конкретный пробел: cross-kind drawId collision ДО seal
-
-После просмотра двух независимых preparation state machines я вижу один небольшой, но реальный liveness edge case, которого текущий collision test не закрывает полностью.
-
-Vault действительно имеет global namespace:
-
-~~~text
-draws[drawId]
-~~~
-
-и после того, как один draw уже зарезервирован, второй тип с тем же `drawId` атомарно отвергается. Это протестировано.
-
-Но **до seal** proposals живут только в своих controllers.
-
-Возможна последовательность:
-
-~~~text
-Short publisher:
-  begin Short(drawId = X)
-  publish...
-  Short Ready, но ещё не sealed
-
-Monthly publisher видит X:
-  begin Month(drawId = X)
-  publish...
-  sealMonth(X)   // vault X теперь занят
+### Preparation boundary
 
 Short:
-  seal(X)        // revert в vault._reserve
-~~~
-
-И наоборот.
-
-Деньги не теряются: проигравшая proposal ещё pre-freeze и может быть superseded. Но compromised/buggy publisher одной стороны получает возможность **мешать liveness другой стороны**, хотя денежные capabilities специально разделены.
-
-Это не критический custody bug, но против нашей идеи capability isolation выглядит лишним.
-
-### Минимальное исправление, которое я бы рассмотрел
-
-Сделать canonical vault drawId domain-separated по типу, а не принимать общий произвольный namespace от publisher.
-
-Например концептуально:
 
 ~~~text
-Short vaultDrawId   = H("PROMO_SHORT_DRAW_V1", shortInstance, logicalDrawId)
-Monthly vaultDrawId = H("PROMO_MONTHLY_DRAW_V1", monthlyInstance, logicalDrawId)
+ShortDatasetPreparation._beginDataset
+→ datasetVault.validateDrawId(drawId, SHORT)
 ~~~
 
-Тогда cross-kind collision невозможен без hash collision.
+Monthly:
 
-Можно также просто определить обязательный kind namespace в самом drawId schema, но hash-domain выглядит чище и воспроизводимее.
+~~~text
+MonthlySettlement._beginMonth
+→ monthlyVault.validateDrawId(drawId, MONTHLY)
+~~~
 
-Важно: если это делать, **canonical ID должен одинаково использоваться в events/context/replay/vault**, чтобы не получить две конкурирующие идентичности «logical draw id» и «vault draw id» без необходимости.
+Поэтому hostile/buggy publisher уже **не может даже подготовить READY dataset** с ID чужого типа.
 
-Если команда сознательно принимает pre-seal cross-DoS как остаточный publisher risk, это тоже допустимо — но тогда лучше прямо записать. Я бы предпочёл убрать: цена исправления сейчас маленькая.
+### Custody boundary
+
+Short real reserve:
+
+~~~text
+PromoVault.reserveUSDG
+→ onlyController
+→ validateDrawId(drawId, SHORT)
+~~~
+
+Monthly real reserve:
+
+~~~text
+PromoVault.startMonthly
+→ onlyMonthlyController
+→ validateDrawId(drawId, MONTHLY)
+~~~
+
+То есть даже если controller обойдёт собственный preparation wrapper и попытается вызвать vault напрямую, namespace всё равно enforced самой казной.
+
+Это сильнее, чем только off-chain generator или только begin-level validation.
 
 ---
 
-## 6. Ещё один не-баг, который надо решить до production: гибкость Monthly policy
+## 2. Другого cross-kind occupation path в dual vault сейчас не вижу
 
-Текущий `MonthlySettlement` делает:
+Проверил оставшиеся пути.
+
+### `reserve(...)`
+
+В `DualControllerPromoVault` generic/TOKEN reserve полностью запрещён через `_validateTokenReserve()`. Поэтому его нельзя использовать как обход namespace.
+
+### `finalize(...)`
+
+`finalize` сам новый draw не создаёт: он требует уже существующий `Reserved` draw. Monthly draw дополнительно отвергается через `UseMonthlySettlement`.
+
+Создать такой `Reserved` draw можно только через уже namespace-checked reserve/start paths.
+
+### `settleMonthly(...)`
+
+Также работает только с уже созданным `MONTHLY` draw и exact `pendingMonthlyDrawId`.
+
+### `fundUSDG / syncUSDG / claim`
+
+Draw storage не создают и namespace не занимают.
+
+### Два одинаковых low-255 payload
+
+Теперь это именно желательный сценарий:
 
 ~~~text
-monthlyInterval immutable
-monthlyRulesHash immutable
-policy immutable по смыслу deployment
+Short   = 0 | payload
+Monthly = 1<<255 | payload
 ~~~
 
-Это очень просто и безопасно.
+Это два разных canonical ID и оба могут быть READY/pending одновременно. Новые tests проверяют обе очередности seal и terminal.
 
-Но наша более общая продуктовая позиция — иметь возможность корректировать **будущие** правила между периодами, не трогая старые obligations.
-
-Short уже умеет rules epochs. Monthly сейчас — нет.
-
-Это не означает, что Monthly epochs надо срочно добавлять. Нужно просто до production сознательно выбрать одно из двух обещаний:
-
-### A. Monthly policy fixed for lifetime этого deployment
-
-Изменение Monthly q/interval требует нового Promo deployment.
-
-Это максимально просто и честно.
-
-### B. Monthly future policy versionable
-
-Тогда нужен такой же forward-only принцип, но отдельный дизайн для monthly attempts, потому что накопленные OPEN monthly attempts нельзя внезапно перевести на новую probability model.
-
-У Monthly controller сейчас большой size headroom (~10.8 KiB под standard 24 KiB), поэтому решение не диктуется размером.
-
-**Я бы не смешивал это с RNG-пакетом.** Но перед mainnet нужно явно выбрать A или B, чтобы случайно не зафиксировать lifetime semantics только потому, что так было проще в первой реализации.
+Итого: исходный edge case закрыт не только после reserve, а до первого state commitment каждой стороны.
 
 ---
 
-## 7. Размеры теперь выглядят действительно здорово
+## 3. Replay/on-chain identity выглядит согласованно
 
-Самое красивое следствие split:
+Lifecycle v3 теперь включает:
 
 ~~~text
-Short + research RNG/roles/readiness   21 866   headroom 2 710
-Monthly + research RNG/readiness       13 753   headroom 10 823
-Dual vault                              8 331   headroom 16 245
+drawIdScheme = kind-bit-v1
 ~~~
 
-без viaIR и без external selection helper.
+и `validateDrawId()` вызывается при построении snapshot и при чтении lifecycle FREEZE/TERMINAL events.
 
-То есть мы одновременно получили:
+`verifyDualBindings()` отдельно требует exact scheme и всё ещё pin'ит runtime hashes обоих controllers и vault.
 
-- стандартную 24 KiB portability;
-- отсутствие code golf;
-- отсутствие proxy/delegatecall;
-- более узкие custody capabilities;
-- независимые Short/Monthly liveness;
-- гораздо более читаемую audit surface.
+Это важно: verifier не просто видит `kind=MONTHLY` в event, он проверяет одновременно:
 
-Поэтому этот split я уже воспринимаю не как workaround code-size, а как **нормальную целевую architecture**.
+~~~text
+exact monthly emitter
++ MONTHLY high-bit namespace
++ exact deployment domain
+~~~
 
-Short headroom 2.7 KiB всё ещё надо уважать: реальный RNG protocol и finality/readiness могут оказаться тяжелее research wrapper. Но теперь если именно provider-specific часть не помещается, её можно вынести в **фиксированный immutable RNG adapter**, не трогая prize custody architecture.
+Поэтому on-chain и replay используют одну идентичность, а не две конкурирующие схемы.
+
+Старые experimental v3 artifacts действительно должны быть пересобраны: domain изменился. То, что v1/v2 legacy formats не переписываются задним числом, правильно.
 
 ---
 
-## 8. Следующий один этап: authenticated RNG boundary для ОБОИХ controllers
+## 4. Маленькое уточнение для документации/UI: drawId уникален внутри deployment, не во всём мультичейне
 
-Я бы теперь не возвращался к общей архитектуре и не оптимизировал vault дальше.
+`kind-bit-v1` разделяет Short/Monthly **в одной казне/instance**. Он не пытается делать bytes32 глобально уникальным между сетями и будущими deployments.
 
-Следующий узкий пакет:
+Это нормально, потому что cryptographic contexts уже содержат chain/controller/instance/vault.
 
-~~~text
-authenticated-rng-adapter-v1
-~~~
-
-Сначала выбрать/исследовать реальный random provider на Robinhood и спроектировать минимальную binding surface.
-
-Хороший вариант для измерения — **один fixed RNG adapter для двух immutable controllers**, но не как заменяемый module.
-
-Примерно:
+Но публичные инструменты лучше считать полной идентичностью draw примерно так:
 
 ~~~text
-ShortController ─┐
-                 ├→ immutable RNG Adapter → provider
-MonthlyController┘
+(chainId, vault/instance, drawId)
 ~~~
 
-Adapter:
+а не обещать, что один bytes32 никогда не повторится в другом deployment.
 
-- знает exact Short + Monthly controller addresses;
-- знает exact provider/verifier;
-- requestId связывает с `(controller, kind, drawId, context)`;
-- provider callback принимается один раз;
-- доставляет seed только тому fixed controller, который создал request;
-- не имеет доступа к PromoVault;
-- не умеет выбирать winner;
-- не умеет reroll/cancel/rebind request;
-- не заменяется после deployment.
-
-Controller со своей стороны всё равно проверяет собственный pending draw/context/request binding. То есть adapter не должен становиться «доверенным admin setSeed».
-
-Нужно сравнить это с двумя duplicated thin provider integrations по:
-
-- runtime Short/Monthly;
-- adapter size;
-- request/fulfill gas;
-- failure/retry semantics;
-- trust surface;
-- provider migration semantics (скорее новый deployment, не setter).
-
-И только после выбора реального provider принимать конкретную схему.
-
-Pre-freeze readiness в том же пакете можно ограничить фактом:
-
-~~~text
-provider ready
-request fee funded
-finality gate passed
-execution reserve/capacity acceptable
-~~~
-
-но после успешного freeze эти gates уже не дают права отменить obligation.
+Для multi-chain проекта это стоит сохранить как audit/UI convention.
 
 ---
 
-## 9. Что бы я НЕ менял сейчас
+## 5. `draw-id.cjs`: только косметическое замечание
 
-После этого commit я бы не трогал без конкретной причины:
+В helper параметр сейчас называется `seed`:
 
-- общую PromoVault accounting;
-- dual immutable controllers;
-- Short outcome/epochs;
-- permissionless process/finish;
-- Monthly/Short independent pending;
-- claim semantics;
-- separate sponsor layer;
-- proxy/upgrades/emergency reset.
+~~~text
+drawIdFor(kind, seed)
+~~~
 
-То есть code-size ветка, похоже, действительно привела нас **к улучшению архитектуры**, а не к компромиссу.
+Комментарий правильно говорит, что это не randomness seed. Security-проблемы здесь нет.
+
+Но перед public tooling я бы переименовал argument в `payload`, `number` или `idSeed`, потому что в проекте одновременно существует настоящий RNG `seed`. Это уменьшит шанс путаницы в auditor/keeper code.
+
+Сам masking корректен: теряется только один high bit, остаётся 255-bit payload. Same-kind повтор payload не обязан предотвращаться генератором — повторный canonical ID уже запрещает state machine/vault.
+
+---
+
+## 6. Размер после исправления всё ещё здоровый
+
+Новая policy добавила немного кода:
+
+~~~text
+Short research wrapper   21 988   headroom 2 588
+Monthly                  13 876   headroom 10 700
+Dual vault                8 496   headroom 16 080
+~~~
+
+Это не меняет принятую dual-controller архитектуру. Short запас всё ещё требует дисциплины перед реальным RNG, но сам namespace не создал нового size-проблемного слоя.
+
+---
+
+# 7. Monthly rules: требования совместимы, если использовать один draining epoch, а не очередь
+
+Текущий вопрос в `GPT_REVIEW_REQUEST.md` сформулирован правильно:
+
+- lifetime immutable q/interval нежелательны;
+- уже накопленные OPEN Monthly attempts нельзя ухудшить задним числом;
+- не хочется бесконечной очереди epochs;
+- новые Monthly cycles не должны получать дополнительную artificial остановку.
+
+Я думаю, эти требования **можно совместить**.
+
+Ключевая идея очень похожа на Short, но Monthly не надо копировать целиком.
+
+Нам нужен максимум:
+
+~~~text
+1 current epoch
+1 announced future epoch
+1 draining old epoch
+~~~
+
+и никогда больше двух реально живых versions одновременно.
+
+---
+
+## 8. Предлагаемая Monthly transition state machine
+
+Допустим сейчас действует `M1`, объявляем `M2`.
+
+### Шаг A — announce
+
+Публикуется полный future payload:
+
+~~~text
+epoch = 2
+q / admission rules
+interval
+other explicitly versionable Monthly params
+eligibleAt
+~~~
+
+До activation **ни один attempt не становится M2**.
+
+Одновременно можно иметь только одну announced version.
+
+### Шаг B — activation в block B
+
+После notice отдельная transaction активирует transition:
+
+~~~text
+oldEpoch = M1
+newEpoch = M2
+firstNewBlock = B + 1
+~~~
+
+Все Monthly attempts, minted:
+
+~~~text
+<= B   → M1
+>= B+1 → M2
+~~~
+
+Same-block semantics такая же простая, как у Short: весь block B остаётся old.
+
+Activation допустима только когда:
+
+- нет pending Monthly draw;
+- старый monthly schedule уже допускает boundary draw;
+- execution/RNG/funding readiness достаточны, чтобы не открыть переход, который заведомо нельзя обслужить.
+
+Последнее — readiness policy, не новая admin power.
+
+### Шаг C — старый epoch становится draining
+
+После activation:
+
+~~~text
+M1 OPEN attempts → должны быть обслужены старым draw
+M2 OPEN attempts → уже копятся для следующего обычного draw
+~~~
+
+Никакого преобразования M1 → M2 нет.
+
+### Шаг D — boundary Monthly draw использует СВЕЖИЙ cutoff C
+
+Здесь полезно повторить именно удачную часть Short epochs.
+
+Не нужно требовать:
+
+~~~text
+cutoff == activation block B
+~~~
+
+Можно взять свежий canonical cutoff:
+
+~~~text
+C >= B+1
+~~~
+
+а replay знает, что participant upper bound для draining M1 всё равно:
+
+~~~text
+B = firstBlock(M2) - 1
+~~~
+
+Поэтому:
+
+- `blockhash(C)` ещё доступен;
+- BUY M2 между B+1 и C видны chain replay;
+- но они не попадают в M1 dataset;
+- весь старый M1 cohort остаётся точным и конечным.
+
+Это решает ту же 256-block проблему, которую уже решили для Short.
+
+### Шаг E — terminal старого draw
+
+Boundary draw полностью работает по M1:
+
+~~~text
+M1 q
+M1 interval/schedule eligibility
+один M1 seed
+M1 attempts consumed и при win, и при no-win
+~~~
+
+После terminal:
+
+~~~text
+drainingEpoch = none
+currentEpoch = M2 only
+lastMonthlyAt = boundary terminal time
+~~~
+
+Следующий обычный Monthly draw использует M2 и ждёт уже `M2.interval`.
+
+M2 attempts, накопленные пока M1 draw был pending, не теряются и не меняют version.
+
+Это не дополнительная остановка относительно обычного правила «один pending Monthly»: пока старый boundary draw pending, новый draw и так не мог бы начаться.
+
+---
+
+## 9. Почему очередь epochs не растёт
+
+Пока существует draining M1:
+
+~~~text
+announce M3 запрещён
+activate M3 запрещён
+~~~
+
+После terminal/verified-empty M1 остаётся только M2.
+
+Поэтому состояния вида:
+
+~~~text
+M1 + M2 + M3 + M4 open
+~~~
+
+не возникает.
+
+Максимум:
+
+~~~text
+frozen/draining M1
++
+open M2
+~~~
+
+Это тот же полезный bounded-state принцип, но Monthly state machine значительно проще Short: нет корзины/Short D policy и отдельного выбора K.
+
+---
+
+## 10. Empty old epoch
+
+Если на activation старых M1 attempts фактически нет, нет смысла запускать randomness с пустым dataset.
+
+Нужен аналогичный replay-verifiable transition:
+
+~~~text
+MonthlyEpochEmpty(M1, cutoff, snapshotHash)
+~~~
+
+После него M2 становится единственным epoch.
+
+Trust boundary остаётся уже знакомой:
+
+- контракт сам не доказывает полную BUY history;
+- ложный EMPTY обнаруживается independent RPC replay;
+- до public launch нужны artifact/monitoring/verifier;
+- это не повод добавлять reset/reroll.
+
+Для empty transition я бы начинал новый M2 clock от момента подтверждённого empty/activation boundary, чтобы первая M2 попытка не могла получить мгновенный draw только потому, что предыдущий old clock давно истёк. Точное правило стоит отдельно зафиксировать в tests/spec.
+
+---
+
+## 11. Interval versioning
+
+`interval` можно безопасно versionить тем же payload, если разделить две вещи.
+
+Boundary draw старого cohort проверяется по **M1 interval**.
+
+После его terminal следующий draw проверяется по **M2 interval**.
+
+То есть обновление:
+
+~~~text
+30 days → 20 days
+~~~
+
+не ускоряет старый M1 draw задним числом.
+
+А:
+
+~~~text
+20 days → 30 days
+~~~
+
+не удлиняет уже накопленным M1 attempts их старое schedule условие.
+
+Новые M2 attempts заранее знают свою будущую policy.
+
+Как и раньше, interval — минимальная eligibility spacing, а не гарантия terminal ровно через N дней: pending/RNG/readiness могут задержать исполнение.
+
+---
+
+## 12. Replay changes
+
+Lifecycle v3 сейчас ведёт Monthly как один ledger. Для versioning потребуется отдельная Monthly epoch принадлежность mint.
+
+Одна BUY/entry в конкретном block может законно создать:
+
+~~~text
+Short attempt  → Short epoch S3
+Monthly attempt → Monthly epoch M2
+~~~
+
+Эти timelines независимы.
+
+Replay должен хранить monthly `byEpoch` или эквивалентные monotonic ranges и при boundary snapshot выбирать target old epoch, а не весь Monthly OPEN.
+
+Conservation остаётся общей:
+
+~~~text
+monthly minted
+= sum(open by epoch)
++ sum(frozen by epoch)
++ sum(consumed by epoch)
+~~~
+
+Это важно проверить отдельно, а не пытаться переиспользовать Short fields вслепую.
+
+---
+
+## 13. Что НЕ нужно копировать из Short
+
+Не надо превращать Monthly в второй Short.
+
+Monthly не нужны:
+
+- basket versions;
+- K/weights;
+- caller-supplied D policy;
+- Short-specific minimumUnit;
+- Short draw interval 6h;
+- общий rules struct только ради reuse.
+
+Monthly epoch payload должен содержать только **реально изменяемую Monthly policy**.
+
+Budget у Monthly уже определяется accounting через `startMonthly`: весь frozen Current. Это даже чище, чем Short D, и не требует новой operator discretion.
+
+---
+
+## 14. Минимальный следующий design package
+
+До RNG я бы сделал маленький design/fixture пакет:
+
+~~~text
+monthly-rules-epochs-v1
+~~~
+
+Acceptance:
+
+1. Genesis Monthly epoch фиксируется deployment.
+2. Максимум одна announced future version.
+3. Notice не активирует rules автоматически.
+4. Activation B: old through B, new from B+1.
+5. Existing Monthly OPEN attempts сохраняют old epoch.
+6. New attempts после boundary получают new epoch.
+7. Old boundary draw использует fresh cutoff C, но dataset ограничен old epoch end B.
+8. Boundary draw uses old q/interval.
+9. New epoch attempts не расходуются old draw.
+10. После terminal старого draw new epoch становится единственным target.
+11. Следующий update запрещён, пока draining old не terminal/verified-empty.
+12. Empty transition проверяется replay и публичным snapshot hash.
+13. Reorg activation/mints откатываются детерминированно.
+14. Monthly and Short epochs полностью независимы.
+15. Никакой setter не может переназначить уже minted attempt другой version.
+
+Production численные q/interval по-прежнему не выбирать в этом пакете.
+
+После этого RNG boundary можно делать сразу для уже окончательной Short + Monthly policy architecture.
 
 ---
 
 ## Итог
 
-`0cb3cc1` мне нравится.
+`80976bd` хорошо закрывает найденную коллизию.
 
-Получилось ровно то, чего мы хотели от всей Trust & Evolution идеи:
+Kind-bit scheme здесь даже лучше моего первоначального hash-domain предложения: она даёт непересекающиеся namespaces, сохраняет один canonical ID и почти ничего не добавляет в audit surface.
 
-> **две сложные части продукта разделены, но не получили широких прав; общая казна знает их точные capabilities и не даёт одной стороне залезть в деньги другой.**
+Нового cross-kind occupation path в dual vault/replay я не вижу.
 
-Это проще объяснить аудитору, чем большой root-controller:
-
-~~~text
-Short controller → только Short money
-Monthly controller → только Monthly cycle
-Vault → только accounting/custody
-~~~
-
-Я бы принял эту архитектуру как текущую базу.
-
-Из конкретных вещей перед RNG я бы сначала решил/протестировал только **cross-kind pre-seal drawId collision**. После этого следующий настоящий внешний trust boundary — authenticated randomness.
+Следующая логичная ветка — **Monthly forward-only epochs**. Причём требования не выглядят противоречивыми: один draining old epoch + один active new epoch позволяет сохранить старые attempts, менять q/interval для будущих, не строить очередь versions и не добавлять отдельную паузу сверх уже существующего one-pending Monthly lifecycle.
