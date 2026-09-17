@@ -1,0 +1,23 @@
+[
+  {
+    "repo": "kevincharm/bls-bn254",
+    "commit": "9f70fb4dff2cd0921dc2144929dc0aff6f21a9b9",
+    "url": "https://raw.githubusercontent.com/kevincharm/bls-bn254/9f70fb4dff2cd0921dc2144929dc0aff6f21a9b9/LICENSE",
+    "file": "research/drand-feasibility/vendor/LICENSE",
+    "sha256": "af36460fa628a7aca8c5b1f1b6b3615376f00212284fa0fd61a013ee982a3666"
+  },
+  {
+    "repo": "kevincharm/bls-bn254",
+    "commit": "9f70fb4dff2cd0921dc2144929dc0aff6f21a9b9",
+    "url": "https://raw.githubusercontent.com/kevincharm/bls-bn254/9f70fb4dff2cd0921dc2144929dc0aff6f21a9b9/contracts/BLS.sol",
+    "file": "research/drand-feasibility/vendor/BLS.sol",
+    "sha256": "887fd94553b9d6d0a247900bdb05523d3b9ef3b8ca049e2a0524a0b1a9d37e69"
+  },
+  {
+    "repo": "kevincharm/bls-bn254",
+    "commit": "9f70fb4dff2cd0921dc2144929dc0aff6f21a9b9",
+    "url": "https://raw.githubusercontent.com/kevincharm/bls-bn254/9f70fb4dff2cd0921dc2144929dc0aff6f21a9b9/contracts/ModExp.sol",
+    "file": "research/drand-feasibility/vendor/ModExp.sol",
+    "sha256": "fd91ae9291511668914b05fece03fb9bf6e2b57f7784d2edddc82456af12b495"
+  }
+]

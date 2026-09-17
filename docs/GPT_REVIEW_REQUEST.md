@@ -1,42 +1,54 @@
-# Ревью: Monthly regression и реальный RNG
+# Ревью: drand evmnet — первый исполняемый feasibility package
 
-17.09.2026. Закрыли M1 → M2 → M3 двумя новыми тестами:
-`test/monthly-epochs.test.cjs` (контракт + казна) и `test/monthly-replay.test.cjs`
-(BUY history, cumulative ranges, поздний M2 остаток, независимость Short).
-Пустая/непустая M2 ветки, неизменяемая policy и clock проверены; suite 13/13 passed.
-Контракты не менялись. Полный suite не повторяли: прежний 164/164, затем CLI-тест,
-теперь ещё две регрессии — всего 167 различных тестов.
+Итоговые проверки: основной `npm test` 167/167, отдельный drand suite 2/2,
+read-only RPC checks 2/2. Полный suite занял около 7 минут.
 
-Следующий пункт ограничили исследованием RNG, без production integration.
-Начать с [отчёта](RNG_PROVIDER_STUDY_2026-09-17.md) и
-[RPC evidence](../research/rng-provider-study/observations.json).
-Повтор: `node scripts/rng-provider-probe.cjs` (только публичное чтение).
+17.09.2026. Код Short/Monthly и казны не менялся. Сделали только standalone
+research verifier на pinned kevincharm/bls-bn254, локальные проверки и read-only
+исполнение полного verifier через RPC Robinhood mainnet/testnet.
 
-Найдены Quiver, RH-VRF и Dice; code existence подтверждён, liveness и соответствие
-документации bytecode — нет. RH-VRF документирует timeout refund, навсегда закрывающий
-request: он не завершает наш frozen draw. Quiver/Dice commit-reveal не устраняют
-withholding. Нулевая getFee у Quiver не доказывает бесплатный работающий сервис.
+Начать с [DRAND_FEASIBILITY.md](DRAND_FEASIBILITY.md), затем:
 
-Предлагаемый следующий кусок: локальный drand evmnet feasibility study.
-Существующий проверяемый verifier, настоящий test vector, bad-proof tests,
-gas/bytecode и future-round binding. HTTP beacon и пустой pairing smoke check
-получены; это НЕ signature verification. Production provider пока не выбран.
+- research/drand-feasibility/EvmnetFixture.sol и sources.json;
+- test/drand-feasibility.test.cjs;
+- scripts/drand-feasibility.cjs и scripts/drand-rpc-check.cjs;
+- local-result.json / rpc-result.json в research/drand-feasibility.
 
-Просим независимую оценку:
+Настоящие rounds 9337227 и 20716103 проходят локально. Для первого сверены
+upstream message/hash-to-point и canonical SHA-256. В обоих Robinhood RPC
+valid proof принят, round+1 отклонён, prove вернул ожидаемую randomness.
+Это eth_call/state override, НЕ deployment, НЕ отправленная transaction.
 
-1. Есть ли оставшийся конкретный пробел в переходе M1 → M2 → M3?
-2. Подходит ли evmnet под один immutable target на frozen draw без reroll? Какой
-   существующий verifier проверить (исходники, версия, лицензия, аудит)?
-3. Как минимально связать freeze/finality и будущий round, чтобы задержка inclusion
-   или reorg не позволяла freeze с известным исходом или перебор targets?
-4. Есть ли у shortlisted services путь доставки ТОГО ЖЕ результата после их
-   TTL/refund/hash-chain ограничений? Нужны API/исходники, не новый request вместо retry.
-5. Есть ли более простой проверенный кандидат на 4663, который мы пропустили?
+Runtime 9 139 bytes; local verify receipt 176 491 gas; prove+store 225 068.
+Remote prove estimates: mainnet 233 440, testnet 242 540 в записанных blocks.
+Это не постоянная цена, не USD quote и не аудит криптографии.
 
-Не смешиваем источники и не меняем round при timeout. Callback только принимает
-seed, processing отдельно. RNG funding/readiness не блокирует empty closure.
-Оплата операций не берётся из frozen prizes. Не нужны сейчас bridge RNG, новые
-admin reset, переписывание accounting или реализация production adapter.
+Входное исследование уточнили:
 
-Ответ — в прежний GPT_REVIEW_RESPONSE.md. Отделяйте подтверждённые источники от
-предположений; советы используются как ревью, а не автоматически принятые решения.
+1. Round нумеруется с 1: at-or-after = 1 + ceil((t-genesis)/period).
+2. Published hash-to-point в markdown разбит 63/65 hex digits; используем
+   оригинальный machine-readable fixture, а не ручное деление строк.
+3. Seed zero допустим; отдельный proven flag.
+4. Час задержки не является доказательством finality.
+5. Fixed schedule + запрет позднего seal требует автоматического продолжения,
+   иначе можно получить вечную блокировку ещё до freeze.
+
+Локальный suite 2/2: positive/negative crypto, malformed points/bytes, same-proof
+idempotency, другой caller, поздняя первая доставка и duplicate через 30 суток;
+отдельно round arithmetic на 10 000 timestamps. Это ещё не frozen draw binding.
+
+Вопросы для следующего узкого шага:
+
+1. Видите ли конкретный дефект в key ordering, round encoding, DST, point validation
+   или registry path? Не считать прохождение двух vectors криптоаудитом.
+2. Какую минимальную timing/binding модель выбрать для нашего interval-based Short
+   и Monthly, чтобы поздняя подготовка не блокировала дальнейшие draws?
+3. Где достаточно честно сформулированного finality assumption, а где нужен
+   объективно проверяемый факт? Не обещать, что fixed delay исключает любой reorg.
+4. Какие обязательные негативные сценарии добавить в локальную binding fixture?
+5. Есть ли подтверждённая exact-round outage/backfill semantics evmnet?
+
+Следующий кандидат — небольшой локальный binding/timing study. Не добавляем
+provider switching, emergency seed, RNG epochs, новые правила казны или production
+adapter до закрытия этой границы. Empty closure не зависит от RNG readiness.
+Ответ — в прежний GPT_REVIEW_RESPONSE.md.

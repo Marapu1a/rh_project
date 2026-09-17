@@ -1,0 +1,15 @@
+{
+  "source": "https://raw.githubusercontent.com/randa-mu/bls-solidity/11af179a8287d978659aae07adb66aa60f64b8a6/test/data/testcases.json",
+  "sourceSha256": "27629e8722e965665b13c3281125d586a01515d6849587e4247c113c2970f20d",
+  "vector": {
+    "dst": "BLS_SIG_BN254G1_XMD:KECCAK-256_SVDW_RO_NUL_",
+    "message": "baf09720c37cb921fd8362b1d907232ac0b813ffba768c714aeaace987e7fd6b",
+    "pk": "07e1d1d335df83fa98462005690372c643340060d205306a9aa8106b6bd0b3820557ec32c2ad488e4d4f6008f89a346f18492092ccc0d594610de2732c8b808f0095685ae3a85ba243747b1b2f426049010f6b73a0cf1d389351d5aaaa1047f6297d3a4f9749b33eb2d904c9d9ebf17224150ddd7abd7567a9bec6c74480ee0b",
+    "m_expected": "1626082c3dd0751bdaaf8c3e709b5dd7cdedf45d4e81a5aa3e270f1e78924b322bf29ab3af54dfe3c053ad4efa93db05d3586368463e9d7334c7ba61f6f4e955",
+    "scheme": "BN254",
+    "sig": "01d65d6128f4b2df3d08de85543d8efe06b0281d0770246ae3672e8ddd3efda0269373123458f0b5c0073eeed1c816a06809e127421513e34ee07df6987910b3",
+    "sig_compressed": "not applicable",
+    "drand_round_number": 9337227,
+    "application": ""
+  }
+}

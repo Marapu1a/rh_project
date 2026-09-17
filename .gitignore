@@ -19,6 +19,8 @@ research/*
 !research/README.md
 !research/rng-provider-study/
 !research/rng-provider-study/**
+!research/drand-feasibility/
+!research/drand-feasibility/**
 !research/pair-source-audit/
 !research/pair-source-audit/**
 !research/direct-buy/

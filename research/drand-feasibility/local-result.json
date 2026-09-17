@@ -1,0 +1,42 @@
+{
+  "schema": "drand-feasibility-local-v1",
+  "compiler": "0.8.37+commit.f401782d.Emscripten.clang",
+  "optimizerRuns": 200,
+  "evmVersion": "cancun",
+  "viaIR": false,
+  "runtimeBytes": 9139,
+  "initcodeBytes": 9167,
+  "sourceHashes": {
+    "EvmnetFixture.sol": "731c0f366d909e208ceb15b37c8b3eaa306aacd6000c7c2a83121f583aea1110",
+    "vendor/BLS.sol": "887fd94553b9d6d0a247900bdb05523d3b9ef3b8ca049e2a0524a0b1a9d37e69",
+    "vendor/ModExp.sol": "fd91ae9291511668914b05fece03fb9bf6e2b57f7784d2edddc82456af12b495"
+  },
+  "vectorRound": 9337227,
+  "randomness": "0xa1e645cd6193837f626716851f5c42ad4bf63ad75193b2cae40f88c08c8f3bd8",
+  "gas": {
+    "verifyEstimate": "178190",
+    "invalidRoundEstimate": "182744",
+    "invalidPointEstimate": "23828",
+    "verifyTransaction": "176491",
+    "proveAndStore": "225068",
+    "duplicate": "183476"
+  },
+  "calldataBytes": 164,
+  "checks": [
+    "real signature and intermediate hash-to-point",
+    "round +/-1",
+    "wrong key and DST",
+    "zero/off-curve/out-of-field/corrupt points",
+    "truncated/extra bytes",
+    "permissionless prove",
+    "duplicate idempotency",
+    "invalid proof never stored",
+    "late first proof and duplicate after 30 days"
+  ],
+  "limitations": [
+    "Local Hardhat Cancun, not Robinhood execution",
+    "No audit or production integration",
+    "No finality guarantee or frozen draw binding",
+    "Gas excludes L2 data fees"
+  ]
+}

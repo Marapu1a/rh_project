@@ -1,5 +1,8 @@
 # Как читать документацию
 
+17.09: [Исполняемая проверка drand, газ и ограничения](DRAND_FEASIBILITY.md).
+Реальная подпись проверена локально и read-only на Robinhood; timing/binding ещё впереди.
+
 17.09: [RNG shortlist, RPC evidence и следующий эксперимент](RNG_PROVIDER_STUDY_2026-09-17.md).
 Регрессии Monthly M1 → M2 → M3 закрыты; production provider пока не выбран.
 

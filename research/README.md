@@ -1,5 +1,10 @@
 # Данные исследований
 
+`drand-feasibility/` — pinned MIT BLS library, настоящие evmnet vectors, standalone
+fixture, local gas/size и Robinhood state-override RPC evidence. `npm run test:drand`
+и `npm run check:drand:rpc`; [границы проверки](../docs/DRAND_FEASIBILITY.md).
+Не production dependency и не публичный deployment.
+
 `rng-provider-study/observations.json` — read-only снимок code hashes/Quiver fee
 на pinned blocks Robinhood mainnet/testnet и HTTP ответов drand evmnet.
 Повтор: `node scripts/rng-provider-probe.cjs`. Не проверяет liveness сервиса или

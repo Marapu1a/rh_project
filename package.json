@@ -42,7 +42,9 @@
     "report:short:legacy": "python scripts/short-report.py",
     "test:short:legacy": "python test/short-legacy.test.py",
     "test:monthly:epochs": "node --test --test-concurrency=1 test/monthly-epochs.test.cjs test/monthly-replay.test.cjs",
-    "verify:monthly:dataset": "node scripts/verify-monthly-dataset.cjs"
+    "verify:monthly:dataset": "node scripts/verify-monthly-dataset.cjs",
+    "test:drand": "node --test test/drand-feasibility.test.cjs",
+    "check:drand:rpc": "node scripts/drand-rpc-check.cjs"
   },
   "devDependencies": {
     "@openzeppelin/contracts": "5.6.1",

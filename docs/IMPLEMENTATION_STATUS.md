@@ -2,16 +2,22 @@
 
 Обновлено по локальному коду и проверкам: 17.09.2026. Это карта кода, а не утверждение реализации всей [продуктовой схемы](PRODUCT_SPEC.md).
 
-Текущий этап 17.09: закрыта регрессия M1 → M2 → M3 и выполнен
+Текущий этап 17.09: [drand feasibility](DRAND_FEASIBILITY.md): настоящие подписи
+проверены standalone verifier локально (2/2) и read-only в Robinhood RPC mainnet/testnet.
+Runtime 9 139 bytes, local prove+store 225 068 gas. Production integration отсутствует;
+следующий кусок — timing/future-round binding. Код Short/Monthly и казны не менялся.
+Полный текущий `npm test`: **167/167 passed**; отдельный research suite **2/2 passed**.
+
+Предыдущий этап 17.09: закрыта регрессия M1 → M2 → M3 и выполнен
 [первичный отбор RNG](RNG_PROVIDER_STUDY_2026-09-17.md). Monthly suite **13/13 passed**;
-добавлено два теста, теперь 167 разных тестов. Полный suite после этого не запускался.
-Production RNG не добавлен. Следующий ограниченный шаг — локальная проверка
-drand evmnet: настоящая подпись, gas и future-round binding.
+добавлено два теста, набор вырос до 167. На тот момент полный suite не повторялся.
+Production RNG не добавлен; запланированная тогда проверка подписи/gas выполнена
+в текущем feasibility package, future-round binding остаётся впереди.
 
 Предыдущий этап: [Monthly admission epochs](MONTHLY_RULES_EPOCHS.md).
 Полный `npm test`: **164/164 passed**. После него расширенный replay/CLI suite — **6/6**,
-дополненная RPC publication/genesis проверка — **1/1**. Итоговый набор содержит 165
-различных тестов; повторный полный запуск после добавления CLI-теста не выполнялся.
+дополненная RPC publication/genesis проверка — **1/1**. На том этапе набор содержал 165
+различных тестов; повторный полный запуск после добавления CLI-теста тогда не выполнялся.
 Отдельный dual size/readiness deployment check также passed. Старые числа ниже — предыдущие этапы.
 
 | Часть | Фактическое состояние |
