@@ -90,6 +90,8 @@ contract PromoVault is ReentrancyGuard {
     }
     function _validateTokenReserve() internal pure virtual {}
     function _validateUSDGSource(ReserveSource) internal pure virtual {}
+    /// Legacy vault has no kind namespace. Dual deployments override this policy.
+    function validateDrawId(bytes32, uint8) public pure virtual {}
 
     /// Total uncommitted balance, NOT the amount available from an individual USDG reserve.
     /// USDG includes unrecognized direct funding; reserveUSDG synchronizes it as GENERAL.
@@ -170,6 +172,7 @@ contract PromoVault is ReentrancyGuard {
         external onlyController nonReentrant
     {
         _validateUSDGSource(source);
+        validateDrawId(drawId, 0);
         // While monthly is pending, new Current belongs to the following accounting outcome.
         if (source == ReserveSource.CURRENT && pendingMonthlyDrawId != bytes32(0)) revert MonthlyPending();
         _syncUSDG();
@@ -187,6 +190,7 @@ contract PromoVault is ReentrancyGuard {
 
     /// Accounting only. Eligibility, checkpoints and random authentication belong to controller.
     function startMonthly(bytes32 drawId, uint64 campaignId) external onlyMonthlyController nonReentrant {
+        validateDrawId(drawId, 1);
         _syncUSDG();
         if (pendingMonthlyDrawId != bytes32(0)) revert MonthlyPending();
         if (freeNext != nextStartTarget) revert NextStartNotReady();

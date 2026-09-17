@@ -18,6 +18,7 @@ contract ShortDatasetFixture is ShortDatasetPreparation {
 
 /// @dev Deliberately adversarial external reserve dependency for guard testing only.
 contract DatasetReentrantVault {
+    function validateDrawId(bytes32, uint8) external pure {}
     address public drawController;
     address public immutable quoteToken = address(0x1234);
     bytes32 public proposal;

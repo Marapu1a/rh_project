@@ -4,7 +4,8 @@ const {fixture,rpc,sent,advance,monthlyRoot}=require('./fixtures/dual-controller
 const {participants,normalRules}=require('./fixtures/short-outcome.cjs');
 const model=require('../scripts/short-outcome.cjs'),dataset=require('../scripts/short-dataset.cjs');
 const shortModel=require('../scripts/short-settlement.cjs');
-const compiled=compile(),id=ethers.id;
+const {drawIdFor}=require('../scripts/draw-id.cjs');
+const compiled=compile(),id=ethers.id,sid=s=>drawIdFor('SHORT',id(s)),mid=s=>drawIdFor('MONTHLY',id(s));
 async function accounting(f){return [await f.vault.freeShort(),await f.vault.freeCurrent(),await f.vault.freeNext(),
   await f.vault.reserved(f.quote.target),await f.vault.claimable(f.quote.target),await f.vault.pendingMonthlyDrawId(),await f.vault.generalFundingPhase()];}
 async function conserved(f){const [s,c,n,res,cl]=await accounting(f);assert.equal(await f.quote.balanceOf(f.vault.target),s+c+n+res+cl+await f.vault.unrecognizedUSDG());}
@@ -16,7 +17,7 @@ test('immutable distinct reverse bindings; legacy getter grants only Short autho
   await assert.rejects(()=>sent(f.vault.startMonthly(id('eoa'),1)));await conserved(f);
 });
 test('hostile controllers cannot cross capabilities or use TOKEN/generic/CURRENT reserves',async()=>{
-  const f=await fixture(compiled),s=id('short'),m=id('month');await sent(f.token.mint(f.vault.target,500));
+  const f=await fixture(compiled),s=sid('short'),m=mid('month');await sent(f.token.mint(f.vault.target,500));
   await f.attack(f.short,'reserveUSDG',[s,1,0,100]);await f.attack(f.monthly,'startMonthly',[m,1]);
   const before=await accounting(f),w=await f.other.getAddress();
   const forbidden=[
@@ -33,16 +34,16 @@ test('hostile controllers cannot cross capabilities or use TOKEN/generic/CURRENT
   for(const [actor,method,args] of forbidden){await assert.rejects(()=>f.attack(actor,method,args));assert.deepEqual(await accounting(f),before);}
   assert.equal(await f.token.balanceOf(f.vault.target),500n);await conserved(f);
 });
-test('global drawId collision fails atomically in both directions',async()=>{
-  const f=await fixture(compiled),same=id('same');await f.attack(f.short,'reserveUSDG',[same,1,0,17]);
+test('wrong-kind drawId and same-kind reuse fail atomically in both directions',async()=>{
+  const f=await fixture(compiled),same=sid('same');await f.attack(f.short,'reserveUSDG',[same,1,0,17]);
   let before=await accounting(f);await assert.rejects(()=>f.attack(f.monthly,'startMonthly',[same,1]));assert.deepEqual(await accounting(f),before);
-  const m=id('monthly');await f.attack(f.monthly,'startMonthly',[m,1]);before=await accounting(f);
+  const m=mid('monthly');await f.attack(f.monthly,'startMonthly',[m,1]);before=await accounting(f);
   await assert.rejects(()=>f.attack(f.short,'reserveUSDG',[m,1,0,17]));assert.deepEqual(await accounting(f),before);
   await f.attack(f.short,'finalize',[same,[],[]]);before=await accounting(f);
   await assert.rejects(()=>f.attack(f.short,'reserveUSDG',[same,1,0,1]));assert.deepEqual(await accounting(f),before);await conserved(f);
 });
 test('controller failure after vault settlement rolls back credits and leaves the other pending draw intact',async()=>{
-  const f=await fixture(compiled),s=id('s'),m=id('m'),w=await f.other.getAddress();
+  const f=await fixture(compiled),s=sid('s'),m=mid('m'),w=await f.other.getAddress();
   await f.attack(f.short,'reserveUSDG',[s,1,0,100]);await f.attack(f.monthly,'startMonthly',[m,1]);const before=await accounting(f);
   await assert.rejects(()=>f.attack(f.short,'finalize',[s,[w],[70]],true));assert.deepEqual(await accounting(f),before);
   assert.equal(await f.vault.reward(s,w),0n);assert.equal((await f.vault.draws(s)).status,1n);
@@ -52,7 +53,7 @@ test('controller failure after vault settlement rolls back credits and leaves th
   await f.attack(f.monthly,'settleMonthly',[m,w]);assert.equal(await f.vault.reward(s,w),70n);await conserved(f);
 });
 test('unpaid claims, direct funding, Next overflow and both transaction orders preserve accounting',async()=>{
-  const f=await fixture(compiled),s=id('s'),m=id('m'),w=await f.other.getAddress();
+  const f=await fixture(compiled),s=sid('s'),m=mid('m'),w=await f.other.getAddress();
   await sent(f.quote.transfer(f.vault.target,13));let checkpoint=await rpc('evm_snapshot'),expected;
   for(const reversed of [false,true]){
     const operations=[()=>f.attack(f.short,'reserveUSDG',[s,1,0,100]),()=>f.attack(f.monthly,'startMonthly',[m,1])];
@@ -65,28 +66,28 @@ test('unpaid claims, direct funding, Next overflow and both transaction orders p
   await f.attack(f.monthly,'settleMonthly',[m,w]);const debt=await f.vault.reward(m,w);assert(debt>1000n);
   await sent(f.quote.blockRecipient(w));await assert.rejects(()=>sent(f.vault.claim(m,w)));assert.equal(await f.vault.reward(m,w),debt);
   await sent(f.vault.fundUSDG(120,3));assert.equal(await f.vault.freeNext(),100n);
-  const m2=id('m2');await f.attack(f.monthly,'startMonthly',[m2,1]);await f.attack(f.monthly,'settleMonthly',[m2,ethers.ZeroAddress]);
+  const m2=mid('m2');await f.attack(f.monthly,'startMonthly',[m2,1]);await f.attack(f.monthly,'settleMonthly',[m2,ethers.ZeroAddress]);
   assert.equal(await f.vault.reward(s,w),71n);assert.equal(await f.vault.reward(m,w),debt);
   await sent(f.quote.blockRecipient(ethers.ZeroAddress));await sent(f.vault.claim(s,w));await sent(f.vault.claim(m,w));await conserved(f);
 });
 test('claim reentrancy from an authorized Short actor is blocked without disturbing Monthly',async()=>{
-  const f=await fixture(compiled),s=id('claim'),m=id('pending');await f.attack(f.short,'reserveUSDG',[s,1,0,100]);
+  const f=await fixture(compiled),s=sid('claim'),m=mid('pending');await f.attack(f.short,'reserveUSDG',[s,1,0,100]);
   await f.attack(f.short,'finalize',[s,[f.short.target],[70]]);await f.attack(f.monthly,'startMonthly',[m,1]);
-  const data=f.vault.interface.encodeFunctionData('reserveUSDG',[id('reentry'),1,0,1]);
+  const data=f.vault.interface.encodeFunctionData('reserveUSDG',[sid('reentry'),1,0,1]);
   await sent(f.quote.setCallback(f.short.target,f.short.interface.encodeFunctionData('attack',[data,false])));
   await sent(f.vault.claim(s,f.short.target));assert.equal(await f.quote.reentrySucceeded(),false);
-  assert.equal((await f.vault.draws(id('reentry'))).status,0n);assert.equal(await f.vault.pendingMonthlyDrawId(),m);
-  await sent(f.short.attack(data,false));assert.equal((await f.vault.draws(id('reentry'))).status,1n);await conserved(f);
+  assert.equal((await f.vault.draws(sid('reentry'))).status,0n);assert.equal(await f.vault.pendingMonthlyDrawId(),m);
+  await sent(f.short.attack(data,false));assert.equal((await f.vault.draws(sid('reentry'))).status,1n);await conserved(f);
 });
 async function prepareReal(f,ps,label,chunkSize=4){
-  const b=await f.provider.getBlock('latest'),drawId=id(label),pid=id(label+' proposal');
+  const b=await f.provider.getBlock('latest'),drawId=sid(label),pid=id(label+' proposal');
   const r={drawId,campaignId:1,rulesEpoch:1,cutoffBlockNumber:b.number,cutoffBlockHash:b.hash,snapshotHash:id(label+' snapshot'),
     expectedRoot:dataset.rootFor(ps),expectedCount:ps.length,expectedAttempts:ps.reduce((a,p)=>a+p.lastAttempt-p.firstAttempt+1n,0n),budget:101};
   await sent(f.short.begin(pid,r));for(let i=0;i<ps.length;i+=chunkSize)await sent(f.short.publish(pid,ps.slice(i,i+chunkSize)));
   await sent(f.short.seal(pid));return {drawId,pid};
 }
 async function prepareMonth(f,ps,label,size=4){
-  const b=await f.provider.getBlock('latest'),drawId=id(label);
+  const b=await f.provider.getBlock('latest'),drawId=mid(label);
   await sent(f.monthly.beginMonth({drawId,snapshotHash:id(label+' snapshot'),root:monthlyRoot(ps),campaign:1,cutoff:b.number,cutoffHash:b.hash,
     count:ps.length,attempts:ps.reduce((a,p)=>a+p.lastAttempt-p.firstAttempt+1n,0n)}));
   for(let i=0;i<ps.length;i+=size)await sent(f.monthly.publishMonth(drawId,ps.slice(i,i+size)));
@@ -155,7 +156,7 @@ test('RPC verifier pins both controllers, policy, assets and reverse vault bindi
   const domain=domainFor(manifest,config);await verifyDualBindings(f.provider,domain);
   for(const [key,value] of [['monthlyPolicyHash',id('wrong')],['monthlyInstanceId',id('wrong')],['vaultQuote',f.token.target],['monthlySourceCodeHash',id('wrong')],['chainId','1']])
     await assert.rejects(()=>verifyDualBindings(f.provider,{...domain,[key]:value}));
-  await advance();const b=await f.provider.getBlock('latest'),ps=participants(4,1),drawId=id('v3 publication'),pid=id('v3 proposal');
+  await advance();const b=await f.provider.getBlock('latest'),ps=participants(4,1),drawId=sid('v3 publication'),pid=id('v3 proposal');
   const snapshot={schema:'attempt-snapshot-v3',domain,drawId,kind:'SHORT',rulesEpoch:'1',
     cutoff:{blockNumber:b.number,blockHash:b.hash},rulesHash:config.shortRules.rulesHash,
     participants:ps.map(p=>({wallet:p.wallet.toLowerCase(),count:'1',firstAttempt:'1',lastAttempt:'1'}))};
@@ -165,4 +166,49 @@ test('RPC verifier pins both controllers, policy, assets and reverse vault bindi
   const artifact={schema:'short-dataset-artifact-v1',snapshot,request,rules:normalRules,weights:[7,5,3],minimumUnit:1};
   const ready=await dataset.verifyPublication(f.provider,f.short,pid,artifact);assert.equal(ready.status,'READY');
   await sent(f.short.seal(pid));assert.equal((await dataset.verifyPublication(f.provider,f.short,pid,artifact)).context,ready.context);
+});
+
+test('kind namespaces reject hostile pre-seal reservations and preserve same-kind replay protection',async()=>{
+  const f=await fixture(compiled),s=sid('shared'),m=mid('shared');
+  assert.equal(BigInt(s)^BigInt(m),1n<<255n);const before=await accounting(f);
+  // Neither ID has been used: rejection must be namespace enforcement, not collision.
+  await assert.rejects(()=>f.attack(f.monthly,'startMonthly',[s,1]));
+  await assert.rejects(()=>f.attack(f.short,'reserveUSDG',[m,1,0,100]));
+  for(const [key,kind] of [[ethers.ZeroHash,0],[ethers.toBeHex(1n<<255n,32),1],[s,2]])
+    await assert.rejects(()=>f.vault.validateDrawId(key,kind));
+  assert.deepEqual(await accounting(f),before);
+  for(const [key,kind] of [[s,0],[m,1],[ethers.toBeHex(1,32),0],[ethers.toBeHex(ethers.MaxUint256,32),1]])await f.vault.validateDrawId(key,kind);
+  await f.attack(f.short,'reserveUSDG',[s,1,0,100]);await f.attack(f.monthly,'startMonthly',[m,1]);
+  await f.attack(f.short,'finalize',[s,[],[]]);await f.attack(f.monthly,'settleMonthly',[m,ethers.ZeroAddress]);
+  await assert.rejects(()=>f.attack(f.short,'reserveUSDG',[s,1,0,100]));
+  await assert.rejects(()=>f.attack(f.monthly,'startMonthly',[m,1]));await conserved(f);
+});
+
+test('both real datasets READY before either seal: same payload, both seal orders and exact event/vault identity',async()=>{
+  for(const monthlyFirst of [false,true]){
+    const f=await fixture(compiled,{real:true}),ps=participants(4,1);await advance();
+    const b=await f.provider.getBlock('latest'),s=sid('shared ready'),m=mid('shared ready'),pid=id('ready proposal');
+    const r={drawId:s,campaignId:1,rulesEpoch:1,cutoffBlockNumber:b.number,cutoffBlockHash:b.hash,
+      snapshotHash:id('snapshot short'),expectedRoot:dataset.rootFor(ps),expectedCount:4,expectedAttempts:4,budget:30};
+    const input={drawId:m,snapshotHash:id('snapshot monthly'),root:monthlyRoot(ps),campaign:1,cutoff:b.number,cutoffHash:b.hash,count:4,attempts:4};
+    await assert.rejects(()=>sent(f.short.begin(pid,{...r,drawId:m})));
+    await assert.rejects(()=>sent(f.monthly.beginMonth({...input,drawId:s})));
+    assert.equal(await f.short.activeProposal(),ethers.ZeroHash);assert.equal(await f.monthly.activeMonth(),ethers.ZeroHash);
+    await sent(f.short.begin(pid,r));await sent(f.short.publish(pid,ps));
+    await sent(f.monthly.beginMonth(input));await sent(f.monthly.publishMonth(m,ps));
+    assert.equal((await f.short.datasetProposal(pid)).status,2n);assert.equal((await f.monthly.month(m)).phase,2n);
+    const operations=[()=>sent(f.short.seal(pid)),()=>sent(f.monthly.sealMonth(m))];
+    for(const op of monthlyFirst?operations.reverse():operations)await op();
+    assert.equal(await f.short.pendingDatasetDraw(),s);assert.equal(await f.monthly.pendingMonth(),m);
+    assert.equal((await f.vault.draws(s)).budget,30n);assert.equal((await f.vault.draws(m)).budget,1000n);
+    for(const [controller,key] of [[f.short,s],[f.monthly,m]])assert.equal((await controller.queryFilter(controller.filters.AttemptsFrozen(key)))[0].args.drawId,key);
+    await sent(f.short.supplySeed(s,ethers.ZeroHash));await sent(f.monthly.supplySeed(m,ethers.ZeroHash));
+    await sent(f.short.processShort(s,0,ps));await sent(f.monthly.processMonth(m,0,ps));
+    await sent(f.short.finishShort(s));await sent(f.monthly.finishMonth(m));
+    for(const [controller,key] of [[f.short,s],[f.monthly,m]]){
+      assert.equal((await controller.queryFilter(controller.filters.AttemptsConsumed(key)))[0].args.drawId,key);
+      assert.equal((await f.vault.draws(key)).status,2n);
+    }
+    await conserved(f);
+  }
 });

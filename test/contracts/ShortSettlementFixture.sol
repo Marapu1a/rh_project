@@ -20,6 +20,7 @@ contract ShortSettlementFixture is ShortSettlement {
 
 /// Adversarial dependency only: real PromoVault does not call back on finalize.
 contract SettlementReentrantVault {
+    function validateDrawId(bytes32, uint8) external pure {}
     address public drawController;
     address public constant quoteToken = address(0x1234);
     bool public callbackRejected;

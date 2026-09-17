@@ -1,6 +1,7 @@
 // Permanent accounting/replay format. A source event is NOT proof of fair randomness.
 const {Interface,isAddress,isHexString,ZeroAddress,ZeroHash}=require('ethers');
 const {replay:replayBuys,canonical,hash}=require('./direct-buy.cjs');
+const {validateDrawId}=require('./draw-id.cjs');
 
 const ABI=new Interface([
   'event AttemptsFrozen(bytes32 indexed drawId,uint8 indexed kind,uint256 cutoffBlockNumber,bytes32 cutoffBlockHash,bytes32 rulesHash,bytes32 snapshotHash)',
@@ -32,7 +33,7 @@ function domainFor(manifest,config){
     requireThat(isAddress(config.monthlySource)&&lower(config.monthlySource)!==ZeroAddress&&lower(config.monthlySource)!==domain.source,'Invalid monthly source');
     requireThat(isAddress(config.vault)&&lower(config.vault)!==ZeroAddress,'Invalid dual vault');
     const m=config.monthlyPolicy;requireThat(m&&integer(m.interval)>0,'Missing monthly policy');integer(m.startedAt);
-    Object.assign(domain,{monthlySource:lower(config.monthlySource),monthlySourceCodeHash:bytes32(config.monthlySourceCodeHash,'monthly code hash'),
+    Object.assign(domain,{drawIdScheme:'kind-bit-v1',monthlySource:lower(config.monthlySource),monthlySourceCodeHash:bytes32(config.monthlySourceCodeHash,'monthly code hash'),
       monthlyInstanceId:bytes32(config.monthlyInstanceId,'monthly instance'),vault:lower(config.vault),vaultCodeHash:bytes32(config.vaultCodeHash,'vault code hash'),
       vaultQuote:lower(manifest.quote),vaultProjectToken:lower(manifest.token),monthlyPolicyHash:hash({rulesHash:bytes32(m.rulesHash,'monthly rules'),
         interval:String(integer(m.interval)),startedAt:String(integer(m.startedAt))})});
@@ -40,6 +41,7 @@ function domainFor(manifest,config){
   return domain;
 }
 function snapshotFor(domain,drawId,kind,cutoff,rulesHash,participants,rulesEpoch){
+  if(domain.schema==='attempt-lifecycle-v3')validateDrawId(drawId,kind);
   const epoch=domain.schema!=='attempt-lifecycle-v1'&&kind==='SHORT';
   if(epoch)requireThat(integer(rulesEpoch)>0,'Snapshot epoch required');
   return {schema:domain.schema==='attempt-lifecycle-v3'?'attempt-snapshot-v3':epoch?'attempt-snapshot-v2':'attempt-snapshot-v1',domain,drawId,kind,cutoff,rulesHash,participants,
@@ -94,6 +96,7 @@ function replayAttempts(manifest,config,deliveredBlocks){
     }
     const kind=KINDS[Number(parsed.args.kind)];requireThat(kind,'Invalid draw kind');
     if(dualMode)requireThat(emitter===(kind==='SHORT'?domain.source:domain.monthlySource),'Wrong source for draw kind');
+    if(dualMode)validateDrawId(parsed.args.drawId,kind);
     events.push({type:parsed.name==='AttemptsFrozen'?'FREEZE':'TERMINAL',kind,drawId:bytes32(parsed.args.drawId,'draw id'),args:parsed.args,...ref});
   }
   const wallets=new Map(),draws=new Map(),transitions=[];

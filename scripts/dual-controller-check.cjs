@@ -2,6 +2,7 @@
 const fs=require('node:fs'),assert=require('node:assert/strict'),{ethers}=require('ethers'),hre=require('hardhat');
 const {compileVariant}=require('./controller-size-study.cjs'),dataset=require('./short-dataset.cjs'),model=require('./short-outcome.cjs');
 const {monthlyRoot}=require('../test/fixtures/dual-controller.cjs'),{participants,normalRules}=require('../test/fixtures/short-outcome.cjs');
+const {drawIdFor}=require('./draw-id.cjs');
 const rpc=(m,p=[])=>hre.network.provider.send(m,p),sent=async p=>(await p).wait(),id=ethers.id;
 async function main(){
   const {artifacts:a,report}=compileVariant({dual:true});await rpc('hardhat_reset');
@@ -24,7 +25,7 @@ async function main(){
   await sent(vault.fundUSDG(1000,1));await sent(vault.fundUSDG(1000,2));await sent(vault.fundUSDG(100,3));
   await rpc('evm_increaseTime',[30*86400+1]);await rpc('evm_mine');
   const block=await provider.getBlock('latest');await rpc('hardhat_mine',['0x2']);
-  const ps=participants(64,5),draw=id('size short'),pid=id('size proposal'),month=id('size month');
+  const ps=participants(64,5),draw=drawIdFor('SHORT',id('size short')),pid=id('size proposal'),month=drawIdFor('MONTHLY',id('size month'));
   await measured('short.begin',short.begin(pid,{drawId:draw,campaignId:1,rulesEpoch:1,cutoffBlockNumber:block.number,cutoffBlockHash:block.hash,
     snapshotHash:id('synthetic short'),expectedRoot:dataset.rootFor(ps),expectedCount:64,expectedAttempts:320,budget:101}));
   await measured('short.publish64',short.publish(pid,ps));

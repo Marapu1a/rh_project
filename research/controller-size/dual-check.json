@@ -7,39 +7,39 @@
   "runtimeLimit": 24576,
   "sizes": {
     "ShortRngSizeStudy": {
-      "runtime": 21866,
-      "initcode": 25514,
-      "headroom": 2710,
+      "runtime": 21988,
+      "initcode": 25643,
+      "headroom": 2588,
       "fits": true
     },
     "MonthlyRngSizeStudy": {
-      "runtime": 13753,
-      "initcode": 15735,
-      "headroom": 10823,
+      "runtime": 13876,
+      "initcode": 15865,
+      "headroom": 10700,
       "fits": true
     },
     "DualControllerPromoVault": {
-      "runtime": 8331,
-      "initcode": 9244,
-      "headroom": 16245,
+      "runtime": 8496,
+      "initcode": 9409,
+      "headroom": 16080,
       "fits": true
     }
   },
   "participants": 64,
   "shortPrizes": 3,
   "gas": {
-    "short.begin": "473470",
+    "short.begin": "474345",
     "short.publish64": "442219",
-    "monthly.begin": "286341",
+    "monthly.begin": "287217",
     "monthly.publish64": "439186",
-    "short.sealAndRequest": "505697",
-    "monthly.sealAndRequest": "462018",
+    "short.sealAndRequest": "505856",
+    "monthly.sealAndRequest": "462156",
     "short.callback": "67281",
     "monthly.callback": "67303",
-    "monthly.process64": "401213",
+    "monthly.process64": "395827",
     "monthly.finish": "239286",
-    "short.process64": "581318",
-    "short.finish": "305408"
+    "short.process64": "579960",
+    "short.finish": "304736"
   },
   "checks": [
     "Both scoped controllers with roles and async RNG binding deploy under standard 24576-byte enforcement",
@@ -64,12 +64,12 @@
     "@openzeppelin/contracts/utils/Panic.sol": "0xf7fe324703a64fc51702311dc51562d5cb1497734f074e4f483bfb6717572d7a",
     "@openzeppelin/contracts/utils/ReentrancyGuard.sol": "0xa516cbf1c7d15d3517c2d668601ce016c54395bf5171918a14e2686977465f53",
     "@openzeppelin/contracts/utils/StorageSlot.sol": "0xcf74f855663ce2ae00ed8352666b7935f6cddea2932fdf2c3ecd30a9b1cd0e97",
-    "contracts/DualControllerPromoVault.sol": "0xbe66f5f96075ce7b9f12dbbc440f1635139172743e9274130b596c9e58d520e6",
+    "contracts/DualControllerPromoVault.sol": "0xe2f6400d5c32b377610a91639b0c849e97d5864c1b84da34b610987194fbea6e",
     "contracts/FeeRouter.sol": "0xf9919dd2ace6da47cc5f38a0e5483fb9943201a3434b1f37e1d2aed8362457b1",
-    "contracts/MonthlySettlement.sol": "0x431b5fc72397b8d0d9358edfd7d02e0e697d45b64bcaed37b643efcd90f7b7b9",
+    "contracts/MonthlySettlement.sol": "0x15a841de7ee4cd2eb1751f3026bcd1a976b9804ef9840477253ad11f2fbd96d9",
     "contracts/ParticipantRegistry.sol": "0x9a806ea3351be266e33bfa8140f5ae9e73720ecca470a80854e8025a9d151700",
-    "contracts/PromoVault.sol": "0xaf7f016c811ddf9efe4887eea165fe3d5c958d6133c01211feae07a34d009138",
-    "contracts/ShortDatasetPreparation.sol": "0xaac595ec78d642953b6ef48c37dcd60d1e43bf25a5323c16c98d1ee5cbb1acdd",
+    "contracts/PromoVault.sol": "0x4812f468eeaa8b59f496178b667a5e21b4ce9bcbaa1a07448aba16a791aa02ce",
+    "contracts/ShortDatasetPreparation.sol": "0x843294098c136fff9178554cb3a234ce1ca5109f14bb7c065c57476a6ee18ca7",
     "contracts/ShortDrawCommitment.sol": "0x4af59b2b3644a4ef31b2bad9653441efd74496c1e573c5b99b84b769ca5d7661",
     "contracts/ShortOutcome.sol": "0x7f14ed1ac920113c4908259324568fa63875cf699c43a1f9aa4cef24a21a0d17",
     "contracts/ShortPrizeBasket.sol": "0x06bff92aa2e4ce420eaa66fe8f2ead0b36d173de496adb6549fe256be702109e",
@@ -79,7 +79,7 @@
     "research/controller-size/FixedSelectionSizeHelper.sol": "0x6704ca6c537b2739d12c63bd0f4ff355639848cc5440f0f6c4056fe867a7e9fe",
     "research/controller-size/MonthlyRngSizeStudy.sol": "0x16b12d176b2abc4246606e78c8c358c1e847f71aeed82ac60faef744093298af",
     "test/contracts/Fixtures.sol": "0x43e4a6f57739977065043a7fcfe3a86fd58bb895510a6ade908f48002b366639",
-    "test/contracts/ShortSettlementFixture.sol": "0xf7c6a1f19b32e6736f86640ae4fb1d3f9f5abbf7629120511587e8eb4a2e5112"
+    "test/contracts/ShortSettlementFixture.sol": "0x5ed8009f10ef1242d8ed0492ba86acc741e0910789cca3fe6a7984a309d96cbe"
   },
   "limitations": [
     "Local EVM and mock asynchronous RNG only",

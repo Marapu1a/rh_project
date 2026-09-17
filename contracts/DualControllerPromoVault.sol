@@ -13,6 +13,15 @@ contract DualControllerPromoVault is PromoVault {
     address public immutable monthlyController;
     error ForbiddenReserve();
     error OnlyMonthlyController();
+    error InvalidDrawNamespace();
+
+    /// One canonical ID everywhere: high bit 0 = Short, 1 = Monthly.
+    /// Nonzero low 255 bits identify the draw within its kind.
+    function validateDrawId(bytes32 drawId, uint8 kind) public pure override {
+        uint256 value = uint256(drawId);
+        if (kind > 1 || value >> 255 != kind || (value & (type(uint256).max >> 1)) == 0)
+            revert InvalidDrawNamespace();
+    }
 
     constructor(address token,address quote,address shortSource,address monthlySource,uint256 target)
         PromoVault(token,quote,shortSource,target) {

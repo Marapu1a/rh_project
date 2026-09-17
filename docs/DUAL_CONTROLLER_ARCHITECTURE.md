@@ -24,8 +24,13 @@ single-controller API и поведение для совместимости и
 Это проверка идентичности, не доказательство добросовестности произвольного кода.
 В тестах намеренно использованы вредоносные контроллеры для проверки ограничений.
 
-Один global namespace drawId запрещает повторное использование и коллизии между
-типами. Short finalize дополнительно запрещает MONTHLY draw. Ни один controller
+Казна хранит одну таблицу drawId, но пространства допустимых ID типов не пересекаются:
+старший бит 0 для Short, 1 для Monthly; младшие 255 бит должны быть ненулевыми.
+Казна проверяет это при reserveUSDG/startMonthly, а контроллеры вызывают ту же
+проверку ещё в begin. Даже до seal другой тип не может занять ID подготовленного draw.
+Повторное использование внутри своего типа по-прежнему запрещено. Это один ID
+во всех request/context/events/replay/vault/claim, без дополнительного logical ID.
+Short finalize дополнительно запрещает MONTHLY draw. Ни один controller
 не получает доступ к reserved/claimable другого через свободный резерв.
 ReentrancyGuard, fund rounding, overflow Next → Current и старые долги сохранены.
 
@@ -77,6 +82,17 @@ Replay формата `attempt-lifecycle-v3` связывает обе стор�
 добавлены `monthlySource`, `monthlySourceCodeHash`, `monthlyInstanceId`, `vault`,
 `vaultCodeHash`, `monthlyPolicy: {rulesHash, interval, startedAt}`.
 Assets берутся из BUY manifest. Snapshots используют `attempt-snapshot-v3`.
+Domain дополнительно фиксирует `drawIdScheme: "kind-bit-v1"`; replay проверяет
+namespace и у freeze, и у terminal. `scripts/draw-id.cjs` создаёт ID из типа и bytes32
+номера: `(kind << 255) | (number & ((1 << 255) - 1))`. Если младшая часть нулевая,
+номер отвергается. Генератор не гарантирует уникальность повторно поданного номера:
+её обеспечивает запрет повторного ID в контракте. Отбор случайного результата с
+этой генерацией ID не связан. Для hash-based номера остаётся 255 бит.
+
+Уточнение v3 сделано до публичного deployment: прежние экспериментальные v3 artifacts
+без scheme нельзя переиспользовать с новой казной, их нужно пересобрать. Runtime hashes
+и domain/snapshot hashes изменились. Исторические v1/v2 и legacy single-controller
+accounting не получают нового ограничения ID; это не миграция существующей казны.
 События каждого типа принимаются только от своего source, Short epoch events —
 только от Short. Проверяются independent pending/clocks, global drawId и снимки
 OPEN/FROZEN/CONSUMED. V1/V2 остаются прежними форматами, добавление monthlySource
@@ -89,11 +105,14 @@ registry, instanceId, assets и immutable monthly policy. Offline evidence не
 
 ## Измерения и проверки
 
-`npm test`: **151/151 passed**; включает прежние unit tests, 10 новых contract/binding tests и 3 dual replay
+`npm test`: **154/154 passed**; включает прежние unit tests, 12 contract/binding tests и 4 dual replay
 tests. Проверены cross-capability calls, collision/reuse, constructor bindings,
 atomic rollback, direct USDG sync order, сохранность старых unpaid credits, failed
 claims, reentrancy, параллельные draws, Monthly win/no-win, chunks/reorg/retry и
 совпадение результата с независимой JS-моделью.
+После разделения ID дополнительно проверены два READY datasets до первого seal,
+одинаковые младшие 255 бит, обе очередности seal, ранний отказ чужому namespace,
+повторное использование после terminal, крайние ID и точная идентичность в events/replay/vault.
 
 `node scripts/dual-controller-check.cjs` отдельно компилирует и действительно
 развёртывает исследовательские wrappers с roles/readiness/async mock RNG при
@@ -101,9 +120,9 @@ claims, reentrancy, параллельные draws, Monthly win/no-win, chunks/r
 
 | Контракт | Runtime | Запас |
 |---|---:|---:|
-| Short + исследовательский RNG/roles/readiness | 21 866 | 2 710 |
-| Monthly + исследовательский RNG/roles/readiness | 13 753 | 10 823 |
-| DualControllerPromoVault | 8 331 | 16 245 |
+| Short + исследовательский RNG/roles/readiness | 21 988 | 2 588 |
+| Monthly + исследовательский RNG/roles/readiness | 13 876 | 10 700 |
+| DualControllerPromoVault | 8 496 | 16 080 |
 
 Источник: [dual-check.json](../research/controller-size/dual-check.json), включая
 source hashes и gas по операциям (64 участника, 3 Short prizes). Это не цена в USD:
@@ -123,6 +142,6 @@ seed чужим caller или повторно отвергается. Один 
 и `ShortSettlement` — внутренние компоненты; fixtures разрешают ручной seed только
 для тестов. Research wrappers также не одобрены для production. Следующий кусок —
 реальная RNG/readiness интеграция с проверенной стоимостью, authenticated callback и
-автоматическим исполнением; после него повторный size/gas gate. Запас Short 2.7 KiB
+автоматическим исполнением; после него повторный size/gas gate. Запас Short 2 588 байт
 не безграничен. Conversion, deployment tooling, finality policy и keeper остаются
 отдельными задачами. Новых emergency/reset полномочий в этом шаге нет.

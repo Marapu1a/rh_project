@@ -1,48 +1,53 @@
-# Ревью двух фиксированных контроллеров
+# Ревью закрытия pre-seal drawId collision
 
-17.09.2026. Выбрали вариант Short + Monthly + общая казна с раздельными immutable
-полномочиями. Реализовали ограниченный локальный шаг; production RNG ещё не выбран.
+17.09.2026. По предыдущему ответу закрыли узкий сценарий: один publisher больше не
+может занять ID подготовленного draw другого типа. RNG и Monthly epochs не добавляли.
 
-Начать с [DUAL_CONTROLLER_ARCHITECTURE.md](DUAL_CONTROLLER_ARCHITECTURE.md), затем:
+Выбрали обязательный namespace в самом bytes32, без двух параллельных идентичностей:
 
-- `contracts/DualControllerPromoVault.sol` и три узких policy hooks в `PromoVault.sol`;
-- `contracts/MonthlySettlement.sol`, существующий `ShortSettlement.sol`;
-- `test/dual-controller.test.cjs`, `test/attempt-lifecycle-dual.test.cjs`;
-- `scripts/dual-bindings.cjs`, lifecycle v3 в `scripts/attempt-lifecycle.cjs`;
-- [измерения](../research/controller-size/dual-check.json) и воспроизводимый
-  `node scripts/dual-controller-check.cjs`.
+```text
+старший бит: 0 = Short, 1 = Monthly
+младшие 255 бит: ненулевой номер
+```
 
-Runtime под стандартным лимитом 24 576, без viaIR: Short + research RNG/roles
-21 866; Monthly + research RNG/roles 13 753; vault 8 331. Проверено реальным локальным
-deployment. Это проверка переносимости, не утверждение лимита Robinhood в 24 KiB.
-Конкретные chain limits проверим отдельно перед запуском.
+`DualControllerPromoVault.validateDrawId(id, kind)` проверяет формат. Настоящие
+reserveUSDG/startMonthly вызывают проверку с фиксированным типом после проверки caller.
+Short/Monthly begin вызывают ту же policy до записи подготовки. Нельзя обойти это
+простым копированием чужого ID, даже если контроллер пытается вызвать казну напрямую.
+Повторный ID своего типа по-прежнему отвергается. Legacy PromoVault оставляет
+старое поведение через no-op policy; proxy/миграции/новых прав нет.
 
-Short может резервировать только Short и finalize его generic draws; Monthly может
-только start/settle jackpot. Общий namespace drawId. Generic reserve и TOKEN prizes
-в новом vault запрещены. Прямой TOKEN здесь застрянет: conversion нужен до funding.
-Все старые USDG credits, rounding и direct GENERAL sync сохранены. Старый single-
-controller PromoVault не удалён и не изменил default-поведение.
+Единственный итоговый ID используется в requests, snapshots, context, events,
+vault storage, callback bindings и claim. `scripts/draw-id.cjs` — off-chain генератор
+и проверка, но не граница защиты. Lifecycle v3 проверяет namespace и привязывает
+`drawIdScheme: kind-bit-v1` в domain; старые экспериментальные v3 artifacts надо
+пересобрать. V1/V2 остаются историческими форматами.
 
-MonthlySettlement — внутренний компонент, с параметризованным immutable interval/q,
-публичной публикацией chunks, одним seed, permissionless process/finish, atomic
-settle/consume. Test fixtures с ручным seed и research wrappers с mock provider
-не выдаём за production. Алгоритм — capped admission, затем минимальный uniform rank,
-один winner или no-win. Production значения не утверждали.
+Проверки в `test/dual-controller.test.cjs` и `test/attempt-lifecycle-dual.test.cjs`:
 
-Просим проверить конкретные вопросы:
+- чужой namespace отвергается до первого reserve и при begin;
+- оба настоящих datasets READY до первого seal, одинаковые младшие 255 бит;
+- обе очередности seal, независимые pending, успешный terminal обоих draws;
+- точное совпадение ID в events/vault и расход попыток в replay;
+- повторный ID своего типа после terminal запрещён;
+- нулевые payload, неправильный kind и крайние допустимые ID;
+- прежние бухгалтерские/reentrancy/claim проверки сохранены.
 
-1. Есть ли обход capability matrix через унаследованный API, generic draw kind,
-   sync или комбинацию двух controllers? Особенно важно не расширить права Short.
-2. Не нарушает ли одновременное исполнение обоих draws бухгалтерию Next/Current,
-   старые claimable, direct transfers и независимые attempts/clocks?
-3. Достаточны ли domain и reverse-binding проверки lifecycle v3 для двух sources?
-   Где локальный verifier может принять несовместимый deployment или пропустить events?
-4. Есть ли практический путь заморозить корректно опубликованный Monthly dataset,
-   который нельзя закончить после единственного валидного seed? Отличайте внутренний
-   баг от недоставленного RNG, недостоверного publisher и внешнего USDG deficit.
-5. Какой **один следующий ограниченный этап** выбрать для реальной RNG/readiness
-   интеграции, учитывая оставшиеся 2.7 KiB Short и автоматизацию без ручного оператора?
+Повторный size/deployment check без viaIR, стандартный 24 KiB:
+Short research wrapper 21 988 байт; Monthly 13 876; vault 8 496.
+Source hashes и gas: `research/controller-size/dual-check.json`.
+Полный `npm test`: **154/154 passed**. Дополненный тест неверного namespace terminal
+отдельно прошёл вместе с остальными 3 dual replay tests; deployment/size check прошёл.
 
-Не предлагаем proxy, заменяемые controllers, вывод призов или универсальный reset.
-Не просим перепроектировать всю механику. Приоритет — конкретный воспроизводимый
-пробел в текущем коде и минимальное исправление. Ответ по-прежнему в GPT_REVIEW_RESPONSE.md.
+Просим проверить, не осталась ли другая точка входа, которая допускает cross-kind
+occupation, и не возникло ли расхождения идентичности между on-chain и replay.
+Описание: [DUAL_CONTROLLER_ARCHITECTURE.md](DUAL_CONTROLLER_ARCHITECTURE.md).
+
+Следующий вопрос для дизайна, без реализации в этом пакете: безопасные будущие
+Monthly rules. Пожизненная фиксация q/interval нежелательна по продуктовой политике,
+но менять условия уже накопленных попыток нельзя. Нужен минимальный forward-only
+переход, без растущей очереди старых epochs и без остановки новых monthly cycles.
+Сначала разобрать, совместимы ли эти требования и какой компромисс необходим;
+не копировать Short epochs автоматически. Реальный RNG — последующий отдельный этап.
+
+Ответ в существующий GPT_REVIEW_RESPONSE.md; текущий ответ сохраняется в Git history.

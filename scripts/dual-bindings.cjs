@@ -2,6 +2,7 @@ const {Contract,keccak256}=require('ethers'),{hash}=require('./direct-buy.cjs');
 async function verifyDualBindings(provider,domain){
   if(domain.schema!=='attempt-lifecycle-v3')return;
   const check=(ok,msg)=>{if(!ok)throw Error(msg);},same=(a,b)=>a.toLowerCase()===b.toLowerCase();
+  check(domain.drawIdScheme==='kind-bit-v1','Dual draw ID scheme mismatch');
   check((await provider.getNetwork()).chainId===BigInt(domain.chainId),'Dual chain mismatch');
   for(const [address,digest] of [[domain.source,domain.sourceCodeHash],[domain.monthlySource,domain.monthlySourceCodeHash],[domain.vault,domain.vaultCodeHash]])
     check(keccak256(await provider.getCode(address))===digest,'Dual runtime mismatch');

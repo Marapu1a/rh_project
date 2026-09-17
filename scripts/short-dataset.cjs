@@ -65,6 +65,7 @@ async function verifyEpochGenesis(provider,address,domain){
 }
 async function verifyPublication(provider,source,id,artifact){
   const p=await source.datasetProposal(id),r=artifact.request,domain=artifact.snapshot.domain;
+  if(domain.schema==='attempt-lifecycle-v3')require('./draw-id.cjs').validateDrawId(r.drawId,'SHORT');
   await require('./dual-bindings.cjs').verifyDualBindings(provider,domain);
   const network=await provider.getNetwork();
   check(BigInt(domain.chainId)===network.chainId&&domain.source.toLowerCase()===source.target.toLowerCase()

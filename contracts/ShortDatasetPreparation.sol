@@ -75,6 +75,7 @@ abstract contract ShortDatasetPreparation is ReentrancyGuard {
         require(r.cutoffBlockNumber < block.number && block.number - r.cutoffBlockNumber <= 256
             && r.cutoffBlockHash != bytes32(0) && blockhash(r.cutoffBlockNumber) == r.cutoffBlockHash, "cutoff");
         require(address(datasetVault).code.length > 0 && datasetVault.drawController() == address(this), "vault");
+        datasetVault.validateDrawId(r.drawId, 0);
         require(weights.length <= 64, "places");
         (uint256[] memory prizes,,) = ShortPrizeBasket.build(r.budget, weights, minimumUnit);
         Proposal storage p = proposals[id]; p.request = r; p.status = Status.Publishing;

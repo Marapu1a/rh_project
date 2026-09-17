@@ -55,6 +55,7 @@ abstract contract MonthlySettlement is ReentrancyGuard {
     function _beginMonth(Input calldata input) internal nonReentrant {
         require(activeMonth==bytes32(0) && pendingMonth==bytes32(0) && block.timestamp>=lastMonthAt+monthlyInterval,"month busy/time");
         require(address(monthlyVault).code.length>0 && IMonthlyControllerBinding(address(monthlyVault)).monthlyController()==address(this),"vault");
+        monthlyVault.validateDrawId(input.drawId,1);
         require(input.drawId!=bytes32(0) && months[input.drawId].phase==Phase.None && input.snapshotHash!=bytes32(0)
             && input.root!=bytes32(0) && input.campaign>0 && input.count>0 && input.attempts>=input.count,"month input");
         require(input.cutoff>=lastMonthBlock && input.cutoff<block.number && block.number-input.cutoff<=256
