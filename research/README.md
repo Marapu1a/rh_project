@@ -1,5 +1,10 @@
 # Данные исследований
 
+`rng-provider-study/observations.json` — read-only снимок code hashes/Quiver fee
+на pinned blocks Robinhood mainnet/testnet и HTTP ответов drand evmnet.
+Повтор: `node scripts/rng-provider-probe.cjs`. Не проверяет liveness сервиса или
+подпись beacon; [выводы и ограничения](../docs/RNG_PROVIDER_STUDY_2026-09-17.md).
+
 `controller-size/dual-check.json` — deployment двух отдельных controllers и новой казны
 при стандартном runtime limit, с mock async RNG/roles/readiness, source hashes и gas.
 Воспроизведение: `node scripts/dual-controller-check.cjs`. Обычные optimizer settings,

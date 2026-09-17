@@ -17,6 +17,8 @@ Thumbs.db
 # Keep only reproducible inputs and evidence referenced by project reports.
 research/*
 !research/README.md
+!research/rng-provider-study/
+!research/rng-provider-study/**
 !research/pair-source-audit/
 !research/pair-source-audit/**
 !research/direct-buy/

@@ -1,0 +1,80 @@
+{
+  "checkedAt": "2026-09-17T18:22:45.336Z",
+  "chains": [
+    {
+      "chainId": 4663,
+      "rpc": "https://rpc.mainnet.chain.robinhood.com",
+      "block": {
+        "number": "0x3e8a59d",
+        "hash": "0xe02f10aada77c419a89983baf85c6a853d6fa31a2d827c9c20f670fd7ec0f694",
+        "timestamp": "0x6aac3002"
+      },
+      "contracts": {
+        "quiver": {
+          "address": "0x8cF4f562301fA966F153eE1e3D46D975DF21C9a3",
+          "codeBytes": 14195,
+          "codeHash": "0x53ed586792fcfe9ecc870270dbf2154d7aae9b7cbac6f5e97d9e09d53b55c03c"
+        },
+        "rhVrf": {
+          "address": "0x1637195a674630E475ACD18B3D27b13C0EefDac1",
+          "codeBytes": 14477,
+          "codeHash": "0xdf8e115e7de3f136a85cf8e761569c7abd10e36107ab5992252230174d6ff5f1"
+        },
+        "dice": {
+          "address": "0xd8a0680e7699526b57140ed4eafdcc7219dc0a0c",
+          "codeBytes": 10855,
+          "codeHash": "0x25133ee28778728ac5825c0da67863eaef8d40b6b5306b28c9f70c30b4daa118"
+        }
+      },
+      "quiverProvider": "0xeB8E79d3495638Dde48336D01A1f1229822bB016",
+      "quiverFeeWei": "0",
+      "pairingEmpty": "0x0000000000000000000000000000000000000000000000000000000000000001",
+      "note": "Code existence and empty pairing are not a service liveness or signature verification test."
+    },
+    {
+      "chainId": 46630,
+      "rpc": "https://rpc.testnet.chain.robinhood.com",
+      "block": {
+        "number": "0x734c194",
+        "hash": "0xdfe31ee51be98aac0ec43e741a9f2c86ff148666608a421a0e2c67fa31a941a8",
+        "timestamp": "0x6aac3002"
+      },
+      "contracts": {
+        "quiver": {
+          "address": "0x1da30d6465f657F11B4D7F6Db0B16aD79152fb40",
+          "codeBytes": 14195,
+          "codeHash": "0x53ed586792fcfe9ecc870270dbf2154d7aae9b7cbac6f5e97d9e09d53b55c03c"
+        },
+        "dice": {
+          "address": "0x43c8A7B1a85384cabf3D3Fd45a15C01F5b51A42D",
+          "codeBytes": 10855,
+          "codeHash": "0x53e734c29c90ad021b6e3e1c388355b1f820f80f0e6635409ef26620038605b1"
+        }
+      },
+      "quiverProvider": "0xc84CC91131b63d9BECFDe7b2DB3D0C653B690541",
+      "quiverFeeWei": "0",
+      "pairingEmpty": "0x0000000000000000000000000000000000000000000000000000000000000001",
+      "note": "Code existence and empty pairing are not a service liveness or signature verification test."
+    }
+  ],
+  "drand": {
+    "chainHash": "04f1e9062b8a81f848fded9c12306733282b2727ecced50032187751166ec8c3",
+    "info": {
+      "public_key": "07e1d1d335df83fa98462005690372c643340060d205306a9aa8106b6bd0b3820557ec32c2ad488e4d4f6008f89a346f18492092ccc0d594610de2732c8b808f0095685ae3a85ba243747b1b2f426049010f6b73a0cf1d389351d5aaaa1047f6297d3a4f9749b33eb2d904c9d9ebf17224150ddd7abd7567a9bec6c74480ee0b",
+      "period": 3,
+      "genesis_time": 1727521075,
+      "hash": "04f1e9062b8a81f848fded9c12306733282b2727ecced50032187751166ec8c3",
+      "groupHash": "cd7ad2f0e0cce5d8c288f2dd016ffe7bc8dc88dbb229b3da2b6ad736490dfed6",
+      "schemeID": "bls-bn254-unchained-on-g1",
+      "metadata": {
+        "beaconID": "evmnet"
+      }
+    },
+    "latest": {
+      "round": 20716103,
+      "randomness": "5f88e60dbd39ec76e17237ffd8d49c09fac7738b3484fa429e554c0a6da3cdb6",
+      "signature": "078154925109bc42e2e4bf82ef6b702bc538375ec8b13757c0b6bff03679d1d42ee1be212b53259f6571defb9a44ff9582b19ae18c8f682783b3a12fbcc44598"
+    },
+    "note": "HTTP observations only; signature has NOT been cryptographically verified."
+  }
+}

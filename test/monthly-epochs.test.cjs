@@ -100,3 +100,34 @@ test('v4 RPC publication binds genesis and per-draw old policy after activation;
   await sent(f.monthly.supplySeed(request.drawId,ethers.ZeroHash));await sent(f.monthly.processMonth(request.drawId,0,f.ps));await sent(f.monthly.finishMonth(request.drawId));
   assert.equal((await dataset.verifyPublication(f.provider,f.monthly,artifact)).context,sealed.context);
 });
+
+test('two real Monthly transitions retain three policies, bounded draining and M3 eligibility after M2 empty or terminal',async()=>{
+  const thirdRules={...normalRules,pNumerator:1,pDenominator:3};
+  for(const empty of [false,true]){
+    const f=await setup();
+    const finish=async(label,epoch,first)=>{
+      f.ps=participants(4,1).map(p=>({...p,firstAttempt:BigInt(first),lastAttempt:BigInt(first)}));
+      const r=await f.request(label,epoch);await f.prepare(r);await sent(f.monthly.sealMonth(r.drawId));
+      await sent(f.monthly.supplySeed(r.drawId,ethers.ZeroHash));await sent(f.monthly.processMonth(r.drawId,0,f.ps));await sent(f.monthly.finishMonth(r.drawId));
+      // Replenish Next after a win; surplus follows the existing CURRENT rule.
+      if(await f.vault.freeNext()===0n)await sent(f.vault.fundUSDG(100,3));return r;
+    };
+    await sent(f.monthly.announce(nextRules));await advance(101);await sent(f.monthly.activate());await rpc('evm_mine');
+    await finish('drain M1',1,1);await advance(101);
+    f.ps=participants(4,1).map(p=>({...p,firstAttempt:2n,lastAttempt:2n}));const r=await f.request('normal M2',2);await f.prepare(r);await sent(f.monthly.sealMonth(r.drawId));
+    await sent(f.monthly.announce(thirdRules));await sent(f.monthly.supplySeed(r.drawId,ethers.ZeroHash));
+    await sent(f.monthly.processMonth(r.drawId,0,f.ps));await sent(f.monthly.finishMonth(r.drawId));
+    if(await f.vault.freeNext()===0n)await sent(f.vault.fundUSDG(100,3));
+    await advance(101);await sent(f.monthly.connect(f.other).activate());await rpc('evm_mine');
+    assert.equal(await f.monthly.currentMonthlyEpoch(),3n);assert.equal(await f.monthly.drainingMonthlyEpoch(),2n);
+    await reject(()=>f.monthly.announce(normalRules));const clock=await f.monthly.lastMonthAt();
+    if(empty){const e=await f.request('empty M2',2);await sent(f.monthly.closeEmpty(e.cutoff,e.cutoffHash,id('empty M2 assertion')));
+      assert.equal(await f.monthly.lastMonthAt(),clock);
+    }else{await finish('drain remaining M2',2,3);assert((await f.monthly.lastMonthAt())>clock);await advance(101);}
+    assert.equal(await f.monthly.drainingMonthlyEpoch(),0n);await sent(f.monthly.announce(normalRules));
+    await finish('normal M3',3,empty?3:4);
+    for(const [epoch,rules] of [[1,normalRules],[2,nextRules],[3,thirdRules],[4,normalRules]])assert.equal((await f.monthly.monthlyEpochPolicy(epoch)).hash,model.rulesHash(rules));
+    assert.equal(await f.monthly.currentMonthlyEpoch(),3n);assert.equal(await f.monthly.announcedMonthlyEpoch(),4n);
+    assert.equal(await f.monthly.pendingMonth(),ethers.ZeroHash);assert.equal(await f.monthly.monthlyInterval(),100n);
+  }
+});

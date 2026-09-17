@@ -1,5 +1,8 @@
 # Как читать документацию
 
+17.09: [RNG shortlist, RPC evidence и следующий эксперимент](RNG_PROVIDER_STUDY_2026-09-17.md).
+Регрессии Monthly M1 → M2 → M3 закрыты; production provider пока не выбран.
+
 1. [PRODUCT_SPEC.md](PRODUCT_SPEC.md) — единственный текущий источник продуктовых решений: утверждённая логика, деньги, билеты, draws, кандидаты чисел и открытые вопросы.
 2. [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md) — что действительно есть в коде и что ещё предстоит реализовать.
 3. [FeeRouter rollover](FEE_ROUTER_ROLLOVER_REPORT.md) и [PromoVault](PROMO_VAULT_DESIGN.md) — технические подробности существующих прототипов.

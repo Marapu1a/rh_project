@@ -1,60 +1,42 @@
-# Ревью Monthly admission epochs
+# Ревью: Monthly regression и реальный RNG
 
-17.09.2026. Реализовали следующий узкий шаг после kind-bit IDs. Код казны, её
-распределение денег и Short state machine в этом пакете не менялись.
+17.09.2026. Закрыли M1 → M2 → M3 двумя новыми тестами:
+`test/monthly-epochs.test.cjs` (контракт + казна) и `test/monthly-replay.test.cjs`
+(BUY history, cumulative ranges, поздний M2 остаток, независимость Short).
+Пустая/непустая M2 ветки, неизменяемая policy и clock проверены; suite 13/13 passed.
+Контракты не менялись. Полный suite не повторяли: прежний 164/164, затем CLI-тест,
+теперь ещё две регрессии — всего 167 различных тестов.
 
-Принятые поправки к прошлому предложению:
+Следующий пункт ограничили исследованием RNG, без production integration.
+Начать с [отчёта](RNG_PROVIDER_STUDY_2026-09-17.md) и
+[RPC evidence](../research/rng-provider-study/observations.json).
+Повтор: `node scripts/rng-provider-probe.cjs` (только публичное чтение).
 
-- Меняются только параметры допуска q. Monthly interval **не versionable**, immutable.
-- Empty closure не является draw и **не обновляет clock**. Нет дополнительного месяца
-  ожидания после закрытия действительно пустой версии.
-- Activation запрещена и при pending, и при Publishing/Ready preparation.
-- Policy закреплена за Input.rulesEpoch; processing читает policy именно этого draw.
+Найдены Quiver, RH-VRF и Dice; code existence подтверждён, liveness и соответствие
+документации bytecode — нет. RH-VRF документирует timeout refund, навсегда закрывающий
+request: он не завершает наш frozen draw. Quiver/Dice commit-reveal не устраняют
+withholding. Нулевая getFee у Quiver не доказывает бесплатный работающий сервис.
 
-Начать с [MONTHLY_RULES_EPOCHS.md](MONTHLY_RULES_EPOCHS.md), затем:
+Предлагаемый следующий кусок: локальный drand evmnet feasibility study.
+Существующий проверяемый verifier, настоящий test vector, bad-proof tests,
+gas/bytecode и future-round binding. HTTP beacon и пустой pairing smoke check
+получены; это НЕ signature verification. Production provider пока не выбран.
 
-1. `contracts/MonthlySettlement.sol`: announcement, notice, B+1, current/draining,
-   immutable policies, empty, terminal. Wrappers в test/contracts и research/controller-size.
-2. `scripts/attempt-lifecycle.cjs`: lifecycle v4, независимые Monthly ranges, mint epoch,
-   old-first snapshot, verified-empty, conservation, reorg; старые v1/v2/v3 остаются.
-3. `scripts/monthly-dataset.cjs`, `scripts/verify-monthly-dataset.cjs`, `scripts/dual-bindings.cjs`:
-   builder из raw history, проверка on-chain genesis и policy draw, публичных chunks и context.
-4. `test/monthly-epochs.test.cjs`, `test/monthly-replay.test.cjs`: оба исхода old draw,
-   failure/retry, credits, новые попытки, независимость Short, empty без переноса срока,
-   same-block mint и B+1, поздний свежий cutoff, reorg, RPC publication и offline CLI.
+Просим независимую оценку:
 
-Одновременно обслуживаются максимум старый draining и новый current. Пока old не
-terminal/empty, третье объявление запрещено. История policies сохраняется для аудита,
-но очереди необслуженных версий не растёт. Carry не сбрасывается; версия возникает при mint.
-После настоящего terminal отсчёт идёт как раньше. После empty остаётся старый clock.
+1. Есть ли оставшийся конкретный пробел в переходе M1 → M2 → M3?
+2. Подходит ли evmnet под один immutable target на frozen draw без reroll? Какой
+   существующий verifier проверить (исходники, версия, лицензия, аудит)?
+3. Как минимально связать freeze/finality и будущий round, чтобы задержка inclusion
+   или reorg не позволяла freeze с известным исходом или перебор targets?
+4. Есть ли у shortlisted services путь доставки ТОГО ЖЕ результата после их
+   TTL/refund/hash-chain ограничений? Нужны API/исходники, не новый request вместо retry.
+5. Есть ли более простой проверенный кандидат на 4663, который мы пропустили?
 
-Новый ABI Monthly Input содержит rulesEpoch, ctor — notice; контекст теперь
-MONTHLY_DATASET_CONTEXT_V2. Это новый deployment без миграции старых обязательств.
-monthlyRulesHash — immutable **genesis** hash; monthRules() — **current** rules;
-проверять старый draw следует через monthlyEpochPolicy(draw.input.rulesEpoch).
+Не смешиваем источники и не меняем round при timeout. Callback только принимает
+seed, processing отдельно. RNG funding/readiness не блокирует empty closure.
+Оплата операций не берётся из frozen prizes. Не нужны сейчас bridge RNG, новые
+admin reset, переписывание accounting или реализация production adapter.
 
-Ограничения по-прежнему явные: fake empty/dataset не исключается on-chain, а выявляется
-независимым replay. RPC не сертифицирует finality/RNG. Нового admin reset/reroll нет.
-Activation не резервирует деньги и не гарантирует будущую внешнюю готовность; production
-readiness/finality/RNG остаются следующим отдельным этапом. Числа q/notice не утверждались.
-
-Size/deployment gate с research RNG wrappers: Short 21 988, Monthly 17 064, vault 8 496
-байт; стандартный runtime limit 24 576, optimizer 200, без viaIR. Evidence:
-`research/controller-size/dual-check.json`.
-
-Проверки: полный `npm test` 164/164; после него дополненный replay/CLI suite 6/6 и
-усиленная RPC publication/genesis проверка 1/1. Всего сейчас 165 разных тестов;
-повторный полный прогон после добавления CLI-теста не делали. Size/deployment check прошёл.
-
-Вопросы:
-
-1. Есть ли путь изменить старым attempts policy или включить новую epoch в старый draw?
-2. Не расходится ли clock при win/no-win/empty между контрактом и replay?
-3. Есть ли способ создать третью обслуживаемую epoch, застрять на старом cutoff или
-   активировать изменение поверх опубликованного dataset?
-4. Видите ли конкретный пропуск в v4 genesis/domain/publication checks?
-5. После исправления реальных замечаний готовы ли перейти к отдельному исследованию
-   настоящего RNG provider и минимального authenticated request/callback API?
-
-Не предлагайте interval setters, mutable controllers или переписывание prize accounting
-без конкретного воспроизводимого дефекта. Ответ — в прежний GPT_REVIEW_RESPONSE.md.
+Ответ — в прежний GPT_REVIEW_RESPONSE.md. Отделяйте подтверждённые источники от
+предположений; советы используются как ревью, а не автоматически принятые решения.
