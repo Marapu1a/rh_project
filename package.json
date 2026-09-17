@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.0.0",
   "scripts": {
-    "test": "node --test --test-concurrency=1 test/fee-router.test.cjs test/promo-vault.test.cjs test/short-prize-basket.test.cjs test/participant-registry.test.cjs test/direct-buy.test.cjs test/attempt-lifecycle.test.cjs test/attempt-lifecycle-events.test.cjs test/short-draw-commitment.test.cjs test/short-outcome.test.cjs test/short-streaming.test.cjs test/short-dataset.test.cjs test/short-epochs.test.cjs test/short-settlement.test.cjs test/dual-controller.test.cjs test/attempt-lifecycle-dual.test.cjs",
+    "test": "node --test --test-concurrency=1 test/fee-router.test.cjs test/promo-vault.test.cjs test/short-prize-basket.test.cjs test/participant-registry.test.cjs test/direct-buy.test.cjs test/attempt-lifecycle.test.cjs test/attempt-lifecycle-events.test.cjs test/short-draw-commitment.test.cjs test/short-outcome.test.cjs test/short-streaming.test.cjs test/short-dataset.test.cjs test/short-epochs.test.cjs test/short-settlement.test.cjs test/dual-controller.test.cjs test/attempt-lifecycle-dual.test.cjs test/monthly-epochs.test.cjs test/monthly-replay.test.cjs",
     "test:short:settlement": "node --test test/short-settlement.test.cjs",
     "test:dual": "node --test test/dual-controller.test.cjs",
     "report:short:selection": "node scripts/short-selection-benchmark.cjs",
@@ -40,7 +40,9 @@
     "test:short:luck": "python test/short-luck.test.py",
     "report:short:luck": "python scripts/short_luck_review.py",
     "report:short:legacy": "python scripts/short-report.py",
-    "test:short:legacy": "python test/short-legacy.test.py"
+    "test:short:legacy": "python test/short-legacy.test.py",
+    "test:monthly:epochs": "node --test --test-concurrency=1 test/monthly-epochs.test.cjs test/monthly-replay.test.cjs",
+    "verify:monthly:dataset": "node scripts/verify-monthly-dataset.cjs"
   },
   "devDependencies": {
     "@openzeppelin/contracts": "5.6.1",

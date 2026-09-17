@@ -53,8 +53,10 @@ publisher может supersede публикацию; после freeze сбро�
 Seal вызывает настоящий startMonthly: Next уже заполнен, весь Current резервируется.
 Seed принимается один раз, включая нулевой; обрабатываются только опубликованные
 chunks по порядку. Из допущенных кошельков выбирается один по минимальному hash rank.
-Если допущенных нет — no-win. Параметры допуска и интервал immutable, задаются при
-deployment; числа из тестов **не утверждены как production-настройки**.
+Если допущенных нет — no-win. Интервал и notice immutable, а параметры допуска
+имеют [версии только для будущих попыток](MONTHLY_RULES_EPOCHS.md). Каждая policy
+неизменяема после объявления; draw закрепляет свою epoch при begin. Числа из тестов
+**не утверждены как production-настройки**.
 
 Finish одной транзакцией выполняет settlement, сохраняет canonical resultHash,
 потребляет monthly attempts событием и обновляет monthly clock. При ошибке откатывается
@@ -101,11 +103,14 @@ OPEN/FROZEN/CONSUMED. V1/V2 остаются прежними форматами
 RPC verifier дополнительно проверяет оба runtime, vault runtime, reverse bindings,
 registry, instanceId, assets и immutable monthly policy. Offline evidence не
 доказывает подлинность цепи; RPC-проверка не сертифицирует finality или случайность.
-Полноценный Monthly artifact/result CLI и автоматический publisher ещё предстоят.
+Дополнение: [Monthly epochs](MONTHLY_RULES_EPOCHS.md) используют lifecycle v4 и
+`MONTHLY_DATASET_CONTEXT_V2`. Есть builder/CLI проверки Monthly dataset publication;
+полный result CLI и автоматический publisher ещё предстоят. V3 остаётся форматом
+исторического deployment с фиксированной Monthly policy, а не fallback для новых epochs.
 
 ## Измерения и проверки
 
-`npm test`: **154/154 passed**; включает прежние unit tests, 12 contract/binding tests и 4 dual replay
+На этапе namespace `npm test`: **154/154 passed**; включает прежние unit tests, 12 contract/binding tests и 4 dual replay
 tests. Проверены cross-capability calls, collision/reuse, constructor bindings,
 atomic rollback, direct USDG sync order, сохранность старых unpaid credits, failed
 claims, reentrancy, параллельные draws, Monthly win/no-win, chunks/reorg/retry и
@@ -113,6 +118,8 @@ claims, reentrancy, параллельные draws, Monthly win/no-win, chunks/r
 После разделения ID дополнительно проверены два READY datasets до первого seal,
 одинаковые младшие 255 бит, обе очередности seal, ранний отказ чужому namespace,
 повторное использование после terminal, крайние ID и точная идентичность в events/replay/vault.
+Следующий этап Monthly epochs: полный прогон 164/164, затем расширенные replay/CLI
+6/6 и RPC publication 1/1; подробности в [карте реализации](IMPLEMENTATION_STATUS.md).
 
 `node scripts/dual-controller-check.cjs` отдельно компилирует и действительно
 развёртывает исследовательские wrappers с roles/readiness/async mock RNG при
@@ -121,7 +128,7 @@ claims, reentrancy, параллельные draws, Monthly win/no-win, chunks/r
 | Контракт | Runtime | Запас |
 |---|---:|---:|
 | Short + исследовательский RNG/roles/readiness | 21 988 | 2 588 |
-| Monthly + исследовательский RNG/roles/readiness | 13 876 | 10 700 |
+| Monthly + исследовательский RNG/roles/readiness | 17 064 | 7 512 |
 | DualControllerPromoVault | 8 496 | 16 080 |
 
 Источник: [dual-check.json](../research/controller-size/dual-check.json), включая

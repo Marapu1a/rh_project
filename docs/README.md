@@ -11,6 +11,10 @@
 
 ## Правила актуальности
 
+[Версии допуска Monthly](MONTHLY_RULES_EPOCHS.md), 17.09 — фиксированное расписание,
+notice и B+1, один draining старый набор, empty без переноса clock, lifecycle v4 и
+проверка опубликованного Monthly dataset. Числа q/notice остаются deployment inputs.
+
 [Два фиксированных контроллера](DUAL_CONTROLLER_ARCHITECTURE.md), 17.09 — новая USDG
 казна с раздельными полномочиями, внутренний Monthly settlement, lifecycle v3 и
 проверка deployment под стандартным 24 KiB. Это текущая выбранная архитектура;

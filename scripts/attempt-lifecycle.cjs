@@ -8,7 +8,10 @@ const ABI=new Interface([
   'event AttemptsConsumed(bytes32 indexed drawId,uint8 indexed kind,bytes32 snapshotHash,uint8 outcome,bytes32 resultHash)',
   'event ShortRulesAnnounced(uint64 indexed epoch,bytes32 rulesHash,uint256 eligibleAt)',
   'event ShortRulesActivated(uint64 indexed oldEpoch,uint64 indexed newEpoch,uint256 firstNewBlock)',
-  'event ShortEpochEmpty(uint64 indexed epoch,uint256 cutoffBlockNumber,bytes32 cutoffBlockHash,bytes32 snapshotHash)'
+  'event ShortEpochEmpty(uint64 indexed epoch,uint256 cutoffBlockNumber,bytes32 cutoffBlockHash,bytes32 snapshotHash)',
+  'event MonthlyRulesAnnounced(uint64 indexed epoch,bytes32 rulesHash,uint256 eligibleAt)',
+  'event MonthlyRulesActivated(uint64 indexed oldEpoch,uint64 indexed newEpoch,uint256 firstNewBlock)',
+  'event MonthlyEpochEmpty(uint64 indexed epoch,uint256 cutoffBlockNumber,bytes32 cutoffBlockHash,bytes32 snapshotHash)'
 ]);
 const KINDS=['SHORT','MONTHLY'];
 const lower=x=>x.toLowerCase();
@@ -16,8 +19,8 @@ const requireThat=(ok,message)=>{if(!ok)throw Error(message);};
 function integer(x){const n=Number(BigInt(x));requireThat(Number.isSafeInteger(n)&&n>=0,'Invalid block/index');return n;}
 function bytes32(x,label){requireThat(isHexString(x,32)&&lower(x)!==ZeroHash,'Invalid '+label);return lower(x);}
 function domainFor(manifest,config){
-  requireThat(['attempt-lifecycle-v1','attempt-lifecycle-v2','attempt-lifecycle-v3'].includes(config.schema),'Unsupported lifecycle schema');
-  if(config.monthlySource)requireThat(config.schema==='attempt-lifecycle-v3','Dual sources require lifecycle v3');
+  requireThat(['attempt-lifecycle-v1','attempt-lifecycle-v2','attempt-lifecycle-v3','attempt-lifecycle-v4'].includes(config.schema),'Unsupported lifecycle schema');
+  if(config.monthlySource)requireThat(['attempt-lifecycle-v3','attempt-lifecycle-v4'].includes(config.schema),'Dual sources require lifecycle v3 or v4');
   requireThat(isAddress(config.source)&&lower(config.source)!==ZeroAddress,'Invalid lifecycle source');
   bytes32(config.sourceCodeHash,'source code hash');
   const instanceId=bytes32(config.instanceId,'instance id');
@@ -29,7 +32,7 @@ function domainFor(manifest,config){
     domain.shortRulesGenesisHash=hash({rulesHash:lower(g.rulesHash),noticeSeconds:String(integer(g.noticeSeconds)),
       startedAt:String(integer(g.startedAt)),firstBlock:String(integer(g.firstBlock))});
   }
-  if(config.schema==='attempt-lifecycle-v3'){
+  if(['attempt-lifecycle-v3','attempt-lifecycle-v4'].includes(config.schema)){
     requireThat(isAddress(config.monthlySource)&&lower(config.monthlySource)!==ZeroAddress&&lower(config.monthlySource)!==domain.source,'Invalid monthly source');
     requireThat(isAddress(config.vault)&&lower(config.vault)!==ZeroAddress,'Invalid dual vault');
     const m=config.monthlyPolicy;requireThat(m&&integer(m.interval)>0,'Missing monthly policy');integer(m.startedAt);
@@ -38,16 +41,22 @@ function domainFor(manifest,config){
       vaultQuote:lower(manifest.quote),vaultProjectToken:lower(manifest.token),monthlyPolicyHash:hash({rulesHash:bytes32(m.rulesHash,'monthly rules'),
         interval:String(integer(m.interval)),startedAt:String(integer(m.startedAt))})});
   }
+  if(config.schema==='attempt-lifecycle-v4'){
+    const g=config.monthlyRules;requireThat(g&&integer(g.noticeSeconds)>0,'Missing monthly epoch genesis');
+    domain.monthlyRulesGenesisHash=hash({rulesHash:lower(config.monthlyPolicy.rulesHash),noticeSeconds:String(integer(g.noticeSeconds)),
+      startedAt:String(integer(config.monthlyPolicy.startedAt)),firstBlock:String(integer(g.firstBlock)),interval:String(integer(config.monthlyPolicy.interval))});
+  }
   return domain;
 }
 function snapshotFor(domain,drawId,kind,cutoff,rulesHash,participants,rulesEpoch){
-  if(domain.schema==='attempt-lifecycle-v3')validateDrawId(drawId,kind);
-  const epoch=domain.schema!=='attempt-lifecycle-v1'&&kind==='SHORT';
+  if(['attempt-lifecycle-v3','attempt-lifecycle-v4'].includes(domain.schema))validateDrawId(drawId,kind);
+  const epoch=(domain.schema!=='attempt-lifecycle-v1'&&kind==='SHORT')||domain.schema==='attempt-lifecycle-v4';
   if(epoch)requireThat(integer(rulesEpoch)>0,'Snapshot epoch required');
-  return {schema:domain.schema==='attempt-lifecycle-v3'?'attempt-snapshot-v3':epoch?'attempt-snapshot-v2':'attempt-snapshot-v1',domain,drawId,kind,cutoff,rulesHash,participants,
+  return {schema:domain.schema==='attempt-lifecycle-v4'?'attempt-snapshot-v4':domain.schema==='attempt-lifecycle-v3'?'attempt-snapshot-v3':epoch?'attempt-snapshot-v2':'attempt-snapshot-v1',domain,drawId,kind,cutoff,rulesHash,participants,
     ...(epoch?{rulesEpoch:String(rulesEpoch)}:{})};
 }
 function emptyEpochHash(domain,epoch,cutoff,rulesHash){return hash({schema:'short-epoch-empty-v1',domain,epoch:String(epoch),cutoff,rulesHash,participants:[]});}
+function emptyMonthlyEpochHash(domain,epoch,cutoff,rulesHash){return hash({schema:'monthly-epoch-empty-v1',domain,epoch:String(epoch),cutoff,rulesHash,participants:[]});}
 function reference(manifest,log){
   return {occurrenceId:[manifest.chainId,lower(log.blockHash),lower(log.transactionHash),integer(log.logIndex)].join(':'),
     blockNumber:integer(log.blockNumber),blockHash:lower(log.blockHash),transactionHash:lower(log.transactionHash),
@@ -65,12 +74,16 @@ function replayAttempts(manifest,config,deliveredBlocks){
   const blocks=[...new Map(deliveredBlocks.map(b=>[integer(b.number),b])).values()].sort((a,b)=>integer(a.number)-integer(b.number));
   const headers=new Map([[integer(manifest.anchor.number),lower(manifest.anchor.hash)],...blocks.map(b=>[integer(b.number),lower(b.hash)])]);
   const times=new Map(blocks.map(b=>[integer(b.number),integer(b.timestamp)]));
-  const dualMode=config.schema==='attempt-lifecycle-v3',epochMode=config.schema!=='attempt-lifecycle-v1';
+  const monthEpochMode=config.schema==='attempt-lifecycle-v4',dualMode=monthEpochMode||config.schema==='attempt-lifecycle-v3',epochMode=config.schema!=='attempt-lifecycle-v1';
   let lastMonthlyTime=dualMode?integer(config.monthlyPolicy.startedAt):0;
   const epochs=epochMode?[{epoch:1,firstBlock:integer(config.shortRules.firstBlock),rulesHash:lower(config.shortRules.rulesHash)}]:[];
   let currentEpoch=1,drainingEpoch=0,announced=null,lastShortTime=epochMode?integer(config.shortRules.startedAt):0;
   const policy=epoch=>epochs.find(e=>e.epoch===epoch);
   const epochAt=height=>epochs.filter(e=>e.firstBlock<=height).at(-1);
+  const monthEpochs=monthEpochMode?[{epoch:1,firstBlock:integer(config.monthlyRules.firstBlock),rulesHash:lower(config.monthlyPolicy.rulesHash)}]:[];
+  let currentMonthEpoch=1,drainingMonthEpoch=0,announcedMonth=null;
+  const monthPolicy=epoch=>monthEpochs.find(e=>e.epoch===epoch);
+  const monthEpochAt=height=>monthEpochs.filter(e=>e.firstBlock<=height).at(-1);
   const events=[],history=new Map();
   for(const d of buyLedger.decisions){
     if(d.status!=='ELIGIBLE')continue;
@@ -92,6 +105,11 @@ function replayAttempts(manifest,config,deliveredBlocks){
     if(parsed.name.startsWith('Short')){
       requireThat(emitter===domain.source,'Monthly source cannot change Short epochs');
       requireThat(epochMode,'Epoch events require lifecycle v2');
+      events.push({type:parsed.name,args:parsed.args,...ref});continue;
+    }
+    if(parsed.name.startsWith('Monthly')){
+      requireThat(monthEpochMode,'Monthly epoch events require lifecycle v4');
+      requireThat(emitter===domain.monthlySource,'Wrong source for Monthly epochs');
       events.push({type:parsed.name,args:parsed.args,...ref});continue;
     }
     const kind=KINDS[Number(parsed.args.kind)];requireThat(kind,'Invalid draw kind');
@@ -123,7 +141,27 @@ function replayAttempts(manifest,config,deliveredBlocks){
   }
   for(const event of events.sort(ordered)){
     const {type,args,kind,drawId,...ref}=event;
-    if(type==='ShortRulesAnnounced'){
+    if(type==='MonthlyRulesAnnounced'){
+      requireThat(!announcedMonth&&!drainingMonthEpoch&&integer(args.epoch)===currentMonthEpoch+1,'Invalid monthly announcement');
+      requireThat(integer(args.eligibleAt)===times.get(event.blockNumber)+integer(config.monthlyRules.noticeSeconds),'Invalid monthly notice');
+      announcedMonth={epoch:integer(args.epoch),rulesHash:bytes32(args.rulesHash,'rules'),eligibleAt:integer(args.eligibleAt)};
+      transitions.push({type,...announcedMonth,source:ref});
+    }else if(type==='MonthlyRulesActivated'){
+      requireThat(announcedMonth&&!pending.MONTHLY&&integer(args.oldEpoch)===currentMonthEpoch&&integer(args.newEpoch)===announcedMonth.epoch,'Invalid monthly activation');
+      requireThat(times.get(event.blockNumber)>=announcedMonth.eligibleAt&&times.get(event.blockNumber)>=lastMonthlyTime+integer(config.monthlyPolicy.interval),'Monthly activation before notice/schedule');
+      requireThat(integer(args.firstNewBlock)===event.blockNumber+1,'Retroactive monthly activation');
+      drainingMonthEpoch=currentMonthEpoch;currentMonthEpoch=announcedMonth.epoch;
+      monthEpochs.push({epoch:currentMonthEpoch,rulesHash:announcedMonth.rulesHash,firstBlock:integer(args.firstNewBlock)});announcedMonth=null;
+      transitions.push({type,oldEpoch:drainingMonthEpoch,newEpoch:currentMonthEpoch,firstNewBlock:integer(args.firstNewBlock),source:ref});
+    }else if(type==='MonthlyEpochEmpty'){
+      requireThat(drainingMonthEpoch&&integer(args.epoch)===drainingMonthEpoch&&!pending.MONTHLY,'Invalid monthly empty transition');
+      const cutoff={blockNumber:integer(args.cutoffBlockNumber),blockHash:bytes32(args.cutoffBlockHash,'cutoff')};
+      requireThat(cutoff.blockNumber>=monthPolicy(currentMonthEpoch).firstBlock&&cutoff.blockNumber<event.blockNumber
+        &&headers.get(cutoff.blockNumber)===cutoff.blockHash,'Invalid monthly empty cutoff');
+      for(const [address,w] of wallets)requireThat(mintedAt(address,monthPolicy(currentMonthEpoch).firstBlock-1)===w.MONTHLY.consumed,'Old monthly epoch is not empty');
+      requireThat(emptyMonthlyEpochHash(domain,drainingMonthEpoch,cutoff,monthPolicy(drainingMonthEpoch).rulesHash)===bytes32(args.snapshotHash,'snapshot'),'Monthly empty snapshot mismatch');
+      transitions.push({type,epoch:drainingMonthEpoch,cutoff,snapshotHash:lower(args.snapshotHash),source:ref});drainingMonthEpoch=0;
+    }else if(type==='ShortRulesAnnounced'){
       requireThat(!announced&&!drainingEpoch&&integer(args.epoch)===currentEpoch+1,'Invalid announcement');
       requireThat(integer(args.eligibleAt)===times.get(event.blockNumber)+integer(config.shortRules.noticeSeconds),'Invalid notice');
       announced={epoch:integer(args.epoch),rulesHash:bytes32(args.rulesHash,'rules'),eligibleAt:integer(args.eligibleAt)};
@@ -146,11 +184,13 @@ function replayAttempts(manifest,config,deliveredBlocks){
       drainingEpoch=0;
     }else if(type==='MINT'){
       if(epochMode)requireThat(epochAt(event.blockNumber),'Mint before genesis epoch');
+      if(monthEpochMode)requireThat(monthEpochAt(event.blockNumber),'Mint before monthly genesis epoch');
       const w=walletFor(event.wallet);w.minted+=event.count;
       for(const k of KINDS)w[k].open+=event.count;
       // Zero-entry purchases remain fully visible in buyLedger including carry.
       if(event.count>0n){const {count,wallet,...source}=ref;transitions.push({type,wallet,count:String(count),source,
-        ...(epochMode?{shortEpoch:String(epochAt(event.blockNumber).epoch)}:{})});}
+        ...(epochMode?{shortEpoch:String(epochAt(event.blockNumber).epoch)}:{}),
+        ...(monthEpochMode?{monthlyEpoch:String(monthEpochAt(event.blockNumber).epoch)}:{})});}
     }else if(type==='FREEZE'){
       requireThat(!draws.has(drawId),'Draw id already used');
       requireThat(pending[kind]===null,'Draw kind already pending');
@@ -159,21 +199,26 @@ function replayAttempts(manifest,config,deliveredBlocks){
       requireThat(headers.get(cutoff.blockNumber)===cutoff.blockHash,'Cutoff is not a canonical ancestor');
       requireThat(lastTerminal[kind]===null||cutoff.blockNumber>=lastTerminal[kind],'Cutoff precedes previous terminal');
       const rulesHash=bytes32(args.rulesHash,'rules hash'),participants=[];
-      if(dualMode&&kind==='MONTHLY')requireThat(rulesHash===lower(config.monthlyPolicy.rulesHash)
+      if(dualMode&&kind==='MONTHLY')requireThat((monthEpochMode||rulesHash===lower(config.monthlyPolicy.rulesHash))
         &&times.get(event.blockNumber)>=lastMonthlyTime+integer(config.monthlyPolicy.interval),'Monthly policy/schedule');
-      const targetEpoch=epochMode&&kind==='SHORT'?(drainingEpoch||currentEpoch):null;
+      const targetEpoch=epochMode&&kind==='SHORT'?(drainingEpoch||currentEpoch):monthEpochMode&&kind==='MONTHLY'?(drainingMonthEpoch||currentMonthEpoch):null;
       let participantCutoff=cutoff.blockNumber;
-      if(targetEpoch){
+      if(targetEpoch&&kind==='SHORT'){
         requireThat(rulesHash===policy(targetEpoch).rulesHash,'Wrong epoch rules');
         requireThat(cutoff.blockNumber>=policy(currentEpoch).firstBlock&&times.get(event.blockNumber)>=lastShortTime+21600,'Epoch cutoff/schedule');
         if(drainingEpoch)participantCutoff=policy(currentEpoch).firstBlock-1;
+      }
+      if(targetEpoch&&kind==='MONTHLY'){
+        requireThat(rulesHash===monthPolicy(targetEpoch).rulesHash,'Wrong monthly epoch rules');
+        requireThat(cutoff.blockNumber>=monthPolicy(currentMonthEpoch).firstBlock,'Monthly boundary incomplete');
+        if(drainingMonthEpoch)participantCutoff=monthPolicy(currentMonthEpoch).firstBlock-1;
       }
       for(const [address,w] of [...wallets].sort(([a],[b])=>lex(a,b))){
         const s=w[kind],last=mintedAt(address,participantCutoff),count=last-s.consumed;
         requireThat(count>=0n&&count<=s.open,'Cutoff conflicts with consumed attempts');
         if(count>0n)participants.push({wallet:address,count:String(count),firstAttempt:String(s.consumed+1n),lastAttempt:String(last)});
       }
-      if(targetEpoch)requireThat(participants.length>0,'Empty Short must not freeze');
+      if(targetEpoch&&kind==='SHORT')requireThat(participants.length>0,'Empty Short must not freeze');
       if(dualMode&&kind==='MONTHLY')requireThat(participants.length>0,'Empty Monthly must not freeze');
       const snapshot=snapshotFor(domain,drawId,kind,cutoff,rulesHash,participants,targetEpoch),snapshotHash=hash(snapshot);
       requireThat(snapshotHash===bytes32(args.snapshotHash,'snapshot hash'),'Frozen snapshot does not match replay');
@@ -195,7 +240,10 @@ function replayAttempts(manifest,config,deliveredBlocks){
       draw.status='CONSUMED';draw.terminal={outcome:outcome===0?'NO_WINNER':'WINNER',resultHash,source:ref};
       pending[kind]=null;lastTerminal[kind]=event.blockNumber;
       if(epochMode&&kind==='SHORT'){lastShortTime=times.get(event.blockNumber);if(drainingEpoch===Number(draw.snapshot.rulesEpoch))drainingEpoch=0;}
-      if(dualMode&&kind==='MONTHLY')lastMonthlyTime=times.get(event.blockNumber);
+      if(dualMode&&kind==='MONTHLY'){
+        lastMonthlyTime=times.get(event.blockNumber);
+        if(monthEpochMode&&drainingMonthEpoch===Number(draw.snapshot.rulesEpoch))drainingMonthEpoch=0;
+      }
       transitions.push({type,drawId,kind,snapshotHash:draw.snapshotHash,outcome:draw.terminal.outcome,resultHash,totalAttempts:draw.totalAttempts,source:ref});
     }
     checkInvariants();
@@ -215,11 +263,24 @@ function replayAttempts(manifest,config,deliveredBlocks){
         firstOpenAttempt:open?String(last-open+1n):null,lastOpenAttempt:open?String(last):null};
     });
     if(epochMode)requireThat(balance.SHORT.byEpoch.reduce((sum,e)=>sum+BigInt(e.open),0n)===w.SHORT.open,'Open epoch total mismatch');
+    if(monthEpochMode){
+      balance.MONTHLY.byEpoch=monthEpochs.map((e,i)=>{
+        const first=mintedAt(wallet,e.firstBlock-1)+1n,last=mintedAt(wallet,(monthEpochs[i+1]?.firstBlock??(buyLedger.head.number+1))-1);
+        const total=last>=first?last-first+1n:0n,s=w.MONTHLY;
+        const consumed=s.consumed<first?0n:(s.consumed<last?s.consumed:last)-first+1n;
+        const frozen=s.frozen&&draws.get(s.frozen.drawId).snapshot.rulesEpoch===String(e.epoch)?BigInt(s.frozen.count):0n,open=total-consumed-frozen;
+        requireThat(open>=0n&&consumed>=0n&&frozen>=0n&&total===open+consumed+frozen,'Monthly epoch conservation failed');
+        return {epoch:String(e.epoch),minted:String(total),consumed:String(consumed),frozen:String(frozen),open:String(open),
+          firstOpenAttempt:open?String(last-open+1n):null,lastOpenAttempt:open?String(last):null};
+      });
+      requireThat(balance.MONTHLY.byEpoch.reduce((sum,e)=>sum+BigInt(e.open),0n)===w.MONTHLY.open,'Monthly open epoch total mismatch');
+    }
     return balance;
   });
-  return {schema:dualMode?'attempt-ledger-v3':epochMode?'attempt-ledger-v2':'attempt-ledger-v1',domain,buyLedger,head:buyLedger.head,finality:buyLedger.finality,
+  return {schema:monthEpochMode?'attempt-ledger-v4':dualMode?'attempt-ledger-v3':epochMode?'attempt-ledger-v2':'attempt-ledger-v1',domain,buyLedger,head:buyLedger.head,finality:buyLedger.finality,
     trust:'Source terminal events are assertions; this replay does not verify RNG, prizes, budget or readiness.',
     pending,draws:[...draws.values()],wallets:balances,transitions,
-    ...(epochMode?{shortRules:{currentEpoch,drainingEpoch,announced,epochs,lastTerminalAt:lastShortTime}}:{})};
+    ...(epochMode?{shortRules:{currentEpoch,drainingEpoch,announced,epochs,lastTerminalAt:lastShortTime}}:{}),
+    ...(monthEpochMode?{monthlyRules:{currentEpoch:currentMonthEpoch,drainingEpoch:drainingMonthEpoch,announced:announcedMonth,epochs:monthEpochs,lastTerminalAt:lastMonthlyTime}}:{})};
 }
-module.exports={replayAttempts,domainFor,snapshotFor,emptyEpochHash,ABI};
+module.exports={replayAttempts,domainFor,snapshotFor,emptyEpochHash,emptyMonthlyEpochHash,ABI};

@@ -9,7 +9,7 @@ import {IStudyRandom} from "./ControllerSizeStudy.sol";
 /// Research wrapper ONLY: mock provider/readiness, not a production RNG adapter.
 contract MonthlyRngSizeStudy is MonthlySettlement, Ownable2Step {
     struct Setup { address vault; address registry; bytes32 instance; address governor; address publisher; address provider;
-        uint256 interval; uint256 confirmations; uint256 maxGasPrice; uint256 nativeFloor; }
+        uint256 interval; uint256 notice; uint256 confirmations; uint256 maxGasPrice; uint256 nativeFloor; }
     struct Binding { bytes32 drawId; bytes32 context; bool delivered; }
     IStudyRandom public immutable randomProvider;
     uint256 public immutable confirmations;
@@ -24,7 +24,7 @@ contract MonthlyRngSizeStudy is MonthlySettlement, Ownable2Step {
     event PublisherAccepted(address publisher);
     event RandomBound(uint256 indexed requestId,bytes32 indexed drawId,bytes32 context);
     constructor(Setup memory s,ShortOutcome.Rules memory r)
-        MonthlySettlement(s.vault,s.registry,s.instance,s.interval,r) Ownable(s.governor){
+        MonthlySettlement(s.vault,s.registry,s.instance,s.interval,s.notice,r) Ownable(s.governor){
         require(s.publisher!=address(0)&&s.provider.code.length>0&&s.confirmations>0&&s.confirmations<=256&&s.maxGasPrice>0,"config");
         publisher=s.publisher;randomProvider=IStudyRandom(s.provider);confirmations=s.confirmations;
         maxGasPrice=s.maxGasPrice;nativeFloor=s.nativeFloor;
@@ -39,6 +39,11 @@ contract MonthlyRngSizeStudy is MonthlySettlement, Ownable2Step {
     }
     function beginMonth(Input calldata input) external onlyPublisher {
         require(block.number>=input.cutoff+confirmations,"finality");_beginMonth(input);
+    }
+    function announce(ShortOutcome.Rules calldata rules) external onlyOwner {_announceMonthlyRules(rules);}
+    function activate() external {_activateMonthlyRules();}
+    function closeEmpty(uint256 c,bytes32 h,bytes32 s) external onlyPublisher {
+        require(block.number>=c+confirmations,"finality");_closeEmptyMonthlyEpoch(c,h,s);
     }
     function publishMonth(bytes32 id,ShortOutcome.Participant[] calldata chunk) external onlyPublisher {_publishMonth(id,chunk);}
     function supersedeMonth(bytes32 id) external onlyPublisher {_supersedeMonth(id);}

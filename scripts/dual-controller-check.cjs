@@ -15,7 +15,7 @@ async function main(){
   const base={vault:futureVault,registry:registry.target,instance:id('dual size short'),governor:owner,publisher:owner,provider:random.target,
     confirmations:2,maxGasPrice:1000000000000n,nativeFloor:10};
   const short=await deploy('ShortRngSizeStudy',[{...base,notice:3600,maxBudget:10000},normalRules,[7,5,3]]);
-  const monthly=await deploy('MonthlyRngSizeStudy',[{...base,instance:id('dual size monthly'),interval:30*86400},normalRules]);
+  const monthly=await deploy('MonthlyRngSizeStudy',[{...base,instance:id('dual size monthly'),interval:30*86400,notice:3600},normalRules]);
   const vault=await deploy('DualControllerPromoVault',[token.target,quote.target,short.target,monthly.target,100]);assert.equal(vault.target,futureVault);
   for(const [name,c] of [['ShortRngSizeStudy',short],['MonthlyRngSizeStudy',monthly],['DualControllerPromoVault',vault]]){
     const size=(await provider.getCode(c.target)).length/2-1;assert.equal(size,report.sizes[name].runtime);assert(size<=24576);
@@ -29,7 +29,7 @@ async function main(){
   await measured('short.begin',short.begin(pid,{drawId:draw,campaignId:1,rulesEpoch:1,cutoffBlockNumber:block.number,cutoffBlockHash:block.hash,
     snapshotHash:id('synthetic short'),expectedRoot:dataset.rootFor(ps),expectedCount:64,expectedAttempts:320,budget:101}));
   await measured('short.publish64',short.publish(pid,ps));
-  await measured('monthly.begin',monthly.beginMonth({drawId:month,snapshotHash:id('synthetic month'),root:monthlyRoot(ps),campaign:1,
+  await measured('monthly.begin',monthly.beginMonth({drawId:month,snapshotHash:id('synthetic month'),root:monthlyRoot(ps),campaign:1,rulesEpoch:1,
     cutoff:block.number,cutoffHash:block.hash,count:64,attempts:320}));
   await measured('monthly.publish64',monthly.publishMonth(month,ps));
   const reject=async fn=>assert.rejects(async()=>sent(fn()));

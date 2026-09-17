@@ -88,7 +88,7 @@ async function prepareReal(f,ps,label,chunkSize=4){
 }
 async function prepareMonth(f,ps,label,size=4){
   const b=await f.provider.getBlock('latest'),drawId=mid(label);
-  await sent(f.monthly.beginMonth({drawId,snapshotHash:id(label+' snapshot'),root:monthlyRoot(ps),campaign:1,cutoff:b.number,cutoffHash:b.hash,
+  await sent(f.monthly.beginMonth({drawId,snapshotHash:id(label+' snapshot'),root:monthlyRoot(ps),campaign:1,rulesEpoch:1,cutoff:b.number,cutoffHash:b.hash,
     count:ps.length,attempts:ps.reduce((a,p)=>a+p.lastAttempt-p.firstAttempt+1n,0n)}));
   for(let i=0;i<ps.length;i+=size)await sent(f.monthly.publishMonth(drawId,ps.slice(i,i+size)));
   await sent(f.monthly.connect(f.other).sealMonth(drawId));return drawId;
@@ -190,7 +190,7 @@ test('both real datasets READY before either seal: same payload, both seal order
     const b=await f.provider.getBlock('latest'),s=sid('shared ready'),m=mid('shared ready'),pid=id('ready proposal');
     const r={drawId:s,campaignId:1,rulesEpoch:1,cutoffBlockNumber:b.number,cutoffBlockHash:b.hash,
       snapshotHash:id('snapshot short'),expectedRoot:dataset.rootFor(ps),expectedCount:4,expectedAttempts:4,budget:30};
-    const input={drawId:m,snapshotHash:id('snapshot monthly'),root:monthlyRoot(ps),campaign:1,cutoff:b.number,cutoffHash:b.hash,count:4,attempts:4};
+    const input={drawId:m,snapshotHash:id('snapshot monthly'),root:monthlyRoot(ps),campaign:1,rulesEpoch:1,cutoff:b.number,cutoffHash:b.hash,count:4,attempts:4};
     await assert.rejects(()=>sent(f.short.begin(pid,{...r,drawId:m})));
     await assert.rejects(()=>sent(f.monthly.beginMonth({...input,drawId:s})));
     assert.equal(await f.short.activeProposal(),ethers.ZeroHash);assert.equal(await f.monthly.activeMonth(),ethers.ZeroHash);

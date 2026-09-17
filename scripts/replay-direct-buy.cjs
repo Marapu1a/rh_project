@@ -24,7 +24,7 @@ async function scan(manifest,rpcUrl,toBlock,lifecycle=null){
   if(lifecycle){
     const code=await rpc('eth_getCode',[lifecycle.source,tag(toBlock)]);
     if(code==='0x'||keccak256(code)!==lifecycle.sourceCodeHash.toLowerCase())throw Error('Unexpected lifecycle source runtime');
-    if(lifecycle.schema==='attempt-lifecycle-v3')for(const [address,digest] of [[lifecycle.monthlySource,lifecycle.monthlySourceCodeHash],[lifecycle.vault,lifecycle.vaultCodeHash]]){
+    if(['attempt-lifecycle-v3','attempt-lifecycle-v4'].includes(lifecycle.schema))for(const [address,digest] of [[lifecycle.monthlySource,lifecycle.monthlySourceCodeHash],[lifecycle.vault,lifecycle.vaultCodeHash]]){
       const code=await rpc('eth_getCode',[address,tag(toBlock)]);
       if(code==='0x'||keccak256(code)!==digest.toLowerCase())throw Error('Unexpected dual lifecycle runtime');
     }

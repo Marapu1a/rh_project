@@ -2,7 +2,7 @@ const {ethers}=require('ethers'),hre=require('hardhat');
 const {normalRules}=require('./short-outcome.cjs');
 const rpc=(m,p=[])=>hre.network.provider.send(m,p),sent=async p=>(await p).wait();
 const advance=async(seconds=30*86400+1)=>{await rpc('evm_increaseTime',[seconds]);await rpc('evm_mine');};
-async function fixture(compiled,{real=false,interval=30*86400,monthlyRules=normalRules}={}){
+async function fixture(compiled,{real=false,interval=30*86400,notice=3600,monthlyRules=normalRules}={}){
   await rpc('hardhat_reset');const provider=new ethers.BrowserProvider(hre.network.provider,undefined,{cacheTimeout:-1});
   const admin=await provider.getSigner(),other=await provider.getSigner(1);
   const deploy=async(name,args=[])=>{const a=compiled[name],c=await new ethers.ContractFactory(a.abi,a.evm.bytecode.object,admin).deploy(...args);await c.waitForDeployment();return c;};
@@ -10,7 +10,7 @@ async function fixture(compiled,{real=false,interval=30*86400,monthlyRules=norma
   const wrong=await deploy('ScopedCallerFixture',[ethers.ZeroAddress]);
   const predicted=ethers.getCreateAddress({from:await admin.getAddress(),nonce:await provider.getTransactionCount(await admin.getAddress())+2});
   const short=await deploy(real?'ShortSettlementFixture':'ScopedCallerFixture',real?[predicted,registry.target,ethers.id('dual short'),3600,normalRules,[7,5,3]]:[predicted]);
-  const monthly=await deploy(real?'MonthlySettlementFixture':'ScopedCallerFixture',real?[predicted,registry.target,ethers.id('dual monthly'),interval,monthlyRules]:[predicted]);
+  const monthly=await deploy(real?'MonthlySettlementFixture':'ScopedCallerFixture',real?[predicted,registry.target,ethers.id('dual monthly'),interval,notice,monthlyRules]:[predicted]);
   // Failed constructor simulations send no transactions, preserving the predicted address.
   for(const [s,m] of [[short.target,short.target],[short.target,await admin.getAddress()],[wrong.target,monthly.target],[short.target,wrong.target]])
     await require('node:assert/strict').rejects(()=>deploy('DualControllerPromoVault',[token.target,quote.target,s,m,100]));

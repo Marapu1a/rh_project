@@ -5,13 +5,16 @@ import {ShortOutcome} from "../../contracts/ShortOutcome.sol";
 /// TEST ONLY. Publisher seed injection is not production randomness.
 contract MonthlySettlementFixture is MonthlySettlement {
     address private immutable publisher=msg.sender;
-    constructor(address v,address r,bytes32 i,uint256 interval,ShortOutcome.Rules memory rules) MonthlySettlement(v,r,i,interval,rules){}
+    constructor(address v,address r,bytes32 i,uint256 interval,uint256 notice,ShortOutcome.Rules memory rules) MonthlySettlement(v,r,i,interval,notice,rules){}
     modifier onlyPublisher(){require(msg.sender==publisher,"publisher");_;}
     function beginMonth(Input calldata input) external onlyPublisher {_beginMonth(input);}
     function publishMonth(bytes32 id,ShortOutcome.Participant[] calldata data) external onlyPublisher {_publishMonth(id,data);}
     function supersedeMonth(bytes32 id) external onlyPublisher {_supersedeMonth(id);}
     function sealMonth(bytes32 id) external {_sealMonth(id);}
     function supplySeed(bytes32 id,bytes32 seed) external onlyPublisher {_acceptMonthlySeed(id,seed);}
+    function announce(ShortOutcome.Rules calldata rules) external onlyPublisher {_announceMonthlyRules(rules);}
+    function activate() external {_activateMonthlyRules();}
+    function closeEmpty(uint256 c,bytes32 h,bytes32 s) external onlyPublisher {_closeEmptyMonthlyEpoch(c,h,s);}
 }
 
 /// Deliberately malicious caller for exhaustive vault authorization tests.

@@ -65,7 +65,7 @@ async function verifyEpochGenesis(provider,address,domain){
 }
 async function verifyPublication(provider,source,id,artifact){
   const p=await source.datasetProposal(id),r=artifact.request,domain=artifact.snapshot.domain;
-  if(domain.schema==='attempt-lifecycle-v3')require('./draw-id.cjs').validateDrawId(r.drawId,'SHORT');
+  if(['attempt-lifecycle-v3','attempt-lifecycle-v4'].includes(domain.schema))require('./draw-id.cjs').validateDrawId(r.drawId,'SHORT');
   await require('./dual-bindings.cjs').verifyDualBindings(provider,domain);
   const network=await provider.getNetwork();
   check(BigInt(domain.chainId)===network.chainId&&domain.source.toLowerCase()===source.target.toLowerCase()
@@ -76,7 +76,7 @@ async function verifyPublication(provider,source,id,artifact){
   check(hash(artifact.snapshot)===r.snapshotHash&&rootFor(artifact.snapshot.participants)===r.expectedRoot,'Artifact commitment mismatch');
   check(p.rulesHash===rulesHash(artifact.rules,artifact.weights,artifact.minimumUnit),'Rules mismatch');
   const snapshot=artifact.snapshot;
-  check(['attempt-snapshot-v1','attempt-snapshot-v2','attempt-snapshot-v3'].includes(snapshot.schema)&&snapshot.kind==='SHORT'&&snapshot.drawId===r.drawId
+  check(['attempt-snapshot-v1','attempt-snapshot-v2','attempt-snapshot-v3','attempt-snapshot-v4'].includes(snapshot.schema)&&snapshot.kind==='SHORT'&&snapshot.drawId===r.drawId
     &&snapshot.rulesHash===p.rulesHash&&BigInt(snapshot.cutoff.blockNumber)===BigInt(r.cutoffBlockNumber)
     &&snapshot.cutoff.blockHash===r.cutoffBlockHash,'Snapshot metadata mismatch');
   if(snapshot.schema!=='attempt-snapshot-v1'){

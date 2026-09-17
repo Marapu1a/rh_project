@@ -13,9 +13,9 @@
       "fits": true
     },
     "MonthlyRngSizeStudy": {
-      "runtime": 13876,
-      "initcode": 15865,
-      "headroom": 10700,
+      "runtime": 17064,
+      "initcode": 19422,
+      "headroom": 7512,
       "fits": true
     },
     "DualControllerPromoVault": {
@@ -30,16 +30,16 @@
   "gas": {
     "short.begin": "474345",
     "short.publish64": "442219",
-    "monthly.begin": "287217",
-    "monthly.publish64": "439186",
+    "monthly.begin": "293049",
+    "monthly.publish64": "439208",
     "short.sealAndRequest": "505856",
-    "monthly.sealAndRequest": "462156",
+    "monthly.sealAndRequest": "464822",
     "short.callback": "67281",
-    "monthly.callback": "67303",
-    "monthly.process64": "395827",
-    "monthly.finish": "239286",
-    "short.process64": "579960",
-    "short.finish": "304736"
+    "monthly.callback": "67370",
+    "monthly.process64": "400986",
+    "monthly.finish": "243640",
+    "short.process64": "576686",
+    "short.finish": "305364"
   },
   "checks": [
     "Both scoped controllers with roles and async RNG binding deploy under standard 24576-byte enforcement",
@@ -66,7 +66,7 @@
     "@openzeppelin/contracts/utils/StorageSlot.sol": "0xcf74f855663ce2ae00ed8352666b7935f6cddea2932fdf2c3ecd30a9b1cd0e97",
     "contracts/DualControllerPromoVault.sol": "0xe2f6400d5c32b377610a91639b0c849e97d5864c1b84da34b610987194fbea6e",
     "contracts/FeeRouter.sol": "0xf9919dd2ace6da47cc5f38a0e5483fb9943201a3434b1f37e1d2aed8362457b1",
-    "contracts/MonthlySettlement.sol": "0x15a841de7ee4cd2eb1751f3026bcd1a976b9804ef9840477253ad11f2fbd96d9",
+    "contracts/MonthlySettlement.sol": "0x7a099beb548a1396bc8ac8ff378a85b6894f12f7a0366040fc7be6017414d327",
     "contracts/ParticipantRegistry.sol": "0x9a806ea3351be266e33bfa8140f5ae9e73720ecca470a80854e8025a9d151700",
     "contracts/PromoVault.sol": "0x4812f468eeaa8b59f496178b667a5e21b4ce9bcbaa1a07448aba16a791aa02ce",
     "contracts/ShortDatasetPreparation.sol": "0x843294098c136fff9178554cb3a234ce1ca5109f14bb7c065c57476a6ee18ca7",
@@ -77,7 +77,7 @@
     "contracts/ShortSettlement.sol": "0x91dd6a535c7af2811113c1d98bc416e2aef1fd29e0fc0764f91c762a6fd73f5f",
     "research/controller-size/ControllerSizeStudy.sol": "0xc42e812f47268bd783ee33a55d59801f989ee5842004db6bb58d467030f2eb9e",
     "research/controller-size/FixedSelectionSizeHelper.sol": "0x6704ca6c537b2739d12c63bd0f4ff355639848cc5440f0f6c4056fe867a7e9fe",
-    "research/controller-size/MonthlyRngSizeStudy.sol": "0x16b12d176b2abc4246606e78c8c358c1e847f71aeed82ac60faef744093298af",
+    "research/controller-size/MonthlyRngSizeStudy.sol": "0xc0b9164271a9bcc10a1359964aa01f8ebacf0ddca0c6b8cb5a9a0ec30b92099b",
     "test/contracts/Fixtures.sol": "0x43e4a6f57739977065043a7fcfe3a86fd58bb895510a6ade908f48002b366639",
     "test/contracts/ShortSettlementFixture.sol": "0x5ed8009f10ef1242d8ed0492ba86acc741e0910789cca3fe6a7984a309d96cbe"
   },
