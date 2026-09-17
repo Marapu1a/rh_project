@@ -1,313 +1,605 @@
 # Текущий ответ GPT
 
-Обновлено: 16.09.2026.
+Обновлено: 17.09.2026.
 
-Просмотрен latest commit `2586de843b8ea81c62fecaa250285dca8b42f494` — `integrate canonical Short streaming settlement`.
+Просмотрен latest commit `c66cd711db116bf2ca09b56b9ff80188ab0caa00` — `measure full controller size and immutable helper tradeoffs`, а также предыдущая оптимизация `712936f438a31eaccacf1ab8963138272645cc6b`.
 
-Прочитаны `ShortSettlement.sol`, `SHORT_SETTLEMENT.md`, independent JS verifier/recovery, новые integration tests, а также связанные `ShortOutcome`, `ShortRulesEpochs`, `ShortDatasetPreparation` и `PromoVault`. GitHub CI/status для latest commit пусты; заявленные `136/136` tests в этом проходе мной независимо не запускались.
+Прочитаны `CONTROLLER_SIZE_STUDY.md`, `ControllerSizeStudy.sol`, текущий `GPT_REVIEW_REQUEST.md`, `SHORT_SELECTION_OPTIMIZATION.md` и связанные production-компоненты. GitHub CI/status для latest commit пусты; локальные `check:controller:size`/behavior сценарии в этом проходе мной независимо не запускались.
 
-## Короткий вердикт
+## Сначала важное уточнение: для Robinhood проблема 24 KB сейчас НЕ является deployment blocker
 
-Пакет хороший: canonical Short теперь действительно собран почти полностью от SEALED dataset до атомарного terminal.
+Исследование корректно проверяет стандартный EIP-170 лимит Hardhat **24 576 bytes**. Но это не фактический лимит Robinhood Chain mainnet.
 
-В текущем коде я не нашёл нового пути, где корректно опубликованный dataset + один фиксированный seed дают неправильный global top-K или альтернативный result из-за partition/executor.
+В официальном mainnet `robinhood-chain-info.json`, на который ссылается документация Robinhood для запуска собственного full node, сейчас прямо указано:
 
-Основная цепочка выглядит согласованно:
-
-~~~text
-SEALED dataset
-→ WaitingSeed
-→ seed принимается один раз
-→ permissionless sequential chunks
-→ global top-K
-→ canonical SHORT_DATASET_RESULT_V1
-→ PromoVault.finalize
-→ AttemptsConsumed / epoch completion
+~~~json
+"arbitrum": {
+  "MaxCodeSize": 98304,
+  "MaxInitCodeSize": 196608
+}
 ~~~
 
-Reserve и terminal атомарны; failed finalize не меняет seed/progress/result, reroll отсутствует.
+Официальные источники, проверены 17.09.2026:
 
-Но перед следующим большим слоем есть два важных архитектурных предупреждения и одна полезная оптимизация.
+- Robinhood full-node guide: https://docs.robinhood.com/chain/run-a-full-node/
+- официальный mainnet chain info: https://cdn.robinhood.com/assets/generated_assets/hoodchain_docsite/chain-node-configs/robinhood-chain-info.json
+
+То есть текущий study monolith `28 475` bytes составляет примерно 29% от объявленного mainnet MaxCodeSize 98 304 bytes.
+
+Это сильно меняет срочность вопроса:
+
+> **для первого Robinhood deployment нам не нужно ломать архитектуру только ради стандартных 24 KB.**
+
+Но 24 KB остаётся очень полезным **portability benchmark**: Ethereum/Base и многие обычные EVM deployments не обязаны иметь Robinhood-специфичный 96 KB лимит. А multi-chain для проекта — сознательная цель.
+
+Поэтому теперь нужно разделить две задачи:
+
+~~~text
+MVP deployability on Robinhood
+!=
+portable-to-standard-EVM architecture
+~~~
+
+Не стоит оптимизировать их как будто это одна проблема.
 
 ---
 
-## 1. Local top-K → global top-K: логика корректна
+## 1. Что говорит текущий size study
 
-`ShortOutcome.compute()` на каждом chunk возвращает первые `min(local admitted, K)` кандидатов, отсортированных тем же `(SHORT_ORDER_V1 rank, wallet)`.
+Сам study полезный и честный.
 
-`_merge()` сливает два уже отсортированных списка тем же comparator и оставляет первые K.
-
-Кандидат, не попавший в local top-K, действительно не может попасть в global top-K: внутри собственного chunk уже есть K admitted кандидатов лучше него.
-
-Поэтому композиция индуктивна и не зависит от partition.
-
-Prize assignment выполняется только после полного scan, через тот же `SHORT_PRIZE_ORDER_V1`. Equal prize-rank сохраняет меньший исходный index первым, как и `ShortOutcome._slots()`.
-
-Canonical result hash также выглядит однозначно: `context + seed + ordered root + outcome rules hash + basketHash + Result(resultHash=0)`. Context уже связывает полный dataset rules hash, budget/request и basket, поэтому отдельное повторение только outcome-rules hash не ослабляет commitment.
-
-### Маленький пробел в тестах
-
-Я бы добавил один targeted test:
+Он показывает:
 
 ~~~text
-0 < global admitted < K
-и admitted лежат в разных chunks
+Short + realistic RNG/roles/readiness       21 866
++ отдельная содержательная Monthly machine  28 475
 ~~~
 
-Сейчас хорошо покрыты `0 winners` и обычный случай `>=K`, но именно частичный случай `1..K-1` полезно зафиксировать отдельно: winners должны совпасть full-sort, а prize slots должны быть случайным подмножеством корзины, а не первыми исходными prizes.
+Selection helper экономит недостаточно. viaIR экономит много, но `24 444` с 132 bytes headroom — явно не production решение.
 
-Это test coverage, не найденный defect.
+Особенно правильно, что Monthly в study не пустая заглушка: там есть publication, root/count/attempts, pending, real PromoVault monthly accounting, seed binding, streaming, win/no-win и terminal.
+
+Поэтому вывод study остаётся ценным:
+
+> если мы хотим **тот же exact bytecode architecture** потом разворачивать на стандартной 24 KB EVM, простой monolith в нынешнем виде не подходит.
+
+Но это уже portability/design pressure, а не блокер Robinhood MVP.
 
 ---
 
-## 2. Пропуск/повтор/ранний finish/повтор seed закрыты
+# 2. Я бы рассматривал четыре варианта, а не сразу один helper
 
-По state machine:
+## Вариант A — Robinhood-first monolith
 
-- seed принимается только из `WaitingSeed`; даже `bytes32(0)` однозначен благодаря phase;
-- process требует `index == nextChunk`;
-- payload chunk обязан совпасть с сохранённым ABI hash;
-- duplicate/skipped/out-of-order chunk не проходят;
-- finish требует все chunks и `processed == proposal.count`;
-- sealed proposal уже нельзя supersede/reseal;
-- rules/basket/D/context после seal читаются только из зафиксированного proposal/epoch;
-- drawId повторно не seal'ится;
-- terminal переводит phase только после успешного vault.finalize + completion.
+Самый простой путь для MVP:
 
-Если `PromoVault.finalize` revert, вся terminal tx откатывается: settlement остаётся Processing, pending draw остаётся тем же, reserve остаётся frozen, result детерминирован тем же seed. Повторный finish должен дать тот же результат.
+~~~text
+PromoVault
+   ↓
+one immutable controller
+   ├── Short
+   ├── Monthly
+   ├── RNG binding
+   └── readiness / roles
+~~~
 
-Это именно нужная no-reroll semantics.
+На Robinhood его текущий исследовательский размер 28.5 KB далеко от официального 96 KB ceiling.
+
+### Плюсы
+
+- минимальное количество trust boundaries;
+- проще аудит: один controller + vault;
+- атомарность очевидна;
+- нет cross-contract orchestration;
+- не нужен viaIR/code golf только ради размера;
+- быстрее довести полный MVP до E2E.
+
+### Минусы
+
+- такой deployment нельзя считать автоматически переносимым на стандартные 24 KB chains;
+- будущий Base/Ethereum instance может потребовать другой composition;
+- если бесконтрольно наращивать monolith, можно всё равно получить ненужный комбайн, даже при 96 KB.
+
+### Моя оценка
+
+**Это теперь вполне нормальный кандидат для первого Robinhood MVP.**
+
+Мы уже приняли, что разные сети могут иметь отдельные deployments/adapters. Поэтому отсутствие byte-for-byte portability само по себе не нарушает продуктовую модель.
+
+Но исходники всё равно лучше держать модульными, чтобы будущий standard-EVM вариант не пришлось переписывать с нуля.
 
 ---
 
-## 3. Старые unpaid credits не смешиваются с новым draw
+## Вариант B — общий typed dataset слой внутри monolith
 
-Новый terminal использует стандартный PromoVault accounting:
+Это первое, что рационально измерить, если хотим сохранить один controller и приблизиться к 24 KB без изменения trust model.
+
+Сейчас Monthly study повторяет заметную часть Short preparation:
 
 ~~~text
-reserved текущего draw
-→ его own reward[] / claimable
-
-старые reward[]
-→ остаются отдельными долгами старых drawId
+Publishing
+root/count/attempts
+lastWallet
+chunk hashes
+Ready
+Supersede
+cutoff checks
+canonical ordering/ranges
 ~~~
 
-Claim failure одного старого winner не мешает следующему Short и не меняет `freeShort` нового draw. Тест epoch transition это покрывает.
+Это можно попробовать свести в один generic **canonical dataset primitive**, не смешивая смысл draw.
+
+Примерно:
+
+~~~text
+DatasetKind = SHORT | MONTHLY
+
+common state:
+  status
+  root
+  count
+  attempts
+  lastWallet
+  chunkHashes
+  cutoff/snapshot identity
+
+separate state:
+  Short: epoch, basket, D, draining
+  Monthly: cycle, Current/Next, jackpot budget
+~~~
+
+`publishCanonicalDataset(kind, ...)` один раз реализует structural validation/root/chunk accounting.
+
+Отдельные `sealShort` / `sealMonthly` остаются разными, потому что деньги и product semantics разные.
+
+### Как сохранить независимость
+
+Не один общий pending:
+
+~~~text
+activeProposal[SHORT]
+activeProposal[MONTHLY]
+
+pendingShort
+pendingMonthly
+~~~
+
+Short draining epoch остаётся только Short.
+Monthly clock/cycle остаётся только Monthly.
+AttemptsConsumed остаётся kind-specific.
+
+### Domain separation
+
+Generic storage не означает generic randomness domain.
+
+Context обязательно включает draw kind либо использует разные domain constants:
+
+~~~text
+SHORT_DATASET_CONTEXT_V1
+MONTHLY_DATASET_CONTEXT_V1
+~~~
+
+Один и тот же participant payload никогда не должен давать interchangeable Short/Monthly commitment.
+
+### Плюсы
+
+- не меняется custody model;
+- один controller;
+- меньше duplicated code и duplicated bug surface;
+- вероятно заметно уменьшает size.
+
+### Минусы
+
+- можно получить слишком generic state machine, которую тяжелее читать;
+- Short и Monthly всё-таки отличаются по funding/terminal/policy;
+- экономию надо **измерить**, а не предполагать.
+
+Я бы не делал generic «draw framework». Только общий низкоуровневый dataset lifecycle.
 
 ---
 
-## 4. Recovery сейчас корректен только для direct-call transport — и это уже конфликтует с нашим вероятным AA keeper
+## Вариант C — два immutable capability-scoped controller в PromoVault
 
-Это не ошибка settlement contract, но важная интеграционная граница.
+Это вариант, который я бы обязательно измерил, потому что он решает size pressure и при этом может даже **улучшить least privilege**.
 
-`recover()` сейчас требует:
+Не:
 
 ~~~text
-DatasetChunk event tx
-→ tx.to == Short controller
-→ tx.data напрямую decode как publish(proposalId, chunk)
+one controller can do all prize operations
 ~~~
 
-То есть текущий recovery **не восстановит publication**, если production keeper публикует через ERC-4337 smart account / EntryPoint / bundled call.
+а:
 
-А в предыдущем execution-funding исследовании именно sponsored AA через Alchemy был основным кандидатом для автоматического keeper.
+~~~text
+PromoVault
+   ├── immutable ShortController
+   └── immutable MonthlyController
+~~~
 
-При AA данные, скорее всего, всё ещё публичны внутри UserOperation / nested calldata, но нужен другой decoder/recovery path.
+Причём vault сам ограничивает способности:
 
-Поэтому до production надо выбрать одно из двух:
+~~~text
+ShortController:
+  reserve only SHORT
+  finalize only SHORT
+  cannot start/settle Monthly
+  cannot touch Current/Next as monthly authority
 
-1. publication намеренно остаётся direct EOA transaction transport; или
-2. verifier/recovery получает canonical decoder фактического AA transport.
+MonthlyController:
+  startMonthly
+  settleMonthly
+  cannot reserve/finalize Short
+~~~
 
-Я бы предпочёл второй вариант, если AA остаётся основным execution path. Нельзя запускать с обещанием permissionless recovery, если production transport сам recovery tool не понимает.
+Оба адреса задаются в constructor и **никогда не заменяются**.
 
-Это пока integration blocker, не изменение Short math.
+Нет proxy, module registry, delegatecall или owner-set-controller.
+
+### Почему это не обязательно хуже для доверия
+
+Количество privileged addresses растёт с 1 до 2, но полномочия каждого сильно сужаются.
+
+Аудитор получает очень понятную capability map:
+
+~~~text
+Short code physically cannot spend jackpot
+Monthly code physically cannot spend Short reserve
+~~~
+
+Это по духу ближе к нашему `bounded powers`, чем один огромный controller, который технически умеет всё.
+
+### Atomicity
+
+Не страдает.
+
+Short controller делает:
+
+~~~text
+vault.finalizeShort(...)
+→ local terminal state
+~~~
+
+в одной transaction. Если локальный completion revert — откатывается и вызов vault.
+
+Monthly аналогично.
+
+Short и Monthly и сейчас задуманы как независимо pending, поэтому между ними нет terminal, который обязан атомарно менять state **обоих** controllers.
+
+### Shared vault concerns
+
+Нужно отдельно проверить:
+
+- drawId collision между двумя controllers;
+- syncUSDG/generalFunding race semantics;
+- одновременный Short pending + Monthly pending;
+- старые claimable;
+- Short не получает способ reserve `CURRENT`;
+- Monthly не получает generic finalize;
+- reverse binding каждого controller к конкретному vault.
+
+Все эти ограничения можно сделать непосредственно в PromoVault.
+
+### Deployment circularity
+
+Технически решаемо как и сейчас через predicted addresses: оба controller получают predicted vault, затем vault создаётся с двумя уже существующими controller addresses и проверяет reverse binding.
+
+### Плюсы
+
+- огромный запас по code size без compiler tricks;
+- сильное capability separation;
+- естественная независимость Short/Monthly;
+- стандартные 24 KB deployments становятся намного реалистичнее.
+
+### Минусы
+
+- меняется нынешний invariant «vault имеет один controller»;
+- два основных contracts вместо одного;
+- немного больше deployment/audit surface;
+- если когда-нибудь нужен новый core draw type, его нельзя тихо добавить — потребуется новый deployment/version. Но для extension campaigns это скорее плюс: они и не должны получать доступ к core vault.
+
+**Я считаю этот вариант очень сильным кандидатом, а не аварийным workaround.**
 
 ---
 
-## 5. Самое важное: code-size budget уже становится архитектурным риском
+## Вариант D — маленький immutable root + fixed Short/Monthly engines
 
-Документация фиксирует runtime `ShortSettlementFixture` около **20 340 bytes** при локальном EIP-170 check.
-
-Лимит, против которого тестируется fixture: 24 576 bytes.
-
-Остаётся примерно:
+Если принципиально хотим оставить в PromoVault ровно один `drawController`, можно разделить state/logic иначе:
 
 ~~~text
-24 576 - 20 340 = 4 236 bytes
+PromoVault
+   ↑
+TinyRootController
+   ├── immutable ShortEngine
+   └── immutable MonthlyEngine
 ~~~
 
-При этом полного immutable controller ещё нет, а в него по текущему плану всё ещё должны войти:
+Engines:
 
-- authenticated RNG/request binding;
-- production authorization;
-- economic/finality readiness;
-- возможно budget D policy;
-- keeper-facing hooks;
-- **Monthly production state machine**, которую мы договорились иметь до immutable deployment.
+- хранят dataset/progress/policy;
+- не имеют права двигать vault funds;
+- immutable addresses в root;
+- permissionless processing можно вызывать прямо на engine.
 
-Fixture содержит тестовые wrappers, поэтому нельзя утверждать, что production controller уже гарантированно не влезет. Но 4.2 KB headroom — достаточно мало, чтобы **не продолжать слепо наращивать один контракт**.
+Root:
 
-Я бы считал это HIGH architectural warning до следующей крупной интеграции.
+- единственный controller vault;
+- принимает только result exact fixed engine;
+- делает reserve/finalize/settle;
+- после успешного vault call отмечает terminal в engine в той же transaction.
 
-Не нужен proxy или replaceable module. Можно сохранить immutable trust model и при этом заранее спроектировать фиксированную composition:
+### Atomic terminal
+
+Например:
 
 ~~~text
-immutable root controller
-    ├── fixed Short calculation/helper contract
-    ├── fixed Monthly helper
-    └── fixed RNG adapter / verifier
+root.finishShort(drawId)
+  ↓
+read verified result from immutable ShortEngine
+  ↓
+vault.finalize(...)
+  ↓
+ShortEngine.complete(drawId) // only immutable root
 ~~~
 
-где addresses задаются один раз в constructor и никогда не заменяются, а только root controller имеет право двигать PromoVault money.
+Любой revert откатывает всю межконтрактную transaction.
 
-Другой вариант — вынести pure/view-heavy computation в linked/fixed helper contract, оставив custody/state transitions в root.
+### Плюсы
 
-Но это надо измерить до того, как RNG + Monthly заставят нас переделывать уже сшитый controller.
+- PromoVault всё ещё имеет ровно один controller;
+- bulky state machines вынесены;
+- engines не имеют custody authority;
+- root можно сделать очень маленьким и легко аудируемым.
 
-### Что попросил бы сделать сейчас
+### Минусы
 
-Небольшой `controller-size-composition-study`, без product changes:
+- самая сложная composition из разумных вариантов;
+- больше cross-contract calls/gas;
+- нужно очень тщательно bind result/context/state между root и engines;
+- root становится security boundary, который доверяет двум fixed code units.
 
-- собрать realistic skeleton будущего root controller;
-- добавить stubs interfaces для Short, Monthly, RNG auth, readiness/auth roles;
-- измерить runtime bytecode;
-- сравнить monolith vs fixed immutable helpers;
-- проверить, какие внешние helper calls меняют trust surface;
-- оставить PromoVault controller immutable и один;
-- никакого delegatecall/proxy/arbitrary module replacement.
-
-Если monolith спокойно влезает с большим запасом — отлично, продолжаем. Если нет — мы поймаем это сейчас, а не перед deployment.
+Я бы рассматривал это **после** dual-controller варианта, а не раньше.
 
 ---
 
-## 6. Есть ещё очевидная gas-оптимизация в processing
+# 3. Что я бы НЕ делал
 
-`processShort()` сейчас вызывает полный `ShortOutcome.compute()` **на каждом chunk**.
+## viaIR + 132 bytes как решение
 
-А полный compute помимо admission/top-K каждый раз ещё:
+Нет. viaIR можно позже принять как нормальный compiler profile после полного regression/gas review, но он не должен быть единственным, что удерживает production contract под лимитом.
 
-- строит prize permutation;
-- создаёт amounts/prizeIndices;
-- считает local resultHash;
-- валидирует basket.
+## Code golf ради нескольких сотен bytes
 
-Но `processShort` использует из результата только:
+Custom errors, более компактные getters и устранение очевидного duplication — нормально.
 
-~~~text
-local.winners
-local.admittedCount
-~~~
+Удалять проверки, события, replay data или делать unreadable assembly ради 24 KB — плохой tradeoff для этого проекта.
 
-Остальное выбрасывается.
+## delegatecall libraries / Diamond / upgradeable facets
 
-При K=64 повторный `_slots()` O(K²) на каждом chunk особенно дорог.
+Не нужны.
 
-Перед финальными gas/economic оценками разумно рефакторнуть `ShortOutcome` так, чтобы был общий internal primitive вроде:
+Они действительно решают code-size композицию, но прямо противоречат выбранной trust model: скрытая/широкая исполняемая власть и более сложная audit surface нам не окупаются.
 
-~~~text
-selectTopK(context, seed, participants, rules, K)
-→ Candidate[] + admittedCount
-~~~
+## Отдельный selection helper как основной ответ
 
-а полный `compute()` и streaming process использовали один и тот же primitive.
+Study уже показал, что этого недостаточно.
 
-Это не меняет probability semantics и даже уменьшает риск расхождения двух реализаций.
-
-Я бы не делал отдельный алгоритм — именно вынес общий selection primitive.
+Stateless immutable helpers могут быть полезным последним слоем оптимизации, но не надо строить архитектуру вокруг экономии ~1 KB, если state-machine composition остаётся неправильной.
 
 ---
 
-## 7. Publisher truth boundary не изменилась
+# 4. Текущий study немного завышает и немного занижает будущий размер
 
-Settlement recovery доказывает:
+## Что может завышать
 
-> processed exactly the published canonical dataset.
+### Дублированная Monthly preparation
 
-Он не доказывает:
+Это главный очевидный источник лишнего bytecode. Common dataset path способен убрать часть.
 
-> published dataset == all true eligible BUY attempts.
+### Большие study getters / ABI encoding
 
-Полнота BUY history по-прежнему проверяется отдельным full replay.
+Например возврат больших structs с dynamic arrays может стоить заметный runtime bytecode. Production audit API необязательно должен возвращать весь state одним методом; можно иметь маленькие scalar getters + события/artifacts.
 
-Документация это не смешивает, что хорошо.
+Прозрачность не требует самого дорогого ABI.
 
-False snapshot / false empty остаются detectable-not-prevented до отдельного future challenge/proof слоя.
+### Revert strings
 
----
+Production custom errors могут уменьшить размер, не убирая checks.
 
-## 8. Что минимально нужно перед authenticated RNG
+### Study-specific glue
 
-После code-size/composition проверки RNG boundary уже довольно узкая.
+Некоторые методы нужны именно для макета и measurements.
 
-Нужны:
+## Что может занижать
 
-~~~text
-requestRandom(drawId, context)
-→ immutable requestId ↔ drawId/context binding
+- реальный RNG provider adapter/protocol может быть тяжелее mock interface;
+- production finality может добавить Arbitrum-specific logic;
+- окончательная D policy ещё не написана;
+- реальные monitoring/readiness bindings могут потребовать состояния;
+- recovery/transport integration ещё не закончена;
+- Monthly final semantics/epochs пока не утверждены.
 
-provider callback(requestId, randomness)
-→ проверка sender/provider
-→ ровно один seed
-→ _acceptShortSeed(drawId, seed)
-~~~
-
-Критичные invariants:
-
-- request создаётся только для SEALED/WaitingSeed draw;
-- один draw не имеет двух requestId;
-- requestId нельзя перепривязать;
-- callback другого draw отвергается;
-- duplicate callback идемпотентно reject/ignore без нового seed;
-- timeout не создаёт новый request/random;
-- никакого owner `setSeed`; 
-- provider failure оставляет тот же pending obligation;
-- context/dataset/rules/D уже immutable до request.
-
-Pre-freeze readiness остаётся отдельной policy: наличие RNG provider/operations capacity надо проверять **до seal**, но оно не даёт права cancel после seal.
+Поэтому `28 475` — хороший pressure test, но не forecast точного production bytecode.
 
 ---
 
-## 9. Какой следующий шаг
+# 5. Какой запас считать нормальным
 
-С учётом нового code-size факта я бы немного поменял прежний порядок.
+Теперь два разных ответа.
 
-Не сразу писать provider-specific RNG.
+## Robinhood
 
-Сначала маленький технический пакет:
+Официальный ceiling 98 304 означает, что десятки килобайт headroom уже есть. Я бы не вводил искусственное правило «обязательно меньше 24 KB» для Robinhood deployment.
+
+Но всё равно стоит завести CI gate заметно ниже network max, чтобы размер не рос бесконтрольно. Точное внутреннее ограничение пока не нужно утверждать.
+
+## Standard-EVM portability
+
+Если хотим deployment, который гарантированно проходит обычный EIP-170, `24 444` — не результат.
+
+Практический экспериментальный target для **уже feature-complete** controller я бы ставил порядка `20–21.5 KB`, то есть оставлять примерно 3–4.5 KB до 24 576.
+
+Это не protocol rule, а engineering headroom.
+
+До feature completeness желательно иметь ещё больше.
+
+---
+
+# 6. Что делать прямо сейчас
+
+Я бы не переписывал production contracts по итогам одного size study.
+
+Следующий пакет лучше сделать **архитектурным сравнением**, а не новой реализацией продукта:
 
 ~~~text
-controller-composition-and-selection-refactor
+controller-architecture-options-v1
 ~~~
 
-В нём:
+## Сначала — target-chain reality
 
-1. измерить production-like bytecode budget и выбрать monolith или fixed immutable helpers;
-2. вынести общий Short selection primitive, чтобы streaming не считал ненужную prize permutation каждый chunk;
-3. добавить test `0 < admitted < K` across chunks;
-4. решить recovery transport для будущего AA keeper хотя бы на уровне documented interface/decoder boundary.
+Добавить два независимых size profiles:
 
-После этого — authenticated RNG binding.
+~~~text
+ROBINHOOD_MAINNET:
+  runtime max = 98 304
+  initcode max = 196 608
+  source = official chain-info.json
 
-Это не новая продуктовая ветка; это снижение риска перед последними внешними интеграциями.
+STANDARD_EVM:
+  runtime benchmark = 24 576
+  initcode benchmark = 49 152
+~~~
+
+И перестать называть standard Hardhat rejection доказательством невозможности Robinhood deployment.
+
+Желательно дополнительно сделать read-only `eth_estimateGas`/test deployment probe против Robinhood **testnet/mainnet-compatible RPC** без отправки transaction, если provider это позволяет, и сохранить evidence. Но official chain config уже является сильным источником.
+
+## Эксперимент 1 — SharedDatasetMonolith
+
+Перенести только structural publication lifecycle Short/Monthly в одну typed реализацию.
+
+Не менять outcomes/funding.
+
+Измерить обычный compiler и viaIR отдельно.
+
+## Эксперимент 2 — DualControllerPromoVault
+
+Минимально изменить test-only copy PromoVault:
+
+~~~text
+immutable shortController
+immutable monthlyController
+~~~
+
+с function-level capability checks.
+
+Развернуть реальный Short controller и содержательный Monthly controller отдельно.
+
+Проверить standard 24 KB **каждый** contract без viaIR сначала.
+
+## Эксперимент 3 — TinyRoot + Engines
+
+Только если dual-controller по trust/deployment причинам окажется хуже.
+
+Не тратить время на этот вариант первым.
+
+### Сравнение должно включать
+
+| Свойство | Monolith | Shared monolith | Dual controllers | Tiny root + engines |
+|---|---|---|---|---|
+| Robinhood deployable | | | | |
+| Standard 24 KB deployable | | | | |
+| Vault authorities | | | | |
+| Can Short touch Monthly funds | | | | |
+| Can Monthly touch Short funds | | | | |
+| Atomic terminal | | | | |
+| Cross-contract calls | | | | |
+| Runtime bytes per contract | | | | |
+| Initcode | | | | |
+| Gas begin/publish/process/finish | | | | |
+| Audit complexity | | | | |
+| Future multi-chain portability | | | | |
+
+---
+
+# 7. Behavioral checks для split-вариантов
+
+Текущие study checks хорошие, но для architecture comparison добавить:
+
+### Dual controller vault
+
+- ShortController cannot call `startMonthly`/`settleMonthly`;
+- MonthlyController cannot reserve/finalize Short;
+- Short cannot debit Current/Next;
+- Monthly cannot debit Short;
+- same drawId collision fails safely;
+- simultaneous pending Short + Monthly works;
+- old claims survive both controllers;
+- failure of one controller path cannot mutate the other's pending state;
+- controller addresses immutable/no replacement API;
+- reverse binding verified at deployment.
+
+### Root + engines
+
+- engine cannot call vault directly;
+- root rejects result from any address except fixed engine;
+- engine cannot change result after root reads/finalizes;
+- vault finalize + engine complete atomic rollback;
+- wrong draw/context/result engine response reverts;
+- engine addresses immutable;
+- no generic call/delegatecall.
+
+### Shared monolith
+
+- Short and Monthly active proposals independent;
+- root/chunk hashes domain-separated by kind;
+- Short epoch filtering cannot affect Monthly snapshot;
+- one kind cannot supersede the other's preparation;
+- simultaneous pending remains supported.
+
+---
+
+# 8. Что бы я выбрал сегодня
+
+После обнаружения реального Robinhood limit я **не стал бы срочно дробить controller**.
+
+Для первого MVP у нас есть роскошь выбрать архитектуру по безопасности и понятности, а не потому что Hardhat кричит 24 KB.
+
+Мой порядок предпочтений сейчас такой:
+
+~~~text
+1. Robinhood MVP:
+   монолит остаётся допустимым и, возможно, самым простым для аудита.
+
+2. Параллельно проверить SharedDatasetMonolith:
+   если он естественно убирает duplication — взять рефактор независимо от размера.
+
+3. Если хотим standard-EVM portable V1:
+   серьёзно рассмотреть DualControllerPromoVault.
+   Это не костыль: capability separation может улучшить trust model.
+
+4. Tiny root + engines:
+   fallback, если принцип одного vault-controller важнее простоты.
+~~~
+
+Самое главное — **не позволить старому 24 KB предположению заставить нас принять более сложную архитектуру, чем реально нужна первой сети.**
+
+Но и не забывать multi-chain: 96 KB Robinhood — преимущество конкретного deployment, а не универсальное свойство нашего протокола.
 
 ---
 
 ## Итог
 
-`2586de8` — сильный шаг. Canonical Short terminal уже не исследование: это цельная внутренняя state machine с одним seed, permissionless continuation и реальным atomic vault settlement.
-
-Нового correctness blocker в самом top-K/terminal я не вижу.
-
-Главное, что всплыло на этом этапе:
+Проблема оказалась мягче, чем выглядела из локального Hardhat:
 
 ~~~text
-Short algorithm/state machine       → выглядит хорошо
-AA recovery transport               → ещё не совместим
-per-chunk gas                       → можно заметно упростить
-full-controller bytecode headroom   → проверить СЕЙЧАС
-authenticated RNG                   → следующий внешний trust boundary
-Monthly                             → всё ещё обязан попасть в immutable deployment design
+Robinhood mainnet MaxCodeSize = 98 304
+full controller study         = 28 475
 ~~~
 
-То есть уже можно двигаться к RNG, но сначала я бы потратил один короткий пакет на composition/code-size и убрать очевидный processing overhead.
+Поэтому прямого size blocker для Robinhood сейчас нет.
+
+Настоящий архитектурный вопрос теперь звучит лучше:
+
+> хотим ли мы оптимизировать V1 под универсальный стандартный EVM limit уже сейчас, или сначала выпустить максимально простой immutable Robinhood monolith и использовать split architecture только там, где сеть действительно требует её?
+
+Я бы пока не принимал решение. Один сравнительный study `shared monolith vs two immutable scoped controllers` даст гораздо больше пользы, чем дальнейший code golf.
