@@ -1,626 +1,302 @@
 # Текущий ответ GPT
 
-Обновлено: 17.09.2026.
+Обновлено: 18.09.2026.
 
-Просмотрен latest commit `7f02b635ac1543f92106c5a4b3fc361e2a107033` — `Cover successive Monthly epochs and document RNG provider feasibility`.
+Просмотрен latest commit 31f160d1c3c532cf88d4466c8873f258f753570f — Verify real drand evmnet proofs locally and on Robinhood RPC.
 
-Прочитаны новый RNG study/evidence, `GPT_REVIEW_REQUEST.md`, две M1 → M2 → M3 регрессии и предыдущая Monthly epoch реализация. Дополнительно перепроверены внешние источники по drand evmnet, `randa-mu/bls-solidity`, Quiver, RH-VRF и Dice. GitHub CI/status для latest commit пусты; заявленный Monthly suite `13/13` в этом проходе мной независимо не запускался, и сам repo прямо отмечает, что полный `npm test` после последних двух тестов не повторялся.
+Прочитаны DRAND_FEASIBILITY.md, новый GPT_REVIEW_REQUEST.md, EvmnetFixture.sol, pinned vendor/source metadata, реальные vectors, local/RPC evidence и тест. Дополнительно сверены upstream drand client/spec, pinned randa-mu vector/demo и актуальные Robinhood/Arbitrum docs. GitHub CI/status для latest commit пусты. Заявленные repo проверки npm test 167/167, drand 2/2 и RPC 2/2 в этом проходе мной независимо не запускались.
 
-## Короткий вердикт
+## Короткий вывод
 
-Предыдущий Monthly test gap закрыт нормально. Новые contract+vault и independent replay сценарии реально проходят второй переход `M1 → M2 → M3`, обе ветки `M2 terminal / M2 empty`, сохранение старых policies, остаток старых attempts и последующий M3. Нового конкретного correctness blocker в epoch state machine я здесь не вижу.
+Feasibility реально продвинул вопрос: путь evmnet proof -> Solidity -> Robinhood EVM теперь не гипотеза. В текущем research package я не вижу конкретной ошибки в ordering public key, uint64 round encoding, DST, hash-to-point или sha256(signature).
 
-А вот RNG действительно вывел нас на более неприятную границу:
+Но до production RNG ещё две отдельные границы:
 
-~~~text
-готовый callback-сервис
-→ проще интеграция
-→ но почти везде есть withholding / timeout / refund semantics
+1. crypto implementation остаётся unaudited dependency в нашем audit scope;
+2. timing/finality binding пока не решён.
 
-public beacon (drand)
-→ намного лучше ложится на no-reroll
-→ но verification + future-round/finality мы берём на себя
-~~~
+И при проверке второй границы нашёлся более срочный production blocker, который относится не только к RNG:
 
-Из просмотренного сейчас **drand evmnet выглядит лучшим структурным кандидатом**, но production-ready вариантом его пока считать нельзя.
+> текущие Short/Monthly cutoff и epoch contracts используют Solidity block.number / blockhash как будто это Robinhood L2 block number. На Arbitrum/Nitro это неверно.
 
-Две главные проблемы:
+Robinhood и Arbitrum docs сейчас прямо говорят: block.number внутри контракта возвращает приблизительный Ethereum/L1 block number, тогда как RPC receipt/log blockNumber — настоящий L2 block number. Для L2 height нужен ArbSys(0x64).arbBlockNumber().
 
-1. найденный Solidity verifier существует и очень точно совпадает с evmnet, но сам автор маркирует библиотеку как **experimental, unaudited cryptographic code**; репозиторий сейчас архивирован;
-2. для public beacon недостаточно «выбрать round через 6 секунд». Надо доказать, что frozen draw окончательно зафиксирован **до того, как target round становится известен**, иначе reorg/inclusion timing может превратиться в скрытый выбор randomness target.
-
-Поэтому следующий шаг действительно должен быть **feasibility**, а не production adapter.
-
----
-
-## 1. M1 → M2 → M3: прежний пробел закрыт
-
-Добавленный контрактный тест проверяет два настоящих successive transitions и сохраняет on-chain policy history. Есть две ветки:
-
-~~~text
-M1 → M2
-обычный M2 draw
-announce M3
-activate M3
-M2 draining
-→ terminal M2
-→ M3
-~~~
-
-и
-
-~~~text
-M1 → M2
-...
-activate M3
-M2 действительно empty
-→ closeEmpty(M2)
-→ clock не переносится
-→ M3
-~~~
-
-При этом следующий `announce M4` разрешается только после закрытия M2 draining, а policy entries M1/M2/M3/M4 не перезаписывают друг друга.
-
-Replay regression дополнительно проверяет именно более важную off-chain часть: поздний M2 остаток остаётся M2, M3 attempts не смешиваются с ним, cumulative attempt numbers/conservation сохраняются, Short epochs идут независимо.
-
-То есть главное обещание конструкции теперь проверяется не только на первом переходе:
-
-> история epochs может расти, но одновременно живы максимум old draining + current.
-
-Контракты в этом commit не менялись. Полный suite всё равно разумно прогнать перед следующим кодовым package, но отдельного архитектурного замечания по Monthly я больше не добавляю.
-
----
-
-# 2. drand evmnet — это не выдуманный experimental endpoint, а реальная mainnet сеть League of Entropy
-
-Официальная drand документация сейчас перечисляет `evmnet` как mainnet network:
-
-~~~text
-chain hash:
-04f1e9062b8a81f848fded9c12306733282b2727ecced50032187751166ec8c3
-
-period: 3 seconds
-scheme: unchained BN254
-public keys on G2
-~~~
-
-и прямо объясняет мотивацию BN254: совместимость с EVM precompiles.
+Это затрагивает как минимум ShortDrawCommitment.sol, ShortDatasetPreparation.sol, ShortRulesEpochs.sol и MonthlySettlement.sol. Поэтому следующий package я бы начинал не с формулы drand round, а с исправления chain-numbering boundary и только затем строил binding поверх правильного L2 anchor.
 
 Источники:
 
-- https://docs.drand.love/developer/
-- https://docs.drand.love/developer/API-v2/drand-http-api/
-
-Repo evidence получил тот же chain hash, `bls-bn254-unchained-on-g1`, публичный key и настоящую 64-byte signature из HTTP API. Это хорошая база для test vector, но текущая пометка repo правильная: HTTP response сам по себе ещё не доказан cryptographically.
-
-### Почему модель нам подходит
-
-У drand нет «request, который оператор потом может refund/cancel».
-
-Для draw можно заранее закрепить:
-
-~~~text
-immutable evmnet chain/public key
-+ exact targetRound
-~~~
-
-После публикации этого round **любой** может принести ту же публичную подпись. Keeper не владеет randomness и не может заменить её другой.
-
-Это очень хорошо совпадает с нашей логикой:
-
-~~~text
-один frozen draw
-→ один target
-→ один seed
-→ сколько угодно повторных attempts доставить ТОТ ЖЕ proof
-~~~
-
-То есть provider/keeper становится liveness transport, а не источником права выбрать результат.
-
-Но остаётся катастрофическая liveness boundary: если сам evmnet перестанет производить beacon или конкретный target round по какой-либо причине никогда не станет доступен, draw остаётся pending. На текущем trust philosophy это всё равно чище, чем автоматически выбирать новый round после timeout. Новый round — уже новый исход и потенциальная reroll-лазейка.
-
-Перед production надо отдельно проверить exact round/outage/catch-up semantics drand: нельзя просто предположить, что любой scheduled round обязательно когда-нибудь будет backfilled.
+- https://docs.robinhood.com/chain/differences-from-ethereum/
+- https://docs.robinhood.com/chain/transaction-finality/
+- https://docs.arbitrum.io/arbitrum-essentials/arbitrum-vs-ethereum/block-numbers-and-time
+- https://docs.arbitrum.io/arbitrum-essentials/arbitrum-vs-ethereum/solidity-support
 
 ---
 
-## 3. Нашёлся очень подходящий Solidity verifier — но именно как research input, не как готовый production dependency
+## 1. Что именно уже доказал drand package
 
-`randa-mu/bls-solidity` содержит буквально demo:
+### Message / round encoding
 
-~~~text
-src/demos/EvmnetRegistry.sol
+Текущий код:
+
+~~~solidity
+BLS.hashToPoint(
+    DST,
+    abi.encodePacked(keccak256(abi.encodePacked(round)))
+)
 ~~~
 
-который:
+для uint64 round совпадает с текущим drand client: round сериализуется как 8-byte big-endian, для BN254 evmnet unchained message используется Keccak-256 от этих восьми bytes.
 
-- hardcode'ит evmnet public key;
-- использует exact DST
-  `BLS_SIG_BN254G1_XMD:KECCAK-256_SVDW_RO_NUL_`;
-- строит message из round;
-- проверяет BN254 BLS signature;
-- сохраняет `sha256(signature)` как randomness.
+Upstream client:
 
-Исходник:
+https://github.com/drand/drand-client/blob/master/lib/beacon-verification.ts
 
-https://github.com/randa-mu/bls-solidity/blob/main/src/demos/EvmnetRegistry.sol
+Pinned randa-mu demo использует ту же конструкцию:
 
-Библиотека MIT:
+https://github.com/randa-mu/bls-solidity/blob/11af179a8287d978659aae07adb66aa60f64b8a6/src/demos/EvmnetRegistry.sol
 
-https://github.com/randa-mu/bls-solidity
+### DST
 
-И тут важная плохая часть. README самого проекта говорит буквально:
+BLS_SIG_BN254G1_XMD:KECCAK-256_SVDW_RO_NUL_ совпадает с drand client и pinned vector.
 
-> Experimental, unaudited cryptographic code. Use at your own risk.
+### Public key ordering
 
-Кроме того, GitHub сейчас помечает repository archived/read-only.
+В fixture key хранится в порядке, который ожидает pinned kevincharm/bls-bn254; тест затем обратно сериализует его в drand wire order и сравнивает с chain info. Плюс две реальные подписи проходят pairing verification. Конкретного ordering defect не вижу.
 
-Поэтому я бы **не импортировал его как npm/forge dependency и не объявлял вопрос закрытым**.
+### Canonical randomness
 
-Хороший путь feasibility:
+sha256(signature) совпадает с drand client validation и с опубликованным beacon randomness. Отдельный proven flag правильно избегает ошибки bytes32(0) как sentinel.
 
-~~~text
-pin exact commit
-→ воспроизвести настоящий evmnet vector
-→ сравнить с официальным drand verifier/client
-→ bad proofs
-→ gas
-→ Robinhood precompiles
-→ затем отдельный crypto/security review
-~~~
+### Robinhood execution
 
-Если дойдём до production, лучше vendor'ить минимально необходимый pinned verifier code в наш audit scope, а не зависеть от плавающего внешнего package.
+Новый RPC check значительно сильнее прежнего precompile smoke test: через state override на chainId 4663 и 46630 исполняется весь runtime, включая hash-to-curve, ECADD/modular work и pairing. Valid proof принят, wrong round отвергнут.
 
-### Пустого 0x08 smoke test недостаточно
+Но repo правильно не называет это deployment: это eth_call / eth_estimateGas, без публичной транзакции и сохранённого state.
 
-Это важно поправить в голове до эксперимента.
-
-`BLS.sol` делает не только pairing 0x08. Hash-to-curve использует modular arithmetic/ModExp и ECADD, затем pairing. То есть настоящий test vector должен реально пройти весь verifier на Robinhood/fork.
-
-Иначе:
-
-~~~text
-0x08 отвечает 1
-~~~
-
-доказывает только существование pairing precompile, а не совместимость всего пути drand verification.
+Runtime 9,139 bytes и ~233k/243k remote estimate сейчас не выглядят техническим blocker.
 
 ---
 
-## 4. Canonical seed для drand уже очевиден
+## 2. Crypto boundary всё ещё не закрыта
 
-Я бы не придумывал свой дополнительный randomness transform на границе provider.
+Pinned kevincharm/bls-bn254 действительно совпадает с сохранёнными hashes и не добавлен в production dependency graph — это хорошо.
 
-Drand публикует randomness как hash подписи; `EvmnetRegistry` также сохраняет:
+Но passing vectors != audit.
 
-~~~text
-sha256(signature)
-~~~
+randa-mu/bls-solidity, который использует ту же базу, сам маркируется как experimental / unaudited и с июля 2026 архивирован. Drand в 2025 отдельно писал и про свой BLS12-381 on-chain verifier, что он не third-party audited и не предназначен для production integration без дальнейшего review.
 
-Это можно и использовать как наш `seed`.
-
-Дальше наш Short/Monthly outcome уже domain-separates:
+То есть production путь для evmnet я бы формулировал так:
 
 ~~~text
-context + seed + wallet/attempt data
+vendor exact minimal verifier
++ exact evmnet key/DST/scheme immutable
++ upstream differential vectors
++ malformed/adversarial corpus
++ dedicated crypto review/audit
 ~~~
 
-Поэтому не нужен дополнительный admin salt, keeper entropy или пользовательский secret. Они только создадут новую точку выбора/withholding.
+а не «мы проверили две подписи, значит криптография закрыта».
+
+Полезно добавить differential corpus не только из randa-mu, но и генерировать множество rounds/signatures off-chain через текущий официальный drand-compatible BN254 implementation и сравнивать Solidity result. Это не заменяет аудит, но лучше двух vectors.
 
 ---
 
-# 5. Самая важная задача feasibility — не BLS, а future-round binding
+## 3. Exact-round outage/backfill: здесь ответ стал лучше
 
-Для drand нельзя сделать так:
+Drand protocol specification прямо описывает catchup:
 
-~~~text
-freeze draw
-потом executor приходит
-и говорит: давайте round 12345
-~~~
-
-Даже если round ещё будущий, caller не должен иметь discretionary target selection.
-
-Минимальный invariant должен быть:
-
-> `targetRound` определяется детерминированно и сохраняется вместе с необратимым freeze; ни publisher, ни keeper, ни admin не могут поменять его после этого.
-
-Но есть ещё более тонкая вещь.
-
-## Freeze должен стать достаточно окончательным ДО раскрытия target
-
-Плохой сценарий:
-
-~~~text
-freeze → targetRound R
-R публикуется
-freeze tx ещё реально может исчезнуть/быть reorged
-→ повторный freeze уже получает R+N
-~~~
-
-Тогда появляется возможность увидеть один результат и получить другой target через chain-history change / timing.
-
-Поэтому формула должна иметь **достаточный future lead**, чтобы выбранный round не существовал, пока freeze не достиг выбранной нами объективной finality boundary.
-
-Это нельзя сейчас заменить числом «2 drand rounds» или «6 секунд».
-
-Robinhood официально подтверждает, что chain построен на Arbitrum Dedicated Blockchains / Nitro. Нам надо отдельно зафиксировать именно для 4663:
-
-- какую finality мы считаем достаточной для Promo;
-- как проверить её из production wrapper/verifier;
-- какие timestamp/block semantics допустимы;
-- какой worst-case lead нужен между freeze и target round.
-
-Источники Robinhood:
-
-- https://docs.robinhood.com/chain/
-- https://docs.robinhood.com/chain/run-a-full-node/
-
-### Кандидат формы, НЕ утверждённая формула
-
-~~~text
-targetRound = first evmnet round strictly after
-              deterministicFreezeTime + MIN_RNG_LEAD
-~~~
-
-где:
-
-~~~text
-MIN_RNG_LEAD > выбранная finality/reorg safety margin
-~~~
-
-а не просто `2 * 3 seconds`.
-
-`targetRound` должен вычисляться контрактом из immutable evmnet genesis/period + canonical chain data; caller не передаёт произвольное число.
-
-Если выяснится, что L2 timestamp даёт слишком неприятную свободу/неопределённость, нужно выбрать другой objective anchor. Это именно предмет следующего study, а не место для догадки.
-
----
-
-## 6. Поведение при reorg должно быть сформулировано явно
-
-До finality freeze может исчезнуть вместе с его target. Это нормальная reorg semantics.
-
-После принятой finality мы хотим утверждать:
-
-~~~text
-(drawId, context, targetRound)
-```
-
-уже один immutable obligation.
-
-Если target после этого опубликован, никакая штатная функция не должна создавать:
-
-~~~text
-same draw → another round
-~~~
-
-Даже если:
-
-- proof tx потерялся;
-- callback/process tx revert;
-- keeper умер;
-- gas x100;
-- прошло много часов/дней.
-
-Повторять можно только доставку proof для того же R.
-
----
-
-# 7. Что происходит у shortlist с ТОЙ ЖЕ randomness
-
-## RH-VRF — прямую интеграцию я бы сейчас исключил
-
-Документация подтверждает хорошую часть: доставку одной signature можно повторять.
-
-Но через `TIMEOUT_BLOCKS = 7200` **любой адрес** может вызвать `refund(requestId)`, после чего request уже никогда нельзя fulfill даже с валидной signature.
+- gaps в beacon rounds быть не должно;
+- если сеть отстала, после восстановления nodes догоняют пропущенные rounds последовательно;
+- sync API отдаёт requested round и последующие;
+- unchained mode всё равно хранит rounds, просто verification не зависит от previous signature.
 
 Источник:
 
-https://rh-vrf.com/
+https://docs.drand.love/docs/specification/
 
-Для обычной игры это нормальный safety escape hatch. Для нас это несовместимо с текущим обещанием:
+Поэтому для **временного outage с последующим восстановлением той же сети** разумное ожидание такое:
 
 ~~~text
-frozen draw не отменяется по timeout
-```
+target R задержался
+-> сеть восстановилась
+-> catchup генерирует R
+-> любой keeper позже приносит тот же proof R
+~~~
 
-Потому что посторонний caller получает способность навсегда убить RNG obligation, не завершив prize obligation.
+Это намного лучше request/refund RNG для нашего no-reroll invariant.
 
-Если deployed code действительно соответствует этой документации, это не просто inconvenience, а semantic no-go для нашей текущей модели.
+Но это не SLA и не решает permanent death. Если evmnet окончательно остановится/будет sunset без генерации конкретного будущего R, draw может зависнуть навсегда. Drand отдельно пишет, что судьбу evmnet решает League of Entropy; на 2025 у них не было плана его сворачивать, пока есть интерес, но immutable lifetime guarantee отсюда не следует.
+
+Источник:
+
+https://docs.drand.love/blog/2025/08/26/verifying-bls12-on-ethereum/
+
+Для нашей philosophy это приемлемая фундаментальная граница только если мы явно принимаем:
+
+> no reroll сильнее guaranteed completion при полном исчезновении RNG network.
 
 ---
 
-## Quiver — хорошая retry semantics ПОСЛЕ reveal, плохая liveness ДО reveal
+# 4. Новый production blocker: L1 block.number vs L2 block number
 
-Quiver documentation очень полезно разделяет два случая.
+Это сейчас важнее timing formula.
 
-Если provider уже reveal'нул randomness, но наш callback revert/OOG:
+Robinhood docs:
 
 ~~~text
-randomness буферизуется
-retryCallback(provider, seq)
-→ anyone can redeliver SAME result
-```
+block.number -> estimate of Ethereum/L1 block number
+ArbSys(0x64).arbBlockNumber() -> actual Robinhood L2 block number
+RPC receipt/log blockNumber -> L2 block number
+~~~
 
-Это нам подходит отлично.
+Arbitrum docs подтверждают то же и отдельно предупреждают, что эти числа не совпадают.
 
-Но push-flow позволяет provider узнать фиксированный outcome и просто **не reveal'нуть его**. Их own security model прямо называет selective withholding главным liveness risk.
+В текущем коде есть конструкции вида:
 
-Источники:
+~~~solidity
+request.cutoffBlockNumber < block.number
+block.number - request.cutoffBlockNumber <= 256
+blockhash(request.cutoffBlockNumber) == request.cutoffBlockHash
+~~~
 
-- https://quiver.foundation/docs/protocol-design
-- https://quiver.foundation/docs/security
-- https://quiver.foundation/docs/api-reference
+и epoch boundaries:
 
-Значит Quiver даёт excellent recovery от callback failure, но не independent recovery от исчезнувшего/злого provider до reveal.
+~~~solidity
+policy.firstBlock = block.number + 1
+lastTerminalBlock = block.number
+~~~
 
-Их типичный mitigation «другой provider / новый request» нам как раз не подходит после freeze, потому что это другой randomness target.
+При этом replay/indexer строит историю по обычным RPC L2 block numbers.
+
+Это две разные координатные системы.
+
+На Hardhat это не видно, потому что там block.number и RPC block number совпадают.
+
+### Что надо сделать до RNG binding
+
+Нужен маленький robinhood-block-semantics package:
+
+1. Ввести один внутренний primitive _l2BlockNumber() через ArbSys и перестать использовать Solidity block.number для attempt/cutoff/epoch L2 boundaries.
+2. Проверить на Robinhood mainnet/testnet read-only, что ArbSys height совпадает с RPC L2 semantics ожидаемым способом.
+3. Не переносить автоматически текущий blockhash(cutoffL2): Arbitrum BLOCKHASH имеет специальные semantics и диапазон относительно Solidity block.number, а не нашего RPC L2 height.
+4. Проверить EIP-2935 history contract на Robinhood ArbOS 61. Актуальные Arbitrum docs говорят, что их modified EIP-2935 path использует ArbSys.arbBlockNumber() и предназначен для past **L2 block hashes**. Если он реально доступен на 4663/46630, это выглядит естественной заменой для canonical recent L2 hash check.
+5. После этого повторить Short/Monthly epoch/cutoff tests в fixture, которая моделирует Nitro semantics, а не Ethereum/Hardhat block.number == L2 number.
+
+Пока это не исправлено, я бы не называл cutoff/finality path Robinhood-compatible.
 
 ---
 
-## Dice — интереснее, чем RH-VRF, но withholding остаётся
+# 5. Timing/future-round binding: минимальная модель после исправления block semantics
 
-Публичные docs/source говорят:
+Robinhood теперь публикует полезную finality модель:
 
-- single-provider commit/reveal;
-- requester-only `refundRequest`;
-- refund после delay очищает active request;
-- live fee сейчас документирован как `0.000025 ETH`;
-- Apache-2.0.
+- soft confirmation — sequencer receipt;
+- posted to Ethereum — ordering fixed, кроме Ethereum reorg;
+- Ethereum finality — полная finality; docs дают ~13 minutes **typical** after posting.
 
-Источники:
+Важно: это не hard upper bound. Поэтому нельзя превратить «~13 минут» в константу, которая математически гарантирует finality.
 
-- https://github.com/diceprotocol/dice-entropy
-- https://github.com/diceprotocol/dice-protocol-docs
+Ещё одна важная Arbitrum граница: L2 block.timestamp задаётся sequencer clock и допускает значительный диапазон; docs указывают до 24h назад / 1h вперёд. Значит block.timestamp нельзя описывать как объективный finality clock.
 
-Это существенно лучше RH-VRF в одном месте:
+### Я бы тестировал такой invariant
 
-> посторонний не может убить request через refund.
+В freeze transaction immutable сохраняются:
 
-Если requester — наш immutable controller и controller **вообще не exposes refund path**, timeout сам по себе, судя по документации, не обязан закрывать request.
+~~~text
+drawId
+frozen context / dataset
+budget / basket / rules
+L2 cutoff identity
+freeze L2 block identity
+targetRound
+targetRoundTime
+~~~
 
-Но это надо подтвердить по exact deployed/source implementation:
+targetRound вычисляется контрактом, caller его не передаёт.
 
-> после наступления refund eligibility, но без вызова refund, может ли тот же `revealWithCallback` всё ещё успешно закрыть старый request спустя сколько угодно блоков?
+Он должен быть достаточно далеко в будущем, чтобы при нормальном ходе freeze успел перейти выбранную security boundary до публикации R. Но поскольку hard upper bound finality нет, production policy должна иметь fail-closed случай:
 
-Если да, Dice остаётся реальным fallback-кандидатом.
+~~~text
+если freeze не достиг требуемой finality до target disclosure,
+этот frozen obligation НЕ получает новый round.
+~~~
 
-Но его фундаментальная проблема не исчезает: provider владеет reveal secret и может withholding'ом оставить frozen draw pending. Третья сторона восстановить secret не может.
+То есть safety не подменяем reroll'ом.
+
+### Что contract может доказать, а что нет
+
+На L2 contract легко доказать immutable target и валидность drand proof.
+
+Сам по себе L2 contract не доказывает, что **его собственный freeze block уже Ethereum-final** до момента раскрытия R. Read-only RPC observation safe/finalized тоже не является on-chain proof.
+
+Поэтому feasibility должен отдельно выбрать один из уровней:
+
+A. accepted external finality assumption + independent verifier detects violation;
+
+B. on-chain/L1-assisted proof of batch/finality, если реально нужен enforce, а не detect;
+
+C. консервативный fixed lead + fail-closed, честно описанный как operational assumption, не mathematical finality guarantee.
+
+Для MVP я бы сначала исследовал A/C, не тащил L1 proof machinery до доказанной необходимости.
 
 ---
 
-## drand — лучший no-reroll fit из текущего набора
+## 6. Обязательные негативные сценарии для binding fixture
 
-После target commitment никакой отдельный service account не владеет секретом результата.
+Минимум:
 
-Как только LoE публикует round, proof публичен и его может доставить любой.
+1. caller не может передать/заменить target round;
+2. target R уже опубликован до freeze -> freeze/relevant seal запрещён;
+3. exact boundary targetTime == block.timestamp;
+4. sequencer timestamp skew around round boundary;
+5. freeze reorged away до accepted finality -> canonical replay не сохраняет obligation;
+6. freeze survives, proof tx reorged/reverted -> повторяется только proof R;
+7. invalid R-1/R+1 proof;
+8. correct R через день/30 дней;
+9. duplicate delivery by another caller;
+10. process/finish revert after proof -> stored R остаётся тем же;
+11. keeper outage -> другой caller продолжает;
+12. temporary drand outage -> late exact R accepted;
+13. permanent no-R -> draw остаётся pending, no reset/new target;
+14. restart/replay reconstructs same drawId -> R;
+15. cutoff uses L2 height/hash semantics, а не Solidity block.number;
+16. target calculation не меняется от caller, gas payer, tx ordering внутри уже frozen context.
 
-Поэтому failure modes становятся понятнее:
-
-~~~text
-наш keeper умер            → другой приносит тот же proof
-Alchemy умер               → другой executor + ETH
-наш callback/tx revert      → повторяем тот же proof/seed path
-LoE evmnet перестал жить    → draw может зависнуть
-```
-
-Последний риск серьёзный, но он не даёт проекту выбор между несколькими уже известными outcomes.
-
----
-
-# 8. Более простой audited кандидат на 4663 я пока не нашёл
-
-Chainlink VRF v2.5 всё ещё не перечисляет Robinhood как supported network. Repo правильно не считает его доступным.
-
-Pyth Entropy официальное deployment на 4663 в просмотренных материалах не подтверждено.
-
-Quiver/Dice/RH-VRF реально существуют на chain, но у каждого описанные выше semantic проблемы.
-
-Есть полезный косвенный сигнал в пользу drand: сторонние проекты Robinhood уже используют evmnet/on-chain BN254 verification. Это показывает практическую исполнимость идеи на 4663, но **не заменяет аудит нашего verifier и binding**.
-
-Поэтому сейчас я не вижу кандидата в категории:
-
-~~~text
-well-audited
-native 4663
-immutable same-result retry forever
-no provider withholding
-```
-
-который позволил бы просто выбросить drand study.
+Отдельно я бы fuzz'ил round arithmetic на timestamp bounds, а не только на идеальные integer seconds.
 
 ---
 
-## 9. Что именно проверить в drand feasibility package
+# 7. Что делать следующим куском
 
-Я бы зафиксировал acceptance очень узко.
+Я бы немного поменял порядок из текущего request.
 
-### A. Cryptographic compatibility
-
-Pin:
-
-- evmnet chain hash;
-- public key;
-- genesis time;
-- period = 3;
-- scheme/DST;
-- exact source commit verifier.
-
-Один настоящий public evmnet vector из pinned evidence:
+Сначала:
 
 ~~~text
-correct round + signature → VALID
-```
+robinhood-block-semantics
+~~~
 
-Обязательно должны падать:
+- ArbSys L2 height;
+- L2 hash retrieval path;
+- mainnet/testnet read-only evidence;
+- заменить/изолировать неверные block.number assumptions в Short/Monthly boundaries;
+- regressions.
 
-~~~text
-wrong round
-wrong pubkey
-1-bit signature corruption
-truncated signature
-extra/malformed signature
-wrong DST/scheme
-```
-
-И независимо проверить:
+Сразу после:
 
 ~~~text
-seed == sha256(signature)
-```
+drand-binding-timing-v1
+~~~
 
-### B. Robinhood execution
+- immutable exact R;
+- future lead;
+- explicit finality assumption;
+- no reroll;
+- late permissionless same-proof delivery;
+- reorg/restart/failure matrix.
 
-Не только local Hardhat.
+И только затем production RNG adapter.
 
-Нужен хотя бы read-only fork / deployed test contract на 46630 или эквивалентный exact EVM check, чтобы настоящий verification path использовал нужные precompiles.
+Это не отменяет текущий drand feasibility — наоборот, он свою задачу выполнил: cryptographic execution path выглядит жизнеспособно. Теперь главный риск уже не «запустится ли BN254 на Robinhood», а правильная Nitro chain identity/finality semantics и отсутствие target grinding.
 
-Измерить:
-
-- verifier runtime bytes;
-- verification gas;
-- calldata bytes;
-- controller/adaptor size impact;
-- revert gas bad proof.
-
-### C. Future-round binding
-
-Локальная state machine:
-
-~~~text
-freeze
-→ exact deterministic target R stored
-→ cannot change R
-→ proof for R accepted once
-→ proof R±1 rejected
-→ duplicate same proof cannot change seed
-→ late proof after arbitrary delay works
-```
-
-Отдельно моделировать:
-
-~~~text
-freeze branch reorg before finality
-freeze survives finality
-proof arrives after keeper restart
-```
-
-И доказать, что target не может быть уже известен на момент необратимого freeze.
-
-### D. Provider/network liveness assumption
-
-Узнать из официальной drand semantics:
-
-- гарантируется ли emission/backfill exact scheduled round после outage;
-- как выглядит chain/public-key rotation;
-- что происходит при network replacement/sunset.
-
-Если exact frozen round может навсегда отсутствовать, это должно стать **явным accepted liveness risk**, а не скрытым timeout reroll.
-
----
-
-## 10. Не тащить verifier внутрь Short controller до измерений
-
-С учётом того, что Short controller уже более тесный по стандартному 24 KiB benchmark, BLS/hash-to-curve код я бы пока не вшивал туда.
-
-Feasibility может использовать standalone verifier.
-
-Если drand проходит, следующая architecture candidate:
-
-~~~text
-immutable DrandVerifier / RNGAdapter
-      ↑             ↑
-ShortController   MonthlyController
-```
-
-но без права adapter'а трогать vault, participants, rules или winner.
-
-Его единственная власть:
-
-~~~text
-prove exact pinned (drawId, targetRound)
-→ derive canonical seed
-→ deliver once
-```
-
-Адрес verifier/adapter должен быть fixed at deployment, никакого `setProvider`/module replacement.
-
-Но окончательный split выбираем только после gas/bytecode study.
-
----
-
-## 11. Ключевой неприятный вывод про liveness
-
-При наших требованиях невозможно магически получить одновременно:
-
-~~~text
-любой внешний RNG может умереть навсегда
-+
-draw всегда обязан завершиться
-+
-никакого fallback target/reroll никогда
-```
-
-Если randomness source катастрофически исчез, кто-то должен уступить.
-
-Самая trust-conservative модель сейчас:
-
-> frozen draw может ждать тот же заранее закреплённый результат сколько угодно; проект не получает право заменить его удобным новым random.
-
-Для drand это особенно приемлемо, потому что после публикации target result не принадлежит конкретному keeper.
-
-Если позже захотим fallback source, его нельзя придумывать после аварии. Он должен быть заранее закоммичен в immutable draw policy с objective activation condition, причём condition «drand умер» сама по себе трудно доказуема on-chain. Поэтому я бы вообще не тащил fallback в MVP до появления реальной необходимости.
-
----
-
-## 12. Что осталось старым security debt
-
-RNG не закрывает publisher truth boundary.
-
-Даже perfect drand verifier не доказывает, что publisher включил всех настоящих eligible attempts или не соврал в `EpochEmpty`.
-
-После RNG эту тему всё ещё надо вынести отдельным решением перед public mainnet:
-
-~~~text
-DETECTABLE false dataset/empty
-vs
-PREVENTED false dataset/empty
-```
-
-Также остаётся AA publication recovery decoder, если execution реально пойдёт через sponsored ERC-4337 transport.
-
----
-
-## Следующий пакет
-
-Поддерживаю предложение repo, но с чуть более строгой формулировкой:
-
-~~~text
-drand-evmnet-feasibility-v1
-```
-
-Только research/test artifacts, без изменения Short/Monthly production components.
-
-Цель пакета — ответить на четыре бинарных вопроса:
-
-~~~text
-1. Мы действительно верифицируем настоящий evmnet proof на Robinhood EVM?
-2. Цена/размер приемлемы?
-3. Мы умеем детерминированно pin'ить FUTURE round без target grinding/reorg reroll?
-4. Один и тот же proof можно безопасно доставлять сколько угодно поздно?
-```
-
-Если хотя бы один ответ `нет`, production integration не пишем и возвращаемся к service shortlist с конкретной причиной.
-
-Если все `да`, тогда уже отдельно проектируем минимальный immutable authenticated RNG adapter для обоих controllers.
-
-## Источники внешнего ревью
-
-- drand evmnet / networks: https://docs.drand.love/developer/
-- drand HTTP API / chain hash: https://docs.drand.love/developer/API-v2/drand-http-api/
-- BLS Solidity verifier: https://github.com/randa-mu/bls-solidity
-- exact evmnet demo: https://github.com/randa-mu/bls-solidity/blob/main/src/demos/EvmnetRegistry.sol
-- Quiver protocol/security/API: https://quiver.foundation/docs/protocol-design ; https://quiver.foundation/docs/security ; https://quiver.foundation/docs/api-reference
-- RH-VRF timeout/refund: https://rh-vrf.com/
-- Dice source/docs: https://github.com/diceprotocol/dice-entropy ; https://github.com/diceprotocol/dice-protocol-docs
-- Robinhood architecture: https://docs.robinhood.com/chain/ ; https://docs.robinhood.com/chain/run-a-full-node/
+Production provider всё ещё не выбран.
