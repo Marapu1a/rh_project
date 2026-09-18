@@ -1,5 +1,9 @@
 # Данные исследований
 
+`chain-blocks/rpc-result.json` — pinned read-only проверки ChainBlocks на Robinhood
+mainnet/testnet: L2 number/hash и границы окна 1..256. `npm run check:nitro:rpc`.
+[Изменение и ограничения](../docs/ROBINHOOD_BLOCK_SEMANTICS.md).
+
 `drand-feasibility/` — pinned MIT BLS library, настоящие evmnet vectors, standalone
 fixture, local gas/size и Robinhood state-override RPC evidence. `npm run test:drand`
 и `npm run check:drand:rpc`; [границы проверки](../docs/DRAND_FEASIBILITY.md).

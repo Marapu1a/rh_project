@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
+import {ChainBlocks} from "./ChainBlocks.sol";
 import {ShortDatasetPreparation} from "./ShortDatasetPreparation.sol";
 import {ShortOutcome} from "./ShortOutcome.sol";
 import {ShortPrizeBasket} from "./ShortPrizeBasket.sol";
@@ -33,7 +34,7 @@ abstract contract ShortRulesEpochs is ShortDatasetPreparation {
         require(notice > 0, "notice");
         shortRulesNotice = notice; shortRulesStartedAt = block.timestamp;
         lastShortTerminalAt = block.timestamp;
-        _storePolicy(1, genesis, weights, minimumUnit); policies[1].firstBlock = block.number;
+        _storePolicy(1, genesis, weights, minimumUnit); policies[1].firstBlock = ChainBlocks.number();
     }
     function shortEpochPolicy(uint64 epoch) public view returns (Policy memory) { return policies[epoch]; }
     function _storePolicy(uint64 epoch, ShortOutcome.Rules memory rules, uint256[] memory weights, uint256 minimumUnit) private {
@@ -56,8 +57,8 @@ abstract contract ShortRulesEpochs is ShortDatasetPreparation {
             && block.timestamp >= lastShortTerminalAt + SHORT_INTERVAL, "busy/schedule");
         drainingShortEpoch = currentShortEpoch; currentShortEpoch = announcedShortEpoch;
         announcedShortEpoch = 0; rulesEligibleAt = 0;
-        policies[currentShortEpoch].firstBlock = block.number + 1;
-        emit ShortRulesActivated(drainingShortEpoch, currentShortEpoch, block.number + 1);
+        policies[currentShortEpoch].firstBlock = ChainBlocks.number() + 1;
+        emit ShortRulesActivated(drainingShortEpoch, currentShortEpoch, ChainBlocks.number() + 1);
     }
     function _beginEpochDataset(bytes32 id, Request calldata r) internal {
         uint64 target = drainingShortEpoch != 0 ? drainingShortEpoch : currentShortEpoch;
@@ -77,8 +78,8 @@ abstract contract ShortRulesEpochs is ShortDatasetPreparation {
     /// A false empty assertion is detected by replay, not proven impossible on-chain.
     function _closeEmptyShortEpoch(uint256 cutoff, bytes32 cutoffHash, bytes32 snapshotHash) internal nonReentrant {
         require(drainingShortEpoch != 0 && activeProposal == bytes32(0) && pendingDatasetDraw == bytes32(0), "phase");
-        require(cutoff >= policies[currentShortEpoch].firstBlock && cutoff < block.number
-            && block.number - cutoff <= 256 && blockhash(cutoff) == cutoffHash && cutoffHash != bytes32(0)
+        require(cutoff >= policies[currentShortEpoch].firstBlock && cutoff < ChainBlocks.number()
+            && ChainBlocks.number() - cutoff <= 256 && ChainBlocks.recentHash(cutoff) == cutoffHash && cutoffHash != bytes32(0)
             && snapshotHash != bytes32(0), "cutoff");
         emit ShortEpochEmpty(drainingShortEpoch, cutoff, cutoffHash, snapshotHash); drainingShortEpoch = 0;
     }
@@ -88,7 +89,7 @@ abstract contract ShortRulesEpochs is ShortDatasetPreparation {
         require(drawId != bytes32(0) && pendingDatasetDraw == drawId && outcome <= 1 && resultHash != bytes32(0), "terminal");
         (,,PromoVault.Status status,,uint256 awarded,) = datasetVault.draws(drawId);
         require(status == PromoVault.Status.Finalized && (outcome == 0) == (awarded == 0), "unfinalized");
-        pendingDatasetDraw = bytes32(0); lastShortTerminalAt = block.timestamp; lastShortTerminalBlock = block.number;
+        pendingDatasetDraw = bytes32(0); lastShortTerminalAt = block.timestamp; lastShortTerminalBlock = ChainBlocks.number();
         if(drainingShortEpoch == drawShortEpoch[drawId]) drainingShortEpoch = 0;
         emit AttemptsConsumed(drawId, 0, drawSnapshots[drawId], outcome, resultHash);
     }

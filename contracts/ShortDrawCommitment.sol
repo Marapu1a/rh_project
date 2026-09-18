@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
+import {ChainBlocks} from "./ChainBlocks.sol";
 
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {PromoVault} from "./PromoVault.sol";
@@ -102,10 +103,10 @@ abstract contract ShortDrawCommitment is ReentrancyGuard {
             || request.expectedRulesHash != basketRulesHash(rules)
             || _shortCommitments[request.drawId].request.drawId != bytes32(0))
             revert InvalidShortRequest();
-        if (request.cutoffBlockNumber >= block.number
-            || block.number - request.cutoffBlockNumber > 256
+        if (request.cutoffBlockNumber >= ChainBlocks.number()
+            || ChainBlocks.number() - request.cutoffBlockNumber > 256
             || request.cutoffBlockHash == bytes32(0)
-            || blockhash(request.cutoffBlockNumber) != request.cutoffBlockHash)
+            || ChainBlocks.recentHash(request.cutoffBlockNumber) != request.cutoffBlockHash)
             revert InvalidShortCutoff();
         if (address(promoVault).code.length == 0 || promoVault.drawController() != address(this))
             revert InvalidVaultBinding();
@@ -114,7 +115,7 @@ abstract contract ShortDrawCommitment is ReentrancyGuard {
             ShortPrizeBasket.build(request.budget, rules.weights, rules.minimumUnit);
         // Includes direct-transfer recognition; any failure rolls it all back.
         promoVault.reserveUSDG(request.drawId, request.campaignId, PromoVault.ReserveSource.SHORT, request.budget);
-        Commitment memory commitment = Commitment(request, keccak256(abi.encode(prizes)), total, dust, block.number);
+        Commitment memory commitment = Commitment(request, keccak256(abi.encode(prizes)), total, dust, ChainBlocks.number());
         bytes32 commitmentHash = keccak256(abi.encode(
             keccak256("SHORT_COMMITMENT_V2"), block.chainid, address(this), instanceId,
             participantRegistry, address(promoVault), address(promoVault.quoteToken()), commitment));

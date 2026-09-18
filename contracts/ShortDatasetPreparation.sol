@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
+import {ChainBlocks} from "./ChainBlocks.sol";
 
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {PromoVault} from "./PromoVault.sol";
@@ -72,8 +73,8 @@ abstract contract ShortDatasetPreparation is ReentrancyGuard {
             && !sealedDraws[r.drawId] && r.campaignId > 0 && r.rulesEpoch > 0, "identity");
         require(r.snapshotHash != bytes32(0) && r.expectedRoot != bytes32(0)
             && r.expectedCount > 0 && r.expectedAttempts >= r.expectedCount && r.budget > 0, "request");
-        require(r.cutoffBlockNumber < block.number && block.number - r.cutoffBlockNumber <= 256
-            && r.cutoffBlockHash != bytes32(0) && blockhash(r.cutoffBlockNumber) == r.cutoffBlockHash, "cutoff");
+        require(r.cutoffBlockNumber < ChainBlocks.number() && ChainBlocks.number() - r.cutoffBlockNumber <= 256
+            && r.cutoffBlockHash != bytes32(0) && ChainBlocks.recentHash(r.cutoffBlockNumber) == r.cutoffBlockHash, "cutoff");
         require(address(datasetVault).code.length > 0 && datasetVault.drawController() == address(this), "vault");
         datasetVault.validateDrawId(r.drawId, 0);
         require(weights.length <= 64, "places");

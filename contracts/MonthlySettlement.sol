@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
+import {ChainBlocks} from "./ChainBlocks.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {PromoVault} from "./PromoVault.sol";
 import {ShortOutcome} from "./ShortOutcome.sol";
@@ -57,7 +58,7 @@ abstract contract MonthlySettlement is ReentrancyGuard {
         require(vault!=address(0) && registry.code.length>0 && instance!=bytes32(0) && interval>0 && notice>0,"binding");
         monthlyVault=PromoVault(vault);monthlyRegistry=registry;monthlyInstance=instance;monthlyInterval=interval;
         monthlyRulesHash=ShortOutcome.rulesHash(rules);monthlyRulesNotice=notice;lastMonthAt=block.timestamp;monthlyStartedAt=block.timestamp;
-        _storeMonthlyPolicy(1,rules);policies[1].firstBlock=block.number;
+        _storeMonthlyPolicy(1,rules);policies[1].firstBlock=ChainBlocks.number();
     }
     function month(bytes32 id) public view returns(Month memory){return months[id];}
     function monthRules() public view returns(ShortOutcome.Rules memory){return policies[currentMonthlyEpoch].outcome;}
@@ -75,14 +76,14 @@ abstract contract MonthlySettlement is ReentrancyGuard {
         require(announcedMonthlyEpoch!=0 && block.timestamp>=monthlyRulesEligibleAt,"month notice");
         require(activeMonth==bytes32(0) && pendingMonth==bytes32(0) && block.timestamp>=lastMonthAt+monthlyInterval,"month busy/time");
         drainingMonthlyEpoch=currentMonthlyEpoch;currentMonthlyEpoch=announcedMonthlyEpoch;
-        announcedMonthlyEpoch=0;monthlyRulesEligibleAt=0;policies[currentMonthlyEpoch].firstBlock=block.number+1;
-        emit MonthlyRulesActivated(drainingMonthlyEpoch,currentMonthlyEpoch,block.number+1);
+        announcedMonthlyEpoch=0;monthlyRulesEligibleAt=0;policies[currentMonthlyEpoch].firstBlock=ChainBlocks.number()+1;
+        emit MonthlyRulesActivated(drainingMonthlyEpoch,currentMonthlyEpoch,ChainBlocks.number()+1);
     }
     /// Authorized publisher assertion only; independent replay must prove old OPEN is empty.
     function _closeEmptyMonthlyEpoch(uint256 cutoff,bytes32 cutoffHash,bytes32 snapshotHash) internal nonReentrant {
         require(drainingMonthlyEpoch!=0 && activeMonth==bytes32(0) && pendingMonth==bytes32(0),"month phase");
-        require(cutoff>=policies[currentMonthlyEpoch].firstBlock && cutoff<block.number && block.number-cutoff<=256
-            && cutoffHash!=bytes32(0) && blockhash(cutoff)==cutoffHash && snapshotHash!=bytes32(0),"month cutoff");
+        require(cutoff>=policies[currentMonthlyEpoch].firstBlock && cutoff<ChainBlocks.number() && ChainBlocks.number()-cutoff<=256
+            && cutoffHash!=bytes32(0) && ChainBlocks.recentHash(cutoff)==cutoffHash && snapshotHash!=bytes32(0),"month cutoff");
         emit MonthlyEpochEmpty(drainingMonthlyEpoch,cutoff,cutoffHash,snapshotHash);drainingMonthlyEpoch=0;
         // An administrative empty closure is not a draw: preserve lastMonthAt/Block.
     }
@@ -96,8 +97,8 @@ abstract contract MonthlySettlement is ReentrancyGuard {
         monthlyVault.validateDrawId(input.drawId,1);
         require(input.drawId!=bytes32(0) && months[input.drawId].phase==Phase.None && input.snapshotHash!=bytes32(0)
             && input.root!=bytes32(0) && input.campaign>0 && input.count>0 && input.attempts>=input.count,"month input");
-        require(input.cutoff>=lastMonthBlock && input.cutoff<block.number && block.number-input.cutoff<=256
-            && input.cutoffHash!=bytes32(0) && blockhash(input.cutoff)==input.cutoffHash,"month cutoff");
+        require(input.cutoff>=lastMonthBlock && input.cutoff<ChainBlocks.number() && ChainBlocks.number()-input.cutoff<=256
+            && input.cutoffHash!=bytes32(0) && ChainBlocks.recentHash(input.cutoff)==input.cutoffHash,"month cutoff");
         Month storage m=months[input.drawId];m.input=input;m.phase=Phase.Publishing;
         m.root=EMPTY_MONTHLY_ROOT;activeMonth=input.drawId;emit MonthProposed(input);
     }
@@ -146,7 +147,7 @@ abstract contract MonthlySettlement is ReentrancyGuard {
             && m.processed==m.count && m.nextChunk==chunks[id].length,"month unfinished");
         monthlyVault.settleMonthly(id,m.winner);
         m.resultHash=keccak256(abi.encode(keccak256("MONTHLY_RESULT_V1"),m.context,m.seed,m.root,m.winner,m.admitted,m.budget));
-        m.phase=Phase.Terminal;pendingMonth=bytes32(0);lastMonthAt=block.timestamp;lastMonthBlock=block.number;
+        m.phase=Phase.Terminal;pendingMonth=bytes32(0);lastMonthAt=block.timestamp;lastMonthBlock=ChainBlocks.number();
         if(drainingMonthlyEpoch==m.input.rulesEpoch)drainingMonthlyEpoch=0;
         emit AttemptsConsumed(id,1,m.input.snapshotHash,m.winner==address(0)?0:1,m.resultHash);
     }

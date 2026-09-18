@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
+import {ChainBlocks} from "../../contracts/ChainBlocks.sol";
 import {MonthlySettlement} from "../../contracts/MonthlySettlement.sol";
 import {ShortOutcome} from "../../contracts/ShortOutcome.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
@@ -38,12 +39,12 @@ contract MonthlyRngSizeStudy is MonthlySettlement, Ownable2Step {
         require(msg.sender==pendingPublisher,"publisher");publisher=msg.sender;pendingPublisher=address(0);emit PublisherAccepted(msg.sender);
     }
     function beginMonth(Input calldata input) external onlyPublisher {
-        require(block.number>=input.cutoff+confirmations,"finality");_beginMonth(input);
+        require(ChainBlocks.number()>=input.cutoff+confirmations,"finality");_beginMonth(input);
     }
     function announce(ShortOutcome.Rules calldata rules) external onlyOwner {_announceMonthlyRules(rules);}
     function activate() external {_activateMonthlyRules();}
     function closeEmpty(uint256 c,bytes32 h,bytes32 s) external onlyPublisher {
-        require(block.number>=c+confirmations,"finality");_closeEmptyMonthlyEpoch(c,h,s);
+        require(ChainBlocks.number()>=c+confirmations,"finality");_closeEmptyMonthlyEpoch(c,h,s);
     }
     function publishMonth(bytes32 id,ShortOutcome.Participant[] calldata chunk) external onlyPublisher {_publishMonth(id,chunk);}
     function supersedeMonth(bytes32 id) external onlyPublisher {_supersedeMonth(id);}

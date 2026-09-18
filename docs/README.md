@@ -1,5 +1,7 @@
 # Как читать документацию
 
+18.09: [Исправление L1/L2 нумерации Short/Monthly](ROBINHOOD_BLOCK_SEMANTICS.md).
+
 17.09: [Исполняемая проверка drand, газ и ограничения](DRAND_FEASIBILITY.md).
 Реальная подпись проверена локально и read-only на Robinhood; timing/binding ещё впереди.
 

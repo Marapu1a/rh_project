@@ -1,54 +1,45 @@
-# Ревью: drand evmnet — первый исполняемый feasibility package
+# Ревью: исправление L1/L2 block identity
 
-Итоговые проверки: основной `npm test` 167/167, отдельный drand suite 2/2,
-read-only RPC checks 2/2. Полный suite занял около 7 минут.
+18.09.2026. Подтвердили дефект независимо через оба Robinhood RPC и исправили.
+Начать с [ROBINHOOD_BLOCK_SEMANTICS.md](ROBINHOOD_BLOCK_SEMANTICS.md).
 
-17.09.2026. Код Short/Monthly и казны не менялся. Сделали только standalone
-research verifier на pinned kevincharm/bls-bn254, локальные проверки и read-only
-исполнение полного verifier через RPC Robinhood mainnet/testnet.
+Минимальный helper contracts/ChainBlocks.sol:
 
-Начать с [DRAND_FEASIBILITY.md](DRAND_FEASIBILITY.md), затем:
+- 4663/46630 используют фиксированный ArbSys(0x64), number + arbBlockHash;
+- остальные chain IDs используют стандартную EVM семантику;
+- на Robinhood нет fallback к L1 при ошибке ArbSys;
+- окно не расширяли: только completed ages 1..256;
+- EIP-2935 не понадобился, нужный путь ArbSys проверен на обеих сетях.
 
-- research/drand-feasibility/EvmnetFixture.sol и sources.json;
-- test/drand-feasibility.test.cjs;
-- scripts/drand-feasibility.cjs и scripts/drand-rpc-check.cjs;
-- local-result.json / rpc-result.json в research/drand-feasibility.
+Заменили cutoff, genesis/activation B+1, terminal block и legacy freezeBlock в
+ShortDrawCommitment, ShortDatasetPreparation, ShortRulesEpochs, MonthlySettlement.
+Research RNG wrappers также исправлены. Их confirmations — L2 block count, НЕ finality.
+Казна, fee math, permission model, события и формат replay не менялись.
 
-Настоящие rounds 9337227 и 20716103 проходят локально. Для первого сверены
-upstream message/hash-to-point и canonical SHA-256. В обоих Robinhood RPC
-valid proof принят, round+1 отклонён, prove вернул ожидаемую randomness.
-Это eth_call/state override, НЕ deployment, НЕ отправленная transaction.
+Проверки: прежний полный набор 167/167; Nitro suite 5/5 отдельным запуском.
+Новые тесты включены в npm test (172). Повторно объединённую команду не запускали.
+State-override RPC checks 2/2; ages 1/256 hashes совпадают с RPC, 0/future/257 дают zero.
+Это не deployment и не finality proof. Evidence: research/chain-blocks/rpc-result.json.
 
-Runtime 9 139 bytes; local verify receipt 176 491 gas; prove+store 225 068.
-Remote prove estimates: mainnet 233 440, testnet 242 540 в записанных blocks.
-Это не постоянная цена, не USD quote и не аудит криптографии.
+Nitro fixture специально разводит координаты: L2 = native EVM number + 1 000 000.
+Это не полный Nitro emulator. Проверяет genesis, B+1, old-first, empty без нового
+clock, begin/seal/terminal с реальной казной, reorg/retry и старый commitment path.
 
-Входное исследование уточнили:
+Повторён standard size/deployment gate: Short 22 368, Monthly 17 445, vault 8 496 bytes.
+Все ниже 24 576. Никаких proxy, setters, смены RNG, admin rescue или новой казны.
 
-1. Round нумеруется с 1: at-or-after = 1 + ceil((t-genesis)/period).
-2. Published hash-to-point в markdown разбит 63/65 hex digits; используем
-   оригинальный machine-readable fixture, а не ручное деление строк.
-3. Seed zero допустим; отдельный proven flag.
-4. Час задержки не является доказательством finality.
-5. Fixed schedule + запрет позднего seal требует автоматического продолжения,
-   иначе можно получить вечную блокировку ещё до freeze.
+Границы переносимости явные: другая Nitro сеть требует добавить её chain ID
+и повторить проверки перед deployment. Автоопределения неизвестных сетей нет.
+Исторический test-only ShortStreamingStudy остаётся Ethereum-only.
 
-Локальный suite 2/2: positive/negative crypto, malformed points/bytes, same-proof
-idempotency, другой caller, поздняя первая доставка и duplicate через 30 суток;
-отдельно round arithmetic на 10 000 timestamps. Это ещё не frozen draw binding.
+Вопросы:
 
-Вопросы для следующего узкого шага:
+1. Остался ли конкретный путь смешать L1/L2 координаты в текущих основных компонентах?
+2. Есть ли несовпадение contract events/genesis/terminal с текущим replay?
+3. Видите ли дефект в диапазоне 1..256 или fail-closed поведении helper?
+4. Можно ли переходить к локальному drand timing/binding study без расширения scope?
 
-1. Видите ли конкретный дефект в key ordering, round encoding, DST, point validation
-   или registry path? Не считать прохождение двух vectors криптоаудитом.
-2. Какую минимальную timing/binding модель выбрать для нашего interval-based Short
-   и Monthly, чтобы поздняя подготовка не блокировала дальнейшие draws?
-3. Где достаточно честно сформулированного finality assumption, а где нужен
-   объективно проверяемый факт? Не обещать, что fixed delay исключает любой reorg.
-4. Какие обязательные негативные сценарии добавить в локальную binding fixture?
-5. Есть ли подтверждённая exact-round outage/backfill semantics evmnet?
-
-Следующий кандидат — небольшой локальный binding/timing study. Не добавляем
-provider switching, emergency seed, RNG epochs, новые правила казны или production
-adapter до закрытия этой границы. Empty closure не зависит от RNG readiness.
+Следующий кусок по-прежнему: один immutable future round, поздняя same-proof
+доставка, явные finality assumptions, отсутствие вечной блокировки из-за задержки
+до freeze. Правильный L2 hash не объявляем доказательством L1 finality.
 Ответ — в прежний GPT_REVIEW_RESPONSE.md.

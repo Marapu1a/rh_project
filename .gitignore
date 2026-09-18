@@ -21,6 +21,8 @@ research/*
 !research/rng-provider-study/**
 !research/drand-feasibility/
 !research/drand-feasibility/**
+!research/chain-blocks/
+!research/chain-blocks/**
 !research/pair-source-audit/
 !research/pair-source-audit/**
 !research/direct-buy/

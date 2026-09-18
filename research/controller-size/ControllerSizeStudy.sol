@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
+import {ChainBlocks} from "../../contracts/ChainBlocks.sol";
 import {ShortSettlement} from "../../contracts/ShortSettlement.sol";
 import {ShortOutcome} from "../../contracts/ShortOutcome.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
@@ -50,13 +51,13 @@ contract ShortRngSizeStudy is ShortSettlement, Ownable2Step {
     function announce(ShortOutcome.Rules calldata r,uint256[] calldata w,uint256 m) external onlyOwner {_announceShortRules(r,w,m);}
     function activate() external {_activateShortRules();}
     function begin(bytes32 id,Request calldata r) external onlyPublisher {
-        require(block.number >= r.cutoffBlockNumber+confirmations && r.budget<=maxBudget,"finality/budget");
+        require(ChainBlocks.number() >= r.cutoffBlockNumber+confirmations && r.budget<=maxBudget,"finality/budget");
         _beginEpochDataset(id,r);
     }
     function publish(bytes32 id,ShortOutcome.Participant[] calldata data) external onlyPublisher {_publishDataset(id,data);}
     function supersede(bytes32 id) external onlyPublisher {_supersedeDataset(id);}
     function closeEmpty(uint256 c,bytes32 h,bytes32 s) external onlyPublisher {
-        require(block.number>=c+confirmations,"finality");_closeEmptyShortEpoch(c,h,s);
+        require(ChainBlocks.number()>=c+confirmations,"finality");_closeEmptyShortEpoch(c,h,s);
     }
     function executionReady() public view returns(bool) {
         return !requesting && randomProvider.ready() && tx.gasprice<=maxGasPrice
@@ -117,8 +118,8 @@ contract FullControllerSizeStudy is ShortRngSizeStudy {
         require(activeMonth==bytes32(0) && pendingMonth==bytes32(0) && block.timestamp>=lastMonthAt+MONTH_INTERVAL,"month busy/time");
         require(input.drawId!=bytes32(0) && months[input.drawId].phase==MonthPhase.None && input.snapshotHash!=bytes32(0)
             && input.root!=bytes32(0) && input.campaign>0 && input.count>0 && input.attempts>=input.count,"month input");
-        require(input.cutoff>=lastMonthBlock && block.number>=input.cutoff+confirmations && input.cutoff<block.number
-            && block.number-input.cutoff<=256 && input.cutoffHash!=bytes32(0) && blockhash(input.cutoff)==input.cutoffHash,"month cutoff");
+        require(input.cutoff>=lastMonthBlock && ChainBlocks.number()>=input.cutoff+confirmations && input.cutoff<ChainBlocks.number()
+            && ChainBlocks.number()-input.cutoff<=256 && input.cutoffHash!=bytes32(0) && ChainBlocks.recentHash(input.cutoff)==input.cutoffHash,"month cutoff");
         Month storage m=months[input.drawId];m.input=input;m.phase=MonthPhase.Publishing;
         m.root=keccak256("MONTH_DATASET_SIZE_STUDY_V1");activeMonth=input.drawId;emit MonthProposed(input);
     }
@@ -168,7 +169,7 @@ contract FullControllerSizeStudy is ShortRngSizeStudy {
             && m.processed==m.count && m.nextChunk==monthChunks[id].length,"month unfinished");
         datasetVault.settleMonthly(id,m.winner);
         bytes32 resultHash=keccak256(abi.encode(keccak256("MONTH_RESULT_SIZE_STUDY_V1"),m.context,m.seed,m.root,m.winner,m.admitted,m.budget));
-        m.phase=MonthPhase.Terminal;pendingMonth=bytes32(0);lastMonthAt=block.timestamp;lastMonthBlock=block.number;
+        m.phase=MonthPhase.Terminal;pendingMonth=bytes32(0);lastMonthAt=block.timestamp;lastMonthBlock=ChainBlocks.number();
         emit AttemptsConsumed(id,1,m.input.snapshotHash,m.winner==address(0)?0:1,resultHash);
     }
 }

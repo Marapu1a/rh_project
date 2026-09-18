@@ -1,8 +1,15 @@
 # Состояние реализации
 
-Обновлено по локальному коду и проверкам: 17.09.2026. Это карта кода, а не утверждение реализации всей [продуктовой схемы](PRODUCT_SPEC.md).
+Обновлено по локальному коду и проверкам: 18.09.2026. Это карта кода, а не утверждение реализации всей [продуктовой схемы](PRODUCT_SPEC.md).
 
-Текущий этап 17.09: [drand feasibility](DRAND_FEASIBILITY.md): настоящие подписи
+Текущий этап 18.09: [Nitro block identity](ROBINHOOD_BLOCK_SEMANTICS.md).
+Cutoff, genesis/activation и terminal heights используют L2 ArbSys на Robinhood.
+Окно 1..256 сохранено; runtime Short 22 368, Monthly 17 445, vault 8 496 bytes.
+Finality/RNG binding пока не реализован.
+Проверки: прежний основной набор **167/167**, новые Nitro tests **5/5** (отдельно),
+оба RPC passed; новые тесты уже включены в `npm test`, теперь 172.
+
+Предыдущий этап 17.09: [drand feasibility](DRAND_FEASIBILITY.md): настоящие подписи
 проверены standalone verifier локально (2/2) и read-only в Robinhood RPC mainnet/testnet.
 Runtime 9 139 bytes, local prove+store 225 068 gas. Production integration отсутствует;
 следующий кусок — timing/future-round binding. Код Short/Monthly и казны не менялся.
@@ -22,7 +29,7 @@ Production RNG не добавлен; запланированная тогда 
 
 | Часть | Фактическое состояние |
 |---|---|
-| Два контроллера / новая казна | DualControllerPromoVault: immutable Short/Monthly capabilities, общая бухгалтерия, USDG-only prizes. Старший бит drawId разделяет типы с проверкой при begin и reserve; pre-seal cross-kind collision закрыт. Research wrappers 21 988 / 17 064 байт, vault 8 496; стандартный deploy прошёл без viaIR |
+| Два контроллера / новая казна | DualControllerPromoVault: immutable Short/Monthly capabilities, общая бухгалтерия, USDG-only prizes. Старший бит drawId разделяет типы с проверкой при begin и reserve; pre-seal cross-kind collision закрыт. Research wrappers 22 368 / 17 445 байт, vault 8 496; стандартный deploy прошёл без viaIR |
 | Внутренний Monthly settlement | MonthlySettlement: chunks, один seed, permissionless process/finish, atomic start/settle/consume. Допуск имеет future epochs; interval/notice immutable. Empty не двигает clock. Нет production RNG. [Модель](MONTHLY_RULES_EPOCHS.md) |
 | Monthly epochs / replay v4 | Независимые Monthly ranges, B+1, старый набор первым, неизменяемая policy на draw. Builder/CLI сверяет публикации и context; empty assertion проверяется replay, а не доказывается контрактом |
 | Replay v3 | Два source, kind-specific events, deployment domain связывает controllers/vault/assets/policy, RPC reverse-binding verification. Offline authenticity не доказывается |
