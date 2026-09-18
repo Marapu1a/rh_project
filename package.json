@@ -46,7 +46,8 @@
     "test:drand": "node --test test/drand-feasibility.test.cjs",
     "check:drand:rpc": "node scripts/drand-rpc-check.cjs",
     "test:nitro:blocks": "node --test test/nitro-blocks.test.cjs",
-    "check:nitro:rpc": "node scripts/chain-blocks-rpc.cjs"
+    "check:nitro:rpc": "node scripts/chain-blocks-rpc.cjs",
+    "test:drand:binding": "node --test test/drand-binding-model.test.cjs"
   },
   "devDependencies": {
     "@openzeppelin/contracts": "5.6.1",

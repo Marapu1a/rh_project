@@ -1,5 +1,9 @@
 # Данные исследований
 
+`drand-binding/model-result.json` — синтетическая JS-модель binding, 40 timing
+сочетаний и контрпримеры. `npm run test:drand:binding`.
+Не EVM/BLS test и не измерение сети; [выводы](../docs/DRAND_BINDING_MODEL.md).
+
 `chain-blocks/rpc-result.json` — pinned read-only проверки ChainBlocks на Robinhood
 mainnet/testnet: L2 number/hash и границы окна 1..256. `npm run check:nitro:rpc`.
 [Изменение и ограничения](../docs/ROBINHOOD_BLOCK_SEMANTICS.md).

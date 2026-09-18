@@ -1,0 +1,34 @@
+{
+  "schema": "drand-binding-model-v1",
+  "model": "JavaScript state machine, synthetic authenticated beacon stub; no EVM/BLS/finality enforcement",
+  "candidateLeadSeconds": 3600,
+  "leadApproved": false,
+  "sweep": {
+    "cases": 40,
+    "knownAtFreeze": 15,
+    "revealedBeforeFinality": 25
+  },
+  "findings": [
+    {
+      "case": "stale-clock",
+      "chainTime": "1727713875",
+      "wallAtFreeze": "1727721075",
+      "round": "65468",
+      "targetTime": "1727717476",
+      "knownAtFreeze": true,
+      "revealedBeforeFinality": true
+    },
+    {
+      "case": "freeze-reorg-after-disclosure",
+      "oldRound": "34535",
+      "newRound": "35736",
+      "conclusion": "Storage immutability applies within surviving chain history; a monitor cannot undo disclosure."
+    },
+    {
+      "case": "late-schedule",
+      "conclusion": "A fixed expired target requires an explicit pre-freeze advancement policy; not implemented here."
+    }
+  ],
+  "decision": "NO-GO for unconditional production guarantee; model works only under explicit clock/finality assumptions",
+  "next": "Choose a bounded clock/finality trust model and a pre-freeze delay policy before implementing a Solidity binding"
+}

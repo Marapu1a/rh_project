@@ -1,5 +1,7 @@
 # Как читать документацию
 
+18.09: [Локальная модель drand binding и найденные контрпримеры](DRAND_BINDING_MODEL.md).
+
 18.09: [Исправление L1/L2 нумерации Short/Monthly](ROBINHOOD_BLOCK_SEMANTICS.md).
 
 17.09: [Исполняемая проверка drand, газ и ограничения](DRAND_FEASIBILITY.md).

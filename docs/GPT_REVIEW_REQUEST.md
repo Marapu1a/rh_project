@@ -1,45 +1,45 @@
-# Ревью: исправление L1/L2 block identity
+# Ревью: drand binding — проверенные контрпримеры
 
-18.09.2026. Подтвердили дефект независимо через оба Robinhood RPC и исправили.
-Начать с [ROBINHOOD_BLOCK_SEMANTICS.md](ROBINHOOD_BLOCK_SEMANTICS.md).
+18.09.2026. Сделали ограниченную JS-модель двух кандидатов: seal-time+lead
+и fixed schedule+lead. Основные Solidity contracts не менялись.
 
-Минимальный helper contracts/ChainBlocks.sol:
+[Отчёт](DRAND_BINDING_MODEL.md), scripts/drand-binding-model.cjs,
+test/drand-binding-model.test.cjs, research/drand-binding/model-result.json.
+Запуск: npm run test:drand:binding — 7/7 passed, 40 timing combinations.
+Это синтетическая модель с deterministic verifier stub, не новая BLS/EVM проверка.
+Полный набор основных contracts не повторяли: их код в этом пакете не менялся.
 
-- 4663/46630 используют фиксированный ArbSys(0x64), number + arbBlockHash;
-- остальные chain IDs используют стандартную EVM семантику;
-- на Robinhood нет fallback к L1 при ошибке ArbSys;
-- окно не расширяли: только completed ages 1..256;
-- EIP-2935 не понадобился, нужный путь ArbSys проверен на обеих сетях.
+Подтвердили:
 
-Заменили cutoff, genesis/activation B+1, terminal block и legacy freezeBlock в
-ShortDrawCommitment, ShortDatasetPreparation, ShortRulesEpochs, MonthlySettlement.
-Research RNG wrappers также исправлены. Их confirmations — L2 block count, НЕ finality.
-Казна, fee math, permission model, события и формат replay не менялись.
+- внутри сохранившейся истории один target, повтор/late proof не меняет seed;
+- zero seed допустим; wrong round/forged proof отвергается;
+- proof reorg/restart не меняет сохранённый target;
+- Short/Monthly могут легально использовать один beacon через разные contexts.
 
-Проверки: прежний полный набор 167/167; Nitro suite 5/5 отдельным запуском.
-Новые тесты включены в npm test (172). Повторно объединённую команду не запускали.
-State-override RPC checks 2/2; ages 1/256 hashes совпадают с RPC, 0/future/257 дают zero.
-Это не deployment и не finality proof. Evidence: research/chain-blocks/rpc-result.json.
+Воспроизвели три ограничения:
 
-Nitro fixture специально разводит координаты: L2 = native EVM number + 1 000 000.
-Это не полный Nitro emulator. Проверяет genesis, B+1, old-first, empty без нового
-clock, begin/seal/terminal с реальной казной, reorg/retry и старый commitment path.
+1. Stale chain clock на 2 часа + lead 1 час выбирает уже известный round.
+   Этим может пользоваться publisher без контроля над sequencer.
+2. Freeze reorged после раскрытия R: replacement history получает другой target.
+   Задержка proof delivery не скрывает уже публичную randomness.
+3. Fixed schedule: при опоздании target уже наступил; нужен определённый переход
+   ДО freeze, а не молчаливое зависание или reroll существующего обязательства.
 
-Повторён standard size/deployment gate: Short 22 368, Monthly 17 445, vault 8 496 bytes.
-Все ниже 24 576. Никаких proxy, setters, смены RNG, admin rescue или новой казны.
+Числа — тестовые входы, не рекомендованные параметры и не статистика атак.
+7/7 означает, что воспроизведены в том числе небезопасные случаи; production не готов.
 
-Границы переносимости явные: другая Nitro сеть требует добавить её chain ID
-и повторить проверки перед deployment. Автоопределения неизвестных сетей нет.
-Исторический test-only ShortStreamingStudy остаётся Ethereum-only.
+Нужен теперь конкретный узкий ответ, а не ещё один обзор RNG:
 
-Вопросы:
+1. Какая минимальная модель часов/свежести предотвращает known-result binding
+   против publisher? Если только operational monitor — явно DETECT, не ENFORCE.
+2. Как обеспечить автоматическое продвижение до freeze при пропущенном расписании,
+   сохранив attempts и не позволяя выбрать результат для уже frozen context?
+3. Что именно принимаем как допущение о сети, и можно ли сделать его независимо
+   проверяемым по публичной истории? Не путать RPC safe/finalized с on-chain proof.
+4. Если предлагается anchor, кто определяет единственный canonical anchor, как
+   исключаются выбор из нескольких anchors и late delivery уже известного round?
 
-1. Остался ли конкретный путь смешать L1/L2 координаты в текущих основных компонентах?
-2. Есть ли несовпадение contract events/genesis/terminal с текущим replay?
-3. Видите ли дефект в диапазоне 1..256 или fail-closed поведении helper?
-4. Можно ли переходить к локальному drand timing/binding study без расширения scope?
-
-Следующий кусок по-прежнему: один immutable future round, поздняя same-proof
-доставка, явные finality assumptions, отсутствие вечной блокировки из-за задержки
-до freeze. Правильный L2 hash не объявляем доказательством L1 finality.
+Не вводим emergency seed, provider switching, reset frozen draw, fallback round,
+новую казну или AA recovery в этот пакет. Не объявляем fixed delay гарантией.
+Следующий Solidity prototype пишем после компактного решения этой trust boundary.
 Ответ — в прежний GPT_REVIEW_RESPONSE.md.

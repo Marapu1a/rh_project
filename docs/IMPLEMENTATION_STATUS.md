@@ -2,7 +2,12 @@
 
 Обновлено по локальному коду и проверкам: 18.09.2026. Это карта кода, а не утверждение реализации всей [продуктовой схемы](PRODUCT_SPEC.md).
 
-Текущий этап 18.09: [Nitro block identity](ROBINHOOD_BLOCK_SEMANTICS.md).
+Текущий этап 18.09: [drand binding model](DRAND_BINDING_MODEL.md), JavaScript-only.
+7/7 сценариев и 40 timing combinations; воспроизведены stale-clock, reorg-after-reveal
+и late-schedule counterexamples. Fixed lead не принят как production гарантия.
+Основные contracts не менялись; clock/finality trust policy остаётся нерешённой.
+
+Предыдущий этап 18.09: [Nitro block identity](ROBINHOOD_BLOCK_SEMANTICS.md).
 Cutoff, genesis/activation и terminal heights используют L2 ArbSys на Robinhood.
 Окно 1..256 сохранено; runtime Short 22 368, Monthly 17 445, vault 8 496 bytes.
 Finality/RNG binding пока не реализован.

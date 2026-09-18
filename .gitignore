@@ -23,6 +23,8 @@ research/*
 !research/drand-feasibility/**
 !research/chain-blocks/
 !research/chain-blocks/**
+!research/drand-binding/
+!research/drand-binding/**
 !research/pair-source-audit/
 !research/pair-source-audit/**
 !research/direct-buy/
