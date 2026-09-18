@@ -2,301 +2,189 @@
 
 Обновлено: 18.09.2026.
 
-Просмотрен latest commit 31f160d1c3c532cf88d4466c8873f258f753570f — Verify real drand evmnet proofs locally and on Robinhood RPC.
+Просмотрен latest commit `307c790a625cbeca3465e71f2ec22a0c9de1be81` — `Use Robinhood L2 identities for draw cutoffs and epoch boundaries`.
 
-Прочитаны DRAND_FEASIBILITY.md, новый GPT_REVIEW_REQUEST.md, EvmnetFixture.sol, pinned vendor/source metadata, реальные vectors, local/RPC evidence и тест. Дополнительно сверены upstream drand client/spec, pinned randa-mu vector/demo и актуальные Robinhood/Arbitrum docs. GitHub CI/status для latest commit пусты. Заявленные repo проверки npm test 167/167, drand 2/2 и RPC 2/2 в этом проходе мной независимо не запускались.
+Прочитаны `ROBINHOOD_BLOCK_SEMANTICS.md`, `ChainBlocks.sol`, изменения в Short/Monthly, Nitro fixture/tests, RPC evidence и текущий `GPT_REVIEW_REQUEST.md`. GitHub CI/status для commit пусты. Заявленные проверки repo: прежний full suite 167/167, отдельный Nitro suite 5/5, RPC checks 2/2 и dual size/deployment gate passed. Объединённый новый `npm test` на 172 tests в этом проходе мной независимо не запускался и, согласно repo, после добавления пяти Nitro tests ещё не запускался.
 
 ## Короткий вывод
 
-Feasibility реально продвинул вопрос: путь evmnet proof -> Solidity -> Robinhood EVM теперь не гипотеза. В текущем research package я не вижу конкретной ошибки в ordering public key, uint64 round encoding, DST, hash-to-point или sha256(signature).
+Предыдущий L1/L2 blocker исправлен по сути правильно.
 
-Но до production RNG ещё две отдельные границы:
+Теперь Short/Monthly on-chain boundaries и off-chain replay используют одну координатную систему: Robinhood **L2 block number + L2 block hash**. Для chainId 4663/46630 helper получает L2 height/hash через фиксированный ArbSys `0x64`; fallback на Solidity `block.number/blockhash` при сбое ArbSys отсутствует.
 
-1. crypto implementation остаётся unaudited dependency в нашем audit scope;
-2. timing/finality binding пока не решён.
+В просмотренных основных компонентах конкретного оставшегося пути смешать L1 и L2 identity я не нашёл.
 
-И при проверке второй границы нашёлся более срочный production blocker, который относится не только к RNG:
-
-> текущие Short/Monthly cutoff и epoch contracts используют Solidity block.number / blockhash как будто это Robinhood L2 block number. На Arbitrum/Nitro это неверно.
-
-Robinhood и Arbitrum docs сейчас прямо говорят: block.number внутри контракта возвращает приблизительный Ethereum/L1 block number, тогда как RPC receipt/log blockNumber — настоящий L2 block number. Для L2 height нужен ArbSys(0x64).arbBlockNumber().
-
-Это затрагивает как минимум ShortDrawCommitment.sol, ShortDatasetPreparation.sol, ShortRulesEpochs.sol и MonthlySettlement.sol. Поэтому следующий package я бы начинал не с формулы drand round, а с исправления chain-numbering boundary и только затем строил binding поверх правильного L2 anchor.
-
-Источники:
-
-- https://docs.robinhood.com/chain/differences-from-ethereum/
-- https://docs.robinhood.com/chain/transaction-finality/
-- https://docs.arbitrum.io/arbitrum-essentials/arbitrum-vs-ethereum/block-numbers-and-time
-- https://docs.arbitrum.io/arbitrum-essentials/arbitrum-vs-ethereum/solidity-support
+Это исправляет **идентичность блока**, но не finality. Следующий отдельный вопрос остаётся прежним: как frozen draw необратимо привязать к одному будущему drand round так, чтобы target нельзя было переиграть.
 
 ---
 
-## 1. Что именно уже доказал drand package
+## 1. ChainBlocks выглядит корректно для принятого scope
 
-### Message / round encoding
+На Robinhood:
 
-Текущий код:
+~~~text
+number()
+-> ArbSys(0x64).arbBlockNumber()
 
-~~~solidity
-BLS.hashToPoint(
-    DST,
-    abi.encodePacked(keccak256(abi.encodePacked(round)))
-)
+recentHash(n)
+-> только completed age 1..256
+-> ArbSys(0x64).arbBlockHash(n)
 ~~~
 
-для uint64 round совпадает с текущим drand client: round сериализуется как 8-byte big-endian, для BN254 evmnet unchained message используется Keccak-256 от этих восьми bytes.
+На остальных chain IDs остаётся обычная EVM semantics.
 
-Upstream client:
+Мне нравится fail-closed поведение:
 
-https://github.com/drand/drand-client/blob/master/lib/beacon-verification.ts
+- неизвестный/current/future/старше 256 -> zero;
+- zero hash caller не принимает;
+- если ArbSys отсутствует/revert'ит внутри допустимого окна -> весь вызов revert;
+- никакого тихого fallback в L1 identity нет.
 
-Pinned randa-mu demo использует ту же конструкцию:
+Это важно: ошибка инфраструктуры не превращается обратно в тот самый смешанный L1/L2 режим, который мы исправляли.
 
-https://github.com/randa-mu/bls-solidity/blob/11af179a8287d978659aae07adb66aa60f64b8a6/src/demos/EvmnetRegistry.sol
+RPC evidence на 4663 и 46630 подтверждает именно нужное поведение: `arbBlockNumber()` совпал с RPC L2 height, отличается от native Solidity `block.number`; hashes для ages 1 и 256 совпали с RPC block hashes, age 0/future/257 дали zero.
 
-### DST
-
-BLS_SIG_BN254G1_XMD:KECCAK-256_SVDW_RO_NUL_ совпадает с drand client и pinned vector.
-
-### Public key ordering
-
-В fixture key хранится в порядке, который ожидает pinned kevincharm/bls-bn254; тест затем обратно сериализует его в drand wire order и сравнивает с chain info. Плюс две реальные подписи проходят pairing verification. Конкретного ordering defect не вижу.
-
-### Canonical randomness
-
-sha256(signature) совпадает с drand client validation и с опубликованным beacon randomness. Отдельный proven flag правильно избегает ошибки bytes32(0) как sentinel.
-
-### Robinhood execution
-
-Новый RPC check значительно сильнее прежнего precompile smoke test: через state override на chainId 4663 и 46630 исполняется весь runtime, включая hash-to-curve, ECADD/modular work и pairing. Valid proof принят, wrong round отвергнут.
-
-Но repo правильно не называет это deployment: это eth_call / eth_estimateGas, без публичной транзакции и сохранённого state.
-
-Runtime 9,139 bytes и ~233k/243k remote estimate сейчас не выглядят техническим blocker.
+Это read-only state-override evidence, не deployment и не finality proof — repo это формулирует корректно.
 
 ---
 
-## 2. Crypto boundary всё ещё не закрыта
+## 2. Основные Short/Monthly границы переведены последовательно
 
-Pinned kevincharm/bls-bn254 действительно совпадает с сохранёнными hashes и не добавлен в production dependency graph — это хорошо.
+Проверены изменения в:
 
-Но passing vectors != audit.
+- `ShortDrawCommitment`;
+- `ShortDatasetPreparation`;
+- `ShortRulesEpochs`;
+- `MonthlySettlement`.
 
-randa-mu/bls-solidity, который использует ту же базу, сам маркируется как experimental / unaudited и с июля 2026 архивирован. Drand в 2025 отдельно писал и про свой BLS12-381 on-chain verifier, что он не third-party audited и не предназначен для production integration без дальнейшего review.
-
-То есть production путь для evmnet я бы формулировал так:
+Исправлены не только cutoff checks, но и места, которые легко было забыть:
 
 ~~~text
-vendor exact minimal verifier
-+ exact evmnet key/DST/scheme immutable
-+ upstream differential vectors
-+ malformed/adversarial corpus
-+ dedicated crypto review/audit
+genesis firstBlock
+activation B+1
+empty cutoff
+terminal block
+legacy freezeBlock
 ~~~
 
-а не «мы проверили две подписи, значит криптография закрыта».
+Это важно, потому что оставить хотя бы один `firstBlock = block.number` означало бы снова смешать replay L2 attempts с L1-like contract boundary.
 
-Полезно добавить differential corpus не только из randa-mu, но и генерировать множество rounds/signatures off-chain через текущий официальный drand-compatible BN254 implementation и сравнивать Solidity result. Это не заменяет аудит, но лучше двух vectors.
+В текущем `contracts/` прямых production-use `block.number/blockhash` для этих identities больше не вижу: они изолированы в `ChainBlocks`.
 
 ---
 
-## 3. Exact-round outage/backfill: здесь ответ стал лучше
+## 3. Replay менять не требовалось
 
-Drand protocol specification прямо описывает catchup:
+Это выглядит правильным решением, а не пропущенной миграцией.
 
-- gaps в beacon rounds быть не должно;
-- если сеть отстала, после восстановления nodes догоняют пропущенные rounds последовательно;
-- sync API отдаёт requested round и последующие;
-- unchained mode всё равно хранит rounds, просто verification не зависит от previous signature.
+Replay/indexer уже использует RPC event/receipt `blockNumber`, то есть L2 height. События и request ABI не менялись. После перехода Solidity стороны на ArbSys contract и replay наконец говорят об одном и том же числе.
 
-Источник:
+Поэтому отдельная lifecycle v5 только ради этого исправления не нужна.
 
-https://docs.drand.love/docs/specification/
-
-Поэтому для **временного outage с последующим восстановлением той же сети** разумное ожидание такое:
+Nitro regression специально разносит:
 
 ~~~text
-target R задержался
--> сеть восстановилась
--> catchup генерирует R
--> любой keeper позже приносит тот же proof R
+native EVM number
+!=
+synthetic L2 number (+1,000,000)
 ~~~
 
-Это намного лучше request/refund RNG для нашего no-reroll invariant.
-
-Но это не SLA и не решает permanent death. Если evmnet окончательно остановится/будет sunset без генерации конкретного будущего R, draw может зависнуть навсегда. Drand отдельно пишет, что судьбу evmnet решает League of Entropy; на 2025 у них не было плана его сворачивать, пока есть интерес, но immutable lifetime guarantee отсюда не следует.
-
-Источник:
-
-https://docs.drand.love/blog/2025/08/26/verifying-bls12-on-ethereum/
-
-Для нашей philosophy это приемлемая фундаментальная граница только если мы явно принимаем:
-
-> no reroll сильнее guaranteed completion при полном исчезновении RNG network.
+и проверяет genesis, activation B+1, cutoff, terminal, empty, reorg/retry и legacy path. Это хороший тест именно против возврата старой ошибки.
 
 ---
 
-# 4. Новый production blocker: L1 block.number vs L2 block number
+## 4. Окно 1..256 соответствует текущему design
 
-Это сейчас важнее timing formula.
-
-Robinhood docs:
+Helper сохраняет прежнее правило:
 
 ~~~text
-block.number -> estimate of Ethereum/L1 block number
-ArbSys(0x64).arbBlockNumber() -> actual Robinhood L2 block number
-RPC receipt/log blockNumber -> L2 block number
+current block    -> нельзя
+future           -> нельзя
+age 1..256       -> можно
+age 257+         -> нельзя
 ~~~
 
-Arbitrum docs подтверждают то же и отдельно предупреждают, что эти числа не совпадают.
+Новый пакет не пытается незаметно превратить 256 L2 blocks в finality delay. Это правильно.
 
-В текущем коде есть конструкции вида:
-
-~~~solidity
-request.cutoffBlockNumber < block.number
-block.number - request.cutoffBlockNumber <= 256
-blockhash(request.cutoffBlockNumber) == request.cutoffBlockHash
-~~~
-
-и epoch boundaries:
-
-~~~solidity
-policy.firstBlock = block.number + 1
-lastTerminalBlock = block.number
-~~~
-
-При этом replay/indexer строит историю по обычным RPC L2 block numbers.
-
-Это две разные координатные системы.
-
-На Hardhat это не видно, потому что там block.number и RPC block number совпадают.
-
-### Что надо сделать до RNG binding
-
-Нужен маленький robinhood-block-semantics package:
-
-1. Ввести один внутренний primitive _l2BlockNumber() через ArbSys и перестать использовать Solidity block.number для attempt/cutoff/epoch L2 boundaries.
-2. Проверить на Robinhood mainnet/testnet read-only, что ArbSys height совпадает с RPC L2 semantics ожидаемым способом.
-3. Не переносить автоматически текущий blockhash(cutoffL2): Arbitrum BLOCKHASH имеет специальные semantics и диапазон относительно Solidity block.number, а не нашего RPC L2 height.
-4. Проверить EIP-2935 history contract на Robinhood ArbOS 61. Актуальные Arbitrum docs говорят, что их modified EIP-2935 path использует ArbSys.arbBlockNumber() и предназначен для past **L2 block hashes**. Если он реально доступен на 4663/46630, это выглядит естественной заменой для canonical recent L2 hash check.
-5. После этого повторить Short/Monthly epoch/cutoff tests в fixture, которая моделирует Nitro semantics, а не Ethereum/Hardhat block.number == L2 number.
-
-Пока это не исправлено, я бы не называл cutoff/finality path Robinhood-compatible.
+Отдельно важно: после успешного `begin` cutoff не проверяется повторно при `seal`, даже если прошло >256 блоков. Это не новый дефект — identity уже была проверена и записана при begin, а publication может длиться дольше окна. Nitro test специально это покрывает.
 
 ---
 
-# 5. Timing/future-round binding: минимальная модель после исправления block semantics
+## 5. Единственная архитектурная оговорка helper — переносимость
 
-Robinhood теперь публикует полезную finality модель:
-
-- soft confirmation — sequencer receipt;
-- posted to Ethereum — ordering fixed, кроме Ethereum reorg;
-- Ethereum finality — полная finality; docs дают ~13 minutes **typical** after posting.
-
-Важно: это не hard upper bound. Поэтому нельзя превратить «~13 минут» в константу, которая математически гарантирует finality.
-
-Ещё одна важная Arbitrum граница: L2 block.timestamp задаётся sequencer clock и допускает значительный диапазон; docs указывают до 24h назад / 1h вперёд. Значит block.timestamp нельзя описывать как объективный finality clock.
-
-### Я бы тестировал такой invariant
-
-В freeze transaction immutable сохраняются:
+Сейчас Nitro behavior включён только для:
 
 ~~~text
-drawId
-frozen context / dataset
-budget / basket / rules
-L2 cutoff identity
-freeze L2 block identity
-targetRound
-targetRoundTime
+4663
+46630
 ~~~
 
-targetRound вычисляется контрактом, caller его не передаёт.
+Для другой Nitro chain код пойдёт по стандартной EVM ветке и будет неверен для той сети, пока chain ID не добавлен.
 
-Он должен быть достаточно далеко в будущем, чтобы при нормальном ходе freeze успел перейти выбранную security boundary до публикации R. Но поскольку hard upper bound finality нет, production policy должна иметь fail-closed случай:
+В текущем Robinhood-first deployment это не blocker: scope явно документирован, auto-detection специально отсутствует.
 
-~~~text
-если freeze не достиг требуемой finality до target disclosure,
-этот frozen obligation НЕ получает новый round.
-~~~
-
-То есть safety не подменяем reroll'ом.
-
-### Что contract может доказать, а что нет
-
-На L2 contract легко доказать immutable target и валидность drand proof.
-
-Сам по себе L2 contract не доказывает, что **его собственный freeze block уже Ethereum-final** до момента раскрытия R. Read-only RPC observation safe/finalized тоже не является on-chain proof.
-
-Поэтому feasibility должен отдельно выбрать один из уровней:
-
-A. accepted external finality assumption + independent verifier detects violation;
-
-B. on-chain/L1-assisted proof of batch/finality, если реально нужен enforce, а не detect;
-
-C. консервативный fixed lead + fail-closed, честно описанный как operational assumption, не mathematical finality guarantee.
-
-Для MVP я бы сначала исследовал A/C, не тащил L1 proof machinery до доказанной необходимости.
+Но deployment checklist должен считать поддержку новой chain отдельной porting task, а не «контракт EVM-compatible автоматически».
 
 ---
 
-## 6. Обязательные негативные сценарии для binding fixture
+## 6. Это всё ещё не finality
 
-Минимум:
+Исправление отвечает на вопрос:
 
-1. caller не может передать/заменить target round;
-2. target R уже опубликован до freeze -> freeze/relevant seal запрещён;
-3. exact boundary targetTime == block.timestamp;
-4. sequencer timestamp skew around round boundary;
-5. freeze reorged away до accepted finality -> canonical replay не сохраняет obligation;
-6. freeze survives, proof tx reorged/reverted -> повторяется только proof R;
-7. invalid R-1/R+1 proof;
-8. correct R через день/30 дней;
-9. duplicate delivery by another caller;
-10. process/finish revert after proof -> stored R остаётся тем же;
-11. keeper outage -> другой caller продолжает;
-12. temporary drand outage -> late exact R accepted;
-13. permanent no-R -> draw остаётся pending, no reset/new target;
-14. restart/replay reconstructs same drawId -> R;
-15. cutoff uses L2 height/hash semantics, а не Solidity block.number;
-16. target calculation не меняется от caller, gas payer, tx ordering внутри уже frozen context.
+> какой именно L2 block мы имеем в виду?
 
-Отдельно я бы fuzz'ил round arithmetic на timestamp bounds, а не только на идеальные integer seconds.
+Оно НЕ отвечает:
+
+> достаточно ли этот L2 block закреплён на Ethereum, чтобы после раскрытия drand round его нельзя было practically переиграть через pre-finality reorg?
+
+Поэтому названия вроде `confirmations` в research wrappers надо продолжать понимать только как **L2 block distance/readiness**, а не proof of finality.
+
+Правильный L2 hash != L1/Ethereum finality.
 
 ---
 
-# 7. Что делать следующим куском
+## 7. Можно ли идти в drand timing/binding study?
 
-Я бы немного поменял порядок из текущего request.
+Да.
 
-Сначала:
+Я не вижу необходимости расширять этот block-semantics package ещё одним механизмом вроде EIP-2935: ArbSys уже даёт ровно тот recent 256-L2-block hash window, который нужен текущему begin/cutoff design и который подтверждён RPC evidence.
 
-~~~text
-robinhood-block-semantics
-~~~
+Перед следующим package полезно только один раз прогнать новый объединённый `npm test` (172 tests), чтобы старый suite + Nitro tests были подтверждены одной текущей командой. Это regression hygiene, не архитектурный blocker.
 
-- ArbSys L2 height;
-- L2 hash retrieval path;
-- mainnet/testnet read-only evidence;
-- заменить/изолировать неверные block.number assumptions в Short/Monthly boundaries;
-- regressions.
+---
 
-Сразу после:
+# Следующий минимальный package: drand-binding-timing-v1
+
+Scope я бы держал узким.
+
+Нужно локально доказать:
 
 ~~~text
-drand-binding-timing-v1
+frozen draw
+-> контракт детерминированно получает ровно один future round R
+-> caller/admin не передаёт и не выбирает R
+-> R ещё не известен в момент допустимого binding
+-> после binding R никогда не меняется
+-> failed/reorged proof/process tx можно повторить только с тем же R
+-> поздняя delivery того же valid proof permissionless
+-> если exact R никогда не появляется, draw остаётся pending
 ~~~
 
-- immutable exact R;
-- future lead;
-- explicit finality assumption;
-- no reroll;
-- late permissionless same-proof delivery;
-- reorg/restart/failure matrix.
+Отдельно зафиксировать finality assumption: что именно production считает достаточной границей до раскрытия R и является ли эта граница on-chain enforced или externally verified/detectable.
 
-И только затем production RNG adapter.
+Не добавлять в этот шаг:
 
-Это не отменяет текущий drand feasibility — наоборот, он свою задачу выполнил: cryptographic execution path выглядит жизнеспособно. Теперь главный риск уже не «запустится ли BN254 на Robinhood», а правильная Nitro chain identity/finality semantics и отсутствие target grinding.
+- provider switching;
+- emergency seed;
+- новый round по timeout;
+- RNG epochs;
+- reset/cancel frozen draw;
+- изменение prize accounting.
 
-Production provider всё ещё не выбран.
+## Итог
+
+`307c790` закрывает найденную L1/L2 identity несовместимость аккуратно и без нового trust surface.
+
+Следующий реальный риск теперь снова тот, ради которого этот фикс понадобился: **future-round/finality binding без возможности target grinding**.
+
+Production RNG provider всё ещё не выбран, но drand feasibility + исправленная Nitro identity дают достаточно оснований переходить к локальному binding/timing study.
