@@ -16,6 +16,11 @@
 
 ## Последний результат
 
+- [Prize flow](LOCAL_PRIZE_FLOW.md): **11/11** новых проверок с реальным локальным CLI,
+  **35/35** соседних регрессий. Основной набор **232**, целиком не запускался.
+  Доход обоих активов автоматически проходит новый custody path; old recipient debt
+  обслуживается по bounded списку. Real DEX и live PAIR не подключены.
+
 - Добавлен LocalPrizeConverter и fixed swap fixture; модель/ограничения —
   [LOCAL_PRIZE_CONVERTER](LOCAL_PRIZE_CONVERTER.md). Converter **5/5**, tx/CLI **11/11**, BUY-cycle **1/1** из cwd без `.local`;
   runtime 4 556 bytes.
@@ -62,15 +67,16 @@
 
 ## Следующий ограниченный шаг
 
-Локальный контрактный [TOKEN → USDG converter](LOCAL_PRIZE_CONVERTER.md) реализован:
-общий inventory, immutable destination/adapter, локальный fixed floor, независимый
-forward USDG. Новые тесты используют FeeRouter recipient=converter; старый funding job
-по-прежнему требует recipient=vault. Это ещё не сквозная автоматизация TOKEN.
+[Локальный prize-flow worker](LOCAL_PRIZE_FLOW.md) связал FeeRouter, converter и USDG vault:
+collect/harvest обоих активов, pay/forward до swap, bounded legacy recipients,
+изоляция definite отказов и stop на unknown tx. Отдельный local-prize-flow-v1 job/CLI.
+Старые USDG jobs не изменены; unsafe legacy TOKEN→USDG-only credit только диагностируется.
 
-Следующий ограниченный кусок — подключить converter к локальным funding/revenue jobs
-и определить bounded обслуживание legacy recipients при смене policy. Прежний прямой
-TOKEN pay в USDG-only vault остаётся опасным для старого deployment-профиля.
-Реальный DEX/price guard пока не выбран; fixed floor разрешён только в chainId 31337 proof.
+Следующий разумный кусок — выбрать и описать эксплуатационную связку: как совместно
+запускать revenue/prize-flow и draw scheduler без конкурирующих tx одного signer,
+с учётом отдельного project gas budget. Начать с ограниченного локального orchestration,
+не объявлять его journal/autorefill/production supervisor. Real DEX/price guard и RNG
+остаются отдельными архитектурными решениями; fixed floor только для chainId 31337.
 
 После этого остаются эксплуатационное финансирование и настоящий RNG с безопасной привязкой.
 Draw scheduler и revenue worker пока запускаются отдельно; общего supervisor нет.

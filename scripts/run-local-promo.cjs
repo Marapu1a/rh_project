@@ -4,6 +4,7 @@ const {ethers}=require('ethers');
 const short=require('./local-short-executor.cjs'),monthly=require('./local-monthly-executor.cjs');
 const funding=require('./local-usdg-funding.cjs');
 const revenue=require('./local-usdg-revenue.cjs');
+const prize=require('./local-prize-flow.cjs');
 async function main(){
   const args=process.argv.slice(2),options={};
   for(let i=0;i<args.length;i++){
@@ -16,17 +17,18 @@ async function main(){
   const url=new URL(options.rpc);
   if(url.protocol!=='http:'||!['localhost','127.0.0.1','[::1]'].includes(url.hostname)||url.username||url.password)throw Error('Loopback HTTP RPC only');
   const job=JSON.parse(fs.readFileSync(options.job,'utf8'));
+  const isPrize=job.schema==='local-prize-flow-v1';
   const isMonthly=job.schema==='local-monthly-job-v1';
   const isRevenue=job.schema==='local-usdg-revenue-v1';
   const isFunding=job.schema==='local-usdg-funding-v1'||isRevenue;
-  (isRevenue?revenue.validateRevenueJob:isFunding?funding.validateFundingJob:isMonthly?monthly.validateMonthlyJob:short.validateJob)(job);
-  const run=isRevenue?revenue.runRevenue:isFunding?funding.runFunding:isMonthly?monthly.runMonthly:short.runShort;
+  (isPrize?prize.validatePrizeFlowJob:isRevenue?revenue.validateRevenueJob:isFunding?funding.validateFundingJob:isMonthly?monthly.validateMonthlyJob:short.validateJob)(job);
+  const run=isPrize?prize.runPrizeFlow:isRevenue?revenue.runRevenue:isFunding?funding.runFunding:isMonthly?monthly.runMonthly:short.runShort;
   const provider=new ethers.JsonRpcProvider(options.rpc,undefined,{cacheTimeout:-1});
   try{
     if((await provider.getNetwork()).chainId!==31337n)throw Error('Local chain 31337 only');
     const artifacts=JSON.parse(fs.readFileSync('artifacts/compiled.json','utf8'));
     const moneyJob=isRevenue?job.funding:job;
-    const bindings=isFunding?{
+    const bindings=isPrize?{router:new ethers.Contract(job.router,artifacts.FeeRouter.abi,provider)}:isFunding?{
       router:new ethers.Contract(moneyJob.router,artifacts.FeeRouter.abi,provider),
       vault:new ethers.Contract(moneyJob.vault,artifacts.PromoVault.abi,provider)
     }:{source:new ethers.Contract(job.artifact.snapshot.domain[isMonthly?'monthlySource':'source'],
@@ -41,12 +43,12 @@ async function main(){
     try{
       do{
         const result=await run({provider,...bindings,job,publisher,executor},{signal:stop.signal,onStep:r=>console.log(JSON.stringify(r))});
-        if(isRevenue)console.log(JSON.stringify({action:'revenuePass',...result}));
+        if(isPrize||isRevenue)console.log(JSON.stringify({action:isPrize?'prizeFlowPass':'revenuePass',...result}));
         if(result.status==='error'){process.exitCode=1;break;}
         if(result.status==='terminal'||result.status==='stopped'||!options.watch)break;
         await new Promise(resolve=>{
           const finish=()=>{clearTimeout(timer);stop.signal.removeEventListener('abort',finish);resolve();};
-          const timer=setTimeout(finish,isRevenue?job.pollSeconds*1000:isFunding?10000:1000);
+          const timer=setTimeout(finish,(isPrize||isRevenue)?job.pollSeconds*1000:isFunding?10000:1000);
           stop.signal.addEventListener('abort',finish,{once:true});if(stop.signal.aborted)finish();
         });
       }while(!stop.signal.aborted);

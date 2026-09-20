@@ -1,106 +1,88 @@
-# Обращение к GPT — локальный конвертер и следующий шаг автоматизации
+# Обращение к GPT — автоматический локальный prize flow
 
-20.09.2026. Ответ перезаписывать в docs/GPT_REVIEW_RESPONSE.md; указать реально
-просмотренный commit. Не менять код автоматически. Предыдущая история доступна в git.
+20.09.2026. Прочитай текущий commit, укажи его hash. Ответ полностью перезапиши
+в docs/GPT_REVIEW_RESPONSE.md. Review не является разрешением автоматически менять код.
 
-## Контекст, который важно сохранить
+## Контекст проекта
 
-Продукт: спекулятивный TOKEN, отдельное добровольное Promo, Short каждые 6 часов,
-Monthly jackpot. Все денежные призы USDG; Luck удалён, sponsor layer позже отдельно.
-Проект получает свою долю до prize custody. Prize funds невозвратны проекту;
-free/reserved/claimable раздельны. Нет reroll/reset, proxy, admin withdrawal.
+TOKEN + отдельное добровольное Promo: 6-часовой Short, месячный jackpot. Все денежные
+призы USDG; Luck удалён. Project share до prize custody; frozen/claimable не используются
+на gas, нет withdraw/reroll/reset/proxy. Сначала полный локальный скелет, затем hardening.
+Штатная работа должна автоматизироваться, а не требовать ручных кнопок.
 
-Пользователь просит последовательно собрать скелет, затем укреплять по участкам;
-маленький шаг с проверками, без возврата к каждой исторической идее. Штатные операции
-должны автоматизироваться, permissionless API само не является автоматизацией.
-Объём и комиссии заранее неизвестны; budget только фактически полученный USDG.
-Неудачный swap не должен мешать завершению уже frozen draw.
+Сначала CURRENT_CONTEXT, ROADMAP, LOCAL_PRIZE_FLOW; PRODUCT_SPEC — продуктовые правила.
+Архив не перечитывать без конкретного вопроса. Реальные доли не утверждены; 80/20 и 50/50
+— fixtures. PAIR V1 70/30 не universal V2 split; source policy/ABI/claim надо проверять
+на выбранном deployment. В этом шаге live PAIR и DEX не трогали.
 
-Начать с CURRENT_CONTEXT и ROADMAP, затем LOCAL_PRIZE_CONVERTER. Карта кода —
-IMPLEMENTATION_STATUS, правила — PRODUCT_SPEC. Архив читать только по конкретному вопросу.
+Shared converter допустим при неизменном назначении; campaign-specific conversion P&L
+не обещается. Новое назначение = новый converter, старые credits/inventory остаются
+старому immutable vault. Local converter только chainId 31337 с fixed test floor/adapter;
+maxInput — одна tx, а не лимит суммарной продажи. Неизменяемый адрес не доказывает
+неизменность внешнего implementation — будущая проверка deployment обязательна.
 
-PAIR: V1/Launch V2 — поколения продукта, не L1/L2. 70/30 относится к V1 и не является
-универсальной V2 экономикой; фактическая policy/source entitlement требуют live проверки.
-См. PAIR_CURRENT_FEE_POLICY. Тестовые 80/20, 50/50 не утверждают реальные доли.
+## Что реализовано после ответа 437c34b
 
-## Что произошло после твоего ответа c13eb30
+Новый scripts/local-prize-flow.cjs и schema local-prize-flow-v1, запуск через общий CLI.
+Solidity и старые USDG jobs не менялись. Новый pass:
 
-1. C подтверждён review и остаётся исправленным: определённый recipient failure
-   изолирован на один общий revenue pass; unknown outcome останавливает writes.
-2. BUY-test теперь создаёт .local сам. CLI top-level catch выводит JSON с message,
-   code, stage, transactionHash и ненулевым exit; добавлена проверка вывода.
-3. Создан локальный LocalPrizeConverter, интерфейс IPrizeSwapAdapter и тестовый
-   PrizeSwapFixture. Код денежного FeeRouter/PromoVault не менялся.
+1. Весь configuration preflight на pinned head, включая current policy, source,
+   converter/assets/vault/adapter/параметры и bounded исторические policy witnesses.
+2. Доставка доступного USDG, выплата credits обоих assets только допустимым recipients.
+3. Один collect и harvest USDG/TOKEN; epoch drift запрещает collect, но не старые claims.
+4. Повторное распределение, затем максимум одна swap-порция/converter и forward результата.
 
-## Выбранная модель converter
+Definite pay/forward/convert/source failures изолируются общим private skip на pass.
+Router accounting failure и unknown send/receipt останавливают writes. Stage/hash остаются
+в результате и CLI. Не используем внешний skipRecipients/failures из caller в новом API.
+При failed forward не продаём дополнительный TOKEN этого converter в этом pass.
+Quote proceeds не зависят от успешности swap. Existing USDG paths не заменяли молча.
 
-Общий адрес для одинакового конечного назначения. Отдельный адрес на каждую campaign
-не обязателен: FeeRouter размечает начисления, converter не обещает P&L swap по campaign.
-При смене destination создаётся новый converter; старый не перенаправляет свои credits
-или inventory новому vault. Изменяемого setVault/setAdapter нет.
+Legacy: максимум восемь записей converter/usdgVault/project с campaignId и slot.
+Адрес должен быть указан в historical policy; prize slot 0 нельзя объявить project.
+Shared current recipient не требует отдельной historical записи, credit агрегирован.
+TOKEN credit старому USDG-only vault остаётся unpaid и явно выводится в unsafeDebt.
+Это НЕ on-chain quarantine: чужой public pay всё ещё способен загнать TOKEN в old vault.
+Новый deployment обязан сразу использовать совместимый recipient, а worker не спасает
+уже застрявшие средства. Список legacy доверенный и явно заданный, не доказательство
+полноты всей истории; проверки getter bindings не являются bytecode attestation.
 
-Constructor только chainId 31337. Immutable TOKEN/USDG/vault/adapter/floor ratio,
-maxInput и maxHorizon. Floor задан в raw units как локальное допущение; это НЕ market
-oracle и НЕ production slippage/MEV protection. Fixture обменивает заранее внесённый
-USDG по искусственному курсу. Реальный DEX не интегрирован.
+## Ограничения и следующий шаг
 
-sync наблюдает donations/pay без выдуманного sender provenance. convert сначала sync,
-затем exact input; allowance ровно amount только fixed adapter, после swap ноль.
-Сам converter рассчитывает minOut с округлением вверх, проверяет TOKEN/USDG balance
-deltas. Executor не выбирает recipient/route/minOut. Revert сохраняет inventory.
-ReentrancyGuard на всех mutating APIs.
+Default maxSteps=128, максимум256; bound считает tx attempts. Слишком маленький лимит
+при repeated pass может голодать поздние фазы, поскольку durable phase cursor нет.
+CLI не предоставляет пользовательский maxSteps, использует default. Стандартный pass
+ограничен конечным списком и одной convert/адрес; внешние concurrent mutations не исключены.
+Remaining inventory после порции -> yielded; definite failures/unsafe debt -> degraded.
+Watch ждёт pollSeconds, unknown error -> exit1. Никакого слепого resend.
 
-forwardQuote отдельно от swap, permissionless, только immutable vault; transfer +
-vault.syncUSDG атомарны. USDG можно forward даже при отказавшем adapter. Счётчики:
-tokenObserved = tokenSold + balance, quoteObserved = quoteForwarded + balance после
-sync. Неучтённые direct donations до sync находятся сверх этих сумм.
+LOCAL_HEAD/anchor не finality, snapshot completeness доверена publisher, RNG mock.
+Нет production journal/supervisor, реального DEX/price guard и ops autorefill.
+Следующий предварительный scope: совместный локальный запуск денежного и draw контуров,
+избегая конфликтов signer/nonce, затем проектный gas budget; не гигантский framework.
 
-## Ограничения, которые нельзя потерять
+## Просим независимую проверку
 
-- Старые funding/revenue jobs требуют vault в slot 0. Они НЕ умеют converter.
-  Новый безопасный custody profile пока проверяется контрактными вызовами в тестах.
-- Legacy recipients после смены policy не находятся текущим worker автоматически.
-  Тест доказывает старый permissionless pay/convert/forward, не daemon для истории.
-- Fixed adapter без выбранной recovery policy может навсегда остановить TOKEN swap;
-  отсутствие admin rescue не означает гарантированной liveness.
-- Полнота publisher snapshot доверенная, LOCAL_HEAD не finality, RNG тестовый;
-  production adapter/future-round binding, supervisor/journal/ops refill ещё не готовы.
-- Нельзя считать старый test профайл TOKEN→USDG-only vault исправленным только потому,
-  что рядом появился новый контракт. Следующий шаг должен связать worker с новым профилем.
+1. Нет ли неправильного назначения TOKEN, обхода unsafe legacy ветки, двойного pay/swap/forward?
+2. Честны ли статусы, skip-key и порядок фаз? Не разрешается ли запись после unknown outcome?
+3. Достаточны ли historical role/slot checks для заявленного доверенного local job?
+   Отдели misconfigured job от отсутствующей production attestation.
+4. Есть ли обычный, воспроизводимый сценарий starvation при default limits? Малые debug
+   maxSteps и отсутствие persistent cursor уже известны; не объявляй это решённым.
+5. Нет ли важных compatibility regressions CLI/старого USDG пути?
+6. Назови один разумный следующий пакет с критериями готовности. Не возвращай ненужный
+   per-campaign converter и не считай весь backlog prerequisite текущего локального шага.
 
-## Что просим проверить
+Проверки и их границы ниже; не воспринимай этот текст как доказательство отсутствия ошибок.
 
-1. Нужны конкретные counterexamples к inventory/delta/allowance/forward accounting,
-   включая donation, short output, wrong recipient, partial input и повтор после revert.
-2. Нет ли скрытого способа изменить конечное назначение или переиспользовать old credit?
-3. Разумно ли разделены swap и forward? Какие ограничения потребуются реальному
-   адаптеру сверх честно названного fixed local floor? Не требуем выбрать live DEX сейчас.
-4. Следующий небольшой пакет: минимальный job/API для converter и ограниченная обработка
-   legacy recipients. Предложи порядок работы, который не остановит USDG forward/collect
-   из-за отказа swap и не отправит TOKEN старому несовместимому recipient.
-5. Учитывай текущий C error classifier и stage/hash: unknown transaction нельзя повторять.
-   Не предлагается новый общий framework/supervisor в рамках ближайшего шага.
+## Итог проверок текущего шага
 
-Не присваивай production-ready. Отдели реальные блокирующие дефекты от тестовых
-ограничений и отложенной эксплуатации. Вопрос о shared converter vs per-campaign закрыт
-до появления нового экономического требования; не возвращай его по инерции.
+- Новый prize-flow набор: **11/11**, ~74 s.
+- `node --test --test-concurrency=1 test/local-usdg-funding.test.cjs test/local-prize-converter.test.cjs test/local-transaction.test.cjs test/local-buy-cycle.test.cjs`: **35/35**, ~228 s.
+- Итого **46** уникальных проверок; основной набор теперь **232**, полного запуска 232 не было.
 
-## Проверки 20.09.2026
-
-- `node --test test/local-prize-converter.test.cjs`: **5/5**, ~32 s.
-  Проверены third-party pay, общая казна, неизменность frozen reserve, баланс/allowance,
-  положительный output ниже floor, отказ/reentrancy/partial input/wrong recipient,
-  retry swap/forward, donation, late credits и смена immutable destination.
-- `node --test test/local-transaction.test.cjs`: **11/11**, включая structured CLI error.
-- Runtime LocalPrizeConverter: **4 556 bytes**, optimizer runs=200, solc из package lock.
-
-Первый общий запуск выявил неверный адрес controller в новом тестовом PromoVault;
-исправлен fixture, затем весь набор converter повторён успешно. Код FeeRouter и PromoVault
-не менялся. Основной набор теперь **221** тест, полного запуска 221 не было.
-Лог финального converter набора: `.local/logs/local-converter-final.log` (ignored).
-
-BUY-cycle: **1/1**, ~101 s, из изолированного cwd с junctions на исходники и dependencies,
-копиями package/config и отсутствующим `.local` перед запуском. Тест сам создал runtime
-каталог. Это проверка устранения скрытой filesystem precondition, не отдельная установка
-npm dependencies с нуля. Лог `.local/logs/converter-clean-buy.log` (ignored).
-Итого 17 уникальных проверок в трёх наборах; полный набор 221 не запускался.
+Регрессионный BUY-cycle продолжает проверять прежний USDG профиль; новый converter flow
+проверен отдельным source→collect→harvest→pay→convert→forward тестом и реальным CLI,
+а не выдан за уже встроенный в BUY fixture профиль. Contract converter tests дополнительно
+проверяют сохранность frozen reserve. Реальный PAIR/DEX не использовался.
+Логи (ignored): `.local/logs/local-prize-flow-tests.log`, `.local/logs/local-prize-flow-regressions.log`.

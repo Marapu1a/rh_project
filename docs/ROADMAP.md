@@ -85,8 +85,12 @@ TOKEN custody и остановка collection из-за project recipient ос�
 Контрактный локальный [TOKEN → USDG proof](LOCAL_PRIZE_CONVERTER.md) реализован:
 immutable destination, shared inventory, fixed test adapter/floor, balance delta,
 независимый USDG forward. Converter 5/5, tx/CLI 11/11, BUY-cycle 1/1 без исходной .local; полного запуска 221 не было. Отдельный converter на campaign не требуется.
-Следующий кусок — funding/revenue job для converter и bounded legacy-debt handling.
-Старый job recipient=vault нельзя выдавать за интеграцию нового converter.
+Реализован отдельный [local-prize-flow-v1](LOCAL_PRIZE_FLOW.md): оба source assets,
+converter pay/forward/convert и bounded legacy list; 11/11 новых + 35/35 регрессионных проверок.
+Полный набор 232 не запускался.
+Старый job recipient=vault сохранён отдельно; unsafe legacy TOKEN debt не платим.
+Следующий ограниченный участок — совместное локальное исполнение revenue и draw jobs
+с разделением signer/nonce и отдельным project gas budget; scope уточнить до реализации.
 Production DEX/price guard, поддержка изменения маршрутов и live PAIR binding не закрыты.
 
 Эксплуатация: доля проекта → native buffer/RNG/executor, bootstrap и

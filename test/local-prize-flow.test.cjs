@@ -1,0 +1,143 @@
+const {test}=require('node:test'),assert=require('node:assert/strict'),{ethers}=require('ethers');
+const {compile}=require('../scripts/compile.cjs');
+const {fixture,sent,advance,rpc}=require('./fixtures/local-controllers.cjs');
+const {runPrizeFlow}=require('../scripts/local-prize-flow.cjs');
+const compiled=compile();
+async function setup(){
+  const f=await fixture(compiled),project=await (await f.provider.getSigner(4)).getAddress();
+  const adapter=await f.deploy('PrizeSwapFixture',[f.token.target,f.quote.target,3,1]);
+  const make=async(vault=f.vault.target)=>f.deploy('LocalPrizeConverter',[f.token.target,f.quote.target,vault,adapter.target,2,1,1000,300]);
+  const converter=await make();
+  const descriptor=(c,vault=f.vault.target)=>({kind:'converter',address:c.target,vault,adapter:adapter.target,
+    floorNumerator:'2',floorDenominator:'1',maxInput:'1000',maxHorizon:'300',swapLimit:'1000',deadlineSeconds:'120'});
+  const end=(await f.provider.getBlock('latest')).timestamp+1000,recipients=[converter.target,ethers.ZeroAddress,project],bps=[8000,0,2000];
+  const router=await f.deploy('FeeRouter',[await f.admin.getAddress(),f.token.target,f.quote.target,[end,recipients,bps]]);
+  const source=await f.deploy('MockPairVault',[f.token.target,router.target]);await sent(router.bindSource(source.target,123));
+  await sent(f.quote.mint(adapter.target,100000));
+  const job={schema:'local-prize-flow-v1',chainId:'31337',router:router.target,token:f.token.target,quote:f.quote.target,
+    campaignId:'1',recipients,bps,active:descriptor(converter),legacy:[],source:{vault:source.target,positionId:'123',epoch:'1'},
+    distribution:'GENERAL',pollSeconds:300,maxGasPrice:'1000000000000'};
+  const options={provider:f.provider,router,executor:f.executor,job};
+  return {...f,project,adapter,converter,make,descriptor,router,source,job,options};
+}
+async function roll(f,recipients=f.job.recipients,bps=f.job.bps){
+  await advance(1001);const end=(await f.provider.getBlock('latest')).timestamp+1000;
+  await sent(f.router.rollCampaign(f.job.campaignId,[end,recipients,bps]));
+  f.job.campaignId=String(BigInt(f.job.campaignId)+1n);f.job.recipients=recipients;f.job.bps=bps;
+}
+async function queue(f,token=600,quote=100){await sent(f.source.queueFees(f.token.target,token));await sent(f.source.queueFees(f.quote.target,quote));}
+test('flow collects both assets, converts actual TOKEN and forwards USDG without double funding',async()=>{
+  const f=await setup(),before=await f.quote.balanceOf(f.vault.target);await queue(f);
+  const events=[],first=await runPrizeFlow(f.options,{onStep:e=>events.push(e)});assert.equal(first.status,'idle');
+  assert.equal(await f.quote.balanceOf(f.vault.target)-before,1520n);assert.equal(await f.token.balanceOf(f.vault.target),0n);
+  assert.equal(await f.token.balanceOf(f.project),120n);assert.equal(await f.quote.balanceOf(f.project),20n);
+  assert.equal(await f.converter.tokenSold(),480n);assert.equal(await f.converter.quoteForwarded(),1520n);
+  const convert=events.findIndex(e=>e.action==='convert');assert(convert>events.findIndex(e=>e.action==='forwardQuote'));
+  assert.equal((await runPrizeFlow(f.options)).status,'idle');assert.equal(await f.quote.balanceOf(f.vault.target)-before,1520n);
+  assert.equal(await f.quote.balanceOf(f.router.target),0n);assert.equal(await f.token.balanceOf(f.router.target),0n);
+});
+test('broken swap does not block USDG/source; retry consumes remaining inventory once',async()=>{
+  const f=await setup(),before=await f.quote.balanceOf(f.vault.target);await queue(f);await sent(f.adapter.setFailure(1));
+  const first=await runPrizeFlow(f.options);assert.equal(first.status,'degraded');assert.equal(first.failures[0].action,'convert');
+  assert.equal(await f.quote.balanceOf(f.vault.target)-before,80n);assert.equal(await f.token.balanceOf(f.converter.target),480n);
+  assert.equal(await f.source.collections(),1n);assert.equal(await f.token.allowance(f.converter.target,f.adapter.target),0n);
+  await sent(f.adapter.setFailure(0));assert.equal((await runPrizeFlow(f.options)).status,'idle');
+  assert.equal(await f.quote.balanceOf(f.vault.target)-before,1520n);
+});
+test('blocked forward preserves quote and does not sell more TOKEN; collection still proceeds',async()=>{
+  const f=await setup();await queue(f);await sent(f.quote.blockRecipient(f.vault.target));
+  const first=await runPrizeFlow(f.options);assert.equal(first.status,'degraded');
+  assert.equal(first.failures.filter(e=>e.action==='forwardQuote').length,1);
+  assert.equal(await f.converter.tokenSold(),0n);assert.equal(await f.quote.balanceOf(f.converter.target),80n);
+  assert.equal(await f.quote.balanceOf(f.project),20n);assert.equal(await f.source.collections(),1n);
+  await sent(f.quote.blockRecipient(ethers.ZeroAddress));assert.equal((await runPrizeFlow(f.options)).status,'idle');
+  assert.equal(await f.converter.quoteForwarded(),1520n);
+});
+test('old converter debt/inventory stays at old destination after rollover',async()=>{
+  const f=await setup(),before=await f.quote.balanceOf(f.vault.target);await sent(f.token.mint(f.router.target,100));await sent(f.router.sync(f.token.target));
+  await sent(f.token.mint(f.converter.target,5));
+  const nextVault=await f.deploy('PromoVault',[f.token.target,f.quote.target,f.short.target,100]),next=await f.make(nextVault.target);
+  f.job.legacy=[{...f.job.active,campaignId:'1',slot:0}];await roll(f,[next.target,ethers.ZeroAddress,f.project]);
+  f.job.active=f.descriptor(next,nextVault.target);await queue(f,100,100);
+  const result=await runPrizeFlow(f.options);assert.equal(result.status,'idle');
+  assert.equal(await f.quote.balanceOf(f.vault.target)-before,255n);assert.equal(await f.quote.balanceOf(nextVault.target),320n);
+  assert.equal(await f.router.credit(f.token.target,f.converter.target),0n);assert.equal(await f.converter.vault(),f.vault.target);
+  assert.equal(await f.token.balanceOf(f.vault.target),0n);
+});
+test('legacy USDG vault gets quote but TOKEN debt is reported and never paid by worker',async()=>{
+  const f=await setup();await roll(f,[f.vault.target,ethers.ZeroAddress,f.project]);
+  await sent(f.token.mint(f.router.target,100));await sent(f.quote.mint(f.router.target,100));
+  await sent(f.router.sync(f.token.target));await sent(f.router.sync(f.quote.target));
+  await roll(f,[f.converter.target,ethers.ZeroAddress,f.project]);
+  f.job.legacy=[{kind:'usdgVault',address:f.vault.target,campaignId:'2',slot:0}];await queue(f,100,100);
+  const before=await f.quote.balanceOf(f.vault.target),result=await runPrizeFlow(f.options);assert.equal(result.status,'degraded');
+  assert.equal(result.unsafeDebt.length,1);assert.equal(result.unsafeDebt[0].amount,'80');
+  assert.equal(await f.router.credit(f.token.target,f.vault.target),80n);assert.equal(await f.token.balanceOf(f.vault.target),0n);
+  assert.equal(await f.quote.balanceOf(f.vault.target)-before,400n);assert.equal(await f.router.credit(f.quote.target,f.vault.target),0n);
+});
+test('two blocked legacy project credits cannot starve current converter or source',async()=>{
+  const f=await setup(),a=await (await f.provider.getSigner(5)).getAddress(),b=await (await f.provider.getSigner(6)).getAddress();
+  await roll(f,[f.converter.target,a,b],[6000,2000,2000]);
+  for(const t of [f.token,f.quote]){await sent(t.mint(f.router.target,1000));await sent(f.router.sync(t.target));}
+  await roll(f,[f.converter.target,ethers.ZeroAddress,f.project],[8000,0,2000]);
+  f.job.legacy=[{kind:'project',address:a,campaignId:'2',slot:1},{kind:'project',address:b,campaignId:'2',slot:2}];
+  await sent(f.quote.blockRecipient(a));await sent(f.token.blockRecipient(b));await queue(f,50,50);
+  const before=await f.source.collections(),result=await runPrizeFlow(f.options);assert.equal(result.status,'degraded');
+  assert.equal(result.failures.length,2);assert.equal(await f.router.credit(f.quote.target,a),200n);assert.equal(await f.router.credit(f.token.target,b),200n);
+  assert.equal(await f.quote.balanceOf(f.project),10n);assert.equal(await f.token.balanceOf(f.project),10n);
+  assert.equal(await f.source.collections(),before+1n);assert.equal(await f.converter.tokenSold(),640n);
+});
+for(const method of ['forwardQuote','convert'])test('unknown '+method+' receipt stops and preserves hash; confirmed tx resumes once',async()=>{
+  const f=await setup(),before=await f.quote.balanceOf(f.vault.target);await queue(f,0,100);
+  await sent((method==='convert'?f.token:f.quote).mint(f.converter.target,10));
+  const selector=f.converter.interface.getFunction(method).selector;let tx,blocked=false,after=0;
+  const executor={provider:f.provider,getAddress:()=>f.executor.getAddress(),sendTransaction:async request=>{
+    if(blocked)after++;
+    if(request.data?.startsWith(selector)){
+      blocked=true;await rpc('evm_setAutomine',[false]);tx=await f.executor.sendTransaction(request);return tx;
+    }
+    return f.executor.sendTransaction(request);
+  }};
+  try{
+    const result=await runPrizeFlow({...f.options,executor,receiptTimeoutMs:100});
+    assert.equal(result.status,'error');assert.equal(result.error.stage,'confirm');assert.equal(result.error.transactionHash,tx.hash);assert.equal(after,0);
+    if(method==='forwardQuote')assert.equal(await f.source.collections(),0n);
+  }finally{await rpc('evm_mine');await rpc('evm_setAutomine',[true]);if(tx)await tx.wait();}
+  assert.equal((await runPrizeFlow(f.options)).status,'idle');
+  assert.equal(await f.quote.balanceOf(f.vault.target)-before,method==='convert'?110n:90n);
+});
+test('validation before writes rejects stale campaign, swapped bindings and unsafe legacy relabeling',async()=>{
+  const f=await setup();await sent(f.quote.mint(f.router.target,100));const nonce=await f.provider.getTransactionCount(await f.executor.getAddress());
+  for(const mutate of [j=>j.active.vault=f.project,j=>j.active.floorNumerator='1',j=>j.campaignId='2',
+    j=>j.source.positionId='999',j=>j.active.address=f.vault.target,
+    j=>j.legacy=[{kind:'project',address:f.vault.target,campaignId:'1',slot:0}]]){
+    const job=structuredClone(f.job);mutate(job);const result=await runPrizeFlow({...f.options,job});assert.equal(result.status,'error');assert.equal(result.steps,0);
+  }
+  assert.equal(await f.provider.getTransactionCount(await f.executor.getAddress()),nonce);assert.equal(await f.router.accounted(f.quote.target),0n);
+});
+test('bounded portions/steps, gas/abort and source epoch drift do not silently report completion',async()=>{
+  const f=await setup();await queue(f,2000,100);
+  const stopped=await runPrizeFlow({...f.options,signal:AbortSignal.abort()});assert.equal(stopped.status,'stopped');
+  const waiting=await runPrizeFlow({...f.options,job:{...f.job,maxGasPrice:'1'}});assert.equal(waiting.status,'waiting');assert.equal(waiting.reason,'gasPrice');
+  assert.equal((await runPrizeFlow(f.options,{maxSteps:1})).status,'yielded');
+  const first=await runPrizeFlow(f.options);assert.equal(first.status,'yielded');assert.equal(first.remainingInventory[0].amount,'600');
+  assert.equal((await runPrizeFlow(f.options)).status,'idle');assert.equal(await f.converter.tokenSold(),1600n);
+  await sent(f.source.setEpoch(2));await sent(f.source.fund(f.quote.target,100));const count=await f.source.collections();
+  assert.equal((await runPrizeFlow(f.options)).status,'degraded');assert.equal(await f.source.collections(),count);assert.equal(await f.source.due(f.quote.target),0n);
+});
+test('prize flow CLI performs the full local collection/conversion pass',async t=>{
+  const f=await setup(),http=require('node:http'),fs=require('node:fs'),path=require('node:path');await queue(f);
+  const server=http.createServer(async(req,res)=>{
+    let body='';for await(const part of req)body+=part;const request=JSON.parse(body);
+    async function handle(q){try{return {jsonrpc:'2.0',id:q.id,result:await rpc(q.method,q.params)};}
+      catch(e){return {jsonrpc:'2.0',id:q.id,error:{code:-32000,message:e.message}};}}
+    res.setHeader('content-type','application/json');res.end(JSON.stringify(Array.isArray(request)?await Promise.all(request.map(handle)):await handle(request)));
+  });
+  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
+  t.after(()=>new Promise(resolve=>{server.close(resolve);server.closeAllConnections();}));
+  fs.mkdirSync('.local',{recursive:true});const file=path.resolve('.local','prize-flow-cli-test.json');fs.writeFileSync(file,JSON.stringify(f.job));t.after(()=>fs.unlinkSync(file));
+  const execFile=require('node:util').promisify(require('node:child_process').execFile);
+  const result=await execFile(process.execPath,['scripts/run-local-promo.cjs','--job',file,'--rpc','http://127.0.0.1:'+server.address().port,'--executor','1'],{timeout:30000});
+  const summary=JSON.parse(result.stdout.trim().split('\n').at(-1));assert.equal(summary.action,'prizeFlowPass');assert.equal(summary.status,'idle');
+  assert.equal(await f.converter.tokenSold(),480n);assert.equal(await f.converter.quoteForwarded(),1520n);
+});

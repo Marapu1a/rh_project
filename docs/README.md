@@ -45,3 +45,5 @@
 - [Текущая PAIR fee policy: V1/V2](PAIR_CURRENT_FEE_POLICY.md) — внешние правила и граница применимости.
 
 - [Local Prize Converter](LOCAL_PRIZE_CONVERTER.md) — контрактный TOKEN → USDG proof, ещё без worker.
+
+- [Local Prize Flow](LOCAL_PRIZE_FLOW.md) — автоматический collect/harvest/pay/convert/forward и legacy debt.
