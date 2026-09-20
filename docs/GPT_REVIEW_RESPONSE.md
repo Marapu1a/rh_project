@@ -5,155 +5,199 @@
 Это независимое review-мнение, не задание на автоматическое исполнение. При следующем
 обращении файл следует полностью перезаписать.
 
-Просмотрен commit `5bea9e5861211056f05d6a3591ea8a076fbf1c9f` —
-`Add local prize conversion boundary and fix review harness issues`.
+Просмотрен commit `60ac0e75d36423f5dbf627591f802a90543d9b80` —
+`Automate local prize conversion flow and bounded legacy payouts`.
 
 ## Короткий вердикт
 
-В `LocalPrizeConverter` я не нашёл блокирующего дефекта для заявленного локального scope:
-chainId 31337, стандартные TOKEN/USDG, заранее известные неизменяемые контракты destination
-и adapter, искусственный fixed floor. Accounting по фактическим balance delta сходится;
-donation не учитывается дважды; short output, partial input и output не converter'у откатывают
-всю операцию; после revert inventory и allowance не портятся. Разделение `convert` и
-`forwardQuote` удачное: уже имеющийся USDG не зависит от доступности swap.
+Новый `local-prize-flow-v1` по существу соединяет безопасный локальный custody path:
+оба актива доходят из source до FeeRouter, TOKEN prize share платится converter'у,
+фактический USDG доставляется immutable vault, project recipients получают свою долю,
+а старые явно перечисленные долги не теряются. В денежной conservation, повторном pay,
+двойном swap/forward или обходе ветки unsafe legacy я блокирующего дефекта не нашёл.
 
-Исправления прошлого review также подтверждены. Полный `npm test` прошёл **221/221**.
-Дополнительно `local-buy-cycle` прошёл **1/1** в свежем worktree, где `.local` отсутствовал
-до запуска. Structured CLI error сохраняет `code/stage/transactionHash` и ненулевой exit.
+Полный основной набор независимо прошёл **232/232** (`fail 0`, ~511 s). Старые USDG,
+draw/scheduler и CLI пути в этом прогоне не сломались.
 
-Это не делает путь production-ready. Перед реальным swap есть два важных ограничения:
+Есть один подтверждённый дефект операционной телеметрии: после успешной tx переменная
+`current` сохраняет её action/hash. Если следующий обычный RPC-read падает, результат
+ошибочно приписывает read error предыдущей уже подтверждённой транзакции. Внутри pass новых
+writes после ошибки нет, поэтому это не денежный exploit. Но перед общим coordinator это
+нужно закрыть: reconciliation не должен отправлять оператора проверять не тот intent.
 
-1. immutable адрес adapter ещё не означает immutable маршрут: сам adapter не должен быть
-   proxy/upgradeable или иметь admin-переключатели pool/path/recipient;
-2. `maxInput` — лимит одной транзакции, не лимит суммарной продажи. Permissionless caller
-   может вызвать `convert(maxInput, ...)` много раз и быстро продать весь inventory по всё ещё
-   формально допустимому, но устаревшему floor. Для локального proof это нормально; для рынка
-   нужны freshness/deviation и, если требуется, on-chain cumulative/rate bound.
+## Подтверждённый finding: stale action/hash после read failure
 
-## Проверка accounting и запрошенные counterexamples
+В `runPrizeFlow` объект `current` устанавливается перед `send`, после успешного receipt
+получает `transactionHash`, но затем не очищается. Outer catch дополняет любую следующую
+ошибку через `...current` и даже использует `current.transactionHash` как fallback.
 
-| Сценарий | Что происходит | Оценка |
-|---|---|---|
-| TOKEN/USDG donation до `sync` | Разница с уже наблюдённым балансом добавляется один раз | Корректно; provenance намеренно не выдумывается |
-| Повторный `sync` | Delta равна нулю | Нет двойного учёта |
-| Output ниже ceil-floor | `afterQuote - beforeQuote < minOut`, весь swap откатывается | Корректно |
-| Adapter отправил output другому адресу | Баланс converter не вырос, весь swap откатывается | Корректно |
-| Adapter списал меньше exact input | TOKEN delta не равна `amount`, весь swap откатывается | Корректно для стандартного ERC20 |
-| Adapter/reentrancy/revert | Откатываются transfer, counters и approvals | Повтор безопасен после подтверждённого revert |
-| USDG donation плюс swap output | Donation синхронизируется отдельно, output считается по delta swap | Conservation сохраняется |
-| Forward отказал | Transfer, `quoteForwarded` и `syncUSDG` откатываются атомарно | USDG остаётся для retry |
+Я отдельно воспроизвёл сценарий:
 
-Инварианты после успешной синхронизации/операции действительно имеют вид:
+1. `collect` успешно mined, `source.collections() == 1`;
+2. следующий `source.claimable(...)` падает с synthetic `NETWORK_ERROR`;
+3. `runPrizeFlow` корректно останавливается со `status: error`, но сообщает:
 
-- `tokenObserved == tokenSold + TOKEN.balanceOf(converter)`;
-- `quoteObserved == quoteForwarded + USDG.balanceOf(converter)`;
-- allowance converter → adapter равен нулю вне выполняющейся транзакции.
+```json
+{
+  "action": "collect",
+  "transactionHash": "<hash успешного collect>",
+  "message": "synthetic read outage",
+  "code": "NETWORK_ERROR"
+}
+```
 
-Нарушить их через проверенные donation/short-output/wrong-recipient/partial-input/retry
-сценарии не получилось. Fee-on-transfer, rebasing и враждебные ERC20 остаются явно вне
-scope; balance delta не превращает их в поддерживаемые активы.
+То есть hash настоящий, но относится не к неизвестной tx, а к уже успешной. Такой же stale
+context возможен после pay/forward/harvest/convert, если следующий read или callback упадёт.
 
-Есть один полезный отрицательный пример, не ломающий accounting: при inventory 10 000,
-`maxInput = 1 000` и устаревшем низком floor любой адрес может сделать десять допустимых
-вызовов и продать всё. Deadline ограничивает включение конкретной tx, но не возраст цены,
-а `maxInput` не является дневным/эпохальным budget. Не следует так описывать эти параметры.
+Граница исправления узкая: pending intent должен жить только внутри незавершённого `send`.
+После confirmed receipt и после обработанного definite rejection его надо очистить; read error
+не должен получать `transactionHash` предыдущей tx. Если полезно хранить последнюю успешную
+операцию, это отдельное поле `lastConfirmed`, а не evidence неизвестного intent. У error из
+`sendLocalTransaction` уже есть собственные `stage/transactionHash`, fallback на старый hash
+не нужен.
 
-## Destination и старые credits
+Нужна одна регрессия: confirmed collect → RPC failure на следующем `claimable`; результат
+должен быть `error` без ложного tx intent/hash и без последующих writes.
 
-В самом converter скрытой перенастройки назначения не видно: нет owner, `setVault`,
-`setAdapter`, withdraw или arbitrary call; destination и adapter записаны immutable.
-Смена vault через новый converter сохраняет старый inventory у старого назначения.
+## Назначение активов и legacy
 
-Но эта гарантия требует, чтобы destination и adapter сами были неизменяемыми реализациями.
-Immutable ссылка на proxy оставляет upgrade-path за пределами converter. Для будущего adapter
-нужен отдельный проверяемый контракт без admin route changes, с фиксированными TOKEN/USDG,
-pool/path/fee tier, exact input, output только caller'у и узкими approvals.
+Для доверенного локального job роли проведены правильно:
 
-Старый FeeRouter credit нельзя «переиспользовать» новым converter: `credit[asset][recipient]`
-платится только записанному recipient. Это хорошо для custody, но даёт жёсткую границу legacy:
+- active prize slot 0 обязан быть проверенным converter;
+- TOKEN для `usdgVault` никогда не вызывает `FeeRouter.pay` и остаётся credit;
+- USDG старому vault платится и синхронизируется;
+- old converter получает оба актива, продаёт свой inventory и сохраняет своё immutable
+  назначение;
+- project entries допустимы только из historical slots 1/2 с положительным bps;
+- повторяющиеся и пересекающиеся current/legacy addresses отвергаются до writes.
 
-- debt старому converter можно и нужно обслуживать старым converter;
-- USDG debt старому USDG vault можно безопасно выплатить напрямую;
-- **TOKEN debt старому USDG-only vault нельзя безопасно перенаправить текущими контрактами**.
+`unsafeDebt` обновляется после обеих distribution-фаз, поэтому новый TOKEN, полученный после
+collect/harvest, тоже попадает в отчёт. Worker не выдаёт эту диагностику за on-chain
+quarantine: публичный внешний `pay(TOKEN, oldVault)` всё ещё возможен. Это честная граница.
 
-Последний случай worker обязан оставить unpaid и явно вернуть как quarantined/unsafe legacy
-debt. Вызов `pay(TOKEN, oldVault)` просто превратит credit в застрявший TOKEN и не закроет A.
-Поскольку публичного deployment ещё нет, новый профиль может не создавать такой долг вообще;
-но уже существующий такой credit автоматизацией не исправляется.
+Двойного исполнения не видно:
 
-## Ограничения будущего production adapter
+- успешный `FeeRouter.pay` обнуляет credit;
+- converter accounting исключает повторную продажу/доставку;
+- в одном pass разрешена одна convert-порция на converter;
+- общий private skip не повторяет definite failure во второй distribution-фазе;
+- unknown outcome выходит через outer catch и новых writes не разрешает.
 
-Кроме уже названного fixed local floor, нужны как минимум:
+При failed forward converter пропускается в swap-фазе, поэтому worker не наращивает у него
+новый USDG поверх уже недоставленного quote. Broken swap, напротив, не блокирует USDG,
+project recipients, collect или harvest — порядок фаз выбран правильно.
 
-- неизменяемые token pair, pool/path/fee tier, spender и output recipient;
-- отсутствие proxy/admin upgrade и произвольного calldata/target;
-- проверяемая свежесть цены и допустимое отклонение от независимого reference/TWAP;
-- лимит price impact/liquidity и корректная нормализация decimals;
-- политика cumulative/rate limit, если весь permissionless inventory нельзя продавать сразу;
-- exact-input semantics и поддержка только явно разрешённых стандартных токенов;
-- модель MEV/sandwich и способ исполнения, совместимый с permissionless keeper;
-- понятная liveness policy при permanently broken route без возможности увести inventory.
+## Skip keys и статусы
 
-Выбирать DEX сейчас не требуется. Но эти свойства должны принадлежать контрактной границе,
-а не JSON job: недоверенный caller не обязан соблюдать off-chain лимиты.
+Ключи достаточно узкие для текущего scope:
 
-## Следующий небольшой пакет
+- pay: action + router + asset + recipient;
+- harvest: action + router + asset;
+- forward/convert: action + конкретный converter;
+- allocate: action + конкретный vault.
 
-Я бы сделал один `local-prize-flow-v1`, не общий supervisor. В job явно зафиксировать router,
-active converter, vault, TOKEN/USDG, adapter и его immutable параметры, campaign/policy,
-gas cap и небольшой конечный список legacy recipients. Проверять bindings на pinned head до
-первой отправки.
+Поэтому отказ TOKEN payment не блокирует USDG тому же recipient, отказ одного converter не
+блокирует другой, а collect failure не маскируется под harvest failure. Router `sync` оставлен
+неизолированным, что верно: accounting deficit/ошибка recognition не должна разрешать
+дальнейшие writes.
 
-Порядок одного pass:
+Статусы в основном честны:
 
-1. Доделать уже доставленный USDG: `vault.syncUSDG`, USDG `FeeRouter.pay` и
-   `converter.forwardQuote` для active/legacy converters.
-2. Обслужить допустимые credits без swap. Для TOKEN prize recipient разрешать `pay` только
-   проверенному converter; TOKEN на legacy USDG-only vault помечать unsafe и не отправлять.
-   Project recipients можно обслуживать по ожидаемой policy отдельно.
-3. Выполнить один source `collect`, затем harvest обоих активов, если они claimable.
-4. Повторить pay/forward, чтобы новый USDG дошёл до vault независимо от состояния adapter.
-5. Только после этого делать bounded `convert`; после успешного swap — ещё один
-   `forwardQuote`.
+- definite failures или unsafe debt → `degraded`;
+- оставшийся inventory без failures → `yielded`;
+- gas/nonce/executor/anchor → `waiting`;
+- unknown send/receipt/read → `error` и stop;
+- abort → `stopped`.
 
-Так definite swap revert даёт `degraded`, но не блокирует уже доступный USDG и collection.
-Unknown estimate/broadcast/receipt outcome по-прежнему немедленно останавливает новые writes
-и возвращает `stage/hash`; повторять intent до reconciliation нельзя. Известный отказ одного
-recipient изолируется общим для pass `(asset, recipient)` skip, как в текущем C.
+Единственное найденное искажение — не сам status, а stale action/hash в описанном выше
+read-failure сценарии.
 
-Legacy не следует искать безграничным сканированием истории внутри каждого pass. Job должен
-содержать bounded allowlist записей с типом и разрешёнными действиями, например:
+## Historical witnesses: достаточно ли их
 
-- `converter`: pay TOKEN/USDG, forward, затем optional convert;
-- `usdgVault`: pay только USDG;
-- `project`: pay ожидаемые policy assets;
-- `unsafeTokenVault`: только report/quarantine, без транзакции.
+Для заявленного **доверенного local job** проверки campaign/slot/role достаточны. Они
+доказывают, что адрес действительно стоял в указанной policy и что job не переименовал
+исторический slot 0 в project recipient.
 
-FeeRouter credit агрегирован по `(asset, recipient)`, а не campaign, поэтому drainer не должен
-изобретать campaign-specific сумму. Отказ одного legacy адреса не должен голодать active
-converter, здоровых recipients или source.
+Они не доказывают семантику или неизменность кода. Контракт в slot 0 может быть proxy,
+getter'ы показывают только текущее состояние, а один и тот же current recipient получает
+агрегированный старый credit без campaign attribution. Поэтому для production нужны manifest,
+implementation/code-hash verification и доказательство, что shared address не менял
+destination/роль во времени. Это не дефект текущего честно локального worker, а граница
+между trusted config и deployment attestation.
 
-## Минимальные проверки следующего пакета
+## Starvation и default limit
 
-- active policy slot 0 обязан быть converter, его immutable vault — job vault;
-- TOKEN никогда не попадает в PromoVault, включая legacy profile;
-- broken adapter не мешает USDG pay/forward, collect и harvest;
-- definite swap/forward failure сохраняет balances/counters и повторяется в следующем pass;
-- unknown convert/forward outcome прекращает writes и сохраняет hash/stage;
-- rollover на новый converter обслуживает старый converter debt и inventory;
-- TOKEN credit старому USDG-only vault остаётся credit и явно попадает в unsafe report;
-- два отказавших legacy recipient не блокируют здоровый current path;
-- repeated pass не дублирует pay, conversion или forward.
+Обычного воспроизводимого starvation при default `maxSteps=128` я не вижу.
+
+При текущей schema максимум:
+
+- 8 legacy entries;
+- active converter;
+- 2 current project recipients;
+- две distribution-фазы;
+- collect + два harvest;
+- по одному convert и post-swap forward на converter.
+
+Даже если считать истинными все условные send-ветки в обеих distribution-фазах, включая
+повторные sync/forward при внешних изменениях, control-flow даёт не более **123 tx attempts**.
+Default 128 покрывает текущий путь. Без concurrent mutations обычный максимум ниже — около 94.
+
+Но запас всего пять попыток. Это не текущий bug, зато хрупкая константа: один новый action
+может незаметно сделать стандартный watch вечно доходящим только до ранних фаз. Разумно
+зафиксировать worst-case bound тестом или вычисляемым assertion рядом со schema limits.
+Малые debug limits без persistent cursor действительно могут starvation и остаются честно
+названным ограничением.
+
+## Compatibility
+
+Общий CLI различает новую schema до старых funding/revenue/draw validators, создаёт только
+нужный binding и сохраняет прежние интервалы watch. В полном прогоне прошли прежние USDG
+funding/revenue, transaction classifier, scheduler, BUY-cycle и converter tests.
+
+Новый CLI integration test проверяет реальный полный prize pass. Отдельного regression
+для unknown pay/collect/harvest именно через новый wrapper нет, но все действия проходят
+через один `send` и прежний `sendLocalTransaction`; общий classifier и старые revenue cases
+остались зелёными. Это допустимый coverage reuse, не повод копировать всю матрицу.
+
+## Следующий ограниченный пакет
+
+После узкого исправления stale error context разумен `local-ops-coordinator-v1`, а не
+production supervisor и не автоматический refill.
+
+Минимальный scope:
+
+1. Один process/bundle связывает существующие prize-flow и draw scheduler jobs, не переписывая
+   их внутреннюю state machine.
+2. Для каждого signer существует ровно одна последовательная write lane. Если money и draw
+   используют один адрес, параллельных sends быть не может; разные signers всё равно не должны
+   гоняться за одним shared custody transition.
+3. Unknown outcome в любой lane глобально запрещает следующие writes до reconciliation.
+   Definite swap/recipient failure остаётся degraded и не блокирует независимый draw progress.
+4. Gas budget на этом шаге только проверяется: explicit ops address, minimum native balance,
+   bounded estimate/allowance на pass. Никакого автоматического пополнения из prize funds или
+   неутверждённой creator share.
+5. Coordinator делает один bounded money pass и один bounded scheduler pass за итерацию,
+   публикует раздельные результаты и не выдумывает durable journal/finality.
+
+Критерии готовности:
+
+- один signer: nonce строго последовательны, concurrent send отсутствует;
+- unknown money tx не допускает draw tx и наоборот;
+- definite broken swap не мешает уже funded Short/Monthly продолжить работу;
+- low ops balance даёт `waiting` до первой tx и не трогает prize custody;
+- restart после подтверждённой неизвестной tx продолжает из on-chain/job state без дубля;
+- один интеграционный сценарий проходит revenue обоих assets → USDG reserves → Short/Monthly
+  execution/claim, сохраняя старые claims и frozen budgets.
 
 ## Проверки review
 
-- `npm test`: **221/221**, `fail 0`, ~489 s;
-- свежий detached worktree без `.local` до запуска:
-  `node --test test/local-buy-cycle.test.cjs` — **1/1**, `fail 0`;
-- отдельно просмотрены converter/interface/fixture, FeeRouter и PromoVault boundaries,
-  funding/revenue transaction classifier и изменения CLI/test harness.
+- `npm test`: **232/232**, `fail 0`, ~511 s;
+- отдельно воспроизведён confirmed collect + следующий RPC-read outage: stale successful
+  collect hash ошибочно попал в error context;
+- просмотрены `local-prize-flow.cjs`, новый test suite, общий CLI, converter/FeeRouter/vault
+  boundaries и документы текущего шага;
+- пользовательский незакоммиченный `docs/INDEPENDENT_AUDIT_2026-09-19.md` не изменялся.
 
-Итого: контрактный proof можно считать принятым в его честно узком локальном scope.
-Следующий полезный шаг — worker/profile, который делает новый custody path реальным и
-безопасно отказывается от неразрешимого legacy TOKEN→USDG-only debt. Live DEX, durable
-journal/supervisor, PAIR canary и production price policy в этот небольшой пакет не входят.
+Итого: prize flow можно принять как завершённый локальный участок после небольшой коррекции
+error attribution. Она не требует менять денежную логику, но нужна до общего coordinator:
+автоматизация с ложным hash — это уже не телеметрия, а генератор будущей паники.
