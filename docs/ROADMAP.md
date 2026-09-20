@@ -92,8 +92,12 @@ converter pay/forward/convert и bounded legacy list; 11/11 новых + 35/35 �
 Перед coordinator исправлены stale error attribution и глобальная остановка scheduler
 на unknown tx; известные отказы остаются изолированы. Prize-flow bound 123 <= 128 закреплён.
 Проверки: 42/42, основной набор240 полностью не запускался.
-Следующий ограниченный участок — совместное локальное исполнение revenue и draw jobs
-с разделением signer/nonce и отдельным project gas budget; scope уточнить до реализации.
+Совместное локальное исполнение реализовано в [coordinator](LOCAL_PROMO_COORDINATOR.md):
+последовательные sends, сохраняемый pending marker, receipt reconciliation перед restart.
+Один state path/эксклюзивные signers; hashless crash не получает автоматического retry.
+Проверки: прежние 240/240 в общем прогоне; новые 7/7 после исправления metadata checksum.
+Общий прогон до фикса 244/247, после локальной правки повторён только coordinator.
+Следующий ограниченный участок — отдельный project gas budget; scope уточнить до реализации.
 Production DEX/price guard, поддержка изменения маршрутов и live PAIR binding не закрыты.
 
 Эксплуатация: доля проекта → native buffer/RNG/executor, bootstrap и

@@ -16,6 +16,16 @@
 
 ## Последний результат
 
+- Добавлен [локальный coordinator](LOCAL_PROMO_COORDINATOR.md): последовательный
+  prize-flow → Short/Monthly scheduler, общий signer без параллельных writes,
+  сохраняемый pending intent до broadcast и hash после ответа RPC. Unknown останавливает
+  оба контура и restart; известный hash проверяется по receipt перед продолжением.
+  Hashless crash/outage требует диагностики, force-clear нет. Solidity не менялся.
+  `npm test`: 244/247 (~1142 s); все прежние **240/240** прошли. Три новых restart
+  сценария обнаружили undefined metadata/checksum mismatch; сериализация исправлена.
+  После фикса отдельный `test/local-coordinator.test.cjs`: **7/7**, fail 0 (~144 s).
+  Полный набор после этой локальной правки повторно не запускали.
+
 - Исправлен stale action/hash в prize-flow: lastConfirmed отделён от ошибки текущего intent.
   Scheduler теперь глобально останавливается на unknown tx/RPC, сохраняя stage/hash;
   Short/Monthly/closeEmpty используют явный estimate/broadcast/confirm. Общего coordinator нет.
@@ -78,10 +88,10 @@ collect/harvest обоих активов, pay/forward до swap, bounded legacy
 изоляция definite отказов и stop на unknown tx. Отдельный local-prize-flow-v1 job/CLI.
 Старые USDG jobs не изменены; unsafe legacy TOKEN→USDG-only credit только диагностируется.
 
-Следующий разумный кусок — выбрать и описать эксплуатационную связку: как совместно
-запускать revenue/prize-flow и draw scheduler без конкурирующих tx одного signer,
-с учётом отдельного project gas budget. Начать с ограниченного локального orchestration,
-не объявлять его journal/autorefill/production supervisor. Real DEX/price guard и RNG
+Совместное локальное исполнение реализовано в coordinator, с минимальным pending marker.
+Следующий разумный кусок — отдельный project gas budget: readiness, native buffer и
+лимиты расхода из доли проекта. Не использовать frozen/claimable и не объявлять
+coordinator полноценным journal/autorefill/production supervisor. Real DEX/price guard и RNG
 остаются отдельными архитектурными решениями; fixed floor только для chainId 31337.
 
 После этого остаются эксплуатационное финансирование и настоящий RNG с безопасной привязкой.

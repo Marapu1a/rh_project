@@ -1,4 +1,7 @@
 // Shared bounded receipt wait. A stopped/timed-out wait does NOT cancel a tx.
+const {AsyncLocalStorage}=require('node:async_hooks');
+const transactionBoundary=new AsyncLocalStorage();
+const withTransactionBoundary=(boundary,action)=>transactionBoundary.run(boundary,action);
 function stopped(tx){
   const error=new Error('Stopped after broadcast; transaction may still confirm: '+tx.hash);
   error.code='LOCAL_EXECUTION_STOPPED';error.transactionHash=tx.hash;return error;
@@ -28,11 +31,15 @@ function receiptOptions(timeout){
 // Only this explicit read-only estimate or a receipt for the original tx proves rollback.
 async function sendLocalTransaction(method,args,overrides,options={}){
   let stage='estimate',tx;
+  const boundary=transactionBoundary.getStore();
   try{
     const gasLimit=await method.estimateGas(...args,overrides);
     if(options.signal?.aborted){const e=new Error('Stopped before broadcast');e.code='LOCAL_EXECUTION_STOPPED';throw e;}
+    if(boundary)await boundary.before(await method.populateTransaction(...args,{...overrides,gasLimit}),method.fragment.name);
     stage='broadcast';tx=await method(...args,{...overrides,gasLimit});
+    if(boundary)await boundary.sent(tx);
     stage='confirm';const receipt=await waitLocalReceipt(tx,options);
+    if(boundary)await boundary.confirmed(receipt);
     return receipt;
   }catch(cause){
     const error=new Error(cause.shortMessage||cause.message,{cause});
@@ -41,7 +48,8 @@ async function sendLocalTransaction(method,args,overrides,options={}){
     error.definiteRejection=(stage==='estimate'&&cause.code==='CALL_EXCEPTION')||
       (stage==='confirm'&&cause.code!=='TRANSACTION_REPLACED'&&cause.receipt?.status===0&&
         typeof tx?.hash==='string'&&cause.receipt.hash===tx.hash);
+    if(boundary&&error.definiteRejection&&stage==='confirm')await boundary.confirmed(cause.receipt);
     throw error;
   }
 }
-module.exports={waitLocalReceipt,receiptOptions,sendLocalTransaction};
+module.exports={waitLocalReceipt,receiptOptions,sendLocalTransaction,withTransactionBoundary};

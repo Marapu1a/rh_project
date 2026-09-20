@@ -21,6 +21,7 @@
 | Drand | Реальная BN254 подпись проверена отдельно; binding counterexamples воспроизведены | Нет production adapter/future-round policy. [Verifier](DRAND_FEASIBILITY.md), [binding](DRAND_BINDING_MODEL.md) |
 | USDG creator funding | Local worker: FeeRouter credits → pay → GENERAL в PromoVault; отдельные recipients проекта | [Контур](LOCAL_USDG_FUNDING.md). Collect/harvest автоматизированы [отдельным проходом](LOCAL_USDG_REVENUE.md); нет swap/ops refill; доли тестовые |
 | Автоматизация / выпуск | Локальные тесты и CLI отдельных этапов | Нет постоянного keeper/indexer, production deployment и frontend |
+| Local coordinator | Последовательные prize-flow + draw scheduler, durable pending marker, receipt reconciliation | [Модуль](LOCAL_PROMO_COORDINATOR.md). Только локально; hashless/manual recovery, exclusive signers, нет production journal/gas autorefill |
 
 ## Проверки
 

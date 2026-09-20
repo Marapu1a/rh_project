@@ -1,119 +1,81 @@
-# Обращение к GPT — автоматический локальный prize flow
+# Обращение к GPT — локальный coordinator и безопасный restart
 
-20.09.2026. Прочитай текущий commit, укажи его hash. Ответ полностью перезапиши
-в docs/GPT_REVIEW_RESPONSE.md. Review не является разрешением автоматически менять код.
+20.09.2026. Прочитай текущий commit и укажи hash. Полностью перезапиши
+`docs/GPT_REVIEW_RESPONSE.md`. Это независимое ревью, не инструкция автоматически
+менять код или продуктовые правила.
 
-## Обновление после ответа 68eba9f
+## Контекст и решение
 
-Узкий fix до coordinator выполнен:
+Строим связанный локальный скелет, затем укрепляем production-границы. Призы USDG,
+Short каждые 6 часов и Monthly, средства проекта отделены от призовой custody.
+Тестовая экономика не утверждает реальные creator shares. Никаких новых proxy,
+withdraw/reset/reroll или изменений Solidity в этом шаге.
 
-- Stale error context очищается после confirmed tx/обработанного definite rejection,
-  причём до вызова onStep. LastConfirmed — отдельная история, не fallback hash ошибки.
-  Регрессии: collect success → claimable read outage; callback после success/rejection.
-- Short/Monthly/closeEmpty используют общий sendLocalTransaction. Scheduler прекращает
-  все последующие kinds/ticks при unknown tx и неклассифицированном coded RPC error.
-  haltedKind/requiresReconciliation + code/stage/hash сохраняются. Обычные локальные
-  validation failures и definite rejection не теряют независимость видов.
-- Формула worst-case123 рядом с MAX_LEGACY=8/DEFAULT128 и assert. Maximal-legacy integration
-  с восемью старыми converter, новым и двумя current project recipients. Формула ручная,
-  её нужно сопровождать при изменении control-flow; это не статический анализ кода.
+Предыдущий commit e537b9c исправил stale error context и остановку всего scheduler
+на unknown tx. В ответе fee7bd2 блокеров не было, следующим шагом предложен coordinator.
+Мы согласились, но добавили важное требование: простой restart процесса не доказывает,
+что неизвестная транзакция разрешилась. Поэтому нужен сохраняемый pending marker.
 
-Проверь, не потеряли ли мы unknown evidence, не создали ли новые continuation paths и
-не сломали ли изоляцию known rejection. Новый coordinator пока НЕ реализован.
-Ниже сохранён контекст законченного денежного шага; результаты новых тестов — в конце.
+## Что реализовано
 
-## Контекст проекта
+- `local-promo-coordinator.cjs` вызывает prize-flow, затем Short/Monthly scheduler
+  последовательно, с общим provider и проверкой совпадения assets/vault.
+- Config включает оба jobs/config, адреса signers и путь scheduler state. Используем
+  существующий checksum/config-bound atomic state + lock helper; coordinator state
+  отдельный. Exclusive ownership signers — явное локальное допущение.
+- Общий `sendLocalTransaction` получил опциональную AsyncLocalStorage boundary.
+  После estimate ДО broadcast сохраняем worker/action/target/data; после ответа RPC —
+  hash/from/nonce. Confirmed receipt исходной tx снимает pending, хранит lastResolved.
+  Standalone workers не включают эту boundary и сохраняют прежнее поведение.
+- Unknown в любом контуре останавливает оба. При новом запуске известный hash проверяем
+  через receipt и canonical blockHash. Pending/неизвестный hash запрещает sends.
+  Hashless crash между broadcast и записью hash тоже остаётся заблокированным.
+- Definite rejection сохраняет существующую изоляцию recipient/Short/Monthly.
+  Повторный проход читает реальные credits/balances/controller state; новая порция
+  TOKEN или новый collect разрешены, повтор уже оплаченного долга/того же begin — нет.
+- CLI `run-local-coordinator.cjs`: one-shot или watch по job.pollSeconds, SIGINT,
+  structured result, exit 1 при blocked/error. `complete` означает завершённый проход,
+  а не завершённые розыгрыши: ожидание seed/schedule нормально.
 
-TOKEN + отдельное добровольное Promo: 6-часовой Short, месячный jackpot. Все денежные
-призы USDG; Luck удалён. Project share до prize custody; frozen/claimable не используются
-на gas, нет withdraw/reroll/reset/proxy. Сначала полный локальный скелет, затем hardening.
-Штатная работа должна автоматизироваться, а не требовать ручных кнопок.
+## Честные ограничения
 
-Сначала CURRENT_CONTEXT, ROADMAP, LOCAL_PRIZE_FLOW; PRODUCT_SPEC — продуктовые правила.
-Архив не перечитывать без конкретного вопроса. Реальные доли не утверждены; 80/20 и 50/50
-— fixtures. PAIR V1 70/30 не universal V2 split; source policy/ABI/claim надо проверять
-на выбранном deployment. В этом шаге live PAIR и DEX не трогали.
+Это небольшой local pending marker, не полноценный production journal. Нет signed-raw
+transaction WAL, replacement recovery, multi-process/distributed signer lease,
+production finality или гарантии сохранности при потере диска/state.
 
-Shared converter допустим при неизменном назначении; campaign-specific conversion P&L
-не обещается. Новое назначение = новый converter, старые credits/inventory остаются
-старому immutable vault. Local converter только chainId 31337 с fixed test floor/adapter;
-maxInput — одна tx, а не лимит суммарной продажи. Неизменяемый адрес не доказывает
-неизменность внешнего implementation — будущая проверка deployment обязательна.
+State lock защищает только один path. Нельзя параллельно запускать standalone workers
+или другой state path с теми же signers. Stale lock после SIGKILL и hashless unknown
+требуют диагностики; force-clear/автоматического retry не добавляли. Проверка pending
+nonce не считается доказательством отсутствия прежней отправки.
 
-## Что реализовано после ответа 437c34b
+Project gas budget решили оставить следующим отдельным шагом. Live DEX/price guard,
+реальные PAIR bindings и RNG также вне текущего пакета.
 
-Новый scripts/local-prize-flow.cjs и schema local-prize-flow-v1, запуск через общий CLI.
-Solidity и старые USDG jobs не менялись. Новый pass:
+## Что проверить
 
-1. Весь configuration preflight на pinned head, включая current policy, source,
-   converter/assets/vault/adapter/параметры и bounded исторические policy witnesses.
-2. Доставка доступного USDG, выплата credits обоих assets только допустимым recipients.
-3. Один collect и harvest USDG/TOKEN; epoch drift запрещает collect, но не старые claims.
-4. Повторное распределение, затем максимум одна swap-порция/converter и forward результата.
+1. Есть ли путь к новому send после unknown, включая restart/abort/storage failure?
+2. Корректны ли границы before broadcast / hash persistence / confirmed receipt?
+   Не теряем ли исходную неопределённость или не снимаем ли pending слишком рано?
+3. Достаточны ли текущие локальные deployment/config/signer bindings для заявленного scope?
+4. Не сломана ли изоляция definite rejection и поведение standalone workers?
+5. Есть ли воспроизводимый double pay/swap/forward/freeze/begin после mining исходной tx?
+   Отличать повтор прежних денег от обработки остатка или нового поступления.
+6. Есть ли узкий блокер перед отдельной работой над project gas budget?
 
-Definite pay/forward/convert/source failures изолируются общим private skip на pass.
-Router accounting failure и unknown send/receipt останавливают writes. Stage/hash остаются
-в результате и CLI. Не используем внешний skipRecipients/failures из caller в новом API.
-При failed forward не продаём дополнительный TOKEN этого converter в этом pass.
-Quote proceeds не зависят от успешности swap. Existing USDG paths не заменяли молча.
+Не расширяй этот шаг до production framework. Если находишь дефект, укажи конкретный
+сценарий, последствия и минимальную правку. Отдельно укажи выполненные тобой проверки.
 
-Legacy: максимум восемь записей converter/usdgVault/project с campaignId и slot.
-Адрес должен быть указан в historical policy; prize slot 0 нельзя объявить project.
-Shared current recipient не требует отдельной historical записи, credit агрегирован.
-TOKEN credit старому USDG-only vault остаётся unpaid и явно выводится в unsafeDebt.
-Это НЕ on-chain quarantine: чужой public pay всё ещё способен загнать TOKEN в old vault.
-Новый deployment обязан сразу использовать совместимый recipient, а worker не спасает
-уже застрявшие средства. Список legacy доверенный и явно заданный, не доказательство
-полноты всей истории; проверки getter bindings не являются bytecode attestation.
+## Проверки
 
-## Ограничения и следующий шаг
+Добавлено семь интеграций: общий signer; pending prize; pending draw; abort после send;
+hashless unknown через restart; definite recipient failure + lock + pre-abort;
+настоящий CLI + config mismatch/corrupt state.
 
-Default maxSteps=128, максимум256; bound считает tx attempts. Слишком маленький лимит
-при repeated pass может голодать поздние фазы, поскольку durable phase cursor нет.
-CLI не предоставляет пользовательский maxSteps, использует default. Стандартный pass
-ограничен конечным списком и одной convert/адрес; внешние concurrent mutations не исключены.
-Remaining inventory после порции -> yielded; definite failures/unsafe debt -> degraded.
-Watch ждёт pollSeconds, unknown error -> exit1. Никакого слепого resend.
+`npm test`: **244/247**, ~1142 s. Все прежние **240/240** прошли. Три новых restart
+сценария упали из-за undefined optional metadata: checksum учитывал отсутствующее в JSON
+поле. Исправлено исключением undefined перед сохранением diagnostics. Это не ошибка
+классификации транзакций и не поблажка timeout; timeout не меняли.
 
-LOCAL_HEAD/anchor не finality, snapshot completeness доверена publisher, RNG mock.
-Нет production journal/supervisor, реального DEX/price guard и ops autorefill.
-Следующий предварительный scope: совместный локальный запуск денежного и draw контуров,
-избегая конфликтов signer/nonce, затем проектный gas budget; не гигантский framework.
-
-## Просим независимую проверку
-
-1. Нет ли неправильного назначения TOKEN, обхода unsafe legacy ветки, двойного pay/swap/forward?
-2. Честны ли статусы, skip-key и порядок фаз? Не разрешается ли запись после unknown outcome?
-3. Достаточны ли historical role/slot checks для заявленного доверенного local job?
-   Отдели misconfigured job от отсутствующей production attestation.
-4. Есть ли обычный, воспроизводимый сценарий starvation при default limits? Малые debug
-   maxSteps и отсутствие persistent cursor уже известны; не объявляй это решённым.
-5. Нет ли важных compatibility regressions CLI/старого USDG пути?
-6. Назови один разумный следующий пакет с критериями готовности. Не возвращай ненужный
-   per-campaign converter и не считай весь backlog prerequisite текущего локального шага.
-
-Проверки и их границы ниже; не воспринимай этот текст как доказательство отсутствия ошибок.
-
-## Итог проверок текущего шага
-
-- Новый prize-flow набор: **11/11**, ~74 s.
-- `node --test --test-concurrency=1 test/local-usdg-funding.test.cjs test/local-prize-converter.test.cjs test/local-transaction.test.cjs test/local-buy-cycle.test.cjs`: **35/35**, ~228 s.
-- Итого **46** уникальных проверок; основной набор теперь **232**, полного запуска 232 не было.
-
-Регрессионный BUY-cycle продолжает проверять прежний USDG профиль; новый converter flow
-проверен отдельным source→collect→harvest→pay→convert→forward тестом и реальным CLI,
-а не выдан за уже встроенный в BUY fixture профиль. Contract converter tests дополнительно
-проверяют сохранность frozen reserve. Реальный PAIR/DEX не использовался.
-Логи (ignored): `.local/logs/local-prize-flow-tests.log`, `.local/logs/local-prize-flow-regressions.log`.
-
-## Проверки исправления, 20.09.2026
-
-`node --test --test-concurrency=1 test/local-prize-flow.test.cjs test/local-scheduler.test.cjs test/local-executor-stability.test.cjs test/local-transaction.test.cjs test/local-buy-cycle.test.cjs`
-— **42/42**, fail 0, ~380 s. Добавлены 8 регрессий/интеграций; основной набор теперь
-**240**, полный запуск 240 не выполнялся. Лог `.local/logs/error-boundary-fixes.log` ignored.
-
-Проверены stale read/callback context после success и definite rejection; максимальный
-legacy list; unknown Short broadcast/receipt, unknown Monthly broadcast без следующего
-Short tick, definite estimate rejection с продолжением Monthly; restart только после
-подтверждения исходной pending tx. Прежние reorg/empty/funding/state/cutoff/abort/timeout
-и BUY-cycle также прошли. Денежная математика и Solidity не менялись.
+После исправления `node --test --test-concurrency=1 test/local-coordinator.test.cjs`:
+**7/7**, fail 0, ~144 s. Полный набор после этого локального fix не повторяли.
+Logs локально: `.local/logs/coordinator-full.log` и `coordinator-final.log`, в git не входят.

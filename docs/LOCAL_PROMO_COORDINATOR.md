@@ -1,0 +1,67 @@
+# Локальный coordinator
+
+20.09.2026. Только chainId 31337, loopback RPC, LOCAL_HEAD, тестовый RNG/обмен.
+Solidity, распределение денег и права доступа не меняются.
+
+## Один ограниченный проход
+
+`prize-flow → draw scheduler (Short/Monthly)` последовательно, с ожиданием receipt каждой
+транзакции. Один provider, связанные TOKEN/USDG/vault, явно заданные unlocked signers.
+Призовой worker сохраняет изоляцию definite recipient failures, scheduler — независимость
+Short/Monthly при definite rejection. Error/abort заканчивает общий проход. Неизвестная
+отправка блокирует оба контура, включая последующие запуски.
+
+CLI:
+
+```powershell
+node scripts/run-local-coordinator.cjs --job prize.json --config scheduler.json --state .local/coordinator.json --scheduler-state .local/scheduler.json --rpc http://127.0.0.1:8545 --publisher 0 --executor 0 --watch
+```
+
+Без `--watch` выполняется один проход. Watch ждёт `job.pollSeconds` между проходами;
+это также задержка повторной проверки draw. Blocked/error завершает CLI с кодом 1,
+а не автоматически перезапускает его. SIGINT прерывает ожидание, но не отменяет tx.
+Статус `complete` означает завершённый проход; draws могут штатно ожидать seed/schedule.
+
+## Маркер незавершённой отправки
+
+Общий `sendLocalTransaction` имеет опциональную AsyncLocalStorage boundary только для
+coordinator. Самостоятельные workers продолжают работать как раньше.
+
+1. После estimate, до broadcast сохраняются worker/action/target/calldata.
+2. После ответа RPC сохраняются tx hash/from/nonce.
+3. Receipt исходной tx (success либо доказанный status 0) снимает pending; `lastResolved`
+   хранит последнюю разрешённую операцию. Неизвестный outcome сохраняет pending.
+4. Restart с известным hash читает receipt и проверяет blockHash текущей цепи. Пока
+   receipt отсутствует, новых sends нет. После подтверждения workers читают актуальные
+   балансы/credits/controller state: уже обработанные деньги/начатые draws не повторяются.
+   Новый collect или обмен оставшегося/нового TOKEN допустим — это не повтор прежней выплаты.
+5. Если hash получить не удалось (включая crash между отправкой и записью hash),
+   автоматического resume нет. Пустой mempool/равные nonce не доказывают, что tx не было.
+   Требуется отдельная диагностика; команды force-clear/retry в этом шаге нет.
+
+State использует существующую checksum/config-binding + atomic replacement + lock
+реализацию `withState`; envelope остаётся `local-scheduler-state-v1`, внутри config
+идентифицирует `local-coordinator-v1`. Jobs этого envelope пусты; реальные draw jobs
+остаются в отдельном scheduler state. Изменение job/config/signers/state path требует
+осознанного перехода, не обходит незавершённый intent. Повреждённый state блокирует запуск.
+
+## Границы
+
+- Это минимальный локальный pending marker, не полноценный transaction journal.
+  Нет истории всех intents, replacement recovery, production finality или crash-proof storage.
+- Lock защищает один state path. Все указанные signers должны принадлежать только этому
+  процессу. Нельзя параллельно запускать standalone workers или второй coordinator с другим
+  state path на тех же accounts. Проверка pending nonce — дополнительный барьер, не mutex.
+- SIGKILL может оставить stale lock; автоматического удаления/перехвата lock нет.
+- Hashless failure блокирует до диагностики. Удаление state/lock не является доказательством
+  безопасного recovery. Потеря/откат локальных файлов отдельно не решены.
+- Ошибка RPC при reconciliation также останавливает запуск. Один receipt в LOCAL_HEAD
+  не даёт production finality. Reorg после разрешения receipt остаётся отдельной границей.
+- Project gas budget/autorefill, live DEX/price guard, real RNG не входят в этот шаг.
+
+Проверки: `node --test --test-concurrency=1 test/local-coordinator.test.cjs` — **7/7**, fail 0,
+144 s, 20.09.2026. Реальная локальная цепь, shared signer, оба pending пути, abort,
+hashless restart, known refusal, lock, CLI и corrupt/config-mismatched state.
+Первый общий прогон выявил optional `undefined` в metadata: checksum учитывал поле,
+которое JSON не сохранял. Исправлено исключением отсутствующих полей перед save;
+все семь интеграций после этого пройдены повторно. Результат общего набора — в CURRENT_CONTEXT.
