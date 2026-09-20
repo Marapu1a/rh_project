@@ -78,9 +78,9 @@ Gas cap и pending nonce могут вернуть waiting. Есть огран�
 - Проверка campaign перед tx не блокирует её смену до inclusion. Это известная граница локального
   orchestration: on-chain sync следует текущей policy, pay — уже возникшему credit. Job не является
   on-chain гарантией неизменности policy между отдельными транзакциями.
-- Ошибка перевода останавливает этот запуск, сохраняя credit. Отдельные permissionless pay
-  и prize workers остаются доступны; автоматическая изоляция постоянно неисправного
-  получателя в фоновом scheduler ещё не реализована.
+- Определённый отказ перевода изолируется на один pass с сохранением credit.
+  runFunding возвращает degraded/failures; неизвестный результат отправки останавливает writes.
+  Подробная классификация и общий skip двух funding-фаз — в [revenue](LOCAL_USDG_REVENUE.md).
 - Job не подписан, не pin-ит bytecode и не является production deployment manifest.
 - Draw scheduler и отдельный revenue pass реализованы локально; общего supervisor,
   TOKEN swap, ops split/refill и production RNG ещё нет. Idle означает «нет доступной работы здесь», не «внешний source пуст».

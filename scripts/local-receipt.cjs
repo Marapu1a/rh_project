@@ -12,7 +12,7 @@ async function waitLocalReceipt(tx,{signal,receiptTimeoutMs=30000}={}){
       abort=()=>reject(stopped(tx));signal.addEventListener('abort',abort,{once:true});
       if(signal.aborted)abort();
     })]):confirmation);
-    if(!receipt||receipt.status!==1)throw Error('Transaction not confirmed: '+tx.hash);
+    if(!receipt||receipt.status!==1){const error=new Error('Transaction not confirmed: '+tx.hash);error.receipt=receipt;throw error;}
     return receipt;
   }catch(error){
     if(error.code==='TIMEOUT'){
@@ -25,4 +25,23 @@ async function waitLocalReceipt(tx,{signal,receiptTimeoutMs=30000}={}){
 function receiptOptions(timeout){
   if(!Number.isInteger(timeout)||timeout<1||timeout>300000)throw Error('Invalid receipt timeout');
 }
-module.exports={waitLocalReceipt,receiptOptions};
+// Only this explicit read-only estimate or a receipt for the original tx proves rollback.
+async function sendLocalTransaction(method,args,overrides,options={}){
+  let stage='estimate',tx;
+  try{
+    const gasLimit=await method.estimateGas(...args,overrides);
+    if(options.signal?.aborted){const e=new Error('Stopped before broadcast');e.code='LOCAL_EXECUTION_STOPPED';throw e;}
+    stage='broadcast';tx=await method(...args,{...overrides,gasLimit});
+    stage='confirm';const receipt=await waitLocalReceipt(tx,options);
+    return receipt;
+  }catch(cause){
+    const error=new Error(cause.shortMessage||cause.message,{cause});
+    error.code=cause.code;error.stage=stage;
+    error.transactionHash=tx?.hash||cause.transactionHash;
+    error.definiteRejection=(stage==='estimate'&&cause.code==='CALL_EXCEPTION')||
+      (stage==='confirm'&&cause.code!=='TRANSACTION_REPLACED'&&cause.receipt?.status===0&&
+        typeof tx?.hash==='string'&&cause.receipt.hash===tx.hash);
+    throw error;
+  }
+}
+module.exports={waitLocalReceipt,receiptOptions,sendLocalTransaction};

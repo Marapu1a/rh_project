@@ -16,14 +16,44 @@ test('review: permissionless TOKEN pay reaches USDG-only vault with no usable TO
     e=>e.data===ethers.id('ForbiddenReserve()').slice(0,10));
   assert.equal(await f.vault.claimable(f.token.target),0n);
 });
-test('review: blocked project recipient prevents subsequent automatic collection',async()=>{
-  const f=await setup();await sent(f.quote.mint(f.router.target,100));
+test('blocked project recipient is skipped once per pass; collection continues and recovered debt pays once',async()=>{
+  const f=await setup(),before=await f.quote.balanceOf(f.vault.target),steps=[];
+  await sent(f.quote.mint(f.router.target,100));
   await sent(f.quote.blockRecipient(f.project));await sent(f.source.queueFees(f.quote.target,600));
-  await assert.rejects(()=>runRevenue(revenueOptions(f)));
-  assert.equal(await f.router.credit(f.quote.target,f.project),20n);
+  const result=await runRevenue(revenueOptions(f),{onStep:s=>steps.push(s)});
+  assert.equal(result.status,'degraded');assert.equal(result.funding.failures.length,1);
+  assert.equal(steps.filter(s=>s.status==='recipientFailed').length,1);
+  assert.equal(await f.router.credit(f.quote.target,f.project),140n);
   assert.equal(await f.router.credit(f.quote.target,f.vault.target),0n);
-  assert.equal(await f.source.collections(),0n);assert.equal(await f.source.queued(f.quote.target),600n);
+  assert.equal(await f.quote.balanceOf(f.vault.target)-before,560n);
+  assert.equal(await f.source.collections(),1n);assert.equal(await f.source.queued(f.quote.target),0n);
+  await sent(f.quote.blockRecipient(ethers.ZeroAddress));
+  assert.equal((await runRevenue(revenueOptions(f))).status,'idle');
+  assert.equal(await f.quote.balanceOf(f.project),140n);
+  await runRevenue(revenueOptions(f));assert.equal(await f.quote.balanceOf(f.project),140n);
+  assert.equal(await f.quote.balanceOf(f.router.target),0n);
 });
+test('blocked prize recipient does not block project, source or existing prize liabilities',async()=>{
+  const f=await setup(),reserved=await f.vault.reserved(f.quote.target),claimable=await f.vault.claimable(f.quote.target);
+  await sent(f.quote.mint(f.router.target,100));await sent(f.quote.blockRecipient(f.vault.target));
+  await sent(f.source.queueFees(f.quote.target,600));
+  const result=await runRevenue(revenueOptions(f));assert.equal(result.status,'degraded');
+  assert.equal(result.funding.failures.length,1);assert.equal(await f.quote.balanceOf(f.project),140n);
+  assert.equal(await f.router.credit(f.quote.target,f.vault.target),560n);
+  assert.equal(await f.vault.reserved(f.quote.target),reserved);assert.equal(await f.vault.claimable(f.quote.target),claimable);
+  assert.equal(await f.quote.balanceOf(f.router.target),560n);
+});
+test('unknown payment broadcast outcome stops before collection even with CALL_EXCEPTION code',async()=>{
+  const f=await setup();await sent(f.quote.mint(f.router.target,100));await sent(f.router.sync(f.quote.target));
+  await sent(f.source.queueFees(f.quote.target,600));let sends=0;
+  const executor={provider:f.provider,getAddress:()=>f.executor.getAddress(),sendTransaction:async()=>{
+    sends++;throw Object.assign(new Error('lost send response'),{code:'CALL_EXCEPTION'});
+  }};
+  await assert.rejects(()=>runRevenue({...revenueOptions(f),executor}),e=>e.stage==='broadcast'&&!e.definiteRejection);
+  assert.equal(sends,1);assert.equal(await f.source.collections(),0n);
+  assert.equal(await f.router.credit(f.quote.target,f.vault.target),80n);
+});
+
 async function setup(){
   const f=await fixture(compiled),project=await (await f.provider.getSigner(4)).getAddress();
   const end=(await f.provider.getBlock('latest')).timestamp+1000;
@@ -163,4 +193,51 @@ test('ambiguous collect receipt stops further sends; confirmed original resumes 
     assert.equal(await f.provider.getTransactionCount(address,'pending'),await f.provider.getTransactionCount(address,'latest')+1);
   }finally{await rpc('evm_mine');await rpc('evm_setAutomine',[true]);if(tx)await tx.wait();}
   await runRevenue(revenueOptions(f));assert.equal(await f.router.received(1,f.quote.target),600n);assert.equal(await f.quote.balanceOf(f.project),120n);
+});
+
+test('two rejected recipients cannot starve a healthy third; step limit never permits collection',async()=>{
+  const f=await setup(),third=await (await f.provider.getSigner(5)).getAddress();
+  await advance(1001);const end=(await f.provider.getBlock('latest')).timestamp+1000;
+  const recipients=[f.vault.target,f.project,third],bps=[6000,2000,2000];
+  await sent(f.router.rollCampaign(1,[end,recipients,bps]));
+  const fundingJob={...f.job,campaignId:'2',recipients,bps};
+  await sent(f.quote.mint(f.router.target,100));await sent(f.router.sync(f.quote.target));
+  const rejected=new Set([f.vault.target.toLowerCase(),f.project.toLowerCase()]),attempts=[];
+  // Inject read-only estimate rejection for two recipients; healthy transfers use the real chain.
+  const router=new Proxy(f.router,{get(target,key){
+    if(key!=='connect')return Reflect.get(target,key);
+    return signer=>{
+      const connected=target.connect(signer),pay=(...args)=>connected.pay(...args);
+      pay.estimateGas=async(...args)=>{
+        attempts.push(args[1].toLowerCase());
+        if(rejected.has(args[1].toLowerCase()))throw Object.assign(new Error('estimate rejected'),{code:'CALL_EXCEPTION'});
+        return connected.pay.estimateGas(...args);
+      };
+      return new Proxy(connected,{get(c,k){return k==='pay'?pay:Reflect.get(c,k);}});
+    };
+  }});
+  const options={...revenueOptions(f),router,job:{...revenueOptions(f).job,funding:fundingJob}};
+  const before=await f.source.collections();
+  assert.equal((await runRevenue(options,{maxSteps:1})).status,'yielded');
+  assert.equal(await f.source.collections(),before);
+  attempts.length=0;
+  const result=await runRevenue(options);assert.equal(result.status,'degraded');assert.equal(result.funding.failures.length,2);
+  for(const address of rejected)assert.equal(attempts.filter(a=>a===address).length,1);
+  assert.equal(await f.quote.balanceOf(third),20n);assert.equal(await f.quote.balanceOf(f.router.target),80n);
+  assert.equal(await f.router.credit(f.quote.target,f.vault.target),60n);assert.equal(await f.router.credit(f.quote.target,f.project),20n);
+});
+test('pending payment receipt stops before source and does not pay again after confirmation',async()=>{
+  const f=await setup(),{rpc}=require('./fixtures/local-controllers.cjs');
+  await sent(f.quote.mint(f.router.target,100));await sent(f.router.sync(f.quote.target));
+  await sent(f.source.queueFees(f.quote.target,600));let tx,sends=0;
+  const executor={provider:f.provider,getAddress:()=>f.executor.getAddress(),sendTransaction:async request=>{
+    sends++;await rpc('evm_setAutomine',[false]);tx=await f.executor.sendTransaction(request);return tx;
+  }};
+  try{
+    await assert.rejects(()=>runRevenue({...revenueOptions(f),executor,receiptTimeoutMs:100}),e=>e.code==='LOCAL_RECEIPT_TIMEOUT'&&e.transactionHash===tx.hash);
+    assert.equal(sends,1);assert.equal(await f.source.collections(),0n);
+  }finally{await rpc('evm_mine');await rpc('evm_setAutomine',[true]);if(tx)await tx.wait();}
+  assert.equal(await f.router.credit(f.quote.target,f.vault.target),0n);
+  await runRevenue(revenueOptions(f));assert.equal(await f.router.received(1,f.quote.target),700n);
+  assert.equal(await f.quote.balanceOf(f.project),140n);assert.equal(await f.quote.balanceOf(f.router.target),0n);
 });

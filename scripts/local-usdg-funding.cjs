@@ -1,6 +1,6 @@
 // Local orchestration of existing custody APIs. No swap, new shares or prize withdrawal.
 const {ethers}=require('ethers');
-const {waitLocalReceipt,receiptOptions}=require('./local-receipt.cjs');
+const {sendLocalTransaction,receiptOptions}=require('./local-receipt.cjs');
 const check=(ok,message)=>{if(!ok)throw Error(message);};
 const same=(a,b)=>String(a).toLowerCase()===String(b).toLowerCase();
 function validateFundingJob(j){
@@ -15,7 +15,7 @@ function validateFundingJob(j){
   for(let i=1;i<3;i++)check(!same(j.recipients[i],j.vault),'Project recipient cannot be prize vault');
   return j;
 }
-async function stepFunding({provider,router,vault,executor,job,signal,receiptTimeoutMs=30000}){
+async function stepFunding({provider,router,vault,executor,job,signal,receiptTimeoutMs=30000,skipRecipients=new Set()}){
   validateFundingJob(job);receiptOptions(receiptTimeoutMs);
   if(signal?.aborted)return {status:'stopped'};
   check((await provider.getNetwork()).chainId===31337n,'Local chain 31337 only');
@@ -35,7 +35,7 @@ async function stepFunding({provider,router,vault,executor,job,signal,receiptTim
   if(await vault.unrecognizedUSDG(at)>0n){target=vault;method='syncUSDG';args=[];action='allocatePrizes';}
   else if(balance>accounted){target=router;method='sync';args=[job.quote];action='recognizeRevenue';}
   else for(const recipient of [...new Set(job.recipients.map(r=>r.toLowerCase()))]){
-    if(await router.credit(job.quote,recipient,at)>0n){target=router;method='pay';args=[job.quote,recipient];action='payRecipient';break;}
+    if(!skipRecipients.has(job.quote.toLowerCase()+':'+recipient)&&await router.credit(job.quote,recipient,at)>0n){target=router;method='pay';args=[job.quote,recipient];action='payRecipient';break;}
   }
   if(!target)return {status:'idle',campaignId:job.campaignId};
   if(!executor)return {status:'waiting',reason:'executor'};
@@ -47,18 +47,34 @@ async function stepFunding({provider,router,vault,executor,job,signal,receiptTim
   if((await provider.getBlock(head.number))?.hash!==head.hash)return {status:'waiting',reason:'chainChanged'};
   if(await router.campaignId()!==BigInt(job.campaignId))return {status:'waiting',reason:'campaignChanged'};
   if(signal?.aborted)return {status:'stopped'};
-  const tx=await target.connect(executor)[method](...args,{type:2,maxFeePerGas:price,maxPriorityFeePerGas:0});
-  const receipt=await waitLocalReceipt(tx,{signal,receiptTimeoutMs});
-  return {status:'progress',action,transactionHash:receipt.hash,...(method==='pay'?{recipient:args[1]}:{})};
+  try{
+    const receipt=await sendLocalTransaction(target.connect(executor)[method],args,
+      {type:2,maxFeePerGas:price,maxPriorityFeePerGas:0},{signal,receiptTimeoutMs});
+    return {status:'progress',action,transactionHash:receipt.hash,...(method==='pay'?{recipient:args[1]}:{})};
+  }catch(error){
+    if(method==='pay'&&error.definiteRejection){
+      error.recipientFailure={asset:job.quote,recipient:args[1],stage:error.stage,
+        message:error.message,...(error.transactionHash?{transactionHash:error.transactionHash}:{})};
+    }
+    throw error;
+  }
 }
-async function runFunding(options,{maxSteps=32,onStep=()=>{},signal}={}){
+async function runFunding(options,{maxSteps=32,onStep=()=>{},signal,skipRecipients=new Set(),failures=[]}={}){
   check(Number.isInteger(maxSteps)&&maxSteps>0&&maxSteps<=10000,'Invalid step limit');
   for(let i=0;i<maxSteps;i++){
     let result;
-    try{result=await stepFunding({...options,signal:signal??options.signal});}
-    catch(e){if(e.code!=='LOCAL_EXECUTION_STOPPED')throw e;result={status:'stopped',transactionHash:e.transactionHash};}
-    await onStep(result);if(result.status!=='progress')return result;
+    try{result=await stepFunding({...options,signal:signal??options.signal,skipRecipients});}
+    catch(e){
+      if(e.recipientFailure){
+        const failure=e.recipientFailure;failures.push(failure);
+        skipRecipients.add(failure.asset.toLowerCase()+':'+failure.recipient.toLowerCase());
+        await onStep({status:'recipientFailed',action:'payRecipient',...failure});continue;
+      }
+      if(e.code!=='LOCAL_EXECUTION_STOPPED')throw e;
+      result={status:'stopped',transactionHash:e.transactionHash};
+    }
+    await onStep(result);if(result.status!=='progress')return {...result,status:result.status==='idle'&&failures.length?'degraded':result.status,failures:[...failures]};
   }
-  return {status:'yielded',reason:'stepLimit'};
+  return {status:'yielded',reason:'stepLimit',failures:[...failures]};
 }
 module.exports={validateFundingJob,stepFunding,runFunding};

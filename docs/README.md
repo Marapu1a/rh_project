@@ -41,3 +41,5 @@
 Источник комиссий и распределение дохода: [локальный USDG revenue pass](LOCAL_USDG_REVENUE.md).
 
 Последняя проверка связок: [automation review 20.09](AUTOMATION_REVIEW_2026-09-20.md).
+
+- [Текущая PAIR fee policy: V1/V2](PAIR_CURRENT_FEE_POLICY.md) — внешние правила и граница применимости.

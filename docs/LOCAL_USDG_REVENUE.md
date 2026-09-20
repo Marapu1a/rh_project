@@ -38,15 +38,18 @@ Collect у внешнего источника может собирать об�
 
 Каждый этап — отдельная транзакция. Отказ позднего этапа не откатывает ранее подтверждённые.
 Это намеренно: источник может отказать, а уже полученные деньги всё равно должны работать.
-Если сами funding/pay операции неисправны, они по-прежнему завершают запуск ошибкой;
-изоляция постоянно неисправного recipient остаётся будущей задачей.
+Определённый отказ pay изолируется на один проход: общий для двух фаз набор
+(asset, recipient) исключает повторную попытку плохому адресу. Остальные recipients,
+collect и harvest продолжаются. Credit сохраняется; следующий проход снова пробует адрес.
+Итог degraded содержит funding.failures; onStep сообщает recipientFailed.
+Не-recipient ошибки и неоднозначные отправки по-прежнему останавливают writes.
 
 ## API и CLI
 
 `runRevenue({provider, router, vault, executor, job, signal?, receiptTimeoutMs?},
 {maxSteps=32, onStep, signal})`; maxSteps применяется отдельно к двум фазам funding.
 Результат содержит source.collect, source.harvest и funding. Статусы: idle, degraded,
-waiting, yielded, stopped, error. Degraded означает известный отказ источника, а не отсутствие проблемы.
+waiting, yielded, stopped, error. Degraded означает известный отказ источника или recipient, а не отсутствие проблемы.
 
 Revenue job оборачивает существующий funding job:
 
@@ -91,3 +94,36 @@ claimable, отказ claim, short payment, source epoch drift, неверная
 Проверено 20.09: `node --test --test-concurrency=1 test/local-usdg-funding.test.cjs test/local-buy-cycle.test.cjs test/fee-router.test.cjs`
 — **31/31**, ~222 s. Лог `.local/logs/usdg-revenue-tests.log`. Основной список теперь
 198 тестов; полный запуск 198 не выполнялся. Синтаксис JS, ссылки и diff проверены.
+
+## Изоляция выплат — текущая реализация 20.09
+
+Funding и source используют sendLocalTransaction из local-receipt.cjs: отдельный
+read-only estimateGas, затем broadcast с явным gasLimit, затем ожидание receipt.
+Определённый отказ: CALL_EXCEPTION именно в estimate либо status=0 receipt с hash
+исходной отправленной tx (не TRANSACTION_REPLACED). Один лишь CALL_EXCEPTION из send
+не доказывает откат. Read/RPC ошибки, timeout, replacement и nonce conflict не обходятся.
+Abort после estimate не отправляет tx. Состояние skip/failures живёт только один pass;
+waiting/yielded/stopped не превращаются в degraded и не разрешают новую collection.
+Прямой stepFunding сохраняет throwing API; runFunding изолирует только recipientFailure.
+
+Это не durable journal: crash/restart при неизвестной tx требует reconciliation.
+Отказ RPC без возвращённого hash остаётся неоднозначным даже если RPC фактически
+исполнил tx. Математика и Solidity не менялись.
+
+## Проверки recipient isolation, 20.09.2026
+
+- `node --test --test-concurrency=1 test/local-usdg-funding.test.cjs test/fee-router.test.cjs test/local-buy-cycle.test.cjs`: **37/37**, ~240 s.
+- `node --test test/local-transaction.test.cjs`: **10/10** — stage/error matrix, включая synthetic mined revert, replacement, RPC и abort.
+- `node --test test/local-executor-stability.test.cjs`: **5/5**, ~32 s — соседние receipt/cutoff регрессии.
+
+Итого 52 проверки в трёх непересекающихся наборах. Основной список теперь 215;
+полный запуск 215 не выполнялся. Реальный mined revert классифицируется по receipt;
+матрица этого исхода использует подставленные ответы, не отдельный mined-revert fork.
+Контрактные сценарии покрывают blocked prize/project, восстановление и однократную
+выплату долга, два отказавших адреса с работающим третьим (estimate injection),
+лимит шагов, неизвестный payment broadcast, реальный pending payment/collect,
+сохранение credits и прежний сквозной BUY-cycle. TOKEN-custody regression по-прежнему
+воспроизводит открытый дефект, а не исправление A.
+
+Логи исключены из git: `.local/logs/recipient-isolation-tests.log`,
+`.local/logs/recipient-isolation-stability.log`. Live PAIR fork не запускался.

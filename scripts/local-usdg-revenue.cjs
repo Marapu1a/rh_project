@@ -1,7 +1,7 @@
 // One local collection pass. Existing funds are drained before touching the source.
 const {ethers}=require('ethers');
 const {validateFundingJob,runFunding}=require('./local-usdg-funding.cjs');
-const {waitLocalReceipt,receiptOptions}=require('./local-receipt.cjs');
+const {sendLocalTransaction,receiptOptions}=require('./local-receipt.cjs');
 const same=(a,b)=>String(a).toLowerCase()===String(b).toLowerCase();
 const check=(ok,msg)=>{if(!ok)throw Error(msg);};
 function validateRevenueJob(job){
@@ -15,9 +15,10 @@ async function runRevenue(options,{onStep=()=>{},signal,maxSteps=32}={}){
   const {provider,router,vault,executor,job,receiptTimeoutMs=30000}=options;
   signal=signal??options.signal;validateRevenueJob(job);receiptOptions(receiptTimeoutMs);
   const fundingOptions={provider,router,vault,executor,job:job.funding,signal,receiptTimeoutMs};
+  const skipRecipients=new Set(),failures=[];
   // Includes the local chain, assets, recipient policy and campaign checks.
-  let funding=await runFunding(fundingOptions,{maxSteps,onStep,signal});
-  if(funding.status!=='idle')return {status:funding.status,funding};
+  let funding=await runFunding(fundingOptions,{maxSteps,onStep,signal,skipRecipients,failures});
+  if(!['idle','degraded'].includes(funding.status))return {status:funding.status,funding};
   const sourceResults={};
   async function record(action,result){sourceResults[action]=result;await onStep({action,...result});}
   const failure=e=>({status:'error',message:e.shortMessage||e.message,...(e.transactionHash?{transactionHash:e.transactionHash}:{})});
@@ -33,8 +34,8 @@ async function runRevenue(options,{onStep=()=>{},signal,maxSteps=32}={}){
   }
   async function send(action,args){
     const ready=await guard();if(ready.status)return ready;
-    const tx=await router.connect(executor)[action](...args,{type:2,maxFeePerGas:ready.price,maxPriorityFeePerGas:0});
-    const receipt=await waitLocalReceipt(tx,{signal,receiptTimeoutMs});
+    const receipt=await sendLocalTransaction(router.connect(executor)[action],args,
+      {type:2,maxFeePerGas:ready.price,maxPriorityFeePerGas:0},{signal,receiptTimeoutMs});
     return {status:'progress',transactionHash:receipt.hash};
   }
   try{
@@ -51,7 +52,7 @@ async function runRevenue(options,{onStep=()=>{},signal,maxSteps=32}={}){
         if(result.status!=='progress')return {status:result.status,source:sourceResults,funding};
       }catch(e){
         // Only a definite EVM rejection permits another transaction in this pass.
-        if(e.code!=='CALL_EXCEPTION')throw e;
+        if(!e.definiteRejection)throw e;
         await record('collect',failure(e));
       }
     }
@@ -60,14 +61,14 @@ async function runRevenue(options,{onStep=()=>{},signal,maxSteps=32}={}){
       try{
         const result=await send('harvest',[job.funding.quote,job.source.epoch]);await record('harvest',result);
         if(result.status!=='progress')return {status:result.status,source:sourceResults,funding};
-      }catch(e){if(e.code!=='CALL_EXCEPTION')throw e;await record('harvest',failure(e));}
+      }catch(e){if(!e.definiteRejection)throw e;await record('harvest',failure(e));}
     }else await record('harvest',{status:'idle'});
   }catch(e){
     if(e.code==='LOCAL_EXECUTION_STOPPED')return {status:'stopped',transactionHash:e.transactionHash,source:sourceResults,funding};
     // Unknown RPC/broadcast/receipt outcomes stop further writes. Prior funding already ran.
     await record('source',failure(e));return {status:'error',source:sourceResults,funding};
   }
-  funding=await runFunding(fundingOptions,{maxSteps,onStep,signal});
+  funding=await runFunding(fundingOptions,{maxSteps,onStep,signal,skipRecipients,failures});
   return {status:funding.status!=='idle'?funding.status:Object.values(sourceResults).some(r=>r.status==='error')?'degraded':'idle',source:sourceResults,funding};
 }
 module.exports={validateRevenueJob,runRevenue};

@@ -41,3 +41,5 @@
 - Стабилизация workers 19.09: bounded receipt/abort и cutoff следующего блока; `npm run test:local:stability`. [Результаты и ограничения](LOCAL_STABILIZATION_REVIEW.md).
 
 Review 20.09: [открытые custody/execution дефекты и исправление reorg](AUTOMATION_REVIEW_2026-09-20.md). Успешные локальные suites не закрывают эти ограничения.
+
+20.09: recipient isolation в funding/revenue и explicit estimate/broadcast/confirm; детали — [LOCAL_USDG_REVENUE](LOCAL_USDG_REVENUE.md). Контрактная математика не менялась.
