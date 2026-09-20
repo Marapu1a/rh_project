@@ -2,328 +2,269 @@
 
 Обновлено: 20.09.2026.
 
-Это независимое review-мнение по состоянию репозитория, а не задание на автоматическое
-исполнение. При следующем обращении файл следует переписать, а не создавать новый ответ.
+Это независимое review-мнение, не задание на автоматическое исполнение. При следующем
+обращении файл следует полностью перезаписать.
 
-Просмотрен commit `bf234c1230b72a3e23af97f714aee2c0c843b08c` —
-`Build local promo automation and document review findings`.
+Просмотрен commit `977cc64f99e30e001981830e726302d208fbf453` —
+`Isolate failed revenue payouts and clarify PAIR V2 fee context`.
 
 ## Короткий вердикт
 
-Текущее направление разумное. A и C подтверждаются кодом и исполнимыми тестами; B исправлен
-для заявленного сценария. Порядок `короткий fix C → TOKEN architecture/conversion → ops/RNG`
-поддерживаю, пока это локальный стенд без реальных средств.
+Fix C по существу сделан правильно. В `runRevenue` я не нашёл пути, где неизвестный
+broadcast/receipt outcome ошибочно превращается в recipient failure и разрешает следующие
+writes. Общий skip действительно живёт обе funding-фазы одного pass; определённо отказавший
+recipient пробуется один раз, здоровые recipients и source продолжают работу, credit не теряется.
 
-В просмотренном участке я не нашёл более тяжёлой уже воспроизводимой потери USDG. Но рядом
-есть архитектурная ловушка, важная до реализации A: `FeeRouter.credit` не содержит campaign id.
-Один общий converter смешает старые и новые TOKEN credits одного адреса и не сможет честно
-восстановить их происхождение только по своему балансу. Это не новый exploit текущего USDG
-worker, а ограничение учёта, которое способно сделать наивный следующий дизайн неверным.
+Это закрывает найденный локальный liveness defect C. Это не durable transaction recovery и не
+production supervisor — repo теперь проводит эту границу честно.
 
-Независимо повторены документированные локальные наборы после создания ignored runtime-каталога
-`.local`: funding/revenue **14/14**, scheduler **6/6**, BUY-cycle **1/1**, итого **21/21**.
-Полный основной набор из 201 теста в этом review не запускался.
+Два оставшихся замечания не отменяют fix:
 
-## Findings по приоритету
+1. заявленная команда `37/37` не воспроизводится на чистом checkout без ручного создания
+   ignored-каталога `.local`;
+2. unknown error первой funding-фазы безопасно выбрасывается наружу, но текущий CLI печатает
+   только `error.message` и может потерять нужные для reconciliation `stage/hash`.
 
-### P0 — A подтверждён, открыт: TOKEN можно необратимо доставить в USDG-only vault
+Для следующего TOKEN-шага общий узкий converter допустим. Отдельный converter на каждую
+FeeRouter campaign действительно не обязателен, если экономическое назначение не меняется и
+не требуется campaign-specific conversion P&L. Но общий converter нельзя путать с вечно
+изменяемым маршрутизатором: смена конечного vault/назначения требует новой версии адреса, а
+старые credits/inventory должны продолжать обслуживаться старой версией.
 
-Место: [`FeeRouter.pay`](../contracts/FeeRouter.sol#L116-L125), общие для двух активов
-`Policy.recipients` и `credit` в [`FeeRouter`](../contracts/FeeRouter.sol#L26-L40), а также
-USDG-only граница `DualControllerPromoVault`.
+## Проверка C по коду
 
-Trigger:
+### 1. Граница estimate → broadcast → confirm стала содержательной
 
-1. текущая policy ставит prize vault в `recipients[0]`;
-2. `_sync(projectToken)` создаёт ему TOKEN credit;
-3. любой адрес вызывает `pay(projectToken, vault)`.
+[`sendLocalTransaction`](../scripts/local-receipt.cjs#L28-L45) сначала выполняет явный
+`estimateGas`, затем отправляет tx с полученным `gasLimit`, затем ждёт receipt.
 
-`pay` корректно обнуляет credit и переводит актив указанному policy recipient. Ошибка не внутри
-этой функции, а в несовместимой композиции: тот же recipient используется для TOKEN и USDG,
-тогда как vault умеет учитывать и резервировать только USDG. Off-chain worker, который сам не
-платит TOKEN, защитой не является, потому что `pay` permissionless.
+Текущая классификация консервативна и верна для локального scope:
 
-Исполнимый контрпример уже есть: тест `review: permissionless TOKEN pay reaches USDG-only vault
-with no usable TOKEN reserve` в [`local-usdg-funding.test.cjs`](../test/local-usdg-funding.test.cjs).
-Он получает `480 TOKEN` в vault из `600 TOKEN` revenue, обнуляет router credit и получает
-`ForbiddenReserve` при попытке использовать TOKEN как резерв. Passed здесь означает
-«дефект воспроизведён», а не «дефект исправлен».
-
-Последствие: TOKEN не украден и USDG accounting не раздут, но призовая стоимость оказывается
-в custody без допустимого пути конвертации или использования. Для deployment-профиля это blocker.
-
-### P1 — C подтверждён, открыт: один recipient останавливает независимую collection
-
-Место: выбор первого credit в [`stepFunding`](../scripts/local-usdg-funding.cjs#L33-L52),
-проброс любой ошибки из [`runFunding`](../scripts/local-usdg-funding.cjs#L54-L63) и ранний
-выход до source в [`runRevenue`](../scripts/local-usdg-revenue.cjs#L14-L20).
-
-Если перевод project recipient ревертит, `runFunding` не возвращает outcome, а бросает ошибку.
-Поэтому `runRevenue` не доходит до `collect` и `harvest`, хотя prize recipient уже мог быть
-успешно обслужен, а новая source revenue от этой выплаты не зависит.
-
-Контрпример — `review: blocked project recipient prevents subsequent automatic collection`:
-prize credit из старых `100 USDG` выплачен, project credit `20` сохранён, но новые `600 USDG`
-остаются queued и `collections() == 0`.
-
-Это liveness/isolation defect, не потеря денег: неуспешный transfer атомарно сохраняет credit.
-
-### P1 — соседняя архитектурная граница: credit агрегируется между campaigns
-
-Место: `received[campaignId][asset]` campaign-scoped, но долг хранится как
-`credit[asset][recipient]`; `_credit` прибавляет к этому общему ключу. `Credited` содержит
-campaign id, а `Paid` — нет.
-
-Следствие: если один и тот же converter используется в нескольких campaigns, его unpaid TOKEN
-credit сливается в одну сумму. Events позволяют внешне реконструировать начисления, но один
-поздний перевод и последующая продажа не дают контракту надёжно определить, какой campaign
-продал сколько TOKEN. Поэтому «один converter навсегда» не удовлетворяет вопросу о поздней
-conversion без дополнительного on-chain accounting.
-
-Сейчас это не отдельная поломка принятого USDG flow: получатель имеет право на суммарный долг.
-Это blocker именно для выбора следующей TOKEN-архитектуры.
-
-### P2 — B подтверждён как узко исправленный
-
-Проверка в [`tickKind`](../scripts/local-promo-scheduler.cjs#L45-L58)
-`phase !== None || !entry.started` теперь не зависит от живости/возраста cutoff. Если scheduler
-уже записал `started`, а reorg удалил on-chain begin/freeze, повторный begin запрещён даже при
-сохранившемся cutoff.
-
-Тест `previously frozen job cannot silently begin again after reorg with surviving cutoff`
-сохраняет state, начинает оба вида draw, доставляет RNG, откатывает chain и проверяет отсутствие
-новых транзакций. Этот конкретный баг закрыт.
-
-Не закрыты:
-
-- crash после broadcast/receipt, но до `selected.started = true; save(state)`;
-- receipt timeout или потерянный ответ до записи tx hash в durable state;
-- потеря/ручная замена state;
-- production finality, выбор future randomness и reorg после раскрытия результата.
-
-Флаг `started` не должен рекламироваться как finality. Простое полезное усиление — двухфазный
-durable journal (`intent` до send, затем `txHash/nonce` сразу после получения ответа) и запрет
-нового begin до явной reconciliation. Он уменьшит crash-window, но всё равно не выберет
-production finality model. Для fix C это не prerequisite; до unattended production daemon — да.
-
-## Минимальный patch C
-
-Лучшее место изоляции — `runFunding`, но ему нужен явный план шага. `stepFunding` сейчас
-одновременно выбирает действие и отправляет tx, поэтому caller не знает, какой recipient
-сломался и на какой стадии возникла ошибка.
-
-Минимальный API:
-
-```js
-planFundingStep(options, { skipRecipients }) ->
-  { status: 'idle' | 'waiting' | 'stopped' }
-  | { status: 'ready', action, target, method, args, recipient? }
-
-executeFundingStep(plan, options) ->
-  { status: 'progress', action, recipient?, transactionHash }
-
-runFunding(options, { skipRecipients, maxSteps, onStep }) ->
-  { status: 'idle' | 'degraded' | 'waiting' | 'yielded' | 'stopped' | 'error',
-    failures: RecipientFailure[] }
-```
-
-`skipRecipients` должен принадлежать всему `runRevenue` pass и передаваться и в первый, и во
-второй `runFunding`. Иначе плохой адрес будет вызван один раз до collection и второй раз сразу
-после неё. Ключ разумно делать `(asset, recipient)`, а не только `recipient`.
-
-Псевдокод:
-
-```js
-const skipped = new Set();          // один Set на весь revenue pass
-const failures = [];
-
-for (let i = 0; i < maxSteps; i++) {
-  const plan = await planFundingStep(options, { skipRecipients: skipped });
-  if (plan.status !== 'ready') return finish(plan.status, failures);
-
-  try {
-    await executeFundingStep(plan, options);
-  } catch (error) {
-    const failure = classifyTxFailure(error, plan);
-    if (plan.action === 'payRecipient' && failure.definiteNoStateChange) {
-      skipped.add(assetRecipientKey(plan));
-      failures.push(failure);
-      continue;
-    }
-    return stopWithoutMoreWrites(failure, failures);
-  }
-}
-```
-
-`degraded` возвращается только когда вся доступная работа, кроме явно skipped recipients,
-исчерпана и есть хотя бы один definite recipient failure. `runRevenue` может продолжить source
-после такого результата. `waiting`, `yielded`, `stopped`, unknown/ambiguous error и ошибки
-не-recipient действий не разрешают следующую запись.
-
-Это сохраняет свойства текущего дизайна:
-
-- credit плохому recipient остаётся;
-- другие recipients и source продолжают работу;
-- в одном pass адрес пробуется не более одного раза;
-- в следующем watch pass ephemeral set создаётся заново, поэтому восстановившийся recipient
-  будет проверен снова без постоянного blacklist.
-
-Для bounded local fix этого достаточно. Будущему supervisor нужны persisted backoff,
-`nextRetryAt`, счётчик/метрика ошибок и durable tx journal; добавлять их в маленький C patch
-не обязательно.
-
-### Классификация ошибок
-
-Одного `e.code === 'CALL_EXCEPTION'` недостаточно. Этот code может означать и revert на
-`estimateGas` до отправки, и mined revert с receipt. И наоборот, неоднозначные provider errors
-могут иметь другой или обёрнутый code. Классифицировать нужно по стадии и доказательствам:
-
-| Случай | Что известно | Решение в bounded fix |
+| Исход | Текущая классификация | Оценка |
 |---|---|---|
-| `estimateGas`/simulation revert, нет hash/receipt | tx не отправлена, состояние не менялось | Для `payRecipient` skip и продолжить |
-| Receipt есть, `status == 0` | tx mined и атомарно откачена; gas/nonce потрачены, contract state не изменён | Для `payRecipient` skip и продолжить |
-| `sendTransaction` вернул ошибку, но неизвестно, принял ли RPC tx | broadcast outcome неизвестен | Остановить все новые writes, reconcile по nonce/hash |
-| Receipt timeout/abort после известного hash | tx pending, mined или replaced | Остановить; не повторять intent |
-| `TRANSACTION_REPLACED` | результат зависит от replacement/cancel и receipt | В маленьком fix остановить; позже проверить nonce, calldata и replacement receipt |
-| Nonce conflict/underpriced replacement | возможно существует другая tx этого signer/nonce | Остановить и reconcile |
-| RPC outage на чистом read до send | записи не было | Вернуть error/waiting без writes |
-| RPC outage во время send/wait | outcome неоднозначен | Остановить |
+| `CALL_EXCEPTION` в `estimateGas` | definite rejection | Верно: это read-only RPC, write не было |
+| Любая ошибка во время `method(...)` | ambiguous broadcast | Верно, даже если code равен `CALL_EXCEPTION` |
+| Receipt `status=0` с hash исходной tx | definite rejection | Верно: tx mined, EVM state откатился |
+| Receipt другой tx | ambiguous | Верно |
+| `TRANSACTION_REPLACED` | ambiguous | Консервативно и безопасно |
+| Timeout/abort/RPC outage после broadcast | ambiguous | Верно; повтор запрещён |
+| Abort после estimate, до send | stopped, sends=0 | Верно |
 
-Стоит хранить stage (`preflight`, `estimate`, `broadcast`, `confirm`) и при наличии — hash,
-nonce и receipt. Нельзя выводить «не отправлено» только из отсутствия `transactionHash` в
-произвольной ошибке провайдера.
+Сравнение receipt hash с `tx.hash` важно: один `status=0` от посторонней/replacement tx не
+доказывает откат исходного intent. Отдельная проверка `TRANSACTION_REPLACED` тоже уместна.
 
-## Рекомендуемая архитектура A
+`CALL_EXCEPTION` больше не используется как универсальное доказательство отказа — прежняя
+ошибка классификации устранена.
 
-Для ближайшего skeleton я бы выбрал **узкий campaign-specific PrizeConverter как recipient
-slot 0**, а не добавлял swap/withdraw в `PromoVault` и не менял весь revenue в USDG до split.
+### 2. Recipient isolation стоит на правильном уровне
+
+[`stepFunding`](../scripts/local-usdg-funding.cjs#L18-L61) по-прежнему делает один шаг и
+throw'ит ошибки. Только definite rejection именно `pay` обогащается `recipientFailure`.
+
+[`runFunding`](../scripts/local-usdg-funding.cjs#L62-L79):
+
+- сохраняет failure;
+- добавляет `(asset, recipient)` в skip;
+- публикует `recipientFailed` через `onStep`;
+- продолжает выбирать следующую работу;
+- возвращает `degraded` только если дошёл до логического idle и есть failures.
+
+Это правильнее, чем catch-and-continue в `runRevenue`: funding знает, какой конкретно action
+и recipient отказал, а revenue не должен угадывать это по тексту provider error.
+
+### 3. Нет повтора между двумя funding-фазами
+
+[`runRevenue`](../scripts/local-usdg-revenue.cjs#L14-L21) создаёт один `skipRecipients` и один
+`failures`, затем передаёт те же объекты в предварительный и финальный `runFunding`.
+
+Поэтому плохой project recipient не вызывается ещё раз сразу после collect/harvest. Новый
+revenue pass создаёт свежий set и повторяет долг один раз — для bounded local worker это
+нормальная retry policy.
+
+### 4. Статусы не разрешают лишнюю collection
+
+Source начинается только после `idle` или `degraded`. `waiting`, `yielded`, `stopped` и thrown
+unknown error не проходят эту границу.
+
+Особенно правильно, что исчерпание `maxSteps` возвращает `yielded`, даже если предыдущий шаг
+был definite recipient failure. Иначе маленький step limit мог бы разрешить collection до
+полного обхода остальных recipients.
+
+Финальный статус также выглядит согласованно:
+
+- оставшийся skipped debt → `degraded`;
+- definite source error → `degraded` после разрешённых последующих шагов;
+- unknown source outcome → `error`, без новых writes;
+- чистое завершение → `idle`.
+
+## Что подтверждают тесты
+
+Независимо повторено:
+
+- `local-transaction`: **10/10**;
+- `local-executor-stability`: **5/5**;
+- FeeRouter/funding/BUY после создания `.local`: **37/37**.
+
+Новые tests действительно покрывают главное:
+
+- blocked project и blocked prize recipient;
+- один failure на весь pass и последующую выплату накопленного долга ровно один раз;
+- два отказавших recipient и работающий третий;
+- unknown payment broadcast с code `CALL_EXCEPTION` без collection;
+- pending payment/collect без слепого повтора;
+- step limit, conservation и сохранение frozen/claimable.
+
+Полный основной набор **215** в этом review не запускался.
+
+### Новый воспроизводимый дефект test harness
+
+На checkout без каталога `.local` опубликованная команда завершилась **36/37**:
+
+```text
+ENOENT: no such file or directory, open '.local/executor-cli-job.json'
+```
+
+Причина: [`local-buy-cycle.test.cjs`](../test/local-buy-cycle.test.cjs#L263) пишет файл в
+ignored `.local`, но не создаёт родительский каталог. После `mkdir -p .local` тот же набор
+прошёл 37/37.
+
+Это не дефект C и не денежная ошибка, но это реальная невоспроизводимость clean checkout/CI.
+Минимальная коррекция — сам test/fixture должен создавать runtime directory до записи. Наличие
+локального каталога у разработчика не должно быть скрытой precondition зелёного пакета.
+
+### Оставшийся пробел mined-revert evidence
+
+`status=0` ветка проверена синтетическим receipt. Реализация соответствует поведению ethers v6,
+но один настоящий локальный mined revert усилил бы доказательство: estimate сначала проходит,
+между estimate и send меняется состояние recipient, tx отправляется с явным gasLimit и реально
+майнится с `status=0`. Это улучшение evidence, не найденная ошибка кода.
+
+## Два небольших API/ops замечания
+
+### Unknown initial funding теряет часть операционного контекста в CLI
+
+Unknown outcome в первом `runFunding` выбрасывается до source — это безопасно. Но
+[`run-local-promo.cjs`](../scripts/run-local-promo.cjs#L56) печатает только `error.message`.
+Если provider дал `transactionHash` отдельно от message, оператор может не увидеть hash/stage,
+которые нужны перед retry.
+
+Минимально достаточно структурированно выводить `code`, `stage`, `transactionHash` и message
+в top-level catch. Ловить эту ошибку и продолжать нельзя. Это observability/recovery gap, не
+обход fail-closed логики.
+
+### `skipRecipients/failures` лучше считать внутренним pass-state
+
+Сейчас экспортированный `runFunding` принимает оба объекта от caller. Текущий `runRevenue`
+создаёт их правильно, поэтому его outcome честен. Но другой caller может передать непустой
+`skipRecipients` и пустой `failures`, после чего `runFunding` вернёт `idle` при существующем
+credit пропущенному адресу.
+
+Это не внешний exploit и не bug текущего CLI, а API footgun. Перед появлением общего supervisor
+лучше передавать единый внутренний pass-state либо проверять инвариант: каждый skip обязан иметь
+соответствующий failure. Сейчас не блокирует переход к TOKEN package.
+
+## Общий узкий converter: уточнённая рекомендация
+
+С учётом продуктового решения я снимаю прежнюю рекомендацию «обязательно один converter на
+каждую campaign». Она была сильнее фактического требования.
+
+Если все prize credits имеют одно и то же конечное назначение, допустима схема:
 
 ```mermaid
 flowchart LR
-    R["FeeRouter credit"] -->|TOKEN, campaign N| C["PrizeConverter N"]
-    R -->|USDG, campaign N| C
-    C -->|fixed-route swap| Q["полученный USDG"]
-    C -->|forward USDG| V["USDG-only PromoVault"]
-    V --> G["GENERAL reserves"]
+    F["FeeRouter prize credit"] -->|TOKEN| C["Shared PrizeConverter"]
+    F -->|USDG| C
+    C -->|fixed swap constraints| U["полученный USDG"]
+    C -->|forward only| V["USDG-only PromoVault"]
+    V --> R["GENERAL reserves"]
 ```
 
-Для каждой campaign адрес converter уникален и не переиспользуется. В существующем
-`FeeRouter` именно адрес тогда служит on-chain namespace старого unpaid credit. Converter
-имеет immutable `campaignId`, `FeeRouter`, TOKEN, USDG, vault и ограниченный набор adapter/route.
+FeeRouter остаётся владельцем unpaid credit до `pay`. После pay converter владеет
+невозвратным prize inventory. Только фактически полученный и доставленный USDG становится
+средством `PromoVault` и может попасть в reserves.
 
-Поведение:
+Third-party `pay(TOKEN, converter)` теперь безопасен: caller способен лишь доставить TOKEN в
+предназначенный для него inventory. Он не может выбрать vault, route или получить output.
 
-- permissionless `FeeRouter.pay(TOKEN, converter)` доставляет TOKEN в допустимый inventory;
-- permissionless `FeeRouter.pay(USDG, converter)` доставляет уже готовый USDG;
-- permissionless `sync/forwardQuote` может отправить USDG только в зафиксированный vault;
-- `convert` может продать только учтённый TOKEN, только по разрешённому route и получить
-  output только на converter, после чего USDG атомарно/отдельным безопасным шагом уходит в vault;
-- нет `withdraw`, arbitrary call, произвольного asset/recipient или пути в treasury проекта.
+### Что агрегировать допустимо
 
-Third-party pay больше не способен загнать системный TOKEN credit в `PromoVault`, потому что
-у vault нет TOKEN credit в policy; единственный его prize recipient — converter. Прямо подарить
-чужой TOKEN адресу vault всё ещё технически можно, как любому адресу, но это не обнулит
-системный credit и не создаст обязанность считать подарок призовым резервом.
+Текущий `FeeRouter` уже даёт достаточное происхождение начислений через
+`Credited(campaignId, asset, recipient, amount)`. Если отдельный P&L каждой campaign не нужен,
+converter может продавать общий TOKEN inventory и вести только cumulative accounting:
 
-### Campaign attribution и поздняя conversion
+- TOKEN observed/received;
+- TOKEN sold и remaining inventory;
+- фактический USDG received;
+- USDG forwarded;
+- route/order id и transaction hash.
 
-Уникальность converter по campaign здесь не косметика, а компенсация текущего ключа
-`credit[asset][recipient]`:
+Не нужно притворяться, что aggregate swap имеет точный USDG result каждой campaign. Events
+FeeRouter отвечают на вопрос «где начислено», converter — «сколько общего inventory реально
+продано и USDG доставлено».
 
-- старый unpaid credit всегда платится старому converter, даже после rollover;
-- новый recipient/campaign получает новый converter и отдельный баланс;
-- converter events включают `campaignId`, `amountIn`, фактический `amountOut`, route id и tx;
-- полезны cumulative поля `tokenRecognized`, `tokenSold`, `quoteReceived`, `quoteForwarded`;
-- deployment/job проверяет, что `policy(campaign).recipients[0]` — converter с тем же
-  immutable campaign id и asset bindings.
+Прямой TOKEN donation converter также допустим как дополнительный невозвратный prize inventory,
+но не должен маркироваться как FeeRouter creator revenue.
 
-Уникальный адрес разделяет balances, но сам по себе не доказывает происхождение прямого ERC20
-transfer: посторонний может подарить TOKEN converter. Для текущей модели это безопасное
-добавление в невозвратный prize inventory, а creator-revenue attribution восстанавливается по
-`Credited`/`Paid` и адресу converter. Если требуется строгое on-chain доказательство «получено
-именно от FeeRouter, а не donation», нужен callback/deposit API в FeeRouter; обычный ERC20
-transfer такого доказательства дать не может.
+### Где общий converter перестаёт быть общим
 
-При этом происхождение USDG и момент его распределения — разные вещи. Поздний USDG старой
-campaign попадёт в актуальную фазу GENERAL reserves в момент funding. По текущей спецификации
-это допустимо: FeeRouter campaign не равна Short/Monthly cycle. Если требуется, чтобы proceeds
-старой campaign финансировали конкретный старый draw/reserve epoch, нынешний vault API этого
-не выражает; это отдельное продуктовое решение, а не поле event.
+Граница должна проходить не по `campaignId`, а по **неизменяемому конечному назначению**.
 
-### Альтернативы
+Если меняется конечный PromoVault, экономический beneficiary или custody policy:
 
-| Вариант | Плюсы | Минусы | Мнение |
-|---|---|---|---|
-| Campaign-specific converter в slot 0 | Малый change surface; сохраняет текущий split и проекту его TOKEN; vault остаётся USDG-only; старые credits разделены адресами | Новый контракт на campaign; deployment/factory дисциплина; старый inventory ограничен маршрутами своего converter | Рекомендую для skeleton |
-| Переделать FeeRouter на asset-specific recipients и campaign-scoped credits | Чистый долгосрочный accounting; USDG может идти прямо в vault | Меняет core storage/API/tests; простой ERC20 transfer в общий converter всё равно не сообщает campaign без callback/отдельного адреса | Возможный production refactor, не минимальный пакет |
-| Конвертировать весь TOKEN до allocation | После swap всё делится единообразно в USDG | Меняет актив project/investor долей, связывает их liveness со swap и принимает неутверждённое экономическое решение | Не рекомендую без продуктового решения |
+- deploy нового converter/version;
+- новая FeeRouter policy использует новый адрес;
+- старый converter сохраняет старый immutable destination;
+- старые unpaid credits и inventory продолжают исполняться через старую версию.
 
-### Минимальные swap-ограничения
+Нельзя делать mutable `setVault`, иначе поздний `pay` старого credit сможет незаметно отправить
+старую prize value новому назначению.
 
-Уже в skeleton нужны:
+Отдельная текущая граница: funding job обслуживает только recipients активной policy. FeeRouter
+сохраняет credit старому адресу, но после смены recipients новый job сам его не обнаружит.
+Для реальной смены получателей нужен bounded список legacy recipients из policy history либо
+отдельный legacy-debt drainer. Permissionless `FeeRouter.pay` сохраняет деньги, но само по себе
+не обеспечивает автоматическую liveness старого долга.
 
-- immutable tokenIn/tokenOut и фиксированный конечный vault;
-- allowlist конкретных adapter/route ids; никакого произвольного target/calldata;
-- exact-input с лимитом порции не выше признанного непроданного inventory;
-- `minOut`, который **не выбирает permissionless executor**. Он должен быть не ниже on-chain
-  price guard (TWAP/oracle) либо заранее committed/signed order floor;
-- короткий deadline и максимальный допустимый horizon;
-- output recipient только converter, проверка USDG balance delta, затем forward только в vault;
-- allowance только фиксированному adapter, на точную сумму и с обнулением после исполнения;
-- revert целиком при плохом route, deadline или output: TOKEN остаётся inventory и может быть
-  продан позже по новому допустимому order, без повторения неизвестной tx;
-- события и cumulative conservation: recognized TOKEN = unsold + sold; полученный USDG =
-  held + forwarded.
+### Минимальные права converter
 
-`minOut > 0` сам по себе не защита. Пока price source не выбран, можно построить интерфейс и
-mock guard локально, но нельзя называть conversion production-safe. Для route flexibility
-лучше небольшой immutable allowlist adapters, чем admin arbitrary call. Если все разрешённые
-маршруты навсегда сломались, inventory честно остаётся заблокированным до заранее определённой
-recovery policy; скрытый owner rescue хуже.
+Для skeleton достаточно узкой поверхности:
 
-## Конкретные тесты ближайших пакетов
+- immutable TOKEN, USDG и конечный PromoVault;
+- один fixed adapter/route для локального proof;
+- exact-input только из учтённого remaining TOKEN;
+- output только converter, затем transfer/sync только в зафиксированный vault;
+- on-chain price floor или заранее committed order floor; executor не выбирает слабый `minOut`;
+- deadline и максимальная порция;
+- allowance только разрешённому adapter, на точную сумму, без произвольного spender;
+- полный revert при плохом output, TOKEN остаётся inventory;
+- нет withdraw, arbitrary target/calldata, смены recipient или использования frozen/claimable.
 
-### C
+Production flexibility маршрутов пока не выбрана. В локальном skeleton лучше честно иметь один
+mock/fixed adapter, чем замаскировать будущую governance проблему под универсальный admin call.
 
-1. Плохой project recipient: prize выплачен, collect/harvest происходят, project credit
-   сохраняет старую и новую сумму, итог `degraded`.
-2. Плохой prize recipient: project получает свою долю, collection продолжается, prize credit
-   остаётся; никаких изменений frozen/claimable.
-3. Один recipient вызывается максимум один раз за весь revenue pass, включая оба funding этапа.
-4. После разблокировки следующий pass выплачивает ровно накопленный credit один раз.
-5. Два плохих recipient не создают loop; здоровый третий обслуживается.
-6. Estimation revert и mined `status=0` дают definite recipient failure; conservation сохраняется.
-7. Lost send response, receipt timeout/replacement, nonce conflict и outage после broadcast
-   прекращают writes: collection/следующий pay не отправляются, исходная tx не дублируется.
-8. Для каждого исхода проверяются `onStep`, `failures`, tx count и итоговый status.
+## PAIR fee policy
 
-### A
+Новая граница в [`PAIR_CURRENT_FEE_POLICY.md`](PAIR_CURRENT_FEE_POLICY.md) сформулирована
+правильно для архитектуры проекта:
 
-1. Permissionless TOKEN pay увеличивает inventory нужного campaign converter, но TOKEN balance
-   vault остаётся нулевым.
-2. Quote pay и успешный swap дают vault ровно фактический USDG output; GENERAL accounting и
-   общая conservation сходятся.
-3. Slippage/deadline/wrong route/wrong output recipient полностью ревертят, TOKEN остаётся
-   доступным для будущей попытки, allowance не остаётся лишним.
-4. Старый credit после rollover попадает только в старый converter; новый converter и новая
-   campaign не получают его и не переименовывают события.
-5. Поздняя conversion старого inventory сохраняет old campaign id в accounting/events, даже
-   когда FeeRouter уже в новой campaign.
-6. Нельзя повторно продать уже списанный inventory, дважды forward USDG, вывести TOKEN/USDG
-   проекту или выполнить arbitrary call.
-7. Third-party executor не может выбрать route, recipient или ослабить price floor.
+- V1/V2 не являются L1/L2;
+- `70/30` нельзя считать универсальной V2 экономикой;
+- PAIR mode/epoch и FeeRouter campaign — разные границы;
+- тестовые `80/20` и `50/50` делят уже полученный доход, а не описывают protocol fee;
+- перед deployment нужен конкретный canary release/vault/handler/ABI/policy/claim.
 
-## Сейчас и позже
+В этом review я проверял согласованность документа с кодовой границей, но не выполнял новый
+on-chain canary актуального PAIR deployment.
 
-Сейчас: сделать C как маленькую замену outcome/control-flow без изменения payout math; затем
-зафиксировать campaign-specific converter interface и его price-guard модель до написания swap.
-A следует считать deployment blocker, а не просто будущим worker.
+## Ближайший разумный порядок
 
-Позже: persisted retry/backoff и tx journal в общем supervisor; выбранная production finality и
-future-random binding; реальный DEX/price-source canary; экономические доли creator revenue и
-правило GENERAL для prize share. Эти решения не стоит тайно кодировать значениями тестового
-профиля `80/20`.
+1. Закрыть пакет C двумя мелочами: self-created `.local` в tests и структурированный вывод
+   unknown funding error. Денежную логику больше не трогать.
+2. Зафиксировать interface общего PrizeConverter и тестовый fixed adapter, отдельно описав
+   immutable destination и обслуживание legacy recipients.
+3. После этого реализовать TOKEN → фактический USDG → PromoVault и проверить conservation,
+   failed swap retry, third-party pay, recipient change и отсутствие TOKEN в vault.
 
-Итого: порядок работ менять не нужно. Единственная существенная поправка — не делать общий
-converter одним адресом для всех campaigns без изменения `FeeRouter` accounting: именно там
-иначе появится незаметное смешение старого и нового дохода.
+Ops/supervisor journal, production route governance, live PAIR canary и RNG/finality остаются
+следующими слоями. Возвращаться к per-campaign converter без нового требования к раздельному
+P&L не нужно.
