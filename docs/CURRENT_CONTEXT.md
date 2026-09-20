@@ -1,6 +1,6 @@
 # Текущий контекст
 
-Обновлено 21.09.2026 после исправления relevant-action block limit.
+Обновлено 21.09.2026 после диагностики scheduler/CLI lock.
 
 ## Где находимся
 
@@ -17,6 +17,11 @@
 ещё не готовы. Локальный скелет связан, production-продукт не завершён.
 
 ## Последний результат и проверки
+
+Добавлена opt-in lock trace (`LOCAL_STATE_LOCK_TRACE=1`) и bounded metadata при EEXIST.
+CLI-тесты проверяют отсутствие lock на границе parent/child. Lifecycle/recovery не менялись;
+не считать intermittent failure исправленным. Детали — [coordinator](LOCAL_PROMO_COORDINATOR.md).
+
 
 Исправлена глобальная зависимость от gas bound неиспользуемых методов: лимит блока
 проверяется для текущего действия и ненулевых remaining obligations. Чужой convert
@@ -71,3 +76,10 @@ proxy, reroll/reset или подмены random. Immutable destination стар
 [Продуктовые решения](PRODUCT_SPEC.md), [карта реализации](IMPLEMENTATION_STATUS.md),
 [исторический снимок статусов](archive/snapshots/PROJECT_PROGRESS_BEFORE_REVIEW_2026-09-20.md).
 Ответ GPT — вспомогательное мнение, не автоматическое задание.
+
+## Результат lock диагностики
+
+Проверки 21.09.2026: первый targeted CLI run 2/2 (107 s); повтор с обеими
+процессными трассами и helper tests 5/5. В повторной трассе 27 acquired / 27 released,
+10 PID, 0 releaseError, 0 оставшихся путей после release. Все pre/post handoff assertions
+прошли. Полный набор не запускался; intermittent failure не воспроизведён и не закрыт.

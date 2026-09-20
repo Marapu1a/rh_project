@@ -1,3 +1,5 @@
+const {inspectLock}=require('../scripts/local-scheduler-state.cjs');
+function assertUnlocked(file){const info=inspectLock(file+'.lock');assert.equal(info.exists,false,JSON.stringify({parentPid:process.pid,...info}));}
 const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),{ethers}=require('ethers');
 const {compile}=require('../scripts/compile.cjs'),{setup}=require('./fixtures/local-scheduler.cjs');
 const {sent,advance,rpc}=require('./fixtures/local-controllers.cjs');
@@ -19,7 +21,7 @@ async function fixture(t){
     legacy:[],source:{vault:source.target,positionId:'123',epoch:'1'},distribution:'GENERAL',pollSeconds:300,maxGasPrice:'1000000000000'};
   const options={statePath:path.join(f.directory,'coordinator.json'),prize:{provider:f.provider,router,job,executor:f.admin},scheduler:{...f.options,executor:f.admin}};
   await sent(f.registry.register());await f.buy(f.admin,100);await advance(30*86400+1);
-  await runScheduler(options.scheduler,{maxTicks:1});
+  await runScheduler(options.scheduler,{maxTicks:1});assertUnlocked(f.statePath);
   await sent(source.queueFees(f.token.target,600));await sent(source.queueFees(f.quote.target,100));
   return {...f,router,source,converter,options};
 }
@@ -80,9 +82,12 @@ test('CLI runs both workers; persisted config/corrupt state fail closed',async t
   const f=await fixture(t),execFile=require('node:util').promisify(require('node:child_process').execFile);
   const jobFile=path.join(f.directory,'job.json'),configFile=path.join(f.directory,'config.json');
   fs.writeFileSync(jobFile,JSON.stringify(f.options.prize.job));fs.writeFileSync(configFile,JSON.stringify(f.config));
+  assertUnlocked(f.statePath);assertUnlocked(f.options.statePath);
   const result=await execFile(process.execPath,['scripts/run-local-coordinator.cjs','--job',jobFile,'--config',configFile,
     '--state',f.options.statePath,'--scheduler-state',f.statePath,'--rpc',f.options.scheduler.rpcUrl,'--executor','0','--publisher','0'],{timeout:60000});
+  if(process.env.LOCAL_STATE_LOCK_TRACE==='1')process.stderr.write(result.stderr);
   assert.equal(JSON.parse(result.stdout.trim()).status,'complete');
+  assertUnlocked(f.statePath);assertUnlocked(f.options.statePath);
   const before=await f.provider.getTransactionCount(await f.admin.getAddress());
   f.options.prize.job.pollSeconds=301;await assert.rejects(()=>runCoordinator(f.options),/checksum\/config mismatch/);
   f.options.prize.job.pollSeconds=300;fs.writeFileSync(f.options.statePath,'{broken');

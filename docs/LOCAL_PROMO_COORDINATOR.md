@@ -88,3 +88,27 @@ hashless restart, known refusal, lock, CLI и corrupt/config-mismatched state.
 Первый общий прогон выявил optional `undefined` в metadata: checksum учитывал поле,
 которое JSON не сохранял. Исправлено исключением отсутствующих полей перед save;
 все семь интеграций после этого пройдены повторно. Результат общего набора — в CURRENT_CONTEXT.
+
+## Диагностика lock, 21.09.2026
+
+`LOCAL_STATE_LOCK_TRACE=1` включает JSONL в stderr: acquire/acquired/release/released,
+conflict/releaseError, уникальный runId, PID, путь и timestamp. После unlink дополнительно
+снимается состояние пути. Трассы разных процессов сопоставлять по runId/PID, а не по
+порядку строк: stderr CLI может быть выведен родителем после завершения child.
+Без переменной трассы нет; EEXIST всегда содержит bounded snapshot: максимум 128 байт
+содержимого, mtimeMs/size и путь. Снимок диагностический, не доказательство владения/lease.
+
+В CLI-тестах проверяется отсутствие lock после await scheduler, перед spawn и после child.
+Проверка helper дополнена async save → child handoff, отказом конкурентному входу и
+освобождением после исключения. Никаких retry/force-clear/PID-based unlock не добавлено.
+
+Открыто: ошибка записи PID после создания lock происходит до основного try/finally и
+может оставить lock. Это отдельный путь отказа; он не объясняет успешный возврат await,
+описанный в review. Перезапуск после abrupt process death также не решён диагностикой.
+
+## Результат lock диагностики
+
+Проверки 21.09.2026: первый targeted CLI run 2/2 (107 s); повтор с обеими
+процессными трассами и helper tests 5/5. В повторной трассе 27 acquired / 27 released,
+10 PID, 0 releaseError, 0 оставшихся путей после release. Все pre/post handoff assertions
+прошли. Полный набор не запускался; intermittent failure не воспроизведён и не закрыт.

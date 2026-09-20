@@ -42,7 +42,8 @@ claims за победителей. Кто финансирует их gas — �
 ## 3. Укрепить обычную эксплуатацию
 
 Intermittent scheduler lock из review пока не воспроизведён (21.09: scheduler 10/10
-и 500 локальных lock cycles). При повторении собрать путь/stack/владельца; force-clear
+и 500 локальных lock cycles). Добавлены trace по runId/PID и pre/post CLI assertions; повтор CLI+helper 5/5,
+27 захватов и 27 освобождений. При повторении собрать путь/stack/владельца; force-clear
 не добавлять. Relevant-action block-limit bug исправлен и покрыт регрессиями.
 
 Fault tests: storage errors до/после broadcast и receipt, abrupt process death,

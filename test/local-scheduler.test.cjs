@@ -1,3 +1,5 @@
+const {inspectLock}=require('../scripts/local-scheduler-state.cjs');
+function assertUnlocked(file){const info=inspectLock(file+'.lock');assert.equal(info.exists,false,JSON.stringify({parentPid:process.pid,...info}));}
 const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),{ethers}=require('ethers');
 const {compile}=require('../scripts/compile.cjs'),{runScheduler}=require('../scripts/local-promo-scheduler.cjs');
 const {setup}=require('./fixtures/local-scheduler.cjs'),{sent,advance,rpc}=require('./fixtures/local-controllers.cjs');
@@ -19,7 +21,7 @@ test('previously frozen job cannot silently begin again after reorg with survivi
   assert.equal(await f.provider.getTransactionCount(await f.admin.getAddress()),before);
   assert.equal(await f.short.pendingDatasetDraw(),ethers.ZeroHash);assert.equal(await f.monthly.pendingMonth(),ethers.ZeroHash);
 });
-async function run(f,limit=32){const r=await runScheduler(f.options,{maxTicks:limit});assert.notEqual(r.status,'error',JSON.stringify(r));return r;}
+async function run(f,limit=32){const r=await runScheduler(f.options,{maxTicks:limit});assert.notEqual(r.status,'error',JSON.stringify(r));assertUnlocked(f.statePath);return r;}
 async function registeredBuy(f){await sent(f.registry.register());await f.buy(f.admin,100);}
 test('scheduler persists before sending, resumes both kinds, handles terminal reorg and makes two cycles from BUY',async t=>{
   const f=await setup(t,compiled);await registeredBuy(f);
@@ -59,7 +61,10 @@ test('scheduler persists before sending, resumes both kinds, handles terminal re
   // CLI starts a fresh process, reads the saved jobs, sees empty and sends nothing.
   const configFile=path.join(f.directory,'config.json');fs.writeFileSync(configFile,JSON.stringify(f.config));
   const execFile=require('node:util').promisify(require('node:child_process').execFile),before=await f.provider.getTransactionCount(await f.admin.getAddress());
+  assertUnlocked(f.statePath);
   const cli=await execFile(process.execPath,['scripts/run-local-scheduler.cjs','--config',configFile,'--state',f.statePath,'--rpc',f.options.rpcUrl,'--publisher','0','--executor','1'],{timeout:30000});
+  if(process.env.LOCAL_STATE_LOCK_TRACE==='1')process.stderr.write(cli.stderr);
+  assertUnlocked(f.statePath);
   const last=JSON.parse(cli.stdout.trim().split('\n').at(-1));assert.equal(last.SHORT.reason,'empty');
   assert.equal(await f.provider.getTransactionCount(await f.admin.getAddress()),before);
 });
