@@ -1,4 +1,4 @@
-const {waitLocalReceipt,receiptOptions}=require('./local-receipt.cjs');
+const {sendLocalTransaction,receiptOptions}=require('./local-receipt.cjs');
 // Local single-job Monthly counterpart. No calendar/seed selection or reset.
 const {ethers}=require('ethers');
 const dataset=require('./monthly-dataset.cjs'),shortDataset=require('./short-dataset.cjs'),outcome=require('./short-outcome.cjs');
@@ -47,8 +47,8 @@ async function stepMonthly({provider,source,job,publisher,executor,gasPrice,sign
     const address=await signer.getAddress();
     if(await provider.getTransactionCount(address,'pending')>await provider.getTransactionCount(address,'latest'))return wait('pendingTransaction');
     if(signal?.aborted)return {status:'stopped'};
-    const tx=await source.connect(signer)[method](...args,{type:2,maxFeePerGas:price,maxPriorityFeePerGas:0});
-    const receipt=await waitLocalReceipt(tx,{signal,receiptTimeoutMs});check(receipt&&receipt.status===1,'Transaction not confirmed');
+    const receipt=await sendLocalTransaction(source.connect(signer)[method],args,
+      {type:2,maxFeePerGas:price,maxPriorityFeePerGas:0},{signal,receiptTimeoutMs});check(receipt&&receipt.status===1,'Transaction not confirmed');
     return {status:'progress',action:method,drawId:r.drawId,transactionHash:receipt.hash};
   }
   check(m.phase!==6n,'Monthly proposal superseded; explicit new job required');

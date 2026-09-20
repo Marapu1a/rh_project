@@ -101,3 +101,46 @@ test('one invalid Short configuration does not prevent Monthly reaching its pend
   assert.equal(result.results.MONTHLY.reason,'seed');assert.notEqual(await f.monthly.pendingMonth(),ethers.ZeroHash);
   assert.equal(await f.short.pendingDatasetDraw(),ethers.ZeroHash);
 });
+
+for(const fault of ['broadcast','timeout','estimate'])test('scheduler isolates known rejection but globally stops '+fault,async t=>{
+  const f=await setup(t,compiled);await registeredBuy(f);await advance(30*86400+1);await run(f,1);
+  let sends=0,tx;
+  const publisher={provider:f.provider,getAddress:()=>f.admin.getAddress(),
+    estimateGas:async request=>{
+      if(fault==='estimate'&&request.to.toLowerCase()===f.short.target.toLowerCase())throw Object.assign(new Error('definite estimate rejection'),{code:'CALL_EXCEPTION'});
+      return f.admin.estimateGas(request);
+    },sendTransaction:async request=>{
+      sends++;if(fault==='broadcast')throw Object.assign(new Error('unknown send outcome'),{code:'CALL_EXCEPTION'});
+      if(fault==='timeout'){await rpc('evm_setAutomine',[false]);tx=await f.admin.sendTransaction(request);return tx;}
+      return f.admin.sendTransaction(request);
+    }};
+  let result;
+  try{
+    result=await runScheduler({...f.options,publisher,receiptTimeoutMs:100},{maxTicks:1});
+    if(fault==='estimate'){
+      assert.equal(result.results.SHORT.stage,'estimate');assert.equal(result.results.MONTHLY.action,'beginMonth');
+      assert.equal(sends,1);assert.equal(result.haltedKind,undefined);
+    }else{
+      assert.equal(result.status,'error');assert.equal(result.haltedKind,'SHORT');assert.equal(result.requiresReconciliation,true);
+      assert.equal(result.results.MONTHLY,undefined);assert.equal(sends,1);
+      assert.equal(result.results.SHORT.stage,fault==='timeout'?'confirm':'broadcast');
+      if(tx)assert.equal(result.results.SHORT.transactionHash,tx.hash);
+      assert.equal(await f.monthly.activeMonth(),ethers.ZeroHash);
+    }
+  }finally{if(tx){await rpc('evm_mine');await rpc('evm_setAutomine',[true]);await tx.wait();}}
+  if(fault==='timeout'){
+    await run(f);assert.equal(f.readState().jobs.SHORT.length,1);assert.equal(f.readState().jobs.MONTHLY.length,1);
+  }
+});
+
+test('unknown Monthly send prevents another Short tick after a confirmed Short begin',async t=>{
+  const f=await setup(t,compiled);await registeredBuy(f);await advance(30*86400+1);await run(f,1);let sends=0;
+  const publisher={provider:f.provider,getAddress:()=>f.admin.getAddress(),sendTransaction:async request=>{
+    sends++;if(request.to.toLowerCase()===f.monthly.target.toLowerCase())throw Object.assign(new Error('Monthly response lost'),{code:'NETWORK_ERROR'});
+    return f.admin.sendTransaction(request);
+  }};
+  const result=await runScheduler({...f.options,publisher});
+  assert.equal(result.status,'error');assert.equal(result.haltedKind,'MONTHLY');assert.equal(result.requiresReconciliation,true);
+  assert.equal(result.results.SHORT.action,'begin');assert.equal(sends,2);
+  const saved=f.readState();assert.equal((await f.short.datasetProposal(saved.jobs.SHORT[0].job.proposalId)).count,0n);
+});

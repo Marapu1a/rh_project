@@ -120,3 +120,31 @@ preflight mismatch, step/portion/gas/abort и source epoch drift. MockPairVault 
 а не выдан за уже встроенный в BUY fixture профиль. Contract converter tests дополнительно
 проверяют сохранность frozen reserve. Реальный PAIR/DEX не использовался.
 Логи (ignored): `.local/logs/local-prize-flow-tests.log`, `.local/logs/local-prize-flow-regressions.log`.
+
+## Коррекция error attribution и лимита, 20.09
+
+После confirmed receipt и после обработанного definite rejection контекст текущего
+send очищается ДО callback onStep. Ошибка следующего read/callback больше не получает
+action/hash завершённой tx. Для истории результата есть отдельный lastConfirmed;
+error.transactionHash берётся только из самой текущей ошибки, без fallback.
+Unknown send/receipt сохраняет собственные stage/hash и по-прежнему останавливает writes.
+
+MAX_LEGACY=8 и DEFAULT_MAX_STEPS=128 вынесены рядом с control-flow bound:
+2 × (9 vault sync + 2 router sync + 2 × 11 pay + 2 × 9 converter forward)
++ 3 source operations + 2 × 9 swap/forward = 123 попытки.
+Все условные ветки берутся сверху; замена converter на usdgVault уменьшает bound.
+Assertion запрещает default ниже формулы; при изменении структуры фаз формулу нужно
+обновлять. Это не автоматический анализ программы. Дополнительный integration test
+обслуживает восемь старых converter, новый converter и двух current project recipients.
+
+## Проверки исправления, 20.09.2026
+
+`node --test --test-concurrency=1 test/local-prize-flow.test.cjs test/local-scheduler.test.cjs test/local-executor-stability.test.cjs test/local-transaction.test.cjs test/local-buy-cycle.test.cjs`
+— **42/42**, fail 0, ~380 s. Добавлены 8 регрессий/интеграций; основной набор теперь
+**240**, полный запуск 240 не выполнялся. Лог `.local/logs/error-boundary-fixes.log` ignored.
+
+Проверены stale read/callback context после success и definite rejection; максимальный
+legacy list; unknown Short broadcast/receipt, unknown Monthly broadcast без следующего
+Short tick, definite estimate rejection с продолжением Monthly; restart только после
+подтверждения исходной pending tx. Прежние reorg/empty/funding/state/cutoff/abort/timeout
+и BUY-cycle также прошли. Денежная математика и Solidity не менялись.

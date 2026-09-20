@@ -3,6 +3,12 @@ const {ethers}=require('ethers');
 const {sendLocalTransaction,receiptOptions}=require('./local-receipt.cjs');
 const check=(ok,message)=>{if(!ok)throw Error(message);};
 const lower=a=>String(a).toLowerCase(),same=(a,b)=>lower(a)===lower(b);
+const MAX_LEGACY=8,DEFAULT_MAX_STEPS=128;
+// Maximum: two distributions (vault sync, 2 router syncs, 2 pays/entry,
+// two forwards/converter), source collect + 2 harvests, swap + forward/converter.
+// Replacing a legacy converter with usdgVault adds one sync but removes two forwards.
+const WORST_CASE_ATTEMPTS=2*((MAX_LEGACY+1)+2+2*(MAX_LEGACY+3)+2*(MAX_LEGACY+1))+3+2*(MAX_LEGACY+1);
+check(DEFAULT_MAX_STEPS>=WORST_CASE_ATTEMPTS,'Default pass limit below schema bound');
 const address=a=>ethers.isAddress(a)&&a!==ethers.ZeroAddress;
 const vaultABI=['function projectToken() view returns(address)','function quoteToken() view returns(address)',
   'function unrecognizedUSDG() view returns(uint256)','function syncUSDG()'];
@@ -19,7 +25,7 @@ function validatePrizeFlowJob(j){
   check(Array.isArray(j.bps)&&j.bps.length===3&&j.bps.every(n=>Number.isInteger(n)&&n>=0&&n<=10000)&&j.bps.reduce((a,b)=>a+b,0)===10000,'Invalid shares');
   check(address(j.source?.vault)&&BigInt(j.source.positionId)>=0n&&BigInt(j.source.epoch)>0n,'Invalid source');
   check(Number.isInteger(j.pollSeconds)&&j.pollSeconds>=60&&j.pollSeconds<=86400,'Invalid poll interval');
-  check(Array.isArray(j.legacy)&&j.legacy.length<=8,'At most eight explicit legacy recipients');
+  check(Array.isArray(j.legacy)&&j.legacy.length<=MAX_LEGACY,'At most eight explicit legacy recipients');
   check(j.active?.kind==='converter'&&same(j.active.address,j.recipients[0])&&j.bps[0]>0,'Active prize recipient must be converter');
   const seen=new Set();
   for(const e of [j.active,...j.legacy]){
@@ -44,10 +50,10 @@ function validatePrizeFlowJob(j){
   for(const e of j.legacy.filter(e=>e.kind==='project'))check(!vaults.some(v=>same(v,e.address)),'Project recipient is a prize vault');
   return j;
 }
-async function runPrizeFlow({provider,router,executor,job,signal,receiptTimeoutMs=30000},{maxSteps=128,onStep=()=>{},signal:overrideSignal}={}){
+async function runPrizeFlow({provider,router,executor,job,signal,receiptTimeoutMs=30000},{maxSteps=DEFAULT_MAX_STEPS,onStep=()=>{},signal:overrideSignal}={}){
   signal=overrideSignal??signal;
-  const failures=[],unsafe=new Map(),skipped=new Set();let steps=0,current;
-  const summary=()=>({failures:[...failures],unsafeDebt:[...unsafe.values()],steps});
+  const failures=[],unsafe=new Map(),skipped=new Set();let steps=0,current,lastConfirmed;
+  const summary=()=>({failures:[...failures],unsafeDebt:[...unsafe.values()],steps,lastConfirmed});
   const halt=(status,reason)=>{throw Object.assign(new Error(reason),{flowStatus:status,reason});};
   try{
     validatePrizeFlowJob(job);receiptOptions(receiptTimeoutMs);
@@ -106,9 +112,10 @@ async function runPrizeFlow({provider,router,executor,job,signal,receiptTimeoutM
       catch(e){
         if(!isolated||!e.definiteRejection)throw e;
         skipped.add(id);const failure={...current,message:e.message,code:e.code,stage:e.stage,transactionHash:e.transactionHash};
-        failures.push(failure);await onStep({status:'failed',...failure});return false;
+        failures.push(failure);current=undefined;await onStep({status:'failed',...failure});return false;
       }
-      current.transactionHash=receipt.hash;await onStep({status:'progress',...current});return true;
+      lastConfirmed={...current,transactionHash:receipt.hash};current=undefined;
+      await onStep({status:'progress',...lastConfirmed});return true;
     }
     async function forward(c){
       if(await quote.balanceOf(c.address)>0n)await send('forwardQuote',c.contract,'forwardQuote');
@@ -157,7 +164,7 @@ async function runPrizeFlow({provider,router,executor,job,signal,receiptTimeoutM
     return {...summary(),status:failures.length||unsafe.size?'degraded':remainingInventory.length?'yielded':'idle',remainingInventory};
   }catch(e){
     return {...summary(),status:e.flowStatus||(e.code==='LOCAL_EXECUTION_STOPPED'?'stopped':'error'),reason:e.reason,
-      error:{...current,message:e.message,code:e.code,stage:e.stage,transactionHash:e.transactionHash??current?.transactionHash}};
+      error:{...current,message:e.message,code:e.code,stage:e.stage,transactionHash:e.transactionHash}};
   }
 }
-module.exports={validatePrizeFlowJob,runPrizeFlow};
+module.exports={validatePrizeFlowJob,runPrizeFlow,MAX_LEGACY,DEFAULT_MAX_STEPS,WORST_CASE_ATTEMPTS};

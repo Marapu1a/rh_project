@@ -1,4 +1,4 @@
-const {waitLocalReceipt,receiptOptions}=require('./local-receipt.cjs');
+const {sendLocalTransaction,receiptOptions}=require('./local-receipt.cjs');
 // Local-only, single-job executor. The chain is the progress journal.
 const {ethers}=require('ethers');
 const dataset=require('./short-dataset.cjs'),settlement=require('./short-settlement.cjs');
@@ -50,8 +50,8 @@ async function stepShort({provider,source,job,publisher,executor,gasPrice,signal
     // Typed transactions retain an explicit chainId in Hardhat's raw RPC history.
     // price is a conservative fee cap; actual effective price may be lower.
     if(signal?.aborted)return {status:'stopped'};
-    const tx=await source.connect(signer)[method](...args,{type:2,maxFeePerGas:price,maxPriorityFeePerGas:0});
-    const receipt=await waitLocalReceipt(tx,{signal,receiptTimeoutMs});
+    const receipt=await sendLocalTransaction(source.connect(signer)[method],args,
+      {type:2,maxFeePerGas:price,maxPriorityFeePerGas:0},{signal,receiptTimeoutMs});
     check(receipt&&receipt.status===1,'Transaction not confirmed');
     return {status:'progress',action:method,drawId:r.drawId,transactionHash:receipt.hash};
   }

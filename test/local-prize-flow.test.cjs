@@ -141,3 +141,39 @@ test('prize flow CLI performs the full local collection/conversion pass',async t
   const summary=JSON.parse(result.stdout.trim().split('\n').at(-1));assert.equal(summary.action,'prizeFlowPass');assert.equal(summary.status,'idle');
   assert.equal(await f.converter.tokenSold(),480n);assert.equal(await f.converter.quoteForwarded(),1520n);
 });
+
+for(const fault of ['read','callback','rejectedCallback'])test('completed intent is absent from later '+fault+' error',async()=>{
+  const f=await setup();await queue(f,0,100);
+  if(fault==='rejectedCallback')await sent(f.source.setFailures(true,ethers.ZeroAddress,false));
+  const original=f.provider.call.bind(f.provider);let collected=false;
+  f.provider.call=async request=>{
+    if(fault==='read'&&collected&&request.to?.toLowerCase()===f.source.target.toLowerCase()&&request.data?.startsWith(f.source.interface.getFunction('claimable').selector))
+      throw Object.assign(new Error('synthetic read outage'),{code:'NETWORK_ERROR'});
+    return original(request);
+  };
+  let result;
+  try{result=await runPrizeFlow(f.options,{onStep:e=>{
+    if(e.action==='collect'){
+      collected=true;if(fault!=='read')throw new Error('callback failed');
+    }
+  }});}finally{f.provider.call=original;}
+  assert.equal(result.status,'error');assert.equal(result.error.action,undefined);assert.equal(result.error.transactionHash,undefined);
+  if(fault==='rejectedCallback'){assert.equal(result.lastConfirmed,undefined);assert.equal(result.failures[0].action,'collect');}
+  else{assert.equal(result.lastConfirmed.action,'collect');assert(result.lastConfirmed.transactionHash);}
+  assert.equal(await f.source.collections(),fault==='rejectedCallback'?0n:1n);
+  assert.equal(await f.router.received(1,f.quote.target),0n);
+});
+test('maximum legacy converter list finishes at default bound',async()=>{
+  const f=await setup();const old=[];
+  for(let i=0;i<8;i++){
+    old.push({...f.job.active,campaignId:f.job.campaignId,slot:0});
+    await sent(f.token.mint(f.converter.target,1));await sent(f.quote.mint(f.converter.target,1));
+    const vault=await f.deploy('PromoVault',[f.token.target,f.quote.target,f.short.target,100]);
+    f.converter=await f.make(vault.target);await roll(f,[f.converter.target,i===7?await (await f.provider.getSigner(5)).getAddress():ethers.ZeroAddress,f.project],i===7?[6000,2000,2000]:f.job.bps);f.job.active=f.descriptor(f.converter,vault.target);
+  }
+  f.job.legacy=old;await queue(f,100,100);
+  const result=await runPrizeFlow(f.options);assert.equal(result.status,'idle');assert.equal(result.remainingInventory.length,0);
+  const {DEFAULT_MAX_STEPS,WORST_CASE_ATTEMPTS}=require('../scripts/local-prize-flow.cjs');
+  assert(result.steps<=WORST_CASE_ATTEMPTS);assert(WORST_CASE_ATTEMPTS<=DEFAULT_MAX_STEPS);
+  assert.equal(old.length,8);for(const c of old){assert.equal(await f.token.balanceOf(c.address),0n);assert.equal(await f.quote.balanceOf(c.address),0n);}
+});

@@ -7,7 +7,7 @@ const sd=require('./short-dataset.cjs'),md=require('./monthly-dataset.cjs');
 const sw=require('./local-short-executor.cjs'),mw=require('./local-monthly-executor.cjs');
 const {drawIdFor}=require('./draw-id.cjs');
 const {withState}=require('./local-scheduler-state.cjs');
-const {waitLocalReceipt}=require('./local-receipt.cjs');
+const {sendLocalTransaction,receiptOptions}=require('./local-receipt.cjs');
 const check=(ok,msg)=>{if(!ok)throw Error(msg);},zero=ethers.ZeroHash;
 const wait=reason=>({status:'waiting',reason});
 function validateConfig(c,rpcUrl){
@@ -86,12 +86,11 @@ async function tickKind(kind,o,state,save){
       if(await pendingSigner(provider,[publisher,executor]))return wait('pendingTransaction');
       if(BigInt(head.number+1)<BigInt(cutoff.blockNumber)+await source.cutoffDelayBlocks())return wait('cutoffDelay');
       if(signal?.aborted)return {status:'stopped'};
-      const tx=await source.connect(publisher).closeEmpty(cutoff.blockNumber,cutoff.blockHash,a.snapshotHash,
-        {type:2,maxFeePerGas:price,maxPriorityFeePerGas:0});
-      const receipt=await waitLocalReceipt(tx,{signal});
+      const receipt=await sendLocalTransaction(source.connect(publisher).closeEmpty,[cutoff.blockNumber,cutoff.blockHash,a.snapshotHash],
+        {type:2,maxFeePerGas:price,maxPriorityFeePerGas:0},{signal,receiptTimeoutMs:o.receiptTimeoutMs});
       return {status:'progress',action:'closeEmpty',transactionHash:receipt.hash};
     }
-    const result=await (isShort?sw.stepShort:mw.stepMonthly)({provider,source,publisher,executor,job:selected.job,signal});
+    const result=await (isShort?sw.stepShort:mw.stepMonthly)({provider,source,publisher,executor,job:selected.job,signal,receiptTimeoutMs:o.receiptTimeoutMs});
     if(result.status==='progress'){selected.started=true;save(state);}
     if(result.status==='terminal'){
       const checked=await provider.getBlock('latest');selected.terminalChecked={number:checked.number,hash:checked.hash};save(state);
@@ -129,6 +128,7 @@ async function tickKind(kind,o,state,save){
   return {status:'progress',action:'saveJob',...(entry.job?{drawId}:{epoch:String(epoch)})};
 }
 async function runScheduler(options,{maxTicks=32,onTick=()=>{}}={}){
+  receiptOptions(options.receiptTimeoutMs??30000);
   check(Number.isInteger(maxTicks)&&maxTicks>0&&maxTicks<=1000,'Invalid tick limit');
   const domain=validateConfig(options.config,options.rpcUrl);
   check((await options.provider.getNetwork()).chainId===31337n,'Local chain 31337 only');
@@ -141,8 +141,16 @@ async function runScheduler(options,{maxTicks=32,onTick=()=>{}}={}){
       for(const kind of ['SHORT','MONTHLY']){
         try{results[kind]=await tickKind(kind,options,state,save);}
         catch(e){if(e.code==='SCHEDULER_STORAGE_ERROR')throw e;
-          results[kind]=e.code==='LOCAL_EXECUTION_STOPPED'?{status:'stopped',transactionHash:e.transactionHash}:
-          {status:'error',message:e.shortMessage||e.message};}
+          results[kind]=e.code==='LOCAL_EXECUTION_STOPPED'?{status:'stopped',code:e.code,stage:e.stage,transactionHash:e.transactionHash}:
+          {status:'error',message:e.shortMessage||e.message,code:e.code,stage:e.stage,transactionHash:e.transactionHash};
+          // Unknown send/receipt and unclassified RPC errors stop ALL subsequent kinds/ticks.
+          if(!e.definiteRejection&&(e.stage||e.code)){
+            await onTick(results);
+            return {status:results[kind].status,results,haltedKind:kind,
+              requiresReconciliation:['broadcast','confirm'].includes(e.stage)};
+          }
+        }
+        if(results[kind].status==='stopped'){await onTick(results);return {status:'stopped',results};}
       }
       await onTick(results);
       if(options.signal?.aborted)return {status:'stopped',results};

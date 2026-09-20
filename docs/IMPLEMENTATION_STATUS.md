@@ -47,3 +47,5 @@ Review 20.09: [открытые custody/execution дефекты и исправ
 20.09: [LocalPrizeConverter](LOCAL_PRIZE_CONVERTER.md) — shared inventory и immutable destination, только локальный fixed adapter/floor. Funding job ещё не интегрирован.
 
 20.09: [Local Prize Flow](LOCAL_PRIZE_FLOW.md), scripts/local-prize-flow.cjs — отдельный job/CLI для converter и bounded legacy recipients; старый USDG API сохранён.
+
+20.09: error context отделён от lastConfirmed; draw workers/closeEmpty используют общий tx classifier, scheduler глобально останавливается на unknown outcome. Подробнее LOCAL_PRIZE_FLOW и LOCAL_PROMO_SCHEDULER.

@@ -117,3 +117,34 @@ RNG — управляемый fixture; эти проверки не доказ�
 Review 20.09: исправлен повторный begin после reorg с сохранившимся cutoff.
 Если started уже наблюдался, а on-chain phase стала None, scheduler требует recovery
 при любом возрасте cutoff. [Результаты проверки](AUTOMATION_REVIEW_2026-09-20.md).
+
+## Общая остановка при неизвестной tx, 20.09
+
+Short/Monthly writes и closeEmpty теперь используют общий sendLocalTransaction:
+explicit estimate → broadcast → confirm. Definite rejection может остаться локальным
+отказом вида; unknown broadcast/receipt немедленно завершает весь runScheduler,
+не вызывая следующий kind и не переходя к следующему tick. Неклассифицированные RPC
+ошибки с code/stage также консервативно останавливают pass; обычные validation errors
+без признаков RPC/tx сохраняют прежнюю независимость веток.
+
+Результат содержит haltedKind, а для unknown broadcast/confirm — requiresReconciliation.
+Ошибка соответствующего kind сохраняет code/stage/transactionHash. После глобальной
+остановки results может не содержать ещё не вызванный MONTHLY; это не успешный пропуск.
+Abort также не разрешает следующую ветку. receiptTimeoutMs доступен library caller;
+его значение проверяется до выполнения. CLI по error выходит, не запускает watch заново.
+
+Это не durable latch/journal: новый вызов после crash/unknown требует reconciliation.
+Тест возобновления сначала подтверждает исходную pending tx и только затем перезапускает.
+Комбинированный coordinator и автоматическое восстановление не добавлены.
+
+## Проверки исправления, 20.09.2026
+
+`node --test --test-concurrency=1 test/local-prize-flow.test.cjs test/local-scheduler.test.cjs test/local-executor-stability.test.cjs test/local-transaction.test.cjs test/local-buy-cycle.test.cjs`
+— **42/42**, fail 0, ~380 s. Добавлены 8 регрессий/интеграций; основной набор теперь
+**240**, полный запуск 240 не выполнялся. Лог `.local/logs/error-boundary-fixes.log` ignored.
+
+Проверены stale read/callback context после success и definite rejection; максимальный
+legacy list; unknown Short broadcast/receipt, unknown Monthly broadcast без следующего
+Short tick, definite estimate rejection с продолжением Monthly; restart только после
+подтверждения исходной pending tx. Прежние reorg/empty/funding/state/cutoff/abort/timeout
+и BUY-cycle также прошли. Денежная математика и Solidity не менялись.

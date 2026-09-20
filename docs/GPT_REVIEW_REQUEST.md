@@ -3,6 +3,25 @@
 20.09.2026. Прочитай текущий commit, укажи его hash. Ответ полностью перезапиши
 в docs/GPT_REVIEW_RESPONSE.md. Review не является разрешением автоматически менять код.
 
+## Обновление после ответа 68eba9f
+
+Узкий fix до coordinator выполнен:
+
+- Stale error context очищается после confirmed tx/обработанного definite rejection,
+  причём до вызова onStep. LastConfirmed — отдельная история, не fallback hash ошибки.
+  Регрессии: collect success → claimable read outage; callback после success/rejection.
+- Short/Monthly/closeEmpty используют общий sendLocalTransaction. Scheduler прекращает
+  все последующие kinds/ticks при unknown tx и неклассифицированном coded RPC error.
+  haltedKind/requiresReconciliation + code/stage/hash сохраняются. Обычные локальные
+  validation failures и definite rejection не теряют независимость видов.
+- Формула worst-case123 рядом с MAX_LEGACY=8/DEFAULT128 и assert. Maximal-legacy integration
+  с восемью старыми converter, новым и двумя current project recipients. Формула ручная,
+  её нужно сопровождать при изменении control-flow; это не статический анализ кода.
+
+Проверь, не потеряли ли мы unknown evidence, не создали ли новые continuation paths и
+не сломали ли изоляцию known rejection. Новый coordinator пока НЕ реализован.
+Ниже сохранён контекст законченного денежного шага; результаты новых тестов — в конце.
+
 ## Контекст проекта
 
 TOKEN + отдельное добровольное Promo: 6-часовой Short, месячный jackpot. Все денежные
@@ -86,3 +105,15 @@ LOCAL_HEAD/anchor не finality, snapshot completeness доверена publishe
 а не выдан за уже встроенный в BUY fixture профиль. Contract converter tests дополнительно
 проверяют сохранность frozen reserve. Реальный PAIR/DEX не использовался.
 Логи (ignored): `.local/logs/local-prize-flow-tests.log`, `.local/logs/local-prize-flow-regressions.log`.
+
+## Проверки исправления, 20.09.2026
+
+`node --test --test-concurrency=1 test/local-prize-flow.test.cjs test/local-scheduler.test.cjs test/local-executor-stability.test.cjs test/local-transaction.test.cjs test/local-buy-cycle.test.cjs`
+— **42/42**, fail 0, ~380 s. Добавлены 8 регрессий/интеграций; основной набор теперь
+**240**, полный запуск 240 не выполнялся. Лог `.local/logs/error-boundary-fixes.log` ignored.
+
+Проверены stale read/callback context после success и definite rejection; максимальный
+legacy list; unknown Short broadcast/receipt, unknown Monthly broadcast без следующего
+Short tick, definite estimate rejection с продолжением Monthly; restart только после
+подтверждения исходной pending tx. Прежние reorg/empty/funding/state/cutoff/abort/timeout
+и BUY-cycle также прошли. Денежная математика и Solidity не менялись.

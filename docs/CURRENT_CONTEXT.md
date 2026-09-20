@@ -16,6 +16,12 @@
 
 ## Последний результат
 
+- Исправлен stale action/hash в prize-flow: lastConfirmed отделён от ошибки текущего intent.
+  Scheduler теперь глобально останавливается на unknown tx/RPC, сохраняя stage/hash;
+  Short/Monthly/closeEmpty используют явный estimate/broadcast/confirm. Общего coordinator нет.
+  Bound default prize-flow закреплён формулой 123 <= 128 и maximal-legacy интеграцией.
+  **42/42** проверок прошли; основной набор **240**, полностью не запускался.
+
 - [Prize flow](LOCAL_PRIZE_FLOW.md): **11/11** новых проверок с реальным локальным CLI,
   **35/35** соседних регрессий. Основной набор **232**, целиком не запускался.
   Доход обоих активов автоматически проходит новый custody path; old recipient debt
