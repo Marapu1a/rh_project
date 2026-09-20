@@ -5,161 +5,133 @@
 Это независимое review-мнение, не задание на автоматическое исполнение. При следующем
 обращении файл следует полностью перезаписать.
 
-Просмотрен commit `6407ddb5af25f1d9766c36992520d27c0e20fb2a` —
-`Scope block gas checks to remaining execution obligations`.
+Просмотрен commit `ce81e84c163ce0677e360aeb5313ee3a87a2dd88` —
+`Trace state lock lifecycle and verify CLI handoff boundaries`.
 
 ## Короткий вердикт
 
-Relevant-action fix сделан правильно. Подтверждённый дефект из предыдущего review закрыт:
-block gas limit теперь проверяется для текущего action и ненулевых remaining actions всех
-построенных obligations. Завышенный bound чужого `convert` больше не блокирует Short;
-необходимый `process/finish` по-прежнему блокирует admission, а process с нулевым остатком
-не удерживается в required set.
+Новая диагностика сделана по правильной границе и не ослабляет fail-closed lock. На текущем
+commit прежнее наблюдение не воспроизвелось ни с трассой, ни без неё. В той же среде
+(Node 24.19.0, Linux overlayfs) точные handoff/helper сценарии прошли у меня **20/20**:
+один trace run 5/5 и три последовательных no-trace run по 5/5.
 
-Нового пропуска completion forecast или необоснованного admission в узком diff я не нашёл.
-После этого исправления gas model можно переводить к следующему этапу — выбору явного
-operational envelope и измерению верхней границы. Production guarantee из этого всё ещё
-не следует.
+Все traced acquisitions получили парный release; после каждого `unlinkSync`
+`inspectLock` видел `ENOENT`. Assertions после awaited scheduler и до/после child CLI
+не нашли lock. Conflict test сохранил чужой lock. Action rejection снял свой lock.
 
-Однако lock-наблюдение не исчезло. В моём повторном targeted-прогоне оно воспроизвелось
-сразу в двух CLI handoff-тестах. Поэтому результат текущей проверки — не 39/39, а 37/39.
-Это не связано с четырьмя строками gas fix, но уже нельзя считать единичным шумом или
-закрывать простым 500-cycle probe.
+Поэтому прошлое заключение надо сузить: оставшиеся lock-файлы и EEXIST в моих предыдущих
+запусках были реальным наблюдением, но данных оказалось недостаточно, чтобы приписать его
+реализации `withState`. Сейчас утверждение «успешный await возвращается с parent lock»
+не подтверждено. До новой трассы это не project finding и не причина задерживать
+калибровку gas model.
 
-## Проверка relevant-action fix
+При review обнаружен другой, детерминированный lock lifecycle defect: после успешного
+`openSync(lock,'wx')` запись PID и закрытие fd находятся до основного `try/finally`.
+Ошибка записи/закрытия отвергает promise, но оставляет принадлежащий этому процессу lock.
+Это не объясняет прежний успешный await, однако является настоящим узким fail-closed
+liveness дефектом.
 
-Изменение:
+## Что проверено в диагностике
 
-```js
-const requiredActions=new Set([action]);
-for(const o of obligations)
-  for(const [method,count] of Object.entries(o.counts))
-    if(count)requiredActions.add(method);
-if([...requiredActions].some(a=>BigInt(n.gasUnits[a])>head.gasLimit))
-  return wait('blockGasBound');
-```
+`runId/PID/path/time` достаточно, чтобы сопоставлять parent и child независимо от порядка
+строк stderr. События разделяют:
 
-Граница выбрана верно:
+- попытку acquire;
+- успешное владение;
+- conflict с bounded snapshot;
+- начало release;
+- подтверждённое отсутствие файла после unlink;
+- ошибку release.
 
-- current action всегда проверяется, включая optional prize/closeEmpty;
-- все frozen Short/Monthly участвуют одновременно;
-- current unfrozen candidate приносит весь оставшийся begin/publish/seal/process/finish;
-- action с count=0 не считается физически оставшейся транзакцией;
-- RNG funding не смешивается с block gas check;
-- unrelated unfrozen preparation, как и раньше, не становится completion obligation.
+`inspectLock` читает не больше 128 байт через собственный fd и возвращает
+`path/exists/owner/mtimeMs/size`. Если diagnostic read не удался или lock исчез в гонке,
+основной acquire всё равно не продолжается. Это правильное fail-closed поведение.
 
-Порядок вычисления не создаёт обхода: obligations сначала строятся из pinned state,
-после чего required actions проверяются до balance admission. `evaluateBudget`,
-`gasObservations`, state identity, pending и migration этим commit не менялись.
+Pre/post assertions поставлены в полезных местах:
 
-Новые тесты действительно вызывают публичный `checkExecutionBudget`, а не только чистый
-`evaluateBudget`. Они закрывают исходный Short-сценарий, oversized required process и
-finish, zero-left process и optional action поверх frozen liabilities.
+- сразу после `await runScheduler` в coordinator fixture;
+- после каждого scheduler helper run;
+- перед child CLI;
+- после завершения child CLI.
 
-Отдельного committed Monthly block-limit regression нет. Это не найденный дефект:
-ручной симметричный probe frozen Monthly дал:
+Новый integration `async save → resolved promise → child process` проверяет именно
+handoff, которого не было в прежнем 500-cycle probe. Conflict metadata и release после
+action rejection также покрыты отдельно.
 
-- oversized unrelated `convert` → `ready:true`;
-- oversized required `finishMonth` → `blockGasBound`.
+## Результат повторения
 
-Но один Monthly regression был бы дешёвой защитой строковых mappings
-`processMonth/finishMonth` при будущем рефакторинге.
-
-## Lock: теперь есть конкретные точки
-
-Команда из обращения:
+Точная команда из обращения с `LOCAL_STATE_LOCK_TRACE=1`:
 
 ```powershell
-node --test --test-concurrency=1 test/local-execution-budget.test.cjs test/local-coordinator.test.cjs test/local-scheduler.test.cjs
+$env:LOCAL_STATE_LOCK_TRACE='1'
+node --test --test-concurrency=1 --test-name-pattern='CLI runs both workers|scheduler persists before sending|async state save|occupied lock|action rejection' test/local-coordinator.test.cjs test/local-scheduler.test.cjs test/local-state-lock.test.cjs
 ```
 
-дала **37/39**, fail 2, 122 s. Все execution-budget tests прошли; оба падения относятся к
-handoff из parent test process в CLI child.
+Результат: **5/5**, fail 0, 56 s.
 
-### 1. Coordinator CLI
+В трассе:
 
-Тест: `CLI runs both workers; persisted config/corrupt state fail closed`.
+- coordinator parent PID 11 освободил scheduler lock, snapshot после unlink — `ENOENT`;
+- child PID 33 затем независимо получил и освободил scheduler/coordinator locks;
+- scheduler parent PID 42 выполнил все проходы с парными acquire/release;
+- scheduler child PID 65 получил lock только после parent release и также снял его;
+- helper parent/children PID 73/81/89/97/105/113 завершили все handoff;
+- intentional conflict с owner `987654` был только прочитан и не удалён;
+- `releaseError` и оставшихся файлов после release нет.
 
-Путь:
+Затем та же выборка без trace была запущена три раза подряд: **15/15**, fail 0,
+примерно 171 s суммарно. Трассировка не является единственной причиной зелёного результата.
 
-```text
-.local/scheduler-test-Iv7D5N/state.json.lock
+## Подтверждённый defect: acquire initialization вне cleanup
+
+Сейчас код выполняет:
+
+```js
+fd=fs.openSync(lock,'wx');
+fs.writeFileSync(fd,String(process.pid));
+fs.closeSync(fd);
+// основной try/finally начинается только здесь
 ```
 
-Lock содержал PID `11` — parent test process. Он был создан во время предварительного
-`await runScheduler(..., {maxTicks:1})` fixture и остался после возврата этого вызова.
-После этого fixture записал `job.json/config.json` и запустил child CLI. Child успел
-выполнить prize-flow, затем draw worker получил:
+Я инъектировал `EIO` в `writeFileSync(fd,...)`. `withState` ожидаемо отклонился, но
+`inspectLock` сразу после rejection показал:
 
-```text
-Scheduler state locked; another process or stale lock:
-.../.local/scheduler-test-Iv7D5N/state.json.lock
-at withState (scripts/local-scheduler-state.cjs:8:39)
-at runScheduler (scripts/local-promo-scheduler.cjs:137:10)
+```json
+{"exists":true,"owner":"","size":0}
 ```
 
-Coordinator вернул `status:error`, `haltedWorker:draw`, без reconciliation marker.
-Отдельно остался `coordinator.json.lock` с PID child `34`.
+То есть новый lock уже создан, fd не закрыт штатно, а cleanup ещё не действует.
 
-### 2. Scheduler CLI
+Последствия ограничены:
 
-Тест: `scheduler persists before sending, resumes both kinds, handles terminal reorg and
-makes two cycles from BUY`.
+- action/state sends не начались;
+- это не unknown transaction и не continuation;
+- следующий запуск корректно остановится на EEXIST;
+- но оператор получит stale zero-byte lock после storage error.
 
-Путь:
+Минимальная правка: считать lock owned сразу после успешного `openSync`, а закрытие fd и
+unlink поместить в cleanup, который действует и на ошибку записи PID. Conflict path не
+должен удалять чужой lock. Нужен один fault test: injected PID-write failure → rejection,
+fd cleanup и `inspectLock(...).exists === false`.
 
-```text
-.local/scheduler-test-rLe2U3/state.json.lock
-```
+Автоматическое удаление lock по PID/возрасту по-прежнему не требуется и небезопасно.
 
-Lock содержал PID `58` — parent test process. Последний parent `await run(f)` уже
-вернулся, после него тест записал `config.json` и запустил `run-local-scheduler.cjs`.
-Child сразу отказался в `withState` с тем же `EEXIST`.
+## Итог
 
-Это дополняет два предыдущих наблюдения:
+Данные действительно не бились, и прежнее lock finding было сформулировано слишком
+уверенно. На `ce81e84` успешный scheduler/CLI handoff подтверждён трассой и повторными
+no-trace запусками. Старое наблюдение оставляем как необъяснённый артефакт до появления
+нового trace evidence, но не как дефект проекта.
 
-- `scheduler-test-TjLs06/state.json.lock` — fail перед run на строке 56;
-- `scheduler-test-ASTzJe/state.json.lock` — fail перед run на строке 47.
-
-Точный повтор только двух упавших CLI-сценариев после этого прошёл **2/2** за 57 s.
-Следовательно, это intermittent lifecycle/handoff failure, а не детерминированно занятый
-state. Причину по имеющимся данным я не утверждаю.
-
-500 синхронных overlap/release/exception/reacquire циклов полезны, но не эквивалентны
-реальному пути: длинный async scheduler action, filesystem saves, возврат promise и новый
-процесс. Они подтверждают базовый helper, но не опровергают наблюдение.
-
-Минимальная следующая диагностика — не force-clear:
-
-1. В двух CLI-тестах прямо перед spawn зафиксировать `existsSync(lock)`, содержимое,
-   `stat.mtime` и parent PID.
-2. На `EEXIST` возвращать в диагностике содержимое/stat lock, не меняя fail-closed
-   поведение.
-3. Одним regression повторять именно `await runScheduler → assert no lock → child CLI`,
-   а не только синхронный вызов `withState`.
-4. Если lock существует уже после resolved promise, инструментировать пары
-   `openSync('wx')/unlinkSync` с run id; только затем решать, это код, runtime или FS.
-
-Удалять lock автоматически по PID/возрасту нельзя: без lease/reconciliation это откроет
-реальную конкурентную запись или unknown transaction.
-
-## Следующий шаг
-
-Gas fix не блокирует калибровку. Сначала нужен выбранный верхний envelope общего
-`N/chunks` — contract-level `MAX_N` по-прежнему отсутствует. Затем измерять Short,
-Monthly и оба frozen одновременно: estimate, receipt gasUsed, calldata, фактическую native
-дельту, RNG fee и восстановление после каждого chunk/restart.
-
-Lock issue следует вести параллельно как ограниченный ops-hardening item. Он не опровергает
-математику budget model, но пока не позволяет называть scheduler/CLI baseline устойчиво
-зелёным.
+Диагностический commit можно оставить: он bounded, opt-in и полезен для следующего
+совпадения. Перед калибровкой есть только маленький самостоятельный cleanup fix для ошибки
+инициализации lock; он не должен разрастаться в lease/recovery framework.
 
 ## Выполненные проверки
 
-- relevant-action targeted suite — **37/39**, два intermittent lock failure;
-- все `local-execution-budget.test.cjs`, включая пять новых block-limit сценариев, прошли;
-- точный повтор двух упавших CLI-сценариев — **2/2**;
-- ручной frozen Monthly symmetry probe — unrelated action admitted, required finish blocked;
-- `git diff --check d8fd45c..6407ddb` — ошибок нет;
-- полный `npm test` повторно не запускался;
+- trace handoff/helper run — **5/5**;
+- три no-trace повтора — **15/15**;
+- injected PID-write failure — stale zero-byte lock воспроизведён;
+- `git diff --check 78dcf28..ce81e84` — ошибок нет;
+- полный `npm test` не запускался;
 - пользовательский `docs/INDEPENDENT_AUDIT_2026-09-19.md` не изменялся.
