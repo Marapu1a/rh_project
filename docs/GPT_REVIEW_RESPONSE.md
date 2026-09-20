@@ -5,199 +5,132 @@
 Это независимое review-мнение, не задание на автоматическое исполнение. При следующем
 обращении файл следует полностью перезаписать.
 
-Просмотрен commit `60ac0e75d36423f5dbf627591f802a90543d9b80` —
-`Automate local prize conversion flow and bounded legacy payouts`.
+Просмотрен commit `e537b9cf181eda2736ff07a90bcd063c16eb7aed` —
+`Clear stale transaction context and stop scheduler on unknown outcomes`.
 
 ## Короткий вердикт
 
-Новый `local-prize-flow-v1` по существу соединяет безопасный локальный custody path:
-оба актива доходят из source до FeeRouter, TOKEN prize share платится converter'у,
-фактический USDG доставляется immutable vault, project recipients получают свою долю,
-а старые явно перечисленные долги не теряются. В денежной conservation, повторном pay,
-двойном swap/forward или обходе ветки unsafe legacy я блокирующего дефекта не нашёл.
+Узкое исправление принимаю. Подтверждённый в прошлом review stale transaction context
+устранён: завершённый intent больше не приклеивается к следующей read/callback error,
+а последняя подтверждённая операция хранится отдельно в `lastConfirmed`. В scheduler
+Short, Monthly и `closeEmpty` теперь проходят через общую transaction boundary; unknown
+broadcast/receipt и неклассифицированная coded RPC error прекращают все последующие
+kinds/ticks текущего запуска. Новых continuation paths после unknown outcome я не нашёл.
 
-Полный основной набор независимо прошёл **232/232** (`fail 0`, ~511 s). Старые USDG,
-draw/scheduler и CLI пути в этом прогоне не сломались.
+Изоляция known rejection не сломана: только доказанный read-only estimate revert либо
+receipt status 0 именно исходной tx считаются definite rejection. Такой Short failure
+может пропустить Short и дать независимому Monthly продолжиться; неясный broadcast,
+timeout или receipt/RPC outage этого разрешения не получает.
 
-Есть один подтверждённый дефект операционной телеметрии: после успешной tx переменная
-`current` сохраняет её action/hash. Если следующий обычный RPC-read падает, результат
-ошибочно приписывает read error предыдущей уже подтверждённой транзакции. Внутри pass новых
-writes после ошибки нет, поэтому это не денежный exploit. Но перед общим coordinator это
-нужно закрыть: reconciliation не должен отправлять оператора проверять не тот intent.
+Блокирующих замечаний к commit нет. Денежная математика, custody и Solidity в этом шаге
+не менялись; предыдущая оценка назначения активов и legacy-границ остаётся в силе.
 
-## Подтверждённый finding: stale action/hash после read failure
+## Stale context исправлен корректно
 
-В `runPrizeFlow` объект `current` устанавливается перед `send`, после успешного receipt
-получает `transactionHash`, но затем не очищается. Outer catch дополняет любую следующую
-ошибку через `...current` и даже использует `current.transactionHash` как fallback.
+После confirmed receipt код сначала формирует `lastConfirmed`, затем очищает `current` и
+только потом вызывает `onStep`. После обработанного definite rejection `current` также
+очищается до callback. Outer catch больше не использует hash предыдущей успешной tx как
+fallback.
 
-Я отдельно воспроизвёл сценарий:
+Это даёт нужные различия:
 
-1. `collect` успешно mined, `source.collections() == 1`;
-2. следующий `source.claimable(...)` падает с synthetic `NETWORK_ERROR`;
-3. `runPrizeFlow` корректно останавливается со `status: error`, но сообщает:
+- read error после confirmed `collect` возвращается без ложного `action`/tx hash, а
+  подтверждённый collect остаётся в `lastConfirmed`;
+- callback error после success не превращает успешную tx в неизвестную;
+- callback error после definite rejection сохраняет failure, но не создаёт ложный
+  confirmed/unknown intent;
+- настоящая ошибка `sendLocalTransaction` по-прежнему несёт собственные `stage`, `code`
+  и, когда он известен, hash исходной tx.
 
-```json
-{
-  "action": "collect",
-  "transactionHash": "<hash успешного collect>",
-  "message": "synthetic read outage",
-  "code": "NETWORK_ERROR"
-}
-```
+Иными словами, evidence неизвестного send не потерян, но больше не смешан с историей
+последней подтверждённой операции.
 
-То есть hash настоящий, но относится не к неизвестной tx, а к уже успешной. Такой же stale
-context возможен после pay/forward/harvest/convert, если следующий read или callback упадёт.
+## Scheduler: stop и независимость видов
 
-Граница исправления узкая: pending intent должен жить только внутри незавершённого `send`.
-После confirmed receipt и после обработанного definite rejection его надо очистить; read error
-не должен получать `transactionHash` предыдущей tx. Если полезно хранить последнюю успешную
-операцию, это отдельное поле `lastConfirmed`, а не evidence неизвестного intent. У error из
-`sendLocalTransaction` уже есть собственные `stage/transactionHash`, fallback на старый hash
-не нужен.
+Переход Short/Monthly/`closeEmpty` на `sendLocalTransaction` закрывает прежний разрыв:
+ошибка broadcast теперь не выглядит как обычный локальный exception, а receipt wait имеет
+единый timeout/abort контракт.
 
-Нужна одна регрессия: confirmed collect → RPC failure на следующем `claimable`; результат
-должен быть `error` без ложного tx intent/hash и без последующих writes.
+В `runScheduler` после non-definite ошибки с `stage` или `code` происходит немедленный
+return из всего scheduler, поэтому:
 
-## Назначение активов и legacy
+- Monthly не запускается после unknown Short send;
+- после unknown Monthly не начинается следующий Short tick;
+- последующие ticks того же запуска также невозможны;
+- `haltedKind`, `requiresReconciliation`, `code`, `stage` и доступный tx hash остаются в
+  результате;
+- CLI печатает kind-specific `code`/`stage`/hash и завершает работу с ошибкой.
 
-Для доверенного локального job роли проведены правильно:
+Для `LOCAL_EXECUTION_STOPPED` scheduler также выходит сразу. Abort до broadcast имеет
+`stage=estimate` и не требует tx reconciliation; abort после broadcast сохраняет hash и
+не разрешает продолжение.
 
-- active prize slot 0 обязан быть проверенным converter;
-- TOKEN для `usdgVault` никогда не вызывает `FeeRouter.pay` и остаётся credit;
-- USDG старому vault платится и синхронизируется;
-- old converter получает оба актива, продаёт свой inventory и сохраняет своё immutable
-  назначение;
-- project entries допустимы только из historical slots 1/2 с положительным bps;
-- повторяющиеся и пересекающиеся current/legacy addresses отвергаются до writes.
+Known estimate rejection остаётся изолированным намеренно. Это безопасно именно потому,
+что estimate read-only и broadcast ещё не выполнялся. Receipt status 0 исходной tx тоже
+является определённым rollback. Остальные `CALL_EXCEPTION`, nonce/network/timeout и
+replacement-неопределённости не получают такого послабления.
 
-`unsafeDebt` обновляется после обеих distribution-фаз, поэтому новый TOKEN, полученный после
-collect/harvest, тоже попадает в отчёт. Worker не выдаёт эту диагностику за on-chain
-quarantine: публичный внешний `pay(TOKEN, oldVault)` всё ещё возможен. Это честная граница.
+Обычные local validation failures без coded RPC/tx evidence по-прежнему могут быть
+изолированы по виду. Это сохраняет прежнюю модель, где плохая конфигурация Short не
+лишает Monthly независимого прогресса, и не ослабляет unknown-границу.
 
-Двойного исполнения не видно:
+## Bound `123 <= 128`
 
-- успешный `FeeRouter.pay` обнуляет credit;
-- converter accounting исключает повторную продажу/доставку;
-- в одном pass разрешена одна convert-порция на converter;
-- общий private skip не повторяет definite failure во второй distribution-фазе;
-- unknown outcome выходит через outer catch и новых writes не разрешает.
+Вынесенные `MAX_LEGACY=8`, `DEFAULT_MAX_STEPS=128` и import-time assertion согласованы с
+текущей schema/control-flow. Ручная формула консервативна: она считает максимум tx attempts
+для двух distribution-проходов, source collect/harvest и convert/forward всех допустимых
+converter. Замена converter на USDG-only vault может добавить sync, но одновременно
+убирает более дорогие converter operations, поэтому bound не занижен.
 
-При failed forward converter пропускается в swap-фазе, поэтому worker не наращивает у него
-новый USDG поверх уже недоставленного quote. Broken swap, напротив, не блокирует USDG,
-project recipients, collect или harvest — порядок фаз выбран правильно.
+Maximal-legacy integration действительно строит восемь старых converter плюс active
+converter и два current project recipient и завершает pass при default limit. Обычного
+воспроизводимого starvation при текущих schema limits я не вижу.
 
-## Skip keys и статусы
+Это не решает известную общую проблему маленького debug `maxSteps` и отсутствия durable
+phase cursor. Формула остаётся ручной: любое изменение числа фаз, повторов, recipients
+или разрешённых операций должно менять формулу и maximal test вместе.
 
-Ключи достаточно узкие для текущего scope:
+## Независимая проверка
 
-- pay: action + router + asset + recipient;
-- harvest: action + router + asset;
-- forward/convert: action + конкретный converter;
-- allocate: action + конкретный vault.
+Повторный полный запуск `npm test` прошёл **240/240**, `fail 0`, примерно 536 s. Внутри
+него прошли новые stale read/callback regressions, maximal legacy case, unknown Short
+broadcast/receipt, unknown Monthly без следующего Short tick и definite estimate rejection
+с продолжением Monthly. Отдельный `test/local-scheduler.test.cjs` прошёл **10/10**.
 
-Поэтому отказ TOKEN payment не блокирует USDG тому же recipient, отказ одного converter не
-блокирует другой, а collect failure не маскируется под harvest failure. Router `sync` оставлен
-неизолированным, что верно: accounting deficit/ошибка recognition не должна разрешать
-дальнейшие writes.
+Первый полный запуск дал **239/240**: один старый scheduler integration единожды встретил
+существующий `.lock` собственного временного state-файла. Тот же тест отдельно, весь
+scheduler-набор и затем полный набор прошли; устойчивой логической регрессии или
+повторяемого lock leak я не получил. Поэтому это не считаю finding текущего commit, но
+результат первого запуска не скрываю.
 
-Статусы в основном честны:
+## Остающиеся границы
 
-- definite failures или unsafe debt → `degraded`;
-- оставшийся inventory без failures → `yielded`;
-- gas/nonce/executor/anchor → `waiting`;
-- unknown send/receipt/read → `error` и stop;
-- abort → `stopped`.
+- Это всё ещё local-only execution на chainId 31337 и `LOCAL_HEAD`, не production
+  finality/journal/supervisor.
+- Trusted legacy list и getter bindings не являются code/implementation attestation.
+- TOKEN credit старому USDG-only vault диагностируется worker'ом, но публичный внешний
+  `pay` по-прежнему может физически отправить туда TOKEN.
+- Реальные PAIR/DEX, price guard, deployment verification и production RNG не проверены
+  этим commit.
+- `lastConfirmed` — удобная телеметрия одного pass, не durable transaction journal.
 
-Единственное найденное искажение — не сам status, а stale action/hash в описанном выше
-read-failure сценарии.
+## Следующий разумный пакет
 
-## Historical witnesses: достаточно ли их
-
-Для заявленного **доверенного local job** проверки campaign/slot/role достаточны. Они
-доказывают, что адрес действительно стоял в указанной policy и что job не переименовал
-исторический slot 0 в project recipient.
-
-Они не доказывают семантику или неизменность кода. Контракт в slot 0 может быть proxy,
-getter'ы показывают только текущее состояние, а один и тот же current recipient получает
-агрегированный старый credit без campaign attribution. Поэтому для production нужны manifest,
-implementation/code-hash verification и доказательство, что shared address не менял
-destination/роль во времени. Это не дефект текущего честно локального worker, а граница
-между trusted config и deployment attestation.
-
-## Starvation и default limit
-
-Обычного воспроизводимого starvation при default `maxSteps=128` я не вижу.
-
-При текущей schema максимум:
-
-- 8 legacy entries;
-- active converter;
-- 2 current project recipients;
-- две distribution-фазы;
-- collect + два harvest;
-- по одному convert и post-swap forward на converter.
-
-Даже если считать истинными все условные send-ветки в обеих distribution-фазах, включая
-повторные sync/forward при внешних изменениях, control-flow даёт не более **123 tx attempts**.
-Default 128 покрывает текущий путь. Без concurrent mutations обычный максимум ниже — около 94.
-
-Но запас всего пять попыток. Это не текущий bug, зато хрупкая константа: один новый action
-может незаметно сделать стандартный watch вечно доходящим только до ранних фаз. Разумно
-зафиксировать worst-case bound тестом или вычисляемым assertion рядом со schema limits.
-Малые debug limits без persistent cursor действительно могут starvation и остаются честно
-названным ограничением.
-
-## Compatibility
-
-Общий CLI различает новую schema до старых funding/revenue/draw validators, создаёт только
-нужный binding и сохраняет прежние интервалы watch. В полном прогоне прошли прежние USDG
-funding/revenue, transaction classifier, scheduler, BUY-cycle и converter tests.
-
-Новый CLI integration test проверяет реальный полный prize pass. Отдельного regression
-для unknown pay/collect/harvest именно через новый wrapper нет, но все действия проходят
-через один `send` и прежний `sendLocalTransaction`; общий classifier и старые revenue cases
-остались зелёными. Это допустимый coverage reuse, не повод копировать всю матрицу.
-
-## Следующий ограниченный пакет
-
-После узкого исправления stale error context разумен `local-ops-coordinator-v1`, а не
-production supervisor и не автоматический refill.
-
-Минимальный scope:
-
-1. Один process/bundle связывает существующие prize-flow и draw scheduler jobs, не переписывая
-   их внутреннюю state machine.
-2. Для каждого signer существует ровно одна последовательная write lane. Если money и draw
-   используют один адрес, параллельных sends быть не может; разные signers всё равно не должны
-   гоняться за одним shared custody transition.
-3. Unknown outcome в любой lane глобально запрещает следующие writes до reconciliation.
-   Definite swap/recipient failure остаётся degraded и не блокирует независимый draw progress.
-4. Gas budget на этом шаге только проверяется: explicit ops address, minimum native balance,
-   bounded estimate/allowance на pass. Никакого автоматического пополнения из prize funds или
-   неутверждённой creator share.
-5. Coordinator делает один bounded money pass и один bounded scheduler pass за итерацию,
-   публикует раздельные результаты и не выдумывает durable journal/finality.
+Следующий узкий пакет — совместный локальный coordinator денежного `prize-flow` и draw
+scheduler, без попытки сразу построить production framework.
 
 Критерии готовности:
 
-- один signer: nonce строго последовательны, concurrent send отсутствует;
-- unknown money tx не допускает draw tx и наоборот;
-- definite broken swap не мешает уже funded Short/Monthly продолжить работу;
-- low ops balance даёт `waiting` до первой tx и не трогает prize custody;
-- restart после подтверждённой неизвестной tx продолжает из on-chain/job state без дубля;
-- один интеграционный сценарий проходит revenue обоих assets → USDG reserves → Short/Monthly
-  execution/claim, сохраняя старые claims и frozen budgets.
+1. Один процесс сериализует write intents обоих контуров для общих signer/nonce; два
+   worker не отправляют транзакции параллельно.
+2. Unknown broadcast/confirmation в любом контуре останавливает оба контура и возвращает
+   kind/worker, action, stage, code и доступный tx hash. До reconciliation новых sends нет.
+3. После подтверждения исходной pending tx restart восстанавливается из on-chain state и
+   существующего scheduler state без повторной выплаты, swap, forward, freeze или begin.
+4. Definite rejection одного независимого действия не превращается в глобальный unknown:
+   действующие правила изоляции Short/Monthly и recipients сохраняются явно.
+5. Интеграции покрывают общий signer, unknown сначала в draw и сначала в prize-flow,
+   restart после mined original tx, abort и отсутствие nonce collision/double send.
 
-## Проверки review
-
-- `npm test`: **232/232**, `fail 0`, ~511 s;
-- отдельно воспроизведён confirmed collect + следующий RPC-read outage: stale successful
-  collect hash ошибочно попал в error context;
-- просмотрены `local-prize-flow.cjs`, новый test suite, общий CLI, converter/FeeRouter/vault
-  boundaries и документы текущего шага;
-- пользовательский незакоммиченный `docs/INDEPENDENT_AUDIT_2026-09-19.md` не изменялся.
-
-Итого: prize flow можно принять как завершённый локальный участок после небольшой коррекции
-error attribution. Она не требует менять денежную логику, но нужна до общего coordinator:
-автоматизация с ложным hash — это уже не телеметрия, а генератор будущей паники.
+Project gas budget можно считать следующим отдельным пакетом после coordinator. Live DEX,
+production finality и весь backlog не являются prerequisite этого локального шага.
