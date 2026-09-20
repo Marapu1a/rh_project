@@ -260,6 +260,7 @@ test('RPC BUY history -> independent Short/Monthly workers -> win/no-win, replay
     +await f.vault.reserved(f.quote.target)+await f.vault.claimable(f.quote.target)+await f.vault.unrecognizedUSDG());
   // Real CLI process reloads the same job and recognizes completion without sending.
   const fs=require('node:fs'),path=require('node:path');
+  fs.mkdirSync('.local',{recursive:true});
   const jobFile=path.resolve('.local','executor-cli-job.json');fs.writeFileSync(jobFile,JSON.stringify(second.job));
   t.after(()=>fs.unlinkSync(jobFile));
   const execFile=require('node:util').promisify(require('node:child_process').execFile);

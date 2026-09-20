@@ -43,3 +43,5 @@
 Review 20.09: [открытые custody/execution дефекты и исправление reorg](AUTOMATION_REVIEW_2026-09-20.md). Успешные локальные suites не закрывают эти ограничения.
 
 20.09: recipient isolation в funding/revenue и explicit estimate/broadcast/confirm; детали — [LOCAL_USDG_REVENUE](LOCAL_USDG_REVENUE.md). Контрактная математика не менялась.
+
+20.09: [LocalPrizeConverter](LOCAL_PRIZE_CONVERTER.md) — shared inventory и immutable destination, только локальный fixed adapter/floor. Funding job ещё не интегрирован.

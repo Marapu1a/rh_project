@@ -53,5 +53,9 @@ async function main(){
     }finally{process.removeListener('SIGINT',interrupt);}
   }finally{provider.destroy();}
 }
-if(require.main===module)main().catch(error=>{console.error(error.message);process.exitCode=1;});
-module.exports={main};
+function reportError(error){
+  console.error(JSON.stringify({status:'error',message:error.message,code:error.code,stage:error.stage,transactionHash:error.transactionHash}));
+  process.exitCode=1;
+}
+if(require.main===module)main().catch(reportError);
+module.exports={main,reportError};

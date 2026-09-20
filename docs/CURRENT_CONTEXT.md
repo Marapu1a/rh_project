@@ -16,6 +16,13 @@
 
 ## Последний результат
 
+- Добавлен LocalPrizeConverter и fixed swap fixture; модель/ограничения —
+  [LOCAL_PRIZE_CONVERTER](LOCAL_PRIZE_CONVERTER.md). Converter **5/5**, tx/CLI **11/11**, BUY-cycle **1/1** из cwd без `.local`;
+  runtime 4 556 bytes.
+  Основной список **221**, целиком не запускался.
+- После GPT review исправлены создание `.local` в BUY-тесте и структурированный
+  CLI error с code/stage/transactionHash. Неизвестная tx по-прежнему останавливает writes.
+
 - Recipient isolation: **37/37** FeeRouter/funding/BUY, **10/10** классификация tx,
   **5/5** соседние worker-регрессии. Основной набор **215**, целиком не запускался.
   C закрыт в локальном worker; TOKEN custody A остаётся открытым. Подробности —
@@ -55,15 +62,15 @@
 
 ## Следующий ограниченный шаг
 
-Изоляция определённого отказа recipient реализована: общий skip на один revenue pass,
-сохранение credit, обслуживание остальных recipients/source, повтор в следующем pass.
-Подробности и результаты — [LOCAL_USDG_REVENUE](LOCAL_USDG_REVENUE.md).
-Неизвестный broadcast/receipt outcome по-прежнему останавливает новые writes.
+Локальный контрактный [TOKEN → USDG converter](LOCAL_PRIZE_CONVERTER.md) реализован:
+общий inventory, immutable destination/adapter, локальный fixed floor, независимый
+forward USDG. Новые тесты используют FeeRouter recipient=converter; старый funding job
+по-прежнему требует recipient=vault. Это ещё не сквозная автоматизация TOKEN.
 
-Следующий кусок — TOKEN → USDG: выбрать место конвертации/получателя до prize custody. Любой caller
-может вызвать FeeRouter.pay(TOKEN, vault), поэтому off-chain пропуска TOKEN недостаточно.
-При необходимости переработать связку recipients, не добавляя вывод prize funds.
-[План](ROADMAP.md). Доводка остальных частей не заменяет устранения этих дефектов.
+Следующий ограниченный кусок — подключить converter к локальным funding/revenue jobs
+и определить bounded обслуживание legacy recipients при смене policy. Прежний прямой
+TOKEN pay в USDG-only vault остаётся опасным для старого deployment-профиля.
+Реальный DEX/price guard пока не выбран; fixed floor разрешён только в chainId 31337 proof.
 
 После этого остаются эксплуатационное финансирование и настоящий RNG с безопасной привязкой.
 Draw scheduler и revenue worker пока запускаются отдельно; общего supervisor нет.

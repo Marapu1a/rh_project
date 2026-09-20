@@ -82,11 +82,12 @@ TOKEN custody и остановка collection из-за project recipient ос�
 
 ### 3г. Оставшиеся связи до заявления о полном скелете
 
-Ближайший кусок — TOKEN → USDG. Сначала определить место конвертации относительно
-FeeRouter recipient credits: нельзя просто платить TOKEN в USDG-only prize vault,
-откуда его нельзя безопасно вывести на swap. Затем минимальный маршрут с явными
-ограничениями цены/срока и сохранением возможности повторить отказ. Не считать текущий
-USDG-only worker готовой TOKEN-интеграцией; допустимо переработать связку recipients.
+Контрактный локальный [TOKEN → USDG proof](LOCAL_PRIZE_CONVERTER.md) реализован:
+immutable destination, shared inventory, fixed test adapter/floor, balance delta,
+независимый USDG forward. Converter 5/5, tx/CLI 11/11, BUY-cycle 1/1 без исходной .local; полного запуска 221 не было. Отдельный converter на campaign не требуется.
+Следующий кусок — funding/revenue job для converter и bounded legacy-debt handling.
+Старый job recipient=vault нельзя выдавать за интеграцию нового converter.
+Production DEX/price guard, поддержка изменения маршрутов и live PAIR binding не закрыты.
 
 Эксплуатация: доля проекта → native buffer/RNG/executor, bootstrap и
 лимиты расхода; frozen/claimable не используются. Creator shares требуют решения.

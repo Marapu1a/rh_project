@@ -1,284 +1,106 @@
-# Обращение к GPT — связанный локальный MVP и ближайшие исправления
+# Обращение к GPT — локальный конвертер и следующий шаг автоматизации
 
-20.09.2026. Активный запрос на независимое ревью кода и решений.
-Предыдущие ответы/исследования находятся в archive; они не заменяют текущую задачу.
-Ответ запиши в `docs/GPT_REVIEW_RESPONSE.md`, перезаписав этот единственный файл ответа.
-Укажи commit, который действительно прочитал. Не меняй код в рамках ответа.
+20.09.2026. Ответ перезаписывать в docs/GPT_REVIEW_RESPONSE.md; указать реально
+просмотренный commit. Не менять код автоматически. Предыдущая история доступна в git.
 
-## Обновление после обсуждения ответа и следующего шага
+## Контекст, который важно сохранить
 
-Пользователь подтвердил все денежные призы в USDG. TOKEN сначала конвертируется,
-в бюджет попадает только фактически полученный USDG; swap не нужен для завершения
-уже frozen draw. Новый проход не должен переоценивать его бюджет по рыночной цене.
+Продукт: спекулятивный TOKEN, отдельное добровольное Promo, Short каждые 6 часов,
+Monthly jackpot. Все денежные призы USDG; Luck удалён, sponsor layer позже отдельно.
+Проект получает свою долю до prize custody. Prize funds невозвратны проекту;
+free/reserved/claimable раздельны. Нет reroll/reset, proxy, admin withdrawal.
 
-Рекомендацию campaign-specific converter НЕ приняли как обязательную. FeeRouter уже
-фиксирует начисления по campaign; получателю принадлежит суммарный credit. Общий
-призовой inventory при одинаковом назначении допустим как рассматриваемый вариант.
-Отдельный долларовый P&L конвертации каждой campaign пока не является требованием.
-Мой прежний вопрос 6 ниже сформулирован слишком жёстко: не выводи из него обязанность
-создавать новый контракт на каждый rollover. Смена конечного назначения/recipients
-требует отдельного рассмотрения, её нельзя подменять переатрибуцией старых долгов.
+Пользователь просит последовательно собрать скелет, затем укреплять по участкам;
+маленький шаг с проверками, без возврата к каждой исторической идее. Штатные операции
+должны автоматизироваться, permissionless API само не является автоматизацией.
+Объём и комиссии заранее неизвестны; budget только фактически полученный USDG.
+Неудачный swap не должен мешать завершению уже frozen draw.
 
-Выполнен узкий fix C: см. [LOCAL_USDG_REVENUE](LOCAL_USDG_REVENUE.md).
-runFunding изолирует recipientFailure, skip общий на обе фазы runRevenue, ошибки
-наблюдаемы через onStep и funding.failures. Следующий pass повторяет попытку.
-Отдельный estimate/broadcast/confirm в local-receipt применяется также к source:
-CALL_EXCEPTION при send больше не считается автоматически definite rejection.
-Контракты, доли, prize accounting не менялись; production journal не добавлен.
+Начать с CURRENT_CONTEXT и ROADMAP, затем LOCAL_PRIZE_CONVERTER. Карта кода —
+IMPLEMENTATION_STATUS, правила — PRODUCT_SPEC. Архив читать только по конкретному вопросу.
 
-Также обновлена [граница внешней PAIR fee policy](PAIR_CURRENT_FEE_POLICY.md).
-Не смешивать V1/V2 поколения с L1/L2 сети; 70/30 не universal V2 split.
-Не превращать тестовые 80/20 в нашу утверждённую экономику.
+PAIR: V1/Launch V2 — поколения продукта, не L1/L2. 70/30 относится к V1 и не является
+универсальной V2 экономикой; фактическая policy/source entitlement требуют live проверки.
+См. PAIR_CURRENT_FEE_POLICY. Тестовые 80/20, 50/50 не утверждают реальные доли.
 
-Сейчас просим проверить именно реализацию C и её новые тесты: не пропускается ли
-неизвестная отправка, нет ли повторов/голодания recipients и ложного idle/degraded.
-Для следующего TOKEN-шага оцени общий узкий converter при одинаковом назначении,
-его ограничения и поведение при смене получателей. Не реализовывай код в ответе.
-Ниже сохраняется подробный контекст предыдущего запроса; пункты о C как открытом
-дефекте относятся к состоянию ДО этого изменения. Результаты новых проверок
-добавлены в конце этого файла после завершения запуска.
+## Что произошло после твоего ответа c13eb30
 
-## Что просим сейчас
+1. C подтверждён review и остаётся исправленным: определённый recipient failure
+   изолирован на один общий revenue pass; unknown outcome останавливает writes.
+2. BUY-test теперь создаёт .local сам. CLI top-level catch выводит JSON с message,
+   code, stage, transactionHash и ненулевым exit; добавлена проверка вывода.
+3. Создан локальный LocalPrizeConverter, интерфейс IPrizeSwapAdapter и тестовый
+   PrizeSwapFixture. Код денежного FeeRouter/PromoVault не менялся.
 
-Мы собрали существенно больше связей между модулями и сделали локальный review.
-Нужен самостоятельный взгляд: верны ли найденные проблемы, достаточно ли узкого
-исправления reorg, как исправить остановку collection из-за одного recipient и где
-правильно разместить TOKEN → USDG, чтобы не закрепить плохую архитектуру.
+## Выбранная модель converter
 
-Не нужен очередной общий список «добавьте аудит, мониторинг, KYC, frontend, governance».
-Нужны конкретные выводы по текущему коду, воспроизводимые сценарии и один-два разумных
-следующих пакета. Не соглашайся с нашими выводами автоматически: опровергай их, если
-код показывает другое. Исторические идеи не возвращать в продукт без явного обоснования.
+Общий адрес для одинакового конечного назначения. Отдельный адрес на каждую campaign
+не обязателен: FeeRouter размечает начисления, converter не обещает P&L swap по campaign.
+При смене destination создаётся новый converter; старый не перенаправляет свои credits
+или inventory новому vault. Изменяемого setVault/setAdapter нет.
 
-## Порядок чтения и граница публикации
+Constructor только chainId 31337. Immutable TOKEN/USDG/vault/adapter/floor ratio,
+maxInput и maxHorizon. Floor задан в raw units как локальное допущение; это НЕ market
+oracle и НЕ production slippage/MEV protection. Fixture обменивает заранее внесённый
+USDG по искусственному курсу. Реальный DEX не интегрирован.
 
-1. [CURRENT_CONTEXT](CURRENT_CONTEXT.md), [ROADMAP](ROADMAP.md), [PRODUCT_SPEC](PRODUCT_SPEC.md).
-2. [Последний review](AUTOMATION_REVIEW_2026-09-20.md) — три конкретных finding и воспроизведения.
-3. [IMPLEMENTATION_STATUS](IMPLEMENTATION_STATUS.md) — карта реально реализованного.
-4. Ниже перечислены код и тесты конкретных связок. Архив открывать только с конкретным вопросом.
+sync наблюдает donations/pay без выдуманного sender provenance. convert сначала sync,
+затем exact input; allowance ровно amount только fixed adapter, после swap ноль.
+Сам converter рассчитывает minOut с округлением вверх, проверяет TOKEN/USDG balance
+deltas. Executor не выбирает recipient/route/minOut. Revert сохраняет inventory.
+ReentrancyGuard на всех mutating APIs.
 
-Этот пакет включает накопленную работу после `00a36ee`: local controllers, BUY-cycle,
-workers, scheduler, funding/revenue, регрессии и реорганизацию документации. Старые
-исследования перенесены в docs/archive, а не объявлены текущими требованиями.
-Публичного deployment нет. Мы публикуем локальный прототип с явно открытыми дефектами,
-а не release candidate. Solidity-контракты изменялись при сборке local controllers;
-последние шаги orchestration/review не меняли денежную математику и Solidity.
+forwardQuote отдельно от swap, permissionless, только immutable vault; transfer +
+vault.syncUSDG атомарны. USDG можно forward даже при отказавшем adapter. Счётчики:
+tokenObserved = tokenSold + balance, quoteObserved = quoteForwarded + balance после
+sync. Неучтённые direct donations до sync находятся сверх этих сумм.
 
-## Продукт и неизменяемые границы
+## Ограничения, которые нельзя потерять
 
-Спекулятивный meme TOKEN + отдельное добровольное Promo. 6-часовой Short и месячный jackpot,
-денежные призы в USDG. Спонсорские/физические призы — будущий дополнительный слой.
+- Старые funding/revenue jobs требуют vault в slot 0. Они НЕ умеют converter.
+  Новый безопасный custody profile пока проверяется контрактными вызовами в тестах.
+- Legacy recipients после смены policy не находятся текущим worker автоматически.
+  Тест доказывает старый permissionless pay/convert/forward, не daemon для истории.
+- Fixed adapter без выбранной recovery policy может навсегда остановить TOKEN swap;
+  отсутствие admin rescue не означает гарантированной liveness.
+- Полнота publisher snapshot доверенная, LOCAL_HEAD не finality, RNG тестовый;
+  production adapter/future-round binding, supervisor/journal/ops refill ещё не готовы.
+- Нельзя считать старый test профайл TOKEN→USDG-only vault исправленным только потому,
+  что рядом появился новый контракт. Следующий шаг должен связать worker с новым профилем.
 
-- Призовые деньги невозвратны проекту. Free, frozen/reserved и claimable — разные состояния
-  средств; одна сумма не должна учитываться дважды. Старые долги победителям сохраняются.
-- Доля проекта отделяется от creator revenue до prize custody. Sponsor funding не создаёт
-  project fee. FeeRouter recipient slots не равны Short/Current/Next reserves.
-- У внешнего GENERAL funding фазовое распределение 3:2:1 до заполнения Next; overflow
-  Next идёт в Current. После заполнения Next — 50/50 Short/Current. Fixed target MVP —
-  100 USDG; raw величины тестовых fixtures не являются production экономикой.
-- Доли creator revenue и применение GENERAL к его prize части ещё не утверждены для
-  deployment. 80/20, 50/50 и budget 101 в тестах — примеры связи, а не принятые числа.
-- Нет owner withdrawal из призовой казны, замены controller, proxy, arbitrary calls,
-  административного reroll/reset или подмены seed. Не предлагать их как быстрый обход.
-- TOKEN, Promo и права инвесторов не смешиваются. Luck удалён. No-winner допустим;
-  недоставленный RNG не означает проигрыш. Sponsor слой не должен менять базовую custody.
-- Автоматизация должна обходиться без человека, постоянно нажимающего collect/publish/finish.
-  При этом 100% бесперебойность не обещаем; сложный emergency recovery пока не строим.
+## Что просим проверить
 
-## Почему мы движемся именно так
+1. Нужны конкретные counterexamples к inventory/delta/allowance/forward accounting,
+   включая donation, short output, wrong recipient, partial input и повтор после revert.
+2. Нет ли скрытого способа изменить конечное назначение или переиспользовать old credit?
+3. Разумно ли разделены swap и forward? Какие ограничения потребуются реальному
+   адаптеру сверх честно названного fixed local floor? Не требуем выбрать live DEX сейчас.
+4. Следующий небольшой пакет: минимальный job/API для converter и ограниченная обработка
+   legacy recipients. Предложи порядок работы, который не остановит USDG forward/collect
+   из-за отказа swap и не отправит TOKEN старому несовместимому recipient.
+5. Учитывай текущий C error classifier и stage/hash: unknown transaction нельзя повторять.
+   Не предлагается новый общий framework/supervisor в рамках ближайшего шага.
 
-Владелец выбрал сначала закончить связанный скелет, чтобы видеть всю систему, а затем
-проходить участок за участком и укреплять его. Не хотим бесконечно оптимизировать worker,
-пока он не связан с доходом или следующим циклом. Если целая картина покажет неудачную
-архитектуру, допустимо заменить существенный кусок до deployment.
+Не присваивай production-ready. Отдели реальные блокирующие дефекты от тестовых
+ограничений и отложенной эксплуатации. Вопрос о shared converter vs per-campaign закрыт
+до появления нового экономического требования; не возвращай его по инерции.
 
-После последних finding договорились сделать короткую остановку для fixes:
-**изоляция отказа recipient → TOKEN-маршрут вместе с конвертацией → дальнейший скелет**.
-Reorg-ошибка уже исправлена узко. Не хотим делать временный TOKEN rescue, который потом
-придётся обходить или который нарушит доверие к prize custody.
+## Проверки 20.09.2026
 
-## Что реально работает
+- `node --test test/local-prize-converter.test.cjs`: **5/5**, ~32 s.
+  Проверены third-party pay, общая казна, неизменность frozen reserve, баланс/allowance,
+  положительный output ниже floor, отказ/reentrancy/partial input/wrong recipient,
+  retry swap/forward, donation, late credits и смена immutable destination.
+- `node --test test/local-transaction.test.cjs`: **11/11**, включая structured CLI error.
+- Runtime LocalPrizeConverter: **4 556 bytes**, optimizer runs=200, solc из package lock.
 
-### Контроллеры и существующая бухгалтерия
+Первый общий запуск выявил неверный адрес controller в новом тестовом PromoVault;
+исправлен fixture, затем весь набор converter повторён успешно. Код FeeRouter и PromoVault
+не менялся. Основной набор теперь **221** тест, полного запуска 221 не было.
+Лог финального converter набора: `.local/logs/local-converter-final.log` (ignored).
 
-[FeeRouter](../contracts/FeeRouter.sol): fixed source binding, cumulative split/credits,
-permissionless pay, atomic rollover. Успешный rollover — accounting boundary, endsAt
-только расписание. Перед сменой policy доход относится к старой кампании; старые unpaid
-credits сохраняются. Это не граница Short/Monthly eligibility и не правило TOKEN conversion.
-
-[DualControllerPromoVault](../contracts/DualControllerPromoVault.sol) и
-[PromoVault](../contracts/PromoVault.sol): общая казна с раздельными полномочиями Short/Monthly,
-три free reserves, frozen budgets, rewards/claims и переходы Current/Next.
-
-[LocalShortController](../contracts/LocalShortController.sol),
-[LocalMonthlyController](../contracts/LocalMonthlyController.sol), [ILocalRandom](../contracts/ILocalRandom.sol).
-Оба local controllers разрешены только на chainId 31337. Publisher и permissionless
-executor разделены; async RNG имеет request binding. Provider в тесте управляемый.
-Последние локальные runtime: Short 22237, Monthly 17453, vault 8496 bytes, без production RNG.
-
-### От покупок до следующих циклов
-
-[BUY-cycle](LOCAL_BUY_CYCLE.md), [его тест](../test/local-buy-cycle.test.cjs): настоящие
-локальные EVM-транзакции упрощённого venue, HTTP scanner, регистрации, carry, builders,
-два Short + два Monthly, win/no-win, независимый progress, terminal reorg и старые claims.
-Это не PAIR fork. Комиссии не выводятся из оборота fixture автоматически: в MockPairVault
-явно вносится revenue. Суммы bootstrap и RNG доставляет стенд.
-
-[Short worker](../scripts/local-short-executor.cjs), [Monthly worker](../scripts/local-monthly-executor.cjs):
-проверяют jobs, bindings, policy/publication/result; исполняют begin/publish/seal/process/finish
-и ждут schedule/funding/seed. Общий CLI — [run-local-promo](../scripts/run-local-promo.cjs).
-Bounded receipt и abort — [local-receipt](../scripts/local-receipt.cjs). Timeout не отменяет tx.
-
-[Scheduler](../scripts/local-promo-scheduler.cjs), [state](../scripts/local-scheduler-state.cjs),
-[CLI](../scripts/run-local-scheduler.cjs), [тесты](../test/local-scheduler.test.cjs).
-Сам делает scan/replay/build, выбирает draining/current epoch и сохраняет artifact до tx.
-Обычный restart продолжает прежний job. Empty current — ожидание без draw; empty draining
-закрывается существующим closeEmpty после replay. Ожидание одного вида не мешает другому.
-Сохраняется история jobs и отметка проверки terminal с canonical anchor.
-
-LOCAL_HEAD — только допущение локального стенда. Это не production finality и не решение
-fair snapshot selection. Полный rescan, stale lock после kill, потерянный state и отсутствие
-durable mempool journal остаются ограничениями. Config hash связан со state; миграции
-настроек и supervisor пока нет.
-
-### Доход → казна
-
-[Funding worker](../scripts/local-usdg-funding.cjs): sync router USDG, pay фиксированным
-recipients, syncUSDG в vault. Перевод и признание — отдельные атомарные транзакции;
-после остановки между ними средства уже находятся в prize custody и могут быть признаны.
-
-[Revenue pass](../scripts/local-usdg-revenue.cjs), [описание](LOCAL_USDG_REVENUE.md):
-сначала funding старых денег, затем один collect, harvest claimable USDG и повторный funding.
-Проверяются source address/position/epoch. Drift epoch блокирует collect, но разрешает
-получение старого claimable привязанной epoch, если внешний источник это допускает.
-Определённый revert collect не мешает старому claim. Unknown RPC/broadcast/receipt outcome
-останавливает отправки. Watch имеет явный interval; пустой collect может стоить gas.
-
-TOKEN не harvest-ится этим worker. Сам внешний collect может собрать обе валюты позиции.
-Rollover FeeRouter также способен признать TOKEN. Именно поэтому запрет TOKEN в worker
-не закрывает найденную ниже custody проблему.
-
-## Три finding и что уже исправлено
-
-### A. TOKEN credit можно выплатить в несовместимую custody — открыто
-
-Наш локальный профиль FeeRouter ставит DualControllerPromoVault в recipient slot 0.
-FeeRouter распределяет обе валюты и разрешает любому вызвать pay. Поэтому любой caller
-может отправить TOKEN credit в USDG-only vault. Credit обнулится, TOKEN останется там,
-USDG не появится. TOKEN reserve запрещён, пути swap/withdraw нет.
-
-Тест в [local-usdg-funding](../test/local-usdg-funding.test.cjs), имя начинается
-`review: permissionless TOKEN pay`: 600 TOKEN на router → 480 в vault, ForbiddenReserve
-даже при вызове reserve от controller. Это подтверждённая несовместимость связки,
-а не утверждение о потере USDG. В реальный deployment такую конфигурацию переносить нельзя.
-
-Нам нужен маршрут, который разрешает проблему до попадания TOKEN в prize custody.
-Варианты ещё не приняты: conversion перед allocation; фиксированный отдельный recipient/
-конвертер для prize доли; разделение asset-specific recipients либо другой минимальный API.
-Просим сравнить по текущему коду, не считать один из вариантов уже нашим решением.
-
-### B. Reorg с живым cutoff позволял повторно начать job — узко исправлено
-
-Раньше started проверялся только при исчезновении/истечении cutoff. Если reorg убрал
-begin/freeze, но оставил cutoff, scheduler мог повторить begin и запрос random.
-Добавлена проверка `phase == None && entry.started` независимо от cutoff.
-
-Новый scheduler-тест сохраняет job до begin, доводит оба вида до freeze, подаёт seed,
-откатывает цепь и проверяет отказ без новых транзакций. До исправления тест падал;
-после проходит. Откат только terminal с сохранением draw по-прежнему возобновляет его.
-
-Это не on-chain finality: потеря state или crash до записи started остаются пробелами.
-Не выдаём этот фикс за полное решение reorg/RNG fairness.
-
-### C. Один неисправный project recipient блокирует новый collect — открыто
-
-Revenue pass ждёт успешного initial runFunding. Revert transfer одному recipient
-останавливает весь pass, поэтому новая collection даже не начинается.
-Второй `review:` тест показывает: из прежних 100 USDG prize credit выплачен, project
-credit 20 остаётся; следующие 600 в source не собираются из-за отказа transfer проекту.
-Деньги не исчезают, но независимость исполнения нарушена. Ошибку моделирует MockToken;
-не утверждаем, что исследовали поведение реального USDG для этого сценария.
-
-Предварительное направление: изолировать определённый recipient revert, сохранить credit,
-обслужить остальных и source, сообщить degraded и повторить позже. При неизвестном
-broadcast/nonce/receipt outcome остановиться. Подробный API/error taxonomy ещё не выбран.
-Не хотим менять payout math или скрывать ошибки общим catch-and-continue.
-
-## Проверки: что доказано, а что нет
-
-- Последний review: **21/21**, ~304 s — scheduler, funding/revenue, BUY-cycle.
-- Revenue-интеграция: **31/31**, ~222 s — FeeRouter, funding/revenue, BUY-cycle до трёх review-тестов.
-- Scheduler-пакет: **11/11**, ~259 s — scheduler, BUY-cycle, receipt/cutoff regressions.
-- Последний полный baseline: **176/176** 19.09 до дальнейших дополнений и fixes.
-- Сейчас основной список содержит **201** тест; единый полный запуск 201 не выполнялся.
-- Два новых passed-теста намеренно воспроизводят **открытые дефекты** A/C. Passed не означает,
-  что они устранены. После исправления их ожидания должны проверять защищённое поведение.
-- Live PAIR fork/canary, production RNG/finality и production deployment не проверялись этим пакетом.
-
-Команды: `npm test`, `npm run test:local:scheduler`, `npm run test:local:revenue`,
-`npm run test:local:buy-cycle`. Логи лежат в ignored `.local/logs`; подтверждённые результаты
-зафиксированы в документах, а не представлены как один общий зелёный release gate.
-
-## Конкретные вопросы
-
-1. Подтверди/опровергни A, B, C ссылками на функции и исполнимыми контрпримерами.
-   Есть ли рядом более серьёзная ошибка, которую мы пропустили? Отдели новый дефект от
-   уже описанного ограничения прототипа и от гипотезы без воспроизведения.
-2. Для C предложи минимальный API/outcome model: где изолировать отказ (stepFunding,
-   runFunding, revenue pass), как не выбирать одного и того же должника бесконечно в
-   текущем проходе, как продолжить остальные выплаты/collection и когда возвращать degraded.
-3. Какие ошибки можно считать определённым отказом без изменения состояния, а какие
-   требуют полной остановки? Отдельно estimation revert, mined status=0, потерянный ответ
-   sendTransaction, receipt timeout/replacement, nonce conflict и RPC outage. Достаточно ли
-   `CALL_EXCEPTION` как классификатора? Не предлагай слепой повтор уже отправленной tx.
-4. Как обеспечить повтор позже и не забить RPC/gas неисправным recipient? Что достаточно
-   для ближайшего bounded local fix, а что относится к будущему supervisor/journal?
-5. Для A сравни 2–3 минимальные архитектуры conversion/recipients и рекомендуй одну.
-   Покажи движение TOKEN и USDG, владельца credit, разрешённые действия и custody boundary.
-   Объясни, почему third-party pay больше не способен загнать TOKEN в необратимый тупик.
-6. Как выбранный TOKEN route сочетается с FeeRouter campaign boundary, поздней conversion,
-   старыми unpaid credits и сменой будущих recipients? Какие поля/commitments нужны,
-   чтобы USDG от старого TOKEN дохода не переатрибутировался новой campaign незаметно?
-7. Какие минимальные ограничения swap обязательны уже в skeleton: фиксированный output/
-   recipient, slippage/ценовой источник, deadline, разрешённый route, approve, retry?
-   Как сохранить разумную гибкость до prize custody без arbitrary admin calls и prize withdrawal?
-8. Проверь узкий reorg fix B: какие сценарии он теперь закрывает, какие точно не закрывает?
-   Есть ли простое обязательное усиление сейчас, или оставшееся требует выбранной finality модели?
-9. Что тестировать в ближайшем fix C и следующем TOKEN-пакете? Нужны конкретные assertions:
-   conservation, нет double pay, долг плохому recipient остаётся, здоровые ветки продолжаются,
-   unknown tx не повторяется, TOKEN не застревает, old campaign attribution сохраняется.
-10. Согласен ли ты с порядком «короткий fix C → TOKEN architecture+conversion → ops/RNG»?
-    Если нет, предложи один более удачный ближайший шаг и объясни практическую причину.
-
-## Формат ответа
-
-Сначала короткий вердикт по текущему направлению. Затем findings по приоритету: место
-в коде, trigger, последствие, воспроизведение, исправлено/открыто. Отдельно:
-
-- минимальный рекомендуемый patch C с API/псевдокодом и тестами;
-- выбранная архитектура A с небольшой схемой движения активов и tradeoffs;
-- оценка B без обещания решить finality одним флагом;
-- что делать прямо сейчас и что осознанно оставить на доводку.
-
-Не переписывай весь проект и не превращай ответ в безразмерный backlog. Если для
-вывода не хватает информации, назови конкретный факт и почему он меняет решение.
-Ответ — вспомогательный материал: окончательные решения будем сверять с кодом и
-политикой проекта, а не принимать автоматически.
-
-## Проверки recipient isolation, 20.09.2026
-
-- `node --test --test-concurrency=1 test/local-usdg-funding.test.cjs test/fee-router.test.cjs test/local-buy-cycle.test.cjs`: **37/37**, ~240 s.
-- `node --test test/local-transaction.test.cjs`: **10/10** — stage/error matrix, включая synthetic mined revert, replacement, RPC и abort.
-- `node --test test/local-executor-stability.test.cjs`: **5/5**, ~32 s — соседние receipt/cutoff регрессии.
-
-Итого 52 проверки в трёх непересекающихся наборах. Основной список теперь 215;
-полный запуск 215 не выполнялся. Реальный mined revert классифицируется по receipt;
-матрица этого исхода использует подставленные ответы, не отдельный mined-revert fork.
-Контрактные сценарии покрывают blocked prize/project, восстановление и однократную
-выплату долга, два отказавших адреса с работающим третьим (estimate injection),
-лимит шагов, неизвестный payment broadcast, реальный pending payment/collect,
-сохранение credits и прежний сквозной BUY-cycle. TOKEN-custody regression по-прежнему
-воспроизводит открытый дефект, а не исправление A.
-
-Логи исключены из git: `.local/logs/recipient-isolation-tests.log`,
-`.local/logs/recipient-isolation-stability.log`. Live PAIR fork не запускался.
+BUY-cycle: **1/1**, ~101 s, из изолированного cwd с junctions на исходники и dependencies,
+копиями package/config и отсутствующим `.local` перед запуском. Тест сам создал runtime
+каталог. Это проверка устранения скрытой filesystem precondition, не отдельная установка
+npm dependencies с нуля. Лог `.local/logs/converter-clean-buy.log` (ignored).
+Итого 17 уникальных проверок в трёх наборах; полный набор 221 не запускался.

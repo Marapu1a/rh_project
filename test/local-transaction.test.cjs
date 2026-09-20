@@ -30,3 +30,11 @@ test('abort during estimate sends nothing',async()=>{
   await assert.rejects(()=>sendLocalTransaction(method,[],{},{signal:controller.signal}),e=>e.code==='LOCAL_EXECUTION_STOPPED'&&!e.definiteRejection);
   assert.equal(sends,0);
 });
+
+test('CLI unknown error retains stage/hash/code and exits unsuccessfully',()=>{
+  const {spawnSync}=require('node:child_process');
+  const result=spawnSync(process.execPath,['-e',
+    "require('./scripts/run-local-promo.cjs').reportError(Object.assign(new Error('unknown send'),{code:'NETWORK_ERROR',stage:'broadcast',transactionHash:'0x123'}))"],{encoding:'utf8'});
+  assert.equal(result.status,1);const output=JSON.parse(result.stderr.trim());
+  assert.deepEqual(output,{status:'error',message:'unknown send',code:'NETWORK_ERROR',stage:'broadcast',transactionHash:'0x123'});
+});
