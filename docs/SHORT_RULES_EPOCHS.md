@@ -1,5 +1,8 @@
 # Версии правил Short: граница mint и завершение старого набора
 
+> Справка по модулю/эксперименту. Общий текущий статус — [CURRENT_CONTEXT](CURRENT_CONTEXT.md);
+> даты и результаты ниже относятся к указанным этапам, а не задают следующий шаг проекта.
+
 16.09.2026. Реализован внутренний `ShortRulesEpochs`, расширяющий dataset-компонент, и lifecycle replay v2. **Это ещё не production controller**: нет authenticated RNG, economic readiness, финального выбора D, полноценного keeper и окончательной permission policy. Test-only fixture имеет произвольный тестовый terminal, с реальными деньгами не развёртывать.
 
 ## Принятое решение этого пакета

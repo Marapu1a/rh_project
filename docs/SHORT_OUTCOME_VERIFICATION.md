@@ -1,5 +1,8 @@
 # Проверяемый результат Short
 
+> Справка по модулю/эксперименту. Общий текущий статус — [CURRENT_CONTEXT](CURRENT_CONTEXT.md);
+> даты и результаты ниже относятся к указанным этапам, а не задают следующий шаг проекта.
+
 15.09.2026. Реализованы [ShortOutcome.sol](../contracts/ShortOutcome.sol), независимый [JavaScript verifier](../scripts/short-outcome.cjs) и локальный gas sweep. Это параметрический расчёт результата, не production RNG/controller и не утверждение численных настроек.
 
 ## Что теперь связано

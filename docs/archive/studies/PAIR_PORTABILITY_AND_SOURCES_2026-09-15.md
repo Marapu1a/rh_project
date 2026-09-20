@@ -1,12 +1,15 @@
 # PAIR: полученные исходники и воспроизводимый запуск
 
+> Архив на 19.09.2026: исторический отчёт/обсуждение, не текущий план и не самостоятельная спецификация.
+> Начало работы: [CURRENT_CONTEXT](../../CURRENT_CONTEXT.md). Условия и выводы ниже относятся к указанному этапу.
+
 15.09.2026. Продолжение [первого аудита](PAIR_DEPENDENCY_AUDIT_2026-09-15.md). Production-контракты не изменены. Продуктовые правила находятся в PRODUCT_SPEC; этот документ описывает доказательства и план реализации переносимости.
 
 ## Что удалось проверить
 
-Исходники доступны через **Sourcify API v2**, хотя старые repository URL отвечали 404, а Blockscout — 403. Сохранены восемь выбранных MIT-файлов в [research/pair-source-audit/sources](../research/pair-source-audit/sources). Это внешние справочные исходники, не часть нашей сборки.
+Исходники доступны через **Sourcify API v2**, хотя старые repository URL отвечали 404, а Blockscout — 403. Сохранены восемь выбранных MIT-файлов в [research/pair-source-audit/sources](../../../research/pair-source-audit/sources). Это внешние справочные исходники, не часть нашей сборки.
 
-[Manifest](../research/pair-source-audit/manifest.json) содержит адреса, URL первоисточников, блок, ответы RPC, compilation metadata и хеши файлов. Для семи deployments Sourcify сообщает `exact_match`; runtime из его записи побайтно совпал с `eth_getCode` на одном свежем блоке chain 4663. Хеши сохранённых исходников проверены по metadata. Независимую перекомпиляцию внешних контрактов не выполняли.
+[Manifest](../../../research/pair-source-audit/manifest.json) содержит адреса, URL первоисточников, блок, ответы RPC, compilation metadata и хеши файлов. Для семи deployments Sourcify сообщает `exact_match`; runtime из его записи побайтно совпал с `eth_getCode` на одном свежем блоке chain 4663. Хеши сохранённых исходников проверены по metadata. Независимую перекомпиляцию внешних контрактов не выполняли.
 
 Воспроизведение: `node scripts/pair-source-audit.cjs`. Нужны установленные npm-зависимости, публичные RPC и Sourcify; кошелёк не нужен, транзакций нет. Команда обновляет snapshot и файлы; изменение implementation или выбранного registry останавливает проверку, а не автоматически принимает новый граф.
 

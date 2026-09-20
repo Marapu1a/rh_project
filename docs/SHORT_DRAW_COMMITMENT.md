@@ -1,5 +1,8 @@
 # Атомарная фиксация Short
 
+> Справка по модулю/эксперименту. Общий текущий статус — [CURRENT_CONTEXT](CURRENT_CONTEXT.md);
+> даты и результаты ниже относятся к указанным этапам, а не задают следующий шаг проекта.
+
 15.09.2026, обновление V2. [ShortDrawCommitment.sol](../contracts/ShortDrawCommitment.sol) — **abstract-компонент будущего полного controller**, не контракт для публичного запуска. Правила теперь фиксируются отдельно на каждый draw, добавлен evmParticipantsHash. PromoVault, FeeRouter и математика корзины не изменены. Старый lifetime singleton из 9adf46d заменён до deployment.
 
 ## Граница пакета

@@ -1,6 +1,9 @@
 # Размер будущего controller — 17.09.2026
 
-Продолжение: выбрана и локально проверена [архитектура двух контроллеров](DUAL_CONTROLLER_ARCHITECTURE.md).
+> Архив на 19.09.2026: исторический отчёт/обсуждение, не текущий план и не самостоятельная спецификация.
+> Начало работы: [CURRENT_CONTEXT](../../CURRENT_CONTEXT.md). Условия и выводы ниже относятся к указанному этапу.
+
+Продолжение: выбрана и локально проверена [архитектура двух контроллеров](../../DUAL_CONTROLLER_ARCHITECTURE.md).
 Ниже — исторический опыт с лимитом **24 KiB для переносимости**, а не доказательство
 невозможности deployment в Robinhood с её отдельными chain limits.
 
@@ -101,10 +104,10 @@ npm run report:controller:size
 npm run check:controller:size
 ```
 
-Измерения и compiler source hashes: [sizes.json](../research/controller-size/sizes.json).
-Проверки: [limits](../research/controller-size/limits-check.json),
-[oversized behavior](../research/controller-size/behavior-check.json),
-[fitting build](../research/controller-size/fitting-check.json).
+Измерения и compiler source hashes: [sizes.json](../../../research/controller-size/sizes.json).
+Проверки: [limits](../../../research/controller-size/limits-check.json),
+[oversized behavior](../../../research/controller-size/behavior-check.json),
+[fitting build](../../../research/controller-size/fitting-check.json).
 Compiler warnings о превышении размера сохранены, а не подавлены.
 Смена settings находится только в этом эксперименте; полный regression suite на
 viaIR не запускался, и переход production compile на viaIR этим не одобрен.

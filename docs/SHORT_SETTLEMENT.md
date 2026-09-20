@@ -15,7 +15,7 @@
   Нельзя выставлять наружу обход через legacy `_sealDataset`/`_sealEpochDataset`.
 - `_acceptShortSeed(drawId, seed)` — внутренний вход для будущего authenticated RNG.
   Повторная доставка запрещена; нулевой seed допустим. До доставки обработка закрыта.
-  Привязка provider/requestId → drawId ещё не реализована.
+  В abstract компоненте привязки provider/requestId нет; локальные обёртки теперь реализуют её с тестовым async провайдером. Production RNG остаётся незавершённым: [локальный скелет](LOCAL_CONTROLLER_SKELETON.md).
 - `processShort(drawId, index, chunk)` доступен любому. Принимает только следующую
   опубликованную порцию с точным ABI hash. В порции 1–64 участника;
   суммарного ограничения числа участников этим не вводим.
@@ -71,7 +71,7 @@ Hash блока повторно проверяется в конце; это н
 ## Проверки и ограничения
 
 Исторический запуск 16.09: `npm test`, **136/136 passed**, включая 8 новых тестов settlement.
-17.09 [оптимизация selection](SHORT_SELECTION_OPTIMIZATION.md) уменьшила runtime
+17.09 [оптимизация selection](archive/studies/SHORT_SELECTION_OPTIMIZATION.md) уменьшила runtime
 `ShortSettlementFixture` с **20 340 до 18 497 байт** при optimizer runs=200, Cancun;
 это размер текущей fixture, не обещание размера будущего полного controller.
 Публичные транзакции/fork в этом пакете не запускались: внешних интеграций не меняли.

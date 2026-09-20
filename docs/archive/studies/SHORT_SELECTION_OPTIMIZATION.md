@@ -1,5 +1,8 @@
 # Оптимизация Short selection — 17.09.2026
 
+> Архив на 19.09.2026: исторический отчёт/обсуждение, не текущий план и не самостоятельная спецификация.
+> Начало работы: [CURRENT_CONTEXT](../../CURRENT_CONTEXT.md). Условия и выводы ниже относятся к указанному этапу.
+
 Узкий пакет после ревью canonical settlement. Правила, ABI production-компонентов,
 контексты и хеши результатов не менялись. Новых внешних зависимостей нет.
 
@@ -36,7 +39,7 @@ controller с RNG/Monthly/readiness. Не вводим helpers/proxy и не у�
 ## Газ обработки
 
 `npm run report:short:selection` создаёт
-[`short-selection-benchmark.json`](../research/short-selection-benchmark.json).
+[`short-selection-benchmark.json`](../../../research/short-selection-benchmark.json).
 N — участники, K — призовые места; порция до 64 участников, по 20 attempts/wallet.
 Normal — тестовые normalRules, near-certain — тестовый допуск почти 1.
 Это профили нагрузки, не утверждённые шансы продукта.

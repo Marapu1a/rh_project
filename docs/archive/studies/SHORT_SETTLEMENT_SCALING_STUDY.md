@@ -1,5 +1,8 @@
 # Short settlement: все участники, ограниченная работа транзакции
 
+> Архив на 19.09.2026: исторический отчёт/обсуждение, не текущий план и не самостоятельная спецификация.
+> Начало работы: [CURRENT_CONTEXT](../../CURRENT_CONTEXT.md). Условия и выводы ниже относятся к указанному этапу.
+
 Исследование 15.09.2026, short-settlement-scaling-study-v1. **Production contracts не изменены.** Прототип находится только в test/contracts; это не готовый controller. Не вводились MAX_N, FIFO, отбор cohort, новая вероятность или несколько seeds на один draw.
 
 ## Вывод
@@ -10,7 +13,7 @@ Single-tx оставить как эталон и возможную заран�
 
 ## 1. Что реально удалось узнать о сети
 
-[RPC evidence](../research/short-scaling-rpc.json), команда `npm run report:short:limits`. Только чтения, без отправки подписанных транзакций. Официальный RPC и BlockReq сопоставлены на одном блоке **63,945,627**, hash `0x005ba993a79e7de8da595eb556abc21b512132c48d522ea51048151504ecedc0`, timestamp **2026-09-15 20:42:54 UTC**, chainId=4663. Оба вернули одинаковые значения на этом блоке.
+[RPC evidence](../../../research/short-scaling-rpc.json), команда `npm run report:short:limits`. Только чтения, без отправки подписанных транзакций. Официальный RPC и BlockReq сопоставлены на одном блоке **63,945,627**, hash `0x005ba993a79e7de8da595eb556abc21b512132c48d522ea51048151504ecedc0`, timestamp **2026-09-15 20:42:54 UTC**, chainId=4663. Оба вернули одинаковые значения на этом блоке.
 
 | Наблюдение | Результат | Что из него следует |
 |---|---|---|
@@ -30,7 +33,7 @@ Single-tx оставить как эталон и возможную заран�
 
 ## 2. Измеренная граница старого пути
 
-[Gas evidence](../research/short-scaling-study.json), команда `npm run report:short:scaling`. Solidity 0.8.37, optimizer 200, Cancun, synthetic participants, настоящий PromoVault. Это local EVM, не полный эмулятор ArbOS/DA/mempool. Все test seed доставляются fixture вручную.
+[Gas evidence](../../../research/short-scaling-study.json), команда `npm run report:short:scaling`. Solidity 0.8.37, optimizer 200, Cancun, synthetic participants, настоящий PromoVault. Это local EVM, не полный эмулятор ArbOS/DA/mempool. Все test seed доставляются fixture вручную.
 
 | Профиль | N | K | Settlement gas / исход | Calldata bytes |
 |---|---:|---:|---:|---:|
@@ -59,7 +62,7 @@ Single-tx оставить как эталон и возможную заран�
 
 ## 4. Прототип streaming без Merkle
 
-[ShortStreamingStudy.sol](../test/contracts/ShortStreamingStudy.sol), [тесты](../test/short-streaming.test.cjs). Один исследовательский draw на экземпляр, не общий production controller.
+[ShortStreamingStudy.sol](../../../test/contracts/ShortStreamingStudy.sol), [тесты](../../../test/short-streaming.test.cjs). Один исследовательский draw на экземпляр, не общий production controller.
 
 ```text
 BEGIN: cutoff проверен, ожидаемые root/count и правила опубликованы

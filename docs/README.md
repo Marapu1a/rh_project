@@ -1,80 +1,43 @@
-# Как читать документацию
+# Навигация по документации
 
-18.09: [Локальная модель drand binding и найденные контрпримеры](DRAND_BINDING_MODEL.md).
+## Для продолжения работы
 
-18.09: [Исправление L1/L2 нумерации Short/Monthly](ROBINHOOD_BLOCK_SEMANTICS.md).
+1. [CURRENT_CONTEXT](CURRENT_CONTEXT.md) — где остановились и ближайший кусок.
+2. [ROADMAP](ROADMAP.md) — последовательность работ и критерии завершения.
+3. [PRODUCT_SPEC](PRODUCT_SPEC.md) — действующие продуктовые решения.
+4. [IMPLEMENTATION_STATUS](IMPLEMENTATION_STATUS.md) — карта кода и команды проверок.
 
-17.09: [Исполняемая проверка drand, газ и ограничения](DRAND_FEASIBILITY.md).
-Реальная подпись проверена локально и read-only на Robinhood; timing/binding ещё впереди.
+Достаточно первых двух файлов и документа нужного модуля. Полный архив при старте не читать.
 
-17.09: [RNG shortlist, RPC evidence и следующий эксперимент](RNG_PROVIDER_STUDY_2026-09-17.md).
-Регрессии Monthly M1 → M2 → M3 закрыты; production provider пока не выбран.
+## Модули и проверки — по необходимости
 
-1. [PRODUCT_SPEC.md](PRODUCT_SPEC.md) — единственный текущий источник продуктовых решений: утверждённая логика, деньги, билеты, draws, кандидаты чисел и открытые вопросы.
-2. [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md) — что действительно есть в коде и что ещё предстоит реализовать.
-3. [FeeRouter rollover](FEE_ROUTER_ROLLOVER_REPORT.md) и [PromoVault](PROMO_VAULT_DESIGN.md) — технические подробности существующих прототипов.
-4. [Архив](archive/README.md) — исходная идея, старые обсуждения, обращения к GPT и результаты исследований. Не инструкция к новой реализации.
+| Задача | Документы |
+|---|---|
+| Локальный сквозной путь | [Monthly и общий контур](LOCAL_MONTHLY_EXECUTOR.md), [исполнитель Short](LOCAL_SHORT_EXECUTOR.md), [BUY cycle](LOCAL_BUY_CYCLE.md), [контроллеры](LOCAL_CONTROLLER_SKELETON.md) |
+| Казна и кампании | [Vault](PROMO_VAULT_DESIGN.md), [FeeRouter](FEE_ROUTER_ROLLOVER_REPORT.md), [dual architecture](DUAL_CONTROLLER_ARCHITECTURE.md) |
+| Билеты и проверяемость | [Registry](PARTICIPANT_REGISTRY.md), [BUY](DIRECT_BUY_REPLAY.md), [lifecycle](ATTEMPT_LIFECYCLE.md), [trust](INDEXER_TRUST_MODEL.md) |
+| Short | [Dataset](SHORT_DATASET_PREPARATION.md), [epochs](SHORT_RULES_EPOCHS.md), [settlement](SHORT_SETTLEMENT.md), [basket](SHORT_PRIZE_BASKET.md), [model](SHORT_MODEL.md) |
+| Monthly | [Epochs и settlement](MONTHLY_RULES_EPOCHS.md) |
+| RNG / сеть | [Drand verifier](DRAND_FEASIBILITY.md), [нерешённый binding](DRAND_BINDING_MODEL.md), [L2 blocks](ROBINHOOD_BLOCK_SEMANTICS.md) |
+| Ранние компоненты Short | [Commitment](SHORT_DRAW_COMMITMENT.md), [outcome](SHORT_OUTCOME_VERIFICATION.md) — сохранённые API/тесты, не основной полный pipeline |
 
-[Текущее обращение к GPT](GPT_REVIEW_REQUEST.md) — один постоянный файл, который перезаписывается при следующем обсуждении; предыдущие версии сохраняются в Git. Это вопросы для ревью, не дополнительная спецификация.
+## История
 
-[Trust & Evolution — рабочие принципы и карта развития](TRUST_AND_EVOLUTION_NOTES.md) — контекст для следующих архитектурных решений: как сохранять гибкость продукта, не расширяя скрытые полномочия над уже возникшими обязательствами; современный security guidance, прозрачность для аудитора и текущий todo. Это записка к размышлению, а не принятая спецификация.
+[Архив](archive/README.md) содержит прежние планы, ревью, сравнения и снимки.
+[Research](../research/README.md) — сырые evidence, vectors и воспроизводимые эксперименты;
+они могут использоваться тестами и не считаются мусором.
+[Обращение к GPT](GPT_REVIEW_REQUEST.md) — один файл для конкретного очередного ревью,
+его текст и ответы не переопределяют принятые правила.
 
-## Правила актуальности
+Новый этап обновляет контекст/план и документ модуля. Не создаём ещё одну «актуальную
+спецификацию» с датой в имени. Примеры чисел и старые результаты имеют статус исследования.
 
-[Версии допуска Monthly](MONTHLY_RULES_EPOCHS.md), 17.09 — фиксированное расписание,
-notice и B+1, один draining старый набор, empty без переноса clock, lifecycle v4 и
-проверка опубликованного Monthly dataset. Числа q/notice остаются deployment inputs.
+Текущая контрольная проверка: [слабые места локальных workers](LOCAL_STABILIZATION_REVIEW.md).
 
-[Два фиксированных контроллера](DUAL_CONTROLLER_ARCHITECTURE.md), 17.09 — новая USDG
-казна с раздельными полномочиями, внутренний Monthly settlement, lifecycle v3 и
-проверка deployment под стандартным 24 KiB. Это текущая выбранная архитектура;
-исследование монолита ниже остаётся историей сравнения.
+Доход и призовые резервы: [локальный USDG funding](LOCAL_USDG_FUNDING.md).
 
-[Размер будущего controller](CONTROLLER_SIZE_STUDY.md), 17.09 — шесть сборок Short/RNG/Monthly; обычный полный макет 28 475 байт, самый компактный 24 444, запас всего 132. Отдельное исследование, не production реализация Monthly/RNG.
+Автоматическая подготовка и повторение локальных циклов: [Short/Monthly scheduler](LOCAL_PROMO_SCHEDULER.md).
 
-[Оптимизация Short selection](SHORT_SELECTION_OPTIMIZATION.md), 17.09 — общий отбор кандидатов, размер 18 497 байт, сравнение газа на одинаковом frozen state/seed. Без новых контрактов/helpers.
+Источник комиссий и распределение дохода: [локальный USDG revenue pass](LOCAL_USDG_REVENUE.md).
 
-[Canonical Short settlement](SHORT_SETTLEMENT.md), 16.09 — единый dataset context, обработка порциями, атомарное начисление/consume и восстановление другим исполнителем. Настоящий RNG пока отсутствует.
-
-[Версии Short и переход старого набора](SHORT_RULES_EPOCHS.md), 16.09 — announcement/notice, mint boundary B+1, fresh snapshot cutoff, empty assertion с replay, lifecycle v2. Внутренний компонент, без production RNG/keeper.
-
-[Быстрая экономика исполнения](EXECUTION_ECONOMICS_QUICK_CHECK.md), 16.09 — 18 локальных сценариев на 90 дней со стартовыми $300. Сценарные ставки, стоимость и доли; production-параметры не утверждены.
-
-Новое обсуждение 16.09: [автоматическая оплата исполнения](EXECUTION_FUNDING_DISCUSSION.md) — обеспечение gas и ожидание приемлемых комиссий. Это направление пересмотра политики расходов, не реализованное разрешение тратить prize reserves.
-
-Подготовка списка перед резервированием: [Short dataset preparation](SHORT_DATASET_PREPARATION.md), 16.09 — канонический root, проверка всех порций, заменяемая незамороженная подготовка, atomic seal и независимый replay/verifier. Внутренний компонент; production controller/epochs/RNG ещё не реализованы.
-
-- Изменяем текущую PRODUCT_SPEC, а не создаём параллельную «ещё более актуальную» версию с датой в имени.
-- У принятого решения и предложенного параметра должен быть разный статус. Согласие с одним пунктом не утверждает всю таблицу примеров.
-- Исторические измерения сохраняют условия своего эксперимента. Они не доказывают новые продуктовые свойства.
-- Код отражается в IMPLEMENTATION_STATUS отдельно от намерений. После реализации обновляем его и релевантный технический отчёт.
-- Архив не редактируется под новую механику; исправляются только навигация и явные пометки статуса. Старые коммиты сохраняют исходные версии.
-- Правила внешних источников и ответы GPT — предложения до принятия владельцем проекта, а не самостоятельное разрешение менять код.
-
-Локальная модель короткого розыгрыша, команды и результаты: [SHORT_MODEL.md](SHORT_MODEL.md).
-
-Первый Solidity-компонент Short: [расчёт обеспеченной корзины](SHORT_PRIZE_BASKET.md), 15.09. Это библиотека будущего controller, не полный розыгрыш.
-
-Проверяемый собственный indexer: [принятая архитектура](INDEXER_TRUST_MODEL.md). Первый реализованный компонент — [публичная регистрация](PARTICIPANT_REGISTRY.md), 15.09.
-
-Direct BUY → билеты: [decoder, replay и fork-проверка](DIRECT_BUY_REPLAY.md), 15.09. Поддержан один точный маршрут; начисления и дальнейшее состояние попыток разделены. Production выбор cutoff/finality отсутствует.
-
-Состояния попыток и снимок: [lifecycle replay](ATTEMPT_LIFECYCLE.md), 15.09 — OPEN/FROZEN/CONSUMED, inclusive cutoff, история и независимая проверка. Production controller/RNG пока отсутствуют; пример явно синтетический.
-
-Связь снимка с деньгами: [атомарный Short commitment](SHORT_DRAW_COMMITMENT.md), 15.09 — внутренний компонент будущего общего controller, реальный reserveUSDG и receipt replay. Нет публичного запуска, readiness или terminal.
-
-Результат из одного seed: [Short outcome verification](SHORT_OUTCOME_VERIFICATION.md), 15.09 — Solidity/JS, два commitment участников, правила отдельно на draw и gas sweep. Источник seed и активация версий ещё не реализованы; денежный terminal есть только в тестовой интеграции.
-
-Независимая проверка следующего шага: [pre-freeze audit](SHORT_PREFREEZE_AUDIT.md), 15.09 — воспроизведённые зависания на ошибочном payload, совместные пределы N/K и открытая проблема переполнения списка. Контракты этим отчётом не исправлены.
-
-Масштабирование без исключения участников: [settlement scaling study](SHORT_SETTLEMENT_SCALING_STUDY.md), 15.09 — реальные read-only параметры сети, сравнение atomic/streaming/ZK/optimistic и локальный streaming-прототип до 5000 участников. Это исследование; production contracts не менялись, лимита участников не добавлено.
-
-Практический сценарий оборота и казны Short: [SHORT_ECONOMY_SCENARIO.md](SHORT_ECONOMY_SCENARIO.md).
-
-Сравнение настроек по 5 760 недельным сценариям: [SHORT_SWEEP_RESULTS](SHORT_SWEEP_RESULTS.md).
-
-Проверка необходимости Luck: [SHORT_LUCK_REVIEW](SHORT_LUCK_REVIEW.md), 1 440 парных недельных прогонов и точный контроль вероятности.
-
-Актуальное решение 14.09: Luck удалён. Основной `short_model.py` и `report:short` работают без истории проигрышей; legacy и сравнительные отчёты сохранены только как исследования.
-
-PAIR dependencies и pre-launch canary: [первый аудит 15.09](PAIR_DEPENDENCY_AUDIT_2026-09-15.md). [Продолжение: полученные исходники и переносимость](PAIR_PORTABILITY_AND_SOURCES_2026-09-15.md) — verified sources, реальные границы внешнего потока комиссий и план независимого повторного запуска.
+Последняя проверка связок: [automation review 20.09](AUTOMATION_REVIEW_2026-09-20.md).

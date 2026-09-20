@@ -69,7 +69,7 @@ key/DST, используемые `prove`. Это исследовательск
 2. `npm run check:drand:rpc` — публичные read-only запросы; переписывает rpc-result.json.
 3. `npm test` — прежний основной набор проекта; research drand suite запускается отдельно.
 
-Артефакты и source pins: [research/drand-feasibility](../research/drand-feasibility/).
+Артефакты и source pins: [research/drand-feasibility](../research/drand-feasibility).
 Все API vectors уже сохранены, сеть локальным тестам не нужна.
 Проверки этого пакета: полный существующий `npm test` **167/167 passed**;
 отдельный `npm run test:drand` **2/2 passed**; remote RPC checks **2/2 passed**.

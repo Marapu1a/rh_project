@@ -1,5 +1,8 @@
 # PAIR dependency audit — 15.09.2026
 
+> Архив на 19.09.2026: исторический отчёт/обсуждение, не текущий план и не самостоятельная спецификация.
+> Начало работы: [CURRENT_CONTEXT](../../CURRENT_CONTEXT.md). Условия и выводы ниже относятся к указанному этапу.
+
 **Дополнение того же дня:** исходники получены через Sourcify API v2; проверены runtime семи deployments и найдена смена recipients через registry. [Продолжение: исходники и переносимость](PAIR_PORTABILITY_AND_SOURCES_2026-09-15.md). Указания ниже «исходники не получены / authority не подтверждена» описывают первый проход, а не итоговый статус исследования.
 
 Статус: выполнены аудит нашего кода, сверка исторического fork, read-only chain snapshot и локальные проверки отказов. **Полномочия внешних vault/locker не доказаны полностью; production clearance не выдан.** Это не формальный аудит всего PAIR и не новый launch canary. Production-контракты не менялись.
@@ -12,8 +15,8 @@ One-time bind и fail-closed rollover пока сохранять. Добавл�
 
 ## Свежие наблюдения и источники
 
-- Наш код: [FeeRouter](../contracts/FeeRouter.sol), [PromoVault](../contracts/PromoVault.sol), [rollover report](FEE_ROUTER_ROLLOVER_REPORT.md), [исторический fork](archive/ECONOMICS_FORK_2026-09-12.md), [fork runner](../scripts/economics-fork.cjs).
-- Live chain 4663: pinned block **63395951 / 0x3c7586f**, header/hash, code, storage и eth_call сохранены в [evidence JSON](../research/pair-dependency-audit-2026-09-15.json). Начало наблюдения 2026-09-15T05:04:24Z. Все on-chain чтения одного collector привязаны к этому номеру блока; HTTP API не является частью его snapshot и вернул более позднюю attestation.
+- Наш код: [FeeRouter](../../../contracts/FeeRouter.sol), [PromoVault](../../../contracts/PromoVault.sol), [rollover report](../../FEE_ROUTER_ROLLOVER_REPORT.md), [исторический fork](../ECONOMICS_FORK_2026-09-12.md), [fork runner](../../../scripts/economics-fork.cjs).
+- Live chain 4663: pinned block **63395951 / 0x3c7586f**, header/hash, code, storage и eth_call сохранены в [evidence JSON](../../../research/pair-dependency-audit-2026-09-15.json). Начало наблюдения 2026-09-15T05:04:24Z. Все on-chain чтения одного collector привязаны к этому номеру блока; HTTP API не является частью его snapshot и вернул более позднюю attestation.
 - [PAIR docs](https://pair.fund/docs) — заявления и таблицы адресов, не доказательство ограничений bytecode. Опубликованная implementation `0x1559…b12c` расходится с прочитанным implementation slot. Нельзя использовать таблицу docs как единственный release manifest.
 - [Native consumer-live](https://pair.fund/api/v5-v2/native-fee/consumer-live) сначала ответил 503, при повторном чтении — 200 с manifest SHA256 `119b86474077e36c6acedef6b6e813374c5b7ede61694b460d7c66ed0ff60b5e`, coordinator `0xddc69…687b`, registry `0x34b34…3809`, hook `0x438b…80c0`. Это соответствует пути 12.09; ответ API не заменяет независимую проверку всех registry bindings.
 - [Standard consumer-live](https://pair.fund/api/v5-v2/standard-route/consumer-live) в collector ответил 503. [Общий readiness](https://pair.fund/api/launches/native-fee-v2-readiness) при этом 200/ready. Отказ подтверждения нельзя автоматически переносить на существующие пулы или все пути запуска.
@@ -88,7 +91,7 @@ One-time bind и fail-closed rollover пока сохранять. Добавл�
 
 ## Проверки, выполненные здесь
 
-Все 18 тестов FeeRouter прошли (16 прежних и 2 новых). Добавлены два локальных mock-теста в [fee-router.test.cjs](../test/fee-router.test.cjs): отказ collect блокирует rollover, но старые credits и direct revenue выплачиваются; смена epoch блокирует rollover, но old-epoch harvest работает, если source продолжает его разрешать. Они проверяют нашу логику, **не моделируют реальные полномочия PAIR**.
+Все 18 тестов FeeRouter прошли (16 прежних и 2 новых). Добавлены два локальных mock-теста в [fee-router.test.cjs](../../../test/fee-router.test.cjs): отказ collect блокирует rollover, но старые credits и direct revenue выплачиваются; смена epoch блокирует rollover, но old-epoch harvest работает, если source продолжает его разрешать. Они проверяют нашу логику, **не моделируют реальные полномочия PAIR**.
 
 Исторический fork 12.09 покрывал реальный тогда launch, BUY/SELL, TOKEN/USDG fee collection, rollover, route receipts и старый PromoVault flow. Новые funding/monthly изменения PromoVault не прошли новый сетевой canary. Сегодня выполнены только read-only chain/API проверки и локальные unit tests; никакой новый TOKEN даже на fork не создавался.
 
@@ -110,6 +113,6 @@ node scripts/pair-dependency-audit.cjs
 node --test --test-concurrency=1 test/fee-router.test.cjs
 ```
 
-[Collector](../scripts/pair-dependency-audit.cjs) разрешает только чтение RPC, закрепляет блок, сохраняет ошибки как evidence. Повторный запуск перезапишет JSON новым наблюдением; это не побайтовое воспроизведение состояния 15.09 и не автоматический поиск всех контрактов. Список кандидатов специально содержит исторические/альтернативные адреса. Перед canary его нужно расширить до подтверждённого полного graph.
+[Collector](../../../scripts/pair-dependency-audit.cjs) разрешает только чтение RPC, закрепляет блок, сохраняет ошибки как evidence. Повторный запуск перезапишет JSON новым наблюдением; это не побайтовое воспроизведение состояния 15.09 и не автоматический поиск всех контрактов. Список кандидатов специально содержит исторические/альтернативные адреса. Перед canary его нужно расширить до подтверждённого полного graph.
 
 Следующий необходимый результат: исходники и authority graph точного native vault/locker/handler. Пока они не получены, решение о безопасности внешних прав и необходимости recovery остаётся открытым; остальную локальную продуктовую разработку этот пробел сам по себе не отменяет.

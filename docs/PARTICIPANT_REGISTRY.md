@@ -1,5 +1,8 @@
 # Публичная регистрация участия
 
+> Справка по модулю/эксперименту. Общий текущий статус — [CURRENT_CONTEXT](CURRENT_CONTEXT.md);
+> даты и результаты ниже относятся к указанным этапам, а не задают следующий шаг проекта.
+
 15.09.2026. [ParticipantRegistry.sol](../contracts/ParticipantRegistry.sol) — первый реализованный компонент [проверяемого indexer](INDEXER_TRUST_MODEL.md).
 
 ## API

@@ -1,5 +1,8 @@
 # Попытки: доступно, заморожено, использовано
 
+> Справка по модулю/эксперименту. Общий текущий статус — [CURRENT_CONTEXT](CURRENT_CONTEXT.md);
+> даты и результаты ниже относятся к указанным этапам, а не задают следующий шаг проекта.
+
 16.09: добавлен opt-in **attempt-lifecycle-v2** с Short epochs, snapshot v2 и проверкой пустого перехода. [Новая модель и manifest](SHORT_RULES_EPOCHS.md). Описание ниже относится к исходному v1; его historical evidence остаётся поддержанным. Не путать номер lifecycle schema с историческим Short commitment V2.
 
 15.09.2026. Реализован [детерминированный lifecycle replay](../scripts/attempt-lifecycle.cjs) поверх [BUY replay](DIRECT_BUY_REPLAY.md). Это постоянный формат учёта попыток и проверки снимка, **не production controller или проверка random**. Custody-контракты не менялись.

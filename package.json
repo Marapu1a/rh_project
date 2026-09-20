@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.0.0",
   "scripts": {
-    "test": "node --test --test-concurrency=1 test/fee-router.test.cjs test/promo-vault.test.cjs test/short-prize-basket.test.cjs test/participant-registry.test.cjs test/direct-buy.test.cjs test/attempt-lifecycle.test.cjs test/attempt-lifecycle-events.test.cjs test/short-draw-commitment.test.cjs test/short-outcome.test.cjs test/short-streaming.test.cjs test/short-dataset.test.cjs test/short-epochs.test.cjs test/short-settlement.test.cjs test/dual-controller.test.cjs test/attempt-lifecycle-dual.test.cjs test/monthly-epochs.test.cjs test/monthly-replay.test.cjs test/nitro-blocks.test.cjs",
+    "test": "node --test --test-concurrency=1 test/fee-router.test.cjs test/promo-vault.test.cjs test/short-prize-basket.test.cjs test/participant-registry.test.cjs test/direct-buy.test.cjs test/attempt-lifecycle.test.cjs test/attempt-lifecycle-events.test.cjs test/short-draw-commitment.test.cjs test/short-outcome.test.cjs test/short-streaming.test.cjs test/short-dataset.test.cjs test/short-epochs.test.cjs test/short-settlement.test.cjs test/dual-controller.test.cjs test/attempt-lifecycle-dual.test.cjs test/monthly-epochs.test.cjs test/monthly-replay.test.cjs test/nitro-blocks.test.cjs test/local-controllers.test.cjs test/local-buy-cycle.test.cjs test/local-executor-stability.test.cjs test/local-usdg-funding.test.cjs test/local-scheduler.test.cjs",
     "test:short:settlement": "node --test test/short-settlement.test.cjs",
     "test:dual": "node --test test/dual-controller.test.cjs",
     "report:short:selection": "node scripts/short-selection-benchmark.cjs",
@@ -47,7 +47,20 @@
     "check:drand:rpc": "node scripts/drand-rpc-check.cjs",
     "test:nitro:blocks": "node --test test/nitro-blocks.test.cjs",
     "check:nitro:rpc": "node scripts/chain-blocks-rpc.cjs",
-    "test:drand:binding": "node --test test/drand-binding-model.test.cjs"
+    "test:drand:binding": "node --test test/drand-binding-model.test.cjs",
+    "test:local:controllers": "node --test test/local-controllers.test.cjs",
+    "test:local:buy-cycle": "node --test test/local-buy-cycle.test.cjs",
+    "local:short": "node scripts/run-local-short.cjs",
+    "test:local:executor": "node --test test/local-buy-cycle.test.cjs",
+    "local:monthly": "node scripts/run-local-promo.cjs",
+    "test:local:monthly": "node --test test/local-buy-cycle.test.cjs",
+    "test:local:stability": "node --test test/local-executor-stability.test.cjs",
+    "test:local:funding": "node --test test/local-usdg-funding.test.cjs",
+    "local:funding": "node scripts/run-local-promo.cjs",
+    "test:local:scheduler": "node --test test/local-scheduler.test.cjs",
+    "local:scheduler": "node scripts/run-local-scheduler.cjs",
+    "local:revenue": "node scripts/run-local-promo.cjs",
+    "test:local:revenue": "node --test test/local-usdg-funding.test.cjs"
   },
   "devDependencies": {
     "@openzeppelin/contracts": "5.6.1",

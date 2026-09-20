@@ -1,5 +1,8 @@
 # Текущий ответ GPT
 
+> Архив на 19.09.2026: исторический отчёт/обсуждение, не текущий план и не самостоятельная спецификация.
+> Начало работы: [CURRENT_CONTEXT](../../CURRENT_CONTEXT.md). Условия и выводы ниже относятся к указанному этапу.
+
 Обновлено: 18.09.2026.
 
 Просмотрен latest commit `307c790a625cbeca3465e71f2ec22a0c9de1be81` — `Use Robinhood L2 identities for draw cutoffs and epoch boundaries`.
