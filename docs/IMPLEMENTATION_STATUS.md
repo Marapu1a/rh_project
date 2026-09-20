@@ -25,6 +25,11 @@
 
 ## Проверки
 
+Локальный [execution budget](LOCAL_EXECUTION_BUDGET.md): pure calculator + coordinator
+preflight до estimate/intent, native accounting по адресам, RNG отдельно, frozen-first,
+два model fee profiles, settings отдельно от deployment identity. Opt-in `--ops FILE`.
+Это off-chain forecast, не native escrow или production guarantee; autorefill отсутствует.
+
 - `npm run test:local:buy-cycle` — новый сквозной локальный путь.
 - `npm run test:local:executor` — тот же расширенный BUY-cycle с worker; `npm run local:short -- ...` — CLI для уже развёрнутого локального узла/job.
 - `npm run test:local:monthly` — тот же общий сценарий; `npm run local:monthly -- ...` — CLI Monthly job, schema выбирает исполнитель.

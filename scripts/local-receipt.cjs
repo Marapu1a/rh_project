@@ -33,6 +33,7 @@ async function sendLocalTransaction(method,args,overrides,options={}){
   let stage='estimate',tx;
   const boundary=transactionBoundary.getStore();
   try{
+    if(boundary?.preflight)await boundary.preflight(await method.populateTransaction(...args,overrides),method.fragment.name);
     const gasLimit=await method.estimateGas(...args,overrides);
     if(options.signal?.aborted){const e=new Error('Stopped before broadcast');e.code='LOCAL_EXECUTION_STOPPED';throw e;}
     // A successful before hook commits the attempt: do not leave a prepared marker by
@@ -46,6 +47,7 @@ async function sendLocalTransaction(method,args,overrides,options={}){
   }catch(cause){
     const error=new Error(cause.shortMessage||cause.message,{cause});
     error.code=cause.code;error.stage=stage;
+    if(cause.code==='LOCAL_BUDGET_WAIT')error.budget=cause.budget;
     error.transactionHash=tx?.hash||cause.transactionHash;
     error.definiteRejection=(stage==='estimate'&&cause.code==='CALL_EXCEPTION')||
       (stage==='confirm'&&cause.code!=='TRANSACTION_REPLACED'&&cause.receipt?.status===0&&

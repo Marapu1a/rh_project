@@ -12,32 +12,31 @@ registry/BUY replay/builders; persisted scheduler jobs; prize-flow/converter;
 Последние результаты проверок — [CURRENT_CONTEXT](CURRENT_CONTEXT.md), карта —
 [IMPLEMENTATION_STATUS](IMPLEMENTATION_STATUS.md).
 
-## 2. Следующий пакет: project gas budget и readiness
+## 2. Реализовано локально: project gas model/readiness
 
-Предварительный fix после GPT review: provider binding всех signers и переданных
-контрактов проверяется до state; сохранение prepared intent явно фиксирует текущую
-попытку отправки при abort. Identity/ops разделение ниже остаётся отдельной задачей.
+[Execution budget](LOCAL_EXECUTION_BUDGET.md) включается через ops profile: остаток
+process/finish для frozen Short/Monthly, текущая подготовка/кандидат, RNG fee отдельно,
+один native balance на фактический адрес. Draw-first/frozen-first, ожидание native funding
+и дорогого gas, preflight до estimate и перед prepared intent.
 
-Сначала короткий API/model: network/deployment identity отдельно от разрешённых
-операционных настроек. Не строить универсальный framework. Существующий state guard
-не обходить новым path или сбросом pending ради изменения gas cap/poll interval.
+Network/deployment identity и signer roles отделены от poll/timeout/gas threshold.
+Проверяемая миграция старого state допускается только без unresolved marker. Settings
+сохраняются в intent; повышение наблюдаемого gas повышает прогноз, а не запрещает навсегда
+исполнение по старой оценке. Два локальных fee profiles и example JSON есть в модуле.
 
-Затем локальная модель бюджета:
-- separate balances для gas publisher/executor и RNG fee в controller;
-- стоимость оставшегося исполнения, запас и одновременные Short/Monthly обязательства;
-- started draws приоритетнее новых freeze и необязательных операций;
-- ждать при дорогом gas/недостатке средств, не обещать расходование prize balances;
-- источник финансирования — bootstrap и только свободная доля проекта.
+Это off-chain gate выбранного coordinator, не escrow, не автообмен и не запрет прямого
+permissionless seal. Начальная калибровка ещё не доказана для всех максимальных datasets.
+Нельзя объявлять физическое завершение гарантированным по результатам fixture-тестов.
+Призовые средства не оплачивают эксплуатацию. Creator shares не утверждены.
 
-Различать finish/назначение награды и отдельный permissionless claim: coordinator
-пока не отправляет claims за победителей. Кто финансирует их gas — явная UX/ops политика.
+Ближайший следующий пакет: проверить прогноз на предельных допустимых chunk/participant/
+prize counts, на общей нагрузке Short+Monthly, повышении actual gas/RNG fee и восстановлении.
+Сопоставить reserve с измеренным gas и явно отделить модельный потолок от реальной оценки.
+После этого проектировать перевод bootstrap/свободной доли проекта в native buffer,
+лимиты пополнения и отказные сценарии. Реальный swap/native refill — самостоятельная работа.
 
-Готово: при недостаточном ops budget новый draw не замораживается; уже начатые
-обязательства учитываются без двойного использования одной суммы; пополнение/снижение
-цены возобновляет исполнение. Проверить два различных локальных fee-профиля.
-Это расчёт/проверки/локальная связка. Реальный обмен проектных средств в native и
-автопополнение — следующий отдельный пакет после модели, не скрытое расширение этого.
-Creator shares и конкретные production лимиты требуют явного выбора.
+Finish/назначение награды и permissionless claim различаются: coordinator не отправляет
+claims за победителей. Кто финансирует их gas — отдельная UX/ops политика.
 
 ## 3. Укрепить обычную эксплуатацию
 
@@ -46,7 +45,7 @@ receipt-read outage, mined revert через coordinator. Затем огран�
 для stale lock/hashless tx/replacement и сохранности state. Не выдавать force-clear за
 reconciliation. Сохранить независимость действий при доказанном отказе.
 
-Разделить immutable identity и ops settings с проверяемой историей применённой политики.
+Сохранить разделение identity/ops; текущая история содержит pending/lastResolved, а не полный journal.
 Укрепить согласованность RPC чтения. Определить один владеющий signer процесс/lease
 и мониторинг; checksum файла не является защитой от оператора, меняющего данные.
 

@@ -138,9 +138,22 @@ async function runScheduler(options,{maxTicks=32,onTick=()=>{}}={}){
     let results;
     for(let i=0;i<maxTicks;i++){
       results={};
-      for(const kind of ['SHORT','MONTHLY']){
+      let kinds=['SHORT','MONTHLY'];
+      if(options.prioritizeStarted){
+        const ranks=[];
+        for(const [kind,source] of [['SHORT',options.short],['MONTHLY',options.monthly]]){
+          const s=kind==='SHORT',pending=await source[s?'pendingDatasetDraw':'pendingMonth']();
+          const active=await source[s?'activeProposal':'activeMonth']();
+          ranks.push({kind,rank:pending!==zero?2:active!==zero?1:0});
+        }
+        kinds=ranks.sort((a,b)=>b.rank-a.rank).map(r=>r.kind);
+      }
+      for(const kind of kinds){
         try{results[kind]=await tickKind(kind,options,state,save);}
         catch(e){if(e.code==='SCHEDULER_STORAGE_ERROR')throw e;
+          if(e.code==='LOCAL_BUDGET_WAIT'&&e.stage==='estimate'){
+            results[kind]={status:'waiting',reason:'executionBudget',budget:e.budget};continue;
+          }
           results[kind]=e.code==='LOCAL_EXECUTION_STOPPED'?{status:'stopped',code:e.code,stage:e.stage,transactionHash:e.transactionHash}:
           {status:'error',message:e.shortMessage||e.message,code:e.code,stage:e.stage,transactionHash:e.transactionHash};
           // Unknown send/receipt and unclassified RPC errors stop ALL subsequent kinds/ticks.

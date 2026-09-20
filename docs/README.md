@@ -50,3 +50,5 @@
 - [Local Prize Flow](LOCAL_PRIZE_FLOW.md) — автоматический collect/harvest/pay/convert/forward и legacy debt.
 
 - [Local Promo Coordinator](LOCAL_PROMO_COORDINATOR.md) — совместный запуск денежного и draw-контуров, pending marker и restart.
+
+- [Local Execution Budget](LOCAL_EXECUTION_BUDGET.md) — native forecast, приоритет frozen draws, network profile и ops settings.

@@ -1,6 +1,6 @@
 # Текущий контекст
 
-Обновлено 20.09.2026 после provider-binding fix по review f222a8c.
+Обновлено 20.09.2026 после локального execution-budget пакета.
 
 ## Где находимся
 
@@ -18,34 +18,29 @@
 
 ## Последний результат и проверки
 
-После review f222a8c закрыт provider binding: все publisher/executor и переданные
-router/Short/Monthly проверяются до state и использования runners. Требуется тот же
-provider object, даже если другой показывает тот же chainId. Это wiring check, не
-attestation произвольных JS wrappers.
+[Execution budget](LOCAL_EXECUTION_BUDGET.md): opt-in `--ops FILE` для coordinator.
+Считаются remaining process/finish всех frozen draws и текущая подготовка/кандидат;
+RNG funding отдельно. Один native balance на адрес, buffer без дублирования ролей.
+Дорогой gas/нехватка средств дают waiting до intent. Draw-first/frozen-first защищает
+completion forecast от необязательного collect. Более высокие estimates повышают
+сохраняемые gasObservations и не блокируют навсегда работу по старой калибровке.
 
-[Coordinator](LOCAL_PROMO_COORDINATOR.md) сохраняет pending до broadcast. Успешное
-сохранение prepared intent фиксирует текущую попытку: более поздний abort допускает
-одну отправку, сохраняет hash и запрещает следующие. Hashless/stale lock по-прежнему
-требуют диагностики; force-clear/cancel не добавляли.
+Network/deployment identity и именные signer roles отделены от polling/timeout/gas
+threshold. Переход со старого state проверяется по точному hash и запрещён при pending;
+policy snapshot незавершённой отправки сохраняется. Без ops — unbudgetedLegacy режим.
+Пример: [local profile](examples/local-execution-budget.json).
 
-`node --test --test-concurrency=1 test/local-coordinator.test.cjs test/local-transaction.test.cjs`:
-**20/20**, fail 0 (~151 s), в том числе 9 coordinator integrations и 11 tx checks.
-Две новые интеграции: неверные/malformed signers/contracts и abort на persisted intent
-с успешным restart без дублирования денег. Полный набор теперь 249, в этом шаге не запускался.
-
-GPT в ответе f222a8c сообщил чистый полный **247/247** для предыдущего кода.
-Это его независимая проверка, не новый полный запуск Codex.
-Solidity, денежная математика и runtime-семантика abort в текущем fix не менялись.
-[Самопроверка и переносимость](LOCAL_REVIEW_AND_PORTABILITY.md) остаётся основанием плана.
+Проверка 2026-09-20: 50/50 targeted tests, 0 failures (554 s): budget, coordinator,
+transaction classifier, scheduler и executor stability. Полный набор не запускался.
+Solidity и призовая математика не менялись.
 
 ## Ближайший кусок
 
-Project gas budget/readiness: учитывать RNG fee и остаток gas исполнителя на завершение
-уже начатого draw, проверять запас перед новым freeze, пережидать дорогой gas.
-Перед этим компактно определить network/deployment identity и изменяемые ops settings:
-сейчас весь job входит в state configHash, включая polling/gas caps.
-Не добавлять сразу auto-swap/project treasury controller и production framework.
-Критерии и порядок — [ROADMAP](ROADMAP.md).
+Калибровка модели на предельных допустимых chunks/participants/prizes и общей нагрузке
+Short/Monthly; сопоставить оценку и измеренный gas, проверить рост расходов после freeze.
+Затем отдельный дизайн native funding/refill из bootstrap/свободной доли проекта.
+Сейчас модель проверяет баланс, но не покупает native и не оплачивает claims за победителей.
+Полный порядок — [ROADMAP](ROADMAP.md).
 
 ## Основные ограничения
 
@@ -55,6 +50,8 @@ Project gas budget/readiness: учитывать RNG fee и остаток gas �
   старые prize balances/credits не переносятся и не выводятся.
 - Fixed floor не заменяет market price guard. Legacy USDG-only TOKEN debt лишь
   диагностируется; публичный pay остаётся возможным. Полнота legacy list доверена config.
+- Budget — off-chain forecast, не escrow и не запрет прямого seal вне coordinator.
+  Fixture estimates не доказаны для всех возможных данных/seed; требуется калибровка.
 - Seed/finality, publisher trust, durable recovery и incremental indexer не завершены.
 
 ## Не пересматривать случайно

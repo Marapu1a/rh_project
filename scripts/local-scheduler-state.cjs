@@ -1,7 +1,7 @@
 const fs=require('node:fs'),path=require('node:path');
 const {hash}=require('./direct-buy.cjs');
 // One local process per state file. This is not a distributed lease or mempool journal.
-async function withState(file,config,action){
+async function withState(file,config,action,{legacyConfigs=[]}={}){
   file=path.resolve(file);fs.mkdirSync(path.dirname(file),{recursive:true});
   const lock=file+'.lock';let fd;
   try{fd=fs.openSync(lock,'wx');}
@@ -21,9 +21,14 @@ async function withState(file,config,action){
     let state={schema:'local-scheduler-state-v1',configHash:hash(config),jobs:{SHORT:[],MONTHLY:[]}};
     if(fs.existsSync(file)){
       const {checksum,...stored}=JSON.parse(fs.readFileSync(file,'utf8'));
-      if(checksum!==hash(stored)||stored.schema!==state.schema||stored.configHash!==state.configHash)
+      if(checksum!==hash(stored)||stored.schema!==state.schema)
         throw Error('Scheduler state checksum/config mismatch');
       if(!Array.isArray(stored.jobs?.SHORT)||!Array.isArray(stored.jobs?.MONTHLY))throw Error('Invalid scheduler state');
+      if(stored.configHash!==state.configHash){
+        if(!legacyConfigs.some(c=>hash(c)===stored.configHash))throw Error('Scheduler state checksum/config mismatch');
+        if(stored.pending)throw Error('Resolve pending with previous configuration before enabling budget profile');
+        stored.configHash=state.configHash;save(stored);
+      }
       state=stored;
     }
     return await action(state,save);

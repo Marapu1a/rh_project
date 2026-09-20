@@ -1,0 +1,38 @@
+{
+  "schema": "local-execution-budget-v1",
+  "network": {
+    "id": "local-plain",
+    "chainId": "31337",
+    "nativeDecimals": 18,
+    "feeModel": "LOCAL_EIP1559",
+    "reserveGasPrice": "2000000000",
+    "extraFeePerTx": "0",
+    "signerBuffer": "100000000000000",
+    "safetyBps": 12500,
+    "gasUnits": {
+      "begin": "3000000",
+      "publish": "3000000",
+      "seal": "3000000",
+      "processShort": "3000000",
+      "finishShort": "3000000",
+      "beginMonth": "3000000",
+      "publishMonth": "3000000",
+      "sealMonth": "3000000",
+      "processMonth": "3000000",
+      "finishMonth": "3000000",
+      "closeEmpty": "3000000",
+      "collect": "3000000",
+      "harvest": "3000000",
+      "sync": "3000000",
+      "pay": "3000000",
+      "syncUSDG": "3000000",
+      "forwardQuote": "3000000",
+      "convert": "3000000"
+    }
+  },
+  "settings": {
+    "maxGasPrice": "2000000000",
+    "receiptTimeoutMs": 30000,
+    "pollSeconds": 10
+  }
+}

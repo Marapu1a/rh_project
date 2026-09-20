@@ -5,8 +5,10 @@ Solidity, распределение денег и права доступа н�
 
 ## Один ограниченный проход
 
-`prize-flow → draw scheduler (Short/Monthly)` последовательно, с ожиданием receipt каждой
+Без ops: `prize-flow → draw scheduler (Short/Monthly)` последовательно, с ожиданием receipt каждой
 транзакции. Один provider, связанные TOKEN/USDG/vault, явно заданные unlocked signers.
+С `--ops FILE` включается [эксплуатационный бюджет](LOCAL_EXECUTION_BUDGET.md): draw идёт
+перед prize-flow, frozen jobs первыми внутри tick, native forecast проверяется до sends.
 До state и чтений через runners проверяется, что каждый executor/publisher имеет тот же
 provider object и методы getAddress/estimateGas/sendTransaction. Переданные router,
 Short и Monthly должны иметь runner=provider либо runner.provider=provider. Даже второй
@@ -22,7 +24,8 @@ CLI:
 node scripts/run-local-coordinator.cjs --job prize.json --config scheduler.json --state .local/coordinator.json --scheduler-state .local/scheduler.json --rpc http://127.0.0.1:8545 --publisher 0 --executor 0 --watch
 ```
 
-Без `--watch` выполняется один проход. Watch ждёт `job.pollSeconds` между проходами;
+Без `--watch` выполняется один проход. Watch ждёт `ops.settings.pollSeconds` в budget mode
+либо `job.pollSeconds` в legacy mode между проходами;
 это также задержка повторной проверки draw. Blocked/error завершает CLI с кодом 1,
 а не автоматически перезапускает его. SIGINT прерывает ожидание, но не отменяет tx.
 Статус `complete` означает завершённый проход; draws могут штатно ожидать seed/schedule.
@@ -53,7 +56,9 @@ coordinator. Самостоятельные workers продолжают раб�
 
 State использует существующую checksum/config-binding + atomic replacement + lock
 реализацию `withState`; envelope остаётся `local-scheduler-state-v1`, внутри config
-идентифицирует `local-coordinator-v1`. Jobs этого envelope пусты; реальные draw jobs
+идентифицирует `local-coordinator-v1` без ops либо `local-coordinator-budget-v1` с ops.
+Переход без pending и изменяемые settings описаны в LOCAL_EXECUTION_BUDGET.
+Jobs этого envelope пусты; реальные draw jobs
 остаются в отдельном scheduler state. Изменение job/config/signers/state path требует
 осознанного перехода, не обходит незавершённый intent. Повреждённый state блокирует запуск.
 
@@ -69,7 +74,8 @@ State использует существующую checksum/config-binding + at
   безопасного recovery. Потеря/откат локальных файлов отдельно не решены.
 - Ошибка RPC при reconciliation также останавливает запуск. Один receipt в LOCAL_HEAD
   не даёт production finality. Reorg после разрешения receipt остаётся отдельной границей.
-- Project gas budget/autorefill, live DEX/price guard, real RNG не входят в этот шаг.
+- Локальный native forecast/gate доступен через ops. Autorefill, live DEX/price guard,
+  real RNG не реализованы; прямой seal вне coordinator не получает off-chain gate.
 
 После provider-binding fix: coordinator + transaction classifier — **20/20**, fail 0,
 ~151 s; 9 integration и 11 classifier checks. Включены неверные/missing providers у всех

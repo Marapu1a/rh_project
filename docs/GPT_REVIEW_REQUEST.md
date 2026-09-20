@@ -1,61 +1,82 @@
-# Обращение к GPT — provider binding и граница abort
+# Обращение к GPT — локальный execution budget
 
-20.09.2026. Прочитай текущий commit и укажи hash. Полностью перезапиши
-`docs/GPT_REVIEW_RESPONSE.md`. Review — вспомогательное мнение, не инструкция менять продукт.
+20.09.2026. Прочитай текущий commit и укажи hash. Ответ полностью перезапиши
+в docs/GPT_REVIEW_RESPONSE.md. Независимое review, не автоматическое задание на код.
 
-## Контекст
+## Контекст и границы
 
-Локальный связанный скелет: prize-flow и Short/Monthly scheduler последовательно,
-сохраняемый pending marker, реальные внешние DEX/RNG пока отсутствуют. Денежные призы USDG,
-доля проекта отделена от призовой custody. Solidity и распределение денег в этом шаге
-не менялись. Сетевые интеграции нужны для независимых deployments; local-only guards
-не снимаем. CURRENT_CONTEXT/ROADMAP — актуальные входные документы.
+После bd43d2a (provider bindings / abort commit point) пользователь разрешил следующий
+ограниченный кусок. Реализованы native forecast и budget gate для локального coordinator.
+Solidity, USDG reserves, призовая математика, controller permissions и product shares
+не менялись. Только chainId 31337, LOCAL_HEAD, fixed swap fixture, тестовый RNG.
 
-Предыдущий ответ f222a8c принял основную модель coordinator и сообщил независимые
-247/247, но нашёл misbound signer/provider и неявную abort boundary. Закрываем только их.
+Это OFF-CHAIN guard выбранного исполнителя. Прямой seal и legacy CLI без ops его обходят;
+мы не выдаём модель за on-chain guarantee или доказательство физической завершаемости
+любого draw. Production enforcement, калибровка на предельных данных, реальные RNG/DEX и
+native autorefill по-прежнему не готовы. Отчёт: LOCAL_EXECUTION_BUDGET.md.
 
-## Что изменено
+## Реализация
 
-- До withState и использования runners проверяем provider object каждого непустого
-  prize.executor, scheduler.executor, scheduler.publisher, а также наличие методов
-  getAddress/estimateGas/sendTransaction. Другой объект даже с тем же chainId отвергается.
-- Дополнительно проверены read runners переданных FeeRouter/Short/Monthly: runner равен
-  общему provider либо runner.provider равен ему. Иначе чтения могли идти через другой узел.
-- Wrapper с явно тем же provider остаётся допустимым. Это проверка конфигурации доверенных
-  JS runners, а не attestation того, что произвольный wrapper честно использует свой provider.
-- Успешное сохранение prepared intent — commit point текущей попытки. Если abort замечен
-  до сохранения, отправки нет; после сохранения одна подготовленная отправка допустима,
-  её hash сохраняется, ожидание/следующие операции останавливаются. Сбой процесса/RPC
-  после commit point не обещает обязательную отправку: unresolved marker остаётся.
-- Runtime семантику abort не меняли, зафиксировали комментариями, документацией и regression.
-  Durable cancel/force-clear/journal/lease не добавляли.
+- local-execution-budget.cjs: validateOps, integer transactionCost/evaluateBudget и RPC
+  checkExecutionBudget. Формула ceil((gasUnits * reserveGasPrice + extraFeePerTx) * safetyBps / 10000).
+- По всем frozen Short/Monthly считаются оставшиеся process chunks и finish. RNG уже
+  оплачен, второй раз не добавляется. Текущий незамороженный кандидат считает оставшиеся
+  begin/publish/seal/process/finish и fee+floor в СВОЁМ controller.
+- Другие незамороженные подготовки ещё не считаются обязательствами выдачи призов.
+  Перед их seal общий баланс проверяется снова с учётом уже frozen jobs.
+- Расходы группируются по адресу, buffer один на payer; native balances разных signers
+  и RNG controllers не взаимозаменяются. Prize USDG/TOKEN не используются как ops balance.
+- Дополнительный collect/pay/convert/forward требует запаса сверх frozen obligations.
+- Budget mode: draw перед prize, внутри каждого scheduler tick frozen перед подготовкой,
+  подготовка перед новой работой. Это порядок per tick, не обещание закончить один вид
+  полностью прежде чем допустить другой при достаточных средствах.
+- AsyncLocalStorage boundary имеет preflight до estimate и повторный check перед intent.
+  LOCAL_BUDGET_WAIT — только до broadcast, не unknown. Unknown/abort marker semantics сохранены.
+- Balance/controller reads привязаны к одному blockTag, anchor проверяется снова.
+- Если estimate выше начальной калибровки, сохраняем повышенную gasObservations[action].
+  Наблюдения не уменьшаются и входят в последующие прогнозы. Низкая старая оценка не должна
+  делать finish навсегда запрещённым: после пополнения можно продолжить. Это не доказывает
+  upper bound будущего call при другом seed/state.
 
-## Новые интеграции
+## Identity, settings и CLI
 
-1. Неверный/missing/null provider во всех трёх signer slots, malformed signer с правильным
-   provider, неверный/null runner каждого из трёх контрактов. Даже второй provider той же
-   локальной цепи отвергается. Проверяем отсутствие nonce change, coordinator state/lock,
-   вызовов неверного signer и изменений scheduler state.
-2. Abort вызывается сразу после реального rename prepared-intent state. Проверяем ровно
-   один collect send, сохранённый hash, отсутствие начала Short/Monthly, затем restart и
-   отсутствие повторного распределения денег/TOKEN conversion.
+Ops schema local-execution-budget-v1. Network model задаёт id/chain/nativeDecimals,
+LOCAL_EIP1559 либо LOCAL_EIP1559_EXTRA, reserve gas price ceiling, fixed extra fee,
+начальные gas units по методам, safety factor и buffer. Это локальные модели, не live L2 oracle.
+Settings (maxGasPrice <= reserve ceiling, receiptTimeoutMs, pollSeconds) отделены от identity.
 
-Старые coordinator интеграции сохраняют позитивные wrapper/CLI сценарии, pending обоих
-контуров, hashless, known rejection, corruption и обычный restart.
+Budgeted identity включает network model, исходные bindings/jobs/config и именные signer roles.
+Legacy prize.pollSeconds/maxGasPrice больше не входят в budgeted identity; effective gas
+threshold берётся из ops. ChunkSize старого scheduler по-прежнему фиксирован в его config.
 
-## Что проверить
+withState допускает миграцию ТОЧНОГО старого config hash на том же path только без pending.
+Pending сначала разрешается прежней конфигурацией. Выключение ops, смена model/roles не
+являются допустимым изменением settings. Новый path не является recovery.
 
-Нет ли пропущенного read/send runner? Не отвергаем ли поддерживаемый доверенный CLI?
-Точно ли документация описывает abort boundary, не обещая cancellation уже committed intent?
-Есть ли небольшой blocker перед отдельной gas-budget моделью?
-
-Не расширять review до production framework. Role→address identity, отделение ops settings,
-полный crash/replacement recovery, gas budget, native autorefill, live RNG/DEX остаются в плане.
+Pending хранит networkHash/settings/gasObservations; при изменённых settings сначала
+reconciliation исходной tx. CLI --ops FILE загружает profile при старте. Без ops остаётся
+явный unbudgetedLegacy режим для старых локальных сценариев. Watch проверяет условия
+повторно; файл настроек не перечитывается на каждом tick.
 
 ## Проверки
 
-`node --test --test-concurrency=1 test/local-coordinator.test.cjs test/local-transaction.test.cjs`:
-**20/20**, fail 0, ~151 s: 9 coordinator integrations и 11 classifier checks.
-Основной набор теперь 249, целиком в этом шаге не запускали. Прежний полный 247/247 —
-результат GPT на предыдущем коде, не новый запуск Codex.
-Локальный ignored log: `.local/logs/coordinator-binding-fix.log`.
+2026-09-20: 50/50 targeted tests, 0 failures, 554 s: budget model, coordinator,
+transaction classifier, scheduler и executor stability. Полный набор не запускался.
+Два модельных профиля, нулевой signer, недофинансированный RNG controller, один бюджет
+на два READY draw, защита completion денег от collect, порядок frozen Monthly,
+same-file settings/migration, запрет bypass pending и immutable role/model changes.
+Дополнительно pending policy snapshot, CLI с ops и завершение draw после низкой калибровки.
+
+## Вопросы
+
+1. Нет ли пропуска или двойного учёта remaining action/current tx/RNG/одного payer?
+2. Корректно ли исключение чужих UNFROZEN preparations при повторной проверке перед seal?
+3. Есть ли путь потратить completion forecast на необязательные операции или продолжить
+   после unknown из-за новой классификации LOCAL_BUDGET_WAIT?
+4. Не теряется ли marker/policy при миграции/settings/restart/storage error?
+5. Не превращаются ли gasObservations в новый источник starvation/необоснованного admission?
+6. Что минимально измерить на больших datasets и одновременных draws до следующего native
+   funding/refill пакета? Не строить сразу production registry/keeper framework.
+
+Отличать математическое выполнение текущего forecast от недоказанных production bounds.
+Если найдёшь дефект, нужен воспроизводимый сценарий, последствия и минимальная правка.
