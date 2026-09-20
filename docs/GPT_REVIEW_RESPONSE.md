@@ -5,132 +5,165 @@
 Это независимое review-мнение, не задание на автоматическое исполнение. При следующем
 обращении файл следует полностью перезаписать.
 
-Просмотрен commit `e537b9cf181eda2736ff07a90bcd063c16eb7aed` —
-`Clear stale transaction context and stop scheduler on unknown outcomes`.
+Просмотрен commit `c618afc0d1765b675aa0d5c3b4c714f9a86c5c2d` —
+`Review local execution boundaries and clarify portable deployment roadmap`.
+Runtime coordinator взят из `571c068`; в `c618afc` менялись документы, а не код.
 
 ## Короткий вердикт
 
-Узкое исправление принимаю. Подтверждённый в прошлом review stale transaction context
-устранён: завершённый intent больше не приклеивается к следующей read/callback error,
-а последняя подтверждённая операция хранится отдельно в `lastConfirmed`. В scheduler
-Short, Monthly и `closeEmpty` теперь проходят через общую transaction boundary; unknown
-broadcast/receipt и неклассифицированная coded RPC error прекращают все последующие
-kinds/ticks текущего запуска. Новых continuation paths после unknown outcome я не нашёл.
+Основная transaction/restart модель coordinator сделана правильно для заявленного
+локального scope. Durable marker ставится после успешного estimate и до broadcast; hash
+дописывается после ответа RPC; unknown outcome оставляет marker и не разрешает draw после
+prize либо новый pass после restart. Confirmed receipt исходной tx снимает marker, после
+чего workers восстанавливаются из on-chain state и сохранённых draw jobs. Повторной выплаты,
+swap, forward, freeze или begin в проверенных сценариях я не получил.
 
-Изоляция known rejection не сломана: только доказанный read-only estimate revert либо
-receipt status 0 именно исходной tx считаются definite rejection. Такой Short failure
-может пропустить Short и дать независимому Monthly продолжиться; неясный broadcast,
-timeout или receipt/RPC outage этого разрешения не получает.
+Есть один узкий preflight-дефект, который стоит закрыть до наращивания gas-budget модели:
+coordinator проверяет общий `prize.provider === scheduler.provider`, но не проверяет, что
+все publisher/executor runners действительно привязаны к этому provider. Поэтому прямой
+API допускает split-brain: preflight/read/reconciliation идут через provider A, а estimate,
+broadcast и receipt wait подключённого signer могут идти через provider B.
 
-Блокирующих замечаний к commit нет. Денежная математика, custody и Solidity в этом шаге
-не менялись; предыдущая оценка назначения активов и legacy-границ остаётся в силе.
+Pending marker не даёт после этого продолжить отправки, то есть это не найденный double
+spend. Но неверный runner успевает дойти до broadcast вместо отказа до первой записи. Для
+компонента, заявляющего один shared provider, это настоящая недостающая binding-проверка.
 
-## Stale context исправлен корректно
+После её узкого исправления блокеров перед отдельным project gas budget я не вижу.
 
-После confirmed receipt код сначала формирует `lastConfirmed`, затем очищает `current` и
-только потом вызывает `onStep`. После обработанного definite rejection `current` также
-очищается до callback. Outer catch больше не использует hash предыдущей успешной tx как
-fallback.
+## Что подтверждено по pending/restart
 
-Это даёт нужные различия:
+Граница `before → sent → confirmed` расположена разумно:
 
-- read error после confirmed `collect` возвращается без ложного `action`/tx hash, а
-  подтверждённый collect остаётся в `lastConfirmed`;
-- callback error после success не превращает успешную tx в неизвестную;
-- callback error после definite rejection сохраняет failure, но не создаёт ложный
-  confirmed/unknown intent;
-- настоящая ошибка `sendLocalTransaction` по-прежнему несёт собственные `stage`, `code`
-  и, когда он известен, hash исходной tx.
+- estimate failure не создаёт marker и не считается возможной отправкой;
+- marker с intent/target/calldata сохраняется до вызова broadcast;
+- outage/crash во время broadcast оставляет hashless marker и запрещает retry;
+- полученный hash/from/nonce сохраняется до receipt;
+- success либо status 0 именно исходной tx переводит intent в `lastResolved`;
+- timeout, abort после send, receipt outage, replacement и чужой receipt marker не снимают;
+- неизвестность в prize-flow не допускает draw, неизвестность в draw не допускает
+  следующий coordinator tick.
 
-Иными словами, evidence неизвестного send не потерян, но больше не смешан с историей
-последней подтверждённой операции.
+Restart с известным hash проверяет receipt и canonical block hash текущей локальной ветки.
+Если receipt отсутствует или RPC-чтение падает, новых sends нет. Hashless marker также
+остаётся закрытым независимо от равенства pending/latest nonce.
 
-## Scheduler: stop и независимость видов
+Сбой записи hash я проверил отдельно: первый вызов ещё может вернуть hash из памяти, но
+если последующие сохранения также недоступны, на диске остаётся hashless marker. Новый
+процесс получает `unknownHash` и не отправляет ничего. Это плохая liveness, но именно
+заявленная fail-closed граница, а не тихий retry.
 
-Переход Short/Monthly/`closeEmpty` на `sendLocalTransaction` закрывает прежний разрыв:
-ошибка broadcast теперь не выглядит как обычный локальный exception, а receipt wait имеет
-единый timeout/abort контракт.
+## Восстановление без денежных дублей
 
-В `runScheduler` после non-definite ошибки с `stage` или `code` происходит немедленный
-return из всего scheduler, поэтому:
+При receipt-read outage исходный `collect` успел mined, coordinator сохранил hash и
+остановился. После восстановления RPC restart сначала разрешил receipt, затем выполнил
+новый bounded pass. Он может сделать ещё один `collect`: этот action не имеет уникального
+job id и новый pass явно разрешает собрать новое поступление. В проверке второй collect
+оказался пустым; TOKEN был продан один раз, credits/pay/forward не удвоились.
 
-- Monthly не запускается после unknown Short send;
-- после unknown Monthly не начинается следующий Short tick;
-- последующие ticks того же запуска также невозможны;
-- `haltedKind`, `requiresReconciliation`, `code`, `stage` и доступный tx hash остаются в
-  результате;
-- CLI печатает kind-specific `code`/`stage`/hash и завершает работу с ошибкой.
+Это важное различие: счётчик вызовов source collect может увеличиться, но прежние деньги
+не распределяются повторно. Converter inventory/balance delta, FeeRouter credit и on-chain
+controller phases остаются фактическими idempotency boundaries.
 
-Для `LOCAL_EXECUTION_STOPPED` scheduler также выходит сразу. Abort до broadcast имеет
-`stage=estimate` и не требует tx reconciliation; abort после broadcast сохраняет hash и
-не разрешает продолжение.
+Отдельно воспроизведён status 0 после успешного estimate: внешнее изменение состояния
+заставило исходный `collect` revert уже в блоке. Receipt исходной tx снял pending как
+definite rejection, prize-flow стал `degraded`, а независимый draw продолжился. То есть
+изоляция known rejection после добавления coordinator не сломана.
 
-Known estimate rejection остаётся изолированным намеренно. Это безопасно именно потому,
-что estimate read-only и broadcast ещё не выполнялся. Receipt status 0 исходной tx тоже
-является определённым rollback. Остальные `CALL_EXCEPTION`, nonce/network/timeout и
-replacement-неопределённости не получают такого послабления.
+## Finding: signer/provider binding
 
-Обычные local validation failures без coded RPC/tx evidence по-прежнему могут быть
-изолированы по виду. Это сохраняет прежнюю модель, где плохая конфигурация Short не
-лишает Monthly независимого прогресса, и не ослабляет unknown-границу.
+В `runCoordinator` сейчас проверяются:
 
-## Bound `123 <= 128`
+- равенство provider объектов двух worker options;
+- chainId 31337 этого provider;
+- TOKEN/USDG/vault bindings;
+- множество адресов publisher/executor в config hash.
 
-Вынесенные `MAX_LEGACY=8`, `DEFAULT_MAX_STEPS=128` и import-time assertion согласованы с
-текущей schema/control-flow. Ручная формула консервативна: она считает максимум tx attempts
-для двух distribution-проходов, source collect/harvest и convert/forward всех допустимых
-converter. Замена converter на USDG-only vault может добавить sync, но одновременно
-убирает более дорогие converter operations, поэтому bound не занижен.
+Но contract sends используют `contract.connect(signer)`, следовательно реальный runner
+и его provider важнее read-only worker option. Я передал runner с неверным `provider`:
+валидация его приняла, intent сохранился, транзакция дошла до broadcast и только receipt
+path упал. Coordinator безопасно заблокировался, но обещанная проверка одного provider
+не была выполнена до записи.
 
-Maximal-legacy integration действительно строит восемь старых converter плюс active
-converter и два current project recipient и завершает pass при default limit. Обычного
-воспроизводимого starvation при текущих schema limits я не вижу.
+Минимальная граница исправления:
 
-Это не решает известную общую проблему маленького debug `maxSteps` и отсутствия durable
-phase cursor. Формула остаётся ручной: любое изменение числа фаз, повторов, recipients
-или разрешённых операций должно менять формулу и maximal test вместе.
+1. До `withState` и любых sends проверить provider binding каждого непустого
+   `prize.executor`, `scheduler.executor`, `scheduler.publisher`.
+2. Для текущего локального API логично требовать именно тот же provider object, поскольку
+   это уже заявленный контракт coordinator. Если нужны wrapper runners, у них должен быть
+   явный проверяемый base provider, а не неявное доверие одному адресу.
+3. Добавить negative integration: signer с другим/malformed provider отвергается до
+   nonce change, marker и broadcast.
 
-## Независимая проверка
+Отдельно уже честно отмеченная проблема role identity остаётся: config хеширует
+отсортированное множество адресов, поэтому перестановка publisher/executor с тем же набором
+не меняет config hash. Для текущих on-chain ролей это обычно закончится waiting/revert, а не
+обходом custody, но при разделении immutable identity и ops settings роли надо связать с
+адресами явно.
 
-Повторный полный запуск `npm test` прошёл **240/240**, `fail 0`, примерно 536 s. Внутри
-него прошли новые stale read/callback regressions, maximal legacy case, unknown Short
-broadcast/receipt, unknown Monthly без следующего Short tick и definite estimate rejection
-с продолжением Monthly. Отдельный `test/local-scheduler.test.cjs` прошёл **10/10**.
+## Abort: определить commit point
 
-Первый полный запуск дал **239/240**: один старый scheduler integration единожды встретил
-существующий `.lock` собственного временного state-файла. Тот же тест отдельно, весь
-scheduler-набор и затем полный набор прошли; устойчивой логической регрессии или
-повторяемого lock leak я не получил. Поэтому это не считаю finding текущего commit, но
-результат первого запуска не скрываю.
+Есть узкая воспроизводимая гонка. `sendLocalTransaction` проверяет signal до
+`boundary.before`; если abort приходит во время сохранения durable pre-broadcast marker,
+после возврата из `before` signal повторно не проверяется и одна tx всё равно broadcast.
+Marker/hash сохраняются, coordinator блокируется, последующих sends нет — денежной
+неопределённости система не теряет.
 
-## Остающиеся границы
+Это можно считать допустимой семантикой, но тогда успешное durable сохранение `before`
+должно быть явно названо commit point: abort после него прекращает ожидание и следующие
+операции, но не текущий broadcast. Сейчас документация делит только «до/после send», а
+реальная граница чуть раньше.
 
-- Это всё ещё local-only execution на chainId 31337 и `LOCAL_HEAD`, не production
-  finality/journal/supervisor.
-- Trusted legacy list и getter bindings не являются code/implementation attestation.
-- TOKEN credit старому USDG-only vault диагностируется worker'ом, но публичный внешний
-  `pay` по-прежнему может физически отправить туда TOKEN.
-- Реальные PAIR/DEX, price guard, deployment verification и production RNG не проверены
-  этим commit.
-- `lastConfirmed` — удобная телеметрия одного pass, не durable transaction journal.
+Если нужен строгий контракт «abort до фактического broadcast не отправляет tx», одного
+повторного `if (signal.aborted)` недостаточно: он оставит ложный hashless marker. Нужен
+отдельный durable cancel prepared-intent до возврата `LOCAL_EXECUTION_STOPPED`. Для
+локального coordinator проще и честнее зафиксировать marker persistence как commit point.
+Это не блокирует gas-budget после явного решения и regression test.
 
-## Следующий разумный пакет
+## Config/deployment и standalone compatibility
 
-Следующий узкий пакет — совместный локальный coordinator денежного `prize-flow` и draw
-scheduler, без попытки сразу построить production framework.
+Для доверенного CLI текущие bindings достаточны после signer/provider check: CLI создаёт
+все signers из одного `JsonRpcProvider`, jobs связывают assets/vault/source, coordinator и
+scheduler state paths различаются. Standalone workers не получают AsyncLocalStorage
+boundary и прошли прежние regressions.
 
-Критерии готовности:
+Checksum/config binding действительно fail-closed, но это не защита от оператора:
+другой state path или standalone process с тем же signer обходит локальный lock. Здесь
+реализация и документация совпадают — exclusive ownership signers остаётся обязательным
+операционным допущением, а не свойством кода.
 
-1. Один процесс сериализует write intents обоих контуров для общих signer/nonce; два
-   worker не отправляют транзакции параллельно.
-2. Unknown broadcast/confirmation в любом контуре останавливает оба контура и возвращает
-   kind/worker, action, stage, code и доступный tx hash. До reconciliation новых sends нет.
-3. После подтверждения исходной pending tx restart восстанавливается из on-chain state и
-   существующего scheduler state без повторной выплаты, swap, forward, freeze или begin.
-4. Definite rejection одного независимого действия не превращается в глобальный unknown:
-   действующие правила изоляции Short/Monthly и recipients сохраняются явно.
-5. Интеграции покрывают общий signer, unknown сначала в draw и сначала в prize-flow,
-   restart после mined original tx, abort и отсутствие nonce collision/double send.
+Разделение identity и ops settings перед gas-budget выбрано верно. Poll interval/gas cap
+не должны вынуждать обходить unresolved marker новым state, а применённые настройки должны
+оставаться видимыми при recovery. Не надо превращать это в универсальный on-chain registry.
 
-Project gas budget можно считать следующим отдельным пакетом после coordinator. Live DEX,
-production finality и весь backlog не являются prerequisite этого локального шага.
+## Документальная ревизия `c618afc`
+
+CURRENT_CONTEXT/ROADMAP теперь заметно честнее отделяют локальный связанный skeleton от
+production deployment. Самопроверка правильно называет незакрытые storage/replacement/
+finality границы, отсутствие бюджета на завершение уже frozen draw, permissionless claim
+и сетевые зависимости. Добавленная ссылка из PRODUCT_SPEC не меняет продуктовые правила.
+
+Локальные markdown-ссылки проверены: битых относительных ссылок не найдено. Существенного
+расхождения между runtime `571c068` и новым описанием, кроме неуказанного signer/provider
+binding и неявного abort commit point, я не нашёл.
+
+## Выполненные проверки
+
+- `node --test --test-concurrency=1 test/local-coordinator.test.cjs` — **7/7**, fail 0;
+- `npm test` — **247/247**, fail 0, примерно 566 s; это первый чистый полный прогон после
+  последнего metadata/checksum fix;
+- отдельные временные fault probes: receipt-read outage + restart, длительный storage
+  failure при записи hash, abort во время pre-broadcast save, mined revert после успешного
+  estimate, misbound signer provider;
+- `git diff --check` и проверка всех относительных markdown-ссылок — ошибок нет;
+- пользовательский `docs/INDEPENDENT_AUDIT_2026-09-19.md` не изменялся.
+
+## Следующий шаг
+
+Сначала один маленький boundary-fix: signer/provider preflight плюс явный abort commit-point
+и две regressions. Не нужно расширять его до production journal.
+
+После этого разумно переходить к запланированному project gas budget/readiness: отдельно
+учесть RNG fee, publisher/executor balances и стоимость завершения уже начатых Short/Monthly;
+started obligations должны иметь приоритет над новым freeze и необязательным collect.
+Frozen/claimable не являются ops budget, а автообмен/автопополнение остаются следующим
+самостоятельным пакетом.
