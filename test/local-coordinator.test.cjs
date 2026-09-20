@@ -86,3 +86,54 @@ test('CLI runs both workers; persisted config/corrupt state fail closed',async t
   f.options.prize.job.pollSeconds=300;fs.writeFileSync(f.options.statePath,'{broken');
   await assert.rejects(()=>runCoordinator(f.options));assert.equal(await f.provider.getTransactionCount(await f.admin.getAddress()),before);
 });
+
+test('misbound or malformed signers/contracts fail before reads through runners, state or broadcast',async t=>{
+  const f=await fixture(t),other=new ethers.BrowserProvider(require('hardhat').network.provider,undefined,{cacheTimeout:-1});
+  t.after(()=>other.destroy());assert.equal((await other.getNetwork()).chainId,31337n);
+  const nonce=await f.provider.getTransactionCount(await f.admin.getAddress()),saved=fs.readFileSync(f.statePath,'utf8');
+  let calls=0;
+  const unexpected=async()=>{calls++;throw Error('runner should not be called');};
+  for(const [group,key] of [['prize','executor'],['scheduler','executor'],['scheduler','publisher']]){
+    for(const provider of [other,null,undefined]){
+      const options={...f.options,prize:{...f.options.prize},scheduler:{...f.options.scheduler}};
+      options[group][key]={provider,getAddress:unexpected,estimateGas:unexpected,sendTransaction:unexpected};
+      await assert.rejects(()=>runCoordinator(options),/Signer must use coordinator provider/);
+    }
+  }
+  const malformed={...f.options,prize:{...f.options.prize,executor:{provider:f.provider,getAddress:unexpected}}};
+  await assert.rejects(()=>runCoordinator(malformed),/support transaction execution/);
+  for(const [group,key] of [['prize','router'],['scheduler','short'],['scheduler','monthly']]){
+    for(const provider of [other,null]){
+      const options={...f.options,prize:{...f.options.prize},scheduler:{...f.options.scheduler}};
+      options[group][key]=options[group][key].connect(provider);
+      await assert.rejects(()=>runCoordinator(options),/Contract must use coordinator provider/);
+    }
+  }
+  assert.equal(calls,0);assert.equal(fs.existsSync(f.options.statePath),false);assert.equal(fs.existsSync(f.options.statePath+'.lock'),false);
+  assert.equal(fs.readFileSync(f.statePath,'utf8'),saved);
+  assert.equal(await f.provider.getTransactionCount(await f.admin.getAddress()),nonce);
+});
+
+test('abort at persisted intent commits one send, preserves hash and resumes without duplicate money',async t=>{
+  const f=await fixture(t),stop=new AbortController(),rename=fs.renameSync;
+  const before=await f.quote.balanceOf(f.vault.target),nonce=await f.provider.getTransactionCount(await f.admin.getAddress());
+  let prepared=0;
+  fs.renameSync=function(from,to){
+    const result=rename.apply(this,arguments);
+    if(path.resolve(to)===path.resolve(f.options.statePath)){
+      const pending=JSON.parse(fs.readFileSync(to,'utf8')).pending;
+      if(pending&&!pending.transactionHash){prepared++;stop.abort();}
+    }
+    return result;
+  };
+  let result;
+  try{result=await runCoordinator({...f.options,signal:stop.signal});}finally{fs.renameSync=rename;}
+  assert.equal(prepared,1);assert.equal(result.status,'blocked');assert.equal(result.pending.action,'collect');
+  assert.equal(result.pending.code,'LOCAL_EXECUTION_STOPPED');assert.equal(result.pending.stage,'confirm');
+  assert.equal(await f.provider.getTransactionCount(await f.admin.getAddress()),nonce+1);
+  assert.equal(JSON.parse(fs.readFileSync(f.options.statePath,'utf8')).pending.transactionHash,result.pending.transactionHash);
+  assert.equal((await f.provider.getTransactionReceipt(result.pending.transactionHash)).status,1);
+  assert.equal(await f.short.pendingDatasetDraw(),ethers.ZeroHash);assert.equal(await f.monthly.pendingMonth(),ethers.ZeroHash);
+  assert.equal((await runCoordinator(f.options)).status,'complete');
+  assert.equal(await f.converter.tokenSold(),480n);assert.equal(await f.quote.balanceOf(f.vault.target)-before,1520n);
+});

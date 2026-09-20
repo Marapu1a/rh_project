@@ -15,10 +15,18 @@ async function runCoordinator({prize,scheduler,statePath,signal,receiptTimeoutMs
     same(prize.job.token,scheduler.config.manifest.token)&&same(prize.job.quote,scheduler.config.manifest.quote),
     'Prize and draw deployment mismatch');
   const provider=prize.provider;
-  check((await provider.getNetwork()).chainId===31337n,'Local chain 31337 only');
-  const signers=[prize.executor,scheduler.executor,scheduler.publisher].filter(Boolean);
-  const addresses=[...new Set(await Promise.all(signers.map(async s=>(await s.getAddress()).toLowerCase())))].sort();
   check(prize.executor&&scheduler.executor,'Executors required');
+  const signers=[prize.executor,scheduler.executor,scheduler.publisher].filter(Boolean);
+  // A matching address/chainId does not bind reads and sends to the same RPC instance.
+  for(const signer of signers)check(signer.provider===provider&&
+    ['getAddress','estimateGas','sendTransaction'].every(k=>typeof signer[k]==='function'),
+    'Signer must use coordinator provider and support transaction execution');
+  for(const contract of [prize.router,scheduler.short,scheduler.monthly]){
+    const runner=contract?.runner;
+    check(runner===provider||runner?.provider===provider,'Contract must use coordinator provider');
+  }
+  check((await provider.getNetwork()).chainId===31337n,'Local chain 31337 only');
+  const addresses=[...new Set(await Promise.all(signers.map(async s=>(await s.getAddress()).toLowerCase())))].sort();
   const config={schema:'local-coordinator-v1',prize:prize.job,scheduler:scheduler.config,
     schedulerState:path.resolve(scheduler.statePath),addresses};
   return withState(statePath,config,async(state,save)=>{
@@ -41,6 +49,7 @@ async function runCoordinator({prize,scheduler,statePath,signal,receiptTimeoutMs
       before:async(request,action)=>{
         check(!state.pending,'Unresolved coordinator intent');
         if(signal?.aborted)throw Object.assign(Error('Stopped before intent'),{code:'LOCAL_EXECUTION_STOPPED'});
+        // Successful persistence commits this send attempt; later abort stops wait/next intents.
         state.pending={worker,action,target:request.to,data:request.data,stage:'broadcast'};save(state);
       },
       sent:async tx=>{state.pending={...state.pending,transactionHash:tx.hash,from:tx.from,nonce:tx.nonce,stage:'confirm'};save(state);},

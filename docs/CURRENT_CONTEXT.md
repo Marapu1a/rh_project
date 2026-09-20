@@ -1,6 +1,6 @@
 # Текущий контекст
 
-Обновлено 20.09.2026 после самопроверки кода 571c068.
+Обновлено 20.09.2026 после provider-binding fix по review f222a8c.
 
 ## Где находимся
 
@@ -18,19 +18,25 @@
 
 ## Последний результат и проверки
 
-[Coordinator](LOCAL_PROMO_COORDINATOR.md) последовательно запускает prize-flow и draws.
-Pending intent сохраняется до broadcast, hash после ответа RPC. Unknown останавливает
-оба контура и обычный restart. Известный hash проверяется по receipt; hashless/stale lock
-требуют диагностики. Один state path и эксклюзивное использование signers обязательны.
+После review f222a8c закрыт provider binding: все publisher/executor и переданные
+router/Short/Monthly проверяются до state и использования runners. Требуется тот же
+provider object, даже если другой показывает тот же chainId. Это wiring check, не
+attestation произвольных JS wrappers.
 
-`npm test` на шаге coordinator: 244/247 (~1142 s), все прежние 240/240 прошли.
-Три новых restart сценария обнаружили undefined metadata/checksum mismatch.
-После исправления отдельный coordinator suite: 7/7, fail 0 (~144 s).
-Полный набор после локальной правки не повторяли. Это не единый чистый прогон 247/247.
+[Coordinator](LOCAL_PROMO_COORDINATOR.md) сохраняет pending до broadcast. Успешное
+сохранение prepared intent фиксирует текущую попытку: более поздний abort допускает
+одну отправку, сохраняет hash и запрещает следующие. Hashless/stale lock по-прежнему
+требуют диагностики; force-clear/cancel не добавляли.
 
-Текущая [самопроверка и переносимость](LOCAL_REVIEW_AND_PORTABILITY.md) отделяет
-подтверждённое поведение от открытых границ. Runtime в документационном review не менялся.
-Повторная узкая проверка tx classifier в review: 11/11; это не повтор всех интеграций.
+`node --test --test-concurrency=1 test/local-coordinator.test.cjs test/local-transaction.test.cjs`:
+**20/20**, fail 0 (~151 s), в том числе 9 coordinator integrations и 11 tx checks.
+Две новые интеграции: неверные/malformed signers/contracts и abort на persisted intent
+с успешным restart без дублирования денег. Полный набор теперь 249, в этом шаге не запускался.
+
+GPT в ответе f222a8c сообщил чистый полный **247/247** для предыдущего кода.
+Это его независимая проверка, не новый полный запуск Codex.
+Solidity, денежная математика и runtime-семантика abort в текущем fix не менялись.
+[Самопроверка и переносимость](LOCAL_REVIEW_AND_PORTABILITY.md) остаётся основанием плана.
 
 ## Ближайший кусок
 

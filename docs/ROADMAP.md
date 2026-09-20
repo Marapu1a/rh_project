@@ -14,6 +14,10 @@ registry/BUY replay/builders; persisted scheduler jobs; prize-flow/converter;
 
 ## 2. Следующий пакет: project gas budget и readiness
 
+Предварительный fix после GPT review: provider binding всех signers и переданных
+контрактов проверяется до state; сохранение prepared intent явно фиксирует текущую
+попытку отправки при abort. Identity/ops разделение ниже остаётся отдельной задачей.
+
 Сначала короткий API/model: network/deployment identity отдельно от разрешённых
 операционных настроек. Не строить универсальный framework. Существующий state guard
 не обходить новым path или сбросом pending ради изменения gas cap/poll interval.

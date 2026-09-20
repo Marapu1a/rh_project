@@ -7,6 +7,11 @@ Solidity, распределение денег и права доступа н�
 
 `prize-flow → draw scheduler (Short/Monthly)` последовательно, с ожиданием receipt каждой
 транзакции. Один provider, связанные TOKEN/USDG/vault, явно заданные unlocked signers.
+До state и чтений через runners проверяется, что каждый executor/publisher имеет тот же
+provider object и методы getAddress/estimateGas/sendTransaction. Переданные router,
+Short и Monthly должны иметь runner=provider либо runner.provider=provider. Даже второй
+provider того же chainId не принимается: один объект — явный контракт локального API.
+Это проверка wiring доверенных runners, не attestation произвольного JavaScript wrapper.
 Призовой worker сохраняет изоляцию definite recipient failures, scheduler — независимость
 Short/Monthly при definite rejection. Error/abort заканчивает общий проход. Неизвестная
 отправка блокирует оба контура, включая последующие запуски.
@@ -39,6 +44,13 @@ coordinator. Самостоятельные workers продолжают раб�
    автоматического resume нет. Пустой mempool/равные nonce не доказывают, что tx не было.
    Требуется отдельная диагностика; команды force-clear/retry в этом шаге нет.
 
+Успешное сохранение prepared intent — **commit point текущей попытки отправки**.
+Если проверка signal перед сохранением замечает abort, marker и send не создаются.
+После успешного сохранения abort допускает одну уже подготовленную
+отправку; её hash сохраняется, ожидание и последующие операции останавливаются.
+Если процесс/RPC откажет после commit point, marker остаётся для reconciliation — это
+не обещание, что отправка обязательно состоится. Durable cancel prepared intent не добавлен.
+
 State использует существующую checksum/config-binding + atomic replacement + lock
 реализацию `withState`; envelope остаётся `local-scheduler-state-v1`, внутри config
 идентифицирует `local-coordinator-v1`. Jobs этого envelope пусты; реальные draw jobs
@@ -59,7 +71,12 @@ State использует существующую checksum/config-binding + at
   не даёт production finality. Reorg после разрешения receipt остаётся отдельной границей.
 - Project gas budget/autorefill, live DEX/price guard, real RNG не входят в этот шаг.
 
-Проверки: `node --test --test-concurrency=1 test/local-coordinator.test.cjs` — **7/7**, fail 0,
+После provider-binding fix: coordinator + transaction classifier — **20/20**, fail 0,
+~151 s; 9 integration и 11 classifier checks. Включены неверные/missing providers у всех
+signers/contracts и abort сразу после сохранения prepared intent с restart. Полный 249
+в этом шаге не запускался. Команда — в CURRENT_CONTEXT.
+
+Предыдущие проверки: `node --test --test-concurrency=1 test/local-coordinator.test.cjs` — **7/7**, fail 0,
 144 s, 20.09.2026. Реальная локальная цепь, shared signer, оба pending пути, abort,
 hashless restart, known refusal, lock, CLI и corrupt/config-mismatched state.
 Первый общий прогон выявил optional `undefined` в metadata: checksum учитывал поле,

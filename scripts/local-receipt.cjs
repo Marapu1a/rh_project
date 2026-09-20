@@ -35,6 +35,8 @@ async function sendLocalTransaction(method,args,overrides,options={}){
   try{
     const gasLimit=await method.estimateGas(...args,overrides);
     if(options.signal?.aborted){const e=new Error('Stopped before broadcast');e.code='LOCAL_EXECUTION_STOPPED';throw e;}
+    // A successful before hook commits the attempt: do not leave a prepared marker by
+    // cancelling between persistence and broadcast. Later abort stops wait/subsequent sends.
     if(boundary)await boundary.before(await method.populateTransaction(...args,{...overrides,gasLimit}),method.fragment.name);
     stage='broadcast';tx=await method(...args,{...overrides,gasLimit});
     if(boundary)await boundary.sent(tx);

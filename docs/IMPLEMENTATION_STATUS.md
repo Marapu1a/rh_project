@@ -54,3 +54,6 @@ Review 20.09: [открытые custody/execution дефекты и исправ
 20.09: [самопроверка и переносимость](LOCAL_REVIEW_AND_PORTABILITY.md) — открытые границы
 ops funding, state/config и production integration. Не новый полный аудит/прогон тестов.
 `npm run local:coordinator -- ...` / `npm run test:local:coordinator` — общий локальный контур.
+
+После review f222a8c: coordinator заранее проверяет provider у всех signers и переданных
+контрактов; successful prepared-intent persistence — явный abort commit point.
