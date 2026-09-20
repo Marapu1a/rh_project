@@ -42,6 +42,10 @@ Monthly выполняет только jackpot cycle; старые credits и �
 
 ## 2. Общая схема
 
+Технические ограничения переносимости и актуальный план для независимых deployments:
+[самопроверка и network profiles](LOCAL_REVIEW_AND_PORTABILITY.md). Этот план не меняет
+номинал призов, custody или правила уже существующего deployment.
+
 ```mermaid
 flowchart TD
     Trade[Торговля TOKEN] --> Fees[Creator revenue: TOKEN и USDG]

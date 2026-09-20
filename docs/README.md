@@ -32,7 +32,8 @@
 Новый этап обновляет контекст/план и документ модуля. Не создаём ещё одну «актуальную
 спецификацию» с датой в имени. Примеры чисел и старые результаты имеют статус исследования.
 
-Текущая контрольная проверка: [слабые места локальных workers](LOCAL_STABILIZATION_REVIEW.md).
+Текущая контрольная проверка: [самопроверка и переносимость](LOCAL_REVIEW_AND_PORTABILITY.md).
+Предыдущая проверка отдельных workers: [ограничения](LOCAL_STABILIZATION_REVIEW.md).
 
 Доход и призовые резервы: [локальный USDG funding](LOCAL_USDG_FUNDING.md).
 
@@ -40,11 +41,11 @@
 
 Источник комиссий и распределение дохода: [локальный USDG revenue pass](LOCAL_USDG_REVENUE.md).
 
-Последняя проверка связок: [automation review 20.09](AUTOMATION_REVIEW_2026-09-20.md).
+Предыдущая проверка связок: [automation review 20.09](AUTOMATION_REVIEW_2026-09-20.md).
 
 - [Текущая PAIR fee policy: V1/V2](PAIR_CURRENT_FEE_POLICY.md) — внешние правила и граница применимости.
 
-- [Local Prize Converter](LOCAL_PRIZE_CONVERTER.md) — контрактный TOKEN → USDG proof, ещё без worker.
+- [Local Prize Converter](LOCAL_PRIZE_CONVERTER.md) — локальный TOKEN → USDG; подключён к prize-flow worker.
 
 - [Local Prize Flow](LOCAL_PRIZE_FLOW.md) — автоматический collect/harvest/pay/convert/forward и legacy debt.
 

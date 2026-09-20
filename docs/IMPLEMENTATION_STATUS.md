@@ -45,8 +45,12 @@ Review 20.09: [открытые custody/execution дефекты и исправ
 
 20.09: recipient isolation в funding/revenue и explicit estimate/broadcast/confirm; детали — [LOCAL_USDG_REVENUE](LOCAL_USDG_REVENUE.md). Контрактная математика не менялась.
 
-20.09: [LocalPrizeConverter](LOCAL_PRIZE_CONVERTER.md) — shared inventory и immutable destination, только локальный fixed adapter/floor. Funding job ещё не интегрирован.
+20.09: [LocalPrizeConverter](LOCAL_PRIZE_CONVERTER.md) — shared inventory и immutable destination, только локальный fixed adapter/floor. Интегрирован через отдельный prize-flow job; старый USDG-only funding job converter не обслуживает.
 
 20.09: [Local Prize Flow](LOCAL_PRIZE_FLOW.md), scripts/local-prize-flow.cjs — отдельный job/CLI для converter и bounded legacy recipients; старый USDG API сохранён.
 
 20.09: error context отделён от lastConfirmed; draw workers/closeEmpty используют общий tx classifier, scheduler глобально останавливается на unknown outcome. Подробнее LOCAL_PRIZE_FLOW и LOCAL_PROMO_SCHEDULER.
+
+20.09: [самопроверка и переносимость](LOCAL_REVIEW_AND_PORTABILITY.md) — открытые границы
+ops funding, state/config и production integration. Не новый полный аудит/прогон тестов.
+`npm run local:coordinator -- ...` / `npm run test:local:coordinator` — общий локальный контур.
