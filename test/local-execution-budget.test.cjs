@@ -38,3 +38,40 @@ test('unsupported profiles, thresholds beyond ceiling and duplicate liabilities 
   assert.throws(()=>evaluateBudget(opsProfile(),{balances:{[a]:'0'},obligations:[obligation('same'),obligation('same')]}),/Duplicate/);
   assert.throws(()=>evaluateBudget(opsProfile(),{balances:{[a]:'0'},obligations:[],extra:{payer:a,gasLimit:'-1'}}),/Invalid gas units/);
 });
+const {checkExecutionBudget}=require('../scripts/local-execution-budget.cjs');
+const {ethers}=require('ethers');
+function budgetFixture({frozen=true,left=1}={}){
+  const id=ethers.id('pending'),head={number:1,hash:ethers.id('head'),gasLimit:30000000n};
+  const provider={getBlock:async()=>head,getBalance:async()=>10n**24n,
+    call:async()=>ethers.AbiCoder.defaultAbiCoder().encode(['uint256'],[1])};
+  const short={target:b,pendingDatasetDraw:async()=>frozen?id:ethers.ZeroHash,
+    settlements:async()=>({proposalId:id,nextChunk:1}),datasetChunkCount:async()=>1+left,
+    activeProposal:async()=>ethers.ZeroHash,interface:{parseTransaction:()=>({args:[id,{drawId:id,expectedCount:2}]})},
+    randomProvider:async()=>c,nativeFloor:async()=>0};
+  const monthly={target:c,pendingMonth:async()=>ethers.ZeroHash};
+  const signer={getAddress:async()=>a};
+  return {ops:opsProfile(),provider,short,monthly,publisher:signer,executor:signer,prizeExecutor:signer,chunkSize:1,
+    request:{to:b,type:2,maxPriorityFeePerGas:0n,maxFeePerGas:1000000000n,gasLimit:1000000n,data:'0x'},
+    action:frozen?'processShort':'begin',worker:'draw'};
+}
+test('unrelated oversized convert does not block begin or frozen completion',async()=>{
+  for(const frozen of [false,true]){
+    const f=budgetFixture({frozen});f.ops.network.gasUnits.convert='30000001';
+    const r=await checkExecutionBudget(f);assert.equal(r.ready,true);assert.equal(r.obligations.length,1);
+  }
+});
+for(const action of ['processShort','finishShort'])test('required oversized '+action+' blocks frozen draw',async()=>{
+  const f=budgetFixture();f.ops.network.gasUnits[action]='30000001';
+  assert.equal((await checkExecutionBudget(f)).reason,'blockGasBound');
+});
+test('completed processing is not a remaining block-limit obligation',async()=>{
+  const f=budgetFixture({left:0});f.action='finishShort';f.ops.network.gasUnits.processShort='30000001';
+  assert.equal((await checkExecutionBudget(f)).ready,true);
+});
+test('optional current action is checked alongside frozen liabilities',async()=>{
+  const f=budgetFixture();f.worker='prize';f.action='convert';f.request.to=a;
+  f.ops.network.gasUnits.convert='30000001';
+  assert.equal((await checkExecutionBudget(f)).reason,'blockGasBound');
+  f.ops.network.gasUnits.convert='3000000';f.ops.network.gasUnits.finishShort='30000001';
+  assert.equal((await checkExecutionBudget(f)).reason,'blockGasBound');
+});

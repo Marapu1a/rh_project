@@ -115,3 +115,23 @@ node --test --test-concurrency=1 test/local-execution-budget.test.cjs test/local
 ```
 
 Полный набор не запускался. Сокращённый запуск: `npm run test:local:budget`.
+
+## Исправление block limit, 2026-09-21
+
+Лимит блока проверяется только для текущего action и ненулевых remaining actions
+в учитываемых obligations. Завышенный чужой convert/pay не останавливает draw.
+Завершённые process chunks не создают block-limit обязательства; будущий finish
+проверяется даже до начала processing. Optional action учитывает также все frozen draws.
+Это не ослабляет native forecast и не сбрасывает сохранённые gasObservations.
+
+## Результат проверки фикса
+
+Проверка 21.09.2026: **39/39**, 0 failures, 518 s:
+
+```powershell
+node --test --test-concurrency=1 test/local-execution-budget.test.cjs test/local-coordinator.test.cjs test/local-scheduler.test.cjs
+```
+
+Полный набор не запускался. Scheduler 10/10; intermittent lock не воспроизведён.
+Отдельный локальный probe: 500 циклов overlap rejection / release / exception / reacquire,
+без оставшегося lock. Причина наблюдения GPT не установлена, lock implementation не менялась.

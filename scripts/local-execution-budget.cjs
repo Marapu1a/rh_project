@@ -54,7 +54,6 @@ async function checkExecutionBudget({ops,provider,short,monthly,publisher,execut
   if(BigInt(request.maxFeePerGas)>BigInt(ops.settings.maxGasPrice))return wait('gasPrice');
   check(ACTIONS.includes(action),'Unbudgeted action');
   if(BigInt(request.gasLimit)>BigInt(n.gasUnits[action]))return wait('actionGasBound');
-  if(ACTIONS.some(a=>BigInt(n.gasUnits[a])>head.gasLimit))return wait('blockGasBound');
   const roles={publisher:publisher?await publisher.getAddress():undefined,executor:await executor.getAddress()};
   const obligations=[];let currentIncluded=false;
   const isShort=request.to.toLowerCase()===short.target.toLowerCase(),isMonth=request.to.toLowerCase()===monthly.target.toLowerCase();
@@ -96,6 +95,9 @@ async function checkExecutionBudget({ops,provider,short,monthly,publisher,execut
   // the first frozen draw against the same remaining signer balance before admission.
   const payer=worker==='prize'?await prizeExecutor.getAddress():PUBLISHER.has(action)?roles.publisher:roles.executor;
   const extra=currentIncluded?undefined:{payer,gasLimit:String(request.gasLimit)};
+  const requiredActions=new Set([action]);
+  for(const o of obligations)for(const [method,count] of Object.entries(o.counts))if(count)requiredActions.add(method);
+  if([...requiredActions].some(a=>BigInt(n.gasUnits[a])>head.gasLimit))return wait('blockGasBound');
   const accounts=new Set([address(payer)]);
   for(const o of obligations){for(const [method,count] of Object.entries(o.counts))if(count)accounts.add(address(PUBLISHER.has(method)?o.publisher:o.executor));if(o.rng)accounts.add(address(o.rng.controller));}
   const balances={};for(const who of accounts)balances[who]=String(await provider.getBalance(who,head.number));

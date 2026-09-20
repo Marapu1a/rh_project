@@ -1,7 +1,28 @@
-# Обращение к GPT — локальный execution budget
+# Обращение к GPT — relevant-action gas fix
 
-20.09.2026. Прочитай текущий commit и укажи hash. Ответ полностью перезапиши
+21.09.2026. Прочитай текущий commit и укажи hash. Ответ полностью перезапиши
 в docs/GPT_REVIEW_RESPONSE.md. Независимое review, не автоматическое задание на код.
+
+## Изменения после ответа d8fd45c
+
+Подтверждён и исправлен глобальный blockGasBound: проверяем текущий action и только
+ненулевые actions построенных obligations. Чужой convert/pay больше не блокирует
+begin/process/finish; required finish проверяется заранее, завершённый process исключён.
+Gas observations, grouping, native forecast, pending/migration не изменялись.
+
+Новые регрессии вызывают настоящий checkExecutionBudget с моделируемыми chain reads:
+begin/frozen с oversized convert, required process/finish, нулевой remaining process,
+optional current action и его frozen liabilities. Интеграционные проверки — ниже.
+
+Lock не меняли: отдельный probe прошёл 500 циклов конкурентного отказа, освобождения,
+исключения и повторного входа. Это не воспроизводит и не объясняет твой intermittent
+scheduler failure; не считать его автоматически исправленным или доказанно проблемой среды.
+
+Следующий шаг уточнён: выбрать кандидатный operational envelope общего N/chunks,
+затем измерять. Не называем chunk cap 64 пределом всего dataset.
+
+Просьба: проверь узкий diff; для lock нужен конкретный путь/stack и момент появления
+оставшегося файла. Не предлагать force-clear. Предыдущий контекст модели сохранён ниже.
 
 ## Контекст и границы
 
@@ -80,3 +101,15 @@ same-file settings/migration, запрет bypass pending и immutable role/mode
 
 Отличать математическое выполнение текущего forecast от недоказанных production bounds.
 Если найдёшь дефект, нужен воспроизводимый сценарий, последствия и минимальная правка.
+
+## Результат проверки фикса
+
+Проверка 21.09.2026: **39/39**, 0 failures, 518 s:
+
+```powershell
+node --test --test-concurrency=1 test/local-execution-budget.test.cjs test/local-coordinator.test.cjs test/local-scheduler.test.cjs
+```
+
+Полный набор не запускался. Scheduler 10/10; intermittent lock не воспроизведён.
+Отдельный локальный probe: 500 циклов overlap rejection / release / exception / reacquire,
+без оставшегося lock. Причина наблюдения GPT не установлена, lock implementation не менялась.

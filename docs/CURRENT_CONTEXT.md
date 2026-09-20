@@ -1,6 +1,6 @@
 # Текущий контекст
 
-Обновлено 20.09.2026 после локального execution-budget пакета.
+Обновлено 21.09.2026 после исправления relevant-action block limit.
 
 ## Где находимся
 
@@ -18,6 +18,12 @@
 
 ## Последний результат и проверки
 
+Исправлена глобальная зависимость от gas bound неиспользуемых методов: лимит блока
+проверяется для текущего действия и ненулевых remaining obligations. Чужой convert
+больше не блокирует завершение Short. 39/39 targeted tests (518 s): budget, coordinator, scheduler. Полный набор не запускался.
+Scheduler 10/10; lock failure не повторился, причина остаётся открытой. Дополнительный
+probe прошёл 500 циклов overlap/release/exception/reacquire; lock code не менялся.
+
 [Execution budget](LOCAL_EXECUTION_BUDGET.md): opt-in `--ops FILE` для coordinator.
 Считаются remaining process/finish всех frozen draws и текущая подготовка/кандидат;
 RNG funding отдельно. Один native balance на адрес, buffer без дублирования ролей.
@@ -30,7 +36,7 @@ threshold. Переход со старого state проверяется по 
 policy snapshot незавершённой отправки сохраняется. Без ops — unbudgetedLegacy режим.
 Пример: [local profile](examples/local-execution-budget.json).
 
-Проверка 2026-09-20: 50/50 targeted tests, 0 failures (554 s): budget, coordinator,
+Предыдущая проверка 2026-09-20: 50/50 targeted tests, 0 failures (554 s): budget, coordinator,
 transaction classifier, scheduler и executor stability. Полный набор не запускался.
 Solidity и призовая математика не менялись.
 
