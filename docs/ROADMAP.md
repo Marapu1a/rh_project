@@ -29,22 +29,25 @@ permissionless seal. Начальная калибровка ещё не док�
 Нельзя объявлять физическое завершение гарантированным по результатам fixture-тестов.
 Призовые средства не оплачивают эксплуатацию. Creator shares не утверждены.
 
-Ближайший следующий пакет: выбрать кандидатный эксплуатационный диапазон общего числа
-участников/chunks (сейчас общего cap нет; 64 — размер одного chunk), затем проверить прогноз
-на верхней границе этого диапазона и по prize counts, на общей нагрузке Short+Monthly, повышении actual gas/RNG fee и восстановлении.
-Сопоставить reserve с измеренным gas и явно отделить модельный потолок от реальной оценки.
-После этого проектировать перевод bootstrap/свободной доли проекта в native buffer,
-лимиты пополнения и отказные сценарии. Реальный swap/native refill — самостоятельная работа.
+[Первая калибровка](LOCAL_EXECUTION_CALIBRATION.md) выполнена для N100/1k/10k,
+chunks64, normal10/admitted64 и двух seed. Отдельные Short/Monthly на N1k; бюджет
+на границе и 34 clean CLI handoffs при фиксированных 2 gwei. Это sampled envelope,
+не общий MAX_N и не доказательство worst-case. Пример calibrated profile отдельный.
+
+Следующий пакет: ограниченный дизайн native funding/refill из bootstrap/свободной доли
+проекта: кто владеет buffer, target/low-watermark, лимит пополнения, повтор/отказ,
+дорогой gas. Не объединять это сразу с реальным DEX adapter и production RNG.
+Измерения новых rules/реальных adapters и enforcement диапазона остаются открытыми.
 
 Finish/назначение награды и permissionless claim различаются: coordinator не отправляет
 claims за победителей. Кто финансирует их gas — отдельная UX/ops политика.
 
 ## 3. Укрепить обычную эксплуатацию
 
-Intermittent scheduler lock из review пока не воспроизведён (21.09: scheduler 10/10
-и 500 локальных lock cycles). Добавлены trace по runId/PID и pre/post CLI assertions; повтор CLI+helper 5/5,
-27 захватов и 27 освобождений. При повторении собрать путь/stack/владельца; force-clear
-не добавлять. Relevant-action block-limit bug исправлен и покрыт регрессиями.
+Прежний intermittent handoff finding отозван без нового trace evidence. Диагностика
+по runId/PID и CLI assertions сохранена. Подтверждённый PID-write/close initialization
+cleanup исправлен, fault tests проверяют освобождение своего lock/fd и отказ чужому.
+Relevant-action block-limit bug также исправлен и покрыт регрессиями.
 
 Fault tests: storage errors до/после broadcast и receipt, abrupt process death,
 receipt-read outage, mined revert через coordinator. Затем ограниченный recovery design

@@ -62,3 +62,7 @@ ops funding, state/config и production integration. Не новый полны�
 
 После review f222a8c: coordinator заранее проверяет provider у всех signers и переданных
 контрактов; successful prepared-intent persistence — явный abort commit point.
+
+21.09: lock initialization cleanup и fault tests; `npm run report:execution:calibration`
+измеряет реальные локальные контроллеры, отдельный calibration child проверяет clean
+process handoff на chunks. [Границы и результаты](LOCAL_EXECUTION_CALIBRATION.md).

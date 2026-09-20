@@ -23,3 +23,15 @@ test('action rejection releases lock before caller observes failure',async t=>{
  const file=location(t);await assert.rejects(()=>withState(file,{},async()=>{await Promise.resolve();throw Error('action failure');}),/action failure/);
  assert.equal(inspectLock(file+'.lock').exists,false);
 });
+for(const operation of ['writeFileSync','closeSync'])test('PID initialization '+operation+' failure releases owned fd and lock before rejection',async t=>{
+ const file=location(t),original=fs[operation];let captured,failed=false,entered=false;
+ fs[operation]=function(target,...args){
+  if(typeof target==='number'&&!failed){failed=true;captured=target;throw Object.assign(Error('injected PID '+operation),{code:'EIO'});}
+  return original.call(this,target,...args);
+ };
+ try{await assert.rejects(()=>withState(file,{},async()=>{entered=true;}),e=>e.code==='EIO');}
+ finally{fs[operation]=original;}
+ assert(failed);assert.equal(entered,false);assert.equal(inspectLock(file+'.lock').exists,false);
+ assert.throws(()=>fs.fstatSync(captured),e=>e.code==='EBADF');
+ await withState(file,{},async()=>{});
+});

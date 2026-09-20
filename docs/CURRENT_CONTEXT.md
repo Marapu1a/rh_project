@@ -1,6 +1,6 @@
 # Текущий контекст
 
-Обновлено 21.09.2026 после диагностики scheduler/CLI lock.
+Обновлено 21.09.2026 после lock cleanup и gas calibration.
 
 ## Где находимся
 
@@ -18,40 +18,29 @@
 
 ## Последний результат и проверки
 
-Добавлена opt-in lock trace (`LOCAL_STATE_LOCK_TRACE=1`) и bounded metadata при EEXIST.
-CLI-тесты проверяют отсутствие lock на границе parent/child. Lifecycle/recovery не менялись;
-не считать intermittent failure исправленным. Детали — [coordinator](LOCAL_PROMO_COORDINATOR.md).
+Lock initialization cleanup исправлен: write/close failure до action освобождает свой
+fd/lock, чужой lock сохраняется. Диагностический trace оставлен. Прежнее подозрение на
+успешный await с оставшимся lock не подтверждено и отозвано review.
 
+[Калибровка](LOCAL_EXECUTION_CALIBRATION.md): синтетические 100/1 000/10 000 участников,
+chunks64, 10/64 места, два seed, Short/Monthly совместно и отдельно при 1 000.
+Плоские 3M недостаточны для некоторых stress64 operations; измеренный пример профиля
+отделён от старого state. Это sampled envelope, не contract cap и не worst-case proof.
 
-Исправлена глобальная зависимость от gas bound неиспользуемых методов: лимит блока
-проверяется для текущего действия и ненулевых remaining obligations. Чужой convert
-больше не блокирует завершение Short. 39/39 targeted tests (518 s): budget, coordinator, scheduler. Полный набор не запускался.
-Scheduler 10/10; lock failure не повторился, причина остаётся открытой. Дополнительный
-probe прошёл 500 циклов overlap/release/exception/reacquire; lock code не менялся.
+Boundary 1 000 / stress64: один бюджет не покрывает два draw; low estimate требует topup.
+32 process + 2 finish выполнены отдельными CLI children с восстановлением state/progress,
+при 2 gwei и точной сверке native delta с receipts. Это clean restart, не crash recovery.
 
-[Execution budget](LOCAL_EXECUTION_BUDGET.md): opt-in `--ops FILE` для coordinator.
-Считаются remaining process/finish всех frozen draws и текущая подготовка/кандидат;
-RNG funding отдельно. Один native balance на адрес, buffer без дублирования ролей.
-Дорогой gas/нехватка средств дают waiting до intent. Draw-first/frozen-first защищает
-completion forecast от необязательного collect. Более высокие estimates повышают
-сохраняемые gasObservations и не блокируют навсегда работу по старой калибровке.
-
-Network/deployment identity и именные signer roles отделены от polling/timeout/gas
-threshold. Переход со старого state проверяется по точному hash и запрещён при pending;
-policy snapshot незавершённой отправки сохраняется. Без ops — unbudgetedLegacy режим.
-Пример: [local profile](examples/local-execution-budget.json).
-
-Предыдущая проверка 2026-09-20: 50/50 targeted tests, 0 failures (554 s): budget, coordinator,
-transaction classifier, scheduler и executor stability. Полный набор не запускался.
-Solidity и призовая математика не менялись.
+Targeted tests 21.09: 37/37 (424 s), state lock / budget / coordinator / local controllers.
+Полный npm test не запускался. Solidity и продуктовая математика не менялись.
 
 ## Ближайший кусок
 
-Калибровка модели на предельных допустимых chunks/participants/prizes и общей нагрузке
-Short/Monthly; сопоставить оценку и измеренный gas, проверить рост расходов после freeze.
-Затем отдельный дизайн native funding/refill из bootstrap/свободной доли проекта.
-Сейчас модель проверяет баланс, но не покупает native и не оплачивает claims за победителей.
-Полный порядок — [ROADMAP](ROADMAP.md).
+На основе измерений спроектировать ограниченный local native funding/refill из bootstrap
+и свободной доли проекта: источник, целевой запас, пороги, лимиты и expensive-gas wait.
+Не тратить frozen/claimable. Реальный swap/RNG и production fee models отдельно.
+Измеренные rules/data/seed не гарантируют любой будущий gas; эксплуатационный диапазон
+не enforced контрактом. Полный порядок — [ROADMAP](ROADMAP.md).
 
 ## Основные ограничения
 
@@ -76,10 +65,3 @@ proxy, reroll/reset или подмены random. Immutable destination стар
 [Продуктовые решения](PRODUCT_SPEC.md), [карта реализации](IMPLEMENTATION_STATUS.md),
 [исторический снимок статусов](archive/snapshots/PROJECT_PROGRESS_BEFORE_REVIEW_2026-09-20.md).
 Ответ GPT — вспомогательное мнение, не автоматическое задание.
-
-## Результат lock диагностики
-
-Проверки 21.09.2026: первый targeted CLI run 2/2 (107 s); повтор с обеими
-процессными трассами и helper tests 5/5. В повторной трассе 27 acquired / 27 released,
-10 PID, 0 releaseError, 0 оставшихся путей после release. Все pre/post handoff assertions
-прошли. Полный набор не запускался; intermittent failure не воспроизведён и не закрыт.

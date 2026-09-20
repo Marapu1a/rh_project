@@ -52,3 +52,5 @@
 - [Local Promo Coordinator](LOCAL_PROMO_COORDINATOR.md) — совместный запуск денежного и draw-контуров, pending marker и restart.
 
 - [Local Execution Budget](LOCAL_EXECUTION_BUDGET.md) — native forecast, приоритет frozen draws, network profile и ops settings.
+
+- [Execution Gas Calibration](LOCAL_EXECUTION_CALIBRATION.md) — измерения 100/1 000/10 000 участников, профиль и проверка бюджета.

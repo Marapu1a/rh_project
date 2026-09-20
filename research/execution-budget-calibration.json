@@ -1,0 +1,1739 @@
+{
+  "schema": "local-execution-calibration-evidence-v1",
+  "environment": {
+    "chainId": 31337,
+    "hardfork": "cancun",
+    "solc": "0.8.37+commit.f401782d.Emscripten.clang",
+    "optimizerRuns": 200
+  },
+  "scope": "Synthetic participants; two sampled seeds, chunk64, N100/1000/10000. Not a proof of worst-case gas or production throughput. Excludes BUY/indexer, deployments, claims, keeper overhead and real RNG/extra L2 fee. Gas price rows are assumptions, not live prices.",
+  "sourceHashes": {
+    "contracts/ShortSettlement.sol": "0x91dd6a535c7af2811113c1d98bc416e2aef1fd29e0fc0764f91c762a6fd73f5f",
+    "contracts/MonthlySettlement.sol": "0x68cb50e06697317f2fc86151df9eb6158552e796a9b527f0a82860b410341f8a",
+    "contracts/ShortOutcome.sol": "0x7f14ed1ac920113c4908259324568fa63875cf699c43a1f9aa4cef24a21a0d17",
+    "contracts/ShortDatasetPreparation.sol": "0x1530894f5cf8c13e9dfccd434174f97b66d847c41d007d632043cad271295d8f",
+    "contracts/LocalShortController.sol": "0xa7e40251c9d099d56d0440d04f33ac23d70e608e0e35c6374ed167430b7697a4",
+    "contracts/LocalMonthlyController.sol": "0x8ecb56e0c5f04df8a1a8e15522836d7abc5250d2fa06157638109da0c02ab5af",
+    "contracts/DualControllerPromoVault.sol": "0xe2f6400d5c32b377610a91639b0c849e97d5864c1b84da34b610987194fbea6e",
+    "contracts/PromoVault.sol": "0x4812f468eeaa8b59f496178b667a5e21b4ce9bcbaa1a07448aba16a791aa02ce",
+    "test/contracts/LocalRandomFixture.sol": "0x3d7139ab02062365ea63b8cf7eeaf1071b3ecabe979d2be7930c7184b61d84d8",
+    "test/fixtures/local-controllers.cjs": "0x245cf00b51970a222e301dd0a988eeaed6a6a4f3a20cb770ca5b7c1ab9d33935",
+    "hardhat.config.cjs": "0xda9022671a615d15c759e660577687ff47d0e4278bf86b0df29bbfc0ab1daf80"
+  },
+  "actions": {
+    "begin": {
+      "maxEstimate": "2034140",
+      "maxGasUsed": "2026226",
+      "maxCalldataBytes": 356,
+      "minBlockGasLimit": "60000000",
+      "samples": 7
+    },
+    "publish": {
+      "maxEstimate": "441043",
+      "maxGasUsed": "435935",
+      "maxCalldataBytes": 6244,
+      "minBlockGasLimit": "60000000",
+      "samples": 366
+    },
+    "beginMonth": {
+      "maxEstimate": "298785",
+      "maxGasUsed": "293624",
+      "maxCalldataBytes": 292,
+      "minBlockGasLimit": "60000000",
+      "samples": 7
+    },
+    "publishMonth": {
+      "maxEstimate": "440336",
+      "maxGasUsed": "435236",
+      "maxCalldataBytes": 6244,
+      "minBlockGasLimit": "60000000",
+      "samples": 366
+    },
+    "seal": {
+      "maxEstimate": "534613",
+      "maxGasUsed": "498582",
+      "maxCalldataBytes": 36,
+      "minBlockGasLimit": "60000000",
+      "samples": 7
+    },
+    "sealMonth": {
+      "maxEstimate": "532707",
+      "maxGasUsed": "496804",
+      "maxCalldataBytes": 36,
+      "minBlockGasLimit": "60000000",
+      "samples": 7
+    },
+    "deliver": {
+      "maxEstimate": "94002",
+      "maxGasUsed": "87826",
+      "maxCalldataBytes": 68,
+      "minBlockGasLimit": "60000000",
+      "samples": 28
+    },
+    "processShort": {
+      "maxEstimate": "4238740",
+      "maxGasUsed": "4205882",
+      "maxCalldataBytes": 6276,
+      "minBlockGasLimit": "60000000",
+      "samples": 732
+    },
+    "processMonth": {
+      "maxEstimate": "450172",
+      "maxGasUsed": "444958",
+      "maxCalldataBytes": 6276,
+      "minBlockGasLimit": "60000000",
+      "samples": 732
+    },
+    "finishShort": {
+      "maxEstimate": "3148332",
+      "maxGasUsed": "3129992",
+      "maxCalldataBytes": 36,
+      "minBlockGasLimit": "60000000",
+      "samples": 14
+    },
+    "finishMonth": {
+      "maxEstimate": "266565",
+      "maxGasUsed": "243717",
+      "maxCalldataBytes": 36,
+      "minBlockGasLimit": "60000000",
+      "samples": 14
+    }
+  },
+  "cases": [
+    {
+      "n": 100,
+      "profile": "normal10",
+      "mode": "BOTH",
+      "chunkSize": 64,
+      "chunks": 2,
+      "weights": [
+        7,
+        5,
+        4,
+        3,
+        2,
+        2,
+        1,
+        1,
+        1,
+        1
+      ],
+      "rules": {
+        "version": 1,
+        "pNumerator": 2,
+        "pDenominator": 5,
+        "hNumerator": 1,
+        "hDenominator": 1
+      },
+      "addresses": {
+        "publisher": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+        "executor": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+        "short": "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9",
+        "monthly": "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707"
+      },
+      "actions": {
+        "begin": {
+          "count": 1,
+          "maxEstimate": "657992",
+          "maxGasUsed": "652892",
+          "maxCalldataBytes": 356,
+          "gasTotal": "652892",
+          "nativeTotal": "82333074932616"
+        },
+        "publish": {
+          "count": 2,
+          "maxEstimate": "439489",
+          "maxGasUsed": "434399",
+          "maxCalldataBytes": 6244,
+          "gasTotal": "685415",
+          "nativeTotal": "72442551909977"
+        },
+        "beginMonth": {
+          "count": 1,
+          "maxEstimate": "298749",
+          "maxGasUsed": "293588",
+          "maxCalldataBytes": 292,
+          "gasTotal": "293588",
+          "nativeTotal": "24960876421392"
+        },
+        "publishMonth": {
+          "count": 2,
+          "maxEstimate": "438782",
+          "maxGasUsed": "433700",
+          "maxCalldataBytes": 6244,
+          "gasTotal": "681874",
+          "nativeTotal": "48519675150872"
+        },
+        "seal": {
+          "count": 1,
+          "maxEstimate": "534613",
+          "maxGasUsed": "498582",
+          "maxCalldataBytes": 36,
+          "gasTotal": "498582",
+          "nativeTotal": "28529750014542"
+        },
+        "sealMonth": {
+          "count": 1,
+          "maxEstimate": "498745",
+          "maxGasUsed": "462604",
+          "maxCalldataBytes": 36,
+          "gasTotal": "462604",
+          "nativeTotal": "23217138557532"
+        },
+        "deliver": {
+          "count": 4,
+          "maxEstimate": "94002",
+          "maxGasUsed": "87826",
+          "maxCalldataBytes": 68,
+          "gasTotal": "310476",
+          "nativeTotal": "12812636636958"
+        },
+        "processShort": {
+          "count": 4,
+          "maxEstimate": "958373",
+          "maxGasUsed": "952791",
+          "maxCalldataBytes": 6276,
+          "gasTotal": "2729362",
+          "nativeTotal": "85564844092502"
+        },
+        "processMonth": {
+          "count": 4,
+          "maxEstimate": "409229",
+          "maxGasUsed": "403710",
+          "maxCalldataBytes": 6276,
+          "gasTotal": "1223748",
+          "nativeTotal": "33413207286204"
+        },
+        "finishShort": {
+          "count": 2,
+          "maxEstimate": "604316",
+          "maxGasUsed": "591606",
+          "maxCalldataBytes": 36,
+          "gasTotal": "1176304",
+          "nativeTotal": "23471084023470"
+        },
+        "finishMonth": {
+          "count": 2,
+          "maxEstimate": "249544",
+          "maxGasUsed": "221817",
+          "maxCalldataBytes": 36,
+          "gasTotal": "443634",
+          "nativeTotal": "7767142741098"
+        }
+      },
+      "prepareAndFreezeGas": "3274955",
+      "results": [
+        {
+          "seed": "0x0000000000000000000000000000000000000000000000000000000000000000",
+          "gas": "2929648",
+          "outcomes": [
+            {
+              "kind": "SHORT",
+              "admitted": "31",
+              "winners": 10
+            },
+            {
+              "kind": "MONTHLY",
+              "admitted": "33",
+              "winners": 1
+            }
+          ]
+        },
+        {
+          "seed": "0x45c711ad0e491ab079f00c75c6f6257d999f50a7415d702dde7e6caa0b4030d5",
+          "gas": "2953876",
+          "outcomes": [
+            {
+              "kind": "SHORT",
+              "admitted": "24",
+              "winners": 10
+            },
+            {
+              "kind": "MONTHLY",
+              "admitted": "35",
+              "winners": 1
+            }
+          ]
+        }
+      ],
+      "variants": [
+        {
+          "seedIndex": 0,
+          "executionGas": "6069649",
+          "fixtureDeliveryGas": "134954",
+          "executionNativeActual": "355357038497264",
+          "modelNativeAt1Gwei": "6069649000000000",
+          "modelNativeAt2Gwei": "12139298000000000",
+          "controllerRngFee": "2"
+        },
+        {
+          "seedIndex": 1,
+          "executionGas": "6053309",
+          "fixtureDeliveryGas": "175522",
+          "executionNativeActual": "354865373619872",
+          "modelNativeAt1Gwei": "6053309000000000",
+          "modelNativeAt2Gwei": "12106618000000000",
+          "controllerRngFee": "2"
+        }
+      ]
+    },
+    {
+      "n": 100,
+      "profile": "admitted64",
+      "mode": "BOTH",
+      "chunkSize": 64,
+      "chunks": 2,
+      "weights": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "rules": {
+        "version": 1,
+        "pNumerator": 4294967294,
+        "pDenominator": 4294967295,
+        "hNumerator": 1,
+        "hDenominator": 4294967295
+      },
+      "addresses": {
+        "publisher": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+        "executor": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+        "short": "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9",
+        "monthly": "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707"
+      },
+      "actions": {
+        "begin": {
+          "count": 1,
+          "maxEstimate": "2034104",
+          "maxGasUsed": "2026190",
+          "maxCalldataBytes": 356,
+          "gasTotal": "2026190",
+          "nativeTotal": "257012258985670"
+        },
+        "publish": {
+          "count": 2,
+          "maxEstimate": "441043",
+          "maxGasUsed": "435935",
+          "maxCalldataBytes": 6244,
+          "gasTotal": "687815",
+          "nativeTotal": "73599832932435"
+        },
+        "beginMonth": {
+          "count": 1,
+          "maxEstimate": "298749",
+          "maxGasUsed": "293588",
+          "maxCalldataBytes": 292,
+          "gasTotal": "293588",
+          "nativeTotal": "25271298170136"
+        },
+        "publishMonth": {
+          "count": 2,
+          "maxEstimate": "440324",
+          "maxGasUsed": "435224",
+          "maxCalldataBytes": 6244,
+          "gasTotal": "684250",
+          "nativeTotal": "49294489774770"
+        },
+        "sealMonth": {
+          "count": 1,
+          "maxEstimate": "532694",
+          "maxGasUsed": "496792",
+          "maxCalldataBytes": 36,
+          "gasTotal": "496792",
+          "nativeTotal": "28781179522688"
+        },
+        "seal": {
+          "count": 1,
+          "maxEstimate": "500661",
+          "maxGasUsed": "464382",
+          "maxCalldataBytes": 36,
+          "gasTotal": "464382",
+          "nativeTotal": "23596284063096"
+        },
+        "deliver": {
+          "count": 4,
+          "maxEstimate": "94002",
+          "maxGasUsed": "87826",
+          "maxCalldataBytes": 68,
+          "gasTotal": "310476",
+          "nativeTotal": "12972124433490"
+        },
+        "processMonth": {
+          "count": 4,
+          "maxEstimate": "450172",
+          "maxGasUsed": "444958",
+          "maxCalldataBytes": 6276,
+          "gasTotal": "1350703",
+          "nativeTotal": "42689305067023"
+        },
+        "processShort": {
+          "count": 4,
+          "maxEstimate": "4203589",
+          "maxGasUsed": "4171004",
+          "maxCalldataBytes": 6276,
+          "gasTotal": "11297153",
+          "nativeTotal": "318787360177855"
+        },
+        "finishMonth": {
+          "count": 2,
+          "maxEstimate": "266552",
+          "maxGasUsed": "243705",
+          "maxCalldataBytes": 36,
+          "gasTotal": "487410",
+          "nativeTotal": "10050355207200"
+        },
+        "finishShort": {
+          "count": 2,
+          "maxEstimate": "3148332",
+          "maxGasUsed": "3129992",
+          "maxCalldataBytes": 36,
+          "gasTotal": "6141424",
+          "nativeTotal": "110935248418984"
+        }
+      },
+      "prepareAndFreezeGas": "4653017",
+      "results": [
+        {
+          "seed": "0x0000000000000000000000000000000000000000000000000000000000000000",
+          "gas": "9690533",
+          "outcomes": [
+            {
+              "kind": "MONTHLY",
+              "admitted": "100",
+              "winners": 1
+            },
+            {
+              "kind": "SHORT",
+              "admitted": "100",
+              "winners": 64
+            }
+          ]
+        },
+        {
+          "seed": "0x45c711ad0e491ab079f00c75c6f6257d999f50a7415d702dde7e6caa0b4030d5",
+          "gas": "9896633",
+          "outcomes": [
+            {
+              "kind": "MONTHLY",
+              "admitted": "100",
+              "winners": 1
+            },
+            {
+              "kind": "SHORT",
+              "admitted": "100",
+              "winners": 64
+            }
+          ]
+        }
+      ],
+      "variants": [
+        {
+          "seedIndex": 0,
+          "executionGas": "14208596",
+          "fixtureDeliveryGas": "134954",
+          "executionNativeActual": "697096779143844",
+          "modelNativeAt1Gwei": "14208596000000000",
+          "modelNativeAt2Gwei": "28417192000000000",
+          "controllerRngFee": "2"
+        },
+        {
+          "seedIndex": 1,
+          "executionGas": "14374128",
+          "fixtureDeliveryGas": "175522",
+          "executionNativeActual": "700476176624808",
+          "modelNativeAt1Gwei": "14374128000000000",
+          "modelNativeAt2Gwei": "28748256000000000",
+          "controllerRngFee": "2"
+        }
+      ]
+    },
+    {
+      "n": 1000,
+      "profile": "normal10",
+      "mode": "BOTH",
+      "chunkSize": 64,
+      "chunks": 16,
+      "weights": [
+        7,
+        5,
+        4,
+        3,
+        2,
+        2,
+        1,
+        1,
+        1,
+        1
+      ],
+      "rules": {
+        "version": 1,
+        "pNumerator": 2,
+        "pDenominator": 5,
+        "hNumerator": 1,
+        "hDenominator": 1
+      },
+      "addresses": {
+        "publisher": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+        "executor": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+        "short": "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9",
+        "monthly": "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707"
+      },
+      "actions": {
+        "begin": {
+          "count": 1,
+          "maxEstimate": "658016",
+          "maxGasUsed": "652916",
+          "maxCalldataBytes": 356,
+          "gasTotal": "652916",
+          "nativeTotal": "82336101457368"
+        },
+        "publish": {
+          "count": 16,
+          "maxEstimate": "439489",
+          "maxGasUsed": "434399",
+          "maxCalldataBytes": 6244,
+          "gasTotal": "5837012",
+          "nativeTotal": "294827375786677"
+        },
+        "beginMonth": {
+          "count": 1,
+          "maxEstimate": "298761",
+          "maxGasUsed": "293600",
+          "maxCalldataBytes": 292,
+          "gasTotal": "293600",
+          "nativeTotal": "3944891514400"
+        },
+        "publishMonth": {
+          "count": 16,
+          "maxEstimate": "438782",
+          "maxGasUsed": "433700",
+          "maxCalldataBytes": 6244,
+          "gasTotal": "5823661",
+          "nativeTotal": "31297149640548"
+        },
+        "seal": {
+          "count": 1,
+          "maxEstimate": "534613",
+          "maxGasUsed": "498582",
+          "maxCalldataBytes": 36,
+          "gasTotal": "498582",
+          "nativeTotal": "712514063142"
+        },
+        "sealMonth": {
+          "count": 1,
+          "maxEstimate": "498745",
+          "maxGasUsed": "462604",
+          "maxCalldataBytes": 36,
+          "gasTotal": "462604",
+          "nativeTotal": "579834792660"
+        },
+        "deliver": {
+          "count": 4,
+          "maxEstimate": "94002",
+          "maxGasUsed": "87826",
+          "maxCalldataBytes": 68,
+          "gasTotal": "310476",
+          "nativeTotal": "319988614368"
+        },
+        "processShort": {
+          "count": 32,
+          "maxEstimate": "963664",
+          "maxGasUsed": "958051",
+          "maxCalldataBytes": 6276,
+          "gasTotal": "17338789",
+          "nativeTotal": "4559582879826"
+        },
+        "processMonth": {
+          "count": 32,
+          "maxEstimate": "409556",
+          "maxGasUsed": "404032",
+          "maxCalldataBytes": 6276,
+          "gasTotal": "10076385",
+          "nativeTotal": "2116490642277"
+        },
+        "finishShort": {
+          "count": 2,
+          "maxEstimate": "607402",
+          "maxGasUsed": "594626",
+          "maxCalldataBytes": 36,
+          "gasTotal": "1180724",
+          "nativeTotal": "14800366812"
+        },
+        "finishMonth": {
+          "count": 2,
+          "maxEstimate": "249544",
+          "maxGasUsed": "221817",
+          "maxCalldataBytes": 36,
+          "gasTotal": "443634",
+          "nativeTotal": "4879752183"
+        }
+      },
+      "prepareAndFreezeGas": "13568375",
+      "results": [
+        {
+          "seed": "0x0000000000000000000000000000000000000000000000000000000000000000",
+          "gas": "14687314",
+          "outcomes": [
+            {
+              "kind": "SHORT",
+              "admitted": "349",
+              "winners": 10
+            },
+            {
+              "kind": "MONTHLY",
+              "admitted": "345",
+              "winners": 1
+            }
+          ]
+        },
+        {
+          "seed": "0x45c711ad0e491ab079f00c75c6f6257d999f50a7415d702dde7e6caa0b4030d5",
+          "gas": "14662694",
+          "outcomes": [
+            {
+              "kind": "SHORT",
+              "admitted": "334",
+              "winners": 10
+            },
+            {
+              "kind": "MONTHLY",
+              "admitted": "342",
+              "winners": 1
+            }
+          ]
+        }
+      ],
+      "variants": [
+        {
+          "seedIndex": 0,
+          "executionGas": "28120735",
+          "fixtureDeliveryGas": "134954",
+          "executionNativeActual": "417053835990398",
+          "modelNativeAt1Gwei": "28120735000000000",
+          "modelNativeAt2Gwei": "56241470000000000",
+          "controllerRngFee": "2"
+        },
+        {
+          "seedIndex": 1,
+          "executionGas": "28055547",
+          "fixtureDeliveryGas": "175522",
+          "executionNativeActual": "417037652160290",
+          "modelNativeAt1Gwei": "28055547000000000",
+          "modelNativeAt2Gwei": "56111094000000000",
+          "controllerRngFee": "2"
+        }
+      ]
+    },
+    {
+      "boundary": {
+        "executionGas": "41825829",
+        "fixedGasPrice": "2000000000",
+        "nativeSpent": "83651658000000000",
+        "singleDrawNative": "194522092500000000",
+        "bothDrawsNative": "215056147500000000",
+        "lowForecastNative": "100085000000000",
+        "oneCannotFundBoth": true,
+        "lowEstimateWaitAndTopup": true,
+        "invocations": 34,
+        "remainingNative": "131404489500000000",
+        "restartScope": "fresh CLI child for every process/finish; persisted estimates, chain-read progress; clean exits only",
+        "childPids": [
+          22448,
+          324,
+          20668,
+          20220,
+          22124,
+          13652,
+          22492,
+          9148,
+          16468,
+          21004,
+          4800,
+          15044,
+          8432,
+          6900,
+          2012,
+          14196,
+          17028,
+          3080,
+          9796,
+          23504,
+          16992,
+          17404,
+          20628,
+          14844,
+          15292,
+          19356,
+          18924,
+          8136,
+          16080,
+          6836,
+          23288,
+          13232,
+          23336,
+          18272
+        ]
+      },
+      "n": 1000,
+      "profile": "admitted64",
+      "mode": "BOTH",
+      "chunkSize": 64,
+      "chunks": 16,
+      "weights": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "rules": {
+        "version": 1,
+        "pNumerator": 4294967294,
+        "pDenominator": 4294967295,
+        "hNumerator": 1,
+        "hDenominator": 4294967295
+      },
+      "addresses": {
+        "publisher": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+        "executor": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+        "short": "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9",
+        "monthly": "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707"
+      },
+      "actions": {
+        "begin": {
+          "count": 1,
+          "maxEstimate": "2034116",
+          "maxGasUsed": "2026202",
+          "maxCalldataBytes": 356,
+          "gasTotal": "2026202",
+          "nativeTotal": "257013781126786"
+        },
+        "publish": {
+          "count": 16,
+          "maxEstimate": "441043",
+          "maxGasUsed": "435935",
+          "maxCalldataBytes": 6244,
+          "gasTotal": "5861012",
+          "nativeTotal": "299717013977429"
+        },
+        "beginMonth": {
+          "count": 1,
+          "maxEstimate": "298761",
+          "maxGasUsed": "293600",
+          "maxCalldataBytes": 292,
+          "gasTotal": "293600",
+          "nativeTotal": "3994361059200"
+        },
+        "publishMonth": {
+          "count": 16,
+          "maxEstimate": "440336",
+          "maxGasUsed": "435236",
+          "maxCalldataBytes": 6244,
+          "gasTotal": "5847661",
+          "nativeTotal": "31820089751584"
+        },
+        "sealMonth": {
+          "count": 1,
+          "maxEstimate": "532707",
+          "maxGasUsed": "496804",
+          "maxCalldataBytes": 36,
+          "gasTotal": "496804",
+          "nativeTotal": "718958354268"
+        },
+        "seal": {
+          "count": 1,
+          "maxEstimate": "500661",
+          "maxGasUsed": "464382",
+          "maxCalldataBytes": 36,
+          "gasTotal": "464382",
+          "nativeTotal": "589424747994"
+        },
+        "deliver": {
+          "count": 4,
+          "maxEstimate": "94002",
+          "maxGasUsed": "87826",
+          "maxCalldataBytes": 68,
+          "gasTotal": "310476",
+          "nativeTotal": "324038160900"
+        },
+        "processMonth": {
+          "count": 32,
+          "maxEstimate": "450022",
+          "maxGasUsed": "444809",
+          "maxCalldataBytes": 6276,
+          "gasTotal": "11307594",
+          "nativeTotal": "2806858252615"
+        },
+        "processShort": {
+          "count": 32,
+          "maxEstimate": "4230873",
+          "maxGasUsed": "4198076",
+          "maxCalldataBytes": 6276,
+          "gasTotal": "64918997",
+          "nativeTotal": "16158486686877"
+        },
+        "finishMonth": {
+          "count": 2,
+          "maxEstimate": "266565",
+          "maxGasUsed": "243717",
+          "maxCalldataBytes": 36,
+          "gasTotal": "487434",
+          "nativeTotal": "6943741047"
+        },
+        "finishShort": {
+          "count": 2,
+          "maxEstimate": "3004964",
+          "maxGasUsed": "2987460",
+          "maxCalldataBytes": 36,
+          "gasTotal": "5901080",
+          "nativeTotal": "73646290640"
+        }
+      },
+      "prepareAndFreezeGas": "14989661",
+      "results": [
+        {
+          "seed": "0x0000000000000000000000000000000000000000000000000000000000000000",
+          "gas": "41245688",
+          "outcomes": [
+            {
+              "kind": "MONTHLY",
+              "admitted": "1000",
+              "winners": 1
+            },
+            {
+              "kind": "SHORT",
+              "admitted": "1000",
+              "winners": 64
+            }
+          ]
+        },
+        {
+          "seed": "0x45c711ad0e491ab079f00c75c6f6257d999f50a7415d702dde7e6caa0b4030d5",
+          "gas": "41679893",
+          "outcomes": [
+            {
+              "kind": "MONTHLY",
+              "admitted": "1000",
+              "winners": 1
+            },
+            {
+              "kind": "SHORT",
+              "admitted": "1000",
+              "winners": 64
+            }
+          ]
+        }
+      ],
+      "variants": [
+        {
+          "seedIndex": 0,
+          "executionGas": "56100395",
+          "fixtureDeliveryGas": "134954",
+          "executionNativeActual": "603370888113651",
+          "modelNativeAt1Gwei": "56100395000000000",
+          "modelNativeAt2Gwei": "112200790000000000",
+          "controllerRngFee": "2"
+        },
+        {
+          "seedIndex": 1,
+          "executionGas": "56494032",
+          "fixtureDeliveryGas": "175522",
+          "executionNativeActual": "603382304892050",
+          "modelNativeAt1Gwei": "56494032000000000",
+          "modelNativeAt2Gwei": "112988064000000000",
+          "controllerRngFee": "2"
+        }
+      ]
+    },
+    {
+      "n": 10000,
+      "profile": "normal10",
+      "mode": "BOTH",
+      "chunkSize": 64,
+      "chunks": 157,
+      "weights": [
+        7,
+        5,
+        4,
+        3,
+        2,
+        2,
+        1,
+        1,
+        1,
+        1
+      ],
+      "rules": {
+        "version": 1,
+        "pNumerator": 2,
+        "pDenominator": 5,
+        "hNumerator": 1,
+        "hDenominator": 1
+      },
+      "addresses": {
+        "publisher": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+        "executor": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+        "short": "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9",
+        "monthly": "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707"
+      },
+      "actions": {
+        "begin": {
+          "count": 1,
+          "maxEstimate": "658029",
+          "maxGasUsed": "652928",
+          "maxCalldataBytes": 356,
+          "gasTotal": "652928",
+          "nativeTotal": "82337614719744"
+        },
+        "publish": {
+          "count": 157,
+          "maxEstimate": "439489",
+          "maxGasUsed": "434399",
+          "maxCalldataBytes": 6244,
+          "gasTotal": "57445324",
+          "nativeTotal": "336256615121488"
+        },
+        "beginMonth": {
+          "count": 1,
+          "maxEstimate": "298761",
+          "maxGasUsed": "293600",
+          "maxCalldataBytes": 292,
+          "gasTotal": "293600",
+          "nativeTotal": "2348800"
+        },
+        "publishMonth": {
+          "count": 157,
+          "maxEstimate": "438782",
+          "maxGasUsed": "433700",
+          "maxCalldataBytes": 6244,
+          "gasTotal": "57333558",
+          "nativeTotal": "458668464"
+        },
+        "seal": {
+          "count": 1,
+          "maxEstimate": "534613",
+          "maxGasUsed": "498582",
+          "maxCalldataBytes": 36,
+          "gasTotal": "498582",
+          "nativeTotal": "3988656"
+        },
+        "sealMonth": {
+          "count": 1,
+          "maxEstimate": "498745",
+          "maxGasUsed": "462604",
+          "maxCalldataBytes": 36,
+          "gasTotal": "462604",
+          "nativeTotal": "3700832"
+        },
+        "deliver": {
+          "count": 4,
+          "maxEstimate": "94002",
+          "maxGasUsed": "87826",
+          "maxCalldataBytes": 68,
+          "gasTotal": "310476",
+          "nativeTotal": "2483808"
+        },
+        "processShort": {
+          "count": 314,
+          "maxEstimate": "967643",
+          "maxGasUsed": "962007",
+          "maxCalldataBytes": 6276,
+          "gasTotal": "159504944",
+          "nativeTotal": "1276039552"
+        },
+        "processMonth": {
+          "count": 314,
+          "maxEstimate": "414951",
+          "maxGasUsed": "409354",
+          "maxCalldataBytes": 6276,
+          "gasTotal": "98428562",
+          "nativeTotal": "787428496"
+        },
+        "finishShort": {
+          "count": 2,
+          "maxEstimate": "601763",
+          "maxGasUsed": "589106",
+          "maxCalldataBytes": 36,
+          "gasTotal": "1175436",
+          "nativeTotal": "9403488"
+        },
+        "finishMonth": {
+          "count": 2,
+          "maxEstimate": "249544",
+          "maxGasUsed": "221817",
+          "maxCalldataBytes": 36,
+          "gasTotal": "443634",
+          "nativeTotal": "3549072"
+        }
+      },
+      "prepareAndFreezeGas": "116686596",
+      "results": [
+        {
+          "seed": "0x0000000000000000000000000000000000000000000000000000000000000000",
+          "gas": "129809133",
+          "outcomes": [
+            {
+              "kind": "SHORT",
+              "admitted": "3457",
+              "winners": 10
+            },
+            {
+              "kind": "MONTHLY",
+              "admitted": "3378",
+              "winners": 1
+            }
+          ]
+        },
+        {
+          "seed": "0x45c711ad0e491ab079f00c75c6f6257d999f50a7415d702dde7e6caa0b4030d5",
+          "gas": "130053919",
+          "outcomes": [
+            {
+              "kind": "SHORT",
+              "admitted": "3546",
+              "winners": 10
+            },
+            {
+              "kind": "MONTHLY",
+              "admitted": "3459",
+              "winners": 1
+            }
+          ]
+        }
+      ],
+      "variants": [
+        {
+          "seedIndex": 0,
+          "executionGas": "246360775",
+          "fixtureDeliveryGas": "134954",
+          "executionNativeActual": "418595735941416",
+          "modelNativeAt1Gwei": "246360775000000000",
+          "modelNativeAt2Gwei": "492721550000000000",
+          "controllerRngFee": "2"
+        },
+        {
+          "seedIndex": 1,
+          "executionGas": "246564993",
+          "fixtureDeliveryGas": "175522",
+          "executionNativeActual": "418595737575160",
+          "modelNativeAt1Gwei": "246564993000000000",
+          "modelNativeAt2Gwei": "493129986000000000",
+          "controllerRngFee": "2"
+        }
+      ]
+    },
+    {
+      "n": 10000,
+      "profile": "admitted64",
+      "mode": "BOTH",
+      "chunkSize": 64,
+      "chunks": 157,
+      "weights": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "rules": {
+        "version": 1,
+        "pNumerator": 4294967294,
+        "pDenominator": 4294967295,
+        "hNumerator": 1,
+        "hDenominator": 4294967295
+      },
+      "addresses": {
+        "publisher": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+        "executor": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+        "short": "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9",
+        "monthly": "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707"
+      },
+      "actions": {
+        "begin": {
+          "count": 1,
+          "maxEstimate": "2034140",
+          "maxGasUsed": "2026226",
+          "maxCalldataBytes": 356,
+          "gasTotal": "2026226",
+          "nativeTotal": "257016825409018"
+        },
+        "publish": {
+          "count": 157,
+          "maxEstimate": "441043",
+          "maxGasUsed": "435935",
+          "maxCalldataBytes": 6244,
+          "gasTotal": "57685324",
+          "nativeTotal": "341846292256075"
+        },
+        "beginMonth": {
+          "count": 1,
+          "maxEstimate": "298785",
+          "maxGasUsed": "293624",
+          "maxCalldataBytes": 292,
+          "gasTotal": "293624",
+          "nativeTotal": "2348992"
+        },
+        "publishMonth": {
+          "count": 157,
+          "maxEstimate": "440336",
+          "maxGasUsed": "435236",
+          "maxCalldataBytes": 6244,
+          "gasTotal": "57573558",
+          "nativeTotal": "460588464"
+        },
+        "sealMonth": {
+          "count": 1,
+          "maxEstimate": "532707",
+          "maxGasUsed": "496804",
+          "maxCalldataBytes": 36,
+          "gasTotal": "496804",
+          "nativeTotal": "3974432"
+        },
+        "seal": {
+          "count": 1,
+          "maxEstimate": "500661",
+          "maxGasUsed": "464382",
+          "maxCalldataBytes": 36,
+          "gasTotal": "464382",
+          "nativeTotal": "3715056"
+        },
+        "deliver": {
+          "count": 4,
+          "maxEstimate": "94002",
+          "maxGasUsed": "87826",
+          "maxCalldataBytes": 68,
+          "gasTotal": "310476",
+          "nativeTotal": "2483808"
+        },
+        "processMonth": {
+          "count": 314,
+          "maxEstimate": "449858",
+          "maxGasUsed": "444648",
+          "maxCalldataBytes": 6276,
+          "gasTotal": "110959945",
+          "nativeTotal": "887679560"
+        },
+        "processShort": {
+          "count": 314,
+          "maxEstimate": "4238740",
+          "maxGasUsed": "4205882",
+          "maxCalldataBytes": 6276,
+          "gasTotal": "562243903",
+          "nativeTotal": "4497951224"
+        },
+        "finishMonth": {
+          "count": 2,
+          "maxEstimate": "266565",
+          "maxGasUsed": "243717",
+          "maxCalldataBytes": 36,
+          "gasTotal": "487434",
+          "nativeTotal": "3899472"
+        },
+        "finishShort": {
+          "count": 2,
+          "maxEstimate": "3003455",
+          "maxGasUsed": "2985960",
+          "maxCalldataBytes": 36,
+          "gasTotal": "5923696",
+          "nativeTotal": "47389568"
+        }
+      },
+      "prepareAndFreezeGas": "118539918",
+      "results": [
+        {
+          "seed": "0x0000000000000000000000000000000000000000000000000000000000000000",
+          "gas": "337823746",
+          "outcomes": [
+            {
+              "kind": "MONTHLY",
+              "admitted": "10000",
+              "winners": 1
+            },
+            {
+              "kind": "SHORT",
+              "admitted": "10000",
+              "winners": 64
+            }
+          ]
+        },
+        {
+          "seed": "0x45c711ad0e491ab079f00c75c6f6257d999f50a7415d702dde7e6caa0b4030d5",
+          "gas": "342101708",
+          "outcomes": [
+            {
+              "kind": "MONTHLY",
+              "admitted": "10000",
+              "winners": 1
+            },
+            {
+              "kind": "SHORT",
+              "admitted": "10000",
+              "winners": 64
+            }
+          ]
+        }
+      ],
+      "variants": [
+        {
+          "seedIndex": 0,
+          "executionGas": "456228710",
+          "fixtureDeliveryGas": "134954",
+          "executionNativeActual": "598866289802373",
+          "modelNativeAt1Gwei": "456228710000000000",
+          "modelNativeAt2Gwei": "912457420000000000",
+          "controllerRngFee": "2"
+        },
+        {
+          "seedIndex": 1,
+          "executionGas": "460466104",
+          "fixtureDeliveryGas": "175522",
+          "executionNativeActual": "598866323701525",
+          "modelNativeAt1Gwei": "460466104000000000",
+          "modelNativeAt2Gwei": "920932208000000000",
+          "controllerRngFee": "2"
+        }
+      ]
+    },
+    {
+      "n": 1000,
+      "profile": "admitted64",
+      "mode": "SHORT",
+      "chunkSize": 64,
+      "chunks": 16,
+      "weights": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "rules": {
+        "version": 1,
+        "pNumerator": 4294967294,
+        "pDenominator": 4294967295,
+        "hNumerator": 1,
+        "hDenominator": 4294967295
+      },
+      "addresses": {
+        "publisher": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+        "executor": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+        "short": "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9",
+        "monthly": "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707"
+      },
+      "actions": {
+        "begin": {
+          "count": 1,
+          "maxEstimate": "2034116",
+          "maxGasUsed": "2026202",
+          "maxCalldataBytes": 356,
+          "gasTotal": "2026202",
+          "nativeTotal": "257013781126786"
+        },
+        "publish": {
+          "count": 16,
+          "maxEstimate": "441031",
+          "maxGasUsed": "435923",
+          "maxCalldataBytes": 6244,
+          "gasTotal": "5860820",
+          "nativeTotal": "299707363353979"
+        },
+        "seal": {
+          "count": 1,
+          "maxEstimate": "534600",
+          "maxGasUsed": "498570",
+          "maxCalldataBytes": 36,
+          "gasTotal": "498570",
+          "nativeTotal": "6782925193200"
+        },
+        "deliver": {
+          "count": 2,
+          "maxEstimate": "93863",
+          "maxGasUsed": "87696",
+          "maxCalldataBytes": 68,
+          "gasTotal": "155108",
+          "nativeTotal": "1850815042224"
+        },
+        "processShort": {
+          "count": 32,
+          "maxEstimate": "4154374",
+          "maxGasUsed": "4122170",
+          "maxCalldataBytes": 6276,
+          "gasTotal": "64807104",
+          "nativeTotal": "344691161371426"
+        },
+        "finishShort": {
+          "count": 2,
+          "maxEstimate": "2996399",
+          "maxGasUsed": "2978944",
+          "maxCalldataBytes": 36,
+          "gasTotal": "5893204",
+          "nativeTotal": "8473107106048"
+        }
+      },
+      "prepareAndFreezeGas": "8385592",
+      "results": [
+        {
+          "seed": "0x0000000000000000000000000000000000000000000000000000000000000000",
+          "gas": "35570236",
+          "outcomes": [
+            {
+              "kind": "SHORT",
+              "admitted": "1000",
+              "winners": 64
+            }
+          ]
+        },
+        {
+          "seed": "0x45c711ad0e491ab079f00c75c6f6257d999f50a7415d702dde7e6caa0b4030d5",
+          "gas": "35285180",
+          "outcomes": [
+            {
+              "kind": "SHORT",
+              "admitted": "1000",
+              "winners": 64
+            }
+          ]
+        }
+      ],
+      "variants": [
+        {
+          "seedIndex": 0,
+          "executionGas": "43888416",
+          "fixtureDeliveryGas": "67412",
+          "executionNativeActual": "739834347306269",
+          "modelNativeAt1Gwei": "43888416000000000",
+          "modelNativeAt2Gwei": "87776832000000000",
+          "controllerRngFee": "1"
+        },
+        {
+          "seedIndex": 1,
+          "executionGas": "43583076",
+          "fixtureDeliveryGas": "87696",
+          "executionNativeActual": "740338060519135",
+          "modelNativeAt1Gwei": "43583076000000000",
+          "modelNativeAt2Gwei": "87166152000000000",
+          "controllerRngFee": "1"
+        }
+      ]
+    },
+    {
+      "n": 1000,
+      "profile": "admitted64",
+      "mode": "MONTHLY",
+      "chunkSize": 64,
+      "chunks": 16,
+      "weights": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "rules": {
+        "version": 1,
+        "pNumerator": 4294967294,
+        "pDenominator": 4294967295,
+        "hNumerator": 1,
+        "hDenominator": 4294967295
+      },
+      "addresses": {
+        "publisher": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+        "executor": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+        "short": "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9",
+        "monthly": "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707"
+      },
+      "actions": {
+        "beginMonth": {
+          "count": 1,
+          "maxEstimate": "298773",
+          "maxGasUsed": "293612",
+          "maxCalldataBytes": 292,
+          "gasTotal": "293612",
+          "nativeTotal": "37243241445916"
+        },
+        "publishMonth": {
+          "count": 16,
+          "maxEstimate": "440336",
+          "maxGasUsed": "435236",
+          "maxCalldataBytes": 6244,
+          "gasTotal": "5847661",
+          "nativeTotal": "296676841020148"
+        },
+        "sealMonth": {
+          "count": 1,
+          "maxEstimate": "532707",
+          "maxGasUsed": "496804",
+          "maxCalldataBytes": 36,
+          "gasTotal": "496804",
+          "nativeTotal": "6703249190176"
+        },
+        "deliver": {
+          "count": 2,
+          "maxEstimate": "94002",
+          "maxGasUsed": "87826",
+          "maxCalldataBytes": 68,
+          "gasTotal": "155368",
+          "nativeTotal": "1838637652176"
+        },
+        "processMonth": {
+          "count": 32,
+          "maxEstimate": "450022",
+          "maxGasUsed": "444809",
+          "maxCalldataBytes": 6276,
+          "gasTotal": "11344981",
+          "nativeTotal": "54006372936302"
+        },
+        "finishMonth": {
+          "count": 2,
+          "maxEstimate": "265982",
+          "maxGasUsed": "238917",
+          "maxCalldataBytes": 36,
+          "gasTotal": "477834",
+          "nativeTotal": "600387191901"
+        }
+      },
+      "prepareAndFreezeGas": "6638077",
+      "results": [
+        {
+          "seed": "0x0000000000000000000000000000000000000000000000000000000000000000",
+          "gas": "5982320",
+          "outcomes": [
+            {
+              "kind": "MONTHLY",
+              "admitted": "1000",
+              "winners": 1
+            }
+          ]
+        },
+        {
+          "seed": "0x45c711ad0e491ab079f00c75c6f6257d999f50a7415d702dde7e6caa0b4030d5",
+          "gas": "5995863",
+          "outcomes": [
+            {
+              "kind": "MONTHLY",
+              "admitted": "1000",
+              "winners": 1
+            }
+          ]
+        }
+      ],
+      "variants": [
+        {
+          "seedIndex": 0,
+          "executionGas": "12552855",
+          "fixtureDeliveryGas": "67542",
+          "executionNativeActual": "367955739890262",
+          "modelNativeAt1Gwei": "12552855000000000",
+          "modelNativeAt2Gwei": "25105710000000000",
+          "controllerRngFee": "1"
+        },
+        {
+          "seedIndex": 1,
+          "executionGas": "12546114",
+          "fixtureDeliveryGas": "87826",
+          "executionNativeActual": "367897683550421",
+          "modelNativeAt1Gwei": "12546114000000000",
+          "modelNativeAt2Gwei": "25092228000000000",
+          "controllerRngFee": "1"
+        }
+      ]
+    }
+  ]
+}

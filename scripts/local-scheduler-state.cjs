@@ -22,7 +22,6 @@ async function withState(file,config,action,{legacyConfigs=[]}={}){
   catch(e){if(e.code==='EEXIST'){const detail=inspectLock(lock);traceLock('conflict',runId,lock,{detail});
     throw Object.assign(Error('Scheduler state locked; another process or stale lock: '+JSON.stringify(detail)),{lock:detail});}throw e;}
   traceLock('acquired',runId,lock);
-  fs.writeFileSync(fd,String(process.pid));fs.closeSync(fd);
   const save=state=>{
     try{
     const payload={...state};delete payload.checksum;
@@ -34,6 +33,7 @@ async function withState(file,config,action,{legacyConfigs=[]}={}){
     }catch(e){e.code='SCHEDULER_STORAGE_ERROR';throw e;}
   };
   try{
+    fs.writeFileSync(fd,String(process.pid));fs.closeSync(fd);fd=undefined;
     let state={schema:'local-scheduler-state-v1',configHash:hash(config),jobs:{SHORT:[],MONTHLY:[]}};
     if(fs.existsSync(file)){
       const {checksum,...stored}=JSON.parse(fs.readFileSync(file,'utf8'));
@@ -50,7 +50,11 @@ async function withState(file,config,action,{legacyConfigs=[]}={}){
     return await action(state,save);
   }finally{
     traceLock('release',runId,lock);
-    try{fs.unlinkSync(lock);if(process.env.LOCAL_STATE_LOCK_TRACE==='1')traceLock('released',runId,lock,{remaining:inspectLock(lock)});}
+    try{
+      try{if(fd!==undefined)fs.closeSync(fd);}
+      finally{fs.unlinkSync(lock);}
+      if(process.env.LOCAL_STATE_LOCK_TRACE==='1')traceLock('released',runId,lock,{remaining:inspectLock(lock)});
+    }
     catch(e){traceLock('releaseError',runId,lock,{code:e.code});throw e;}
   }
 }

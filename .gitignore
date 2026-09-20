@@ -37,6 +37,7 @@ research/*
 !research/controller-size/
 !research/controller-size/**
 !research/execution-economics.json
+!research/execution-budget-calibration.json
 !research/short-scaling-rpc.json
 !research/short-economy-report.json
 !research/pair-dependency-audit-2026-09-15.json

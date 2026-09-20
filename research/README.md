@@ -52,3 +52,7 @@ fixture, local gas/size и Robinhood state-override RPC evidence. `npm run test:
 `short-sweep.json` генерируется локально и не включён в Git. Команда воспроизведения, допущения и итоговые таблицы — в [SHORT_SWEEP_RESULTS](../docs/archive/studies/SHORT_SWEEP_RESULTS.md).
 
 `pair-dependency-audit-2026-09-15.json` — read-only snapshot chain 4663, pinned block, bytecode/storage/getters и HTTP readiness. Границы доказательств: [PAIR audit](../docs/archive/studies/PAIR_DEPENDENCY_AUDIT_2026-09-15.md).
+
+`execution-budget-calibration.json` — компактные локальные gas measurements для Short/Monthly,
+не production bound. Сырые transactions остаются в `.local/logs`, команды и ограничения —
+[Execution Calibration](../docs/LOCAL_EXECUTION_CALIBRATION.md).

@@ -135,3 +135,10 @@ node --test --test-concurrency=1 test/local-execution-budget.test.cjs test/local
 Полный набор не запускался. Scheduler 10/10; intermittent lock не воспроизведён.
 Отдельный локальный probe: 500 циклов overlap rejection / release / exception / reacquire,
 без оставшегося lock. Причина наблюдения GPT не установлена, lock implementation не менялась.
+
+## Измеренный диапазон
+
+[Калибровка](LOCAL_EXECUTION_CALIBRATION.md) проверяет до 10 000 участников, chunks64,
+10/64 мест и два seed. Старый плоский bound 3M недостаточен для некоторых stress64
+process/finish. Новый example — отдельный локальный профиль для нового state; immutable
+identity старого state не меняется. Измерения не доказывают worst-case всех данных/rules.
