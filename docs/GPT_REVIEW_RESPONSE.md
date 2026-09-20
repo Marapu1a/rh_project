@@ -5,165 +5,167 @@
 Это независимое review-мнение, не задание на автоматическое исполнение. При следующем
 обращении файл следует полностью перезаписать.
 
-Просмотрен commit `c618afc0d1765b675aa0d5c3b4c714f9a86c5c2d` —
-`Review local execution boundaries and clarify portable deployment roadmap`.
-Runtime coordinator взят из `571c068`; в `c618afc` менялись документы, а не код.
+Просмотрен commit `78e2a62dd005a7b90f158bf6c64952b035631da8` —
+`Add local execution budget gates and network profiles`. Также проверен входящий в него
+предыдущий fix `bd43d2a` по provider bindings и abort commit point.
 
 ## Короткий вердикт
 
-Основная transaction/restart модель coordinator сделана правильно для заявленного
-локального scope. Durable marker ставится после успешного estimate и до broadcast; hash
-дописывается после ответа RPC; unknown outcome оставляет marker и не разрешает draw после
-prize либо новый pass после restart. Confirmed receipt исходной tx снимает marker, после
-чего workers восстанавливаются из on-chain state и сохранённых draw jobs. Повторной выплаты,
-swap, forward, freeze или begin в проверенных сценариях я не получил.
+Для заявленного локального scope основная математика forecast собрана последовательно:
+оставшийся current action не прибавляется второй раз, RNG для frozen draw повторно не
+считается, balances и signer buffer группируются по фактическому адресу, а optional
+prize-flow проходит только поверх прогноза всех frozen Short/Monthly. Новая классификация
+`LOCAL_BUDGET_WAIT` не открывает путь через unknown marker. Миграция и policy snapshot
+также выглядят fail-closed.
 
-Есть один узкий preflight-дефект, который стоит закрыть до наращивания gas-budget модели:
-coordinator проверяет общий `prize.provider === scheduler.provider`, но не проверяет, что
-все publisher/executor runners действительно привязаны к этому provider. Поэтому прямой
-API допускает split-brain: preflight/read/reconciliation идут через provider A, а estimate,
-broadcast и receipt wait подключённого signer могут идти через provider B.
+Нашёл один воспроизводимый liveness-дефект в проверке block gas limit. Сейчас любой
+`gasUnits` из всего профиля, даже для неиспользуемого метода, может остановить все budgeted
+операции. Например, завышенный `convert` блокирует `begin`, `processShort` и `finishShort`.
+После попадания такого значения в монотонные `gasObservations` это способно навсегда
+остановить уже frozen draw на данном state, хотя нужные ему транзакции помещаются в блок.
 
-Pending marker не даёт после этого продолжить отправки, то есть это не найденный double
-spend. Но неверный runner успевает дойти до broadcast вместо отказа до первой записи. Для
-компонента, заявляющего один shared provider, это настоящая недостающая binding-проверка.
+Это не найденный перерасход native и не double admission; это общий starvation из-за
+нерелевантного action bound. До калибровки и native refill стоит сначала сузить эту
+проверку и закрепить её регрессиями.
 
-После её узкого исправления блокеров перед отдельным project gas budget я не вижу.
+## Finding: нерелевантный gas bound блокирует всю очередь
 
-## Что подтверждено по pending/restart
+В `checkExecutionBudget` до построения obligations выполняется:
 
-Граница `before → sent → confirmed` расположена разумно:
+```js
+if(ACTIONS.some(a=>BigInt(n.gasUnits[a])>head.gasLimit))
+  return wait('blockGasBound');
+```
 
-- estimate failure не создаёт marker и не считается возможной отправкой;
-- marker с intent/target/calldata сохраняется до вызова broadcast;
-- outage/crash во время broadcast оставляет hashless marker и запрещает retry;
-- полученный hash/from/nonce сохраняется до receipt;
-- success либо status 0 именно исходной tx переводит intent в `lastResolved`;
-- timeout, abort после send, receipt outage, replacement и чужой receipt marker не снимают;
-- неизвестность в prize-flow не допускает draw, неизвестность в draw не допускает
-  следующий coordinator tick.
+Минимальное воспроизведение не требует on-chain draw: профиль валиден, лимит блока равен
+30 000 000, текущий `begin` запрашивает 1 000 000, но у неиспользуемого `convert` стоит
+30 000 001. Результат проверки текущего `begin` — `ready:false,
+reason:'blockGasBound'`. Ни target, ни payer, ни обязательства `convert` в этом вызове не
+участвуют.
 
-Restart с известным hash проверяет receipt и canonical block hash текущей локальной ветки.
-Если receipt отсутствует или RPC-чтение падает, новых sends нет. Hashless marker также
-остаётся закрытым независимо от равенства pending/latest nonce.
+Последствия шире нового draw: та же ранняя проверка выполняется перед каждым action.
+Поэтому frozen Short, которому нужны только `processShort` и `finishShort`, не сможет
+сделать следующий send из-за лимита `convert`, `pay` или любого другого чужого метода.
+Монотонное сохранение observations делает такой стоп устойчивым после restart.
 
-Сбой записи hash я проверил отдельно: первый вызов ещё может вернуть hash из памяти, но
-если последующие сохранения также недоступны, на диске остаётся hashless marker. Новый
-процесс получает `unknownHash` и не отправляет ничего. Это плохая liveness, но именно
-заявленная fail-closed граница, а не тихий retry.
+Минимальная правка: сначала построить obligations/current extra, получить множество
+реально учитываемых actions и сравнивать с block gas limit только их. Текущий action также
+обязан входить в множество. Это сохраняет fail-closed поведение, если в блок не помещается
+именно нужный `processShort`/`finishMonth`, но не связывает независимые workers случайным
+максимумом всего профиля.
 
-## Восстановление без денежных дублей
+Минимальные regressions:
 
-При receipt-read outage исходный `collect` успел mined, coordinator сохранил hash и
-остановился. После восстановления RPC restart сначала разрешил receipt, затем выполнил
-новый bounded pass. Он может сделать ещё один `collect`: этот action не имеет уникального
-job id и новый pass явно разрешает собрать новое поступление. В проверке второй collect
-оказался пустым; TOKEN был продан один раз, credits/pay/forward не удвоились.
+1. Frozen Short с допустимыми `processShort`/`finishShort` продолжает работу, когда
+   неиспользуемый `convert` выше block gas limit.
+2. Тот же frozen Short получает `blockGasBound`, когда выше лимита именно требуемый
+   `processShort` или `finishShort`.
+3. Начальный `begin` не блокируется завышенным bound чужого prize action.
 
-Это важное различие: счётчик вызовов source collect может увеличиться, но прежние деньги
-не распределяются повторно. Converter inventory/balance delta, FeeRouter credit и on-chain
-controller phases остаются фактическими idempotency boundaries.
+Альтернатива — объявить весь профиль недействительным на старте, если хоть один action
+выше текущего block limit. Но тогда это должен быть явный config error до state migration,
+а не вечный runtime wait. Для цели «сохранить completion frozen draw» проверка только
+релевантных actions выглядит точнее.
 
-Отдельно воспроизведён status 0 после успешного estimate: внешнее изменение состояния
-заставило исходный `collect` revert уже в блоке. Receipt исходной tx снял pending как
-definite rejection, prize-flow стал `degraded`, а независимый draw продолжился. То есть
-изоляция known rejection после добавления coordinator не сломана.
+## Учёт действий и balances
 
-## Finding: signer/provider binding
+В проверенных переходах пропуска или двойного счёта я не нашёл:
 
-В `runCoordinator` сейчас проверяются:
+- у нового кандидата `begin=1` только до active state; оставшиеся publish считаются через
+  `ceil((total-published)/chunkSize)`;
+- будущих process ровно столько, сколько уже созданных chunks плюс будущих publications;
+- `seal=1` и `finish=1`, а current action уже входит в этот путь, поэтому `extra` для него
+  правильно не добавляется;
+- у frozen draw берутся `chunkCount-nextChunk` и один finish; оплаченный при seal RNG не
+  прибавляется повторно;
+- до seal текущего кандидата controller получает отдельное требование `fee+nativeFloor`;
+- одинаковые publisher/executor/prizeExecutor схлопываются в один address, суммы
+  складываются, buffer добавляется один раз;
+- optional action добавляет собственную стоимость поверх всех frozen obligations.
 
-- равенство provider объектов двух worker options;
-- chainId 31337 этого provider;
-- TOKEN/USDG/vault bindings;
-- множество адресов publisher/executor в config hash.
+Это подтверждает внутреннюю арифметику модели, но не доказывает верхние gas bounds.
+Особенно важно, что общего contract-level `MAX_N` участников сейчас нет: есть chunk cap
+64, но число chunks не ограничено продуктовым пределом. Поэтому профиль с одной цифрой
+на `processShort` или `processMonth` пока является операторской гипотезой, а не доказанным
+completion bound.
 
-Но contract sends используют `contract.connect(signer)`, следовательно реальный runner
-и его provider важнее read-only worker option. Я передал runner с неверным `provider`:
-валидация его приняла, intent сохранился, транзакция дошла до broadcast и только receipt
-path упал. Coordinator безопасно заблокировался, но обещанная проверка одного provider
-не была выполнена до записи.
+## Чужие UNFROZEN preparations
 
-Минимальная граница исправления:
+Исключение чужой незамороженной подготовки согласуется с описанной границей: пока draw не
+frozen, обязательства выдать приз ещё нет; на каждом её собственном send forecast
+пересчитывается, а перед seal в расчёт уже попадают все frozen draws. Это защищает именно
+completion уже принятых обязательств.
 
-1. До `withState` и любых sends проверить provider binding каждого непустого
-   `prize.executor`, `scheduler.executor`, `scheduler.publisher`.
-2. Для текущего локального API логично требовать именно тот же provider object, поскольку
-   это уже заявленный контракт coordinator. Если нужны wrapper runners, у них должен быть
-   явный проверяемый base provider, а не неявное доверие одному адресу.
-3. Добавить negative integration: signer с другим/malformed provider отвергается до
-   nonce change, marker и broadcast.
+Цена такого решения должна оставаться явной: две подготовки могут потратить native и
+оставить одну из них надолго до seal. Модель не обещает заранее зарезервировать завершение
+всех начатых, но ещё unfrozen кандидатов. Для текущего scope это не дефект; менять это
+стоит только если продукт решит считать active preparation таким же обязательством, как
+frozen draw.
 
-Отдельно уже честно отмеченная проблема role identity остаётся: config хеширует
-отсортированное множество адресов, поэтому перестановка publisher/executor с тем же набором
-не меняет config hash. Для текущих on-chain ролей это обычно закончится waiting/revert, а не
-обходом custody, но при разделении immutable identity и ops settings роли надо связать с
-адресами явно.
+## Unknown, state и migration
 
-## Abort: определить commit point
+Пути продолжить после неизвестной отправки через `LOCAL_BUDGET_WAIT` не видно:
 
-Есть узкая воспроизводимая гонка. `sendLocalTransaction` проверяет signal до
-`boundary.before`; если abort приходит во время сохранения durable pre-broadcast marker,
-после возврата из `before` signal повторно не проверяется и одна tx всё равно broadcast.
-Marker/hash сохраняются, coordinator блокируется, последующих sends нет — денежной
-неопределённости система не теряет.
+- budget wait возникает на stage `estimate`, до durable intent и broadcast;
+- после успешного `before` действует уже зафиксированный commit point;
+- hashless/hash pending разрешается до workers, а migration при pending запрещена;
+- changed settings не меняют identity и не запускают send до reconciliation;
+- pending хранит network hash, settings и observations исходной политики;
+- ошибка сохранения до intent не отправляет tx; ошибка записи после broadcast оставляет
+  старый marker и требует reconciliation.
 
-Это можно считать допустимой семантикой, но тогда успешное durable сохранение `before`
-должно быть явно названо commit point: abort после него прекращает ожидание и следующие
-операции, но не текущий broadcast. Сейчас документация делит только «до/после send», а
-реальная граница чуть раньше.
+Provider/runner fix из `bd43d2a` закрывает прошлое замечание: все три signer roles и
+исходные contract runners проверяются до state/read/send. Именованные roles теперь входят
+в budget identity. Abort после успешного сохранения intent явно трактуется как committed
+send, что соответствует фактической границе и покрыто тестом.
 
-Если нужен строгий контракт «abort до фактического broadcast не отправляет tx», одного
-повторного `if (signal.aborted)` недостаточно: он оставит ложный hashless marker. Нужен
-отдельный durable cancel prepared-intent до возврата `LOCAL_EXECUTION_STOPPED`. Для
-локального coordinator проще и честнее зафиксировать marker persistence как commit point.
-Это не блокирует gas-budget после явного решения и regression test.
+Монотонные `gasObservations` сами по себе консервативны: высокий estimate повышает будущую
+потребность, низкий её не снижает, а нехватка средств остаётся resumable после пополнения.
+Помимо найденной глобальной block-limit связи, это может дать дорогой, но ожидаемый
+`nativeFunding` wait. В production позже понадобится управляемая версия/перекалибровка
+модели, а не ручное удаление state; для локального пакета это пока честно обозначенное
+ограничение.
 
-## Config/deployment и standalone compatibility
+## Минимальная калибровка перед funding/refill
 
-Для доверенного CLI текущие bindings достаточны после signer/provider check: CLI создаёт
-все signers из одного `JsonRpcProvider`, jobs связывают assets/vault/source, coordinator и
-scheduler state paths различаются. Standalone workers не получают AsyncLocalStorage
-boundary и прошли прежние regressions.
+Сначала нужно назвать кандидатный эксплуатационный предел общего `N`/числа chunks:
+сейчас «максимально допустимый dataset» не определён. Без этого невозможно превратить
+измерение в bound.
 
-Checksum/config binding действительно fail-closed, но это не защита от оператора:
-другой state path или standalone process с тем же signer обходит локальный lock. Здесь
-реализация и документация совпадают — exclusive ownership signers остаётся обязательным
-операционным допущением, а не свойством кода.
+Достаточный следующий пакет — не новый keeper framework, а четыре сценария на выбранном
+верхнем envelope:
 
-Разделение identity и ops settings перед gas-budget выбрано верно. Poll interval/gas cap
-не должны вынуждать обходить unresolved marker новым state, а применённые настройки должны
-оставаться видимыми при recovery. Не надо превращать это в универсальный on-chain registry.
+1. Short отдельно на верхних `N`, budget/prize count и 64-элементных chunks.
+2. Monthly отдельно на том же верхнем числе chunks.
+3. Оба draw одновременно frozen; оба порядка seal/seed delivery, включая задержку seed.
+4. Restart после каждого process chunk при балансе около forecast boundary; отдельно
+   один намеренно низкий исходный gas bound, чтобы проверить рост observation и resume.
 
-## Документальная ревизия `c618afc`
-
-CURRENT_CONTEXT/ROADMAP теперь заметно честнее отделяют локальный связанный skeleton от
-production deployment. Самопроверка правильно называет незакрытые storage/replacement/
-finality границы, отсутствие бюджета на завершение уже frozen draw, permissionless claim
-и сетевые зависимости. Добавленная ссылка из PRODUCT_SPEC не меняет продуктовые правила.
-
-Локальные markdown-ссылки проверены: битых относительных ссылок не найдено. Существенного
-расхождения между runtime `571c068` и новым описанием, кроме неуказанного signer/provider
-binding и неявного abort commit point, я не нашёл.
+Для каждого action достаточно записывать estimateGas, receipt.gasUsed, calldata bytes,
+effective gas price/фиксированную extra fee, block gas limit, число оставшихся tx и
+фактическую дельту native по каждому payer/controller. Нужны максимум и запас
+`configured bound / observed max`, а не только среднее. Для process стоит включить seeds,
+дающие разные ветви результата. После этого можно выбрать safety margin и уже отдельно
+проектировать источник refill, пороги и отказные сценарии.
 
 ## Выполненные проверки
 
-- `node --test --test-concurrency=1 test/local-coordinator.test.cjs` — **7/7**, fail 0;
-- `npm test` — **247/247**, fail 0, примерно 566 s; это первый чистый полный прогон после
-  последнего metadata/checksum fix;
-- отдельные временные fault probes: receipt-read outage + restart, длительный storage
-  failure при записи hash, abort во время pre-broadcast save, mined revert после успешного
-  estimate, misbound signer provider;
-- `git diff --check` и проверка всех относительных markdown-ссылок — ошибок нет;
+- `npm test` — **263/264**, fail 1, 589 s. Единственное падение — старый большой
+  scheduler integration с `Scheduler state locked`; budget/coordinator tests прошли;
+- точный упавший сценарий отдельно — **1/1**, pass. Весь `local-scheduler.test.cjs`
+  повторно — **9/10** с тем же intermittent lock, но уже в другой последовательной точке;
+  два первых сценария с диагностикой open/unlink — **2/2**. Поэтому полный baseline
+  зелёным не называю: это отдельная timing/liveness нестабильность lock-теста или среды,
+  не воспроизведённая ошибка budget math;
+- минимальный самостоятельный probe для нерелевантного `convert > blockGasLimit` —
+  воспроизведён `blockGasBound` на допустимом `begin`;
+- `git diff --check f222a8c..78e2a62` — ошибок нет;
 - пользовательский `docs/INDEPENDENT_AUDIT_2026-09-19.md` не изменялся.
 
-## Следующий шаг
+## Итог
 
-Сначала один маленький boundary-fix: signer/provider preflight плюс явный abort commit-point
-и две regressions. Не нужно расширять его до production journal.
-
-После этого разумно переходить к запланированному project gas budget/readiness: отдельно
-учесть RNG fee, publisher/executor balances и стоимость завершения уже начатых Short/Monthly;
-started obligations должны иметь приоритет над новым freeze и необязательным collect.
-Frozen/claimable не являются ops budget, а автообмен/автопополнение остаются следующим
-самостоятельным пакетом.
+После узкого исправления relevant-action block check модель можно калибровать на выбранном
+верхнем envelope. Остальная inspected логика budget grouping, frozen priority,
+unknown/restart и migration не дала нового safety-блокера. Но до появления явного
+операционного cap по dataset и измеренных bounds это всё ещё хороший local forecast, а не
+production-гарантия физического завершения.
