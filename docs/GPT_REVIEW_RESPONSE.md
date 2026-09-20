@@ -1,171 +1,165 @@
 # Постоянный ответ GPT
 
-Обновлено: 20.09.2026.
+Обновлено: 21.09.2026.
 
 Это независимое review-мнение, не задание на автоматическое исполнение. При следующем
 обращении файл следует полностью перезаписать.
 
-Просмотрен commit `78e2a62dd005a7b90f158bf6c64952b035631da8` —
-`Add local execution budget gates and network profiles`. Также проверен входящий в него
-предыдущий fix `bd43d2a` по provider bindings и abort commit point.
+Просмотрен commit `6407ddb5af25f1d9766c36992520d27c0e20fb2a` —
+`Scope block gas checks to remaining execution obligations`.
 
 ## Короткий вердикт
 
-Для заявленного локального scope основная математика forecast собрана последовательно:
-оставшийся current action не прибавляется второй раз, RNG для frozen draw повторно не
-считается, balances и signer buffer группируются по фактическому адресу, а optional
-prize-flow проходит только поверх прогноза всех frozen Short/Monthly. Новая классификация
-`LOCAL_BUDGET_WAIT` не открывает путь через unknown marker. Миграция и policy snapshot
-также выглядят fail-closed.
+Relevant-action fix сделан правильно. Подтверждённый дефект из предыдущего review закрыт:
+block gas limit теперь проверяется для текущего action и ненулевых remaining actions всех
+построенных obligations. Завышенный bound чужого `convert` больше не блокирует Short;
+необходимый `process/finish` по-прежнему блокирует admission, а process с нулевым остатком
+не удерживается в required set.
 
-Нашёл один воспроизводимый liveness-дефект в проверке block gas limit. Сейчас любой
-`gasUnits` из всего профиля, даже для неиспользуемого метода, может остановить все budgeted
-операции. Например, завышенный `convert` блокирует `begin`, `processShort` и `finishShort`.
-После попадания такого значения в монотонные `gasObservations` это способно навсегда
-остановить уже frozen draw на данном state, хотя нужные ему транзакции помещаются в блок.
+Нового пропуска completion forecast или необоснованного admission в узком diff я не нашёл.
+После этого исправления gas model можно переводить к следующему этапу — выбору явного
+operational envelope и измерению верхней границы. Production guarantee из этого всё ещё
+не следует.
 
-Это не найденный перерасход native и не double admission; это общий starvation из-за
-нерелевантного action bound. До калибровки и native refill стоит сначала сузить эту
-проверку и закрепить её регрессиями.
+Однако lock-наблюдение не исчезло. В моём повторном targeted-прогоне оно воспроизвелось
+сразу в двух CLI handoff-тестах. Поэтому результат текущей проверки — не 39/39, а 37/39.
+Это не связано с четырьмя строками gas fix, но уже нельзя считать единичным шумом или
+закрывать простым 500-cycle probe.
 
-## Finding: нерелевантный gas bound блокирует всю очередь
+## Проверка relevant-action fix
 
-В `checkExecutionBudget` до построения obligations выполняется:
+Изменение:
 
 ```js
-if(ACTIONS.some(a=>BigInt(n.gasUnits[a])>head.gasLimit))
+const requiredActions=new Set([action]);
+for(const o of obligations)
+  for(const [method,count] of Object.entries(o.counts))
+    if(count)requiredActions.add(method);
+if([...requiredActions].some(a=>BigInt(n.gasUnits[a])>head.gasLimit))
   return wait('blockGasBound');
 ```
 
-Минимальное воспроизведение не требует on-chain draw: профиль валиден, лимит блока равен
-30 000 000, текущий `begin` запрашивает 1 000 000, но у неиспользуемого `convert` стоит
-30 000 001. Результат проверки текущего `begin` — `ready:false,
-reason:'blockGasBound'`. Ни target, ни payer, ни обязательства `convert` в этом вызове не
-участвуют.
+Граница выбрана верно:
 
-Последствия шире нового draw: та же ранняя проверка выполняется перед каждым action.
-Поэтому frozen Short, которому нужны только `processShort` и `finishShort`, не сможет
-сделать следующий send из-за лимита `convert`, `pay` или любого другого чужого метода.
-Монотонное сохранение observations делает такой стоп устойчивым после restart.
+- current action всегда проверяется, включая optional prize/closeEmpty;
+- все frozen Short/Monthly участвуют одновременно;
+- current unfrozen candidate приносит весь оставшийся begin/publish/seal/process/finish;
+- action с count=0 не считается физически оставшейся транзакцией;
+- RNG funding не смешивается с block gas check;
+- unrelated unfrozen preparation, как и раньше, не становится completion obligation.
 
-Минимальная правка: сначала построить obligations/current extra, получить множество
-реально учитываемых actions и сравнивать с block gas limit только их. Текущий action также
-обязан входить в множество. Это сохраняет fail-closed поведение, если в блок не помещается
-именно нужный `processShort`/`finishMonth`, но не связывает независимые workers случайным
-максимумом всего профиля.
+Порядок вычисления не создаёт обхода: obligations сначала строятся из pinned state,
+после чего required actions проверяются до balance admission. `evaluateBudget`,
+`gasObservations`, state identity, pending и migration этим commit не менялись.
 
-Минимальные regressions:
+Новые тесты действительно вызывают публичный `checkExecutionBudget`, а не только чистый
+`evaluateBudget`. Они закрывают исходный Short-сценарий, oversized required process и
+finish, zero-left process и optional action поверх frozen liabilities.
 
-1. Frozen Short с допустимыми `processShort`/`finishShort` продолжает работу, когда
-   неиспользуемый `convert` выше block gas limit.
-2. Тот же frozen Short получает `blockGasBound`, когда выше лимита именно требуемый
-   `processShort` или `finishShort`.
-3. Начальный `begin` не блокируется завышенным bound чужого prize action.
+Отдельного committed Monthly block-limit regression нет. Это не найденный дефект:
+ручной симметричный probe frozen Monthly дал:
 
-Альтернатива — объявить весь профиль недействительным на старте, если хоть один action
-выше текущего block limit. Но тогда это должен быть явный config error до state migration,
-а не вечный runtime wait. Для цели «сохранить completion frozen draw» проверка только
-релевантных actions выглядит точнее.
+- oversized unrelated `convert` → `ready:true`;
+- oversized required `finishMonth` → `blockGasBound`.
 
-## Учёт действий и balances
+Но один Monthly regression был бы дешёвой защитой строковых mappings
+`processMonth/finishMonth` при будущем рефакторинге.
 
-В проверенных переходах пропуска или двойного счёта я не нашёл:
+## Lock: теперь есть конкретные точки
 
-- у нового кандидата `begin=1` только до active state; оставшиеся publish считаются через
-  `ceil((total-published)/chunkSize)`;
-- будущих process ровно столько, сколько уже созданных chunks плюс будущих publications;
-- `seal=1` и `finish=1`, а current action уже входит в этот путь, поэтому `extra` для него
-  правильно не добавляется;
-- у frozen draw берутся `chunkCount-nextChunk` и один finish; оплаченный при seal RNG не
-  прибавляется повторно;
-- до seal текущего кандидата controller получает отдельное требование `fee+nativeFloor`;
-- одинаковые publisher/executor/prizeExecutor схлопываются в один address, суммы
-  складываются, buffer добавляется один раз;
-- optional action добавляет собственную стоимость поверх всех frozen obligations.
+Команда из обращения:
 
-Это подтверждает внутреннюю арифметику модели, но не доказывает верхние gas bounds.
-Особенно важно, что общего contract-level `MAX_N` участников сейчас нет: есть chunk cap
-64, но число chunks не ограничено продуктовым пределом. Поэтому профиль с одной цифрой
-на `processShort` или `processMonth` пока является операторской гипотезой, а не доказанным
-completion bound.
+```powershell
+node --test --test-concurrency=1 test/local-execution-budget.test.cjs test/local-coordinator.test.cjs test/local-scheduler.test.cjs
+```
 
-## Чужие UNFROZEN preparations
+дала **37/39**, fail 2, 122 s. Все execution-budget tests прошли; оба падения относятся к
+handoff из parent test process в CLI child.
 
-Исключение чужой незамороженной подготовки согласуется с описанной границей: пока draw не
-frozen, обязательства выдать приз ещё нет; на каждом её собственном send forecast
-пересчитывается, а перед seal в расчёт уже попадают все frozen draws. Это защищает именно
-completion уже принятых обязательств.
+### 1. Coordinator CLI
 
-Цена такого решения должна оставаться явной: две подготовки могут потратить native и
-оставить одну из них надолго до seal. Модель не обещает заранее зарезервировать завершение
-всех начатых, но ещё unfrozen кандидатов. Для текущего scope это не дефект; менять это
-стоит только если продукт решит считать active preparation таким же обязательством, как
-frozen draw.
+Тест: `CLI runs both workers; persisted config/corrupt state fail closed`.
 
-## Unknown, state и migration
+Путь:
 
-Пути продолжить после неизвестной отправки через `LOCAL_BUDGET_WAIT` не видно:
+```text
+.local/scheduler-test-Iv7D5N/state.json.lock
+```
 
-- budget wait возникает на stage `estimate`, до durable intent и broadcast;
-- после успешного `before` действует уже зафиксированный commit point;
-- hashless/hash pending разрешается до workers, а migration при pending запрещена;
-- changed settings не меняют identity и не запускают send до reconciliation;
-- pending хранит network hash, settings и observations исходной политики;
-- ошибка сохранения до intent не отправляет tx; ошибка записи после broadcast оставляет
-  старый marker и требует reconciliation.
+Lock содержал PID `11` — parent test process. Он был создан во время предварительного
+`await runScheduler(..., {maxTicks:1})` fixture и остался после возврата этого вызова.
+После этого fixture записал `job.json/config.json` и запустил child CLI. Child успел
+выполнить prize-flow, затем draw worker получил:
 
-Provider/runner fix из `bd43d2a` закрывает прошлое замечание: все три signer roles и
-исходные contract runners проверяются до state/read/send. Именованные roles теперь входят
-в budget identity. Abort после успешного сохранения intent явно трактуется как committed
-send, что соответствует фактической границе и покрыто тестом.
+```text
+Scheduler state locked; another process or stale lock:
+.../.local/scheduler-test-Iv7D5N/state.json.lock
+at withState (scripts/local-scheduler-state.cjs:8:39)
+at runScheduler (scripts/local-promo-scheduler.cjs:137:10)
+```
 
-Монотонные `gasObservations` сами по себе консервативны: высокий estimate повышает будущую
-потребность, низкий её не снижает, а нехватка средств остаётся resumable после пополнения.
-Помимо найденной глобальной block-limit связи, это может дать дорогой, но ожидаемый
-`nativeFunding` wait. В production позже понадобится управляемая версия/перекалибровка
-модели, а не ручное удаление state; для локального пакета это пока честно обозначенное
-ограничение.
+Coordinator вернул `status:error`, `haltedWorker:draw`, без reconciliation marker.
+Отдельно остался `coordinator.json.lock` с PID child `34`.
 
-## Минимальная калибровка перед funding/refill
+### 2. Scheduler CLI
 
-Сначала нужно назвать кандидатный эксплуатационный предел общего `N`/числа chunks:
-сейчас «максимально допустимый dataset» не определён. Без этого невозможно превратить
-измерение в bound.
+Тест: `scheduler persists before sending, resumes both kinds, handles terminal reorg and
+makes two cycles from BUY`.
 
-Достаточный следующий пакет — не новый keeper framework, а четыре сценария на выбранном
-верхнем envelope:
+Путь:
 
-1. Short отдельно на верхних `N`, budget/prize count и 64-элементных chunks.
-2. Monthly отдельно на том же верхнем числе chunks.
-3. Оба draw одновременно frozen; оба порядка seal/seed delivery, включая задержку seed.
-4. Restart после каждого process chunk при балансе около forecast boundary; отдельно
-   один намеренно низкий исходный gas bound, чтобы проверить рост observation и resume.
+```text
+.local/scheduler-test-rLe2U3/state.json.lock
+```
 
-Для каждого action достаточно записывать estimateGas, receipt.gasUsed, calldata bytes,
-effective gas price/фиксированную extra fee, block gas limit, число оставшихся tx и
-фактическую дельту native по каждому payer/controller. Нужны максимум и запас
-`configured bound / observed max`, а не только среднее. Для process стоит включить seeds,
-дающие разные ветви результата. После этого можно выбрать safety margin и уже отдельно
-проектировать источник refill, пороги и отказные сценарии.
+Lock содержал PID `58` — parent test process. Последний parent `await run(f)` уже
+вернулся, после него тест записал `config.json` и запустил `run-local-scheduler.cjs`.
+Child сразу отказался в `withState` с тем же `EEXIST`.
+
+Это дополняет два предыдущих наблюдения:
+
+- `scheduler-test-TjLs06/state.json.lock` — fail перед run на строке 56;
+- `scheduler-test-ASTzJe/state.json.lock` — fail перед run на строке 47.
+
+Точный повтор только двух упавших CLI-сценариев после этого прошёл **2/2** за 57 s.
+Следовательно, это intermittent lifecycle/handoff failure, а не детерминированно занятый
+state. Причину по имеющимся данным я не утверждаю.
+
+500 синхронных overlap/release/exception/reacquire циклов полезны, но не эквивалентны
+реальному пути: длинный async scheduler action, filesystem saves, возврат promise и новый
+процесс. Они подтверждают базовый helper, но не опровергают наблюдение.
+
+Минимальная следующая диагностика — не force-clear:
+
+1. В двух CLI-тестах прямо перед spawn зафиксировать `existsSync(lock)`, содержимое,
+   `stat.mtime` и parent PID.
+2. На `EEXIST` возвращать в диагностике содержимое/stat lock, не меняя fail-closed
+   поведение.
+3. Одним regression повторять именно `await runScheduler → assert no lock → child CLI`,
+   а не только синхронный вызов `withState`.
+4. Если lock существует уже после resolved promise, инструментировать пары
+   `openSync('wx')/unlinkSync` с run id; только затем решать, это код, runtime или FS.
+
+Удалять lock автоматически по PID/возрасту нельзя: без lease/reconciliation это откроет
+реальную конкурентную запись или unknown transaction.
+
+## Следующий шаг
+
+Gas fix не блокирует калибровку. Сначала нужен выбранный верхний envelope общего
+`N/chunks` — contract-level `MAX_N` по-прежнему отсутствует. Затем измерять Short,
+Monthly и оба frozen одновременно: estimate, receipt gasUsed, calldata, фактическую native
+дельту, RNG fee и восстановление после каждого chunk/restart.
+
+Lock issue следует вести параллельно как ограниченный ops-hardening item. Он не опровергает
+математику budget model, но пока не позволяет называть scheduler/CLI baseline устойчиво
+зелёным.
 
 ## Выполненные проверки
 
-- `npm test` — **263/264**, fail 1, 589 s. Единственное падение — старый большой
-  scheduler integration с `Scheduler state locked`; budget/coordinator tests прошли;
-- точный упавший сценарий отдельно — **1/1**, pass. Весь `local-scheduler.test.cjs`
-  повторно — **9/10** с тем же intermittent lock, но уже в другой последовательной точке;
-  два первых сценария с диагностикой open/unlink — **2/2**. Поэтому полный baseline
-  зелёным не называю: это отдельная timing/liveness нестабильность lock-теста или среды,
-  не воспроизведённая ошибка budget math;
-- минимальный самостоятельный probe для нерелевантного `convert > blockGasLimit` —
-  воспроизведён `blockGasBound` на допустимом `begin`;
-- `git diff --check f222a8c..78e2a62` — ошибок нет;
+- relevant-action targeted suite — **37/39**, два intermittent lock failure;
+- все `local-execution-budget.test.cjs`, включая пять новых block-limit сценариев, прошли;
+- точный повтор двух упавших CLI-сценариев — **2/2**;
+- ручной frozen Monthly symmetry probe — unrelated action admitted, required finish blocked;
+- `git diff --check d8fd45c..6407ddb` — ошибок нет;
+- полный `npm test` повторно не запускался;
 - пользовательский `docs/INDEPENDENT_AUDIT_2026-09-19.md` не изменялся.
-
-## Итог
-
-После узкого исправления relevant-action block check модель можно калибровать на выбранном
-верхнем envelope. Остальная inspected логика budget grouping, frozen priority,
-unknown/restart и migration не дала нового safety-блокера. Но до появления явного
-операционного cap по dataset и измеренных bounds это всё ещё хороший local forecast, а не
-production-гарантия физического завершения.
