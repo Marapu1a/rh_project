@@ -47,15 +47,10 @@ function evaluateBudget(ops,{balances,obligations,extra}){
 }
 const number=v=>{const n=Number(v);check(Number.isSafeInteger(n)&&n>=0,'Invalid on-chain count');return n;};
 const zero=ethers.ZeroHash;
-async function checkExecutionBudget({ops,provider,short,monthly,publisher,executor,prizeExecutor,chunkSize,request,action,worker}){
-  validateOps(ops);const head=await provider.getBlock('latest'),at={blockTag:head.number},n=ops.network;
-  const wait=reason=>({ready:false,reason,profileId:n.id,policyHash:hash(ops.settings)});
-  check(request.type===2&&BigInt(request.maxPriorityFeePerGas)===0n,'Unsupported transaction fee policy');
-  if(BigInt(request.maxFeePerGas)>BigInt(ops.settings.maxGasPrice))return wait('gasPrice');
-  check(ACTIONS.includes(action),'Unbudgeted action');
-  if(BigInt(request.gasLimit)>BigInt(n.gasUnits[action]))return wait('actionGasBound');
+async function collectExecutionObligations({provider,short,monthly,publisher,executor,chunkSize,head,request,action,worker}){
+  const at={blockTag:head.number};
   const roles={publisher:publisher?await publisher.getAddress():undefined,executor:await executor.getAddress()};
-  const obligations=[];let currentIncluded=false;
+  const obligations=[],committedObligations=[],candidateObligations=[];let currentIncluded=false;
   const isShort=request.to.toLowerCase()===short.target.toLowerCase(),isMonth=request.to.toLowerCase()===monthly.target.toLowerCase();
   const drawAction=worker==='draw'&&action!=='closeEmpty';
   check(worker!=='draw'||isShort||isMonth,'Unknown draw controller');
@@ -89,8 +84,18 @@ async function checkExecutionBudget({ops,provider,short,monthly,publisher,execut
         rng:{controller:source.target,fee:String(await random.fee(at)),floor:String(await source.nativeFloor(at))}};
       currentIncluded=true;
     }
-    if(o)obligations.push(o);
+    if(o){obligations.push(o);(pending!==zero?committedObligations:candidateObligations).push(o);}
   }
+  return {roles,obligations,committedObligations,candidateObligations,currentIncluded};
+}
+async function checkExecutionBudget({ops,provider,short,monthly,publisher,executor,prizeExecutor,chunkSize,request,action,worker}){
+  validateOps(ops);const head=await provider.getBlock('latest'),n=ops.network;
+  const wait=reason=>({ready:false,reason,profileId:n.id,policyHash:hash(ops.settings)});
+  check(request.type===2&&BigInt(request.maxPriorityFeePerGas)===0n,'Unsupported transaction fee policy');
+  if(BigInt(request.maxFeePerGas)>BigInt(ops.settings.maxGasPrice))return wait('gasPrice');
+  check(ACTIONS.includes(action),'Unbudgeted action');
+  if(BigInt(request.gasLimit)>BigInt(n.gasUnits[action]))return wait('actionGasBound');
+  const {roles,obligations,committedObligations,candidateObligations,currentIncluded}=await collectExecutionObligations({provider,short,monthly,publisher,executor,chunkSize,head,request,action,worker});
   // Unfrozen OTHER preparations are not committed liabilities. A second seal rechecks
   // the first frozen draw against the same remaining signer balance before admission.
   const payer=worker==='prize'?await prizeExecutor.getAddress():PUBLISHER.has(action)?roles.publisher:roles.executor;
@@ -103,6 +108,6 @@ async function checkExecutionBudget({ops,provider,short,monthly,publisher,execut
   const balances={};for(const who of accounts)balances[who]=String(await provider.getBalance(who,head.number));
   const result=evaluateBudget(ops,{balances,obligations,extra});
   if((await provider.getBlock(head.number))?.hash!==head.hash)return wait('chainChanged');
-  return {...result,reason:result.ready?undefined:'nativeFunding',anchor:{number:head.number,hash:head.hash}};
+  return {...result,reason:result.ready?undefined:'nativeFunding',committedObligations,candidateObligations:extra?[...candidateObligations,{id:'operation:'+action,publisher:payer,executor:payer,counts:{[action]:1}}]:candidateObligations,anchor:{number:String(head.number),hash:head.hash,timestamp:String(head.timestamp)}};
 }
-module.exports={ACTIONS,validateOps,transactionCost,evaluateBudget,checkExecutionBudget};
+module.exports={ACTIONS,validateOps,transactionCost,evaluateBudget,checkExecutionBudget,collectExecutionObligations};

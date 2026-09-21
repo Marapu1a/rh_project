@@ -2,7 +2,7 @@
 
 21.09.2026. Чистая функция `planNativeRefill(input)` в scripts/local-native-refill.cjs.
 Нет RPC, подписания, переводов, резервирования средств и изменения funding history.
-Planner остаётся чистым. Local executor описан ниже; автоматический сбор obligations ещё не подключён.
+Planner остаётся чистым. Local executor описан ниже; автоматический сбор obligations подключён к coordinator.
 
 ## API
 
@@ -73,7 +73,7 @@ blocked из-за optional buffer/caps не означает автоматич�
   связь PROJECT_NATIVE с долей проекта и конверсия TOKEN/USDG ещё не реализованы.
 - Нет нового процента комиссий, withdrawal призовой казны, proxy или governance.
 - Executor выполняет anchor/balance/estimate checks и проверку source signer;
-  durable history/nonce/hash/receipt описаны ниже. Автосбор obligations ещё нужен.
+  durable history/nonce/hash/receipt описаны ниже. Автосбор obligations включён в coordinator.
   TransferGas — вход модели; это не гарантия, что произвольный contract receive уложится.
 - Не добавлен общий MAX_N или новый unsupportedEnvelope gate. Расчёт потребляет переданные
   bounds; он не доказывает их достаточность или физическую возможность выполнения.
@@ -132,10 +132,10 @@ state file for the same source signer. save is synchronous atomic persistence; m
 only after save succeeds. Exactly one transfer or one recovery per call; no retry loop.
 
 input supplies ops/source/policy/protectedAddresses, committedObligations, candidateObligations
-and optional gasObservations. Obligations and protected deployment addresses are trusted caller
-inputs; the executor does NOT derive current Short/Monthly obligations. The normal coordinator
-pass currently recovers refill receipts but does not initiate funding. Wiring the automatic
-obligation collector and executor admission into that pass is the next bounded package.
+and optional gasObservations. The coordinator now builds obligations using the shared budget
+collector. obligationsAnchor binds their block to the executor balance snapshot; a changed head
+returns staleSnapshot before intent. Standalone executor callers remain responsible for correct
+obligations. allowedTiers restricts which funding tier may execute in this call.
 
 Only BOOTSTRAP_NATIVE, local chain31337, LOCAL_EIP1559. Signer must have the exact shared provider
 and configured source address. Source must be dedicated/exclusively owned; other pending nonce
@@ -157,7 +157,7 @@ Replaced transactions are not accepted as original receipts. Recovery verifies r
 anchor against local canonical blocks, then uses the same pure finalizer, including status=0.
 These are local canonicality checks, not production finality or reorg recovery guarantees.
 
-## Проверки текущего пакета
+## Предыдущие проверки executor
 
 21.09.2026: 56/56 planner/ledger/executor/budget/lock/transaction tests (8.3 s),
 4/4 targeted coordinator regressions (88.1 s). Final executor-only rerun: 7/7 (5.8 s).
@@ -188,7 +188,61 @@ broadcast verification would be a separate design change, not claimed by this ex
 
 58/58 focused planner/ledger/executor/budget/lock/transaction tests passed (7.9 s), including
 real mutated-fee send with timeout/restart, actual overspend accounting and no second send.
-Full npm test/fork not run. Coordinator results recorded in CURRENT_CONTEXT.
+Full npm test/fork not run. Historical coordinator results recorded in CURRENT_CONTEXT.
 
 Проверка fee-policy fix: 4/4 targeted coordinator (82.1 s); финальный тест typed recovery +
 durable halt повторно 1/1 (43.9 s), state suite 7/7. Команды coordinator — в LOCAL_NATIVE_REFILL.
+
+## Automatic coordinator funding — 21.09.2026
+
+runCoordinator accepts optional nativeRefill={signer,source,policy,protectedAddresses?} with ops.
+Only a dedicated BOOTSTRAP_NATIVE signer on the shared provider is accepted. Source cannot be
+an execution signer or Short/Monthly controller. Prize vault/router/converter addresses are
+included in protectedAddresses automatically. Funding domain/source are part of coordinator
+config identity. Enabling from previous config is allowed only without pending; policy changes
+cannot silently reset the ledger. Disabling/change of configured funding is not an implicit migration.
+
+collectExecutionObligations is shared with checkExecutionBudget. It reads both lifecycles at one
+block: frozen settlements → committed, current candidate operation → candidate. Other unfrozen
+proposals are not committed liabilities. An operation outside a draw is represented separately.
+Mutable gas observations apply to the planner without changing the immutable base funding domain.
+
+Pass order:
+1. Recover existing pending. A recovered refill ends the enabled pass, including reverted receipts.
+2. A persisted policy violation reports requiresOperatorAction=true, requiresReconciliation=false.
+   Unresolved transactions continue to report requiresReconciliation=true.
+3. Read committed obligations; fund at most one committed deficit, then end the pass.
+4. Run funded draw work first. At a native budget shortfall the worker yields to the coordinator;
+   no refill occurs inside its nested transaction boundary. Candidate funding is deferred while
+   committed work exists and is covered. After one actual refill, always end the pass.
+5. Optional buffers are considered after workers, only when no frozen work remains. A buffer
+   wait never prevents already-funded work. Source pending nonce is checked only for needed sends.
+
+Confirmed/reverted refill returns progress. Normal source-floor/cap/cooldown/gas/stale waits
+return waiting, so --watch polls again. Unknown transaction or policy violation returns blocked;
+watch exits for reconciliation/operator action. No hidden multi-transfer loop within a pass.
+
+CLI adds --native-refill FILE --refill-signer INDEX (both required together, plus --ops):
+FILE contains source, policy, optional protectedAddresses; the signer comes from the local RPC.
+Use a persistent local runtime state directory and exclusive source signer, as before.
+
+Validation: 59/59 focused planner/ledger/executor/budget/lock/transaction tests passed (8.1 s).
+Automatic candidate and committed scenarios passed locally. Coordinator/CLI final results are
+in CURRENT_CONTEXT. Full npm test and fork not run. The network, venue, RNG and gas model remain
+local fixtures, not production integration.
+
+Дополнение к проверкам интеграции: 2/2 automatic coordinator scenarios (60.0 s),
+4/4 ранее выбранных recovery/CLI/refusal regressions прошли в общем запуске;
+первоначальная проверка «freeze ровно на втором pass» заменена проверкой возобновления и
+ограниченного продвижения двух candidates. Short начинает работу на следующем pass; Monthly
+может запросить собственное пополнение, каждый раз не более одного transfer/pass.
+
+Финальные проверки интеграции 21.09: 59/59 профильных тестов; 12 различных coordinator
+regressions прошли отдельными выборками: 4 recovery/CLI/refusal, 6 budget/RNG/frozen/config
+(171 s), 2 auto-refill (60 s). Финальная CLI-проверка дополнена source-floor wait → пополнение
+источника → resume в том же state, 1/1 (41 s). Полный npm test/fork не запускались.
+
+```powershell
+node --test --test-name-pattern='automatic .*refill|CLI runs both workers|hashless broadcast failure|known recipient refusal|native refill pending' test/local-coordinator.test.cjs
+node --test --test-name-pattern='budgeted profile waits|one shared budget|RNG controller funding|frozen Monthly gets|budget profile upgrades' test/local-coordinator.test.cjs
+```

@@ -93,5 +93,13 @@ test('mutated signer fees persist hash across timeout, account overspend and sto
  assert.equal((await f.run({input,signer})).reason,'broadcastPolicyMismatch');
  const state=f.read();assert(!state.pending);assert(state.nativeRefillHalt);assert(state.lastResolved.budgetExceeded);
  assert.equal(BigInt(state.nativeRefillHistory.spent),1001500000000000000n-await f.provider.getBalance(f.source));
- assert.equal((await f.run({input,signer})).reason,'broadcastPolicyMismatch');assert.equal(sends,1);
+ const alarm=await f.run({input,signer});assert.equal(alarm.reason,'broadcastPolicyMismatch');
+ assert.equal(alarm.requiresReconciliation,false);assert.equal(alarm.requiresOperatorAction,true);assert.equal(sends,1);
+});
+
+test('obligations anchor mismatch never sends; deferred buffers do not wait on source nonce',async t=>{
+ const f=await fixture(t),input={...f.input,obligationsAnchor:{number:'0',hash:ethers.id('stale')}};
+ assert.equal((await f.run({input})).reason,'staleSnapshot');
+ await f.rpc.send('evm_setAutomine',[false]);await f.signer.sendTransaction({to:f.target,value:1n});
+ assert.equal((await f.run({allowedTiers:['committed']})).reason,'tierDeferred');
 });

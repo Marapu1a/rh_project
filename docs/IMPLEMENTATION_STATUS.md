@@ -28,7 +28,7 @@
 Локальный [execution budget](LOCAL_EXECUTION_BUDGET.md): pure calculator + coordinator
 preflight до estimate/intent, native accounting по адресам, RNG отдельно, frozen-first,
 два model fee profiles, settings отдельно от deployment identity. Opt-in `--ops FILE`.
-Это off-chain forecast, не native escrow или production guarantee; autorefill отсутствует.
+Это off-chain forecast, не native escrow или production guarantee; local bootstrap autorefill подключён отдельно.
 
 - `npm run test:local:buy-cycle` — новый сквозной локальный путь.
 - `npm run test:local:executor` — тот же расширенный BUY-cycle с worker; `npm run local:short -- ...` — CLI для уже развёрнутого локального узла/job.
@@ -73,11 +73,15 @@ RPC/transfer executor отсутствует. [API и границы](LOCAL_NATI
 
 21.09: scripts/local-native-refill-state.cjs — pure intent/hash/receipt transitions общего journal;
 actual expense и cooldown попыток, atomic finalization. Coordinator не очищает refill pending
-через generic recovery. Typed recovery подключён; автоматический запуск funding пока отсутствует. [Модуль](LOCAL_NATIVE_REFILL.md).
+через generic recovery. Typed recovery подключён; автоматический запуск funding подключён optional-конфигурацией. [Модуль](LOCAL_NATIVE_REFILL.md).
 
 21.09: local-native-refill-executor.cjs — один bootstrap-native transfer под существующим
 coordinator lock, RPC/source/fee/estimate/head/nonce checks; typed receipt recovery включён в
-coordinator startup. Автосбор draw obligations и запуск пополнений обычным pass ещё не подключены.
+coordinator startup. Автосбор draw obligations и запуск пополнений теперь подключены (см. ниже).
 
 21.09: refill intent связывает gas/fee envelope; post-broadcast mismatch сохраняет hash,
 учитывает расход и ставит durable stop для executor/coordinator. Первого перерасхода это не предотвращает.
+
+21.09: автоматический native funding включён optional-конфигурацией coordinator/CLI; общий
+collectExecutionObligations для budget/refill, anchor binding, frozen-first, один refill/pass.
+Receipt wait отделён от requiresOperatorAction. Детали и границы — LOCAL_NATIVE_REFILL.

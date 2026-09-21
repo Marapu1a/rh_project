@@ -55,4 +55,4 @@
 
 - [Execution Gas Calibration](LOCAL_EXECUTION_CALIBRATION.md) — измерения 100/1 000/10 000 участников, профиль и проверка бюджета.
 
-- [Local Native Refill](LOCAL_NATIVE_REFILL.md) — planner, bounded local executor и typed receipt recovery; автоматический запуск funding ещё не подключён.
+- [Local Native Refill](LOCAL_NATIVE_REFILL.md) — planner, bounded local executor и typed receipt recovery; автоматическое funding через coordinator/CLI.

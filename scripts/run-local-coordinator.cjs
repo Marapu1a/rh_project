@@ -4,8 +4,8 @@ async function main(){
   const args=process.argv.slice(2),o={};
   for(let i=0;i<args.length;i++){
     if(args[i]==='--watch'){o.watch=true;continue;}
-    if(!['--job','--config','--state','--scheduler-state','--rpc','--publisher','--executor','--ops'].includes(args[i])||args[i+1]==null)
-      throw Error('Expected --job FILE --config FILE --state FILE --scheduler-state FILE --rpc LOOPBACK [--ops FILE] [--publisher INDEX] [--executor INDEX] [--watch]');
+    if(!['--job','--config','--state','--scheduler-state','--rpc','--publisher','--executor','--ops','--native-refill','--refill-signer'].includes(args[i])||args[i+1]==null)
+      throw Error('Expected --job FILE --config FILE --state FILE --scheduler-state FILE --rpc LOOPBACK [--ops FILE] [--native-refill FILE --refill-signer INDEX] [--publisher INDEX] [--executor INDEX] [--watch]');
     o[args[i].slice(2)]=args[++i];
   }
   for(const k of ['job','config','state','scheduler-state','rpc'])if(!o[k])throw Error('Missing --'+k);
@@ -19,8 +19,10 @@ async function main(){
   try{
     async function signer(index){if(index==null)return undefined;if(!/^\d+$/.test(index)||!Number.isSafeInteger(Number(index)))throw Error('Invalid account');return provider.getSigner(Number(index));}
     const executor=await signer(o.executor??'0'),publisher=await signer(o.publisher);
+    if(!!o['native-refill']!==(o['refill-signer']!=null))throw Error('Provide both --native-refill and --refill-signer');
+    const nativeRefill=o['native-refill']?{...JSON.parse(fs.readFileSync(o['native-refill'],'utf8')),signer:await signer(o['refill-signer'])}:undefined;
     const contract=(address,name)=>new ethers.Contract(address,artifacts[name].abi,provider);
-    const options={statePath:o.state,signal:stop.signal,ops,
+    const options={statePath:o.state,signal:stop.signal,ops,nativeRefill,
       prize:{provider,job,router:contract(job.router,'FeeRouter'),executor},
       scheduler:{provider,config,rpcUrl:o.rpc,statePath:o['scheduler-state'],publisher,executor,
         short:contract(config.lifecycle.source,'LocalShortController'),monthly:contract(config.lifecycle.monthlySource,'LocalMonthlyController')}};

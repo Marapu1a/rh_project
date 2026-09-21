@@ -19,11 +19,11 @@ async function reconcileNativeRefill({provider,state,save}){
   hash:receipt.hash,status:receipt.status,blockHash:receipt.blockHash,blockNumber:String(receipt.blockNumber),
   gasUsed:String(receipt.gasUsed),gasPrice:String(receipt.gasPrice)}});
  commit(state,save,next);
- if(state.nativeRefillHalt)return {status:'blocked',reason:'broadcastPolicyMismatch',requiresReconciliation:true,transactionHash:receipt.hash};
+ if(state.nativeRefillHalt)return {status:'blocked',reason:'broadcastPolicyMismatch',requiresReconciliation:false,requiresOperatorAction:true,transactionHash:receipt.hash};
  return {status:receipt.status===1?'confirmed':'reverted',transactionHash:receipt.hash};
 }
 // One bounded transfer. Obligations are supplied by a trusted caller, not inferred here.
-async function executeNativeRefill({provider,signer,state,save,input,signal}){
+async function executeNativeRefill({provider,signer,state,save,input,signal,allowedTiers}){
  check(signer?.provider===provider&&typeof signer.sendTransaction==='function','Refill signer/provider mismatch');
  check((await provider.getNetwork()).chainId===31337n,'Local chain 31337 only');
  check(input.source.kind==='BOOTSTRAP_NATIVE'&&input.ops.network.feeModel==='LOCAL_EIP1559','Only bootstrap plain local native supported');
@@ -34,18 +34,20 @@ async function executeNativeRefill({provider,signer,state,save,input,signal}){
   check(state.pending.domainHash===domain,'Pending refill domain mismatch');
   return reconcileNativeRefill({provider,state,save});
  }
- if(state.nativeRefillHalt)return {status:'blocked',reason:'broadcastPolicyMismatch',requiresReconciliation:true};
+ if(state.nativeRefillHalt)return {status:'blocked',reason:'broadcastPolicyMismatch',requiresReconciliation:false,requiresOperatorAction:true};
  if(signal?.aborted)return {status:'stopped'};
  const source=input.source.address.toLowerCase();
- const latestNonce=await provider.getTransactionCount(source,'latest'),pendingNonce=await provider.getTransactionCount(source,'pending');
- if(latestNonce!==pendingNonce)return {status:'blocked',reason:'pendingSourceNonce'};
  const head=await provider.getBlock('latest'),anchor=blockData(head),balances={};
+ if(input.obligationsAnchor&&(anchor.hash!==input.obligationsAnchor.hash||anchor.number!==input.obligationsAnchor.number))return {status:'blocked',reason:'staleSnapshot'};
  for(const address of new Set([source,...input.policy.targets.map(t=>t.address.toLowerCase())]))balances[address]=String(await provider.getBalance(address,head.number));
  const fee=await provider.getFeeData(),price=fee.maxFeePerGas;
  check(price!==null&&price>0n,'Missing fee quote');
  const history=state.nativeRefillHistory||{domainHash:domain,pending:false,windowStart:String(BigInt(anchor.timestamp)/BigInt(input.policy.periodSeconds)*BigInt(input.policy.periodSeconds)),spent:'0',lastAttemptAt:null,lastSuccessAt:null,lastNonce:null};
  const snapshot={...input,anchor,head:anchor,balances,gasPrice:String(price)};
- const plan=planNativeRefill({...snapshot,history});if(plan.status!=='needsRefill')return plan;
+ const plan=planNativeRefill({...snapshot,history});if(allowedTiers&&plan.tier&&!allowedTiers.includes(plan.tier))return {status:'ready',reason:'tierDeferred',tier:plan.tier};
+ if(plan.status!=='needsRefill')return plan;
+ const latestNonce=await provider.getTransactionCount(source,'latest'),pendingNonce=await provider.getTransactionCount(source,'pending');
+ if(latestNonce!==pendingNonce)return {status:'blocked',reason:'pendingSourceNonce'};
  const request={chainId:31337,to:plan.transfer.to,value:BigInt(plan.transfer.value),data:'0x',nonce:latestNonce,type:2,maxPriorityFeePerGas:0n,maxFeePerGas:price};
  const estimate=await signer.estimateGas(request),limit=BigInt(input.source.transferGas);
  if(estimate>limit||limit>head.gasLimit)return {status:'blocked',reason:'transferGasBound'};

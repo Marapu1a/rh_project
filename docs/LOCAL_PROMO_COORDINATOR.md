@@ -18,6 +18,11 @@ provider того же chainId не принимается: один объек�
 Short/Monthly при definite rejection. Error/abort заканчивает общий проход. Неизвестная
 отправка блокирует оба контура, включая последующие запуски.
 
+С optional nativeRefill / `--native-refill FILE --refill-signer INDEX` координатор сам
+собирает потребности и выполняет максимум одно пополнение за pass. После receipt — новый pass.
+Frozen funding первым, buffers после работы; обычные waits продолжаются в watch.
+Подробная модель, конфигурация и ограничения — [LOCAL_NATIVE_REFILL](LOCAL_NATIVE_REFILL.md).
+
 CLI:
 
 ```powershell

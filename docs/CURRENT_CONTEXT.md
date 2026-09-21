@@ -1,6 +1,6 @@
 # Текущий контекст
 
-Обновлено 21.09.2026 после fee-envelope binding fix.
+Обновлено 21.09.2026 после automatic coordinator native refill.
 
 ## Где находимся
 
@@ -25,7 +25,8 @@ native ops source, общий payer/RNG forecast, low/target, source floor, gas 
 
 Local executor делает один native transfer под существующим coordinator lock, проверяет
 source signer/provider, balances/fee/estimate/head/nonce и сохраняет intent до send.
-Автоматический сбор draw obligations и запуск funding из coordinator пока не подключены.
+Автосбор draw obligations и запуск funding подключены к coordinator через optional nativeRefill/CLI.
+Один anchor для obligations/balances; после одного refill текущий pass заканчивается.
 В ops-контуре TOKEN/USDG не конвертируются,
 project share не утверждается, призовые buckets не являются источником ops.
 State policy/source/network hash не позволяет тихо сбросить funding history при смене config.
@@ -47,16 +48,17 @@ Mismatch сохраняет hash, учитывает receipt и ставит dur
 и refill executor останавливают автоматику, не повторяют перевод. Это обнаружение после
 broadcast, не гарантия против первого перерасхода неисправным signer.
 
-Проверки 21.09: 58/58 профильных planner/ledger/executor/budget/lock/transaction tests.
-Полный npm test/fork не запускались. Команды — [LOCAL_NATIVE_REFILL](LOCAL_NATIVE_REFILL.md).
+Проверки 21.09: 59/59 профильных тестов и 12 различных coordinator regressions
+(4 recovery/CLI/refusal, 6 budget/RNG/frozen/config, 2 automatic refill).
+Финальные повторы: CLI source-floor wait/resume 1/1; executor 9/9.
+Полный npm test/fork не запускались. Команды и API — [LOCAL_NATIVE_REFILL](LOCAL_NATIVE_REFILL.md).
 
 ## Ближайший кусок
 
-Подключить автоматический сбор committed/candidate obligations и bounded refill к обычному
-coordinator pass. Executor и typed startup recovery уже есть; нужны свежие draw obligations,
-привязка конфигурации funding и запрет buffer refill тормозить обеспеченную frozen работу.
-Реальный swap/project-share conversion отдельно. Не превращать unknown send в retry.
-Полный порядок — [ROADMAP](ROADMAP.md).
+Проверить связанный funding контур по отзыву GPT: startup/config migration, watch waits,
+приоритет frozen и restart. После этого выбрать следующий ограниченный этап укрепления MVP.
+Автопополнение из выделенного native bootstrap source уже подключено; TOKEN/USDG → ops native
+и production network/RNG/finality остаются отдельными задачами.
 
 ## Основные ограничения
 
@@ -82,5 +84,3 @@ proxy, reroll/reset или подмены random. Immutable destination стар
 [исторический снимок статусов](archive/snapshots/PROJECT_PROGRESS_BEFORE_REVIEW_2026-09-20.md).
 Ответ GPT — вспомогательное мнение, не автоматическое задание.
 
-Проверка fee-policy fix: 4/4 targeted coordinator (82.1 s); финальный тест typed recovery +
-durable halt повторно 1/1 (43.9 s), state suite 7/7. Команды coordinator — в LOCAL_NATIVE_REFILL.

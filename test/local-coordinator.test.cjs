@@ -289,3 +289,55 @@ test('native refill pending uses typed receipt recovery and records expense befo
   assert.equal(fs.readFileSync(file,'utf8'),before);
   assert.equal(await f.provider.getTransactionCount(await f.admin.getAddress()),nonce);
 });
+
+async function enableRefill(f){
+  f.options.ops=opsProfile();const signer=await f.provider.getSigner(8),source=await signer.getAddress();
+  f.options.nativeRefill={signer,source:{kind:'BOOTSTRAP_NATIVE',address:source,minimumBalance:'1000000000000000000',transferGas:'30000'},
+    policy:{targets:[await f.admin.getAddress(),f.short.target,f.monthly.target].map(address=>({address,lowWatermark:'0',target:'0'})),
+      maxPerRefill:'1000000000000000000',maxPerPeriod:'10000000000000000000',periodSeconds:'86400',cooldownSeconds:'0'}};
+  return source;
+}
+test('automatic refill CLI funds candidate and bounded passes resume freezing',async t=>{
+  const f=await fixture(t),source=await enableRefill(f),admin=await f.admin.getAddress();
+  await f.provider.send('hardhat_setBalance',[admin,'0x0']);
+  const nonce=await f.provider.getTransactionCount(source);
+  const sourceBalance=await f.provider.getBalance(source);
+  await f.provider.send('hardhat_setBalance',[source,ethers.toQuantity(BigInt(f.options.nativeRefill.source.minimumBalance))]);
+  const waiting=await runCoordinator(f.options);assert.equal(waiting.status,'waiting',JSON.stringify(waiting));assert.equal(waiting.reason,'sourceFunding');
+  assert.equal(await f.provider.getTransactionCount(source),nonce);
+  await f.provider.send('hardhat_setBalance',[source,ethers.toQuantity(sourceBalance)]);
+  const files={job:f.options.prize.job,config:f.config,ops:f.options.ops,refill:{source:f.options.nativeRefill.source,policy:f.options.nativeRefill.policy}};
+  for(const [name,value] of Object.entries(files))fs.writeFileSync(path.join(f.directory,name+'.json'),JSON.stringify(value));
+  const execFile=require('node:util').promisify(require('node:child_process').execFile);
+  const cli=await execFile(process.execPath,['scripts/run-local-coordinator.cjs','--job',path.join(f.directory,'job.json'),
+    '--config',path.join(f.directory,'config.json'),'--ops',path.join(f.directory,'ops.json'),'--native-refill',path.join(f.directory,'refill.json'),
+    '--refill-signer','8','--state',f.options.statePath,'--scheduler-state',f.statePath,'--rpc',f.options.scheduler.rpcUrl,'--executor','0','--publisher','0'],{timeout:60000});
+  const result=JSON.parse(cli.stdout.trim());assert.equal(result.status,'progress',JSON.stringify(result));
+  assert.equal(result.results.nativeRefill.status,'confirmed');assert.equal(await f.provider.getTransactionCount(source),nonce+1);
+  const state=JSON.parse(fs.readFileSync(f.options.statePath));assert(!state.pending);assert.equal(state.lastResolved.worker,'nativeRefill');
+  assert.equal(await f.short.pendingDatasetDraw(),ethers.ZeroHash);
+  const next=await runCoordinator(f.options);assert.notEqual(next.status,'error',JSON.stringify(next));
+  assert.notEqual(await f.short.activeProposal(),ethers.ZeroHash,JSON.stringify(next));
+  // Short begins; Monthly may then require its own funding pass before either is frozen.
+  assert(await f.provider.getTransactionCount(source)<=nonce+2);
+  for(let i=0;i<3&&await f.short.pendingDatasetDraw()===ethers.ZeroHash;i++){
+    const before=await f.provider.getTransactionCount(source),progress=await runCoordinator(f.options);
+    assert.notEqual(progress.status,'error',JSON.stringify(progress));
+    assert(await f.provider.getTransactionCount(source)<=before+1);
+  }
+  assert.notEqual(await f.short.pendingDatasetDraw(),ethers.ZeroHash);
+  const changed={...f.options,nativeRefill:{...f.options.nativeRefill,policy:{...f.options.nativeRefill.policy,cooldownSeconds:'1'}}};
+  await assert.rejects(()=>runCoordinator(changed),/checksum\/config mismatch/);
+});
+test('automatic committed refill precedes new work and optional buffer cannot delay funded frozen work',async t=>{
+  const f=await fixture(t);await runCoordinator(f.options);const source=await enableRefill(f),admin=await f.admin.getAddress();
+  f.options.nativeRefill.policy.targets[0].lowWatermark=f.options.nativeRefill.policy.targets[0].target='1000000000000000000';
+  const draw=await f.short.pendingDatasetDraw();assert.notEqual(draw,ethers.ZeroHash);
+  await f.provider.send('hardhat_setBalance',[admin,'0x0']);
+  const result=await runCoordinator(f.options);assert.equal(result.status,'progress',JSON.stringify(result));
+  assert.equal(result.results.nativeRefill.status,'confirmed');
+  const state=JSON.parse(fs.readFileSync(f.options.statePath));assert(state.lastResolved.value!=='0');
+  assert.equal(await f.short.pendingDatasetDraw(),draw);
+  const nonce=await f.provider.getTransactionCount(source);await runCoordinator(f.options);
+  assert.equal(await f.provider.getTransactionCount(source),nonce);
+});

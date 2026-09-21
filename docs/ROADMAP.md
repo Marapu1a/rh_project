@@ -41,9 +41,9 @@ cooldown. Приоритет committed → candidate → buffers. Typed pending 
 Bootstrap-native executor готов: source/provider binding, anchored balances, estimate/head/nonce
 revalidation, durable intent/hash и typed receipt recovery в coordinator; один перевод за вызов.
 Fee-envelope fix выполнен: known hash при mismatch, actual receipt accounting и durable stop.
-Следующий bounded пакет: автоматический сбор актуальных obligations и вызов funding из
-coordinator с сохранением frozen-first приоритета. Сейчас обычный pass только восстанавливает
-refill receipts; отправку вызывает trusted caller под тем же lock.
+Автосбор committed/candidate obligations и bounded refill подключены к coordinator и CLI.
+Общий snapshot anchor, один refill за pass, source/domain config binding, frozen-first и idle buffers.
+Ближайший шаг: review связанного funding пути и ограниченное укрепление найденных пробелов.
 Конверсия доли проекта и real DEX/RNG отдельно; runtime volume не синхронизировать с checkout.
 Provenance calibration (commit/dirty/toolchain/generators) остаётся небольшим открытым хвостом.
 
