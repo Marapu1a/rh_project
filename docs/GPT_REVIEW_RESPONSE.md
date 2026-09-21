@@ -5,186 +5,121 @@
 Это независимое review-мнение, не задание на автоматическое исполнение. При следующем
 обращении файл следует полностью перезаписать.
 
-Просмотрен HEAD `0652d24cf7259ffc82831d1bf1d1cfb1b01249a8` —
-`feat: execute bounded local native refill with durable receipt recovery`.
+Просмотрен HEAD `46d95ee8d3ed76350cf8d0db43b82f83ba0150c6` —
+`fix: bind refill fee envelope and persist policy violation halt`.
 
 ## Короткий вердикт
 
-Предыдущий priority defect закрыт по правильной границе. API теперь явно разделяет
-`committedObligations` и `candidateObligations`, legacy flat input отвергается, общий payer
-получает один buffer в combined forecast. Очередь committed → candidate → buffer реально
-следует данным, а не соглашению caller. Моя прежняя inversion reproduction теперь покрыта
-регрессией и проходит.
+Предыдущий подтверждённый fee-envelope defect закрыт в заявленной границе local executor.
+Подмена signer-ом `type`, `gasLimit`, `maxFeePerGas` или `maxPriorityFeePerGas` больше не
+завершается как обычный `confirmed`: известный hash сохраняется, canonical receipt и
+фактический расход учитываются, pending очищается, а `nativeRefillHalt` защёлкивается тем же
+atomic save. Следующие вызовы executor и coordinator не отправляют новые транзакции.
 
-Pure intent/hash/receipt transitions и единый coordinator pending сделаны убедительно.
-Mined success учитывает value + gas, revert — только gas; обе попытки двигают cooldown.
-Expense ledger и очистка pending попадают в один atomic save. Ошибка сохранения оставляет
-старый pending/spend и позволяет ровно один раз завершить receipt после reload.
+Это исправляет опасное тихое продолжение и потерю recovery evidence, но не предотвращает
+первую уже broadcast-транзакцию неисправного signer. Код и документация это различие теперь
+описывают честно. Caps и source floor остаются pre-send гарантиями при signer, соблюдающем
+request; post-broadcast mismatch является alarm/stop, а не возвратом денег.
 
-Обнаружен один подтверждённый defect перед автоматическим wiring: transaction identity не
-связывает fee envelope. После `sendTransaction` и при recovery проверяются
-`chainId/from/to/value/nonce/data/hash`, но не `type/gasLimit/maxFeePerGas/maxPriorityFeePerGas`.
-Signer с правильным address/provider может отправить ту же выплату с более дорогими fee.
-Planner cap и source floor тогда нарушаются; `budgetExceeded` лишь честно фиксирует уже
-потраченные деньги.
+Подтверждённых блокеров перед следующим bounded-пакетом автоматического сбора obligations
+я не нашёл. Это не означает готовность production signer/finality boundary.
 
-Это не требует переделывать executor или journal. Нужно связать fee envelope с prepared
-intent и проверить returned/on-chain transaction. После этого пакет можно подключать к
-обычному coordinator pass.
+## Что проверено в исправлении
 
-## Подтверждённый fee-envelope defect
+Prepared intent хранит полный ожидаемый envelope:
 
-Я повторил реальный Hardhat transfer через допустимый интерфейс signer-wrapper:
+- `type=2`;
+- точный `gasLimit` из source policy;
+- точный `maxFeePerGas` из принятого fee quote;
+- `maxPriorityFeePerGas=0`.
 
-- executor сформировал request с `gasLimit=30000`, max fee в рамках 10 gwei profile;
-- wrapper сохранил from/to/value/nonce/data, но отправил `maxFeePerGas=100 gwei` и
-  `maxPriorityFeePerGas=50 gwei`;
-- executor принял transaction, сохранил hash, нашёл canonical receipt и вернул `confirmed`;
-- planned `maxSourceDebit` был `1,375,000,000,000,000`;
-- actual debit стал `2,068,375,000,000,000`;
-- source balance был `1.0015 native` при floor `1 native`, после receipt осталось
-  `0.999431625 native` — floor физически нарушен;
-- `lastResolved.budgetExceeded === true`, но предотвратить расход уже невозможно.
+Staging дополнительно валидирует fee ceiling. `txData` извлекает эти поля и из returned
+transaction, и из RPC transaction. Несовпадение returned transaction сразу переводит pending
+в `broadcastPolicyMismatch`; несовпадение, обнаруженное только при RPC recovery, приводит к
+тому же durable halt. Если returned response был подозрительным, последующее совпадение RPC
+не снимает нарушение.
 
-Это не атака через подмену source address: `getAddress()` и provider binding прошли. Конечно,
-полностью злой signer может потратить source вне приложения; но buggy/remote signer,
-изменивший fee policy, находится внутри заявленной transaction boundary. Поэтому обещание
-caps/floor требует проверки фактического transaction envelope, а не только доверия к
-реализации `sendTransaction`.
+Legacy pending без `feeEnvelope` не получает неявного доверия: при известном hash его receipt
+можно безопасно учесть, после чего автоматика останавливается. Hashless prepared intent, как и
+раньше, остаётся неизвестным исходом без автоматического retry.
 
-Минимальный fix:
+`finalizeNativeRefill` сначала проверяет прежнюю transaction/receipt/block/history identity,
+затем считает actual debit. В одном новом состоянии находятся:
 
-1. Prepared pending сохраняет ожидаемые `type=2`, `gasLimit`, `maxFeePerGas` и
-   `maxPriorityFeePerGas=0` вместе с остальным intent.
-2. `txData` извлекает эти поля из returned transaction и RPC transaction.
-3. `verifyTransaction` требует точного совпадения с intent и проверяет fee ceiling.
-4. Регрессия signer-wrapper повышает fee/priority и не должна завершаться как обычный
-   confirmed refill.
+- обновлённый `nativeRefillHistory.spent`;
+- `lastResolved` с `actualDebit`, `budgetExceeded` и `policyMismatch`;
+- удалённый pending;
+- durable `nativeRefillHalt` с expected/observed envelope и transaction hash.
 
-Поскольку mismatch обнаруживается уже после возможного broadcast, его нельзя выдавать за
-«транзакции не было». Лучше best-effort сохранить известный hash и состояние
-`broadcastPolicyMismatch`, затем reconcile фактический receipt/расход и остановить
-автоматику для оператора. Оставить prepared/hashless тоже fail-closed, но это теряет уже
-известный hash и ухудшает восстановление. Автоматически повторять нельзя в обоих вариантах.
+Контракт `commit(save-before-mutate)` сохранён. Поэтому failed final save оставляет старый
+известный pending; reload повторно читает original receipt и снова вычисляет тот же halt без
+повторной отправки. Отдельный journal не появился.
 
-`budgetExceeded` правильно сохранить как post-factum alarm. Но это accounting evidence,
-не enforcement caps.
+## Проверка прежней reproduction
 
-## Priority и shared payer
+Новая real Hardhat regression повторяет существенную часть прежнего сценария: wrapper signer
+сохраняет адрес/получателя/value/nonce, но отправляет 100 gwei max fee и 50 gwei priority fee.
+При выключенном automine первый запуск сохраняет hash и состояние
+`broadcastPolicyMismatch`, а не теряет broadcast. После mining и reload:
 
-Текущая математика tier-ов корректна:
+- original receipt находится и учитывается;
+- фактический перерасход отмечается `budgetExceeded`;
+- pending очищается;
+- `nativeRefillHalt` сохраняется;
+- следующий запуск возвращает `broadcastPolicyMismatch`;
+- число send остаётся равным одному.
 
-- committed budget считается отдельно;
-- total budget считается по committed + candidate;
-- signer buffer в total добавляется один раз на фактический gas payer;
-- committed shortfall использует committed snapshot;
-- candidate shortfall использует incremental gap до total required;
-- buffer начинается только после покрытия total required;
-- внутри tier адресный tie-break детерминирован;
-- transfer покрывает только deficit выбранного tier и не прыгает сразу к target;
-- `committedFundingReady` отделён от total `fundingReady`.
+То есть прежний сценарий больше не возвращает нормальный `confirmed` и не может незаметно
+перейти к следующему refill. При этом первый physical debit всё ещё может превысить planned
+`maxSourceDebit` и нарушить floor — именно поэтому документация не называет этот механизм
+pre-broadcast enforcement.
 
-Regression со smaller-address candidate и cap ровно на frozen transfer теперь выбирает
-frozen payer. Shared payer между tier-ами сначала получает committed 15, затем incremental
-candidate 12, а не второй signer buffer. Замечаний к этой части нет.
+## Coordinator stop
 
-Важно сохранить смысл при интеграции: `committedFundingReady=true` ещё не разрешает новый
-candidate, а `fundingReady=true` не доказывает общую draw readiness. И наоборот,
-`blocked/waitExpensiveGas` только у optional buffer не должен останавливать уже обеспеченный
-frozen draw.
+После typed native-refill recovery coordinator проверяет `nativeRefillHalt` до pending-nonce
+checks, budget collection и обоих workers. Targeted regression дополнительно фиксирует, что
+при уже сохранённом halt:
 
-## Period, cooldown и ledger
+- возвращается `reason='broadcastPolicyMismatch'`;
+- state-файл остаётся байт-в-байт неизменным;
+- nonce execution signer не меняется.
 
-Переходы ledger согласованы:
+Путь, где recovery сам в текущем pass создаёт halt, тоже корректен: finalizer очищает pending,
+после чего общий halt check не допускает draw/prize работу.
 
-- receipt block timestamp выбирает окно расхода;
-- success добавляет `value + gasUsed × gasPrice`;
-- revert добавляет только gas;
-- `lastAttemptAt` обновляется и на success, и на revert;
-- `lastSuccessAt` обновляется только на success;
-- actual overspend не отбрасывается и помечается `budgetExceeded`;
-- `lastNonce` запрещает повтор старого source nonce;
-- duplicate finalization отвергается;
-- изменённый history не проходит `historyHash`.
+Поле `requiresReconciliation=true` при уже очищенном pending фактически означает ручное
+решение оператора, а не ожидание ещё одного receipt. Это небольшая терминологическая
+шероховатость, но не safety defect; отсутствие автоматического reset соответствует текущей
+fail-closed границе.
 
-Переход транзакции через period boundary разумно относится к окну mined receipt. Pending
-в это время единственный и блокирует новый расход, поэтому двойного cap admission здесь нет.
+## Оставшиеся границы
 
-Один semantic пункт стоит явно сохранить в будущих docs/tests: cooldown — это cooldown
-attempt, а не только успешного refill. Текущие поля и тесты уже реализуют именно это.
+- Нельзя гарантировать fee/floor до broadcast через интерфейс `sendTransaction`, если сам
+  signer меняет request. Signature-before-broadcast verification потребовала бы другой
+  signing/broadcast design.
+- Полностью злой signer всё равно способен расходовать source вне executor; этот пакет лишь
+  обнаруживает несоответствие транзакции, отправленной через данный вызов.
+- Поддерживаются только BOOTSTRAP_NATIVE, chain 31337 и plain LOCAL_EIP1559.
+- Проверка canonical local block не является production finality/reorg proof.
+- Durable halt пока намеренно не имеет reset API; восстановление остаётся операторским.
+- Автоматический сбор committed/candidate obligations и инициирование refill обычным
+  coordinator pass ещё не реализованы.
 
-## Receipt identity и atomic save
-
-Кроме fee envelope, чистые проверки достаточны для заявленного local scope:
-
-- intent требует свободный общий coordinator pending;
-- history/domain и nonce связаны до send;
-- returned transaction связывает source, receiver, value, nonce, chain и empty calldata;
-- replacement hash не принимается как оригинал;
-- receipt hash, status, block number/hash и transaction сверяются;
-- receipt не может предшествовать anchor/предыдущей attempt;
-- coordinator dispatches `nativeRefill` в typed recovery до generic recovery и draw work;
-- unknown hash/receipt остаётся stop, а не retry.
-
-Контракт `commit` правильный при заявленном синхронном atomic `save`: сначала persistence,
-потом mutation объекта in-memory. Failed intent save не отправляет transaction; failed hash
-save оставляет prepared stop; failed finalization оставляет известный hash и старый spend.
-
-Это не production finality proof: canonical local block read, trusted provider и exact hash
-достаточны только для chain31337 стенда. Отсутствие reorg/finality/replacement recovery не
-является дефектом этого bounded пакета.
-
-## Как подключить к ordinary coordinator pass
-
-Не создавать новый state/lock/journal. Следующий шаг можно оставить узким:
-
-1. Выделить из существующей budget collection функцию, которая на одном anchor возвращает
-   `committedObligations`, `candidateObligations`, balances и gasObservations.
-2. Pending Short/Monthly settlement всегда попадает в committed. Новый active/current
-   prepare/freeze — в candidate. Эта классификация строится из chain lifecycle, не адресов.
-3. Добавить `nativeRefill.domainHash`, source signer address и hash protected manifest в
-   immutable coordinator config. Mutable polling/receipt timeout остаются settings.
-4. После startup recovery сначала оценивать committed funding.
-5. Если committed недофинансирован — выполнить максимум один refill и закончить pass,
-   чтобы следующий pass перечитал chain/state.
-6. Если committed обеспечен и есть frozen work — выполнять его раньше candidate refill.
-7. Candidate refill допускается, только когда он нужен для следующей ещё не принятой работы.
-8. Optional buffer refill выполнять на idle/post-work пути; его cooldown/cap/gas wait не
-   блокируют обеспеченные frozen/candidate sends.
-
-После любого refill receipt лучше завершать текущий coordinator pass со статусом progress,
-а не продолжать на старом obligations snapshot. Следующий pass дешево пересчитает balances,
-progress и gas observations и не создаст скрытого multi-transfer loop.
-
-Существующий `pending.worker='nativeRefill'` и typed finalizer уже достаточны. Generic startup
-recovery менять второй раз не нужно.
-
-## Что является ограничением, а не текущим defect
-
-- obligations и protectedAddresses пока trusted caller inputs;
-- executor поддерживает только BOOTSTRAP_NATIVE, chain31337 и plain LOCAL_EIP1559;
-- PROJECT_NATIVE economics/conversion не реализованы;
-- unknown hash требует оператора и не восстанавливается по nonce автоматически;
-- source signer должен быть эксклюзивным;
-- local canonical block checks не заменяют production finality;
-- config migration и calibration provenance остаются отдельными хвостами.
-
-Это честные границы текущего пакета. Их не надо смешивать с подтверждённым fee-envelope
-дефектом или использовать для расширения scope в swap/governance.
+Эти пункты не опровергают текущий fix и не требуют расширять следующий пакет в raw signing,
+production finality, PROJECT_NATIVE conversion или новый journal.
 
 ## Выполненные проверки
 
-- заявленный planner/ledger/executor/budget/lock/transaction набор — **56/56**, fail 0;
-- заявленные coordinator regressions — **4/4**, fail 0;
-- real Hardhat mutated-fee reproduction — cap и source floor нарушены, defect подтверждён;
-- priority regression и shared-payer tier accounting — подтверждены;
-- intent/hash/finalization failure и mined revert tests — подтверждены;
+- `git diff --check 19960e6..46d95ee` — чисто;
+- planner/ledger/executor/budget/lock/transaction — **58/58**, fail 0;
+- targeted coordinator regressions — **4/4**, fail 0;
+- real mutated-fee timeout/restart/no-repeat regression — прошла;
+- pure envelope mutations по всем четырём полям, legacy missing envelope и RPC-only mismatch — прошли;
+- durable coordinator halt без записи state и без нового nonce — прошёл;
 - полный `npm test` и fork не запускались;
-- `git diff --check 394e793..0652d24` нашёл один whitespace defect:
-  лишнюю пустую строку в конце `test/local-native-refill-executor.test.cjs`;
 - пользовательский `docs/INDEPENDENT_AUDIT_2026-09-19.md` не изменялся.
 
-Итог: priority/ledger fix и единый recovery design приняты. Перед автоматическим сбором
-obligations нужен один маленький transaction-policy fix: persist и verify полный fee/gas
-envelope, сохраняя известный hash при post-broadcast mismatch. После этого ordinary
-coordinator integration можно делать следующим bounded пакетом без широкого refactor.
+Итог: fee-envelope binding, evidence-preserving recovery и durable stop принимаю. Прежний
+узкий блокер перед ordinary obligations integration снят. В следующем пакете по-прежнему важно
+сохранить существующие инварианты: единый pending/lock/journal, один anchor для
+committed/candidate, frozen-first admission и максимум один refill с завершением текущего pass.
