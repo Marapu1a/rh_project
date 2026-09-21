@@ -34,10 +34,12 @@ chunks64, normal10/admitted64 и двух seed. Отдельные Short/Monthly
 на границе и 34 clean CLI handoffs при фиксированных 2 gwei. Это sampled envelope,
 не общий MAX_N и не доказательство worst-case. Пример calibrated profile отдельный.
 
-Следующий пакет: ограниченный дизайн native funding/refill из bootstrap/свободной доли
-проекта: кто владеет buffer, target/low-watermark, лимит пополнения, повтор/отказ,
-дорогой gas. Не объединять это сразу с реальным DEX adapter и production RNG.
-Измерения новых rules/реальных adapters и enforcement диапазона остаются открытыми.
+[Чистый native refill planner](LOCAL_NATIVE_REFILL.md) готов: source floor, low/target,
+gas и caps, cooldown/period, priority/partial funding, anchor/pending/history domain.
+Следующий bounded пакет: bootstrap-native transfer executor с source binding, revalidation,
+durable intent/hash/nonce/receipt и расходным ledger. Затем подключение к coordinator.
+Конверсия доли проекта и real DEX/RNG отдельно; runtime volume не синхронизировать с checkout.
+Provenance calibration (commit/dirty/toolchain/generators) остаётся небольшим открытым хвостом.
 
 Finish/назначение награды и permissionless claim различаются: coordinator не отправляет
 claims за победителей. Кто финансирует их gas — отдельная UX/ops политика.

@@ -66,3 +66,7 @@ ops funding, state/config и production integration. Не новый полны�
 21.09: lock initialization cleanup и fault tests; `npm run report:execution:calibration`
 измеряет реальные локальные контроллеры, отдельный calibration child проверяет clean
 process handoff на chunks. [Границы и результаты](LOCAL_EXECUTION_CALIBRATION.md).
+
+21.09: scripts/local-native-refill.cjs — pure planner, `npm run test:local:refill`.
+Приоритет obligations, caps с gas, source floor, cooldown/period, pending/anchor/domain.
+RPC/transfer executor отсутствует. [API и границы](LOCAL_NATIVE_REFILL.md).

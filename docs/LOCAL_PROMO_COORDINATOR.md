@@ -114,3 +114,7 @@ lock. Проверены инъекции write/close EIO: action не начи�
 процессными трассами и helper tests 5/5. В повторной трассе 27 acquired / 27 released,
 10 PID, 0 releaseError, 0 оставшихся путей после release. Все pre/post handoff assertions
 прошли. Полный набор не запускался; intermittent failure не воспроизведён и не закрыт.
+
+21.09: при двойном отказе cleanup выбрасывает AggregateError с исходным cause и
+cleanupErrors; primary code/stage/transactionHash/definiteRejection сохраняются.
+Рабочие state/lock размещать на постоянном локальном volume вне синхронизации checkout.

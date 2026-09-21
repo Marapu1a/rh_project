@@ -32,6 +32,7 @@ async function withState(file,config,action,{legacyConfigs=[]}={}){
     fs.renameSync(temp,file);
     }catch(e){e.code='SCHEDULER_STORAGE_ERROR';throw e;}
   };
+  let primaryError,failed=false;
   try{
     fs.writeFileSync(fd,String(process.pid));fs.closeSync(fd);fd=undefined;
     let state={schema:'local-scheduler-state-v1',configHash:hash(config),jobs:{SHORT:[],MONTHLY:[]}};
@@ -48,14 +49,20 @@ async function withState(file,config,action,{legacyConfigs=[]}={}){
       state=stored;
     }
     return await action(state,save);
-  }finally{
-    traceLock('release',runId,lock);
-    try{
-      try{if(fd!==undefined)fs.closeSync(fd);}
-      finally{fs.unlinkSync(lock);}
-      if(process.env.LOCAL_STATE_LOCK_TRACE==='1')traceLock('released',runId,lock,{remaining:inspectLock(lock)});
+  }catch(e){primaryError=e;failed=true;throw e;}
+  finally{
+    traceLock('release',runId,lock);const cleanupErrors=[];
+    try{if(fd!==undefined)fs.closeSync(fd);}catch(e){cleanupErrors.push(e);}
+    try{fs.unlinkSync(lock);}catch(e){cleanupErrors.push(e);}
+    if(cleanupErrors.length){
+      traceLock('releaseError',runId,lock,{codes:cleanupErrors.map(e=>e.code)});
+      if(!failed&&cleanupErrors.length===1)throw cleanupErrors[0];
+      const error=new AggregateError(failed?[primaryError,...cleanupErrors]:cleanupErrors,
+        'State cleanup failed'+(failed?': '+String(primaryError?.message||primaryError):''),{cause:failed?primaryError:cleanupErrors[0]});
+      for(const key of ['code','stage','transactionHash','definiteRejection'])if(primaryError?.[key]!==undefined)error[key]=primaryError[key];
+      error.cleanupErrors=cleanupErrors;throw error;
     }
-    catch(e){traceLock('releaseError',runId,lock,{code:e.code});throw e;}
+    if(process.env.LOCAL_STATE_LOCK_TRACE==='1')traceLock('released',runId,lock,{remaining:inspectLock(lock)});
   }
 }
 module.exports={withState,inspectLock};

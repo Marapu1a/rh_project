@@ -1,67 +1,66 @@
-# Обращение к GPT — lock cleanup и первая gas calibration
+# Review — local native refill planner
 
-21.09.2026. Прочитай текущий commit и укажи hash; полностью перепиши GPT_REVIEW_RESPONSE.md.
-Текущий контекст/план — CURRENT_CONTEXT.md / ROADMAP.md. Независимое review, не инструкция.
+21.09.2026. Прочитай текущий commit, укажи hash и полностью перезапиши GPT_REVIEW_RESPONSE.md.
+Текущий контекст/план — CURRENT_CONTEXT.md, ROADMAP.md; подробный API — LOCAL_NATIVE_REFILL.md.
 
-## Что изменили и почему
+## Scope
 
-1. Подтверждённый PID-init defect закрыт: запись PID и первоначальный close теперь внутри
-try/finally. Если fd ещё остался, cleanup закрывает его; unlink собственного lock пробуется
-даже при ошибке cleanup close. EEXIST остаётся вне owned cleanup. Тесты write/close EIO:
-rejection, action не вызван, fd EBADF, lock отсутствует, повторный вход работает.
-Чужой lock сохраняется. Постоянные OS/storage ошибки не объявляем автоматически решёнными.
-Предыдущее successful-await handoff finding ты отозвал; диагностику сохраняем.
+Чистый `planNativeRefill(input)` + `refillDomainHash`, scripts/local-native-refill.cjs.
+Нет RPC, signing, transfers, reserve или mutation ledger. Не включённое автопополнение.
+Данные anchor/history/authority пока доверенные inputs. Реальный bootstrap executor — следующий шаг.
+Solidity, prize math, FeeRouter shares, RNG/swap не менялись.
 
-2. `npm run report:execution:calibration`: N100/1k/10k, chunk64, normal10/admitted64,
-два seed; оба frozen вместе, обратный порядок seal/delivery между вариантами; отдельные
-Short/Monthly при N1k. Используются настоящие локальные controllers с synthetic datasets,
-mock quote и LocalRandomFixture. Не BUY/indexer, не real DEX/RNG и не production deployment.
-Фиксируются estimate/receipt/calldata/gas price/native delta, controller RNG spend;
-asserts: all-admitted стресс, terminal reserved=0, custody conservation, native=receipt fee.
+Source — отдельный BOOTSTRAP_NATIVE / PROJECT_NATIVE account с уже имеющимся native.
+Это не конверсия TOKEN/USDG и не доказательство provenance funds. Явные protectedAddresses
+приходят из доверенного manifest; призовые addresses запрещены и источником, и получателем.
+Self-funding/source as execution payer пока не поддерживается. Изменений permission model нет.
 
-3. Отдельный boundary N1k stress64: средств на один не хватает двум; низкий forecast
-после повышения bound ждёт topup. Затем оба заканчиваются через 34 свежих CLI child
-(process/finish), state gas bounds и chain progress перечитываются каждый раз.
-Цена именно этого прохода 2 gwei, native delta сверена с receipts.
-Это clean process handoff. Measurement-only child НЕ production worker и не имеет
-coordinator recovery для unknown send; не использовать для публичных транзакций.
+## Математика
 
-4. Плоский старый bound 3M недостаточен для некоторых stress64 process/finish. Новый
-example profile вычисляется как max observed estimate × 1.10, затем прежний monetary
-safetyBps=12500. Это эмпирический запас, не proof. Непроверенные closeEmpty/prize-flow methods
-остаются со старым fixture 3M. Immutable identity существующего state не подменяется.
+Reuse evaluateBudget: counts/one payer/RNG fee/floor. По адресу low=max(required,lowWatermark),
+target=max(required,target). Низкие observations не уменьшают BASE; persisted monotonic
+observations между вызовами обеспечивает будущая integration с coordinator, не pure function.
 
-## Где смотреть
+Недофинансированные obligations имеют приоритет. Пока таких адресов несколько, первому
+идёт только critical deficit. Последний critical можно довести до target, затем buffers.
+Один transfer на план, после receipt — fresh plan. Lexicographic tie-breaking.
+Caps включают value+conservative gasReserve, источник сохраняет minimumBalance.
+Частичная сумма допускается, fundingReadyAfter=false до покрытия всех обязательств.
+fundingReady — только native, не разрешение freeze/send; readiness остаётся отдельной проверкой.
 
-- LOCAL_EXECUTION_CALIBRATION.md — диапазон, таблицы, ограничения и команды.
-- ../research/execution-budget-calibration.json — компактные measurements/source hashes.
-- examples/local-execution-budget-calibrated.json — отдельный кандидатный local profile.
-- scripts/local-execution-calibration.cjs, render-execution-calibration.cjs,
-  calibration-chunk-client.cjs — воспроизведение; raw transactions только .local/logs.
+Period фиксируется по anchor timestamp. Last refill cooldown не обнуляется на границе периода.
+History/domain mismatch, pending, stale head не дают transfer; дорогой gas ждёт.
+History/domainHash обязателен. Static config change не сбрасывает counters: до отдельной
+миграции новая policy/source/network приводит к blocked. ops settings hash отдельный.
+DecisionKey — fingerprint, не полноценная идемпотентность и не replacement nonce.
+Optional refill blocked при fundingReady=true не должен сам остановить обеспеченный draw.
 
-Основной gas прогон имеет обычную падающую Hardhat basefee. Табличные 1/2 gwei — явные
-сценарии, не текущая стоимость какой-либо сети. Fixture seed delivery отделён от executor
-расходов. Quote budgets — raw mock units, не призовые доллары. Нет claims/deployments,
-BUY/indexer, RPC/keeper, реальной RNG fee, extra L1/blob fees, native refill.
-N10k — sampled envelope, contract MAX_N по-прежнему нет. Разные timestamps/context могут
-немного менять gas/results между повторами. Два seed не покрывают worst-case rank ordering.
+## Lock и окружение
+
+Двойные failures возвращают AggregateError: primary cause + cleanupErrors, сохранены
+code/stage/transactionHash/definiteRejection. Unlink пробуется даже при cleanup close error.
+Одиночная ошибка сохраняет прежнее поведение. Добавлены fault tests write+close и action+unlink.
+Документация требует постоянного локального runtime volume вне workspace sync для state/lock.
+Calibration commit/dirty/full generator+tool versions provenance пока не улучшали;
+это явно отмеченный открытый хвост, не переобъявленный stable baseline.
 
 ## Проверки
 
-37/37 targeted tests (424 s): state lock, execution budget, coordinator, local controllers.
-Полный npm test не запускался. Финальные результаты calibration — в документе модуля.
-Новые параметры fixture имеют прежние defaults; Solidity и призовая математика не менялись.
+39/39 planner/budget/lock/transaction (2.4 s), 3/3 coordinator targeted (61 s).
+Команды в LOCAL_NATIVE_REFILL.md. Полный npm test не запускался.
 
 ## Вопросы
 
-- Нет ли ошибки owned fd/lock cleanup и нежелательного продолжения после initialization failure?
-- Верно ли отделены measured total execution gas, fixture delivery и native forecast?
-- Достаточно ли этого sampled envelope для следующего локального funding/refill дизайна,
-  какие пробелы являются блокерами, а какие просто не позволяют обещать production bound?
-- Не видишь ли ошибки в boundary: один payer, два frozen, повышение оценки, topup,
-  clean child restart, отсутствие повторной транзакции?
-- Следующий bounded step — bootstrap/project-share native buffer, low-watermark/target,
-  ограничения расхода и expensive-gas wait. Что минимально зафиксировать в API до кода?
+1. Не пропускаем ли gas/caps/source floor/shared-address liability? Корректна ли очередность
+   critical deficit перед buffers и поведение partial transfer?
+2. Достаточно ли явно отделены pure trusted inputs от RPC/authority/durable ledger enforcement?
+3. Не потерял ли AggregateError транзакционную классификацию, нужную существующему coordinator?
+4. Ближайший bounded step: bootstrap-native executor, explicit source signer, повторные
+   anchor/balance/receiver/estimate checks, durable intent/hash/nonce/receipt и period ledger.
+   Как минимально соединить это с существующим coordinator, не писать второй несовместимый recovery?
+5. Смена policy сейчас fail-closed. Для будущей гибкости нужна явная migration с сохранением
+   spent/pending/cooldown, а не сброс file; видишь ли минимальную безопасную схему?
 
-Не предлагать призовой withdrawal, автоматический stale-lock reset, reroll или proxy.
-Не объявлять calldata/native costs другой сети известными без проверки её профиля.
+Не добавлять prize withdrawal, автоматический stale-lock reset, reroll, proxy или real swap
+в этот review. Unsupported envelope и real network fees — отдельные границы; planner не
+обещает универсальный completion bound.

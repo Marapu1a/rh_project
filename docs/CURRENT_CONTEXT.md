@@ -1,6 +1,6 @@
 # Текущий контекст
 
-Обновлено 21.09.2026 после lock cleanup и gas calibration.
+Обновлено 21.09.2026 после local native refill planner.
 
 ## Где находимся
 
@@ -18,29 +18,33 @@
 
 ## Последний результат и проверки
 
-Lock initialization cleanup исправлен: write/close failure до action освобождает свой
-fd/lock, чужой lock сохраняется. Диагностический trace оставлен. Прежнее подозрение на
-успешный await с оставшимся lock не подтверждено и отозвано review.
+[Native refill planner](LOCAL_NATIVE_REFILL.md) реализован как чистый расчёт: отдельный
+native ops source, общий payer/RNG forecast, low/target, source floor, gas перевода,
+лимиты периода/операции, cooldown, stale/pending stop. Один план — один перевод,
+current deficits важнее buffers. fundingReady не подменяет draw readiness.
 
-[Калибровка](LOCAL_EXECUTION_CALIBRATION.md): синтетические 100/1 000/10 000 участников,
-chunks64, 10/64 места, два seed, Short/Monthly совместно и отдельно при 1 000.
-Плоские 3M недостаточны для некоторых stress64 operations; измеренный пример профиля
-отделён от старого state. Это sampled envelope, не contract cap и не worst-case proof.
+Переводов/RPC/автоматического исполнения пока нет. TOKEN/USDG не конвертируются,
+project share не утверждается, призовые buckets не являются источником ops.
+State policy/source/network hash не позволяет тихо сбросить funding history при смене config.
 
-Boundary 1 000 / stress64: один бюджет не покрывает два draw; low estimate требует topup.
-32 process + 2 finish выполнены отдельными CLI children с восстановлением state/progress,
-при 2 gwei и точной сверке native delta с receipts. Это clean restart, не crash recovery.
+Двойные lock failures теперь сохраняют primary error и cleanupErrors вместе с
+классификацией исходной транзакции. Runtime state/lock должен быть на постоянном локальном
+volume без фоновой синхронизации checkout; lock не является distributed lease.
 
-Targeted tests 21.09: 37/37 (424 s), state lock / budget / coordinator / local controllers.
-Полный npm test не запускался. Solidity и продуктовая математика не менялись.
+Предыдущая [калибровка](LOCAL_EXECUTION_CALIBRATION.md): N100/1k/10k, 10/64 места,
+два seed и 34 clean child handoffs. Это sampled envelope, не доказанный worst-case.
+
+
+Проверки 21.09: 39/39 (2.4 s) planner/budget/lock/transaction tests и 3/3 (61 s)
+coordinator regressions: hashless unknown, concurrent/refusal/abort, CLI handoff.
+Полный npm test не запускался.
 
 ## Ближайший кусок
 
-На основе измерений спроектировать ограниченный local native funding/refill из bootstrap
-и свободной доли проекта: источник, целевой запас, пороги, лимиты и expensive-gas wait.
-Не тратить frozen/claimable. Реальный swap/RNG и production fee models отдельно.
-Измеренные rules/data/seed не гарантируют любой будущий gas; эксплуатационный диапазон
-не enforced контрактом. Полный порядок — [ROADMAP](ROADMAP.md).
+Подключить bounded bootstrap-native executor к planner: явный source signer/binding,
+перепроверка snapshot/estimate, durable intent/hash/nonce/receipt, period ledger и остановка
+при unknown send. Реальный swap/project-share conversion пока отдельно. Не превращать
+повтор неизвестного перевода в retry. Полный порядок — [ROADMAP](ROADMAP.md).
 
 ## Основные ограничения
 

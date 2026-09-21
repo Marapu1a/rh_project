@@ -35,3 +35,21 @@ for(const operation of ['writeFileSync','closeSync'])test('PID initialization '+
  assert.throws(()=>fs.fstatSync(captured),e=>e.code==='EBADF');
  await withState(file,{},async()=>{});
 });
+test('primary PID write and cleanup close failures both survive; unlink is still attempted',async t=>{
+ const file=location(t),write=fs.writeFileSync,close=fs.closeSync;let fd;
+ const primary=Object.assign(Error('primary write'),{code:'EPRIMARY'}),cleanup=Object.assign(Error('cleanup close'),{code:'ECLEANUP'});
+ fs.writeFileSync=(target,...args)=>{if(typeof target==='number'){fd=target;throw primary;}return write(target,...args);};
+ fs.closeSync=target=>{if(target===fd)throw cleanup;return close(target);};
+ try{await assert.rejects(()=>withState(file,{},async()=>assert.fail('action started')),e=>{
+  assert(e instanceof AggregateError);assert.equal(e.cause,primary);assert.equal(e.code,'EPRIMARY');assert.deepEqual(e.errors,[primary,cleanup]);return true;
+ });}finally{fs.writeFileSync=write;fs.closeSync=close;if(fd!==undefined)close(fd);}
+ assert.equal(inspectLock(file+'.lock').exists,false);
+});
+test('release error preserves primary transaction classification and does not claim cleanup succeeded',async t=>{
+ const file=location(t),unlink=fs.unlinkSync,primary=Object.assign(Error('original send'),{code:'NETWORK_ERROR',stage:'broadcast',transactionHash:'0x123',definiteRejection:false});
+ fs.unlinkSync=p=>{if(p===file+'.lock')throw Object.assign(Error('release failed'),{code:'EIO'});return unlink(p);};
+ try{await assert.rejects(()=>withState(file,{},async()=>{throw primary;}),e=>{
+  assert.equal(e.cause,primary);assert.equal(e.stage,'broadcast');assert.equal(e.transactionHash,'0x123');assert.equal(e.definiteRejection,false);assert.equal(e.cleanupErrors[0].code,'EIO');return true;
+ });}finally{fs.unlinkSync=unlink;}
+ assert.equal(inspectLock(file+'.lock').exists,true);
+});
