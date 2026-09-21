@@ -1,6 +1,6 @@
 # Текущий контекст
 
-Обновлено 21.09.2026 после local native refill planner.
+Обновлено 21.09.2026 после native refill priority + receipt ledger.
 
 ## Где находимся
 
@@ -21,7 +21,7 @@
 [Native refill planner](LOCAL_NATIVE_REFILL.md) реализован как чистый расчёт: отдельный
 native ops source, общий payer/RNG forecast, low/target, source floor, gas перевода,
 лимиты периода/операции, cooldown, stale/pending stop. Один план — один перевод,
-current deficits важнее buffers. fundingReady не подменяет draw readiness.
+Приоритет committed → candidate → buffers, общий payer считается один раз. fundingReady не подменяет draw readiness.
 
 Переводов/RPC/автоматического исполнения пока нет. TOKEN/USDG не конвертируются,
 project share не утверждается, призовые buckets не являются источником ops.
@@ -35,9 +35,13 @@ volume без фоновой синхронизации checkout; lock не яв
 два seed и 34 clean child handoffs. Это sampled envelope, не доказанный worst-case.
 
 
-Проверки 21.09: 39/39 (2.4 s) planner/budget/lock/transaction tests и 3/3 (61 s)
-coordinator regressions: hashless unknown, concurrent/refusal/abort, CLI handoff.
-Полный npm test не запускался.
+Чистые переходы intent/hash/receipt готовы: success учитывает value + gas, mined revert — gas;
+обе попытки включают cooldown. Ledger и очистка pending сохраняются одним atomic save.
+До подключения executor generic coordinator recovery блокирует nativeRefill pending.
+
+Проверки 21.09: 49/49 planner/ledger/budget/lock/transaction (3.4 s),
+4/4 targeted coordinator regressions (86.5 s). Полный npm test и fork не запускались.
+Команды и границы — [LOCAL_NATIVE_REFILL](LOCAL_NATIVE_REFILL.md).
 
 ## Ближайший кусок
 

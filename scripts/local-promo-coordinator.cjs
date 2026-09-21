@@ -44,6 +44,9 @@ async function runCoordinator({prize,scheduler,statePath,signal,receiptTimeoutMs
     const pendingResult=reason=>({status:'blocked',reason,requiresReconciliation:true,pending:state.pending,results});
     if(signal?.aborted)return {status:'stopped',results};
     if(state.pending){
+      // Refill receipts must update the expense ledger in the same save that clears pending.
+      // The generic prize/draw resolver cannot finalize them; executor integration is pending.
+      if(state.pending.worker==='nativeRefill')return pendingResult('nativeRefillExecutorNotEnabled');
       if(!state.pending.transactionHash)return pendingResult('unknownHash');
       const receipt=await provider.getTransactionReceipt(state.pending.transactionHash);
       if(!receipt)return pendingResult('pendingReceipt');

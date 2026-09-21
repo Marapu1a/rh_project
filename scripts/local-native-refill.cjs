@@ -20,11 +20,13 @@ function configuration(ops,source,policy,protectedAddresses){
  for(const t of targets){check(BigInt(t.target)>=BigInt(t.lowWatermark),'Target below low watermark');check(t.address!==origin&&!protectedSet.includes(t.address),'Invalid ops destination');}
  const canonicalSource={kind:source.kind,address:origin,minimumBalance:source.minimumBalance,transferGas:source.transferGas};
  const canonicalPolicy={maxPerRefill:policy.maxPerRefill,maxPerPeriod:policy.maxPerPeriod,periodSeconds:policy.periodSeconds,cooldownSeconds:policy.cooldownSeconds,targets};
- return {origin,targets,domainHash:hash({network:ops.network,source:canonicalSource,policy:canonicalPolicy,protectedAddresses:protectedSet})};
+ return {origin,targets,domainHash:hash({schema:'native-refill-v2',network:ops.network,source:canonicalSource,policy:canonicalPolicy,protectedAddresses:protectedSet})};
 }
 function refillDomainHash({ops,source,policy,protectedAddresses}){return configuration(ops,source,policy,protectedAddresses).domainHash;}
 function planNativeRefill(input){
- const {ops,source,policy,protectedAddresses,anchor,head,balances,obligations,history,gasObservations={}}=input;
+ const {ops,source,policy,protectedAddresses,anchor,head,balances,committedObligations,candidateObligations,history,gasObservations={}}=input;
+ check(!Object.hasOwn(input,'obligations'),'Use explicit committed/candidate obligations');
+ check(Array.isArray(committedObligations)&&Array.isArray(candidateObligations),'Explicit obligation tiers required');
  const {origin,targets,domainHash}=configuration(ops,source,policy,protectedAddresses);
  for(const b of [anchor,head]){uint(b.number,'block number');uint(b.timestamp,'block timestamp');check(ethers.isHexString(b.hash,32)&&b.hash!==ethers.ZeroHash,'Invalid block hash');}
  const result=(status,reason,extra={})=>({status,reason,profileId:ops.network.id,domainHash,settingsHash:hash(ops.settings),anchor:{...anchor},...extra});
@@ -35,25 +37,30 @@ function planNativeRefill(input){
  const now=BigInt(anchor.timestamp),period=BigInt(policy.periodSeconds),window=now/period*period;
  const oldWindow=uint(history.windowStart,'history window'),spent=uint(history.spent,'history spend');
  check(oldWindow%period===0n&&oldWindow<=window,'Invalid history window');
- const last=history.lastRefillAt===null?null:uint(history.lastRefillAt,'last refill');check(last===null||last<=now,'Future funding history');
+ const last=history.lastAttemptAt===null?null:uint(history.lastAttemptAt,'last refill');check(last===null||last<=now,'Future funding history');
  const remainingPeriod=max(0n,BigInt(policy.maxPerPeriod)-(oldWindow===window?spent:0n));
  const effective={...ops,network:{...ops.network,gasUnits:{...ops.network.gasUnits}}};
  for(const [action,value] of Object.entries(gasObservations)){
   check(ACTIONS.includes(action),'Unknown gas observation');effective.network.gasUnits[action]=String(max(BigInt(effective.network.gasUnits[action]),uint(value,'gas observation')));
  }
  const normalized={};for(const [a,b] of Object.entries(balances)){const key=addr(a);check(normalized[key]===undefined,'Duplicate balance address');normalized[key]=String(uint(b,'balance'));}
- const budget=evaluateBudget(effective,{balances:normalized,obligations});
+ const committed=evaluateBudget(effective,{balances:normalized,obligations:committedObligations});
+ const budget=evaluateBudget(effective,{balances:normalized,obligations:[...committedObligations,...candidateObligations]});
  check(!budget.accounts.some(a=>a.address===origin),'Funding source must be separate from execution accounts');
  if(budget.accounts.some(a=>!targets.some(t=>t.address===a.address)))return result('blocked','missingFundingTarget');
  const accounts=targets.map(t=>{
   const current=uint(normalized[t.address],'target balance'),required=BigInt(budget.accounts.find(a=>a.address===t.address)?.required||0);
+  const committedRequired=BigInt(committed.accounts.find(a=>a.address===t.address)?.required||0);
   const low=max(required,BigInt(t.lowWatermark)),target=max(required,BigInt(t.target));
-  return {address:t.address,current,required,shortfall:max(0n,required-current),target,needs:current<low};
+  return {address:t.address,current,required,committedRequired,committedShortfall:max(0n,committedRequired-current),shortfall:max(0n,required-current),target,needs:current<low};
  });
  const publicAccounts=accounts.map(a=>Object.fromEntries(Object.entries(a).map(([k,v])=>[k,typeof v==='bigint'?String(v):v])));
  const fundingReady=accounts.every(a=>a.shortfall===0n);
- const context={accounts:publicAccounts,fundingReady,windowStart:String(window),remainingPeriod:String(remainingPeriod)};
- const needed=accounts.filter(a=>a.needs).sort((a,b)=>Number(b.shortfall>0n)-Number(a.shortfall>0n)||a.address.localeCompare(b.address));
+ const committedFundingReady=accounts.every(a=>a.committedShortfall===0n);
+ const context={accounts:publicAccounts,fundingReady,committedFundingReady,windowStart:String(window),remainingPeriod:String(remainingPeriod)};
+ const tier=!committedFundingReady?'committed':!fundingReady?'candidate':'buffer';
+ const needed=accounts.filter(a=>tier==='committed'?a.committedShortfall>0n:tier==='candidate'?a.shortfall>0n:a.needs).sort((a,b)=>a.address.localeCompare(b.address));
+ context.tier=tier;
  if(!needed.length)return result('ready','sufficient',context);
  if(uint(input.gasPrice,'gas price')>BigInt(ops.settings.maxGasPrice))return result('waitExpensiveGas','gasPrice',context);
  if(last!==null&&now-last<BigInt(policy.cooldownSeconds))return result('blocked','cooldown',{...context,retryAt:String(last+BigInt(policy.cooldownSeconds))});
@@ -62,10 +69,10 @@ function planNativeRefill(input){
  // Both caps cover value + conservative gas expense. Do not fund from the source floor.
  const envelope=min(available,BigInt(policy.maxPerRefill),remainingPeriod);
  if(envelope<=gasReserve)return result('blocked',available<=gasReserve?'sourceFunding':'spendCap',{...context,gasReserve:String(gasReserve)});
- const recipient=needed[0],amount=min(needed.filter(a=>a.shortfall>0n).length>1?recipient.shortfall:recipient.target-recipient.current,envelope-gasReserve);
+ const recipient=needed[0],amount=min(tier==='committed'?recipient.committedShortfall:tier==='candidate'?recipient.shortfall:recipient.target-recipient.current,envelope-gasReserve);
  const after=accounts.every(a=>a.current+(a.address===recipient.address?amount:0n)>=a.required);
  const transfer={from:origin,to:recipient.address,value:String(amount),gasReserve:String(gasReserve),maxSourceDebit:String(amount+gasReserve)};
  const decisionKey=hash({domainHash,settingsHash:hash(ops.settings),anchor,transfer,history,gasObservations,accounts:publicAccounts,gasPrice:input.gasPrice});
- return result('needsRefill','nativeShortfall',{...context,transfer,fundingReadyAfter:after,decisionKey});
+ return result('needsRefill','nativeShortfall',{...context,transfer,fundingReadyAfter:after,committedFundingReadyAfter:accounts.every(a=>a.current+(a.address===recipient.address?amount:0n)>=a.committedRequired),decisionKey});
 }
 module.exports={planNativeRefill,refillDomainHash};

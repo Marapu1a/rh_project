@@ -258,3 +258,18 @@ test('higher observed gas raises the persisted forecast instead of locking a fro
   const gas=JSON.parse(fs.readFileSync(f.options.statePath,'utf8')).gasObservations;
   for(const action of ['seal','sealMonth','processShort','processMonth','finishShort','finishMonth'])assert(BigInt(gas[action])>21000n);
 });
+
+test('native refill pending is never cleared by generic coordinator receipt recovery',async t=>{
+  const f=await fixture(t);await runCoordinator(f.options);
+  const file=f.options.statePath,{checksum,...state}=JSON.parse(fs.readFileSync(file,'utf8'));
+  assert(state.lastResolved.transactionHash);
+  state.pending={...state.lastResolved,worker:'nativeRefill',action:'transferNative'};
+  state.nativeRefillHistory={pending:true,spent:'17'};
+  const {hash}=require('../scripts/direct-buy.cjs');
+  fs.writeFileSync(file,JSON.stringify({...state,checksum:hash(state)}));
+  const before=fs.readFileSync(file,'utf8'),nonce=await f.provider.getTransactionCount(await f.admin.getAddress());
+  const result=await runCoordinator(f.options);
+  assert.equal(result.reason,'nativeRefillExecutorNotEnabled');assert.equal(result.requiresReconciliation,true);
+  assert.equal(fs.readFileSync(file,'utf8'),before);
+  assert.equal(await f.provider.getTransactionCount(await f.admin.getAddress()),nonce);
+});

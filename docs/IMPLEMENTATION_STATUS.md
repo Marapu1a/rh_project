@@ -70,3 +70,7 @@ process handoff на chunks. [Границы и результаты](LOCAL_EXEC
 21.09: scripts/local-native-refill.cjs — pure planner, `npm run test:local:refill`.
 Приоритет obligations, caps с gas, source floor, cooldown/period, pending/anchor/domain.
 RPC/transfer executor отсутствует. [API и границы](LOCAL_NATIVE_REFILL.md).
+
+21.09: scripts/local-native-refill-state.cjs — pure intent/hash/receipt transitions общего journal;
+actual expense и cooldown попыток, atomic finalization. Coordinator не очищает refill pending
+через generic recovery. Автоматические переводы не подключены. [Модуль](LOCAL_NATIVE_REFILL.md).

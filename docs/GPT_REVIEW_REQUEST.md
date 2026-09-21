@@ -1,66 +1,49 @@
-# Review — local native refill planner
+# Review: native refill priority and receipt accounting
 
-21.09.2026. Прочитай текущий commit, укажи hash и полностью перезапиши GPT_REVIEW_RESPONSE.md.
-Текущий контекст/план — CURRENT_CONTEXT.md, ROADMAP.md; подробный API — LOCAL_NATIVE_REFILL.md.
+21.09.2026. Current package supersedes the earlier planner review request.
+Read CURRENT_CONTEXT.md and LOCAL_NATIVE_REFILL.md, then the narrow diff from 394e793.
 
-## Scope
+## What changed and why
 
-Чистый `planNativeRefill(input)` + `refillDomainHash`, scripts/local-native-refill.cjs.
-Нет RPC, signing, transfers, reserve или mutation ledger. Не включённое автопополнение.
-Данные anchor/history/authority пока доверенные inputs. Реальный bootstrap executor — следующий шаг.
-Solidity, prize math, FeeRouter shares, RNG/swap не менялись.
+The flat obligation list could fund a candidate ahead of frozen work because address order
+was the only priority. Planner now requires committedObligations and candidateObligations;
+legacy input fails. Evaluate committed and combined requirements separately to count shared
+payer buffers once. Each transfer covers only its tier deficit: committed, candidate, buffer.
+committedFundingReady reports frozen native coverage, not overall draw readiness.
+Domain hash has a v2 tag; old history cannot silently inherit the changed semantics.
 
-Source — отдельный BOOTSTRAP_NATIVE / PROJECT_NATIVE account с уже имеющимся native.
-Это не конверсия TOKEN/USDG и не доказательство provenance funds. Явные protectedAddresses
-приходят из доверенного manifest; призовые addresses запрещены и источником, и получателем.
-Self-funding/source as execution payer пока не поддерживается. Изменений permission model нет.
+Next bounded piece: pure stageNativeRefill / recordNativeRefillHash / finalizeNativeRefill
+in scripts/local-native-refill-state.cjs. They use the existing coordinator state and pending,
+not a second journal. Finalization returns one state containing both actual expense and cleared
+pending; caller must atomic-save under the existing lock. Success costs value + gas; revert
+costs gas and advances lastAttemptAt/cooldown. Receipt time controls period. Actual overspend
+is recorded rather than rejected after money was already spent. Duplicate finalization rejects.
+Transaction identity, nonce, hash, block, history consistency and stale receipts are checked.
 
-## Математика
+No transfers/RPC/signing are enabled. These are pure transitions over trusted normalized evidence,
+not finality proofs. Only local plain EVM receipts are supported; EXTRA profile rejects at staging.
+Coordinator generic recovery explicitly blocks nativeRefill pending until typed executor exists:
+it must never erase a refill receipt without recording expense. This is deliberate incomplete
+integration, not a production recovery mechanism. Prize contracts/math remain unchanged.
 
-Reuse evaluateBudget: counts/one payer/RNG fee/floor. По адресу low=max(required,lowWatermark),
-target=max(required,target). Низкие observations не уменьшают BASE; persisted monotonic
-observations между вызовами обеспечивает будущая integration с coordinator, не pure function.
+## Evidence
 
-Недофинансированные obligations имеют приоритет. Пока таких адресов несколько, первому
-идёт только critical deficit. Последний critical можно довести до target, затем buffers.
-Один transfer на план, после receipt — fresh plan. Lexicographic tie-breaking.
-Caps включают value+conservative gasReserve, источник сохраняет minimumBalance.
-Частичная сумма допускается, fundingReadyAfter=false до покрытия всех обязательств.
-fundingReady — только native, не разрешение freeze/send; readiness остаётся отдельной проверкой.
+49/49 planner/ledger/budget/lock/transaction tests; 4/4 targeted coordinator regressions.
+Atomic save failure test preserves pending and old spend, reload finalizes exactly once.
+Priority regression gives the smaller-address candidate a deficit and enough cap for only frozen:
+frozen wins. Shared payer test checks one buffer across tiers. Coordinator test uses a mined hash
+and proves generic recovery preserves refill pending/state and sends no transaction.
+Commands in LOCAL_NATIVE_REFILL.md. Full npm test/fork not run for this package.
 
-Period фиксируется по anchor timestamp. Last refill cooldown не обнуляется на границе периода.
-History/domain mismatch, pending, stale head не дают transfer; дорогой gas ждёт.
-History/domainHash обязателен. Static config change не сбрасывает counters: до отдельной
-миграции новая policy/source/network приводит к blocked. ops settings hash отдельный.
-DecisionKey — fingerprint, не полноценная идемпотентность и не replacement nonce.
-Optional refill blocked при fundingReady=true не должен сам остановить обеспеченный draw.
+## Questions
 
-## Lock и окружение
+1. Any priority/shared-payer or period/cooldown accounting defect in this implementation?
+2. Any gap in pure receipt identity checks or atomic-save contract that should be fixed before wiring?
+3. For the NEXT bounded bootstrap-native executor package, review the order: bind dedicated source
+   signer and chain, revalidate balances/estimate/head, persist intent before send, persist hash,
+   reconcile receipt through typed finalizer, stop on unknown send. Keep one coordinator journal.
+4. Identify mandatory integration checks versus later production/finality work; avoid adding a second
+   lock/journal or enabling automatic retries for unknown transfers.
 
-Двойные failures возвращают AggregateError: primary cause + cleanupErrors, сохранены
-code/stage/transactionHash/definiteRejection. Unlink пробуется даже при cleanup close error.
-Одиночная ошибка сохраняет прежнее поведение. Добавлены fault tests write+close и action+unlink.
-Документация требует постоянного локального runtime volume вне workspace sync для state/lock.
-Calibration commit/dirty/full generator+tool versions provenance пока не улучшали;
-это явно отмеченный открытый хвост, не переобъявленный stable baseline.
-
-## Проверки
-
-39/39 planner/budget/lock/transaction (2.4 s), 3/3 coordinator targeted (61 s).
-Команды в LOCAL_NATIVE_REFILL.md. Полный npm test не запускался.
-
-## Вопросы
-
-1. Не пропускаем ли gas/caps/source floor/shared-address liability? Корректна ли очередность
-   critical deficit перед buffers и поведение partial transfer?
-2. Достаточно ли явно отделены pure trusted inputs от RPC/authority/durable ledger enforcement?
-3. Не потерял ли AggregateError транзакционную классификацию, нужную существующему coordinator?
-4. Ближайший bounded step: bootstrap-native executor, explicit source signer, повторные
-   anchor/balance/receiver/estimate checks, durable intent/hash/nonce/receipt и period ledger.
-   Как минимально соединить это с существующим coordinator, не писать второй несовместимый recovery?
-5. Смена policy сейчас fail-closed. Для будущей гибкости нужна явная migration с сохранением
-   spent/pending/cooldown, а не сброс file; видишь ли минимальную безопасную схему?
-
-Не добавлять prize withdrawal, автоматический stale-lock reset, reroll, proxy или real swap
-в этот review. Unsupported envelope и real network fees — отдельные границы; planner не
-обещает универсальный completion bound.
+No prize spending for ops, new allocation percentages, conversion, proxy or governance is authorized.
+Project share economics and actual native source automation remain separate work.

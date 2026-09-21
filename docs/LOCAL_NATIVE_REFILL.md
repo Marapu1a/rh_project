@@ -9,7 +9,7 @@
 ```js
 planNativeRefill({
   ops, source, policy, protectedAddresses,
-  anchor, head, gasPrice, balances, obligations, gasObservations,
+  anchor, head, gasPrice, balances, committedObligations, candidateObligations, gasObservations,
   history
 })
 // status: ready | waitExpensiveGas | needsRefill | blocked
@@ -30,8 +30,8 @@ planNativeRefill({
   вызовами обязан обеспечивать persisted coordinator state; чистая функция не помнит историю.
 - anchor/head: `{number, hash, timestamp}` одного подтверждённого caller snapshot.
   Различие даёт staleAnchor. Проверку RPC/финальности делает будущий adapter, не planner.
-- history: `{domainHash, pending, windowStart, spent, lastRefillAt}` обязательна даже
-  при первом использовании: spent='0', lastRefillAt=null, windowStart=floor(timestamp/period)*period.
+- history: `{domainHash, pending, windowStart, spent, lastAttemptAt}` обязательна даже
+  при первом использовании: spent='0', lastAttemptAt=null, windowStart=floor(timestamp/period)*period.
   domainHash строит refillDomainHash из network/source/policy/protectedAddresses.
 
 Изменение static policy/source/network не сбрасывает историю: несовпадение hash блокирует
@@ -41,18 +41,17 @@ planNativeRefill({
 
 ## Решение
 
-1. evaluateBudget даёт required по адресу (с текущим signer buffer и gas safety).
-2. effective low = max(required, lowWatermark), target = max(required, configured target).
-   Если balance >= low, лишнего перевода нет.
-3. Дефициты current obligations приоритетнее накопления запаса. Пока таких адресов
-   несколько, выбранному покрывается только required shortfall. Последний дефицитный
-   адрес можно пополнить до target; затем очередь доходит до optional buffers.
-   Равный приоритет разрешается лексикографически по нормализованному адресу.
+1. Evaluate committed obligations and combined committed + candidate obligations separately.
+   Both arrays are required; legacy flat obligations is rejected. Duplicate IDs are rejected.
+   Shared payers have one buffer in the combined forecast.
+2. Strict tiers: committed (frozen) → candidate (unfrozen) → optional buffer.
+3. Cover only the selected tier deficit, never fill its target ahead of another tier.
+   Ties within a tier use normalized address order. Recalculate after every receipt.
 4. Только один transfer за план; после его receipt всё рассчитывается заново.
 5. gasReserve = existing transactionCost(network, transferGas): reserve gas price,
    extraFeePerTx и safetyBps. Из источника нельзя потратить minimumBalance.
 6. maxPerRefill и maxPerPeriod ограничивают СУММУ value + gasReserve, не только перевод.
-   Подтверждённый ledger позже должен учитывать фактические value + fee; pending intent
+   Ledger учитывает фактические value + fee (при revert только fee); pending intent
    резервирует максимальную сумму и блокирует следующий расход до reconciliation.
 7. Если caps/source не покрывают даже gas, transfer отсутствует. Иначе разрешена частичная
    сумма; fundingReadyAfter=false, пока хотя бы одно required не покрыто.
@@ -91,11 +90,41 @@ confirmed расход и сохранение source balance. Lock suite доп
 AggregateError сохраняет cause, cleanupErrors и primary code/stage/hash/definiteRejection.
 Точные результаты шага — CURRENT_CONTEXT.
 
-Проверки 21.09: 39/39 (2.4 s) planner/budget/lock/transaction tests и 3/3 (61 s)
-coordinator regressions: hashless unknown, concurrent/refusal/abort, CLI handoff.
-Полный npm test не запускался.
+## Receipt ledger update — 2026-09-21
+
+Domain now includes native-refill-v2: old history requires explicit migration, never silent reset.
+committedFundingReady / committedFundingReadyAfter distinguish frozen coverage from total
+fundingReady / fundingReadyAfter. Neither proves full draw readiness.
+
+scripts/local-native-refill-state.cjs exports pure transitions returning a cloned coordinator state:
+- stageNativeRefill(state, input, nonce): plan and prepare intent; reject other pending.
+- recordNativeRefillHash(state, transaction): bind chain/from/to/value/nonce/data/hash.
+- finalizeNativeRefill(state, {transaction, receipt, block}): account actual expense and clear pending.
+
+Persist the returned state in ONE atomic save under the existing coordinator lock. No second journal.
+nativeRefillHistory adds lastNonce and lastSuccessAt (initially null). lastAttemptAt advances for
+both success and mined revert: success consumes value + gas, revert consumes gas only and cooldown.
+Receipt block timestamp determines the expense period. Actual overspend is recorded with
+lastResolved.budgetExceeded, never discarded. Duplicate finalization and stale nonce reject.
+Unknown sends retain pending. Changed history, mismatched tx/hash/block and old receipt reject.
+
+Normalized evidence uses decimal strings for chainId/nonce/value/block/time/gas and numeric
+receipt.status 0/1; receipt.hash is the transaction hash. An adapter must verify RPC evidence and
+canonicality/finality. Helpers do not do this. Only LOCAL_EIP1559 / chainId31337 / data=0x is supported;
+fee=gasUsed*gasPrice. EXTRA fee profile is rejected before staging.
+
+Coordinator blocks nativeRefill pending with nativeRefillExecutorNotEnabled until typed executor
+integration: generic receipt recovery MUST NOT clear pending without expense accounting.
+No actual transfer executor, RPC or automatic refill is enabled. Signer binding, live revalidation,
+bootstrap/migration policy and durable unknown-send recovery remain the next package.
+
+Current verification: 49/49 planner/ledger/budget/lock/transaction tests, including failed atomic save
+and reload. 4/4 targeted coordinator regressions also pass (86.5 s). No full npm test or fork run for this patch.
 
 ```powershell
-node --test --test-concurrency=1 test/local-native-refill.test.cjs test/local-state-lock.test.cjs test/local-execution-budget.test.cjs test/local-transaction.test.cjs
-node --test --test-name-pattern='CLI runs both workers|hashless broadcast failure|known recipient refusal' test/local-coordinator.test.cjs
+node --test --test-concurrency=1 test/local-native-refill.test.cjs test/local-native-refill-state.test.cjs test/local-state-lock.test.cjs test/local-execution-budget.test.cjs test/local-transaction.test.cjs
+```
+
+```powershell
+node --test --test-name-pattern='CLI runs both workers|hashless broadcast failure|known recipient refusal|native refill pending' test/local-coordinator.test.cjs
 ```

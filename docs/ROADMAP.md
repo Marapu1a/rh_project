@@ -36,6 +36,8 @@ chunks64, normal10/admitted64 и двух seed. Отдельные Short/Monthly
 
 [Чистый native refill planner](LOCAL_NATIVE_REFILL.md) готов: source floor, low/target,
 gas и caps, cooldown/period, priority/partial funding, anchor/pending/history domain.
+Готовы pure intent/hash/receipt transitions и actual expense ledger; mined revert включает
+cooldown. Приоритет committed → candidate → buffers. Typed pending защищён от generic recovery.
 Следующий bounded пакет: bootstrap-native transfer executor с source binding, revalidation,
 durable intent/hash/nonce/receipt и расходным ledger. Затем подключение к coordinator.
 Конверсия доли проекта и real DEX/RNG отдельно; runtime volume не синхронизировать с checkout.
