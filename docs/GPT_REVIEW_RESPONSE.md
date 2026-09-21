@@ -5,210 +5,186 @@
 Это независимое review-мнение, не задание на автоматическое исполнение. При следующем
 обращении файл следует полностью перезаписать.
 
-Просмотрен commit `c7a5171cc0e30e2d9a680e331516fb625f6d86fd` —
-`Plan bounded native refills and preserve primary cleanup errors`.
+Просмотрен HEAD `0652d24cf7259ffc82831d1bf1d1cfb1b01249a8` —
+`feat: execute bounded local native refill with durable receipt recovery`.
 
 ## Короткий вердикт
 
-Чистая математика refill в основном собрана аккуратно: общий payer не дублируется,
-RNG liability остаётся отдельной, source floor сохраняется, transfer gas входит в оба cap,
-низкие observations не уменьшают baseline, partial transfer не объявляет обязательства
-покрытыми. Trusted-input/RPC/authority/ledger границы в документации названы честно.
+Предыдущий priority defect закрыт по правильной границе. API теперь явно разделяет
+`committedObligations` и `candidateObligations`, legacy flat input отвергается, общий payer
+получает один buffer в combined forecast. Очередь committed → candidate → buffer реально
+следует данным, а не соглашению caller. Моя прежняя inversion reproduction теперь покрыта
+регрессией и проходит.
 
-Исправление lock cleanup принято. При двойной ошибке primary и cleanup errors теперь
-доступны вместе, а нужные coordinator поля `code/stage/transactionHash/definiteRejection`
-сохранены на верхнем AggregateError. Unlink всё равно пробуется; ложного сообщения об
-успешном cleanup нет.
+Pure intent/hash/receipt transitions и единый coordinator pending сделаны убедительно.
+Mined success учитывает value + gas, revert — только gas; обе попытки двигают cooldown.
+Expense ledger и очистка pending попадают в один atomic save. Ошибка сохранения оставляет
+старый pending/spend и позволяет ровно один раз завершить receipt после reload.
 
-Но подключать executor к текущему planner ещё рано: плоский массив `obligations` потерял
-главный lifecycle priority — уже frozen/committed completion против нового unfrozen
-кандидата. Planner видит оба дефицита одинаковыми и выбирает адрес лексикографически.
-При ограниченном period cap это позволяет потратить единственный refill на будущую работу,
-оставив уже принятое обязательство без native. Это противоречит frozen-first архитектуре.
+Обнаружен один подтверждённый defect перед автоматическим wiring: transaction identity не
+связывает fee envelope. После `sendTransaction` и при recovery проверяются
+`chainId/from/to/value/nonce/data/hash`, но не `type/gasLimit/maxFeePerGas/maxPriorityFeePerGas`.
+Signer с правильным address/provider может отправить ту же выплату с более дорогими fee.
+Planner cap и source floor тогда нарушаются; `budgetExceeded` лишь честно фиксирует уже
+потраченные деньги.
 
-Это локальный API defect, а не провал всей модели. Его лучше закрыть сейчас, пока executor
-не закрепил неверный контракт.
+Это не требует переделывать executor или journal. Нужно связать fee envelope с prepared
+intent и проверить returned/on-chain transaction. После этого пакет можно подключать к
+обычному coordinator pass.
 
-## Подтверждённый priority defect
+## Подтверждённый fee-envelope defect
 
-Я передал два дефицита по 10 native units:
+Я повторил реальный Hardhat transfer через допустимый интерфейс signer-wrapper:
 
-- `candidate-unfrozen-short` с payer `0x1111…`;
-- `frozen-monthly` с payer `0xeeee…`;
-- period/refill cap покрывает ровно один transfer: value 10 + gasReserve 21000.
+- executor сформировал request с `gasLimit=30000`, max fee в рамках 10 gwei profile;
+- wrapper сохранил from/to/value/nonce/data, но отправил `maxFeePerGas=100 gwei` и
+  `maxPriorityFeePerGas=50 gwei`;
+- executor принял transaction, сохранил hash, нашёл canonical receipt и вернул `confirmed`;
+- planned `maxSourceDebit` был `1,375,000,000,000,000`;
+- actual debit стал `2,068,375,000,000,000`;
+- source balance был `1.0015 native` при floor `1 native`, после receipt осталось
+  `0.999431625 native` — floor физически нарушен;
+- `lastResolved.budgetExceeded === true`, но предотвратить расход уже невозможно.
 
-Planner вернул transfer на `0x1111…`, потому что после общего признака `shortfall > 0`
-использует адресный tie-break. Frozen Monthly остался без средств, а period cap исчерпан.
-Названия/id obligations на решение не влияют.
+Это не атака через подмену source address: `getAddress()` и provider binding прошли. Конечно,
+полностью злой signer может потратить source вне приложения; но buggy/remote signer,
+изменивший fee policy, находится внутри заявленной transaction boundary. Поэтому обещание
+caps/floor требует проверки фактического transaction envelope, а не только доверия к
+реализации `sendTransaction`.
 
-Текущие тесты этого не видят: их Short и Monthly оба считаются одинаково critical. Формат
-`evaluateBudget` (`id/publisher/executor/counts/rng`) вообще не несёт стадии commitment.
+Минимальный fix:
 
-Минимальная безопасная форма API — два явных уровня, например:
+1. Prepared pending сохраняет ожидаемые `type=2`, `gasLimit`, `maxFeePerGas` и
+   `maxPriorityFeePerGas=0` вместе с остальным intent.
+2. `txData` извлекает эти поля из returned transaction и RPC transaction.
+3. `verifyTransaction` требует точного совпадения с intent и проверяет fee ceiling.
+4. Регрессия signer-wrapper повышает fee/priority и не должна завершаться как обычный
+   confirmed refill.
 
-```text
-committedObligations  // frozen draws, физически обязаны завершить
-candidateObligations  // текущая подготовка/freeze, ещё можно не начинать
-```
+Поскольку mismatch обнаруживается уже после возможного broadcast, его нельзя выдавать за
+«транзакции не было». Лучше best-effort сохранить известный hash и состояние
+`broadcastPolicyMismatch`, затем reconcile фактический receipt/расход и остановить
+автоматику для оператора. Оставить prepared/hashless тоже fail-closed, но это теряет уже
+известный hash и ухудшает восстановление. Автоматически повторять нельзя в обоих вариантах.
 
-Можно вычислить два budget snapshot:
+`budgetExceeded` правильно сохранить как post-factum alarm. Но это accounting evidence,
+не enforcement caps.
 
-1. `committedRequired` только из frozen;
-2. `totalRequired` из committed + candidate, с одним signer buffer на адрес.
+## Priority и shared payer
 
-Очередь тогда однозначна:
+Текущая математика tier-ов корректна:
 
-1. deficits относительно `committedRequired`;
-2. deficits относительно `totalRequired`;
-3. low-watermark/target buffers.
+- committed budget считается отдельно;
+- total budget считается по committed + candidate;
+- signer buffer в total добавляется один раз на фактический gas payer;
+- committed shortfall использует committed snapshot;
+- candidate shortfall использует incremental gap до total required;
+- buffer начинается только после покрытия total required;
+- внутри tier адресный tie-break детерминирован;
+- transfer покрывает только deficit выбранного tier и не прыгает сразу к target;
+- `committedFundingReady` отделён от total `fundingReady`.
 
-Пока в более высоком уровне остаётся дефицит, перевод не должен тратить остаток на target
-или нижний уровень. Лексикографический tie-break внутри одного уровня нормален. Нужен
-регрессионный тест с разными payer и cap только на один перевод: unfrozen address меньше
-frozen address, но получателем обязан стать frozen.
+Regression со smaller-address candidate и cap ровно на frozen transfer теперь выбирает
+frozen payer. Shared payer между tier-ами сначала получает committed 15, затем incremental
+candidate 12, а не второй signer buffer. Замечаний к этой части нет.
 
-Альтернатива «caller передаст только frozen obligations» слишком неявная: следующий вызов
-всё равно должен уметь оценить candidate funding перед freeze, и ошибка orchestration снова
-вернёт priority inversion. Граница должна быть выражена в данных, а не в комментарии.
+Важно сохранить смысл при интеграции: `committedFundingReady=true` ещё не разрешает новый
+candidate, а `fundingReady=true` не доказывает общую draw readiness. И наоборот,
+`blocked/waitExpensiveGas` только у optional buffer не должен останавливать уже обеспеченный
+frozen draw.
 
-## Gas, caps, source floor и partial transfer
+## Period, cooldown и ledger
 
-В остальном расчёт согласован:
+Переходы ledger согласованы:
 
-- `validateOps` гарантирует `maxGasPrice <= reserveGasPrice`, поэтому refill gasReserve не
-  ниже разрешённого gas threshold;
-- `maxPerRefill` и `maxPerPeriod` действительно ограничивают `value + gasReserve`;
-- `minimumBalance` вычитается до caps, источник не расходуется ниже floor;
-- если envelope не покрывает gas, transfer не создаётся;
-- positive transfer гарантирован условием `envelope > gasReserve`;
-- один адрес publisher/executor получает объединённую liability и один signer buffer;
-- source запрещён как execution/RNG account, target и protected custody;
-- fundingReadyAfter проверяет required после фактического value, а не target;
-- смена периода обнуляет только period spend, но не cooldown.
+- receipt block timestamp выбирает окно расхода;
+- success добавляет `value + gasUsed × gasPrice`;
+- revert добавляет только gas;
+- `lastAttemptAt` обновляется и на success, и на revert;
+- `lastSuccessAt` обновляется только на success;
+- actual overspend не отбрасывается и помечается `budgetExceeded`;
+- `lastNonce` запрещает повтор старого source nonce;
+- duplicate finalization отвергается;
+- изменённый history не проходит `historyHash`.
 
-`transferGas` остаётся доверенным model input. Planner не знает block gas limit, наличие
-кода у receiver и поведение receive/fallback. Это нормально только потому, что executor
-обязан повторно проверить estimate и receiver binding до intent.
+Переход транзакции через period boundary разумно относится к окну mined receipt. Pending
+в это время единственный и блокирует новый расход, поэтому двойного cap admission здесь нет.
 
-Есть интеграционный footgun: при уже покрытых obligations, но недоступном optional buffer,
-planner может вернуть `blocked`/`waitExpensiveGas` при `fundingReady=true`. Coordinator не
-должен трактовать один лишь `status` как запрет draw. Единственный execution gate здесь —
-`fundingReady`; refill status описывает только возможность пополнения. Лучше закрепить это
-отдельным integration test, иначе честно обеспеченный frozen draw легко остановить из-за
-необязательного target buffer.
+Один semantic пункт стоит явно сохранить в будущих docs/tests: cooldown — это cooldown
+attempt, а не только успешного refill. Текущие поля и тесты уже реализуют именно это.
 
-## Trusted inputs и authority
+## Receipt identity и atomic save
 
-Разделение описано достаточно ясно для pure planner:
+Кроме fee envelope, чистые проверки достаточны для заявленного local scope:
 
-- balances, anchor/head, history, obligations и protectedAddresses не доказаны функцией;
-- `PROJECT_NATIVE` — только label уже разрешённого native source, не доказательство доли;
-- domain mismatch блокирует тихий reset history;
-- decisionKey — fingerprint canonical inputs, не nonce и не idempotency barrier;
-- prize buckets и TOKEN/USDG conversion не притворяются реализованными.
+- intent требует свободный общий coordinator pending;
+- history/domain и nonce связаны до send;
+- returned transaction связывает source, receiver, value, nonce, chain и empty calldata;
+- replacement hash не принимается как оригинал;
+- receipt hash, status, block number/hash и transaction сверяются;
+- receipt не может предшествовать anchor/предыдущей attempt;
+- coordinator dispatches `nativeRefill` в typed recovery до generic recovery и draw work;
+- unknown hash/receipt остаётся stop, а не retry.
 
-Следующий executor должен сам доказать непосредственно перед intent:
+Контракт `commit` правильный при заявленном синхронном atomic `save`: сначала persistence,
+потом mutation объекта in-memory. Failed intent save не отправляет transaction; failed hash
+save оставляет prepared stop; failed finalization оставляет известный hash и старый spend.
 
-- signer address равен source manifest binding;
-- chain/profile/domain/history всё ещё те же;
-- head/anchor, gas price, source и receiver balances перечитаны;
-- receiver входит в target manifest и не входит в custody exclusions;
-- estimate укладывается в transferGas/block limit;
-- source после `value + conservative fee` сохраняет floor;
-- committed/candidate forecast не изменился после planner snapshot.
+Это не production finality proof: canonical local block read, trusted provider и exact hash
+достаточны только для chain31337 стенда. Отсутствие reorg/finality/replacement recovery не
+является дефектом этого bounded пакета.
 
-Между этим preflight и broadcast всё равно остаётся transaction boundary; именно поэтому
-нужен durable intent, а не надежда на повторный RPC check.
+## Как подключить к ordinary coordinator pass
 
-## AggregateError и coordinator classification
+Не создавать новый state/lock/journal. Следующий шаг можно оставить узким:
 
-Новая реализация сохраняет нужную классификацию:
+1. Выделить из существующей budget collection функцию, которая на одном anchor возвращает
+   `committedObligations`, `candidateObligations`, balances и gasObservations.
+2. Pending Short/Monthly settlement всегда попадает в committed. Новый active/current
+   prepare/freeze — в candidate. Эта классификация строится из chain lifecycle, не адресов.
+3. Добавить `nativeRefill.domainHash`, source signer address и hash protected manifest в
+   immutable coordinator config. Mutable polling/receipt timeout остаются settings.
+4. После startup recovery сначала оценивать committed funding.
+5. Если committed недофинансирован — выполнить максимум один refill и закончить pass,
+   чтобы следующий pass перечитал chain/state.
+6. Если committed обеспечен и есть frozen work — выполнять его раньше candidate refill.
+7. Candidate refill допускается, только когда он нужен для следующей ещё не принятой работы.
+8. Optional buffer refill выполнять на idle/post-work пути; его cooldown/cap/gas wait не
+   блокируют обеспеченные frozen/candidate sends.
 
-- одиночный primary без cleanup failure возвращается как прежде;
-- одиночный cleanup failure после успешного action остаётся исходной cleanup error;
-- primary + cleanup становятся AggregateError с `cause=primary`, полным `errors` и
-  `cleanupErrors`;
-- primary `code/stage/transactionHash/definiteRejection` копируются наверх;
-- close failure не мешает попытке unlink, а unlink failure не объявляется успехом.
+После любого refill receipt лучше завершать текущий coordinator pass со статусом progress,
+а не продолжать на старом obligations snapshot. Следующий pass дешево пересчитает balances,
+progress и gas observations и не создаст скрытого multi-transfer loop.
 
-Этого достаточно для текущих веток coordinator/scheduler, которые принимают решения по
-верхним `code/stage/transactionHash/definiteRejection`. Тест action+unlink корректно
-оставляет lock и сообщает обе причины.
+Существующий `pending.worker='nativeRefill'` и typed finalizer уже достаточны. Generic startup
+recovery менять второй раз не нужно.
 
-Можно позже копировать `shortMessage`/другие diagnostic fields, но это не blocker: primary
-сохраняется в `cause` и `errors`, а транзакционная семантика не потеряна.
+## Что является ограничением, а не текущим defect
 
-## Как соединить executor с coordinator
+- obligations и protectedAddresses пока trusted caller inputs;
+- executor поддерживает только BOOTSTRAP_NATIVE, chain31337 и plain LOCAL_EIP1559;
+- PROJECT_NATIVE economics/conversion не реализованы;
+- unknown hash требует оператора и не восстанавливается по nonce автоматически;
+- source signer должен быть эксклюзивным;
+- local canonical block checks не заменяют production finality;
+- config migration и calibration provenance остаются отдельными хвостами.
 
-Не нужен второй state-файл, второй lock или отдельный recovery loop. Refill должен стать
-ещё одним типом операции внутри существующего coordinator `withState` и его единственного
-`pending` journal.
-
-Минимально:
-
-```text
-pending.worker = nativeRefill
-pending.action = transferNative
-pending.domainHash / decisionKey / windowStart
-pending.from / to / value / maxSourceDebit
-pending.stage / nonce / transactionHash
-```
-
-Порядок:
-
-1. На входе coordinator сначала reconciles любой существующий pending, включая refill.
-2. Frozen draw forecast строится отдельно от candidate и получает высший refill priority.
-3. Pure planner выдаёт один transfer.
-4. После повторного preflight coordinator атомарно сохраняет refill intent в тот же pending.
-5. Broadcast/hash/nonce и receipt проходят существующую transaction boundary.
-6. Reconciliation receipt атомарно обновляет funding ledger и только потом очищает pending.
-7. После одного receipt строится новый snapshot/plan; циклического слепого добора нет.
-
-Текущий generic startup resolver просто переносит pending в `lastResolved`. Для refill ему
-понадобится typed finalizer: успешный receipt добавляет value + actual fee в period spend;
-reverted receipt добавляет хотя бы фактически сожжённую fee, но не value. Unknown receipt
-сохраняет pending и блокирует новые расходы. Нельзя сначала очистить pending, а потом
-отдельно попытаться записать spend — crash между ними обнулит расходный ledger.
-
-Ещё до executor стоит уточнить cooldown semantics. Поле `lastRefillAt` выглядит как время
-успешного пополнения. Но mined revert тоже тратит gas: если он не двигает cooldown, плохой
-receiver позволит повторять попытки и жечь cap. Безопаснее сейчас назвать поле
-`lastAttemptAt` и обновлять его после любого mined refill attempt; отдельно можно хранить
-`lastSuccessAt`. Unknown send уже блокируется pending и cooldown ему не заменяет recovery.
-
-## Минимальная migration
-
-Тихо менять domain hash или удалять state нельзя. Для первой версии безопасная migration
-может быть намеренно узкой:
-
-- только при `pending === false`;
-- явные `fromDomainHash`, `toDomainHash`, anchor и hash старого history snapshot;
-- тот же chain/native asset и тот же `periodSeconds`;
-- атомарно переносить `windowStart`, `spent`, `lastAttemptAt` без уменьшения;
-- если новый `maxPerPeriod < spent`, remaining просто равен нулю;
-- записывать migration record и новый domain в том же state save.
-
-Смену `periodSeconds` нельзя безопасно восстановить из одного scalar `spent`: новые окна
-могут пересекать старые иначе. Для неё нужен журнал подтверждённых attempts с timestamp и
-actual debit либо ожидание, пока гарантированно истекут старое окно и cooldown. Cross-network
-migration также не нужна: это новый deployment/state.
-
-Source/targets/caps в той же сети можно менять только таким явным переходом и с повторной
-manifest validation. Pending сначала reconciles по старому domain; переносить его в новую
-policy нельзя.
+Это честные границы текущего пакета. Их не надо смешивать с подтверждённым fee-envelope
+дефектом или использовать для расширения scope в swap/governance.
 
 ## Выполненные проверки
 
-- заявленный planner/budget/lock/transaction набор — **39/39**, fail 0;
-- заявленные coordinator regressions — **3/3**, fail 0;
-- отдельный reproduction frozen-vs-unfrozen priority — inversion подтверждён;
-- lock dual-fault tests подтверждают AggregateError и сохранение classification;
-- `git diff --check 79a8a7b..c7a5171` — ошибок нет;
-- полный `npm test` не запускался;
+- заявленный planner/ledger/executor/budget/lock/transaction набор — **56/56**, fail 0;
+- заявленные coordinator regressions — **4/4**, fail 0;
+- real Hardhat mutated-fee reproduction — cap и source floor нарушены, defect подтверждён;
+- priority regression и shared-payer tier accounting — подтверждены;
+- intent/hash/finalization failure и mined revert tests — подтверждены;
+- полный `npm test` и fork не запускались;
+- `git diff --check 394e793..0652d24` нашёл один whitespace defect:
+  лишнюю пустую строку в конце `test/local-native-refill-executor.test.cjs`;
 - пользовательский `docs/INDEPENDENT_AUDIT_2026-09-19.md` не изменялся.
 
-Итог: lock fix можно считать закрытым в заявленном scope. Planner годится как основа, но
-перед bootstrap executor нужен один ограниченный API fix: явно разделить committed и
-candidate liabilities, добавить priority regression и определить учёт/cooldown mined
-failed attempts. После этого существующий coordinator journal можно расширять, не создавая
-вторую несовместимую recovery-систему.
+Итог: priority/ledger fix и единый recovery design приняты. Перед автоматическим сбором
+obligations нужен один маленький transaction-policy fix: persist и verify полный fee/gas
+envelope, сохраняя известный hash при post-broadcast mismatch. После этого ordinary
+coordinator integration можно делать следующим bounded пакетом без широкого refactor.
