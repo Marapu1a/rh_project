@@ -73,4 +73,8 @@ RPC/transfer executor отсутствует. [API и границы](LOCAL_NATI
 
 21.09: scripts/local-native-refill-state.cjs — pure intent/hash/receipt transitions общего journal;
 actual expense и cooldown попыток, atomic finalization. Coordinator не очищает refill pending
-через generic recovery. Автоматические переводы не подключены. [Модуль](LOCAL_NATIVE_REFILL.md).
+через generic recovery. Typed recovery подключён; автоматический запуск funding пока отсутствует. [Модуль](LOCAL_NATIVE_REFILL.md).
+
+21.09: local-native-refill-executor.cjs — один bootstrap-native transfer под существующим
+coordinator lock, RPC/source/fee/estimate/head/nonce checks; typed receipt recovery включён в
+coordinator startup. Автосбор draw obligations и запуск пополнений обычным pass ещё не подключены.

@@ -259,17 +259,27 @@ test('higher observed gas raises the persisted forecast instead of locking a fro
   for(const action of ['seal','sealMonth','processShort','processMonth','finishShort','finishMonth'])assert(BigInt(gas[action])>21000n);
 });
 
-test('native refill pending is never cleared by generic coordinator receipt recovery',async t=>{
+test('native refill pending uses typed receipt recovery and records expense before draw work',async t=>{
   const f=await fixture(t);await runCoordinator(f.options);
   const file=f.options.statePath,{checksum,...state}=JSON.parse(fs.readFileSync(file,'utf8'));
-  assert(state.lastResolved.transactionHash);
-  state.pending={...state.lastResolved,worker:'nativeRefill',action:'transferNative'};
-  state.nativeRefillHistory={pending:true,spent:'17'};
   const {hash}=require('../scripts/direct-buy.cjs');
-  fs.writeFileSync(file,JSON.stringify({...state,checksum:hash(state)}));
-  const before=fs.readFileSync(file,'utf8'),nonce=await f.provider.getTransactionCount(await f.admin.getAddress());
-  const result=await runCoordinator(f.options);
-  assert.equal(result.reason,'nativeRefillExecutorNotEnabled');assert.equal(result.requiresReconciliation,true);
-  assert.equal(fs.readFileSync(file,'utf8'),before);
-  assert.equal(await f.provider.getTransactionCount(await f.admin.getAddress()),nonce);
+  const save=next=>fs.writeFileSync(file,JSON.stringify({...next,checksum:hash(next)}));
+  const {executeNativeRefill}=require('../scripts/local-native-refill-executor.cjs');
+  const signer=await f.provider.getSigner(8),source=await signer.getAddress(),target=await (await f.provider.getSigner(9)).getAddress();
+  await f.provider.send('hardhat_setBalance',[target,'0x0']);
+  const ops=opsProfile();ops.settings.receiptTimeoutMs=30;ops.settings.maxGasPrice=ops.network.reserveGasPrice='10000000000';
+  const input={ops,source:{kind:'BOOTSTRAP_NATIVE',address:source,minimumBalance:'1000',transferGas:'30000'},
+    policy:{targets:[{address:target,lowWatermark:'1000',target:'2000'}],maxPerRefill:'10000000000000000',maxPerPeriod:'20000000000000000',periodSeconds:'3600',cooldownSeconds:'30'},
+    protectedAddresses:[f.vault.target],committedObligations:[],candidateObligations:[]};
+  await f.provider.send('evm_setAutomine',[false]);
+  try{
+    assert.equal((await executeNativeRefill({provider:f.provider,signer,state,save,input})).reason,'receiptUnknown');
+    const before=fs.readFileSync(file,'utf8');
+    assert.equal((await runCoordinator(f.options)).reason,'pendingReceipt');assert.equal(fs.readFileSync(file,'utf8'),before);
+    await f.provider.send('evm_mine');
+  }finally{await f.provider.send('evm_setAutomine',[true]);}
+  await runCoordinator(f.options);const resolved=JSON.parse(fs.readFileSync(file));
+  assert(!resolved.pending);assert(BigInt(resolved.nativeRefillHistory.spent)>2000n);
+  const spent=resolved.nativeRefillHistory.spent;await runCoordinator(f.options);
+  assert.equal(JSON.parse(fs.readFileSync(file)).nativeRefillHistory.spent,spent);
 });

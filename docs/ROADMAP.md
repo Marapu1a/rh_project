@@ -38,8 +38,11 @@ chunks64, normal10/admitted64 и двух seed. Отдельные Short/Monthly
 gas и caps, cooldown/period, priority/partial funding, anchor/pending/history domain.
 Готовы pure intent/hash/receipt transitions и actual expense ledger; mined revert включает
 cooldown. Приоритет committed → candidate → buffers. Typed pending защищён от generic recovery.
-Следующий bounded пакет: bootstrap-native transfer executor с source binding, revalidation,
-durable intent/hash/nonce/receipt и расходным ledger. Затем подключение к coordinator.
+Bootstrap-native executor готов: source/provider binding, anchored balances, estimate/head/nonce
+revalidation, durable intent/hash и typed receipt recovery в coordinator; один перевод за вызов.
+Следующий bounded пакет: автоматический сбор актуальных obligations и вызов funding из
+coordinator с сохранением frozen-first приоритета. Сейчас обычный pass только восстанавливает
+refill receipts; отправку вызывает trusted caller под тем же lock.
 Конверсия доли проекта и real DEX/RNG отдельно; runtime volume не синхронизировать с checkout.
 Provenance calibration (commit/dirty/toolchain/generators) остаётся небольшим открытым хвостом.
 

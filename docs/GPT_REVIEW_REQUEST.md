@@ -1,7 +1,7 @@
-# Review: native refill priority and receipt accounting
+# Review: native refill executor + priority/ledger package
 
-21.09.2026. Current package supersedes the earlier planner review request.
-Read CURRENT_CONTEXT.md and LOCAL_NATIVE_REFILL.md, then the narrow diff from 394e793.
+21.09.2026. Прочитай CURRENT_CONTEXT и LOCAL_NATIVE_REFILL, проверь HEAD и укажи его hash.
+Перезапиши GPT_REVIEW_RESPONSE.md. Предыдущий ответ — исторический, не текущий план.
 
 ## What changed and why
 
@@ -12,7 +12,7 @@ payer buffers once. Each transfer covers only its tier deficit: committed, candi
 committedFundingReady reports frozen native coverage, not overall draw readiness.
 Domain hash has a v2 tag; old history cannot silently inherit the changed semantics.
 
-Next bounded piece: pure stageNativeRefill / recordNativeRefillHash / finalizeNativeRefill
+Already implemented: pure stageNativeRefill / recordNativeRefillHash / finalizeNativeRefill
 in scripts/local-native-refill-state.cjs. They use the existing coordinator state and pending,
 not a second journal. Finalization returns one state containing both actual expense and cleared
 pending; caller must atomic-save under the existing lock. Success costs value + gas; revert
@@ -20,30 +20,43 @@ costs gas and advances lastAttemptAt/cooldown. Receipt time controls period. Act
 is recorded rather than rejected after money was already spent. Duplicate finalization rejects.
 Transaction identity, nonce, hash, block, history consistency and stale receipts are checked.
 
-No transfers/RPC/signing are enabled. These are pure transitions over trusted normalized evidence,
+The state helpers are pure transitions over normalized evidence,
 not finality proofs. Only local plain EVM receipts are supported; EXTRA profile rejects at staging.
-Coordinator generic recovery explicitly blocks nativeRefill pending until typed executor exists:
-it must never erase a refill receipt without recording expense. This is deliberate incomplete
-integration, not a production recovery mechanism. Prize contracts/math remain unchanged.
+
+## New bounded executor
+
+scripts/local-native-refill-executor.cjs provides executeNativeRefill/reconcileNativeRefill.
+Trusted caller holds the existing coordinator withState lock; no second journal. One transfer OR
+one recovery per call. Source is BOOTSTRAP_NATIVE only, chain31337/plain local EVM. Exact signer
+address/provider binding, exclusive source nonce, anchored balances, fee cap, estimate against
+configured transferGas and block limit, head/nonce recheck before intent. Persist intent before
+send; bind returned hash; fetch original receipt and canonical local block/anchor; atomic expense
+and pending finalization. Revert costs gas/cooldown. No automatic unknown-send retry.
+
+Coordinator startup now uses typed recovery; it does not initiate native funding yet. The next
+bounded piece is automatic current obligations collection and funding admission in ordinary passes.
+Committed/candidate obligations and protected addresses remain trusted caller inputs. No production
+finality, config migration, project-share conversion or new prize math is claimed.
 
 ## Evidence
 
-49/49 planner/ledger/budget/lock/transaction tests; 4/4 targeted coordinator regressions.
+56/56 planner/ledger/executor/budget/lock/transaction tests. 4/4 targeted coordinator regressions; final executor-only rerun 7/7.
 Atomic save failure test preserves pending and old spend, reload finalizes exactly once.
 Priority regression gives the smaller-address candidate a deficit and enough cap for only frozen:
-frozen wins. Shared payer test checks one buffer across tiers. Coordinator test uses a mined hash
-and proves generic recovery preserves refill pending/state and sends no transaction.
+frozen wins. Shared payer test checks one buffer across tiers. Executor tests use real Hardhat sends, timeout/restart, mined revert, send ambiguity, failed
+intent/hash/finalization persistence, source/gas/floor gates and stale head/nonce. Coordinator
+integration verifies typed recovery from a real mined refill and persistence of its expense.
 Commands in LOCAL_NATIVE_REFILL.md. Full npm test/fork not run for this package.
 
 ## Questions
 
 1. Any priority/shared-payer or period/cooldown accounting defect in this implementation?
 2. Any gap in pure receipt identity checks or atomic-save contract that should be fixed before wiring?
-3. For the NEXT bounded bootstrap-native executor package, review the order: bind dedicated source
-   signer and chain, revalidate balances/estimate/head, persist intent before send, persist hash,
-   reconcile receipt through typed finalizer, stop on unknown send. Keep one coordinator journal.
-4. Identify mandatory integration checks versus later production/finality work; avoid adding a second
-   lock/journal or enabling automatic retries for unknown transfers.
+3. Review executor send/recovery boundaries, especially failed persistence and original receipt
+   identity. Separate confirmed defects from future production/finality requirements.
+4. For the next bounded integration: how to reuse current budget collection to build fresh
+   committed/candidate tiers, bind source/policy to coordinator config and avoid optional buffers
+   blocking already-funded frozen work? Do not introduce another journal or broad refactor.
 
 No prize spending for ops, new allocation percentages, conversion, proxy or governance is authorized.
 Project share economics and actual native source automation remain separate work.

@@ -5,6 +5,7 @@ const {runPrizeFlow,validatePrizeFlowJob}=require('./local-prize-flow.cjs');
 const {runScheduler,validateConfig}=require('./local-promo-scheduler.cjs');
 const {validateOps,checkExecutionBudget}=require('./local-execution-budget.cjs');
 const {hash}=require('./direct-buy.cjs');
+const {reconcileNativeRefill}=require('./local-native-refill-executor.cjs');
 const check=(ok,message)=>{if(!ok)throw Error(message);};
 const same=(a,b)=>String(a).toLowerCase()===String(b).toLowerCase();
 
@@ -44,9 +45,12 @@ async function runCoordinator({prize,scheduler,statePath,signal,receiptTimeoutMs
     const pendingResult=reason=>({status:'blocked',reason,requiresReconciliation:true,pending:state.pending,results});
     if(signal?.aborted)return {status:'stopped',results};
     if(state.pending){
-      // Refill receipts must update the expense ledger in the same save that clears pending.
-      // The generic prize/draw resolver cannot finalize them; executor integration is pending.
-      if(state.pending.worker==='nativeRefill')return pendingResult('nativeRefillExecutorNotEnabled');
+      if(state.pending.worker==='nativeRefill'){
+        const recovery=await reconcileNativeRefill({provider,state,save});
+        if(state.pending)return pendingResult(recovery.reason);
+      }
+    }
+    if(state.pending){
       if(!state.pending.transactionHash)return pendingResult('unknownHash');
       const receipt=await provider.getTransactionReceipt(state.pending.transactionHash);
       if(!receipt)return pendingResult('pendingReceipt');

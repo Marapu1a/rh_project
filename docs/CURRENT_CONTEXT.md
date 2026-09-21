@@ -1,6 +1,6 @@
 # Текущий контекст
 
-Обновлено 21.09.2026 после native refill priority + receipt ledger.
+Обновлено 21.09.2026 после bounded local bootstrap-native executor.
 
 ## Где находимся
 
@@ -23,7 +23,10 @@ native ops source, общий payer/RNG forecast, low/target, source floor, gas 
 лимиты периода/операции, cooldown, stale/pending stop. Один план — один перевод,
 Приоритет committed → candidate → buffers, общий payer считается один раз. fundingReady не подменяет draw readiness.
 
-Переводов/RPC/автоматического исполнения пока нет. TOKEN/USDG не конвертируются,
+Local executor делает один native transfer под существующим coordinator lock, проверяет
+source signer/provider, balances/fee/estimate/head/nonce и сохраняет intent до send.
+Автоматический сбор draw obligations и запуск funding из coordinator пока не подключены.
+В ops-контуре TOKEN/USDG не конвертируются,
 project share не утверждается, призовые buckets не являются источником ops.
 State policy/source/network hash не позволяет тихо сбросить funding history при смене config.
 
@@ -37,18 +40,19 @@ volume без фоновой синхронизации checkout; lock не яв
 
 Чистые переходы intent/hash/receipt готовы: success учитывает value + gas, mined revert — gas;
 обе попытки включают cooldown. Ledger и очистка pending сохраняются одним atomic save.
-До подключения executor generic coordinator recovery блокирует nativeRefill pending.
+Coordinator направляет nativeRefill pending в typed receipt recovery; unknown hash остаётся stop.
 
-Проверки 21.09: 49/49 planner/ledger/budget/lock/transaction (3.4 s),
-4/4 targeted coordinator regressions (86.5 s). Полный npm test и fork не запускались.
+Проверки 21.09: 56/56 planner/ledger/executor/budget/lock/transaction (8.3 s),
+4/4 targeted coordinator (88.1 s); финальный executor rerun 7/7. Полный npm test и fork не запускались.
 Команды и границы — [LOCAL_NATIVE_REFILL](LOCAL_NATIVE_REFILL.md).
 
 ## Ближайший кусок
 
-Подключить bounded bootstrap-native executor к planner: явный source signer/binding,
-перепроверка snapshot/estimate, durable intent/hash/nonce/receipt, period ledger и остановка
-при unknown send. Реальный swap/project-share conversion пока отдельно. Не превращать
-повтор неизвестного перевода в retry. Полный порядок — [ROADMAP](ROADMAP.md).
+Подключить автоматический сбор committed/candidate obligations и bounded refill к обычному
+coordinator pass. Executor и typed startup recovery уже есть; нужны свежие draw obligations,
+привязка конфигурации funding и запрет buffer refill тормозить обеспеченную frozen работу.
+Реальный swap/project-share conversion отдельно. Не превращать unknown send в retry.
+Полный порядок — [ROADMAP](ROADMAP.md).
 
 ## Основные ограничения
 

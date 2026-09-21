@@ -2,7 +2,7 @@
 
 21.09.2026. Чистая функция `planNativeRefill(input)` в scripts/local-native-refill.cjs.
 Нет RPC, подписания, переводов, резервирования средств и изменения funding history.
-Это реализованный расчёт для следующего executor-пакета, не включённое автопополнение.
+Planner остаётся чистым. Local executor описан ниже; автоматический сбор obligations ещё не подключён.
 
 ## API
 
@@ -67,13 +67,13 @@ DecisionKey — fingerprint решения, не durable idempotency guard и н
 blocked из-за optional buffer/caps не означает автоматическую остановку уже обеспеченного
 фrozen draw. Исполнитель должен отдельно вызвать актуальные readiness/budget проверки.
 
-## Границы следующего шага
+## Границы модели
 
 - Здесь source имеет выделенный адрес, native и заранее разрешённую authority. Реальная
   связь PROJECT_NATIVE с долей проекта и конверсия TOKEN/USDG ещё не реализованы.
 - Нет нового процента комиссий, withdrawal призовой казны, proxy или governance.
-- Перед intent нужны повторные anchor/balance/estimate checks, проверка source signer,
-  receiver и профиля, durable history/nonce/hash/receipt и unknown-send reconciliation.
+- Executor выполняет anchor/balance/estimate checks и проверку source signer;
+  durable history/nonce/hash/receipt описаны ниже. Автосбор obligations ещё нужен.
   TransferGas — вход модели; это не гарантия, что произвольный contract receive уложится.
 - Не добавлен общий MAX_N или новый unsupportedEnvelope gate. Расчёт потребляет переданные
   bounds; он не доказывает их достаточность или физическую возможность выполнения.
@@ -113,18 +113,59 @@ receipt.status 0/1; receipt.hash is the transaction hash. An adapter must verify
 canonicality/finality. Helpers do not do this. Only LOCAL_EIP1559 / chainId31337 / data=0x is supported;
 fee=gasUsed*gasPrice. EXTRA fee profile is rejected before staging.
 
-Coordinator blocks nativeRefill pending with nativeRefillExecutorNotEnabled until typed executor
-integration: generic receipt recovery MUST NOT clear pending without expense accounting.
-No actual transfer executor, RPC or automatic refill is enabled. Signer binding, live revalidation,
-bootstrap/migration policy and durable unknown-send recovery remain the next package.
+Coordinator dispatches nativeRefill pending to typed receipt recovery before prize/draw work.
+Unknown hash or absent receipt stops the pass. Generic recovery never clears a refill marker.
+No migration resets caps or cooldown. Project-share conversion remains separate.
 
-Current verification: 49/49 planner/ledger/budget/lock/transaction tests, including failed atomic save
-and reload. 4/4 targeted coordinator regressions also pass (86.5 s). No full npm test or fork run for this patch.
+## Local bootstrap executor — 21.09.2026
 
-```powershell
-node --test --test-concurrency=1 test/local-native-refill.test.cjs test/local-native-refill-state.test.cjs test/local-state-lock.test.cjs test/local-execution-budget.test.cjs test/local-transaction.test.cjs
+scripts/local-native-refill-executor.cjs:
+
+```js
+executeNativeRefill({provider, signer, state, save, input, signal})
+reconcileNativeRefill({provider, state, save})
 ```
 
+Caller must hold the EXISTING coordinator withState lock and supply its state/save callback.
+The module does not acquire another lock or open another journal. Do not run it with an independent
+state file for the same source signer. save is synchronous atomic persistence; memory advances
+only after save succeeds. Exactly one transfer or one recovery per call; no retry loop.
+
+input supplies ops/source/policy/protectedAddresses, committedObligations, candidateObligations
+and optional gasObservations. Obligations and protected deployment addresses are trusted caller
+inputs; the executor does NOT derive current Short/Monthly obligations. The normal coordinator
+pass currently recovers refill receipts but does not initiate funding. Wiring the automatic
+obligation collector and executor admission into that pass is the next bounded package.
+
+Only BOOTSTRAP_NATIVE, local chain31337, LOCAL_EIP1559. Signer must have the exact shared provider
+and configured source address. Source must be dedicated/exclusively owned; other pending nonce
+blocks funding. Initial history is created only when absent, and persisted together with first
+intent; existing domain mismatch blocks. No policy/source migration or deletion of ledger.
+
+The executor reads block-anchored native balances for source/targets and current fee quote,
+runs planner, estimates the transfer and requires estimate <= configured transferGas <= block gas
+limit. TransferGas is a configurable admission bound, not a universal 21000 constant. EIP1559
+maxFeePerGas <= configured threshold <= reserveGasPrice; priority fee is zero in this local profile.
+A changed latest head or pending nonce stops before intent. Abort before intent sends nothing.
+After intent persistence the attempt is committed; later abort stops waiting, not the transaction.
+
+Persistence order: prepared intent → send with explicit nonce/value/gas/fee cap → bound hash →
+original receipt lookup → atomic actual expense + clear pending. Failure to save intent sends
+nothing. Send error or failed hash persistence leaves prepared/unknown and cannot auto-retry.
+Failed finalization leaves known hash; next recovery records expense once. Timeout does not cancel.
+Replaced transactions are not accepted as original receipts. Recovery verifies receipt and intent
+anchor against local canonical blocks, then uses the same pure finalizer, including status=0.
+These are local canonicality checks, not production finality or reorg recovery guarantees.
+
+## Проверки текущего пакета
+
+21.09.2026: 56/56 planner/ledger/executor/budget/lock/transaction tests (8.3 s),
+4/4 targeted coordinator regressions (88.1 s). Final executor-only rerun: 7/7 (5.8 s).
+Real Hardhat transfers, timeout/restart, mined revert, unknown send, source binding, gas/floor gates,
+stale snapshot, pending nonce, abort, failed intent/hash/finalization persistence are covered.
+Full npm test and fork not run. Local fixtures are not production network evidence.
+
 ```powershell
+node --test --test-concurrency=1 test/local-native-refill.test.cjs test/local-native-refill-state.test.cjs test/local-native-refill-executor.test.cjs test/local-state-lock.test.cjs test/local-execution-budget.test.cjs test/local-transaction.test.cjs
 node --test --test-name-pattern='CLI runs both workers|hashless broadcast failure|known recipient refusal|native refill pending' test/local-coordinator.test.cjs
 ```
