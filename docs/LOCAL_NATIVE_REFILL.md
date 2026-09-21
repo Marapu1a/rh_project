@@ -169,3 +169,26 @@ Full npm test and fork not run. Local fixtures are not production network eviden
 node --test --test-concurrency=1 test/local-native-refill.test.cjs test/local-native-refill-state.test.cjs test/local-native-refill-executor.test.cjs test/local-state-lock.test.cjs test/local-execution-budget.test.cjs test/local-transaction.test.cjs
 node --test --test-name-pattern='CLI runs both workers|hashless broadcast failure|known recipient refusal|native refill pending' test/local-coordinator.test.cjs
 ```
+
+## Fee policy binding — 21.09.2026
+
+Prepared intent now records feeEnvelope: type=2, gasLimit, maxFeePerGas and
+maxPriorityFeePerGas=0. Staging validates the fee ceiling against the current threshold.
+Both returned and RPC transactions are compared exactly against these fields. A fee-policy
+mismatch keeps the known hash as broadcastPolicyMismatch; the original receipt still accounts
+actual expense and clears pending atomically. The same save records durable nativeRefillHalt.
+Executor rejects further funding; coordinator stops automation and reports the policy violation.
+There is no automatic reset or retry. Missing envelope on legacy pending is treated as a mismatch,
+not silently approved; known receipts can still be accounted. Hashless intents remain unresolved.
+
+Detection is after possible broadcast: this does NOT prevent the first overspend by a faulty
+signer. Caps/floor require a signer that honours the submitted request. The alarm prevents silent
+continuation and preserves evidence; it cannot recover money already spent. Signature-before-
+broadcast verification would be a separate design change, not claimed by this executor.
+
+58/58 focused planner/ledger/executor/budget/lock/transaction tests passed (7.9 s), including
+real mutated-fee send with timeout/restart, actual overspend accounting and no second send.
+Full npm test/fork not run. Coordinator results recorded in CURRENT_CONTEXT.
+
+Проверка fee-policy fix: 4/4 targeted coordinator (82.1 s); финальный тест typed recovery +
+durable halt повторно 1/1 (43.9 s), state suite 7/7. Команды coordinator — в LOCAL_NATIVE_REFILL.

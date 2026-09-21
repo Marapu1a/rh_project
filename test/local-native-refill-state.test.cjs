@@ -11,7 +11,7 @@ function fixture(){
  const anchor={number:'10',hash:ethers.id('anchor'),timestamp:'1000'};
  const input={ops,source:{kind:'BOOTSTRAP_NATIVE',address:source,minimumBalance:'100',transferGas:'21000'},policy:{maxPerRefill:'30000',maxPerPeriod:'50000',periodSeconds:'100',cooldownSeconds:'30',targets:[{address:a,lowWatermark:'0',target:'0'}]},protectedAddresses:[vault],anchor,head:{...anchor},gasPrice:'1',balances:{[source]:'1000000',[a]:'0'},committedObligations:[{id:'draw',publisher:a,executor:a,counts:{finishShort:10}}],candidateObligations:[]};
  const state={jobs:{SHORT:[],MONTHLY:[]},nativeRefillHistory:{domainHash:refillDomainHash(input),pending:false,windowStart:'1000',spent:'5',lastAttemptAt:null,lastSuccessAt:null,lastNonce:null}};
- const transaction={chainId:'31337',data:'0x',hash:ethers.id('tx'),from:source,to:a,value:'10',nonce:'4'};
+ const transaction={chainId:'31337',data:'0x',hash:ethers.id('tx'),from:source,to:a,value:'10',nonce:'4',type:2,gasLimit:'21000',maxFeePerGas:'1',maxPriorityFeePerGas:'0'};
  const evidence={transaction,receipt:{hash:transaction.hash,status:1,gasUsed:'21000',gasPrice:'1',blockHash:ethers.id('block'),blockNumber:'11'},block:{number:'11',hash:ethers.id('block'),timestamp:'1001'}};
  return {input,state,transaction,evidence};
 }
@@ -55,4 +55,18 @@ test('atomic save failure retains pending and old spend; reload accounts receipt
  await withState(file,{},async(state,save)=>save(finish(state,f.evidence)));
  const done=JSON.parse(fs.readFileSync(file));assert.equal(done.pending,undefined);assert.equal(done.nativeRefillHistory.spent,'21015');
  await assert.rejects(()=>withState(file,{},async(state,save)=>save(finish(state,f.evidence))),/No pending/);
+});
+
+test('fee envelope differences preserve hash, account actual expense and latch a refill stop',()=>{
+ for(const delta of [{type:0},{gasLimit:'22000'},{maxFeePerGas:'2'},{maxPriorityFeePerGas:'1'}]){
+  const f=fixture(),tx={...f.transaction,...delta},p=record(stage(f.state,f.input,'4'),tx);
+  assert.equal(p.pending.stage,'broadcastPolicyMismatch');assert.equal(p.pending.transactionHash,tx.hash);
+  const done=finish(p,{...f.evidence,transaction:tx});assert(done.nativeRefillHalt);assert(done.lastResolved.policyMismatch);
+  assert.equal(done.nativeRefillHistory.spent,'21015');assert(!done.pending);
+  assert.throws(()=>stage(done,f.input,'5'),/policy violation/);
+ }
+ const f=fixture(),p=broadcast(f);delete p.pending.feeEnvelope;
+ assert(finish(p,f.evidence).nativeRefillHalt); // Legacy pending is accounted, never silently trusted.
+ const recovered=finish(broadcast(f),{...f.evidence,transaction:{...f.transaction,maxFeePerGas:'2'}});
+ assert(recovered.nativeRefillHalt); // RPC mismatch detected even if returned tx claimed the right fees.
 });

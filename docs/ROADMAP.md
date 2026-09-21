@@ -40,6 +40,7 @@ gas и caps, cooldown/period, priority/partial funding, anchor/pending/history d
 cooldown. Приоритет committed → candidate → buffers. Typed pending защищён от generic recovery.
 Bootstrap-native executor готов: source/provider binding, anchored balances, estimate/head/nonce
 revalidation, durable intent/hash и typed receipt recovery в coordinator; один перевод за вызов.
+Fee-envelope fix выполнен: known hash при mismatch, actual receipt accounting и durable stop.
 Следующий bounded пакет: автоматический сбор актуальных obligations и вызов funding из
 coordinator с сохранением frozen-first приоритета. Сейчас обычный pass только восстанавливает
 refill receipts; отправку вызывает trusted caller под тем же lock.

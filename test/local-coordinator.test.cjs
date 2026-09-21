@@ -282,4 +282,10 @@ test('native refill pending uses typed receipt recovery and records expense befo
   assert(!resolved.pending);assert(BigInt(resolved.nativeRefillHistory.spent)>2000n);
   const spent=resolved.nativeRefillHistory.spent;await runCoordinator(f.options);
   assert.equal(JSON.parse(fs.readFileSync(file)).nativeRefillHistory.spent,spent);
+  const {checksum:ignored,...halted}=JSON.parse(fs.readFileSync(file));
+  halted.nativeRefillHalt={reason:'broadcastPolicyMismatch'};save(halted);
+  const before=fs.readFileSync(file,'utf8'),nonce=await f.provider.getTransactionCount(await f.admin.getAddress());
+  assert.equal((await runCoordinator(f.options)).reason,'broadcastPolicyMismatch');
+  assert.equal(fs.readFileSync(file,'utf8'),before);
+  assert.equal(await f.provider.getTransactionCount(await f.admin.getAddress()),nonce);
 });

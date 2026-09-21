@@ -1,6 +1,6 @@
 # Текущий контекст
 
-Обновлено 21.09.2026 после bounded local bootstrap-native executor.
+Обновлено 21.09.2026 после fee-envelope binding fix.
 
 ## Где находимся
 
@@ -42,9 +42,13 @@ volume без фоновой синхронизации checkout; lock не яв
 обе попытки включают cooldown. Ledger и очистка pending сохраняются одним atomic save.
 Coordinator направляет nativeRefill pending в typed receipt recovery; unknown hash остаётся stop.
 
-Проверки 21.09: 56/56 planner/ledger/executor/budget/lock/transaction (8.3 s),
-4/4 targeted coordinator (88.1 s); финальный executor rerun 7/7. Полный npm test и fork не запускались.
-Команды и границы — [LOCAL_NATIVE_REFILL](LOCAL_NATIVE_REFILL.md).
+Intent сохраняет type/gasLimit/maxFeePerGas/maxPriorityFeePerGas; returned/RPC tx сверяются.
+Mismatch сохраняет hash, учитывает receipt и ставит durable nativeRefillHalt. Coordinator
+и refill executor останавливают автоматику, не повторяют перевод. Это обнаружение после
+broadcast, не гарантия против первого перерасхода неисправным signer.
+
+Проверки 21.09: 58/58 профильных planner/ledger/executor/budget/lock/transaction tests.
+Полный npm test/fork не запускались. Команды — [LOCAL_NATIVE_REFILL](LOCAL_NATIVE_REFILL.md).
 
 ## Ближайший кусок
 
@@ -77,3 +81,6 @@ proxy, reroll/reset или подмены random. Immutable destination стар
 [Продуктовые решения](PRODUCT_SPEC.md), [карта реализации](IMPLEMENTATION_STATUS.md),
 [исторический снимок статусов](archive/snapshots/PROJECT_PROGRESS_BEFORE_REVIEW_2026-09-20.md).
 Ответ GPT — вспомогательное мнение, не автоматическое задание.
+
+Проверка fee-policy fix: 4/4 targeted coordinator (82.1 s); финальный тест typed recovery +
+durable halt повторно 1/1 (43.9 s), state suite 7/7. Команды coordinator — в LOCAL_NATIVE_REFILL.

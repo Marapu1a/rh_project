@@ -3,7 +3,7 @@ const {stageNativeRefill,recordNativeRefillHash,finalizeNativeRefill}=require('.
 const {waitLocalReceipt}=require('./local-receipt.cjs');
 const check=(ok,message)=>{if(!ok)throw Error(message);};
 const blockData=b=>({number:String(b.number),hash:b.hash,timestamp:String(b.timestamp)});
-const txData=t=>({chainId:String(t.chainId),from:t.from,to:t.to,value:String(t.value),nonce:String(t.nonce),data:t.data,hash:t.hash});
+const txData=t=>({chainId:String(t.chainId),from:t.from,to:t.to,value:String(t.value),nonce:String(t.nonce),data:t.data,hash:t.hash,type:t.type,gasLimit:String(t.gasLimit),maxFeePerGas:t.maxFeePerGas==null?null:String(t.maxFeePerGas),maxPriorityFeePerGas:t.maxPriorityFeePerGas==null?null:String(t.maxPriorityFeePerGas)});
 // Caller owns the coordinator lock. Save before advancing memory.
 function commit(state,save,next){save(next);for(const key of Object.keys(state))delete state[key];Object.assign(state,next);}
 async function reconcileNativeRefill({provider,state,save}){
@@ -18,7 +18,9 @@ async function reconcileNativeRefill({provider,state,save}){
  const next=finalizeNativeRefill(state,{transaction:txData(transaction),block:blockData(block),receipt:{
   hash:receipt.hash,status:receipt.status,blockHash:receipt.blockHash,blockNumber:String(receipt.blockNumber),
   gasUsed:String(receipt.gasUsed),gasPrice:String(receipt.gasPrice)}});
- commit(state,save,next);return {status:receipt.status===1?'confirmed':'reverted',transactionHash:receipt.hash};
+ commit(state,save,next);
+ if(state.nativeRefillHalt)return {status:'blocked',reason:'broadcastPolicyMismatch',requiresReconciliation:true,transactionHash:receipt.hash};
+ return {status:receipt.status===1?'confirmed':'reverted',transactionHash:receipt.hash};
 }
 // One bounded transfer. Obligations are supplied by a trusted caller, not inferred here.
 async function executeNativeRefill({provider,signer,state,save,input,signal}){
@@ -32,6 +34,7 @@ async function executeNativeRefill({provider,signer,state,save,input,signal}){
   check(state.pending.domainHash===domain,'Pending refill domain mismatch');
   return reconcileNativeRefill({provider,state,save});
  }
+ if(state.nativeRefillHalt)return {status:'blocked',reason:'broadcastPolicyMismatch',requiresReconciliation:true};
  if(signal?.aborted)return {status:'stopped'};
  const source=input.source.address.toLowerCase();
  const latestNonce=await provider.getTransactionCount(source,'latest'),pendingNonce=await provider.getTransactionCount(source,'pending');

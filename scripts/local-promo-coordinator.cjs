@@ -59,6 +59,7 @@ async function runCoordinator({prize,scheduler,statePath,signal,receiptTimeoutMs
       state.lastResolved={...state.pending,status:receipt.status,blockHash:receipt.blockHash};
       delete state.pending;save(state);
     }
+    if(state.nativeRefillHalt)return {status:'blocked',reason:'broadcastPolicyMismatch',requiresReconciliation:true,results};
     // Includes publisher, even when different from the funding/execution signer.
     for(const address of addresses)if(await provider.getTransactionCount(address,'pending')>
       await provider.getTransactionCount(address,'latest'))return {status:'blocked',reason:'pendingSigner',address,results};

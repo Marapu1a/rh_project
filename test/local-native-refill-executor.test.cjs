@@ -81,3 +81,17 @@ test('pending source nonce, gas bound, abort and unrelated pending do not submit
  assert.equal((await f.run()).reason,'pendingSourceNonce');assert.equal(await f.provider.getTransactionCount(f.source,'latest'),nonce);
 });
 
+
+test('mutated signer fees persist hash across timeout, account overspend and stop subsequent sends',async t=>{
+ const f=await fixture(t);await f.rpc.send('hardhat_setBalance',[f.source,ethers.toQuantity(1001500000000000000n)]);
+ const input=structuredClone(f.input);input.policy.targets[0].target=input.policy.targets[0].lowWatermark='1000000000000000';
+ let sends=0;const signer={provider:f.provider,getAddress:()=>f.signer.getAddress(),estimateGas:r=>f.signer.estimateGas(r),
+  sendTransaction:r=>{sends++;return f.signer.sendTransaction({...r,maxFeePerGas:100000000000n,maxPriorityFeePerGas:50000000000n});}};
+ await f.rpc.send('evm_setAutomine',[false]);assert.equal((await f.run({input,signer})).reason,'receiptUnknown');
+ const pending=f.read().pending;assert.equal(pending.stage,'broadcastPolicyMismatch');assert(pending.transactionHash);
+ await f.rpc.send('evm_mine');await f.rpc.send('evm_setAutomine',[true]);
+ assert.equal((await f.run({input,signer})).reason,'broadcastPolicyMismatch');
+ const state=f.read();assert(!state.pending);assert(state.nativeRefillHalt);assert(state.lastResolved.budgetExceeded);
+ assert.equal(BigInt(state.nativeRefillHistory.spent),1001500000000000000n-await f.provider.getBalance(f.source));
+ assert.equal((await f.run({input,signer})).reason,'broadcastPolicyMismatch');assert.equal(sends,1);
+});

@@ -1,4 +1,4 @@
-# Review: native refill executor + priority/ledger package
+# Review: fee-envelope fix on native refill executor
 
 21.09.2026. Прочитай CURRENT_CONTEXT и LOCAL_NATIVE_REFILL, проверь HEAD и укажи его hash.
 Перезапиши GPT_REVIEW_RESPONSE.md. Предыдущий ответ — исторический, не текущий план.
@@ -60,3 +60,13 @@ Commands in LOCAL_NATIVE_REFILL.md. Full npm test/fork not run for this package.
 
 No prize spending for ops, new allocation percentages, conversion, proxy or governance is authorized.
 Project share economics and actual native source automation remain separate work.
+
+## Latest fix to review
+
+Prepared feeEnvelope binds type/gasLimit/maxFeePerGas/maxPriorityFeePerGas with stage ceiling
+validation. Returned/RPC mismatch preserves the original known hash, records actual receipt
+expense and latches nativeRefillHalt atomically with pending clearance. Coordinator and executor
+stop automation. No reset API. Legacy pending without envelope is not silently trusted.
+Post-broadcast checking cannot prevent the first overspend; this boundary is explicit in docs.
+58 focused tests pass, including real signer mutation with timeout/restart and repeat-send stop.
+Please check mismatch/recovery/persistence paths before the next obligations integration.

@@ -78,3 +78,6 @@ actual expense и cooldown попыток, atomic finalization. Coordinator не
 21.09: local-native-refill-executor.cjs — один bootstrap-native transfer под существующим
 coordinator lock, RPC/source/fee/estimate/head/nonce checks; typed receipt recovery включён в
 coordinator startup. Автосбор draw obligations и запуск пополнений обычным pass ещё не подключены.
+
+21.09: refill intent связывает gas/fee envelope; post-broadcast mismatch сохраняет hash,
+учитывает расход и ставит durable stop для executor/coordinator. Первого перерасхода это не предотвращает.
