@@ -5,103 +5,179 @@
 Это независимое review-мнение, не задание на автоматическое исполнение. При следующем
 обращении файл следует полностью перезаписать.
 
-Просмотрен HEAD `f6af6f32258ea6dff19453ed277922d5a9f86042` —
-`feat: add read-only native refill recovery inspector`.
+Просмотрен HEAD `cec8db3a7dfbe4121ed3abde34826a19c9271078` —
+`Share coordinator identity with verified inspection manifests`. Дополнительно сделан
+релизный срез продукта и реализации в целом, а не только review последнего diff.
 
 ## Короткий вердикт
 
-Read-only inspector принимаю. Подтверждённых safety-блокеров в пакете не нашёл.
-Инструмент не превратился в скрытый recovery/repair path: он не получает signer, не вызывает
-send, не входит в `withState`, не сохраняет journal и не удаляет lock. Известный receipt
-классифицируется через существующие pure `recordNativeRefillHash` и
-`finalizeNativeRefill` на копии state; hashless исход ни при каких nonce не становится
-разрешением на retry.
+Новый manifest/identity package пока **не принимаю окончательно**: в нём два подтверждённых
+дефекта воспроизводимости identity. Денежной safety-уязвимости они не создают, но инструмент,
+который должен доказывать точную конфигурацию, не должен зависеть от случайной формы checkout
+или регистра букв в эквивалентном Ethereum-адресе.
 
-Классификация достаточно консервативна. `recoverableReceipt` означает только, что текущие
-evidence проходят штатные проверки будущей finalization. Существующий lock оставляет
-`ownershipUnresolved=true` и принудительно делает exit ненулевым. Изменение наблюдаемого
-state/lock в ходе проверки переводит результат в `snapshotChanged` и удаляет projected
-accounting. Документация прямо говорит, что это best-effort snapshot, а не lease,
-execution permit или защита от ABA.
+По проекту в целом: идея архитектурно целостна, локальный сквозной skeleton действительно
+собран и хорошо протестирован. Но до публичного релиза с реальными деньгами мы **не близко**.
+Мы близко к завершению архитектурного прототипа и можем готовить testnet/fork canary.
+Production-контроллеров, production RNG/finality, постоянного indexer/keeper, реального swap,
+deployment pipeline, frontend и утверждённой экономики ещё нет.
 
-Главная trust-граница описана честно: `configHash` и полный refill config должны прийти из
-независимо одобренной конфигурации, а не из подозрительного journal. Сам inspector не может
-доказать происхождение expected-файла. Поэтому пакет годится как диагностический слой, но
-ещё не как полностью собранный операторский workflow.
+Особенно важно: сейчас не только интеграции являются заглушками — часть самого продукта
+не определена числами. Пока не утверждены creator shares, Short budget, K/weights/minimum,
+вероятности Short/Monthly и точный production schedule/finality, нельзя посчитать payout,
+farming economics или даже сформулировать окончательные условия промо. Большое количество
+зелёных тестов этого не заменяет.
 
-## Что проверено
+## Findings по текущему пакету
 
-- checksum/schema/config identity проверяются до RPC;
-- refill domain пересчитывается из expected `ops/source/policy/protectedAddresses`;
-- history/pending связаны через domain, pending flag и `historyHash`;
-- source/destination/value/nonce/anchor/stage и policy bounds валидируются fail-closed;
-- transaction identity и fee envelope проходят существующий runtime transition;
-- receipt связан с transaction hash и каноническим block evidence;
-- success включает value + gas, revert — только gas; результат явно помечен
-  `persisted=false`;
-- known hash без receipt остаётся `pendingReceipt`, отсутствие transaction не доказывает
-  отсутствие broadcast;
-- hashless после send-before-hash остаётся `manualTransactionSearchRequired`;
-- stale-looking lock показывается как evidence, но PID не используется для разрешения
-  удаления;
-- idle и other-worker state не провоцируют лишний recovery/RPC path;
-- CLI ограничен loopback HTTP, имеет request/overall timeout, один JSON result и
-  содержательные exit codes.
+### 1. Confirmed: exporter не работает без `.git`
 
-Process-death интеграция тоже соответствует заявлению: inspector запускается на journal,
-оставшемся после реального SIGKILL child, пока fixture lock ещё существует; файл не меняется,
-нового send нет, а exit остаётся ненулевым даже при recoverable receipt.
+`inspection-manifest.cjs export` безусловно выполняет:
 
-## Неблокирующие замечания
+```text
+git rev-parse HEAD
+git status --porcelain
+```
 
-1. Для known hash чтение `latest/pending` nonce сейчас является обязательным шлюзом перед
-   transaction/receipt lookup. Если именно `eth_getTransactionCount` недоступен, inspector
-   возвращает `rpcUnavailable`, хотя nonce объявлен лишь вспомогательным evidence и receipt
-   мог быть полностью проверяем. Это безопасный false negative, не false-positive recovery.
-   При следующем изменении инструмента nonce лучше сделать best-effort: сохранить ошибку в
-   `sourceNonce`, но продолжить known-hash receipt validation.
+В чистом source archive, deployment bundle или ином checkout без `.git` export падает до
+создания manifest. Это воспроизвёл полный `npm test` в чистом `git archive`: **329/330**,
+единственный fail — manifest integration с `fatal: not a git repository`.
 
-2. Документация evidence разошлась с фактическим набором: основной текст говорит 31/31,
-   добавленная финальная строка — 10/10, а команда из документа на текущем HEAD даёт 32/32.
-   На корректность кода это не влияет, но при ближайшей правке стоит оставить одну
-   воспроизводимую цифру и убрать добавочные «финальные» строки из CURRENT_CONTEXT/request/doc.
+Это не просто тестовая причуда: заявленный операторский artifact нельзя воспроизвести из
+исходного release bundle. Предпочтительная граница — явный provenance input
+(`--provenance FILE` или эквивалентные обязательные build values), а git discovery оставить
+удобным режимом для developer checkout. Verifier должен проверять форму provenance, но не
+изображать, будто локальный `.git` сам доказывает одобрение или deployed bytecode.
 
-3. В чистом `git archive` тестовые fixtures не создают родительский `.local`, поэтому падают
-   до проверки логики, пока каталог не создан окружением. Это старое свойство local test
-   harness, а не регрессия inspector. Для действительно fresh-clone reproducibility лучше
-   либо создавать `.local` в общей test setup, либо использовать системный temp directory.
+Нужен regression: export/verify из копии без `.git`, с явно переданными commit/source digest,
+dirty/generatedAt. Исправление только теста, чтобы он перестал вызывать export, скроет дефект.
 
-Ни одно из этих замечаний не разрешает repair/reset и не блокирует принятие текущего пакета.
+### 2. Confirmed: role casing меняет configHash
 
-## Один следующий bounded step
+`buildCoordinatorIdentity` проверяет роли через `ethers.isAddress`, но сохраняет
+`roles.prizeExecutor/executor/publisher` в budget identity в исходном регистре. Runtime получает
+обычно checksummed адрес из `signer.getAddress()`, а независимый deployment JSON может законно
+содержать тот же адрес lowercase. Оба значения валидны и семантически равны, но канонический
+JSON hash различается.
 
-Следующим шагом предлагаю **approved inspection manifest exporter/verifier** из того же
-канонического coordinator/deployment config, который формирует runtime identity:
+Минимальный probe на стандартном Hardhat address дал:
 
-- детерминированно экспортировать `configHash` и нормализованные
-  `ops/source/policy/protectedAddresses`;
-- до записи доказать соответствие hash канонической полной coordinator configuration;
-- запретить брать expected values из state journal;
-- вывести checksum/provenance (commit, chain/profile, generated-at без влияния на identity);
-- добавить negative tests на stale config, неполный protected set, другой source/network и
-  ручную подмену `configHash`;
-- не добавлять signer, send, state save, lock deletion или pending reset.
+```text
+checksumValid=true, lowerValid=true, sameSemantic=true, hashEqual=false
+```
 
-Это закрывает единственный специально оставленный входной trust-gap и делает уже готовый
-inspector воспроизводимым операторским инструментом. После этого логично переходить к одной
-внешней fixture-границе за раз; я бы первым выделил venue/BUY decoder, не смешивая его с
-real swap или RNG.
+В результате exporter/verify успешно создают внутренне согласованный manifest, который затем
+не совпадает с реальным runtime state. Это безопасный false mismatch, но ломает основное
+назначение инструмента. Роли следует канонизировать одним способом внутри общего builder
+(например, `ethers.getAddress`) до построения legacy/budget/refill identity. Для обычных
+runtime signer addresses это сохраняет текущий hash. Нужен regression lowercase deployment
+roles ↔ checksum runtime roles.
+
+### Что в пакете сделано правильно
+
+- общий pure identity builder действительно устранил дублирование формулы runtime/manifest;
+- legacy и budget shape для обычного runtime ввода сохранены тестами;
+- refill domain строится из полного source/policy/protected set, а не берётся из journal;
+- controller objects теперь сверяются с lifecycle addresses до journal access;
+- независимое изменение source/network/config/protected set не проходит verifier даже после
+  пересчёта checksum;
+- manifest не выдаётся за on-chain attestation или внешнее approval;
+- nonce read стал best-effort: known receipt проверяется при nonce outage, hashless всё равно
+  не получает разрешения на retry;
+- inspector/verify остаются read-only, signer/send/reset/lock deletion не появились.
+
+После исправления двух findings пакет можно принять без расширения его полномочий.
+
+## Целостность идеи
+
+Сильная часть проекта — одна непротиворечивая денежная и lifecycle-модель:
+
+- TOKEN остаётся обычным спекулятивным активом, Promo — отдельным добровольным контуром;
+- только фактически полученный USDG становится денежным призовым резервом;
+- project share отделяется до prize custody, а frozen/claimable не оплачивают эксплуатацию;
+- free, reserved и claimable не считаются одними деньгами дважды;
+- Short и Monthly имеют раздельные immutable capabilities и пространства draw ID;
+- BUY создаёт независимые Short/Monthly attempts; freeze/terminal/claim разделены;
+- no-win, недоставленный RNG и неготовый draw не смешаны;
+- старые долги и старые версии правил не переписываются новыми циклами;
+- нет admin withdrawal, reroll, reset, proxy или подмены результата.
+
+То есть это уже не набор случайных контрактов. Core accounting, custody и переходы состояний
+сходятся. Локальный BUY → attempts → Short/Monthly → award → claim и параллельный revenue →
+converter → reserves проходят сквозными сценариями.
+
+Но product thesis ещё не замкнут экономически. Покупка одновременно создаёт комиссионный доход
+и шанс на приз; при разрешённом multi-wallet farming устойчивость определяется конкретными fee,
+creator share, q, бюджетом и корзиной. Пока этих параметров нет, нельзя проверить, не покупаем ли
+мы искусственный объём слишком щедрой ожидаемой выплатой. Технический core не отвечает на этот
+вопрос за продукт.
+
+Отдельная честно принятая граница доверия: publisher/indexer может опубликовать неполный snapshot.
+Это можно независимо обнаружить, но текущий on-chain контур не обязан предотвратить выплату по
+нему. Для MVP такая модель возможна только как явно раскрытое доверие к оператору, с публичными
+artifacts и независимым replay; называть её trustless нельзя.
+
+## Насколько близко к релизу
+
+| Слой | Состояние | Релизный вывод |
+|---|---|---|
+| Product/custody model | Основные инварианты сформированы | Сильная база |
+| Экономический профиль | Ключевые значения не утверждены | Блокер спецификации и моделирования |
+| Vault/FeeRouter/settlement core | Реализован и широко покрыт тестами | Близок к audit candidate после final profile |
+| Исполняемые controllers | Только `Local*`, жёстко chainId 31337 и mock RNG | Production blocker |
+| BUY/indexer | Воспроизводимый replay есть, daemon/finality/publication отсутствуют | Production blocker |
+| Venue/fees | PAIR-specific допущения и local/fork evidence | Нужна конкретная live integration/canary |
+| TOKEN → USDG | Fixed adapter/floor fixture | Нужны real route, oracle/price guard, slippage/MEV policy |
+| RNG | Исследование Drand есть, binding не выбран | Production blocker |
+| Coordinator/ops | Хороший local journal и fail-closed recovery | Нет supervisor, lease model, monitoring, RPC failover |
+| Delivery | Нет deploy scripts/CI/reproducible build/frontend | Production blocker |
+| External assurance | Нет invariant/fuzz campaign и внешнего аудита | До public funds обязательно |
+| Правовая рамка | В репозитории не определена | Проверить отдельно до публичного промо |
+
+Практическая оценка без фальшивых процентов:
+
+- **локальный demo/architecture MVP — готов;**
+- **закрытый testnet/fork canary — следующий большой этап;**
+- **публичный запуск с настоящими средствами — ещё несколько независимых release gates, не
+  «пара фиксов и заменить заглушки».**
+
+## Следующий необходимый шаг
+
+Ближайший коммит должен оставаться маленьким: закрыть `.git` provenance portability и role
+address canonicalization, добавить два regression и вернуть полный suite в зелёное состояние.
+Не надо под этот fix добавлять deployment, recovery или новую сеть.
+
+Сразу после принятия этого patch следующий **проектный**, а не технический шаг — утвердить
+один `MVP release profile v1`. До новой внешней интеграции владелец должен зафиксировать:
+
+1. creator revenue bps и назначение всех трёх FeeRouter slots;
+2. формулу/лимит Short budget D;
+3. K, weights и minimum unit корзины;
+4. численные q для Short и Monthly;
+5. точный Monthly interval и notice rules;
+6. finality/cutoff policy и максимальный поддерживаемый participant envelope.
+
+Для профиля нужен один экономический sweep: обычный пользователь, крупный участник,
+multi-wallet farmer, низкий/высокий объём, недостаток prize funding и дорогая эксплуатация.
+Результат — не «идеальная токеномика», а конкретная версия условий, которую можно закодировать,
+показать пользователю и против которой тестировать production adapters.
+
+Только после profile freeze следующий инженерный пакет — bounded real venue/BUY integration.
+RNG и swap нельзя тащить в тот же пакет.
 
 ## Выполненные проверки
 
-- документированный inspector/process/state/lock набор в чистом checkout — **32/32**, fail 0;
-- полный `npm run test:local:refill` в чистом checkout — **66/66**, fail 0, 9.0 s;
-- process-death checkpoints — 5/5, receipt-outage recovery — 1/1;
-- `git diff --check 8c86099..f6af6f3` — чисто;
-- полный `npm test` повторно не запускался: предыдущий baseline на `6a068ec` был 318/318,
-  а этот пакет покрыт полным refill-набором;
-- fork/live-network проверки не запускались;
+- полный `npm test` в чистом `git archive` checkout: **330 total, 329 pass, 1 fail**,
+  663.0 s; fail воспроизводит `.git` dependency manifest exporter;
+- все остальные 329 тестов, включая contracts, coordinator, refill и process-death, прошли;
+- отдельный local manifest test в синхронизируемом checkout упёрся в восстановленный stale
+  `.local` lock; этот результат не смешивается с подтверждённым clean-archive finding;
+- ручной role-casing probe подтвердил разные hash для одного Ethereum address;
+- `git diff --check af2754c..cec8db3` — чисто;
+- live fork/current PAIR, production RNG и внешний audit не запускались;
 - пользовательский `docs/INDEPENDENT_AUDIT_2026-09-19.md` не изменялся.
 
-Итог: read-only recovery inspector соответствует заявленным границам и принят. Он помогает
-понять состояние, но сознательно ничего не чинит и не даёт разрешения на повторную отправку.
+Итог: проект уже хорошо сформирован как архитектура и локальная система, но ещё не как
+утверждённый публичный продукт. Сначала чинится воспроизводимость manifest package, затем
+замораживается release profile. Если перескочить сразу к venue/RNG/swap, мы начнём дорого и
+аккуратно реализовывать параметры, которые пока никто не выбрал.
