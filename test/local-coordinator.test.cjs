@@ -278,6 +278,14 @@ test('native refill pending uses typed receipt recovery and records expense befo
     assert.equal((await runCoordinator(f.options)).reason,'pendingReceipt');assert.equal(fs.readFileSync(file,'utf8'),before);
     await f.provider.send('evm_mine');
   }finally{await f.provider.send('evm_setAutomine',[true]);}
+  const beforeOutage=fs.readFileSync(file,'utf8'),receiptReader=f.provider.getTransactionReceipt;
+  const sourceNonce=await f.provider.getTransactionCount(source),executorNonce=await f.provider.getTransactionCount(await f.admin.getAddress());
+  f.provider.getTransactionReceipt=async()=>{throw Error('test receipt-read outage');};
+  try{await assert.rejects(()=>runCoordinator(f.options),/test receipt-read outage/);}
+  finally{f.provider.getTransactionReceipt=receiptReader;}
+  assert.equal(fs.readFileSync(file,'utf8'),beforeOutage);assertUnlocked(file);
+  assert.equal(await f.provider.getTransactionCount(source),sourceNonce);
+  assert.equal(await f.provider.getTransactionCount(await f.admin.getAddress()),executorNonce);
   await runCoordinator(f.options);const resolved=JSON.parse(fs.readFileSync(file));
   assert(!resolved.pending);assert(BigInt(resolved.nativeRefillHistory.spent)>2000n);
   const spent=resolved.nativeRefillHistory.spent;await runCoordinator(f.options);

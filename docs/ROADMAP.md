@@ -59,8 +59,10 @@ claims за победителей. Кто финансирует их gas — �
 cleanup исправлен, fault tests проверяют освобождение своего lock/fd и отказ чужому.
 Relevant-action block-limit bug также исправлен и покрыт регрессиями.
 
-Fault tests: storage errors до/после broadcast и receipt, abrupt process death,
-receipt-read outage, mined revert через coordinator. Затем ограниченный recovery design
+22.09: process-death проверки refill в пяти точках + receipt RPC outage прошли;
+[матрица восстановления](LOCAL_NATIVE_REFILL_RECOVERY.md). Это child refill + shared journal,
+не kill всего draw/prize coordinator; stale lock в runtime не снимается автоматически.
+Storage faults и mined revert покрыты предыдущими тестами. Далее ограниченный recovery design
 для stale lock/hashless tx/replacement и сохранности state. Не выдавать force-clear за
 reconciliation. Сохранить независимость действий при доказанном отказе.
 

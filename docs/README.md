@@ -56,3 +56,5 @@
 - [Execution Gas Calibration](LOCAL_EXECUTION_CALIBRATION.md) — измерения 100/1 000/10 000 участников, профиль и проверка бюджета.
 
 - [Local Native Refill](LOCAL_NATIVE_REFILL.md) — planner, bounded local executor и typed receipt recovery; автоматическое funding через coordinator/CLI.
+
+- [Native refill recovery](LOCAL_NATIVE_REFILL_RECOVERY.md) — реальные process-death checkpoints, RPC outage и границы ручного восстановления.

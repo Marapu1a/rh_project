@@ -88,3 +88,5 @@ Receipt wait отделён от requiresOperatorAction. Детали и гра�
 
 22.09: withState.validateMigration — guard под lock до записи нового configHash; coordinator
 проверяет history domain/pending и статическую полноту funding targets. Нет reset/migration bypass.
+
+22.09: test/local-native-refill-process.test.cjs + test-only child fixture — пять crash boundaries, stale-lock stop, hashless stop и known-hash recovery; coordinator receipt RPC outage regression. [Матрица](LOCAL_NATIVE_REFILL_RECOVERY.md).

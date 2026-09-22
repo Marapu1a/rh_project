@@ -274,3 +274,5 @@ incomplete targets, incompatible domain, byte-unchanged rejection and compatible
 node --test --test-concurrency=1 test/local-state-lock.test.cjs test/local-native-refill-state.test.cjs test/local-native-refill-executor.test.cjs
 node --test --test-name-pattern='refill admission|automatic .*refill|budget profile upgrades|enabling budget cannot' test/local-coordinator.test.cjs
 ```
+
+22.09: [process-death/RPC recovery checks](LOCAL_NATIVE_REFILL_RECOVERY.md) проверяют сохранность pending/расходов без изменения runtime поведения.

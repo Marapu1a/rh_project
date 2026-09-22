@@ -1,6 +1,6 @@
 # Текущий контекст
 
-Обновлено 22.09.2026 после pre-migration config admission fix.
+Обновлено 22.09.2026 после process-death/RPC recovery checks.
 
 ## Где находимся
 
@@ -53,16 +53,24 @@ broadcast, не гарантия против первого перерасхо�
 Отказ не меняет state; правильные настройки можно повторить без сброса spend/cooldown/nonce.
 Pending по-прежнему запрещает migration. Repair/reset ранее испорченного admission не добавлен.
 
-Проверки 22.09: 25/25 state-lock/refill-state/refill-executor (11.4 s),
-5/5 targeted coordinator admission/upgrade/pending/automatic funding (112 s).
-Полный npm test/fork не запускались. Команды и границы — [LOCAL_NATIVE_REFILL](LOCAL_NATIVE_REFILL.md).
+Проверки 22.09: 31/31 process/state-lock/refill-state/executor (17.7 s),
+3/3 targeted coordinator RPC-recovery/hashless/admission (80.6 s).
+Полный npm test/fork не запускались. Команды и границы — [LOCAL_NATIVE_REFILL_RECOVERY](LOCAL_NATIVE_REFILL_RECOVERY.md).
+
+## Последняя проверка отказов
+
+Добавлены реальные child-process kill checkpoints: prepared, send до hash-save, сохранённый hash,
+receipt до final-save и после final-save. После смерти child stale lock блокирует restart;
+только тестовый harness подтверждает exit и снимает собственный lock для проверки journal recovery.
+Hashless остаётся stop, known hash учитывается ровно один раз. RPC receipt outage не меняет state.
+Runtime-код не менялся. Детали и границы — [LOCAL_NATIVE_REFILL_RECOVERY](LOCAL_NATIVE_REFILL_RECOVERY.md).
 
 ## Ближайший кусок
 
-Проверить связанный funding контур по отзыву GPT: startup/config migration, watch waits,
-приоритет frozen и restart. После этого выбрать следующий ограниченный этап укрепления MVP.
-Автопополнение из выделенного native bootstrap source уже подключено; TOKEN/USDG → ops native
-и production network/RNG/finality остаются отдельными задачами.
+Review результатов отказов; затем выбрать ограниченный recovery/диагностический шаг для
+stale lock/hashless исходов. Автоудаление lock/reset pending не реализованы. После RPC ошибки
+CLI требуется новый запуск; встроенный reconnect-loop и supervisor ещё не добавлены.
+Полный сценарий аварийного завершения всего draw/prize coordinator остаётся отдельной проверкой.
 
 ## Основные ограничения
 
