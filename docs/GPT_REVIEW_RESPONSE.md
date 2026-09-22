@@ -5,133 +5,103 @@
 Это независимое review-мнение, не задание на автоматическое исполнение. При следующем
 обращении файл следует полностью перезаписать.
 
-Просмотрен HEAD `6a068ec2bb93d1c4a7ac219bae3045f998c9411c` —
-`test: verify native refill recovery across process death and RPC outages`.
-Проверен весь диапазон после прошлого ответа: `459fc38..6a068ec`, включая runtime fix
-`edd27d5 fix: validate refill admission before persisting config migration`.
+Просмотрен HEAD `f6af6f32258ea6dff19453ed277922d5a9f86042` —
+`feat: add read-only native refill recovery inspector`.
 
 ## Короткий вердикт
 
-Предыдущий config-admission defect закрыт по правильной границе. Funding targets
-валидируются до открытия/создания state, а совместимость существующего
-`nativeRefillHistory` проверяется под тем же lock до сохранения нового `configHash`.
-Rejected migration не меняет state; повтор с правильной конфигурацией сохраняет
-spend/cooldown/lastNonce и принимается.
+Read-only inspector принимаю. Подтверждённых safety-блокеров в пакете не нашёл.
+Инструмент не превратился в скрытый recovery/repair path: он не получает signer, не вызывает
+send, не входит в `withState`, не сохраняет journal и не удаляет lock. Известный receipt
+классифицируется через существующие pure `recordNativeRefillHash` и
+`finalizeNativeRefill` на копии state; hashless исход ни при каких nonce не становится
+разрешением на retry.
 
-Process-death/RPC evidence соответствует заявленным выводам. Тесты действительно убивают
-отдельный Node process в пяти точках штатного `executeNativeRefill + withState`, а не
-симулируют restart новым объектом в том же процессе. Hashless исход не повторяется, known
-hash восстанавливается по original receipt, expense учитывается ровно один раз, а уже
-финализированный state остаётся неизменным.
+Классификация достаточно консервативна. `recoverableReceipt` означает только, что текущие
+evidence проходят штатные проверки будущей finalization. Существующий lock оставляет
+`ownershipUnresolved=true` и принудительно делает exit ненулевым. Изменение наблюдаемого
+state/lock в ходе проверки переводит результат в `snapshotChanged` и удаляет projected
+accounting. Документация прямо говорит, что это best-effort snapshot, а не lease,
+execution permit или защита от ABA.
 
-Подтверждённых runtime-блокеров в этом диапазоне не нашёл. Локальный сквозной skeleton
-можно считать собранным и переходить к замене внешних fixture-границ и укреплению
-эксплуатации. Это всё ещё не заявление о production readiness.
+Главная trust-граница описана честно: `configHash` и полный refill config должны прийти из
+независимо одобренной конфигурации, а не из подозрительного journal. Сам inspector не может
+доказать происхождение expected-файла. Поэтому пакет годится как диагностический слой, но
+ещё не как полностью собранный операторский workflow.
 
-## Config admission fix
+## Что проверено
 
-Исправление сохраняет нужные инварианты:
+- checksum/schema/config identity проверяются до RPC;
+- refill domain пересчитывается из expected `ops/source/policy/protectedAddresses`;
+- history/pending связаны через domain, pending flag и `historyHash`;
+- source/destination/value/nonce/anchor/stage и policy bounds валидируются fail-closed;
+- transaction identity и fee envelope проходят существующий runtime transition;
+- receipt связан с transaction hash и каноническим block evidence;
+- success включает value + gas, revert — только gas; результат явно помечен
+  `persisted=false`;
+- known hash без receipt остаётся `pendingReceipt`, отсутствие transaction не доказывает
+  отсутствие broadcast;
+- hashless после send-before-hash остаётся `manualTransactionSearchRequired`;
+- stale-looking lock показывается как evidence, но PID не используется для разрешения
+  удаления;
+- idle и other-worker state не провоцируют лишний recovery/RPC path;
+- CLI ограничен loopback HTTP, имеет request/overall timeout, один JSON result и
+  содержательные exit codes.
 
-- target coverage включает prize executor, draw publisher/executor и оба controller/RNG
-  accounts до вызова `withState`;
-- неправильный target set не создаёт новый state-файл и не меняет существующий;
-- `validateMigration` выполняется после checksum/config/legacy/pending checks, под
-  захваченным lock, но до записи новой identity;
-- callback получает `structuredClone(stored)`, поэтому не может незаметно изменить
-  сохраняемый объект;
-- incompatible history и `history.pending=true` отвергаются до persistence;
-- pending marker по-прежнему имеет приоритет и даже не вызывает migration callback;
-- принятая migration сохраняет funding history без обнуления.
+Process-death интеграция тоже соответствует заявлению: inspector запускается на journal,
+оставшемся после реального SIGKILL child, пока fixture lock ещё существует; файл не меняется,
+нового send нет, а exit остаётся ненулевым даже при recoverable receipt.
 
-Regression проверяет отсутствующий по очереди target каждого execution/controller address,
-несовместимый domain, byte-identical rejected state, отсутствие source send и успешный
-повтор с history-compatible config. Отдельный state-lock test подтверждает, что guard
-держит lock и не оставляет temporary file после отказа.
+## Неблокирующие замечания
 
-Замечание к формулировке request: tip commit с process tests действительно не меняет runtime,
-но диапазон после предыдущего GPT review включает runtime-изменения `edd27d5`. Они были
-проверены отдельно и приняты.
+1. Для known hash чтение `latest/pending` nonce сейчас является обязательным шлюзом перед
+   transaction/receipt lookup. Если именно `eth_getTransactionCount` недоступен, inspector
+   возвращает `rpcUnavailable`, хотя nonce объявлен лишь вспомогательным evidence и receipt
+   мог быть полностью проверяем. Это безопасный false negative, не false-positive recovery.
+   При следующем изменении инструмента nonce лучше сделать best-effort: сохранить ошибку в
+   `sourceNonce`, но продолжить known-hash receipt validation.
 
-## Process-death evidence
+2. Документация evidence разошлась с фактическим набором: основной текст говорит 31/31,
+   добавленная финальная строка — 10/10, а команда из документа на текущем HEAD даёт 32/32.
+   На корректность кода это не влияет, но при ближайшей правке стоит оставить одну
+   воспроизводимую цифру и убрать добавочные «финальные» строки из CURRENT_CONTEXT/request/doc.
 
-Checkpoint-ы стоят в осмысленных местах:
+3. В чистом `git archive` тестовые fixtures не создают родительский `.local`, поэтому падают
+   до проверки логики, пока каталог не создан окружением. Это старое свойство local test
+   harness, а не регрессия inspector. Для действительно fresh-clone reproducibility лучше
+   либо создавать `.local` в общей test setup, либо использовать системный temp directory.
 
-1. `prepared`: intent сохранён, send ещё не вызван;
-2. `sent`: RPC send завершён, но transaction response ещё не вернулся executor-у и hash
-   не сохранён;
-3. `hashed`: original hash сохранён;
-4. `receipt`: final state вычислен после чтения receipt, но ещё не записан;
-5. `finalized`: atomic final save завершён, process всё ещё держит lock.
-
-После SIGKILL первый restart упирается в оставшийся lock и не меняет файл. Test harness
-снимает только lock собственного завершившегося child после проверки абсолютного private
-path и PID. Это корректная тестовая механика, а не скрытый runtime force-clear.
-
-После контролируемого снятия fixture lock:
-
-- `prepared` до send остаётся hashless stop без отправки;
-- send-before-hash остаётся hashless stop, хотя перевод физически прошёл;
-- known hash после `hashed` или `receipt` находит original receipt и финализируется;
-- `finalized` возвращает ready без повторного accounting;
-- число `eth_sendTransaction` не превышает одного;
-- balance delta source совпадает с persisted `nativeRefillHistory.spent`;
-- повторный запуск не меняет финализированный state.
-
-Receipt RPC outage после process death также fail-closed: known pending и файл остаются
-побайтно прежними, нового send нет; после восстановления RPC свежий process учитывает
-исходную транзакцию один раз. Coordinator regression дополнительно подтверждает, что такая
-ошибка не запускает draw/prize workers и обычный finally освобождает живой lock.
-
-## Что эти тесты не доказывают
-
-- Не проверяются power loss, disk cache и directory fsync durability.
-- Hardhat/RPC и chain state переживают смерть client process.
-- Kill-сценарии используют automining; отдельные mempool timeout/revert paths покрываются
-  прежними тестами, но не этим harness.
-- Не доказаны production finality/reorg/replacement recovery.
-- Не убивается весь coordinator внутри каждого draw/prize send.
-- PID в lock сам по себе не является достаточным разрешением на удаление: namespace/reuse
-  и неизвестный исход транзакции требуют операторской проверки.
-
-Документация эти ограничения не маскирует.
+Ни одно из этих замечаний не разрешает repair/reset и не блокирует принятие текущего пакета.
 
 ## Один следующий bounded step
 
-Следующим разумным шагом считаю **read-only native-refill recovery inspector**, а не
-автоматический repair:
+Следующим шагом предлагаю **approved inspection manifest exporter/verifier** из того же
+канонического coordinator/deployment config, который формирует runtime identity:
 
-- входы: coordinator state path, ожидаемый config и RPC;
-- без save, broadcast, pending reset и lock deletion;
-- проверка checksum/config/domain/history;
-- вывод lock metadata, pending stage/hash/from/to/value/nonce/fee envelope;
-- для known hash — RPC transaction/receipt/block identity и классификация
-  `pendingReceipt | recoverableReceipt | policyMismatch | evidenceConflict`;
-- для hashless — явный `manualTransactionSearchRequired`, никогда не `safeToRetry`;
-- source latest/pending nonce показывать как evidence, но не использовать как доказательство,
-  что send не было;
-- результат — машинно читаемый report и ненулевой exit для conflict/unknown.
+- детерминированно экспортировать `configHash` и нормализованные
+  `ops/source/policy/protectedAddresses`;
+- до записи доказать соответствие hash канонической полной coordinator configuration;
+- запретить брать expected values из state journal;
+- вывести checksum/provenance (commit, chain/profile, generated-at без влияния на identity);
+- добавить negative tests на stale config, неполный protected set, другой source/network и
+  ручную подмену `configHash`;
+- не добавлять signer, send, state save, lock deletion или pending reset.
 
-Тесты inspector-а должны доказывать byte-identical state и ноль send для stale lock,
-hashless, known pending, receipt outage, mined success/revert и conflicting RPC evidence.
-Оператор после этого принимает отдельное решение; inspector ничего не «чинит».
+Это закрывает единственный специально оставленный входной trust-gap и делает уже готовый
+inspector воспроизводимым операторским инструментом. После этого логично переходить к одной
+внешней fixture-границе за раз; я бы первым выделил venue/BUY decoder, не смешивая его с
+real swap или RNG.
 
 ## Выполненные проверки
 
-- `npm run test:local:refill` в рабочем checkout — **56/56**, fail 0;
-- targeted coordinator в рабочем checkout сначала дал 2/3 из-за воскресшего
-  `.local/...state.json.lock` в синхронизируемой среде;
-- тот же targeted coordinator в чистом `/tmp` checkout — **3/3**, fail 0;
-- полный `npm test` в чистом checkout — **318/318**, fail 0, 664.2 s;
-- process death checkpoints — 5/5; receipt-outage recovery — 1/1;
-- `git diff --check dc6b3f3..6a068ec` — чисто;
-- полный fork/live-network test не запускался;
+- документированный inspector/process/state/lock набор в чистом checkout — **32/32**, fail 0;
+- полный `npm run test:local:refill` в чистом checkout — **66/66**, fail 0, 9.0 s;
+- process-death checkpoints — 5/5, receipt-outage recovery — 1/1;
+- `git diff --check 8c86099..f6af6f3` — чисто;
+- полный `npm test` повторно не запускался: предыдущий baseline на `6a068ec` был 318/318,
+  а этот пакет покрыт полным refill-набором;
+- fork/live-network проверки не запускались;
 - пользовательский `docs/INDEPENDENT_AUDIT_2026-09-19.md` не изменялся.
 
-Локальный красный запуск не считаю defect кода: рабочий synchronized checkout содержит
-много восстановленных lock-файлов с завершившимися PID, тогда как идентичный commit в чистом
-`/tmp` прошёл targeted и полный baseline. Это ещё одно практическое подтверждение уже
-записанного требования: runtime state/locks нельзя размещать в синхронизируемом checkout.
-
-Итог: admission fix и recovery evidence принимаю, открытых блокеров этому bounded package
-нет. Следующий шаг лучше посвятить безопасной read-only диагностике неизвестных исходов,
-после чего по одной заменять внешние заглушки: venue/fee source, swap и RNG.
+Итог: read-only recovery inspector соответствует заявленным границам и принят. Он помогает
+понять состояние, но сознательно ничего не чинит и не даёт разрешения на повторную отправку.
