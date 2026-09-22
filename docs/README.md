@@ -58,3 +58,5 @@
 - [Local Native Refill](LOCAL_NATIVE_REFILL.md) — planner, bounded local executor и typed receipt recovery; автоматическое funding через coordinator/CLI.
 
 - [Native refill recovery](LOCAL_NATIVE_REFILL_RECOVERY.md) — реальные process-death checkpoints, RPC outage и границы ручного восстановления.
+
+- [Native refill inspector](LOCAL_NATIVE_REFILL_INSPECTOR.md) — read-only CLI, projected receipt accounting и безопасный следующий шаг.

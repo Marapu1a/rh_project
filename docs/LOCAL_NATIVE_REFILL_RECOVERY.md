@@ -66,3 +66,5 @@ node --test --test-name-pattern='native refill pending|hashless broadcast failur
 Process suite включён в npm test и test:local:refill. Полный npm test/fork в этом пакете не запускались.
 22.09: 31/31 process/state-lock/refill-state/executor (17.7 s), 3/3 targeted coordinator
 RPC-recovery/hashless/admission (80.6 s). Логи отдельных запусков — .local/logs.
+
+22.09: добавлен [read-only inspector](LOCAL_NATIVE_REFILL_INSPECTOR.md). Он помогает читать evidence, но не выполняет шаг снятия lock из тестового harness и не изменяет journal.

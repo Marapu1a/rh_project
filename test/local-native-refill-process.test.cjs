@@ -1,6 +1,7 @@
 const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),http=require('node:http');
 const {fork}=require('node:child_process'),{ethers}=require('ethers');
 const {opsProfile}=require('./fixtures/execution-budget.cjs');
+const {hash}=require('../scripts/direct-buy.cjs'),{inspectNativeRefill}=require('../scripts/local-native-refill-inspector.cjs');
 async function fixture(t){
  const rpc=require('hardhat').network.provider;await rpc.send('hardhat_reset');
  const provider=new ethers.BrowserProvider(rpc,undefined,{cacheTimeout:-1});
@@ -35,7 +36,7 @@ async function fixture(t){
   await new Promise(resolve=>{server.close(resolve);server.closeAllConnections();});provider.destroy();
   for(const name of fs.readdirSync(directory))fs.unlinkSync(path.join(directory,name));fs.rmdirSync(directory);
  });
- return {provider,source,target,file,marker,directory,launch,run,sends:()=>sends,failReceipts:v=>{failReceipts=v;},read:()=>JSON.parse(fs.readFileSync(file))};
+ return {expected:{configHash:hash({fixture:'refill-process-v1'}),refill:input},provider,source,target,file,marker,directory,launch,run,sends:()=>sends,failReceipts:v=>{failReceipts=v;},read:()=>JSON.parse(fs.readFileSync(file))};
 }
 async function crash(f,mode){
  const {child,done}=f.launch(mode),deadline=Date.now()+15000;
@@ -55,6 +56,9 @@ for(const mode of ['prepared','sent','hashed','receipt','finalized'])test('proce
  const f=await fixture(t),before=await f.provider.getBalance(f.source),pid=await crash(f,mode),bytes=fs.readFileSync(f.file,'utf8');
  const locked=await f.run();assert.equal(locked.status,'error');assert.match(locked.message,/state locked/);assert.equal(fs.readFileSync(f.file,'utf8'),bytes); // stale lock blocks even after death
  assert.equal(f.sends(),mode==='prepared'?0:1);
+ const report=await inspectNativeRefill({statePath:f.file,expected:f.expected,provider:f.provider});
+ assert.equal(report.status,['prepared','sent'].includes(mode)?'manualTransactionSearchRequired':mode==='finalized'?'noPending':'recoverableReceipt');
+ assert.equal(report.ownershipUnresolved,true);assert.equal(report.exitCode,1);assert.equal(fs.readFileSync(f.file,'utf8'),bytes);
  releaseTestLock(f,pid);
  const result=await f.run();
  if(['prepared','sent'].includes(mode)){

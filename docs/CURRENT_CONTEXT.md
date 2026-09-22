@@ -1,6 +1,6 @@
 # Текущий контекст
 
-Обновлено 22.09.2026 после process-death/RPC recovery checks.
+Обновлено 22.09.2026 после read-only native refill inspector.
 
 ## Где находимся
 
@@ -53,9 +53,12 @@ broadcast, не гарантия против первого перерасхо�
 Отказ не меняет state; правильные настройки можно повторить без сброса spend/cooldown/nonce.
 Pending по-прежнему запрещает migration. Repair/reset ранее испорченного admission не добавлен.
 
-Проверки 22.09: 31/31 process/state-lock/refill-state/executor (17.7 s),
-3/3 targeted coordinator RPC-recovery/hashless/admission (80.6 s).
-Полный npm test/fork не запускались. Команды и границы — [LOCAL_NATIVE_REFILL_RECOVERY](LOCAL_NATIVE_REFILL_RECOVERY.md).
+Read-only inspector проверяет state/config/domain, lock metadata и исходную transaction/receipt.
+CLI выдаёт JSON + nextAction, ничего не пишет и не отправляет. Concurrent state/lock change
+делает report неактуальным; known receipt показывает только projected accounting.
+Expected configHash/domain берутся из независимо одобренной конфигурации; export manifest ещё нет.
+Проверки 22.09: 31/31 inspector/process-death/refill-state/state-lock tests (14.1 s).
+Full npm test/fork не запускались. [API и ограничения](LOCAL_NATIVE_REFILL_INSPECTOR.md).
 
 ## Последняя проверка отказов
 
@@ -67,10 +70,10 @@ Runtime-код не менялся. Детали и границы — [LOCAL_NA
 
 ## Ближайший кусок
 
-Review результатов отказов; затем выбрать ограниченный recovery/диагностический шаг для
-stale lock/hashless исходов. Автоудаление lock/reset pending не реализованы. После RPC ошибки
-CLI требуется новый запуск; встроенный reconnect-loop и supervisor ещё не добавлены.
-Полный сценарий аварийного завершения всего draw/prize coordinator остаётся отдельной проверкой.
+Review инспектора и выбор следующей внешней integration/stabilization границы.
+Диагностика готова; runtime repair/reset, автоудаление lock, reconnect-loop и supervisor
+не добавлены. Approved inspection manifest пока задаётся отдельно от deployment tooling.
+Полный сценарий аварийного завершения draw/prize coordinator остаётся отдельной проверкой.
 
 ## Основные ограничения
 
@@ -95,3 +98,5 @@ proxy, reroll/reset или подмены random. Immutable destination стар
 [Продуктовые решения](PRODUCT_SPEC.md), [карта реализации](IMPLEMENTATION_STATUS.md),
 [исторический снимок статусов](archive/snapshots/PROJECT_PROGRESS_BEFORE_REVIEW_2026-09-20.md).
 Ответ GPT — вспомогательное мнение, не автоматическое задание.
+
+Финальная проверка inspector suite: 10/10, включая idle/other-worker, lock exit code и отказ unsupported fee profile.
