@@ -96,3 +96,6 @@ Receipt wait отделён от requiresOperatorAction. Детали и гра�
 22.09: `scripts/local-coordinator-identity.cjs` используется runtime и `scripts/inspection-manifest.cjs`;
 export/verify независимого deployment input и manifest support в inspector CLI.
 Границы доверия и команды: [inspector](LOCAL_NATIVE_REFILL_INSPECTOR.md).
+
+22.09: `scripts/review-runner.cjs`, `test/review-runner.test.cjs`, `npm run test:review` —
+[изолированный review HEAD](REVIEW_TESTING.md), без изменения продуктового runtime.

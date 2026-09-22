@@ -54,6 +54,11 @@ claims за победителей. Кто финансирует их gas — �
 
 ## 3. Укрепить обычную эксплуатацию
 
+22.09: добавлен [единый review runner](REVIEW_TESTING.md): detached HEAD, отдельный
+runtime, npm ci из lockfile, полный npm test и сохранение failure/cleanup evidence.
+Ближайшая проверка — полный канонический baseline; затем role-casing identity отдельно.
+Manifest redesign/venue/RNG/recovery не смешивать с процедурой review.
+
 Прежний intermittent handoff finding отозван без нового trace evidence. Диагностика
 по runId/PID и CLI assertions сохранена. Подтверждённый PID-write/close initialization
 cleanup исправлен, fault tests проверяют освобождение своего lock/fd и отказ чужому.

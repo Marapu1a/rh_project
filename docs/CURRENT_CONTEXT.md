@@ -1,6 +1,6 @@
 # Текущий контекст
 
-Обновлено 22.09.2026: inspection manifest и best-effort nonce evidence.
+Обновлено 22.09.2026: единый review runner, полный baseline готовится.
 
 ## Где находимся
 
@@ -74,7 +74,9 @@ Runtime-код не менялся. Детали и границы — [LOCAL_NA
 
 ## Ближайший кусок
 
-Review инспектора и выбор следующей внешней integration/stabilization границы.
+Проверить полный HEAD через `npm run test:review` ([процедура](REVIEW_TESTING.md)).
+Затем отдельно исправить role-address casing identity: lowercase/checksum формы сейчас
+дают разные budget hashes; нельзя молча менять hash уже существующего state.
 Диагностика готова; runtime repair/reset, автоудаление lock, reconnect-loop и supervisor
 не добавлены. Manifest строится из отдельной deployment-конфигурации, не из проверяемого state.
 Полный сценарий аварийного завершения draw/prize coordinator остаётся отдельной проверкой.

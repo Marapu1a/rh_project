@@ -18,6 +18,7 @@
 | Билеты и проверяемость | [Registry](PARTICIPANT_REGISTRY.md), [BUY](DIRECT_BUY_REPLAY.md), [lifecycle](ATTEMPT_LIFECYCLE.md), [trust](INDEXER_TRUST_MODEL.md) |
 | Short | [Dataset](SHORT_DATASET_PREPARATION.md), [epochs](SHORT_RULES_EPOCHS.md), [settlement](SHORT_SETTLEMENT.md), [basket](SHORT_PRIZE_BASKET.md), [model](SHORT_MODEL.md) |
 | Monthly | [Epochs и settlement](MONTHLY_RULES_EPOCHS.md) |
+| Воспроизводимое review | [Канонический runner](REVIEW_TESTING.md) |
 | Диагностика refill / manifest | [Inspector и deployment manifest](LOCAL_NATIVE_REFILL_INSPECTOR.md) |
 | RNG / сеть | [Drand verifier](DRAND_FEASIBILITY.md), [нерешённый binding](DRAND_BINDING_MODEL.md), [L2 blocks](ROBINHOOD_BLOCK_SEMANTICS.md) |
 | Ранние компоненты Short | [Commitment](SHORT_DRAW_COMMITMENT.md), [outcome](SHORT_OUTCOME_VERIFICATION.md) — сохранённые API/тесты, не основной полный pipeline |
