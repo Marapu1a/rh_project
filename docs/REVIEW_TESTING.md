@@ -48,3 +48,18 @@ Git metadata и отдельный runtime устраняют прежние с�
 это изоляция checkout, не контейнер и не доказательство независимости от ОС/toolchain.
 Fork/live сети, реальные RPC/RNG/venue и production readiness сюда не входят.
 Не подменять итоговый verdict случайным запуском в синхронизируемом рабочем каталоге.
+
+
+## Подтверждённый baseline 22.09.2026
+
+`npm run test:review`, чистый HEAD `e0407e15efb2281d955dd5c83df2c02df395a709`:
+334/334, fail/skipped/cancelled 0, 1462.0 s тестов; install/test/final exit 0,
+cleanupError null. Node v24.21.0, npm 11.19.0, Hardhat 2.29.1, ethers 6.17.0,
+solc 0.8.37. npm ci установил 242 пакета за 33 s; worktree удалён.
+Evidence: `C:\Temp\rh-review-8uIG7f\.local\logs\review.log` и `result.json`.
+Копия вывода вызова: `.local/logs/review-canonical.log` (перенаправлена вызывающей
+командой; сам runner пишет только свой temp evidence).
+
+`npm run test:review -- --self-test` — exit 0, cleanup OK на том же HEAD.
+`node --test test/review-runner.test.cjs` — 4/4; они также включены в 334 полного набора.
+После этого baseline менялись только документы. Fork/live профили не запускались.

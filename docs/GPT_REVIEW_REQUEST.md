@@ -1,39 +1,42 @@
-# Review: shared runtime identity and inspection manifest
+# Review: canonical isolated test runner
 
-22.09.2026. Baseline af2754c. Read CURRENT_CONTEXT and LOCAL_NATIVE_REFILL_INSPECTOR.
-Report reviewed HEAD; replace GPT_REVIEW_RESPONSE.md. This is one local diagnostics
-package, not production deployment tooling or automatic recovery.
+22.09.2026. Baseline before this package: 83f3812. Read CURRENT_CONTEXT and
+REVIEW_TESTING. Report reviewed HEAD and overwrite GPT_REVIEW_RESPONSE.md.
 
-Implemented:
-- Nonce RPC reads are best-effort evidence. Known receipts remain inspectable when
-  nonce reads fail; hashless remains manual search, never safe retry.
-- Refill fixture suites create .local before mkdtemp (clean checkout fix).
-- Pure buildCoordinatorIdentity is shared by coordinator and manifest tooling.
-  Existing legacy/budget/refill identity shape is preserved. Runtime additionally
-  binds controller objects to configured addresses before journal access.
-- inspection-manifest export takes explicit independent deployment JSON. It never
-  derives expected identity from inspected state. Export uses exclusive create;
-  verify is read-only, with no RPC/signers/journal/lock API.
-- Full manifest includes coordinator config/hash, refill full protected set,
-  deployment hash, commit/dirty/time provenance and checksum. Verifier independently
-  rebuilds it from deployment input. Recomputed checksums cannot hide a mismatch
-  with that input. Neither checksum nor commit constitutes external approval.
-- Inspector CLI requires independent --deployment when --expected is a manifest;
-  raw expected config remains available for existing trusted callers.
+We accepted the process finding independently: archive removes required git metadata;
+main checkout runtime can be affected by external sync. Neither is a good canonical
+review environment. This package changes review infrastructure only.
 
-Review questions:
-1. Does extraction preserve all runtime identity and admission checks, including
-   legacy migration, role casing, controller target coverage and protected addresses?
-2. Can source/network/config/protected-set drift pass independent verification?
-3. Is the explicit input/provenance boundary clear enough without suggesting that
-   self-generated checksum proves authenticity or that deployment matches on-chain code?
-4. Any meaningful regression in read-only behavior, unknown-send handling or lock safety?
+Canonical command: `npm run test:review`.
+It creates a unique detached HEAD worktree under system temp, refuses temp inside the
+source checkout, checks git HEAD and missing .local, creates runtime directories,
+installs using `npm ci --ignore-scripts --no-audit --no-fund`, prints toolchain and exact
+commands, then runs full npm test. Dirty/untracked work is explicitly excluded.
 
-Tests include real coordinator configHash comparison, legacy/budget formula
-comparison, modified payloads with recomputed checksum, stale deployment, CLI
-export/verify/no-overwrite, inspector manifest admission and nonce outage.
-Exact executed results are in CURRENT_CONTEXT. No contracts/prize math changed.
+Cleanup uses the registered worktree only after checking the owned temp root/token and
+non-redirected absolute checkout path. Evidence lives beside the disposable checkout
+in the runner-owned .local/logs and is retained. Source runtime is not copied or cleaned.
+Test exit survives cleanup failure; cleanup failure after green tests makes exit nonzero.
+Forced process/OS termination cannot guarantee finally and is documented, not silently
+presented as automatic safe recovery. There is no lock deletion in product runtime.
 
-Next suggestion: take a bounded real-venue/BUY integration boundary from the roadmap;
-keep stale-lock/hashless recovery separately designed, without force-clear or reroll.
-Please prioritize confirmed issues and a reasonable next step over rare hypotheticals.
+Self-test is explicitly not a baseline. Four fixture tests cover git provenance,
+source stale-lock preservation, cleanup ownership refusal and actual locked-worktree
+cleanup failure with test exits 0/7. The fake npm in those tests exercises process
+handling only; the full review uses real npm ci and package-lock dependencies.
+
+Important boundaries:
+- Isolated checkout is not a container or a fully pinned OS/Node/npm toolchain.
+- Registry/install failure is reported separately from product test failure.
+- Manifest still expects .git; release bundles without it are not added requirements.
+- Role-address casing remains an independent confirmed finding. No configHash or
+  migration semantics changed in this package. Address canonicalization will need an
+  explicit compatibility strategy for existing resolved and pending journals.
+- No venue/RNG/recovery/manifest redesign/product-rule changes.
+
+Please run the canonical command, not another hand-built archive/checkout recipe.
+Assess ownership cleanup, exit preservation, isolation and clarity of evidence. After
+this step propose the smallest role-casing fix with safe legacy identity compatibility.
+Current run results and exact tested commit are recorded in CURRENT_CONTEXT.
+
+Verified here: canonical full run on clean e0407e1: 334/334, 1462.0 s, install/test/final exit 0, cleanupError null. Worktree removed; subsequent changes are docs only.

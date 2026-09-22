@@ -1,6 +1,6 @@
 # Текущий контекст
 
-Обновлено 22.09.2026: единый review runner, полный baseline готовится.
+Обновлено 22.09.2026: канонический полный review baseline прошёл.
 
 ## Где находимся
 
@@ -16,7 +16,16 @@
 Реальные DEX/RNG, production finality и автоматическое эксплуатационное финансирование
 ещё не готовы. Локальный скелет связан, production-продукт не завершён.
 
-## Последний результат и проверки
+## Канонический полный baseline
+
+22.09: `npm run test:review` на чистом HEAD `e0407e1` — **334/334**, 1462.0 s
+тестов, test exit 0, cleanupError null. Отдельный temp worktree удалён.
+Node v24.21.0, npm 11.19.0, Hardhat 2.29.1, ethers 6.17.0, solc 0.8.37;
+зависимости установлены через npm ci --ignore-scripts. Fork/live не запускались.
+Короткий self-test и четыре fixture tests runner тоже прошли; они не заменяют полный baseline.
+[Процедура и evidence](REVIEW_TESTING.md). После проверенного commit менялись только документы.
+
+## Предыдущий результат: manifest и refill
 
 [Native refill planner](LOCAL_NATIVE_REFILL.md) реализован как чистый расчёт: отдельный
 native ops source, общий payer/RNG forecast, low/target, source floor, gas перевода,
@@ -61,7 +70,8 @@ Checksum/provenance не являются доказательством одо�
 Проверки 22.09: основной пакет coordinator + native-refill suites — 70/70 (498.8 s);
 финальный `npm run test:local:refill` — 67/67 (15.8 s), включая budget и lock.
 После дополнения CLI assertions: `node --test --test-name-pattern="inspection manifest" test/local-coordinator.test.cjs` — 1/1 (40.3 s).
-Это пересекающиеся наборы, результаты не суммировать. Full npm test/fork не запускались.
+Это пересекающиеся наборы предыдущего пакета, результаты не суммировать.
+Актуальный полный baseline приведён выше.
 [Команды, clean-cwd проверка и ограничения](LOCAL_NATIVE_REFILL_INSPECTOR.md).
 
 ## Последняя проверка отказов
@@ -74,8 +84,8 @@ Runtime-код не менялся. Детали и границы — [LOCAL_NA
 
 ## Ближайший кусок
 
-Проверить полный HEAD через `npm run test:review` ([процедура](REVIEW_TESTING.md)).
-Затем отдельно исправить role-address casing identity: lowercase/checksum формы сейчас
+Полный baseline подтверждён через `npm run test:review` ([процедура](REVIEW_TESTING.md)).
+Следующий отдельный кусок — role-address casing identity: lowercase/checksum формы сейчас
 дают разные budget hashes; нельзя молча менять hash уже существующего state.
 Диагностика готова; runtime repair/reset, автоудаление lock, reconnect-loop и supervisor
 не добавлены. Manifest строится из отдельной deployment-конфигурации, не из проверяемого state.
