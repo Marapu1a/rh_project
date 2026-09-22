@@ -246,3 +246,31 @@ regressions прошли отдельными выборками: 4 recovery/CLI
 node --test --test-name-pattern='automatic .*refill|CLI runs both workers|hashless broadcast failure|known recipient refusal|native refill pending' test/local-coordinator.test.cjs
 node --test --test-name-pattern='budgeted profile waits|one shared budget|RNG controller funding|frozen Monthly gets|budget profile upgrades' test/local-coordinator.test.cjs
 ```
+
+## Config admission fix — 22.09.2026
+
+Before entering withState, coordinator validates funding targets cover every supplied execution
+signer and both Short/Monthly native controller accounts. This applies even when there are no
+current obligations and even for a fresh state file. Accounts are compared case-insensitively.
+
+For an allowed legacy/budget upgrade, withState now invokes optional validateMigration(copy)
+under its existing lock, after checksum/legacy/pending checks and BEFORE assigning or saving the
+new configHash. The guard throws to reject; it receives a detached state copy, no save callback.
+A rejected guard cannot change persisted identity/history through this API. No additional journal.
+
+The refill guard requires existing nativeRefillHistory to match the proposed domain and have
+pending=false. Absent history is allowed; malformed/null history is not silently treated as absent.
+A rejected admission leaves the existing state file byte-for-byte unchanged. Correct compatible
+configuration can then be retried. Accepted migration preserves spend, lastAttemptAt,
+lastSuccessAt, lastNonce and other history; it does not reset limits or cooldown.
+Already accepted non-legacy config changes remain forbidden. Pending still forbids migration.
+This prevents NEW failed admissions from pinning a bad identity; it does not provide a reset or
+repair command for state already pinned by an older version.
+
+22.09 checks: 25/25 state-lock/refill-state/refill-executor tests (11.4 s). Coordinator admission/upgrade/pending/automatic funding: 5/5 (112 s), including
+incomplete targets, incompatible domain, byte-unchanged rejection and compatible retry.
+
+```powershell
+node --test --test-concurrency=1 test/local-state-lock.test.cjs test/local-native-refill-state.test.cjs test/local-native-refill-executor.test.cjs
+node --test --test-name-pattern='refill admission|automatic .*refill|budget profile upgrades|enabling budget cannot' test/local-coordinator.test.cjs
+```

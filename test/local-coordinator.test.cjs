@@ -341,3 +341,27 @@ test('automatic committed refill precedes new work and optional buffer cannot de
   const nonce=await f.provider.getTransactionCount(source);await runCoordinator(f.options);
   assert.equal(await f.provider.getTransactionCount(source),nonce);
 });
+
+test('refill admission rejects incomplete targets and incompatible history without pinning config',async t=>{
+ const f=await fixture(t);f.options.ops=opsProfile();await runCoordinator(f.options);await enableRefill(f);
+ const file=f.options.statePath,{checksum,...state}=JSON.parse(fs.readFileSync(file,'utf8'));
+ const {hash}=require('../scripts/direct-buy.cjs'),{refillDomainHash}=require('../scripts/local-native-refill.cjs');
+ const now=BigInt((await f.provider.getBlock('latest')).timestamp),period=BigInt(f.options.nativeRefill.policy.periodSeconds);
+ const history={domainHash:refillDomainHash({...f.options.nativeRefill,ops:f.options.ops,
+   protectedAddresses:[f.vault.target,f.router.target,f.options.prize.job.active.address]}),pending:false,
+   windowStart:String(now/period*period),spent:'7',lastAttemptAt:String(now),lastSuccessAt:String(now),lastNonce:'0'};
+ state.nativeRefillHistory=history;fs.writeFileSync(file,JSON.stringify({...state,checksum:hash(state)}));
+ const before=fs.readFileSync(file,'utf8'),source=await f.options.nativeRefill.signer.getAddress(),nonce=await f.provider.getTransactionCount(source);
+ for(const missing of f.options.nativeRefill.policy.targets){
+   const bad={...f.options,nativeRefill:{...f.options.nativeRefill,policy:{...f.options.nativeRefill.policy,
+     targets:f.options.nativeRefill.policy.targets.filter(t=>t!==missing)}}};
+   await assert.rejects(()=>runCoordinator(bad),/cover all execution/);assert.equal(fs.readFileSync(file,'utf8'),before);
+   const fresh=path.join(f.directory,'fresh-refill.json');await assert.rejects(()=>runCoordinator({...bad,statePath:fresh}),/cover all execution/);assert(!fs.existsSync(fresh));
+ }
+ const incompatible={...f.options,nativeRefill:{...f.options.nativeRefill,policy:{...f.options.nativeRefill.policy,cooldownSeconds:'1'}}};
+ await assert.rejects(()=>runCoordinator(incompatible),/history domain incompatible/);
+ assert.equal(fs.readFileSync(file,'utf8'),before);assert.equal(await f.provider.getTransactionCount(source),nonce);
+ const result=await runCoordinator(f.options);assert.equal(result.status,'complete',JSON.stringify(result));
+ const accepted=JSON.parse(fs.readFileSync(file,'utf8'));assert.notEqual(accepted.configHash,state.configHash);
+ assert.deepEqual(accepted.nativeRefillHistory,history);assert.equal(await f.provider.getTransactionCount(source),nonce);
+});

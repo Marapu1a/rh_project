@@ -85,3 +85,6 @@ coordinator startup. Автосбор draw obligations и запуск попо�
 21.09: автоматический native funding включён optional-конфигурацией coordinator/CLI; общий
 collectExecutionObligations для budget/refill, anchor binding, frozen-first, один refill/pass.
 Receipt wait отделён от requiresOperatorAction. Детали и границы — LOCAL_NATIVE_REFILL.
+
+22.09: withState.validateMigration — guard под lock до записи нового configHash; coordinator
+проверяет history domain/pending и статическую полноту funding targets. Нет reset/migration bypass.

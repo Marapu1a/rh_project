@@ -14,7 +14,7 @@ function traceLock(event,runId,lock,detail={}){
   try{process.stderr.write(JSON.stringify({event,runId,pid:process.pid,time:new Date().toISOString(),lock,...detail})+'\n');}catch{}
 }
 // One local process per state file. This is not a distributed lease or mempool journal.
-async function withState(file,config,action,{legacyConfigs=[]}={}){
+async function withState(file,config,action,{legacyConfigs=[],validateMigration}={}){
   file=path.resolve(file);fs.mkdirSync(path.dirname(file),{recursive:true});
   const lock=file+'.lock',runId=randomUUID();let fd;
   traceLock('acquire',runId,lock);
@@ -44,6 +44,8 @@ async function withState(file,config,action,{legacyConfigs=[]}={}){
       if(stored.configHash!==state.configHash){
         if(!legacyConfigs.some(c=>hash(c)===stored.configHash))throw Error('Scheduler state checksum/config mismatch');
         if(stored.pending)throw Error('Resolve pending with previous configuration before enabling budget profile');
+        // Admission runs under the same lock, before any identity write. A guard cannot mutate stored state.
+        if(validateMigration)await validateMigration(structuredClone(stored));
         stored.configHash=state.configHash;save(stored);
       }
       state=stored;

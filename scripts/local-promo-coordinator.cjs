@@ -53,6 +53,8 @@ async function runCoordinator({prize,scheduler,statePath,signal,receiptTimeoutMs
     refillInput=JSON.parse(JSON.stringify({ops,source,policy,protectedAddresses:[...new Set([...protectedAddresses,
       prize.job.active.vault,prize.job.router,prize.job.active.address].filter(Boolean).map(a=>a.toLowerCase()))].sort()}));
     config={...config,nativeRefill:{domainHash:refillDomainHash(refillInput),source:source.address.toLowerCase()}};
+    check([...addresses,scheduler.short.target,scheduler.monthly.target].every(a=>
+      refillInput.policy.targets.some(t=>same(t.address,a))),'Funding targets must cover all execution signers and controllers');
   }
   return withState(statePath,config,async(state,save)=>{
     const results={};let worker,refillRequest;
@@ -163,6 +165,13 @@ async function runCoordinator({prize,scheduler,statePath,signal,receiptTimeoutMs
       return {status:'complete',budgetMode:ops?ops.network.id:'unbudgetedLegacy',results};
     }catch(e){return {status:state.pending?'blocked':'error',requiresReconciliation:!!state.pending,pending:state.pending,
       haltedWorker:worker,error:{message:e.message,code:e.code,stage:e.stage,transactionHash:e.transactionHash},results};}
-  },{legacyConfigs:nativeRefill?[legacyConfig,budgetConfig]:ops?[legacyConfig]:[]});
+  },{legacyConfigs:nativeRefill?[legacyConfig,budgetConfig]:ops?[legacyConfig]:[],
+    validateMigration:nativeRefill?stored=>{
+      const history=stored.nativeRefillHistory;
+      if(Object.hasOwn(stored,'nativeRefillHistory')){
+        check(history?.domainHash===config.nativeRefill.domainHash,'Refill history domain incompatible with configuration');
+        check(history.pending===false,'Resolve pending refill history before migration');
+      }
+    }:undefined});
 }
 module.exports={runCoordinator};

@@ -43,7 +43,9 @@ revalidation, durable intent/hash и typed receipt recovery в coordinator; од
 Fee-envelope fix выполнен: known hash при mismatch, actual receipt accounting и durable stop.
 Автосбор committed/candidate obligations и bounded refill подключены к coordinator и CLI.
 Общий snapshot anchor, один refill за pass, source/domain config binding, frozen-first и idle buffers.
-Ближайший шаг: review связанного funding пути и ограниченное укрепление найденных пробелов.
+22.09: pre-migration admission исправлен: target coverage и history domain проверяются
+до записи новой identity; rejected upgrade оставляет state неизменным.
+Ближайший шаг: review исправленной admission-границы, затем следующий bounded stabilization step.
 Конверсия доли проекта и real DEX/RNG отдельно; runtime volume не синхронизировать с checkout.
 Provenance calibration (commit/dirty/toolchain/generators) остаётся небольшим открытым хвостом.
 

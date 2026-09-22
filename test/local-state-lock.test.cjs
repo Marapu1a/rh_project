@@ -53,3 +53,22 @@ test('release error preserves primary transaction classification and does not cl
  });}finally{fs.unlinkSync=unlink;}
  assert.equal(inspectLock(file+'.lock').exists,true);
 });
+
+test('migration admission holds lock and rejected guard leaves bytes and history unchanged',async t=>{
+ const file=location(t),old={version:1},next={version:2};
+ await withState(file,old,(s,save)=>{s.nativeRefillHistory={spent:'7',lastAttemptAt:'10',lastNonce:'3'};save(s);});
+ const before=fs.readFileSync(file,'utf8');let entered=false;
+ await assert.rejects(()=>withState(file,next,()=>{entered=true;},{legacyConfigs:[old],validateMigration:async copy=>{
+  assert.equal(inspectLock(file+'.lock').exists,true);copy.nativeRefillHistory.spent='0';
+  await assert.rejects(()=>withState(file,old,()=>{}),/locked/);throw Error('incompatible');
+ }}),/incompatible/);
+ assert.equal(entered,false);assert.equal(fs.readFileSync(file,'utf8'),before);assert(!fs.existsSync(file+'.tmp'));
+ await withState(file,next,s=>assert.deepEqual(s.nativeRefillHistory,{spent:'7',lastAttemptAt:'10',lastNonce:'3'}),{legacyConfigs:[old],validateMigration:s=>assert.equal(s.nativeRefillHistory.spent,'7')});
+ assert.notEqual(fs.readFileSync(file,'utf8'),before);
+});
+test('pending forbids migration before admission callback and persistence',async t=>{
+ const file=location(t);await withState(file,{v:1},(s,save)=>{s.pending={worker:'draw'};save(s);});
+ const before=fs.readFileSync(file,'utf8');let called=false;
+ await assert.rejects(()=>withState(file,{v:2},()=>{},{legacyConfigs:[{v:1}],validateMigration:()=>{called=true;}}),/Resolve pending/);
+ assert(!called);assert.equal(fs.readFileSync(file,'utf8'),before);
+});

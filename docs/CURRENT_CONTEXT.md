@@ -1,6 +1,6 @@
 # Текущий контекст
 
-Обновлено 21.09.2026 после automatic coordinator native refill.
+Обновлено 22.09.2026 после pre-migration config admission fix.
 
 ## Где находимся
 
@@ -48,10 +48,14 @@ Mismatch сохраняет hash, учитывает receipt и ставит dur
 и refill executor останавливают автоматику, не повторяют перевод. Это обнаружение после
 broadcast, не гарантия против первого перерасхода неисправным signer.
 
-Проверки 21.09: 59/59 профильных тестов и 12 различных coordinator regressions
-(4 recovery/CLI/refusal, 6 budget/RNG/frozen/config, 2 automatic refill).
-Финальные повторы: CLI source-floor wait/resume 1/1; executor 9/9.
-Полный npm test/fork не запускались. Команды и API — [LOCAL_NATIVE_REFILL](LOCAL_NATIVE_REFILL.md).
+Исправлен config admission: все execution/controller targets проверяются до работы с журналом.
+Под lock проверяется совместимость existing funding history ДО сохранения нового configHash.
+Отказ не меняет state; правильные настройки можно повторить без сброса spend/cooldown/nonce.
+Pending по-прежнему запрещает migration. Repair/reset ранее испорченного admission не добавлен.
+
+Проверки 22.09: 25/25 state-lock/refill-state/refill-executor (11.4 s),
+5/5 targeted coordinator admission/upgrade/pending/automatic funding (112 s).
+Полный npm test/fork не запускались. Команды и границы — [LOCAL_NATIVE_REFILL](LOCAL_NATIVE_REFILL.md).
 
 ## Ближайший кусок
 
@@ -83,4 +87,3 @@ proxy, reroll/reset или подмены random. Immutable destination стар
 [Продуктовые решения](PRODUCT_SPEC.md), [карта реализации](IMPLEMENTATION_STATUS.md),
 [исторический снимок статусов](archive/snapshots/PROJECT_PROGRESS_BEFORE_REVIEW_2026-09-20.md).
 Ответ GPT — вспомогательное мнение, не автоматическое задание.
-
