@@ -1,4 +1,5 @@
 const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),http=require('node:http');
+require('node:fs').mkdirSync('.local',{recursive:true});
 const {fork}=require('node:child_process'),{ethers}=require('ethers');
 const {opsProfile}=require('./fixtures/execution-budget.cjs');
 const {hash}=require('../scripts/direct-buy.cjs'),{inspectNativeRefill}=require('../scripts/local-native-refill-inspector.cjs');

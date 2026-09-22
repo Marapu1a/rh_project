@@ -373,3 +373,38 @@ test('refill admission rejects incomplete targets and incompatible history witho
  const accepted=JSON.parse(fs.readFileSync(file,'utf8'));assert.notEqual(accepted.configHash,state.configHash);
  assert.deepEqual(accepted.nativeRefillHistory,history);assert.equal(await f.provider.getTransactionCount(source),nonce);
 });
+test('inspection manifest matches runtime identity and rejects independently changed deployment',async t=>{
+ const f=await fixture(t);await enableRefill(f);
+ const {createInspectionManifest,verifyInspectionManifest}=require('../scripts/inspection-manifest.cjs');
+ const {hash}=require('../scripts/direct-buy.cjs');
+ const {signer,...nativeRefill}=f.options.nativeRefill;
+ const d={schema:'local-coordinator-deployment-v1',prizeJob:f.options.prize.job,schedulerConfig:f.options.scheduler.config,
+  schedulerState:path.resolve(f.options.scheduler.statePath),roles:{prizeExecutor:await f.admin.getAddress(),executor:await f.admin.getAddress(),publisher:await f.options.scheduler.publisher.getAddress()},ops:f.options.ops,nativeRefill};
+ const {buildCoordinatorIdentity}=require('../scripts/local-coordinator-identity.cjs');
+ const addresses=[...new Set(Object.values(d.roles).filter(Boolean).map(a=>a.toLowerCase()))].sort();
+ const legacy={schema:'local-coordinator-v1',prize:d.prizeJob,scheduler:d.schedulerConfig,schedulerState:d.schedulerState,addresses};
+ assert.equal(hash(buildCoordinatorIdentity({...d,ops:undefined,nativeRefill:undefined}).config),hash(legacy));
+ const {pollSeconds,maxGasPrice,...prizeIdentity}=d.prizeJob;
+ const budget={...legacy,schema:'local-coordinator-budget-v1',prize:prizeIdentity,network:d.ops.network,roles:d.roles};
+ assert.equal(hash(buildCoordinatorIdentity({...d,nativeRefill:undefined}).config),hash(budget));
+ const provenance={commit:'a'.repeat(40),dirty:false,generatedAt:'2026-09-22T00:00:00Z'};
+ const m=createInspectionManifest(d,provenance);assert.deepEqual(m,createInspectionManifest(d,provenance));
+ assert.equal(verifyInspectionManifest(m,d).configHash,m.configHash);
+ await runCoordinator(f.options);assert.equal(JSON.parse(fs.readFileSync(f.options.statePath)).configHash,m.configHash);
+ for(const mutate of [x=>x.refill.protectedAddresses.pop(),x=>x.configHash=hash('bad'),x=>x.refill.source.address=ethers.ZeroAddress,x=>x.coordinatorConfig.network.chainId='1']){
+  const bad=structuredClone(m);mutate(bad);delete bad.checksum;bad.checksum=hash(bad);assert.throws(()=>verifyInspectionManifest(bad,d));
+ }
+ const changed=structuredClone(d);changed.nativeRefill.policy.maxPerPeriod='1';assert.throws(()=>verifyInspectionManifest(m,changed));
+ assert.throws(()=>createInspectionManifest({...d,schedulerState:'relative.json'},provenance));
+ assert.throws(()=>createInspectionManifest({...d,pending:{}},provenance));
+ const {spawnSync}=require('node:child_process'),deployment=path.join(f.directory,'deployment.json'),out=path.join(f.directory,'manifest.json');
+ fs.writeFileSync(deployment,JSON.stringify(d));
+ const cli=(...args)=>spawnSync(process.execPath,['scripts/inspection-manifest.cjs',...args],{encoding:'utf8'});
+ let r=cli('export','--deployment',deployment,'--out',out);assert.equal(r.status,0,r.stderr);
+ r=cli('verify','--deployment',deployment,'--manifest',out);assert.equal(r.status,0,r.stderr);
+ const inspectArgs=['scripts/inspect-local-native-refill.cjs','--state',f.options.statePath,'--expected',out,'--rpc','http://127.0.0.1:1'];
+ r=spawnSync(process.execPath,[...inspectArgs,'--deployment',deployment],{encoding:'utf8'});
+ assert.equal(r.status,0,r.stdout+r.stderr);assert.equal(JSON.parse(r.stdout).status,'noPending');
+ r=spawnSync(process.execPath,inspectArgs,{encoding:'utf8'});assert.equal(r.status,1);assert.match(r.stdout,/independent/);
+ const before=fs.readFileSync(out);assert.notEqual(cli('export','--deployment',deployment,'--out',out).status,0);assert.deepEqual(fs.readFileSync(out),before);
+});

@@ -45,7 +45,7 @@ Fee-envelope fix выполнен: known hash при mismatch, actual receipt ac
 Общий snapshot anchor, один refill за pass, source/domain config binding, frozen-first и idle buffers.
 22.09: pre-migration admission исправлен: target coverage и history domain проверяются
 до записи новой identity; rejected upgrade оставляет state неизменным.
-Ближайший шаг: review исправленной admission-границы, затем следующий bounded stabilization step.
+22.09: review admission и inspector учтён; общий identity builder и независимый inspection manifest готовы локально.
 Конверсия доли проекта и real DEX/RNG отдельно; runtime volume не синхронизировать с checkout.
 Provenance calibration (commit/dirty/toolchain/generators) остаётся небольшим открытым хвостом.
 
@@ -64,7 +64,7 @@ Relevant-action block-limit bug также исправлен и покрыт р
 не kill всего draw/prize coordinator; stale lock в runtime не снимается автоматически.
 Storage faults и mined revert покрыты предыдущими тестами. Read-only inspector добавлен:
 [диагностика](LOCAL_NATIVE_REFILL_INSPECTOR.md), JSON/nextAction без изменения state.
-Далее review диагностики и ограниченный recovery design
+Далее ограниченный recovery design
 для stale lock/hashless tx/replacement и сохранности state. Не выдавать force-clear за
 reconciliation. Сохранить независимость действий при доказанном отказе.
 

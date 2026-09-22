@@ -1,4 +1,5 @@
 const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
+require('node:fs').mkdirSync('.local',{recursive:true});
 const {ethers}=require('ethers');
 const {executeNativeRefill,reconcileNativeRefill}=require('../scripts/local-native-refill-executor.cjs');
 const {withState}=require('../scripts/local-scheduler-state.cjs');

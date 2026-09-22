@@ -92,3 +92,7 @@ Receipt wait отделён от requiresOperatorAction. Детали и гра�
 22.09: test/local-native-refill-process.test.cjs + test-only child fixture — пять crash boundaries, stale-lock stop, hashless stop и known-hash recovery; coordinator receipt RPC outage regression. [Матрица](LOCAL_NATIVE_REFILL_RECOVERY.md).
 
 22.09: local-native-refill-inspector.cjs / inspect-local-native-refill.cjs — read-only JSON diagnosis, expected config/domain validation, nonce evidence, pure projected accounting, snapshot-change guard. [CLI](LOCAL_NATIVE_REFILL_INSPECTOR.md).
+
+22.09: `scripts/local-coordinator-identity.cjs` используется runtime и `scripts/inspection-manifest.cjs`;
+export/verify независимого deployment input и manifest support в inspector CLI.
+Границы доверия и команды: [inspector](LOCAL_NATIVE_REFILL_INSPECTOR.md).

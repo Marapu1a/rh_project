@@ -67,9 +67,11 @@ async function inspectNativeRefill({statePath,expected,provider}){
  if(!p)return finish(state.nativeRefillHalt?'policyMismatch':'noPending');
  try{
   if((await provider.getNetwork()).chainId!==31337n)return finish('evidenceConflict','RPC chain differs from local profile');
+ }catch(e){return finish(p.transactionHash?'rpcUnavailable':'manualTransactionSearchRequired',e.message);}
+ try{
   const [latest,pending]=await Promise.all([provider.getTransactionCount(p.from,'latest'),provider.getTransactionCount(p.from,'pending')]);
   report.sourceNonce={latest:String(latest),pending:String(pending),isRetryProof:false};
- }catch(e){return finish(p.transactionHash?'rpcUnavailable':'manualTransactionSearchRequired',e.message);}
+ }catch(e){report.sourceNonce={available:false,error:e.message,isRetryProof:false};}
  if(!p.transactionHash)return finish('manualTransactionSearchRequired');
  let receipt,transaction,block,anchor;
  try{

@@ -1,4 +1,5 @@
 const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
+require('node:fs').mkdirSync('.local',{recursive:true});
 const {ethers}=require('ethers');
 const {opsProfile}=require('./fixtures/execution-budget.cjs');
 const {refillDomainHash,planNativeRefill}=require('../scripts/local-native-refill.cjs');

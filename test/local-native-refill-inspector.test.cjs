@@ -1,4 +1,5 @@
 const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),http=require('node:http');
+require('node:fs').mkdirSync('.local',{recursive:true});
 const {ethers}=require('ethers'),{hash}=require('../scripts/direct-buy.cjs'),{opsProfile}=require('./fixtures/execution-budget.cjs');
 const {refillDomainHash}=require('../scripts/local-native-refill.cjs');
 const {stageNativeRefill,recordNativeRefillHash}=require('../scripts/local-native-refill-state.cjs');
@@ -85,4 +86,10 @@ test('CLI returns JSON/nonzero for hashless and uses only read RPC methods',asyn
 test('idle and other-worker journals do not trigger RPC or imply full readiness',async t=>{
  const f=await fixture(t);f.write(f.initial);const idle=await f.inspect();assert.equal(idle.status,'noPending');assert.equal(idle.exitCode,0);
  f.write({...f.initial,pending:{worker:'draw'}});assert.equal((await f.inspect()).status,'unsupportedPending');assert.equal(f.reads(),0);
+});
+
+test('nonce outage does not hide known receipt and never authorizes hashless retry',async t=>{
+ const f=await fixture(t);f.provider.getTransactionCount=async()=>{throw Error('nonce offline');};
+ let r=await f.inspect();assert.equal(r.status,'recoverableReceipt');assert.equal(r.sourceNonce.available,false);
+ f.write(f.prepared);r=await f.inspect();assert.equal(r.status,'manualTransactionSearchRequired');
 });

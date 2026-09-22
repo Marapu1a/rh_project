@@ -24,7 +24,7 @@ prize vault, FeeRouter, active converter и явно добавленные ад
 refillDomainHash, а не берётся на веру из проверяемого journal. configHash — hash канонической
 одобренной coordinator configuration, НЕ checksum state-файла. Значения должны приходить
 из независимо проверенной конфигурации развёртывания; копирование hash из подозрительного
-state не является проверкой. Экспорт approved manifest из deployment tooling пока не добавлен.
+state не является проверкой. Manifest exporter описан ниже.
 
 Функция для программного вызова:
 `inspectNativeRefill({statePath, expected, provider})` в local-native-refill-inspector.cjs.
@@ -71,7 +71,6 @@ Exit 2: pendingReceipt без lock. Exit 1: conflict/unknown/lock/halt, непр
 
 ## Проверки
 
-22.09: 31/31 inspector/process-death/refill-state/state-lock tests (14.1 s).
 Включены success/revert projected expense, hashless и равные nonce, receipt outage, stale-looking
 lock, fee-policy mismatch, conflicting RPC evidence, invalid config/history/checksum, конкурентное
 изменение state/lock и реальный CLI JSON/exit с разрешёнными только read RPC методами.
@@ -82,6 +81,53 @@ Inspector дополнительно запущен на пяти реальны
 node --test --test-concurrency=1 test/local-native-refill-inspector.test.cjs test/local-native-refill-process.test.cjs test/local-native-refill-state.test.cjs test/local-state-lock.test.cjs
 ```
 
-Тесты добавлены в npm test и test:local:refill. Логи — .local/logs/refill-inspector-package.log.
+Тесты добавлены в npm test и test:local:refill. Актуальный прогон: `npm run test:local:refill` — 67/67 (22.09, 15.8 s).
+Лог — `.local/logs/manifest-refill-final.log`.
 
-Финальная проверка inspector suite: 10/10, включая idle/other-worker, lock exit code и отказ unsupported fee profile.
+
+## Deployment manifest (22.09.2026)
+
+`scripts/local-coordinator-identity.cjs` — общий pure builder runtime identity и
+manifest. Вход exporter — отдельный проверенный JSON с schema
+`local-coordinator-deployment-v1`, полями `prizeJob`, `schedulerConfig`, абсолютным
+`schedulerState`, `roles: {prizeExecutor, executor, publisher}`, `ops`,
+`nativeRefill: {source, policy, protectedAddresses?}`. Это те же job/config/roles,
+которые используются coordinator. Signer и private key не включать; publisher при
+отсутствии задаётся null. Регистр role addresses сохраняется как в runtime.
+Scheduler state path является частью identity; файл по нему не читается.
+
+```powershell
+node scripts/inspection-manifest.cjs export --deployment deployment.json --out inspection.json
+node scripts/inspection-manifest.cjs verify --deployment deployment.json --manifest inspection.json
+node scripts/inspect-local-native-refill.cjs --state coordinator.json --expected inspection.json --deployment deployment.json --rpc http://127.0.0.1:8545
+```
+
+Export записывает только новый output через exclusive create; существующий файл не
+перезаписывает. Verify не пишет файлы и не обращается к RPC. Manifest содержит
+configHash, полную coordinatorConfig, refill с обязательными protected addresses
+(vault/router/active converter), deploymentHash, commit/dirty/time и checksum.
+Verifier пересобирает всё из отдельного deployment input и сравнивает полный payload.
+Checksum и commit фиксируют целостность/происхождение, но не доказывают одобрение:
+подмена одновременно deployment и manifest не обнаруживается без внешнего trusted source.
+Это экспорт переданной конфигурации, а не аттестация реально развёрнутого кода.
+Legacy expected JSON поддерживается; manifest в CLI требует --deployment.
+
+Nonce latest/pending — дополнительное best-effort evidence: его RPC failure не
+скрывает доступный known receipt. Hashless intent по-прежнему требует поиска исходной
+транзакции; совпадение nonce не разрешает повторную отправку. Сеть проверяется обязательно.
+
+Тестовые native-refill suites сами создают `.local` в свежем checkout.
+
+
+Дополнительно 22.09: coordinator + native-refill suites — 70/70; финальный
+`node --test --test-name-pattern="inspection manifest" test/local-coordinator.test.cjs`
+— 1/1. Проверены совпадение с реальным runtime state, прежние legacy/budget hashes,
+подмены с пересчитанным checksum, CLI export/verify/no-overwrite и inspector CLI.
+Логи: `.local/logs/manifest-tests.log`, `.local/logs/manifest-final-integration.log`.
+Наборы пересекаются; не складывать их как число уникальных тестов.
+
+В отдельном новом temp cwd без `.local`: 16/16 state/executor tests, с
+`HARDHAT_CONFIG=D:\sites\rh_project\hardhat.config.cjs` и абсолютными путями тестов.
+Без явного config запуск из постороннего cwd дал HH9; после указания config прошёл.
+Это проверка создания каталога при существующих зависимостях, не свежая установка npm.
+Лог `.local/logs/refill-clean-cwd.log`. Full npm test и fork не запускались.

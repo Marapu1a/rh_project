@@ -6,7 +6,7 @@ const {runScheduler,validateConfig}=require('./local-promo-scheduler.cjs');
 const {validateOps,checkExecutionBudget,collectExecutionObligations}=require('./local-execution-budget.cjs');
 const {hash}=require('./direct-buy.cjs');
 const {reconcileNativeRefill,executeNativeRefill}=require('./local-native-refill-executor.cjs');
-const {refillDomainHash}=require('./local-native-refill.cjs');
+const {buildCoordinatorIdentity}=require('./local-coordinator-identity.cjs');
 const check=(ok,message)=>{if(!ok)throw Error(message);};
 const same=(a,b)=>String(a).toLowerCase()===String(b).toLowerCase();
 
@@ -31,31 +31,16 @@ async function runCoordinator({prize,scheduler,statePath,signal,receiptTimeoutMs
     check(runner===provider||runner?.provider===provider,'Contract must use coordinator provider');
   }
   check((await provider.getNetwork()).chainId===31337n,'Local chain 31337 only');
-  const addresses=[...new Set(await Promise.all(signers.map(async s=>(await s.getAddress()).toLowerCase())))].sort();
-  const legacyConfig={schema:'local-coordinator-v1',prize:prize.job,scheduler:scheduler.config,
-    schedulerState:path.resolve(scheduler.statePath),addresses};
-  let config=legacyConfig;
-  if(ops){
-    const {pollSeconds,maxGasPrice,...identity}=prize.job;
-    config={...legacyConfig,schema:'local-coordinator-budget-v1',prize:identity,network:ops.network,
-      roles:{prizeExecutor:await prize.executor.getAddress(),executor:await scheduler.executor.getAddress(),
-        publisher:scheduler.publisher?await scheduler.publisher.getAddress():null}};
-  }
-  const budgetConfig=config;
-  let refillInput;
+  check(same(scheduler.short.target,scheduler.config.lifecycle.source)&&same(scheduler.monthly.target,scheduler.config.lifecycle.monthlySource),'Controller deployment mismatch');
+  const roles={prizeExecutor:await prize.executor.getAddress(),executor:await scheduler.executor.getAddress(),
+    publisher:scheduler.publisher?await scheduler.publisher.getAddress():null};
   if(nativeRefill){
-    check(ops&&ops.network.feeModel==='LOCAL_EIP1559','Refill requires plain local ops profile');
-    const {signer,source,policy,protectedAddresses=[]}=nativeRefill;
-    check(source?.kind==='BOOTSTRAP_NATIVE','Only bootstrap refill supported');
+    const {signer,source}=nativeRefill;
     check(signer?.provider===provider&&['getAddress','estimateGas','sendTransaction'].every(k=>typeof signer[k]==='function'),'Refill signer/provider mismatch');
-    check(same(await signer.getAddress(),source.address),'Refill source signer mismatch');
-    check(![...addresses,scheduler.short.target,scheduler.monthly.target].some(a=>same(a,source.address)),'Dedicated refill source required');
-    refillInput=JSON.parse(JSON.stringify({ops,source,policy,protectedAddresses:[...new Set([...protectedAddresses,
-      prize.job.active.vault,prize.job.router,prize.job.active.address].filter(Boolean).map(a=>a.toLowerCase()))].sort()}));
-    config={...config,nativeRefill:{domainHash:refillDomainHash(refillInput),source:source.address.toLowerCase()}};
-    check([...addresses,scheduler.short.target,scheduler.monthly.target].every(a=>
-      refillInput.policy.targets.some(t=>same(t.address,a))),'Funding targets must cover all execution signers and controllers');
+    check(same(await signer.getAddress(),source?.address),'Refill source signer mismatch');
   }
+  const {config,legacyConfig,budgetConfig,refillInput,addresses}=buildCoordinatorIdentity({prizeJob:prize.job,
+    schedulerConfig:scheduler.config,schedulerState:scheduler.statePath,roles,ops,nativeRefill});
   return withState(statePath,config,async(state,save)=>{
     const results={};let worker,refillRequest;
     const pendingResult=reason=>({status:'blocked',reason,requiresReconciliation:true,pending:state.pending,results});

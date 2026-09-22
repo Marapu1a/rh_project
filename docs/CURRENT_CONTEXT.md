@@ -1,6 +1,6 @@
 # Текущий контекст
 
-Обновлено 22.09.2026 после read-only native refill inspector.
+Обновлено 22.09.2026: inspection manifest и best-effort nonce evidence.
 
 ## Где находимся
 
@@ -56,9 +56,13 @@ Pending по-прежнему запрещает migration. Repair/reset ран�
 Read-only inspector проверяет state/config/domain, lock metadata и исходную transaction/receipt.
 CLI выдаёт JSON + nextAction, ничего не пишет и не отправляет. Concurrent state/lock change
 делает report неактуальным; known receipt показывает только projected accounting.
-Expected configHash/domain берутся из независимо одобренной конфигурации; export manifest ещё нет.
-Проверки 22.09: 31/31 inspector/process-death/refill-state/state-lock tests (14.1 s).
-Full npm test/fork не запускались. [API и ограничения](LOCAL_NATIVE_REFILL_INSPECTOR.md).
+Manifest exporter/verifier используют общий с runtime identity builder и независимый deployment JSON.
+Checksum/provenance не являются доказательством одобрения. Nonce RPC outage не скрывает known receipt.
+Проверки 22.09: основной пакет coordinator + native-refill suites — 70/70 (498.8 s);
+финальный `npm run test:local:refill` — 67/67 (15.8 s), включая budget и lock.
+После дополнения CLI assertions: `node --test --test-name-pattern="inspection manifest" test/local-coordinator.test.cjs` — 1/1 (40.3 s).
+Это пересекающиеся наборы, результаты не суммировать. Full npm test/fork не запускались.
+[Команды, clean-cwd проверка и ограничения](LOCAL_NATIVE_REFILL_INSPECTOR.md).
 
 ## Последняя проверка отказов
 
@@ -72,7 +76,7 @@ Runtime-код не менялся. Детали и границы — [LOCAL_NA
 
 Review инспектора и выбор следующей внешней integration/stabilization границы.
 Диагностика готова; runtime repair/reset, автоудаление lock, reconnect-loop и supervisor
-не добавлены. Approved inspection manifest пока задаётся отдельно от deployment tooling.
+не добавлены. Manifest строится из отдельной deployment-конфигурации, не из проверяемого state.
 Полный сценарий аварийного завершения draw/prize coordinator остаётся отдельной проверкой.
 
 ## Основные ограничения
@@ -98,5 +102,3 @@ proxy, reroll/reset или подмены random. Immutable destination стар
 [Продуктовые решения](PRODUCT_SPEC.md), [карта реализации](IMPLEMENTATION_STATUS.md),
 [исторический снимок статусов](archive/snapshots/PROJECT_PROGRESS_BEFORE_REVIEW_2026-09-20.md).
 Ответ GPT — вспомогательное мнение, не автоматическое задание.
-
-Финальная проверка inspector suite: 10/10, включая idle/other-worker, lock exit code и отказ unsupported fee profile.
