@@ -2,94 +2,85 @@
 
 Обновлено: 23.09.2026.
 
-Это независимое review-мнение, не задание на автоматическое исполнение. При следующем
-обращении файл следует полностью перезаписать.
+Это независимое инженерное мнение по просьбе пользователя. Файл при следующем обращении
+полностью перезаписывается.
 
-Просмотрен implementation HEAD `50599bcef669da14523134d37b273650c7702db2` и последующий
-process/docs commit `9931a5d69032f8cea6673ed4ac7cac65be585819`; runtime-пакет role casing —
-`0e5d8ea235328d7f06eade70bd32450a3856996b`.
+## Обращение к Codex: убрать повторную Solidity-компиляцию из test loop
 
-## Вердикт
+Пользователь справедливо недоволен циклом «пять минут кода — до 25 минут тестов».
+Сокращать покрытие вслепую не нужно: основной расход сейчас находится не в самих сценариях.
 
-Пакет принимаю. Подтверждённых дефектов в канонизации role addresses или admission старых
-journals не нашёл. Он закрывает зафиксированный hash drift между lowercase deployment и
-checksummed runtime, не расширяя migration до произвольного stored hash и не меняя
-продуктовые контракты.
+Замер GPT на полном run HEAD `50599bc`:
 
-GPT запустил ровно `npm run test:review` на HEAD `50599bc`:
+- `npm run test:review`: 336/336, общий test duration **606.4 s**;
+- сумма duration всех 336 test cases из лога: примерно **222.0 s**;
+- неатрибутированный межфайловый overhead: примерно **384.4 s**;
+- одна `compile({writeArtifacts:false})`: **16.843 s**;
+- в полном списке 35 test files, из них **22 вызывают `compile()` при загрузке модуля**.
 
-- dependency install: exit 0, 242 packages;
-- полный suite: **336/336**, fail/skipped/cancelled 0, 606.4 s;
-- final exit: 0;
-- cleanupError: null;
-- disposable checkout `/tmp/rh-review-nqz8hT/checkout` удалён;
-- его worktree registration после завершения отсутствует;
-- `git diff --check a0a5fb0..50599bc` — чисто;
-- пользовательский `docs/INDEPENDENT_AUDIT_2026-09-19.md` не изменён и не входил в
-  tested HEAD.
+`22 × 16.8 s ≈ 370 s`, что почти полностью объясняет 384 s overhead. Каждый test file
+исполняется отдельным Node process, а `--test-concurrency=1` последовательно компилирует весь
+набор `contracts/` + `test/contracts/` заново. В среде Codex тот же эффект раздувает baseline
+до 1466.8 s. `npm ci` занимал 4–12 s и причиной не является. Новые role-casing tests занимают
+около двух секунд, то есть продуктовая проверка не выросла на пятнадцать минут.
 
-Среда GPT: Node 24.19.0, npm 11.9.0, Hardhat 2.29.1, ethers 6.17.0, solc 0.8.37.
-Fork/live не запускались.
+## Предлагаемый bounded package
 
-## Соразмерность следующих проверок
+Сделать **ровно одну свежую Solidity-компиляцию на один test invocation**, без persistent
+cache между коммитами и без изменения самих 336 сценариев.
 
-Process commit `9931a5d` принимаю. Он docs-only; для него достаточно просмотренного diff и
-`git diff --check`, повторный product suite не нужен. Текущий полный прогон был запущен по
-предыдущей версии обращения на `50599bc`, где `npm run test:review` требовался явно; новая
-policy появилась в remote уже во время этого прогона.
+Предпочтительная схема:
 
-Дальше правило простое: небольшой пакет — затронутые и соседние тесты; docs-only — ссылки и
-diff; full — широкий риск, накопленный пакет или контрольная точка с названной причиной.
-Изоляция окружения и объём проверки не смешиваются. Сам commit/push/review больше не является
-поводом жечь десять минут на полный suite.
+1. Добавить небольшой Node test launcher, который перед `node --test` один раз вызывает
+   обычный `compile()` и получает `artifacts/compiled.json`.
+2. Launcher передаёт дочерним test processes абсолютный путь к этому artifact и SHA-256 его
+   байтов через отдельные test-only env variables.
+3. `compile.cjs`, когда такой env contract присутствует и `sourceOverrides` пуст,
+   проверяет path/file/digest, читает artifact и возвращает его вместо нового `solc.compile`.
+4. Если env contract заявлен, но artifact отсутствует, повреждён или digest не совпадает —
+   fail closed. Не делать тихий fallback к 22 повторным компиляциям.
+5. Без test-only env поведение `compile()` остаётся прежним. Research paths с
+   `sourceOverrides` всегда компилируются самостоятельно и не используют общий artifact.
+6. `npm test` переводится на launcher; `npm run test:review` автоматически получает ускорение,
+   потому что вызывает `npm test`. CLI, которым нужен `artifacts/compiled.json`, продолжают
+   видеть созданный artifact.
 
-## Что проверено по коду
+Это намеренно cache **внутри одного запуска**, а не долгоживущий content cache. Поэтому не
+нужно в первом пакете проектировать invalidation по source/import/package-lock/solc и рисковать
+тем, что тесты незаметно проверят старый bytecode.
 
-- Новая identity нормализует только `prizeExecutor`, `executor`, `publisher` через
-  `ethers.getAddress`; `publisher: null` остаётся `null`.
-- Legacy unbudgeted config не меняется. Для уже checksummed budget/refill callers новый
-  hash совпадает с прежним.
-- Старые кандидаты строятся из точного прежнего budget object и checksum/lowercase/
-  uppercase представлений **тех же** role addresses. При трёх ролях это максимум 27
-  комбинаций плюс отдельно исходный raw candidate; hash из journal не используется для
-  восстановления или расширения конфигурации.
-- Любое другое поле остаётся частью прежнего config object. Изменение настоящего адреса,
-  policy, domain или другой конфигурации не маскируется как casing migration.
-- Admission выполняется под существующим lock после checksum/schema проверки. Coordinator
-  pending отклоняется до migration write. Для refill domain/history и `history.pending`
-  проверяются до записи нового `configHash`.
-- Resolved migration меняет только identity/checksum; jobs, history, spend, cooldown,
-  nonce, lastResolved и gas observations сохраняются. Повторный canonical admission не
-  переписывает файл.
-- Lowercase deployment manifest проходит полный export/verify/inspect CLI путь и совпадает
-  с checksummed signer runtime identity. Raw deployment provenance при этом закономерно
-  остаётся побайтно отличимой от другого входного файла.
+## Границы
 
-Новая регрессия с другим role address проверяет именно pre-fix budget/refill migration.
-Старый unbudgeted→budget переход по-прежнему вводит роли впервые, потому что в старой
-схеме их вообще не было. Это прежняя явно сохранённая граница совместимости, а не новый
-casing bypass.
+- Не удалять, не объединять и не переписывать продуктовые тесты ради скорости.
+- Не включать `--test-concurrency=2/4` в тот же пакет. Сначала убрать повторный solc и получить
+  чистый замер; параллелизм — отдельный следующий эксперимент после проверки изоляции Hardhat,
+  temp state и child-process сценариев.
+- Не добавлять persistent cache между checkout/commit.
+- Не смешивать с named review profiles, venue/RNG/recovery или продуктовыми изменениями.
+- Сохранить stdout/stderr, signal/exit code и поведение review-runner без маскировки failure.
 
-## Что дальше
+## Регрессии и критерий приёмки
 
-Identity/manifest ветку считаю закрытой; ещё один технический пакет вокруг неё сейчас будет
-полировкой уже зелёного места.
+Сначала достаточно адресных проверок launcher/loader:
 
-Следующий действительно необходимый шаг перед внешними интеграциями — **зафиксировать один
-MVP release profile как продуктовое решение**, без немедленного написания кода:
+- два compile-heavy test files проходят, а ordinary `solc.compile` вызывается один раз;
+- missing/corrupt/digest-mismatched artifact отклоняется ненулевым exit;
+- `sourceOverrides` не читает общий artifact;
+- прямой запуск без env сохраняет прежнюю семантику;
+- child CLI видит тот же `artifacts/compiled.json`.
 
-- доля проекта в creator revenue;
-- формула Short budget `D`;
-- `K`, веса и минимальный приз `m`;
-- численные параметры допуска Short и Monthly;
-- минимальная готовность и execution budgets;
-- finality и поддерживаемый participant envelope.
+После этого оправдан **один** canonical `npm run test:review`: изменение затрагивает test harness
+всего suite, поэтому это контрольная точка, а не возврат к full после каждого commit. Записать:
 
-После утверждения одного профиля нужен ограниченный economic/farming sweep: conservation,
-ожидаемый расход, вероятность выигрыша, доминирование одного и нескольких кошельков,
-поведение при малом/большом числе участников и достаточность операционного бюджета. Только
-после этого имеет смысл выбирать конкретный venue/BUY decoder, real swap и RNG. Иначе можно
-очень качественно интегрировать продукт, численные правила которого всё ещё не выбраны.
+- pass/fail и cleanup;
+- число ordinary Solidity compilations;
+- install/test/total duration до и после на той же машине.
 
-Это рекомендация для выбора следующего шага, не автоматическое поручение Кодексу менять
-`PRODUCT_SPEC` или реализацию без решения владельца.
+Критерий успеха — 336 тестов остаются зелёными, ordinary compilation выполняется один раз,
+а время заметно падает. На машине GPT последовательный теоретический минимум после этого
+около 4 минут вместо 10; на более медленной среде точную цифру надо получить замером, а не
+обещать заранее.
+
+Если compile-once даст ожидаемый эффект, только затем отдельно рассматривать concurrency=2.
+Сейчас переписывать suite — дорогой способ лечить проблему, которая почти целиком состоит из
+21 лишнего запуска solc.
