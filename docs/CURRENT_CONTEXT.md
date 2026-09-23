@@ -99,22 +99,22 @@ receipt до final-save и после final-save. После смерти child 
 Hashless остаётся stop, known hash учитывается ровно один раз. RPC receipt outage не меняет state.
 Runtime-код не менялся. Детали и границы — [LOCAL_NATIVE_REFILL_RECOVERY](LOCAL_NATIVE_REFILL_RECOVERY.md).
 
-## Текущий запрос к GPT: партнёрские акции
+## Текущий шаг к релизу
 
-Пользователь просит совместно продумать предложение Telegram-продавцам постеров с
-розыгрышами: выгода партнёра, связь покупки TOKEN и его акции, отдельный sponsor layer.
-[Обращение](GPT_REVIEW_REQUEST.md) обновлено; идеи не утверждены и не реализуются.
-Экономический кандидат ниже сохраняется; базовая казна и sponsor commercial payment
-не смешиваются. Следующий шаг — прочитать ответ и выбрать понятный пилот для обсуждения.
+Ответ GPT b4a89ef прочитан. По указанию пользователя sponsor/merchant ветка отложена;
+[архив обсуждения](archive/studies/SPONSOR_PARTNERSHIP_DISCUSSION_2026-09-23.md).
+Никаких sponsor API и новых условий участия не утверждено.
 
-## Текущий шаг: численный профиль
+[Численный профиль](MVP_ECONOMIC_PROFILE.md) остаётся кандидатом. Добавлен локальный
+scripts/mvp-economic-sweep.py: 72 аналитических single-draw сценария концентрации и
+9 funding-сценариев. Assertions прошли. Выявлено усиление ожидаемых наград при дроблении
+по wallets и субсидировании Short. Это не full calendar/farming profitability model.
+Контракты/config не менялись; unit/full/fork/live не запускались.
 
-Watch принят review 3e4ab3d. Пользователь согласовал подготовку таблицы и предложения,
-не конкретные значения. [MVP_ECONOMIC_PROFILE](MVP_ECONOMIC_PROFILE.md): принятое /
-открытое / кандидат; первые аналитические sanity checks. Контракты/config и PRODUCT_SPEC
-не менялись. Обсудить кандидата, затем economic/farming sweep на диапазонах.
-Gas/finality/dataset limits обосновывать сетью и измерениями, не произвольными числами.
-Docs-only: арифметика локально, diff/ссылки; unit/full/fork/live не требуются.
+Дальше двигать базовый MVP: окончательная экономика и полноценный calendar sweep,
+затем ограниченный реальный integration slice из ROADMAP §4. Не объявлять кандидаты
+утверждёнными и не снимать local guards для запуска на реальной сети. До deployment
+нужны реальные venue/swap/RNG/finality, execution funding, recovery и внешний аудит.
 
 ## Последний кусок: watch RPC recovery
 

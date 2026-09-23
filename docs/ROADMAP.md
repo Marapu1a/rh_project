@@ -78,8 +78,10 @@ Storage faults и mined revert покрыты предыдущими теста�
 state/config/lock ошибки остаются stop. Проверка этого пакета адресная.
 23.09: после принятого watch review ближайший шаг — [численный профиль MVP](MVP_ECONOMIC_PROFILE.md),
 обсуждение кандидатов и затем economic/farming sweep. Новые цифры пока не утверждены.
-По запросу владельца параллельно сформулировано обсуждение sponsor/merchant пилота
-в GPT_REVIEW_REQUEST: коммерческая выгода и связь TOKEN/отдельной акции, без реализации.
+По указанию владельца sponsor/merchant обсуждение отложено в отдельную ветку:
+[архив](archive/studies/SPONSOR_PARTNERSHIP_DISCUSSION_2026-09-23.md), без реализации.
+Первый economic slice выполнен: 72 single-draw concentration сценария и 9 funding;
+calendar/carry/unequal-entry модель и окончательное решение по цифрам ещё впереди.
 Recovery design для stale lock/hashless tx/replacement и сохранности state остаётся
 до production, с привязкой к выбранному deployment runtime/supervisor. Не выдавать force-clear за
 reconciliation. Сохранить независимость действий при доказанном отказе.
