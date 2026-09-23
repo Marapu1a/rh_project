@@ -58,6 +58,8 @@ claims за победителей. Кто финансирует их gas — �
 runtime, npm ci из lockfile, полный npm test и сохранение failure/cleanup evidence.
 Полный канонический baseline на e0407e1 — 334/334, cleanup OK. 23.09: role-casing identity исправлен, canonical baseline 0e5d8ea — 336/336, cleanup OK. Далее независимое review пакета.
 Manifest redesign/venue/RNG/recovery не смешивать с процедурой review.
+23.09: принят соразмерный объём тестирования (AGENTS/REVIEW_TESTING); full не обязателен
+для каждого шага. Именованные адресные профили runner — отдельный небольшой будущий шаг.
 
 Прежний intermittent handoff finding отозван без нового trace evidence. Диагностика
 по runId/PID и CLI assertions сохранена. Подтверждённый PID-write/close initialization

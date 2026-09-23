@@ -2,7 +2,9 @@
 
 23.09.2026. Baseline a0a5fb0. Read CURRENT_CONTEXT and the Role casing compatibility
 section of LOCAL_NATIVE_REFILL_INSPECTOR. Report reviewed HEAD and replace response.
-Run the canonical npm run test:review; no ad-hoc clean checkout recipe.
+User update 23.09: use scoped tests for small changes; no automatic full rerun for each
+review/commit. Full baseline already exists below. Run full only with a concrete
+coverage/risk reason, using the canonical runner; see REVIEW_TESTING.
 
 Scope: shared identity builder plus coordinator legacy candidates. New budget/refill
 roles use ethers.getAddress, publisher null stays null, schema/hash for existing
