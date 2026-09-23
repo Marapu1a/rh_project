@@ -99,3 +99,6 @@ export/verify независимого deployment input и manifest support в i
 
 22.09: `scripts/review-runner.cjs`, `test/review-runner.test.cjs`, `npm run test:review` —
 [изолированный review HEAD](REVIEW_TESTING.md), без изменения продуктового runtime.
+
+23.09: общий coordinator identity builder канонизирует roles; точные pre-fix casing
+кандидаты используются штатной migration с прежними pending и refill history guards.

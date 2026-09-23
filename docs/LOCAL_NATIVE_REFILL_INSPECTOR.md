@@ -93,7 +93,7 @@ manifest. Вход exporter — отдельный проверенный JSON �
 `schedulerState`, `roles: {prizeExecutor, executor, publisher}`, `ops`,
 `nativeRefill: {source, policy, protectedAddresses?}`. Это те же job/config/roles,
 которые используются coordinator. Signer и private key не включать; publisher при
-отсутствии задаётся null. Регистр role addresses сохраняется как в runtime.
+отсутствии задаётся null. Role addresses канонизируются через ethers.getAddress как в runtime.
 Scheduler state path является частью identity; файл по нему не читается.
 
 ```powershell
@@ -131,3 +131,32 @@ Nonce latest/pending — дополнительное best-effort evidence: ег
 Без явного config запуск из постороннего cwd дал HH9; после указания config прошёл.
 Это проверка создания каталога при существующих зависимостях, не свежая установка npm.
 Лог `.local/logs/refill-clean-cwd.log`. Full npm test и fork не запускались.
+
+
+## Role casing compatibility (23.09.2026)
+
+Builder канонизирует только prizeExecutor/executor/publisher budget/refill identity
+через ethers.getAddress; отсутствующий publisher остаётся null. Legacy unbudgeted
+формула не меняется. Job/scheduler addresses и прочие поля не нормализуются этим шагом.
+Lowercase deployment roles теперь дают тот же configHash, что checksum runtime roles.
+DeploymentHash/checksum manifest продолжают фиксировать точный вход и provenance:
+семантически одинаковый configHash не означает побайтно одинаковые manifests.
+
+Migration допускает только точные pre-fix budget/refill objects: исходный raw-role
+object и максимум 27 комбинаций checksum/lowercase/uppercase стандартных 0x адресов
+тех же трёх ролей. Все остальные поля сохраняются. Произвольный stored hash и другая
+реальная role не допускаются. Unbudgeted→budget и budget→refill пути сохранены.
+
+Resolved journal обновляет только configHash/checksum под прежним lock; jobs, history,
+spend/cooldown/nonce и observations не сбрасываются. Уже canonical journal не требует
+migration write. При refill прежний domain/history guard выполняется до записи.
+Любой coordinator pending запрещает migration; history.pending тоже блокирует refill
+migration. Pending старого hash сначала reconcile прежней версией и прежней конфигурацией:
+автоматического repair/reset или обхода этой границы не добавлено.
+
+Тесты admission используют aborted signal, чтобы после проверки миграции не запускать
+обычную работу и сравнить все поля журнала. Полные coordinator сценарии остаются в npm test.
+
+Старые manifests с non-canonical role configHash нужно экспортировать заново для новой
+identity после завершения pending/migration. Автоматический перевод старого manifest или
+подмена ожидаемого hash из проверяемого journal не выполняется.

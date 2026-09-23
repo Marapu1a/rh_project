@@ -1,42 +1,38 @@
-# Review: canonical isolated test runner
+# Review: role-address canonicalization and exact legacy admission
 
-22.09.2026. Baseline before this package: 83f3812. Read CURRENT_CONTEXT and
-REVIEW_TESTING. Report reviewed HEAD and overwrite GPT_REVIEW_RESPONSE.md.
+23.09.2026. Baseline a0a5fb0. Read CURRENT_CONTEXT and the Role casing compatibility
+section of LOCAL_NATIVE_REFILL_INSPECTOR. Report reviewed HEAD and replace response.
+Run the canonical npm run test:review; no ad-hoc clean checkout recipe.
 
-We accepted the process finding independently: archive removes required git metadata;
-main checkout runtime can be affected by external sync. Neither is a good canonical
-review environment. This package changes review infrastructure only.
+Scope: shared identity builder plus coordinator legacy candidates. New budget/refill
+roles use ethers.getAddress, publisher null stays null, schema/hash for existing
+checksummed callers and legacy unbudgeted config remain unchanged. Other config
+fields and product contracts are not changed.
 
-Canonical command: `npm run test:review`.
-It creates a unique detached HEAD worktree under system temp, refuses temp inside the
-source checkout, checks git HEAD and missing .local, creates runtime directories,
-installs using `npm ci --ignore-scripts --no-audit --no-fund`, prints toolchain and exact
-commands, then runs full npm test. Dirty/untracked work is explicitly excluded.
+Important correction to simply retaining current input raw config: runtime usually
+returns checksummed addresses, so that alone cannot recognize a pre-fix lowercase
+journal. Builder therefore constructs only exact original raw candidate plus up to
+27 checksum/lowercase/uppercase combinations of the SAME roles in pre-fix budget and
+refill config shapes. It never derives configuration from an arbitrary stored hash.
+Other fields still match exactly. Original raw candidate is retained as well.
 
-Cleanup uses the registered worktree only after checking the owned temp root/token and
-non-redirected absolute checkout path. Evidence lives beside the disposable checkout
-in the runner-owned .local/logs and is retained. Source runtime is not copied or cleaned.
-Test exit survives cleanup failure; cleanup failure after green tests makes exit nonzero.
-Forced process/OS termination cannot guarantee finally and is documented, not silently
-presented as automatic safe recovery. There is no lock deletion in product runtime.
+Migration uses existing withState lock/checksum/pending guard. Existing native refill
+history domain/pending guard still runs BEFORE writing identity. No jobs/history/spend/
+cooldown/nonce/observations reset, no arbitrary address substitution, no new repair API.
+Pending old hash must reconcile using previous version/config first. Canonical state
+requires no migration write. Old non-canonical manifests require re-export; configHash
+semantic equality is distinct from raw deploymentHash/provenance/manifest equality.
 
-Self-test is explicitly not a baseline. Four fixture tests cover git provenance,
-source stale-lock preservation, cleanup ownership refusal and actual locked-worktree
-cleanup failure with test exits 0/7. The fake npm in those tests exercises process
-handling only; the full review uses real npm ci and package-lock dependencies.
+New regressions:
+- actual lowercase deployment manifest matches checksummed runtime state (full CLI path);
+- lowercase/uppercase/mixed pre-fix budget and refill states migrate;
+- complete state payload preserved and repeated canonical admission is byte-identical;
+- draw/prize/refill pending reject without state writes;
+- incompatible refill history domain and history.pending reject without state writes;
+- a different real role address cannot pass case migration; optional publisher remains null.
+Admission regressions deliberately use an aborted signal to observe only migration,
+without subsequent ordinary coordinator actions changing the journal.
 
-Important boundaries:
-- Isolated checkout is not a container or a fully pinned OS/Node/npm toolchain.
-- Registry/install failure is reported separately from product test failure.
-- Manifest still expects .git; release bundles without it are not added requirements.
-- Role-address casing remains an independent confirmed finding. No configHash or
-  migration semantics changed in this package. Address canonicalization will need an
-  explicit compatibility strategy for existing resolved and pending journals.
-- No venue/RNG/recovery/manifest redesign/product-rule changes.
-
-Please run the canonical command, not another hand-built archive/checkout recipe.
-Assess ownership cleanup, exit preservation, isolation and clarity of evidence. After
-this step propose the smallest role-casing fix with safe legacy identity compatibility.
-Current run results and exact tested commit are recorded in CURRENT_CONTEXT.
-
-Verified here: canonical full run on clean e0407e1: 334/334, 1462.0 s, install/test/final exit 0, cleanupError null. Worktree removed; subsequent changes are docs only.
+Please inspect bounded candidate generation, unchanged migration guards, and whether
+any real role/config change could be admitted. Keep venue/RNG/swap/manifest redesign
+and product decisions out of this package. Exact run results will be in CURRENT_CONTEXT.

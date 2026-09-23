@@ -16,6 +16,11 @@ function buildCoordinatorIdentity({prizeJob,schedulerConfig,schedulerState,roles
  let config=legacyConfig;
  if(ops){const {pollSeconds,maxGasPrice,...identity}=prizeJob;config={...legacyConfig,schema:'local-coordinator-budget-v1',prize:identity,network:ops.network,
   roles:{prizeExecutor:roles.prizeExecutor,executor:roles.executor,publisher:roles.publisher||null}};}
+ const rawBudgetConfig=config;
+ const canonicalRoles=ops?Object.fromEntries(Object.entries(rawBudgetConfig.roles).map(([key,value])=>[key,value?ethers.getAddress(value):null])):null;
+ const roleVariants=ops?Object.entries(canonicalRoles).reduce((sets,[key,value])=>
+  sets.flatMap(set=>[...new Set(value?[ethers.getAddress(value),value.toLowerCase(),'0x'+value.slice(2).toUpperCase()]:[null])].map(address=>({...set,[key]:address}))),[{}]):[];
+ if(ops)config={...config,roles:canonicalRoles};
  const budgetConfig=config;let refillInput;
  if(nativeRefill){
   check(ops&&ops.network.feeModel==='LOCAL_EIP1559','Refill requires plain local ops profile');
@@ -28,6 +33,9 @@ function buildCoordinatorIdentity({prizeJob,schedulerConfig,schedulerState,roles
   config={...config,nativeRefill:{domainHash:refillDomainHash(refillInput),source:source.address.toLowerCase()}};
   check([...addresses,...controllers].every(a=>refillInput.policy.targets.some(t=>same(t.address,a))),'Funding targets must cover all execution signers and controllers');
  }
- return {config,legacyConfig,budgetConfig,refillInput,addresses};
+ // Only exact pre-fix configs of the same addresses are admitted, never an arbitrary stored hash.
+ const oldBudgets=ops?[rawBudgetConfig,...roleVariants.map(roles=>({...rawBudgetConfig,roles}))]:[];
+ const legacyConfigs=!ops?[]:[legacyConfig,...oldBudgets,...(nativeRefill?oldBudgets.map(old=>({...old,nativeRefill:config.nativeRefill})):[])];
+ return {config,legacyConfig,budgetConfig,refillInput,addresses,legacyConfigs};
 }
 module.exports={buildCoordinatorIdentity};

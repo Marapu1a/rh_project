@@ -388,6 +388,9 @@ test('inspection manifest matches runtime identity and rejects independently cha
  const budget={...legacy,schema:'local-coordinator-budget-v1',prize:prizeIdentity,network:d.ops.network,roles:d.roles};
  assert.equal(hash(buildCoordinatorIdentity({...d,nativeRefill:undefined}).config),hash(budget));
  const provenance={commit:'a'.repeat(40),dirty:false,generatedAt:'2026-09-22T00:00:00Z'};
+ const lower=structuredClone(d);for(const key of Object.keys(lower.roles))if(lower.roles[key])lower.roles[key]=lower.roles[key].toLowerCase();
+ assert.equal(createInspectionManifest(lower,provenance).configHash,createInspectionManifest(d,provenance).configHash);
+ d.roles=lower.roles;
  const m=createInspectionManifest(d,provenance);assert.deepEqual(m,createInspectionManifest(d,provenance));
  assert.equal(verifyInspectionManifest(m,d).configHash,m.configHash);
  await runCoordinator(f.options);assert.equal(JSON.parse(fs.readFileSync(f.options.statePath)).configHash,m.configHash);
@@ -407,4 +410,39 @@ test('inspection manifest matches runtime identity and rejects independently cha
  assert.equal(r.status,0,r.stdout+r.stderr);assert.equal(JSON.parse(r.stdout).status,'noPending');
  r=spawnSync(process.execPath,inspectArgs,{encoding:'utf8'});assert.equal(r.status,1);assert.match(r.stdout,/independent/);
  const before=fs.readFileSync(out);assert.notEqual(cli('export','--deployment',deployment,'--out',out).status,0);assert.deepEqual(fs.readFileSync(out),before);
+});
+
+for(const refill of [false,true])test('role casing migration preserves resolved data and refuses pending/domain/address drift: '+refill,async t=>{
+ const f=await fixture(t);if(refill)await enableRefill(f);else f.options.ops=opsProfile();
+ const {hash}=require('../scripts/direct-buy.cjs'),{buildCoordinatorIdentity}=require('../scripts/local-coordinator-identity.cjs');
+ const role=await f.admin.getAddress();
+ const input={prizeJob:f.options.prize.job,schedulerConfig:f.options.scheduler.config,schedulerState:f.options.scheduler.statePath,
+  roles:{prizeExecutor:role,executor:role,publisher:role},ops:f.options.ops,nativeRefill:f.options.nativeRefill};
+ const identity=buildCoordinatorIdentity(input),canonical=identity.config;
+ const controller=new AbortController();controller.abort();f.options.signal=controller.signal;
+ const payload={schema:'local-scheduler-state-v1',jobs:{SHORT:[{sentinel:'preserve'}],MONTHLY:[]},gasObservations:{begin:'123'},lastResolved:{nonce:'4'},
+  ...(refill?{nativeRefillHistory:{domainHash:canonical.nativeRefill.domainHash,pending:false,windowStart:'0',spent:'7',lastAttemptAt:'9',lastNonce:'4',lastSuccessAt:'9'}}:{})};
+ const file=f.options.statePath;
+ const write=state=>fs.writeFileSync(file,JSON.stringify({...state,checksum:hash(state)}));
+ const read=()=>{const {checksum,configHash,...rest}=JSON.parse(fs.readFileSync(file));return rest;};
+ // Independent old formula: change only role strings, retain the full old budget/refill object.
+ for(const variant of ['lower','upper','mixed']){
+  const old={...canonical,roles:{prizeExecutor:variant==='upper'?'0x'+role.slice(2).toUpperCase():role.toLowerCase(),executor:variant==='lower'?role.toLowerCase():variant==='upper'?'0x'+role.slice(2).toUpperCase():role,publisher:variant==='upper'?'0x'+role.slice(2).toUpperCase():role.toLowerCase()}};
+  write({...payload,configHash:hash(old)});await runCoordinator(f.options);
+  assert.deepEqual(read(),payload);assert.equal(JSON.parse(fs.readFileSync(file)).configHash,hash(canonical));
+  const bytes=fs.readFileSync(file);await runCoordinator(f.options);assert.deepEqual(fs.readFileSync(file),bytes);
+  for(const worker of ['draw','prize','nativeRefill']){
+   write({...payload,configHash:hash(old),pending:{worker,stage:'prepared'}});const before=fs.readFileSync(file);
+   await assert.rejects(()=>runCoordinator(f.options),/Resolve pending/);assert.deepEqual(fs.readFileSync(file),before);
+  }
+  if(refill)for(const history of [{...payload.nativeRefillHistory,domainHash:hash('other')},{...payload.nativeRefillHistory,pending:true}]){
+   write({...payload,configHash:hash(old),nativeRefillHistory:history});const before=fs.readFileSync(file);
+   await assert.rejects(()=>runCoordinator(f.options),/history domain incompatible|pending refill history/);assert.deepEqual(fs.readFileSync(file),before);
+  }
+ }
+ const wrong={...canonical,roles:{...canonical.roles,executor:await (await f.provider.getSigner(5)).getAddress()}};
+ write({...payload,configHash:hash(wrong)});const before=fs.readFileSync(file);
+ await assert.rejects(()=>runCoordinator(f.options),/config mismatch/);assert.deepEqual(fs.readFileSync(file),before);
+ const noPublisher=buildCoordinatorIdentity({...input,roles:{...input.roles,publisher:null}});
+ assert.equal(noPublisher.config.roles.publisher,null);assert(noPublisher.legacyConfigs.length<=21);
 });

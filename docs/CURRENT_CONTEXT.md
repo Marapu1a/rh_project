@@ -1,6 +1,6 @@
 # Текущий контекст
 
-Обновлено 22.09.2026: канонический полный review baseline прошёл.
+Обновлено 23.09.2026: role casing canonicalization и совместимая migration; проверка нового HEAD готовится.
 
 ## Где находимся
 
@@ -23,7 +23,7 @@
 Node v24.21.0, npm 11.19.0, Hardhat 2.29.1, ethers 6.17.0, solc 0.8.37;
 зависимости установлены через npm ci --ignore-scripts. Fork/live не запускались.
 Короткий self-test и четыре fixture tests runner тоже прошли; они не заменяют полный baseline.
-[Процедура и evidence](REVIEW_TESTING.md). После проверенного commit менялись только документы.
+[Процедура и evidence](REVIEW_TESTING.md). Это baseline предыдущего пакета до role-casing изменений.
 
 ## Предыдущий результат: manifest и refill
 
@@ -85,8 +85,10 @@ Runtime-код не менялся. Детали и границы — [LOCAL_NA
 ## Ближайший кусок
 
 Полный baseline подтверждён через `npm run test:review` ([процедура](REVIEW_TESTING.md)).
-Следующий отдельный кусок — role-address casing identity: lowercase/checksum формы сейчас
-дают разные budget hashes; нельзя молча менять hash уже существующего state.
+Role-address casing исправлен в общем builder: checksum identity, точные старые
+case-варианты для resolved migration, прежние pending/domain guards сохранены.
+Следующий шаг — канонический review этого пакета; ограничения и детали в
+[inspector/identity](LOCAL_NATIVE_REFILL_INSPECTOR.md).
 Диагностика готова; runtime repair/reset, автоудаление lock, reconnect-loop и supervisor
 не добавлены. Manifest строится из отдельной deployment-конфигурации, не из проверяемого state.
 Полный сценарий аварийного завершения draw/prize coordinator остаётся отдельной проверкой.

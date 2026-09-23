@@ -39,7 +39,7 @@ async function runCoordinator({prize,scheduler,statePath,signal,receiptTimeoutMs
     check(signer?.provider===provider&&['getAddress','estimateGas','sendTransaction'].every(k=>typeof signer[k]==='function'),'Refill signer/provider mismatch');
     check(same(await signer.getAddress(),source?.address),'Refill source signer mismatch');
   }
-  const {config,legacyConfig,budgetConfig,refillInput,addresses}=buildCoordinatorIdentity({prizeJob:prize.job,
+  const {config,refillInput,addresses,legacyConfigs}=buildCoordinatorIdentity({prizeJob:prize.job,
     schedulerConfig:scheduler.config,schedulerState:scheduler.statePath,roles,ops,nativeRefill});
   return withState(statePath,config,async(state,save)=>{
     const results={};let worker,refillRequest;
@@ -150,7 +150,7 @@ async function runCoordinator({prize,scheduler,statePath,signal,receiptTimeoutMs
       return {status:'complete',budgetMode:ops?ops.network.id:'unbudgetedLegacy',results};
     }catch(e){return {status:state.pending?'blocked':'error',requiresReconciliation:!!state.pending,pending:state.pending,
       haltedWorker:worker,error:{message:e.message,code:e.code,stage:e.stage,transactionHash:e.transactionHash},results};}
-  },{legacyConfigs:nativeRefill?[legacyConfig,budgetConfig]:ops?[legacyConfig]:[],
+  },{legacyConfigs,
     validateMigration:nativeRefill?stored=>{
       const history=stored.nativeRefillHistory;
       if(Object.hasOwn(stored,'nativeRefillHistory')){
