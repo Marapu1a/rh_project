@@ -23,8 +23,12 @@ for(const testCode of [0,7])test('cleanup refusal preserves test exit '+testCode
  fs.writeFileSync(npmCli,`const fs=require('node:fs'),path=require('node:path');
  const arg=process.argv[2];if(arg==='--version')console.log('fixture');
  else if(arg==='ci'){for(const name of ['hardhat','ethers','solc']){fs.mkdirSync(path.join('node_modules',name),{recursive:true});fs.writeFileSync(path.join('node_modules',name,'package.json'),JSON.stringify({version:'fixture'}));}}
- else {require('node:child_process').execFileSync('git',['worktree','lock',process.cwd()]);process.exit(${testCode});}`);
- const r=await runReview({sourceRoot:f.dir,npmCli});
+ else {const reportDir=path.join('.local','logs','test-run-fixture');fs.mkdirSync(reportDir,{recursive:true});
+ fs.writeFileSync(path.join(reportDir,'result.json'),JSON.stringify({fixture:true,exitCode:${testCode}}));
+ require('node:child_process').execFileSync('git',['worktree','lock',process.cwd()]);process.exit(${testCode});}`);
+ const r=await runReview({sourceRoot:f.dir,npmCli,...(testCode===7?{profile:'math',pattern:'shared'}:{})});
+ assert.equal(r.error,undefined);assert.equal(r.testReports.length,1);assert(fs.existsSync(r.testReports[0]));
+ if(testCode===7){assert.equal(r.fullSuite,false);assert.deepEqual(r.commands.at(-1).slice(-5),['--','--profile','math','--match','shared']);}
  assert.equal(r.testExitCode,testCode);assert.equal(r.exitCode,testCode||1);assert(r.cleanupError);assert(fs.existsSync(r.logPath));
  assert.equal(fs.readFileSync(path.join(f.dir,'.local','state.lock'),'utf8'),'do not touch');
  const root=path.dirname(r.checkout);assertOwned(root,r.checkout,fs.readFileSync(path.join(root,'owner'),'utf8'));

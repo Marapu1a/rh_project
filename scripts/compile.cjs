@@ -1,7 +1,9 @@
 const fs = require('node:fs');
 const path = require('node:path');
-const solc = require('solc');
+const {readArtifact,audit}=require('./test-artifact.cjs');
 function compile({sourceOverrides = {}, writeArtifacts = true} = {}) {
+  if(Object.keys(sourceOverrides).length===0){const artifact=readArtifact();if(artifact){audit('reuse');return artifact;}}
+  const solc=require('solc');
   const sources = {};
   for (const dir of ['contracts', 'test/contracts']) {
     if (!fs.existsSync(dir)) continue;
@@ -15,6 +17,7 @@ function compile({sourceOverrides = {}, writeArtifacts = true} = {}) {
     if (!sources[file] || typeof content !== 'string') throw new Error(`Invalid source override: ${file}`);
     sources[file] = {content};
   }
+  audit(Object.keys(sourceOverrides).length?'override':'ordinary');
   const result = JSON.parse(solc.compile(JSON.stringify({language: 'Solidity', sources, settings: {
     optimizer: {enabled: true, runs: 200}, evmVersion: 'cancun',
     outputSelection: {'*': {'*': ['abi', 'evm.bytecode.object', 'evm.deployedBytecode.object']}}

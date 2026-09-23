@@ -21,7 +21,8 @@
 23.09 пользователь отменил автоматический full run после каждого небольшого шага.
 По умолчанию — затронутый путь и значимые соседи; docs-only — ссылки/diff.
 Полный набор — по масштабу/риску или на контрольной точке с кратким обоснованием.
-Именованные адресные профили runner пока не реализованы. [Правила](REVIEW_TESTING.md).
+Группы и --match добавлены в launcher/review runner; compile-once и per-file timing
+проходят проверку. [Правила и карта выбора](REVIEW_TESTING.md).
 
 ## Канонический полный baseline
 
@@ -30,7 +31,7 @@
 Node v24.21.0, npm 11.19.0, Hardhat 2.29.1, ethers 6.17.0, solc 0.8.37;
 зависимости установлены через npm ci --ignore-scripts. Fork/live не запускались.
 Адресные проверки отдельно: `node --test --test-name-pattern="role casing|inspection manifest" test/local-coordinator.test.cjs` — 3/3 (53.0 s).
-Наборы пересекаются, не суммировать. После проверенного HEAD менялись только документы.
+Наборы пересекаются, не суммировать. Это baseline до изменений test harness.
 Evidence: `.local/logs/role-casing-review.log`,
 `C:\Temp\rh-review-oJ1Q1P\.local\logs\review.log` и `result.json`.
 [Процедура](REVIEW_TESTING.md), [identity/migration](LOCAL_NATIVE_REFILL_INSPECTOR.md).
@@ -97,7 +98,8 @@ Runtime-код не менялся. Детали и границы — [LOCAL_NA
 Полный baseline подтверждён через `npm run test:review` ([процедура](REVIEW_TESTING.md)).
 Role-address casing исправлен в общем builder: checksum identity, точные старые
 case-варианты для resolved migration, прежние pending/domain guards сохранены.
-Канонический прогон 336/336 прошёл. Следующий шаг — независимое review этого пакета; детали в
+Role-casing принят review. Сейчас проверяется тестовый контур: группы, compile-once,
+per-file timing. Один full обоснован изменением общего harness. Role-casing детали в
 [inspector/identity](LOCAL_NATIVE_REFILL_INSPECTOR.md).
 Диагностика готова; runtime repair/reset, автоудаление lock, reconnect-loop и supervisor
 не добавлены. Manifest строится из отдельной deployment-конфигурации, не из проверяемого state.

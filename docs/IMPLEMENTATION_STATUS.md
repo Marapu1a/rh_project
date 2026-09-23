@@ -102,3 +102,7 @@ export/verify независимого deployment input и manifest support в i
 
 23.09: общий coordinator identity builder канонизирует roles; точные pre-fix casing
 кандидаты используются штатной migration с прежними pending и refill history guards.
+
+23.09: test-launcher/test-artifact/test-profiles/test-timing-reporter — именованные
+группы, свежая общая компиляция, строгий loader и per-file timing. Review runner
+поддерживает группы/regex и сохраняет структурированные отчёты вне удаляемого worktree.

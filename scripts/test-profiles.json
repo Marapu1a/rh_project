@@ -1,0 +1,143 @@
+{
+  "full": {
+    "compile": true,
+    "files": [
+      "test/fee-router.test.cjs",
+      "test/promo-vault.test.cjs",
+      "test/short-prize-basket.test.cjs",
+      "test/participant-registry.test.cjs",
+      "test/direct-buy.test.cjs",
+      "test/attempt-lifecycle.test.cjs",
+      "test/attempt-lifecycle-events.test.cjs",
+      "test/short-draw-commitment.test.cjs",
+      "test/short-outcome.test.cjs",
+      "test/short-streaming.test.cjs",
+      "test/short-dataset.test.cjs",
+      "test/short-epochs.test.cjs",
+      "test/short-settlement.test.cjs",
+      "test/dual-controller.test.cjs",
+      "test/attempt-lifecycle-dual.test.cjs",
+      "test/monthly-epochs.test.cjs",
+      "test/monthly-replay.test.cjs",
+      "test/nitro-blocks.test.cjs",
+      "test/local-controllers.test.cjs",
+      "test/local-buy-cycle.test.cjs",
+      "test/local-executor-stability.test.cjs",
+      "test/local-usdg-funding.test.cjs",
+      "test/local-scheduler.test.cjs",
+      "test/local-transaction.test.cjs",
+      "test/local-prize-converter.test.cjs",
+      "test/local-prize-flow.test.cjs",
+      "test/local-coordinator.test.cjs",
+      "test/local-execution-budget.test.cjs",
+      "test/local-state-lock.test.cjs",
+      "test/local-native-refill.test.cjs",
+      "test/local-native-refill-state.test.cjs",
+      "test/local-native-refill-executor.test.cjs",
+      "test/local-native-refill-process.test.cjs",
+      "test/local-native-refill-inspector.test.cjs",
+      "test/review-runner.test.cjs",
+      "test/test-launcher.test.cjs"
+    ]
+  },
+  "accounting": {
+    "compile": true,
+    "files": [
+      "test/fee-router.test.cjs",
+      "test/promo-vault.test.cjs",
+      "test/local-usdg-funding.test.cjs",
+      "test/local-prize-converter.test.cjs",
+      "test/local-prize-flow.test.cjs"
+    ]
+  },
+  "short": {
+    "compile": true,
+    "files": [
+      "test/short-prize-basket.test.cjs",
+      "test/short-draw-commitment.test.cjs",
+      "test/short-outcome.test.cjs",
+      "test/short-streaming.test.cjs",
+      "test/short-dataset.test.cjs",
+      "test/short-epochs.test.cjs",
+      "test/short-settlement.test.cjs",
+      "test/dual-controller.test.cjs",
+      "test/attempt-lifecycle-dual.test.cjs"
+    ]
+  },
+  "monthly": {
+    "compile": true,
+    "files": [
+      "test/monthly-epochs.test.cjs",
+      "test/monthly-replay.test.cjs",
+      "test/dual-controller.test.cjs",
+      "test/attempt-lifecycle-dual.test.cjs",
+      "test/local-controllers.test.cjs"
+    ]
+  },
+  "replay": {
+    "compile": true,
+    "files": [
+      "test/participant-registry.test.cjs",
+      "test/direct-buy.test.cjs",
+      "test/attempt-lifecycle.test.cjs",
+      "test/attempt-lifecycle-events.test.cjs",
+      "test/attempt-lifecycle-dual.test.cjs",
+      "test/monthly-replay.test.cjs",
+      "test/nitro-blocks.test.cjs"
+    ]
+  },
+  "coordinator": {
+    "compile": true,
+    "files": [
+      "test/local-coordinator.test.cjs",
+      "test/local-scheduler.test.cjs",
+      "test/local-execution-budget.test.cjs",
+      "test/local-transaction.test.cjs",
+      "test/local-state-lock.test.cjs"
+    ]
+  },
+  "recovery": {
+    "compile": true,
+    "files": [
+      "test/local-executor-stability.test.cjs",
+      "test/local-native-refill-state.test.cjs",
+      "test/local-native-refill-executor.test.cjs",
+      "test/local-native-refill-process.test.cjs",
+      "test/local-native-refill-inspector.test.cjs",
+      "test/local-transaction.test.cjs",
+      "test/local-state-lock.test.cjs"
+    ]
+  },
+  "refill": {
+    "compile": false,
+    "files": [
+      "test/local-native-refill.test.cjs",
+      "test/local-native-refill-state.test.cjs",
+      "test/local-native-refill-executor.test.cjs",
+      "test/local-native-refill-process.test.cjs",
+      "test/local-native-refill-inspector.test.cjs",
+      "test/local-execution-budget.test.cjs",
+      "test/local-state-lock.test.cjs"
+    ]
+  },
+  "math": {
+    "compile": false,
+    "files": [
+      "test/local-execution-budget.test.cjs",
+      "test/local-native-refill.test.cjs"
+    ]
+  },
+  "smoke": {
+    "compile": true,
+    "files": [
+      "test/local-buy-cycle.test.cjs"
+    ]
+  },
+  "infrastructure": {
+    "compile": false,
+    "files": [
+      "test/review-runner.test.cjs",
+      "test/test-launcher.test.cjs"
+    ]
+  }
+}
