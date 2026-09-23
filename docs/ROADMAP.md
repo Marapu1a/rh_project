@@ -94,8 +94,10 @@ reconciliation. Сохранить независимость действий �
 ## 4. Заменить внешние заглушки по отдельности
 
 23.09: [read-only dossier](PAIR_PROFILE_EVIDENCE_2026-09-23.md) готов с явными unknown.
-Следующий target gate — реальный TOKEN/USDG pool/vault/position и BUY receipt;
-не менять adapters по нерелевантной выборке и не снимать local guards.
+23.09: [TOKEN/USDG reference](PAIR_USDG_REFERENCE_2026-09-23.md) найден у чужого
+deployment: LP binding и реальные BUY receipts сохранены. Выявлен другой route
+0x060c0f. Далее — source/receipt разбор и ограниченный decoder adapter с негативными
+fixtures; collect/claim на fork отдельно. Наш токен ещё не запущен, local guards сохраняются.
 
 - Источник комиссий и venue BUY: проверяемая интеграция конкретной площадки, сохранение
   rollover semantics, code/binding evidence и воспроизводимый decoder.

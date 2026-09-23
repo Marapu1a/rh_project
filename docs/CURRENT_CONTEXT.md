@@ -107,8 +107,12 @@ sample и getters исторического vault. Runtime не менялся,
 Старый native graph hashes совпали, standard-route API503, launchpad coordinator другой.
 Старый fork TOKEN отсутствует public; 12 sampled tx не доказывают нужный TOKEN/USDG BUY.
 Нельзя утверждать доступный creator revenue/стоимость draw/RNG без целевого deployment.
-Следующий шаг: найти и закрепить реальный TOKEN/USDG pool/vault/position выбранного
-release, затем точечный source/BUY adapter при доказанном несовпадении.
+23.09: найден [чужой публичный TOKEN/USDG reference](PAIR_USDG_REFERENCE_2026-09-23.md):
+20 launch events, 6 vault candidates, LP owner/binding и 11 historical swaps.
+Три direct BUY используют 0x060c0f вместо поддерживаемого 0x060b0e и отвергаются.
+Следующий шаг: проверить settlement/delivery этой формы по исходникам и receipts,
+затем отдельный route adapter с regression fixtures. Это не наш deployment;
+collect/claim и актуальная ликвидность ещё не доказаны. GPT пока не привлекаем.
 
 ## Текущий шаг к релизу
 

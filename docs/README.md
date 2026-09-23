@@ -65,3 +65,4 @@
 - [Native refill inspector](LOCAL_NATIVE_REFILL_INSPECTOR.md) — read-only CLI, projected receipt accounting и безопасный следующий шаг.
 
 - [PAIR/network read-only dossier 23.09](PAIR_PROFILE_EVIDENCE_2026-09-23.md).
+- [Публичный TOKEN/USDG reference и BUY route gap](PAIR_USDG_REFERENCE_2026-09-23.md).
