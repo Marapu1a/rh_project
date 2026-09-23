@@ -1,6 +1,6 @@
 # Текущий контекст
 
-Обновлено 23.09.2026: role casing canonicalization и совместимая migration; проверка нового HEAD готовится.
+Обновлено 23.09.2026: role casing canonicalization и совместимая migration проверены.
 
 ## Где находимся
 
@@ -18,12 +18,15 @@
 
 ## Канонический полный baseline
 
-22.09: `npm run test:review` на чистом HEAD `e0407e1` — **334/334**, 1462.0 s
-тестов, test exit 0, cleanupError null. Отдельный temp worktree удалён.
+23.09: `npm run test:review` на чистом HEAD `0e5d8ea` — **336/336**, 1466.8 s
+тестов, install/test/final exit 0, cleanupError null. Temp worktree удалён.
 Node v24.21.0, npm 11.19.0, Hardhat 2.29.1, ethers 6.17.0, solc 0.8.37;
 зависимости установлены через npm ci --ignore-scripts. Fork/live не запускались.
-Короткий self-test и четыре fixture tests runner тоже прошли; они не заменяют полный baseline.
-[Процедура и evidence](REVIEW_TESTING.md). Это baseline предыдущего пакета до role-casing изменений.
+Адресные проверки отдельно: `node --test --test-name-pattern="role casing|inspection manifest" test/local-coordinator.test.cjs` — 3/3 (53.0 s).
+Наборы пересекаются, не суммировать. После проверенного HEAD менялись только документы.
+Evidence: `.local/logs/role-casing-review.log`,
+`C:\Temp\rh-review-oJ1Q1P\.local\logs\review.log` и `result.json`.
+[Процедура](REVIEW_TESTING.md), [identity/migration](LOCAL_NATIVE_REFILL_INSPECTOR.md).
 
 ## Предыдущий результат: manifest и refill
 
@@ -87,7 +90,7 @@ Runtime-код не менялся. Детали и границы — [LOCAL_NA
 Полный baseline подтверждён через `npm run test:review` ([процедура](REVIEW_TESTING.md)).
 Role-address casing исправлен в общем builder: checksum identity, точные старые
 case-варианты для resolved migration, прежние pending/domain guards сохранены.
-Следующий шаг — канонический review этого пакета; ограничения и детали в
+Канонический прогон 336/336 прошёл. Следующий шаг — независимое review этого пакета; детали в
 [inspector/identity](LOCAL_NATIVE_REFILL_INSPECTOR.md).
 Диагностика готова; runtime repair/reset, автоудаление lock, reconnect-loop и supervisor
 не добавлены. Manifest строится из отдельной deployment-конфигурации, не из проверяемого state.

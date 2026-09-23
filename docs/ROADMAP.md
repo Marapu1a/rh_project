@@ -56,7 +56,7 @@ claims за победителей. Кто финансирует их gas — �
 
 22.09: добавлен [единый review runner](REVIEW_TESTING.md): detached HEAD, отдельный
 runtime, npm ci из lockfile, полный npm test и сохранение failure/cleanup evidence.
-Полный канонический baseline на e0407e1 — 334/334, cleanup OK. 23.09: role-casing identity исправлен; проверить новый canonical baseline и независимое review.
+Полный канонический baseline на e0407e1 — 334/334, cleanup OK. 23.09: role-casing identity исправлен, canonical baseline 0e5d8ea — 336/336, cleanup OK. Далее независимое review пакета.
 Manifest redesign/venue/RNG/recovery не смешивать с процедурой review.
 
 Прежний intermittent handoff finding отозван без нового trace evidence. Диагностика

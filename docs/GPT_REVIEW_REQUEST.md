@@ -36,3 +36,7 @@ without subsequent ordinary coordinator actions changing the journal.
 Please inspect bounded candidate generation, unchanged migration guards, and whether
 any real role/config change could be admitted. Keep venue/RNG/swap/manifest redesign
 and product decisions out of this package. Exact run results will be in CURRENT_CONTEXT.
+
+Verified: clean 0e5d8ea canonical npm run test:review — 336/336, 1466.8 s,
+install/test/final exit 0, cleanupError null; worktree removed. Final focused
+role-casing/manifest tests 3/3. Subsequent changes are documentation only. No fork/live.

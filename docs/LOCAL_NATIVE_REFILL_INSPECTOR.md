@@ -160,3 +160,10 @@ migration. Pending старого hash сначала reconcile прежней �
 Старые manifests с non-canonical role configHash нужно экспортировать заново для новой
 identity после завершения pending/migration. Автоматический перевод старого manifest или
 подмена ожидаемого hash из проверяемого journal не выполняется.
+
+23.09: canonical `npm run test:review` на 0e5d8ea — 336/336 (1466.8 s), exit 0,
+cleanup OK. Отдельный финальный role-casing/manifest run — 3/3 (53.0 s);
+первичный admission/manifest/casing run — 4/4 (86.5 s) до финального дополнения
+lowercase CLI и uppercase fixture. Наборы пересекаются. Fork/live не запускались.
+Логи: `.local/logs/role-casing-review.log`, `role-casing-final-targeted.log`,
+`role-casing-targeted.log` в том же каталоге. После полного baseline менялись только docs.
