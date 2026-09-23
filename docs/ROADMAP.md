@@ -93,6 +93,10 @@ reconciliation. Сохранить независимость действий �
 
 ## 4. Заменить внешние заглушки по отдельности
 
+23.09: [read-only dossier](PAIR_PROFILE_EVIDENCE_2026-09-23.md) готов с явными unknown.
+Следующий target gate — реальный TOKEN/USDG pool/vault/position и BUY receipt;
+не менять adapters по нерелевантной выборке и не снимать local guards.
+
 - Источник комиссий и venue BUY: проверяемая интеграция конкретной площадки, сохранение
   rollover semantics, code/binding evidence и воспроизводимый decoder.
 - Реальный swap: ликвидность/price guard/slippage/deadline и immutable prize destination.

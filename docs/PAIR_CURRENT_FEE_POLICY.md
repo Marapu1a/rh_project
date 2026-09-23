@@ -4,7 +4,9 @@
 Источник: [PAIR Documentation — Fees & Policy Epochs](https://pair.fund/docs).
 
 - V1 и Launch V2 — поколения продукта PAIR, не L1/L2 сети.
-- 70/30 относится к V1; V2 использует выбранные mode, epoch и recipients.
+- Документационная 70/30 относится к V1; V2 использует mode/epoch/recipients.
+  Уточнение 23.09: изученный V2 vault source тоже содержит MODE_SHARE_BPS=7000,
+  но это доля mode в collected fees, не универсальная доля creator в обороте.
 - Режимы V2: Creator Fees, Fee Sharing, Buyback/Burn, Holder Distribution.
   Buyback/burn направляет соответствующие комиссии на выкуп/сжигание, а не нам в claim.
 - Custom/mixed-custom путь сейчас описан как Creator Fees only.
@@ -27,3 +29,6 @@ FeeRouter — разные границы.
 допустимость router как recipient, конкретные активы и фактический claim. Эти проверки
 не выполнялись в текущем исправлении worker. Исторические fork/source исследования
 не подтверждают актуальность нынешнего deployment автоматически.
+
+Свежая read-only проверка: [dossier 23.09](PAIR_PROFILE_EVIDENCE_2026-09-23.md).
+Релизы/маршруты нельзя смешивать; profile selection остаётся открытым.

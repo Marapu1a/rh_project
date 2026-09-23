@@ -99,6 +99,17 @@ receipt до final-save и после final-save. После смерти child 
 Hashless остаётся stop, known hash учитывается ровно один раз. RPC receipt outage не меняет state.
 Runtime-код не менялся. Детали и границы — [LOCAL_NATIVE_REFILL_RECOVERY](LOCAL_NATIVE_REFILL_RECOVERY.md).
 
+## Последний шаг: публичный read-only профиль
+
+23.09 [PAIR/network dossier](PAIR_PROFILE_EVIDENCE_2026-09-23.md): свежие pinned RPC
+снимки, mode bindings, API readiness, source/runtime нового coordinator, public Swap
+sample и getters исторического vault. Runtime не менялся, sends/fork/full отсутствуют.
+Старый native graph hashes совпали, standard-route API503, launchpad coordinator другой.
+Старый fork TOKEN отсутствует public; 12 sampled tx не доказывают нужный TOKEN/USDG BUY.
+Нельзя утверждать доступный creator revenue/стоимость draw/RNG без целевого deployment.
+Следующий шаг: найти и закрепить реальный TOKEN/USDG pool/vault/position выбранного
+release, затем точечный source/BUY adapter при доказанном несовпадении.
+
 ## Текущий шаг к релизу
 
 Ответ GPT b4a89ef прочитан. По указанию пользователя sponsor/merchant ветка отложена;

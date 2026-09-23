@@ -1,27 +1,26 @@
-# Review: календарная проверка экономического кандидата
+# Review: read-only PAIR/network evidence, target selection still open
 
-23.09.2026. Sponsor ветка отложена пользователем. Работаем над базовым релизом.
-Новые экономические цифры всё ещё кандидат; PRODUCT_SPEC/контракты/config не менялись.
+23.09.2026. Read PAIR_PROFILE_EVIDENCE_2026-09-23 and research/pair-*-2026-09-23*.json.
+No sends, deployment, runtime edits, guard removal or full/fork tests. Public RPC reads
+and two bounded collectors only. Earlier economic profile remains a candidate.
 
-Изучи MVP_ECONOMIC_PROFILE, MVP_CALENDAR_CHECK и scripts/mvp-calendar-model.py.
-Скрипт переиспользует scripts/short_model.py, добавляет exact raw funding/project
-split с carry, monthly frozen/current/next, календарь и synthetic eligible BUY.
-520 прогонов: 13 сценариев, 20 seeds, оба порядка Short/Monthly, 120 дней.
-Модельные assertions денег/attempts/intervals прошли, отдельные fixtures проверяют
-funding fragmentation, pending funding win/no-win, Next gate и carry во время Short.
+Findings: seven historical native graph runtime hashes match; active registry handlers
+read successfully. launchpad coordinator differs from native-fee path; Sourcify runtime
+for new getter address matched. Standard-route API503, native ready, custom enabled:
+these are different paths, not a proved inconsistency or selected deployment.
 
-Важно: paid=assigned claimable, claims не исполняются. 6h grid, immediate conversion,
-нет газа/финальности/отказов RNG, seeded Python random не production. 0.2% creator
-revenue — сценарный вход, не реальная PAIR policy. Cohorts фиксированы, BUY allocation
-синтетический. Не объявлять эту проверку доказательством production или farming EV.
+Prior direct-buy evidence is explicitly local-fork-only; its token is absent public.
+Public sample 12 swaps from500 blocks: eight non-direct, one extra commands, three other
+actions on NON-USDG pairs. No eligible target BUY proved. Do not propose adapting our
+TOKEN/USDG decoder merely because unrelated pairs use other commands.
 
-Проверь ошибки именно модели: порядок funding/settlement/freeze, сохранение новых
-поступлений/попыток, clocks от settlement, funding phase и выводы из выборки. Особый
-вопрос: single-wallet/no-win может создавать много платных исполнений при слабой
-выручке; как обосновать ops readiness без произвольного min_wallets и траты prize funds?
-Новые продуктовые ограничения самостоятельно не утверждай.
+Historical vault getters work, epoch1/one recipient10000bps/claimable=0; this does not
+prove same V2 source or zero uncollected revenue. Stored V2 source MODE_SHARE_BPS7000
+is mode share, not a universal creator/volume rate. Current project vault does not exist.
+Gas price observed, not draw/RNG cost. Finality docs/tags not production cutoff policy.
 
-Нужен ограниченный следующий шаг к реальным integration slices, не бесконечный
-перебор экономических вариантов. Подскажи, какие результаты мешают двигаться дальше,
-а какие разумно оставить объявленными ограничениями. Full Solidity suite для нового
-offline Python model не нужен; воспроизведение скрипта достаточно для его assertions.
+Please assess evidence boundaries and suggest one bounded way to identify the actual
+native-fee/custom TOKEN/USDG pool/vault/position plus public BUY receipt for target
+selection. Do not invent production readiness from hashes, API readiness or no due.
+Keep unrelated sponsor work and policy changes out. New collector output path required;
+inspect error/response.error, not just file existence. Details in dossier.
