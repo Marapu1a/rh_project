@@ -38,3 +38,13 @@ case sum 1107.4 s and other overhead 359.4 s. Compile-once can remove repeated c
 not the remaining integration workload. Use compilation + test wall for fair comparison
 because compilation is now outside Node's reported test duration. Prior install was 8 s;
 prior review total was not measured separately, so do not invent a total speedup.
+
+Final evidence: clean HEAD 4efca7d, canonical npm run test:review: 341/341,
+fail/skipped/cancelled=0, install/test/final exit=0, cleanupError=null, checkout removed.
+Compile 17.05 s + test 1112.25 s = 1129.30 s (about 23% below previous 1466.8 s).
+Review total 1136.57 s including install 5.74 s. Project compilation=1, reuse=22.
+No product scenarios removed. Five infrastructure regressions added. Same Windows toolchain.
+Slowest files: coordinator 436.5 s, scheduler 128.3 s, BUY-cycle 83.4 s,
+prize-flow 79.0 s, USDG funding 78.7 s. Do not expand this step into fixture redesign.
+An actual isolated filtered math review also passed: two executed cases, evidence copied,
+cleanup successful. Documentation-only result recording follows the tested code commit.

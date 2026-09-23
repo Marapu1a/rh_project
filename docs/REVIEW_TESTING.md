@@ -76,7 +76,7 @@ Evidence: `C:\Temp\rh-review-8uIG7f\.local\logs\review.log` и `result.json`.
 
 `npm run test:review -- --self-test` — exit 0, cleanup OK на том же HEAD.
 `node --test test/review-runner.test.cjs` — 4/4; они также включены в 334 полного набора.
-После этого baseline менялись только документы. Fork/live профили не запускались.
+Это исторический baseline до role-casing и нового launcher. Актуальный результат ниже.
 
 
 ## Группы, фильтры и однократная компиляция (23.09.2026)
@@ -156,3 +156,27 @@ cleanup не сохраняются. stdout/stderr, исходный ненул�
 не скрываются. Launcher пересылает SIGINT/SIGTERM тестовому процессу; принудительное
 завершение ОС не обещает cleanup, как и раньше. Reporter проверен на текущем Node 24;
 изменение формата событий в другой версии потребует отдельной валидации.
+
+## Подтверждённый результат 23.09.2026
+
+Чистый HEAD `4efca7d`, `npm run test:review`: **341/341**, fail/skipped/cancelled 0.
+Compile 17.05 s, tests 1112.25 s, launcher total 1129.30 s; install 5.74 s,
+review total 1136.57 s. Ordinary project compile=1, reuse=22. Все exit 0,
+cleanupError null, checkout удалён. Node 24.21.0 / npm 11.19.0 / Hardhat 2.29.1 /
+ethers 6.17.0 / solc 0.8.37. Без fork/live.
+По сравнению с 1466.8 s прежнего baseline: compilation+tests быстрее примерно на 23%
+(5m37s); это два локальных измерения, не гарантированный benchmark для других машин.
+336 старых сценариев сохранены, 5 новых проверяют test infrastructure.
+
+Самые долгие файлы (wall): coordinator 436.5 s, scheduler 128.3 s,
+BUY-cycle 83.4 s, prize-flow 79.0 s, USDG funding 78.7 s.
+Следующая возможная оптимизация — подготовка интеграционных fixtures; snapshots,
+совместное deployment и concurrency в этот шаг не входят. Ежедневная экономия —
+выбор затронутых групп/сценариев с нужными соседями, не сокращение негативных проверок.
+
+Адресно: infrastructure 9/9 ~2.5 s; fee-router+registry 24/24, 47.3 s вместе с compile;
+isolated review math --match "two draws": 2 actual cases, exit 0, evidence сохранён,
+cleanup OK. Эти результаты не прибавлять к полному набору.
+Evidence: `.local/logs/compile-once-review.log`,
+`C:\Temp\rh-review-nPLCK9\.local\logs\result.json` и `test-run-dkTHDw.json`.
+После прогона менялись только документы; повторный full для этого не нужен.

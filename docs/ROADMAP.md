@@ -59,8 +59,9 @@ runtime, npm ci из lockfile, полный npm test и сохранение fai
 Полный канонический baseline на e0407e1 — 334/334, cleanup OK. 23.09: role-casing identity исправлен, canonical baseline 0e5d8ea — 336/336, cleanup OK. Далее независимое review пакета.
 Manifest redesign/venue/RNG/recovery не смешивать с процедурой review.
 23.09: принят соразмерный объём тестирования (AGENTS/REVIEW_TESTING); full не обязателен
-для каждого шага. Группы/фильтры, compile-once и per-file timing реализованы; сейчас адресная проверка
-и один полный сравнительный прогон общего harness. Snapshot reuse и concurrency отдельно.
+для каждого шага. Группы/фильтры, compile-once и per-file timing готовы: 341/341 на 4efca7d,
+18m49s compilation+tests вместо 24m27s. Малые шаги проверять адресно по карте REVIEW_TESTING.
+Snapshot reuse и concurrency — отдельные будущие оптимизации, сейчас не требуются.
 
 Прежний intermittent handoff finding отозван без нового trace evidence. Диагностика
 по runId/PID и CLI assertions сохранена. Подтверждённый PID-write/close initialization

@@ -1,6 +1,6 @@
 # Текущий контекст
 
-Обновлено 23.09.2026: role casing canonicalization и совместимая migration проверены.
+Обновлено 23.09.2026: scoped test profiles / compile-once проверены полным прогоном.
 
 ## Где находимся
 
@@ -22,19 +22,25 @@
 По умолчанию — затронутый путь и значимые соседи; docs-only — ссылки/diff.
 Полный набор — по масштабу/риску или на контрольной точке с кратким обоснованием.
 Группы и --match добавлены в launcher/review runner; compile-once и per-file timing
-проходят проверку. [Правила и карта выбора](REVIEW_TESTING.md).
+проверены. [Правила и карта выбора](REVIEW_TESTING.md).
 
 ## Канонический полный baseline
 
-23.09: `npm run test:review` на чистом HEAD `0e5d8ea` — **336/336**, 1466.8 s
-тестов, install/test/final exit 0, cleanupError null. Temp worktree удалён.
+23.09: `npm run test:review` на чистом HEAD `4efca7d` — **341/341**,
+fail/skipped/cancelled 0. Прежние 336 сценариев сохранены, добавлены 5 infrastructure.
+Compile 17.05 s + tests 1112.25 s = 1129.30 s (18m49s); полный review 1136.57 s,
+install 5.74 s. Одна обычная компиляция проекта, 22 reuse; маленькие Probe-компиляции
+инфраструктурных тестов отдельно. Install/test/final exit 0, cleanupError null,
+worktree удалён. Предыдущий baseline 0e5d8ea: 1466.8 s, экономия около 23% / 5m37s
+на compilation+tests; прежний review total отдельно не измерялся.
 Node v24.21.0, npm 11.19.0, Hardhat 2.29.1, ethers 6.17.0, solc 0.8.37;
-зависимости установлены через npm ci --ignore-scripts. Fork/live не запускались.
-Адресные проверки отдельно: `node --test --test-name-pattern="role casing|inspection manifest" test/local-coordinator.test.cjs` — 3/3 (53.0 s).
-Наборы пересекаются, не суммировать. Это baseline до изменений test harness.
-Evidence: `.local/logs/role-casing-review.log`,
-`C:\Temp\rh-review-oJ1Q1P\.local\logs\review.log` и `result.json`.
-[Процедура](REVIEW_TESTING.md), [identity/migration](LOCAL_NATIVE_REFILL_INSPECTOR.md).
+npm ci --ignore-scripts. Fork/live не запускались.
+Evidence: `.local/logs/compile-once-review.log`,
+`C:\Temp\rh-review-nPLCK9\.local\logs\result.json` и `test-run-dkTHDw.json`.
+Адресные проверки: infrastructure 9/9 (~2.5 s), два контрактных файла 24/24
+(47.3 s включая compile), isolated math --match "two draws": 2 сценария, exit 0,
+cleanup OK. Эти выборки пересекаются с full, результаты не суммировать.
+[Процедура и измерения](REVIEW_TESTING.md).
 
 ## Предыдущий результат: manifest и refill
 
@@ -98,7 +104,7 @@ Runtime-код не менялся. Детали и границы — [LOCAL_NA
 Полный baseline подтверждён через `npm run test:review` ([процедура](REVIEW_TESTING.md)).
 Role-address casing исправлен в общем builder: checksum identity, точные старые
 case-варианты для resolved migration, прежние pending/domain guards сохранены.
-Role-casing принят review. Сейчас проверяется тестовый контур: группы, compile-once,
+Role-casing принят review. Тестовый контур проверен: группы, compile-once,
 per-file timing. Один full обоснован изменением общего harness. Role-casing детали в
 [inspector/identity](LOCAL_NATIVE_REFILL_INSPECTOR.md).
 Диагностика готова; runtime repair/reset, автоудаление lock, reconnect-loop и supervisor
