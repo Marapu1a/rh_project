@@ -122,8 +122,11 @@ Review 132b6af: смена manifest ломает старые snapshot hashes. v
 это проверка формы, не admission. Регрессия pending/settled воспроизводит отказ.
 24.09: versioned BUY policy реализована в pure replay; старые FREEZE/EMPTY сохраняют
 manifest своего cutoff, BUY выбирает версию по блоку, carry непрерывен.
-Далее публикация/admission и подключение builders/CLI/coordinator; история пока
-локальный opt-in input, не доверенная production policy. Source collect/fork отдельно.
+24.09: добавлен [read-only admission prototype](BUY_POLICY_ADMISSION.md): RPC notices,
+полный manifest в event, pinned trust root, sender/runtime/hash-chain/notice/finalized
+checks. 18/18 direct-buy tests, новые RPC fixtures синтетические.
+Далее реальный source/полномочия/finality и подключение builders/CLI/coordinator;
+production publication не реализована, pure input сам по себе не доверенный. Source collect/fork отдельно.
 Сайт/уведомления и статистика частоты routes ещё не реализованы.
 
 ## Текущий шаг к релизу

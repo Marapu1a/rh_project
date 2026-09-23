@@ -125,3 +125,7 @@ validateRouteExtensionCandidate проверяет лишь форму; v2 — �
 24.09: buyPolicyHistory в direct-buy.cjs и cutoff domain в attempt-lifecycle.cjs
 поддерживают локальную историю manifest. Старые FREEZE/EMPTY/TERMINAL сохраняются.
 Интеграция builders/CLI/coordinator и provenance объявлений ещё не подключена.
+
+24.09: buy-policy-admission.cjs — отдельный read-only loader из закреплённого
+источника событий с полными manifests. [Границы](BUY_POLICY_ADMISSION.md): synthetic
+RPC tests, без контракта публикации/deployment и интеграции исполнителей.

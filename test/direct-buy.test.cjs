@@ -251,3 +251,51 @@ test('FREEZE after activation keeps policy of its earlier cutoff; future version
  const bad=copy(policy);bad.versions.reverse();assert.throws(()=>replayAttempts(bad,h.config,h.blocks));
  const mismatch=copy(policy);mismatch.versions[1].manifest.routes[1].fromBlock++;assert.throws(()=>replayAttempts(mismatch,h.config,h.blocks),/activation mismatch/);
 });
+
+test('policy admission loads only authorized finalized notices with full manifests; preserves old snapshot',async()=>{
+ const {loadBuyPolicy,ABI}=require('../scripts/buy-policy-admission.cjs');
+ const {history}=require('./fixtures/attempt-history.cjs');const {replayAttempts}=require('../scripts/attempt-lifecycle.cjs');
+ function fixture(){
+  const h=history(),draw=h.freeze('admission old','SHORT',h.head(),[h.participant(1)]),source=h.config.source,publisher=h.wallet;
+  const notice=h.head().blockNumber+1,fromBlock=notice+2;
+  const next={...copy(h.manifest),schema:'direct-buy-v2',routeVersion:'scheduled-routes-v1',routes:[{id:h.manifest.routeVersion,fromBlock:0},{id:'rh-ur-10-060c0f-v1',fromBlock}]};
+  const trust={chainId:h.manifest.chainId,source,publisher,instanceId:h.config.instanceId,sourceCodeHash:keccak256('0x6000'),genesisHash:hash(h.manifest),noticeBlocks:2};
+  h.append('policy notice',source,'0x',[h.log(ABI,'BuyPolicyAnnounced',[trust.instanceId,hash(h.manifest),hash(next),fromBlock,canonical(next)],source)]);
+  const log=h.blocks.at(-1).transactions[0].receipt.logs[0],pair=h.blocks.at(-1).transactions[0];
+  h.empty('activate wait');h.empty('activate');const head=h.blocks.at(-1);let logs=[log],code='0x6000';
+  const rpc=async(method,params)=>{
+   if(method==='eth_chainId')return '0x7a69';
+   if(method==='eth_getCode')return code;
+   if(method==='eth_getLogs')return copy(logs);
+   if(method==='eth_getTransactionByHash')return copy(pair.tx);
+   if(method==='eth_getTransactionReceipt')return copy(pair.receipt);
+   if(method==='eth_getBlockByNumber')return copy(params[0]==='finalized'?head:h.blocks.find(b=>BigInt(b.number)===BigInt(params[0]))||{number:h.manifest.anchor.number,hash:h.manifest.anchor.hash});
+   throw Error('Unexpected RPC method '+method);
+  };
+  return {h,draw,trust,next,log,pair,rpc,setLogs:x=>logs=x,setCode:x=>code=x};
+ }
+ const good=fixture(),result=await loadBuyPolicy({trust:good.trust,genesis:good.h.manifest,rpc:good.rpc});
+ assert.equal(result.history.versions.length,2);
+ assert.equal(replayAttempts(result.history,good.h.config,good.h.blocks).draws[0].snapshotHash,good.draw.snapshotHash);
+ for(const mutate of [
+  x=>{x.trust.genesisHash=id('wrong');},
+  x=>{x.trust.publisher=x.trust.source;},
+  x=>{x.log.address=x.h.manifest.router;},
+  x=>{x.log.blockHash=id('reorg');},
+  x=>{x.pair.receipt.status='0x0';},
+  x=>{x.pair.receipt.transactionHash=id('other');},
+  x=>{x.trust.noticeBlocks=3;},
+  x=>{x.setCode('0x6001');},
+  x=>{x.setLogs([x.log,x.log]);},
+  x=>{x.log.removed=true;},
+  x=>{x.pair.receipt.logs=[];},
+  x=>{const a=ABI.parseLog(x.log).args;Object.assign(x.log,ABI.encodeEventLog('BuyPolicyAnnounced',[a.instanceId,a.previousHash,id('false manifest'),a.fromBlock,a.manifest]));},
+  x=>{const a=ABI.parseLog(x.log).args;Object.assign(x.log,ABI.encodeEventLog('BuyPolicyAnnounced',[a.instanceId,id('wrong parent'),a.nextHash,a.fromBlock,a.manifest]));},
+  x=>{const a=ABI.parseLog(x.log).args;Object.assign(x.log,ABI.encodeEventLog('BuyPolicyAnnounced',[id('other instance'),a.previousHash,a.nextHash,a.fromBlock,a.manifest]));},
+  x=>{const a=ABI.parseLog(x.log).args;Object.assign(x.log,ABI.encodeEventLog('BuyPolicyAnnounced',[a.instanceId,a.previousHash,a.nextHash,BigInt(x.log.blockNumber),a.manifest]));}
+ ]){const x=fixture();mutate(x);await assert.rejects(loadBuyPolicy({trust:x.trust,genesis:x.h.manifest,rpc:x.rpc}));}
+ const missing=fixture();missing.setLogs([]);assert.equal((await loadBuyPolicy({trust:missing.trust,genesis:missing.h.manifest,rpc:missing.rpc})).history.versions.length,1);
+ const reorg=fixture();let count=0;const changing=async(m,p)=>{const v=await reorg.rpc(m,p);if(m==='eth_getBlockByNumber'&&p[0]!=='finalized'&&BigInt(p[0])===BigInt(reorg.h.head().blockNumber)&&++count===1)v.hash=id('changed checkpoint');return v;};
+ await assert.rejects(loadBuyPolicy({trust:reorg.trust,genesis:reorg.h.manifest,rpc:changing}),/checkpoint changed/);
+ const noFinal=fixture();await assert.rejects(loadBuyPolicy({trust:noFinal.trust,genesis:noFinal.h.manifest,rpc:async(m,p)=>m==='eth_getBlockByNumber'&&p[0]==='finalized'?null:noFinal.rpc(m,p)}),/Missing block/);
+});

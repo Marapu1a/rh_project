@@ -1,23 +1,23 @@
-# Review: versioned BUY policy в pure replay
+# Review: read-only BUY policy admission prototype
 
-24.09.2026. Исправляем конфликт hash manifest и исторических snapshots из 132b6af.
-Добавлен buy-policy-history-v1 с полными manifests и activation/notice block+hash.
-BUY выбирает manifest по блоку сделки; одна регистрация/carry ledger на всю историю.
-FREEZE и EMPTY выбирают snapshot domain по cutoff, TERMINAL сохраняет ссылку на FREEZE.
-Старый manifest API и snapshots не мигрируются вручную.
+24.09.2026. По указанию пользователя сохраняем прозрачность условий и гибкость,
+не добавляем скрытые полномочия. Реализован scripts/buy-policy-admission.cjs.
+Подробно: BUY_POLICY_ADMISSION.md. Контракт публикации НЕ реализован, trust source
+и publisher НЕ назначены production ролями. Исторический pure replay не менялся.
 
-Проверьте scripts/direct-buy.cjs, scripts/attempt-lifecycle.cjs и новые тесты в
- test/direct-buy.test.cjs, test/monthly-replay.test.cjs. Документ DIRECT_BUY_REPLAY.md.
-39/39 targeted (эти два файла + attempt-lifecycle.test.cjs); full/fork не запускались.
-Переходы синтетические поверх старого fork evidence, не production execution.
+Loader получает pinned trust root и genesis, читает finalized RPC события с полным
+canonical manifest, проверяет источник/runtime, прямого publisher, receipt/header,
+instance/previousHash/nextHash, notice и append-only constraints. Сам собирает
+history; caller не передаёт announcedAtBlock. Старые snapshots сохраняются.
+18/18 test:direct-buy; admission scenarios используют synthetic RPC. Нет live/fork/full.
 
-Особое внимание: activation inclusive, notice canonical anchor, запрет исторических
-изменений, непрерывный carry, pending/settled old draws, FREEZE после обновления
-со старым cutoff, EMPTY domains, head domain vs draw domain. Не удаляли hash из domain.
+Проверьте correctness/bypass/ложные отказы. Особенно: finalized checkpoint и reorg,
+полнота источника, границы доверия к RPC, source runtime vs фактические полномочия,
+отсутствующий notice, availability полного manifest в событии. Hash кода и finalized
+от RPC не выдаются за независимое доказательство. Source proxy автоматически не
+одобряем. Builders/CLI/coordinator не подключены; pure JSON остаётся тестовым входом.
 
-Граница: запись notice block/hash не доказывает публикацию или авторизацию. Input
-пока локальный; production admission, policy loader, builders/CLI/coordinator ещё
-не подключены. Следующий отдельный шаг — публично проверяемая policy admission,
-затем интеграция потребителей. Deactivation route пока не реализована.
-Просьба проверить локальную модель и подсказать минимальный следующий пакет,
-не выдавая этот replay за готовую production миграцию.
+Следующий ограниченный шаг: определить минимальный реальный источник публикации
+без скрытого расширения прав, связывание instance/genesis и finality. Предложите
+простую модель authority и оговорки для пользователя; не утверждайте параметры
+notice или production readiness по mock-тестам. Deactivation отдельно.
