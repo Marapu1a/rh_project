@@ -76,7 +76,12 @@ Storage faults и mined revert покрыты предыдущими теста�
 23.09: CLI --watch получает ограниченный retry временных RPC read outages,
 с backoff и обязательной сверкой known pending перед новой работой. Unknown send,
 state/config/lock ошибки остаются stop. Проверка этого пакета адресная.
-Далее ограниченный recovery design для stale lock/hashless tx/replacement и сохранности state. Не выдавать force-clear за
+23.09: после принятого watch review ближайший шаг — [численный профиль MVP](MVP_ECONOMIC_PROFILE.md),
+обсуждение кандидатов и затем economic/farming sweep. Новые цифры пока не утверждены.
+По запросу владельца параллельно сформулировано обсуждение sponsor/merchant пилота
+в GPT_REVIEW_REQUEST: коммерческая выгода и связь TOKEN/отдельной акции, без реализации.
+Recovery design для stale lock/hashless tx/replacement и сохранности state остаётся
+до production, с привязкой к выбранному deployment runtime/supervisor. Не выдавать force-clear за
 reconciliation. Сохранить независимость действий при доказанном отказе.
 
 Сохранить разделение identity/ops; текущая история содержит pending/lastResolved, а не полный journal.

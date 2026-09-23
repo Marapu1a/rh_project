@@ -1,40 +1,108 @@
-# Review: bounded watch recovery after transient RPC reads
+# Обсуждение: зачем партнёру наш токен и как связать совместные промо
 
-23.09.2026. Previous test infrastructure accepted in 130a029. This package returns
-work to runtime automation. Please review actual code; do not infer safety from retries alone.
+23.09.2026. Сейчас нужен продуктовый и коммерческий разбор, не код и не очередной
+технический аудит. Watch recovery принят в GPT_REVIEW_RESPONSE на fccc916.
+Этот файл — постоянное обращение: ответ оставь в docs/GPT_REVIEW_RESPONSE.md.
 
-Before: CLI --watch exited on receipt read outage. Now a narrow transport allowlist
-permits backoff 1/2/4/8/16/30 seconds (capped), followed by a fresh coordinator pass.
-Existing journal/locks/identity/reconciliation gate every pass. Single-shot API stays
-single-shot. Config/state errors, cleanup, network change, unknown send/hashless,
-policy halt, unconfirmed receipts and unclassified errors still stop.
+## Контекст и намерение владельца
 
-Known hash + confirmation transport/receipt timeout can resume through reconciliation.
-Known pendingReceipt polls at ordinary pollSeconds. No blind resend, no marker clearing,
-no lock removal, no endpoint/signer failover. No contracts or product math changed.
-Refill broadcast/persistence unknown result is deliberately not relaxed by this package.
+Мы строим спекулятивный meme TOKEN с собственным постоянным промо: USDG Short по
+готовности, но не чаще 6 часов после предыдущего settlement; jackpot по готовности,
+не чаще месячного интервала, с обеспеченным следующим стартом 100 USDG.
+Промо финансируется creator revenue, допускает внешнее USDG funding. Призовая казна
+невозвратная, project/ops деньги отдельно. Нет торговли — нет нового комиссионного
+дохода, но накопленные средства сохраняются. Публичного запуска пока нет.
 
-Code: local-rpc-watch.cjs, run-local-coordinator.cjs, error metadata in prize-flow,
-scheduler and coordinator; structured HTTP status from the independent replay scanner.
-Temporary retry flags do not authorize journal migration. HTTP request timeout 20 s;
-SIGINT/SIGTERM interrupt waits but cannot promise immediate cancellation of a running scan.
+100 nominal USDG накопленного eligible BUY зарегистрированного кошелька = entry;
+entry даёт отдельные Short и Monthly attempts. SELL не отменяет entry, holding
+не требуется. Один кошелёк не равен одному человеку; Sybil resistance не обещана.
 
-Tests: allowlist exclusions incl cleanup/network change; bounded/reset backoff; one-shot
-failure; known receipt polling; abort; real HTTP 503 recovery using ethers. Integration:
-real transaction timeout, mined original, two receipt outages, unchanged pending journal,
-one conversion, next draw; estimate read retry followed by hashless send stop. Actual
-CLI child recovers startup HTTP 503, completes, exits on SIGTERM event. Windows test
-uses IPC to deliver process signal event, not native OS signal delivery.
+Владелец после выхода проекта планирует искать спонсоров и партнёров, в том числе
+в Telegram-каналах, где, по его наблюдению, продают постеры, а среди покупателей
+разыгрывают призы. Это описание потенциального сегмента, а не проверка конкретного
+бизнеса или его правового статуса. Интересуют также физические призы и товары.
 
-Please focus on false retry permissions at broadcast/cleanup boundaries, propagation
-of worker error metadata, known hash reconciliation, startup failures and stopped state.
-No supervisor/stale-lock/hashless repair or fixture optimization in this package.
-Scoped verification commands/results are recorded in CURRENT_CONTEXT. Do not run full
-solely to review this change: targeted watch + coordinator neighbors is the intended scope.
+Вопрос владельца: «Моя выгода понятна. Какая выгода продавцу добавлять прослойку в
+виде токена? Как связать покупку токена с его розыгрышем или отдельной акцией так,
+чтобы это было удобно, понятно и выгодно обеим сторонам?»
 
-Confirmed 23.09: watch 6/6 (0.26 s), coordinator --match "watch " 8 actual cases
-(62.2 s compile+tests), final neighbor filter 10 cases (87.7 s), infrastructure 9/9
-(2.19 s). These overlap; no full/fork/live. An initial test tried overriding tx.wait,
-but ethers replaced that wrapper; the final test uses real automining-off timeout,
-then original mining and controlled receipt-read outages. Do not confuse the old
-341/341 full baseline with validation of this package.
+Наши источники: PRODUCT_SPEC (особенно постоянная основа/спонсорский слой),
+CURRENT_CONTEXT, MVP_ECONOMIC_PROFILE. Последний — расчётный кандидат, НЕ набор
+утверждённых production параметров. Владелец положительно оценил таблицы, но нового
+точного deploy-профиля не фиксировали. Газ/finality требуют отдельного обоснования.
+
+## Границы, которые сохраняем
+
+- Базовые Short/Monthly живут независимо от появления и ухода спонсора.
+- USDG donation в базовую казну следует GENERAL/targeted правилам, project fee=0,
+  не подлежит возврату и не становится бюджетом доставки физического приза.
+- Спонсорская рекламная оплата/комиссия за продажи и prize funding — разные потоки;
+  нельзя молча вычитать оплату проекта из заявленного призового фонда.
+- Отдельная акция не переписывает frozen budgets, awards, random или уже обещанные
+  условия участия. Партнёр не получает доступ к базовой казне/контроллерам.
+- Отдельное согласие на акцию; базовые денежные attempts не расходуются партнёрским
+  промо. Переиспользование активности как основания участия пока только направление.
+- Не обещаем доказательство доставки вещи блокчейном или уникальность человека по wallet.
+- Sponsor API/учёт товаров/доставка сейчас не реализованы. Не предлагай срочно расширять
+  контракты, добавлять proxy, универсальный controller или KYC всему базовому слою.
+
+## Предварительные мысли Codex — оспаривай
+
+Токен сам по себе не даёт продавцу пользу. Криптокошелёк и обязательная вторая покупка
+могут снижать конверсию. Продавать партнёру логичнее доступ к подходящей аудитории,
+измеримые дополнительные продажи и повторный контакт; аудитория у нового проекта
+ещё не доказана. Отличать спонсора, покупающего внимание, от продавца, покупающего заказы.
+
+Варианты для сравнения, НЕ принятые решения:
+
+A. Партнёр предоставляет отдельный приз; eligible активность TOKEN открывает возможность
+участвовать в дополнительной акции после согласия. Продавец получает размещение,
+переходы и предложение своих товаров. Как не привлечь только охотников за бесплатным?
+
+B. Его собственная продажа постеров/акция остаётся самостоятельной. Нашим участникам
+выделяется отдельный бонус/приз/предложение; трафик и заказы учитываются по ссылке или
+промокоду. Покупка TOKEN не становится обязательной для всех его прежних клиентов.
+
+C. Продавец платит проекту за подтверждённые дополнительные продажи/размещение и
+отдельно финансирует промо. Нужно показать, что здесь даёт TOKEN по сравнению с
+обычной реферальной программой и где партнёрская маржа вообще позволяет такое сотрудничество.
+
+Не принимаем на веру, что обязательно покупать и постер, и TOKEN — хорошая воронка.
+При этом вариант «обычная реклама, токен вообще ни на что не влияет» тоже не отвечает
+на исходный вопрос о связи продукта. Если разумной связи на старте нет — скажи прямо.
+
+## Что просим проработать
+
+1. Дай 2–3 конкретные модели: путь покупателя, выгода партнёра, выгода проекта,
+   роль TOKEN, денежные/призовые потоки. Сравни с его нынешней самостоятельной акцией.
+2. Выбери одну модель для первого небольшого пилота. Что предложить партнёру при
+   ещё маленькой аудитории? Не обещай ему продажи, которых мы пока не доказали.
+3. Как именно связать участие: historical/new eligible BUY, регистрация, отдельный
+   opt-in, окно активности, cutoff? Нужна ли покупка товара? Не добавляй обязательное
+   удержание токена или задним числом новые права билета как будто это уже принято.
+4. Стоит ли использовать нашу базовую случайность или отдельный draw? Различай
+   использование данных об активности и использование того же random/result.
+   Как избежать конфликтов сроков и зависимости базовых draws от доставки призов?
+5. Кто и когда передаёт физический приз, кто проверяет получение, что если партнёр
+   исчез, отказал в доставке или товар не соответствует? Какой минимум обеспечения
+   реалистичен для пилота, без универсального marketplace/арбитражной платформы?
+6. Как измерять результат: новые оплаченные заказы, маржинальная прибыль, стоимость
+   привлечения, возвраты, повторные покупки. Чем обычный промокод недостаточен для
+   доказательства инкрементальных продаж? Покажи пример break-even на ЯВНО условных
+   цифрах, без выдачи их за реальные конверсии или цены Telegram-рекламы.
+7. Где абьюз: Sybil/перепродажа entries, накрутка BUY, отмена заказа после получения
+   права, ложные продажи/саморефералы, неоднократные заявки на один заказ. Что стоит
+   предотвращать в пилоте, а что допустимо оставить объявленным ограничением?
+8. Предложи простой способ объяснить это пользователю и короткий оффер партнёру.
+   Раздели основной USDG-приз, отдельный товарный приз и рекламную оплату.
+9. Если приводишь реальные кейсы, проверь первоисточники и дай ссылки/дату. Юридическую
+   допустимость paid purchase/token eligibility не предполагай: обозначь вопросы,
+   зависящие от страны/формата, без попыток назвать gambling безопасным из-за слова «промо».
+
+## Ожидаемый ответ
+
+Сначала честный коммерческий вывод: почему партнёр согласится или почему откажется.
+Затем компактное сравнение вариантов, рекомендуемый пилот и схема денег/участия/
+выдачи приза. В конце — что уточнить у владельца и какие возможности заложить позже.
+Не писать код, не переутверждать экономику базовых draws и не превращать brainstorm
+в обязательный backlog. Нужна реалистичная взаимная выгода, а не сложность ради TOKEN.
