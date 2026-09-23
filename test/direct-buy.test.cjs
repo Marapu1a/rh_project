@@ -153,3 +153,40 @@ test('independent RPC scan fetches all receipts and detects changed head or code
     mode='reorg';headReads=0;await assert.rejects(scan(manifest,url,to),/Chain changed/);
   }finally{server.closeAllConnections();await new Promise(resolve=>server.close(resolve));}
 });
+const publicEvidence=require('../research/pair-usdg-active-reference-2026-09-23.json');
+const scheduled={...m,...publicEvidence.decoderConfig,schema:'direct-buy-v2',routeVersion:'scheduled-routes-v1',codeHashes:publicEvidence.codeHashes,
+ routes:[{id:'rh-ur-10-060b0e-v1',fromBlock:0},{id:'rh-ur-10-060c0f-v1',fromBlock:60495395}]};
+const publicBuys=publicEvidence.samples.filter(s=>s.decoded.some(d=>d.reason==='ACTION_SEQUENCE')).map(s=>({
+ tx:publicEvidence.reads.find(r=>r.method==='eth_getTransactionByHash'&&r.params[0]===s.hash).response.result,
+ receipt:publicEvidence.reads.find(r=>r.method==='eth_getTransactionReceipt'&&r.params[0]===s.hash).response.result}));
+test('scheduled routes decode three public BUY receipts, gated at exact activation block',()=>{
+ for(const {tx,receipt} of publicBuys){const d=decodeTransaction(scheduled,tx,receipt)[0];assert.equal(d.status,'ELIGIBLE');assert.equal(d.payer,tx.from.toLowerCase());assert(BigInt(d.grossQuoteRaw)>0n);
+ const future=copy(scheduled);future.routes[1].fromBlock=Number(BigInt(receipt.blockNumber))+1;assert.equal(decodeTransaction(future,tx,receipt)[0].reason,'ROUTE_NOT_ACTIVE');
+ assert.equal(decodeTransaction({...scheduled,schema:'direct-buy-v1',routeVersion:m.routeVersion,routes:undefined},tx,receipt)[0].status,'UNSUPPORTED_ROUTE');}
+});
+test('route policy rejects unknown, duplicate, invalid blocks and unpinned runtime; legacy replay unchanged',()=>{
+ const {validateManifest}=require('../scripts/direct-buy.cjs');validateManifest(scheduled);
+ for(const mutate of [x=>x.routes.push(x.routes[0]),x=>x.routes[0].id='unknown',x=>x.routes[0].fromBlock=-1,x=>x.routes[0].fromBlock='1',x=>x.codeHashes.router=id('other')]){const x=copy(scheduled);mutate(x);assert.throws(()=>validateManifest(x));}
+ const upgraded={...m,schema:'direct-buy-v2',routeVersion:'scheduled-routes-v1',routes:[{id:m.routeVersion,fromBlock:0}]};
+ const old=replay(m,blocks),next=replay(upgraded,blocks);assert.deepEqual(next.wallets,old.wallets);assert.deepEqual(next.decisions,old.decisions);assert.notEqual(next.manifestHash,old.manifestHash);
+});
+test('public route rejects malformed settlement, limits, extra commands and inconsistent transfers',()=>{
+ function params(tx,change){const parsed=EXECUTE_ABI.parseTransaction({data:tx.input});const [actions,ps]=coder.decode(['bytes','bytes[]'],parsed.args.inputs[0]);const a=Array.from(ps);change(a);tx.input=EXECUTE_ABI.encodeFunctionData('execute',['0x10',[coder.encode(['bytes','bytes[]'],[actions,a])],parsed.args.deadline]);}
+ const mutations=[
+ ({tx})=>params(tx,p=>p[1]=coder.encode(['address','uint256'],[scheduled.quote,0n])),
+ ({tx})=>params(tx,p=>p[2]=coder.encode(['address','uint256'],[scheduled.token,(1n<<256n)-1n])),
+ ({tx})=>params(tx,p=>p[1]=coder.encode(['address','uint256'],[scheduled.token,1000000000000n])),
+ ({tx})=>params(tx,p=>p[1]+='00'),
+ ({tx})=>{tx.from=scheduled.router;},
+ ({receipt})=>{receipt.status='0x0';},
+ ({receipt})=>{receipt.logs.push(copy(receipt.logs.find(l=>l.address.toLowerCase()===scheduled.quote.toLowerCase())));},
+ ({tx})=>{const p=EXECUTE_ABI.parseTransaction({data:tx.input});tx.input=EXECUTE_ABI.encodeFunctionData('execute',['0x1010',[p.args.inputs[0],p.args.inputs[0]],p.args.deadline]);}
+ ];for(const mutate of mutations){const x=copy(publicBuys[0]);mutate(x);assert.notEqual(decodeTransaction(scheduled,x.tx,x.receipt)[0].status,'ELIGIBLE');}
+});
+test('route upgrades are append-only and cannot activate before or at announcement',()=>{
+ const {validateRouteUpgrade}=require('../scripts/direct-buy.cjs');const next={...m,schema:'direct-buy-v2',routeVersion:'scheduled-routes-v1',routes:[{id:m.routeVersion,fromBlock:0},{id:'rh-ur-10-060c0f-v1',fromBlock:70000001}]};
+ validateRouteUpgrade(m,next,70000000);
+ assert.throws(()=>validateRouteUpgrade(m,next,70000001),/announcement/);
+ const changed=copy(next);changed.routes[0].fromBlock=1;assert.throws(()=>validateRouteUpgrade(m,changed,70000000),/Historical/);
+ assert.throws(()=>validateRouteUpgrade(m,{...next,registry:next.router},70000000),/Unrelated/);
+});

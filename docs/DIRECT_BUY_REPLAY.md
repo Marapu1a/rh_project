@@ -97,3 +97,34 @@ npm run report:direct-buy
 ## Следующая граница
 
 Не реализованы: production daemon/finality/выбор cutoff, денежный snapshot commitment, random и проверка winners. Учёт потребления attempts, inclusive cutoff и проверка attempt snapshot реализованы следующим отдельным [этапом](ATTEMPT_LIFECYCLE.md), пока на test-only lifecycle source. Smart-wallet wrappers, exact-out и другие маршруты не расширяем молча.
+
+## 23.09: scheduled routes и второй direct adapter
+
+Старый direct-buy-v1 не изменяет результаты. Новый manifest: schema `direct-buy-v2`,
+routeVersion `scheduled-routes-v1`, routes — массив `{id, fromBlock}`. Поддержаны
+`rh-ur-10-060b0e-v1` и `rh-ur-10-060c0f-v1`; fromBlock — целое безопасное JS number,
+включительно. Неизвестные/повторные id, отрицательные блоки отвергаются. Новый schema
+требует router code hash из сохранённого source/runtime evidence. Pure decoder не
+читает сеть: проверка фактического runtime остаётся задачей RPC evidence verifier.
+
+Второй adapter использует SETTLE_ALL/TAKE_ALL: обе валюты проверяются, фактический
+quote debt <= maxAmount, token output >= minAmount; payer и recipient — caller
+прямого execute. Остальные ограничения v1 сохранены, включая два точных transfers.
+Основание: сохранённые V4Router.sol, Lock.sol и Dispatcher.sol в research/direct-buy/sources;
+source provenance описан выше (Sourcify match, не независимая перекомпиляция).
+Runtime hash совпадает с сохранённым публичным reference. Это ограниченный adapter,
+не общая поддержка UniversalRouter, aggregator или смарт-кошельков.
+
+`validateRouteUpgrade(previous,next,announcedAtBlock)` разрешает только добавление
+routes, сохраняет старые id/границы и все остальные поля manifest; новые fromBlock
+строго позже announcedAtBlock. Это pure helper, НЕ опубликованный on-chain registry
+политики: достоверность announcement block он не доказывает. Автоматический rollout
+в coordinator и сайт не подключены. Их admission обязан использовать проверяемое
+объявление и этот helper; произвольная подмена manifest не запрещена самим JSON.
+Manifest hash уже связывает replay с политикой. Frozen datasets не пересчитываем.
+Реальные production activation blocks в этом пакете не назначались.
+
+Проверки: npm run test:direct-buy — 14/14, включая три сохранённых публичных BUY,
+activation boundary, старый replay, неверные limits/currency, лишние commands и
+transfers, payer mismatch, noncanonical calldata, failed receipt и append-only upgrade.
+Это offline replay, не новый fork или полный публичный registry/entry replay.

@@ -15,8 +15,26 @@ function canonical(value){
   return JSON.stringify(value);
 }
 function hash(value){return keccak256(toUtf8Bytes(canonical(value)));}
+const ROUTES=Object.freeze({'rh-ur-10-060b0e-v1':'0x060b0e','rh-ur-10-060c0f-v1':'0x060c0f'});
+const ROUTER_HASH='0x2ce6aaaf9f4151f5e1cbf774668772f17f532ae11b15e9284fd0a072a8b0fbde';
+function routePolicy(m){
+  if(m.schema==='direct-buy-v2'){
+    ensure(m.routeVersion==='scheduled-routes-v1','Unsupported route policy');
+    ensure(m.codeHashes?.router===ROUTER_HASH,'Unsupported router runtime');
+    ensure(Array.isArray(m.routes)&&m.routes.length>0,'Empty routes');
+    const seen=new Set();
+    for(const r of m.routes){
+      ensure(Object.hasOwn(ROUTES,r.id)&&!seen.has(r.id),'Unknown/duplicate route');
+      ensure(typeof r.fromBlock==='number'&&Number.isSafeInteger(r.fromBlock)&&r.fromBlock>=0,'Invalid activation block');
+      seen.add(r.id);
+    }
+    return m.routes;
+  }
+  ensure(m.schema==='direct-buy-v1'&&m.routeVersion==='rh-ur-10-060b0e-v1'&&m.routes===undefined,'Unsupported schema/route');
+  return [{id:m.routeVersion,fromBlock:0}];
+}
 function validateManifest(m){
-  ensure(m.schema==='direct-buy-v1'&&m.routeVersion==='rh-ur-10-060b0e-v1','Unsupported schema/route');
+  routePolicy(m);
   ensure(m.quoteDecimals===6&&m.entryThresholdRaw==='100000000','Expected 100 nominal USDG (6 decimals)');
   for(const field of ['router','manager','token','quote','registry','hook'])ensure(isAddress(m[field]),'Invalid '+field);
   ensure(low(m.token)!==low(m.quote),'Identical assets');
@@ -27,6 +45,18 @@ function validateManifest(m){
   ensure(low(key[4])===low(m.hook),'Wrong hook');
   ensure(keccak256(coder.encode(['address','address','uint24','int24','address'],key))===low(m.poolId),'Wrong pool id');
   number(m.chainId);number(m.anchor.number);
+}
+// Off-chain admission helper. Caller must supply an independently established publication
+// block; this pure function cannot prove public announcement or enforce deployed policy.
+function validateRouteUpgrade(previous,next,announcedAtBlock){
+  validateManifest(previous);validateManifest(next);number(announcedAtBlock);
+  ensure(next.schema==='direct-buy-v2','Expected scheduled routes');
+  const strip=m=>{const x={...m};delete x.schema;delete x.routeVersion;delete x.routes;return x;};
+  ensure(canonical(strip(previous))===canonical(strip(next)),'Unrelated manifest change');
+  const before=routePolicy(previous),after=routePolicy(next);
+  ensure(after.length>before.length,'No added routes');
+  for(let i=0;i<before.length;i++)ensure(canonical(before[i])===canonical(after[i]),'Historical route changed');
+  for(const r of after.slice(before.length))ensure(r.fromBlock>number(announcedAtBlock),'Activation must follow announcement');
 }
 function decodeCanonical(types,data){
   const result=coder.decode(types,data);
@@ -57,18 +87,28 @@ function decodeTransaction(m,tx,receipt){
       if(!parsed||parsed.args.commands!=='0x10'||parsed.args.inputs.length!==1)return result('UNSUPPORTED_ROUTE','COMMAND_SEQUENCE');
       if(low(EXECUTE_ABI.encodeFunctionData('execute',parsed.args))!==low(tx.input))return result('UNSUPPORTED_ROUTE','NON_CANONICAL_CALLDATA');
       const [actions,parameters]=decodeCanonical(['bytes','bytes[]'],parsed.args.inputs[0]);
-      if(actions!=='0x060b0e'||parameters.length!==3)return result('UNSUPPORTED_ROUTE','ACTION_SEQUENCE');
+      // Research-only projections without a schema retain legacy decoding only.
+      const policy=m.schema===undefined?[{id:'rh-ur-10-060b0e-v1',fromBlock:0}]:routePolicy(m);
+      const route=policy.find(r=>ROUTES[r.id]===actions);
+      if(!route||parameters.length!==3)return result('UNSUPPORTED_ROUTE','ACTION_SEQUENCE');
+      if(number(log.blockNumber)<route.fromBlock)return result('UNSUPPORTED_ROUTE','ROUTE_NOT_ACTIVE');
       const [spec]=decodeCanonical([SWAP_TYPE],parameters[0]);
       const [key,zeroForOne,amountIn,minimum,price,hookData]=spec;
       if(keccak256(coder.encode(['address','address','uint24','int24','address'],key))!==low(m.poolId))return result('AMBIGUOUS','CALLDATA_POOL_MISMATCH');
       if(zeroForOne!==quote0||amountIn===0n||price!==0n||hookData!=='0x')return result('UNSUPPORTED_ROUTE','SWAP_PARAMETERS');
-      const [settleCurrency,settleAmount,payerIsUser]=decodeCanonical(['address','uint256','bool'],parameters[1]);
-      const [takeCurrency,takeRecipient,takeAmount]=decodeCanonical(['address','address','uint256'],parameters[2]);
-      if(low(settleCurrency)!==low(m.quote)||low(takeCurrency)!==low(m.token)||settleAmount!==0n||takeAmount!==0n||!payerIsUser)
-        return result('UNSUPPORTED_ROUTE','SETTLEMENT_PARAMETERS');
-      // Proven only for a top-level execute call to the pinned router: its lock stores
-      // msg.sender, and payerIsUser resolves to that locker. Nested wallet calls excluded.
-      const payer=low(tx.from),recipient=BigInt(takeRecipient)===1n?payer:low(takeRecipient);
+      const payer=low(tx.from);let recipient=payer;
+      if(actions==='0x060b0e'){
+        const [settleCurrency,settleAmount,payerIsUser]=decodeCanonical(['address','uint256','bool'],parameters[1]);
+        const [takeCurrency,takeRecipient,takeAmount]=decodeCanonical(['address','address','uint256'],parameters[2]);
+        if(low(settleCurrency)!==low(m.quote)||low(takeCurrency)!==low(m.token)||settleAmount!==0n||takeAmount!==0n||!payerIsUser)
+          return result('UNSUPPORTED_ROUTE','SETTLEMENT_PARAMETERS');
+        recipient=BigInt(takeRecipient)===1n?payer:low(takeRecipient);
+      }else{
+        const [settleCurrency,maxAmount]=decodeCanonical(['address','uint256'],parameters[1]);
+        const [takeCurrency,minAmount]=decodeCanonical(['address','uint256'],parameters[2]);
+        if(low(settleCurrency)!==low(m.quote)||low(takeCurrency)!==low(m.token))return result('UNSUPPORTED_ROUTE','SETTLEMENT_PARAMETERS');
+        if(-q>maxAmount||t<minAmount)return result('AMBIGUOUS','SETTLEMENT_LIMIT_MISMATCH');
+      }
       const attributed={payer,recipient,grossQuoteRaw:String(-q)};
       if(payer!==recipient)return result('UNSUPPORTED_ROUTE','PAYER_RECIPIENT_DIFFER',attributed);
       if(low(swap.sender)!==low(m.router)||BigInt(tx.value)!==0n||-q>amountIn||t<minimum)
@@ -147,4 +187,4 @@ function replay(m,deliveredBlocks){
     registrations:[...registrations.values()].sort((a,b)=>a.participant.localeCompare(b.participant)),decisions,
     wallets:[...wallets].sort(([a],[b])=>a.localeCompare(b)).map(([wallet,w])=>({wallet,carryRaw:String(w.carryRaw),entriesMinted:String(w.entriesMinted),shortAttemptsMinted:String(w.entriesMinted),monthlyAttemptsMinted:String(w.entriesMinted)}))};
 }
-module.exports={replay,decodeTransaction,canonical,hash,validateManifest,SWAP_ABI,TRANSFER_ABI,REGISTER_ABI,EXECUTE_ABI,SWAP_TYPE};
+module.exports={validateRouteUpgrade,replay,decodeTransaction,canonical,hash,validateManifest,SWAP_ABI,TRANSFER_ABI,REGISTER_ABI,EXECUTE_ABI,SWAP_TYPE};

@@ -110,13 +110,16 @@ sample и getters исторического vault. Runtime не менялся,
 23.09: найден [чужой публичный TOKEN/USDG reference](PAIR_USDG_REFERENCE_2026-09-23.md):
 20 launch events, 6 vault candidates, LP owner/binding и 11 historical swaps.
 Три direct BUY используют 0x060c0f вместо поддерживаемого 0x060b0e и отвергаются.
-Следующий шаг: проверить settlement/delivery этой формы по исходникам и receipts,
-затем отдельный route adapter с regression fixtures. Это не наш deployment;
+Settlement/delivery проверены по сохранённым исходникам и receipts;
+route adapter добавлен ниже. Это не наш deployment;
 collect/claim и актуальная ликвидность ещё не доказаны.
-23.09: по новому запросу владельца GPT отправлен вопрос о welcome tickets для
-владельцев TOKEN без entries: [обращение](GPT_REVIEW_REQUEST.md). Только обсуждение;
-выдача по текущему балансу уязвима к повторному переносу TOKEN между кошельками.
-PRODUCT_SPEC и код не менялись, ближайший технический шаг — прежний route-v2.
+23.09: welcome bonus отклонён владельцем; единственная логика — eligible BUY.
+В [decoder](DIRECT_BUY_REPLAY.md) добавлен opt-in scheduled manifest, direct route
+0x060c0f и helper append-only upgrade с будущим activation block. Старый v1 сохранён.
+Публичные BUY fixtures и негативные проверки проходят; production activation не задана.
+Далее: проверяемая публикация/admission route policy и интеграция выбранного профиля;
+helper пока не подключён к автоматическому rollout. Source collect/fork отдельно.
+Сайт/уведомления и статистика частоты routes ещё не реализованы.
 
 ## Текущий шаг к релизу
 
@@ -190,3 +193,7 @@ proxy, reroll/reset или подмены random. Immutable destination стар
 [Продуктовые решения](PRODUCT_SPEC.md), [карта реализации](IMPLEMENTATION_STATUS.md),
 [исторический снимок статусов](archive/snapshots/PROJECT_PROGRESS_BEFORE_REVIEW_2026-09-20.md).
 Ответ GPT — вспомогательное мнение, не автоматическое задание.
+
+Проверки 23.09: npm run test:direct-buy — 14/14; node --test
+test/attempt-lifecycle.test.cjs test/monthly-replay.test.cjs — 21/21.
+Full/fork/live sends не запускались.

@@ -96,8 +96,9 @@ reconciliation. Сохранить независимость действий �
 23.09: [read-only dossier](PAIR_PROFILE_EVIDENCE_2026-09-23.md) готов с явными unknown.
 23.09: [TOKEN/USDG reference](PAIR_USDG_REFERENCE_2026-09-23.md) найден у чужого
 deployment: LP binding и реальные BUY receipts сохранены. Выявлен другой route
-0x060c0f. Далее — source/receipt разбор и ограниченный decoder adapter с негативными
-fixtures; collect/claim на fork отдельно. Наш токен ещё не запущен, local guards сохраняются.
+0x060c0f. Adapter и негативные fixtures реализованы opt-in (см. DIRECT_BUY_REPLAY).
+Далее публикация/admission policy; collect/claim на fork отдельно.
+Наш токен ещё не запущен, local guards сохраняются.
 
 - Источник комиссий и venue BUY: проверяемая интеграция конкретной площадки, сохранение
   rollover semantics, code/binding evidence и воспроизводимый decoder.
@@ -136,5 +137,6 @@ Sponsor/physical prizes — отдельный слой. Межсетевой br
 Исторические шаги и их промежуточные test counts сохранены
 [в снимке](archive/snapshots/PROJECT_PROGRESS_BEFORE_REVIEW_2026-09-20.md).
 
-23.09: параллельно обсуждается welcome bonus для держателей без билетов
-([вопрос GPT](GPT_REVIEW_REQUEST.md)); не принят, реализации нет, route-v2 не блокирует.
+23.09: welcome bonus отклонён. Scheduled direct decoder 0x060c0f реализован
+локально; следующий кусок — публикация/admission route policy и выбранный профиль.
+Сайт/объявления/частотная статистика отдельно; публичный запуск не разрешён.

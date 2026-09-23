@@ -114,3 +114,7 @@ bounded backoff, known receipt polling, SIGINT/SIGTERM. Worker catches сохр�
 классификацию read errors; journal/send guards прежние. `test/local-rpc-watch.test.cjs`
 и coordinator regressions; отдельный `watch` профиль не компилирует Solidity.
 Границы/команды: [coordinator](LOCAL_PROMO_COORDINATOR.md).
+
+23.09: direct-buy.cjs поддерживает opt-in scheduled routes и 0x060c0f,
+validateRouteUpgrade проверяет append-only расширение. Production rollout не подключён.
+Подробности и проверки — [DIRECT_BUY_REPLAY](DIRECT_BUY_REPLAY.md).
