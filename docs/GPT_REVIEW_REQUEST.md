@@ -1,26 +1,91 @@
-# Review: read-only PAIR/network evidence, target selection still open
+# Обсуждение: приветственные билеты для владельцев TOKEN
 
-23.09.2026. Read PAIR_PROFILE_EVIDENCE_2026-09-23 and research/pair-*-2026-09-23*.json.
-No sends, deployment, runtime edits, guard removal or full/fork tests. Public RPC reads
-and two bounded collectors only. Earlier economic profile remains a candidate.
+23.09.2026. Запрос владельца: обсудить продуктовую идею, не реализовывать её пока.
+Это кандидат, не изменение PRODUCT_SPEC и не отмена ближайшего decoder slice.
 
-Findings: seven historical native graph runtime hashes match; active registry handlers
-read successfully. launchpad coordinator differs from native-fee path; Sourcify runtime
-for new getter address matched. Standard-route API503, native ready, custom enabled:
-these are different paths, not a proved inconsistency or selected deployment.
+## Контекст и идея пользователя
 
-Prior direct-buy evidence is explicitly local-fork-only; its token is absent public.
-Public sample 12 swaps from500 blocks: eight non-direct, one extra commands, three other
-actions on NON-USDG pairs. No eligible target BUY proved. Do not propose adapting our
-TOKEN/USDG decoder merely because unrelated pairs use other commands.
+У проекта будет сайт: регистрация Promo, розыгрыши, проверка участия, claim наград,
+позже другие функции. Пользователь может прийти с TOKEN, купленными по маршруту,
+который наш decoder не поддерживает, или до регистрации, и обнаружить ноль билетов.
+Предложение: начислить приветственные билеты по количеству TOKEN и текущему курсу,
+затем ясно объяснить, где и как покупать для обычного начисления. Это также
+поощрение знакомства с сайтом. Пользователь считает такой открытый обмен честным.
+Просим оценить идею самостоятельно: не нужна универсальная защита от всех Sybil,
+но не хотим практически бесплатной многократной выдачи за один и тот же капитал.
 
-Historical vault getters work, epoch1/one recipient10000bps/claimable=0; this does not
-prove same V2 source or zero uncollected revenue. Stored V2 source MODE_SHARE_BPS7000
-is mode share, not a universal creator/volume rate. Current project vault does not exist.
-Gas price observed, not draw/RNG cost. Finality docs/tags not production cutoff policy.
+## Действующая база (её пока не меняем)
 
-Please assess evidence boundaries and suggest one bounded way to identify the actual
-native-fee/custom TOKEN/USDG pool/vault/position plus public BUY receipt for target
-selection. Do not invent production readiness from hashes, API readiness or no due.
-Keep unrelated sponsor work and policy changes out. New collector output path required;
-inspect error/response.error, not just file existence. Details in dossier.
+- PRODUCT_SPEC: opt-in on-chain registry; покупки до регистрации не учитываются.
+- 100 nominal USDG eligible BUY = entry; каждая entry даёт Short и Monthly попытку.
+- SELL не отменяет entries, holding не требуется. Регистрация сама билетов не даёт.
+- Payer == recipient == registered wallet; indexer/replay публично воспроизводимы.
+- Участник может иметь ноль доступных Short попыток после их расхода, сохраняя
+  Monthly попытки. «Сейчас нет билетов» не равно «никогда не участвовал».
+- Новые билеты не создают деньги: они изменяют шансы остальных участников.
+- Независимый replay должен восстановить все источники билетов, а не доверять
+  ручным начислениям оператора. Само подключение кошелька к сайту не on-chain событие.
+- Скелет работает локально; нашего публичного TOKEN/pool ещё нет.
+
+Последний технический результат: PAIR_USDG_REFERENCE_2026-09-23.md, commit 7480522.
+Из 11 публичных reference swaps три direct BUY используют 0x060c0f, не поддержанный
+текущим 0x060b0e decoder. Ваш review 2dfcb60 предлагает отдельный route-v2 slice.
+Приветственный бонус не должен заменять исправление обычных поддерживаемых BUY.
+
+## Наша предварительная оценка
+
+UX-идея полезна, но текущий баланс не доказывает покупку или пропущенные билеты.
+Нужно назвать это отдельным welcome bonus, не компенсацией подтверждённого оборота.
+Пример: A держит TOKEN на 1000 USDG, получает 10 билетов, переводит их B, затем C.
+При «один раз на кошелёк» получаются 30 билетов с одних TOKEN без новых покупок.
+Повторение возможно и для ранее учтённых BUY через новые кошельки. Даже фиксированный
+маленький бонус только ограничивает масштаб одной выдачи, не решает Sybil.
+
+Оценка по spot на момент запроса добавляет влияние неликвидного пула/манипуляции
+ценой, выбор источника, stale quote и новую oracle зависимость. Существующие билеты
+считаются по фактически потраченным nominal USDG и этого риска не имеют.
+TWAP сглаживает часть риска, но не устраняет его и не отвечает на повтор капитала.
+Нельзя задним числом пересчитывать бонус по изменившейся цене.
+
+Предлагаем сравнить три варианта:
+
+1. Никаких новых билетов за баланс: дружелюбный onboarding, объяснение причины
+   отсутствия entries и проверенный путь покупки; расширяем реально нужные routes.
+2. Ограниченная welcome campaign: единый заранее определённый исторический snapshot
+   holdings и фиксированная оценка; детерминированный cap/общий бюджет бонусных
+   попыток, публичные правила округления и окна регистрации. Переводы после snapshot
+   не размножают snapshot entitlement, но split до snapshot и кошельки-посредники
+   остаются проблемами. При пропорциональном начислении floor, без минимальной
+   гарантированной выдачи, дробление само не увеличивает общую сумму; per-wallet
+   caps обходятся разделением. Это конечная акция, не вечное решение для новичков.
+3. Постоянный бонус по балансу при первом обращении: нужен явный ответ на перемещение
+   капитала. Не предлагаем сразу staking/lock/burn/KYC/глобальную историю каждого
+   TOKEN: могут стоить больше, чем даёт этот onboarding. Если простого ограничения
+   нет, лучше честно признать это или отказаться от постоянного варианта.
+
+## Вопросы к GPT
+
+1. Есть ли простой постоянный вариант с понятным ограничением ущерба, который
+   сохраняет идею пользователя без дорогого нового слоя? Не обещайте уникальность
+   человека по адресу. Покажите остаточные атаки и экономическую цену повторения.
+2. Сравните варианты по UX, стоимости реализации, проверяемости, размыванию шансов
+   обычных покупателей и зависимости от цены. Дайте рекомендацию для MVP.
+3. Если welcome campaign оправдана: какие минимальные правила snapshot/оценки,
+   округления, one-time claim, expiry и caps нужны? Как публично проверять отсутствие
+   дубликатов? Не подменять проблему доверенной таблицей от администратора.
+4. Давать только Short попытки или также Monthly? Бонус обязан ли подчиняться
+   обычному расходованию/cutoff? Как не открыть повторную выдачу после расхода Short?
+5. Как не штрафовать честных новичков и не превращать отсутствие welcome бонуса
+   в стимул перевести TOKEN на чистый кошелёк? Есть ли смысл eligibility по прежней
+   истории вообще, если адреса легко меняются?
+6. Какие три-пять локальных математических сценариев достаточно посчитать до кода:
+   последовательный перенос капитала, предварительный split, рост цены, маленькая
+   аудитория с большим бонусным весом, обычный новичок? Параметры пока кандидаты.
+7. Предложите короткий понятный текст onboarding: bonus не гарантирует выигрыш,
+   текущий баланс не равен eligible volume, условия обычных BUY известны заранее.
+
+Не расширять scope до sponsor/KYC/новой экономики казны. Не менять production
+параметры и код. Нужны компактное решение и аргументы, включая вариант «отложить».
+Ответ перезаписать в GPT_REVIEW_RESPONSE.md. Источники кода/правил:
+PRODUCT_SPEC.md, DIRECT_BUY_REPLAY.md, PARTICIPANT_REGISTRY.md,
+ATTEMPT_LIFECYCLE.md, PAIR_USDG_REFERENCE_2026-09-23.md.

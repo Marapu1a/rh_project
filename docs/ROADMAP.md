@@ -135,3 +135,6 @@ Sponsor/physical prizes — отдельный слой. Межсетевой br
 
 Исторические шаги и их промежуточные test counts сохранены
 [в снимке](archive/snapshots/PROJECT_PROGRESS_BEFORE_REVIEW_2026-09-20.md).
+
+23.09: параллельно обсуждается welcome bonus для держателей без билетов
+([вопрос GPT](GPT_REVIEW_REQUEST.md)); не принят, реализации нет, route-v2 не блокирует.
