@@ -60,6 +60,29 @@ function validateRouteExtensionCandidate(previous,next,announcedAtBlock){
   for(let i=0;i<before.length;i++)ensure(canonical(before[i])===canonical(after[i]),'Historical route changed');
   for(const r of after.slice(before.length))ensure(r.fromBlock>number(announcedAtBlock),'Activation must follow announcement');
 }
+// Local versioned replay input, not proof that an operator published a policy.
+function buyPolicyHistory(input){
+  if(input.schema!=='buy-policy-history-v1'){
+    validateManifest(input);return {genesis:input,at:()=>input,versions:[]};
+  }
+  ensure(Array.isArray(input.versions)&&input.versions.length>0,'Empty BUY policy history');
+  const versions=input.versions;
+  const genesis=versions[0].manifest;validateManifest(genesis);
+  ensure(versions[0].fromBlock===number(genesis.anchor.number),'Invalid policy genesis');
+  for(let i=1;i<versions.length;i++){
+    const v=versions[i],prev=versions[i-1];
+    ensure(Number.isSafeInteger(v.fromBlock)&&v.fromBlock>prev.fromBlock,'Unordered policy activation');
+    ensure(Number.isSafeInteger(v.announcedAtBlock)&&v.announcedAtBlock>=prev.fromBlock,'Invalid policy notice');
+    ensure(/^0x[0-9a-fA-F]{64}$/.test(v.announcedBlockHash||''),'Missing policy notice anchor');
+    validateRouteExtensionCandidate(prev.manifest,v.manifest,v.announcedAtBlock);
+    const count=routePolicy(prev.manifest).length;
+    ensure(v.manifest.routes.slice(count).every(r=>r.fromBlock===v.fromBlock),'Route/policy activation mismatch');
+  }
+  return {genesis,versions,at:height=>{
+    ensure(Number.isSafeInteger(height)&&height>=versions[0].fromBlock,'Policy block required');
+    return versions.filter(v=>v.fromBlock<=height).at(-1).manifest;
+  }};
+}
 function decodeCanonical(types,data){
   const result=coder.decode(types,data);
   ensure(low(coder.encode(types,result))===low(data),'Non-canonical calldata');
@@ -129,11 +152,13 @@ function decodeTransaction(m,tx,receipt){
 
 // Replay a complete branch from the anchor before registration deployment.
 // Branch replacement is full replay; stale committed draws are NOT repaired here.
-function replay(m,deliveredBlocks){
-  validateManifest(m);
+function replay(input,deliveredBlocks){
+  const policy=buyPolicyHistory(input),m=policy.genesis;
   const byNumber=new Map();
   for(const b of deliveredBlocks){const n=number(b.number);if(byNumber.has(n))ensure(canonical(byNumber.get(n))===canonical(b),'Conflicting block delivery');else byNumber.set(n,b);}
   const blocks=[...byNumber.values()].sort((a,b)=>number(a.number)-number(b.number));
+  const headers=new Map([[number(m.anchor.number),low(m.anchor.hash)],...blocks.map(b=>[number(b.number),low(b.hash)])]);
+  for(const v of policy.versions.slice(1))ensure(headers.get(v.announcedAtBlock)===low(v.announcedBlockHash),'Policy notice not on supplied branch');
   let parent=low(m.anchor.hash),height=number(m.anchor.number);
   const registrations=new Map(),wallets=new Map(),decisions=[];
   let registryDeployed=false;
@@ -163,7 +188,7 @@ function replay(m,deliveredBlocks){
           events.push({kind:'register',index,participant:low(REGISTER_ABI.parseLog(l).args.participant),blockNumber:number(b.number),blockHash:low(b.hash),transactionHash:low(tx.hash),transactionIndex:i});
         }
       }
-      for(const d of decodeTransaction(m,tx,{...receipt,logs:[...unique.values()].sort((a,c)=>number(a.logIndex)-number(c.logIndex))}))events.push({kind:'swap',index:d.logIndex,decision:d});
+      for(const d of decodeTransaction(policy.at(number(b.number)),tx,{...receipt,logs:[...unique.values()].sort((a,c)=>number(a.logIndex)-number(c.logIndex))}))events.push({kind:'swap',index:d.logIndex,decision:d});
     }
     ensure([...logIndexes].sort((a,b)=>a-b).every((index,i)=>index===i),'Missing receipt log index');
     for(const e of events.sort((a,b)=>a.index-b.index)){
@@ -184,9 +209,9 @@ function replay(m,deliveredBlocks){
     height=number(b.number);parent=low(b.hash);
   }
   ensure(registryDeployed,'Range must include registry deployment; imported carry is not supported');
-  return {schema:'direct-buy-ledger-v1',manifestHash:hash(m),head:{number:height,hash:parent},
+  return {schema:'direct-buy-ledger-v1',manifestHash:hash(input),head:{number:height,hash:parent},
     finality:'canonical-in-supplied-branch-not-eligible-for-commit',
     registrations:[...registrations.values()].sort((a,b)=>a.participant.localeCompare(b.participant)),decisions,
     wallets:[...wallets].sort(([a],[b])=>a.localeCompare(b)).map(([wallet,w])=>({wallet,carryRaw:String(w.carryRaw),entriesMinted:String(w.entriesMinted),shortAttemptsMinted:String(w.entriesMinted),monthlyAttemptsMinted:String(w.entriesMinted)}))};
 }
-module.exports={validateRouteExtensionCandidate,replay,decodeTransaction,canonical,hash,validateManifest,SWAP_ABI,TRANSFER_ABI,REGISTER_ABI,EXECUTE_ABI,SWAP_TYPE};
+module.exports={buyPolicyHistory,validateRouteExtensionCandidate,replay,decodeTransaction,canonical,hash,validateManifest,SWAP_ABI,TRANSFER_ABI,REGISTER_ABI,EXECUTE_ABI,SWAP_TYPE};

@@ -120,7 +120,10 @@ collect/claim и актуальная ликвидность ещё не док�
 Review 132b6af: смена manifest ломает старые snapshot hashes. v2 пока только для
 нового экземпляра. validateRouteUpgrade заменён на validateRouteExtensionCandidate:
 это проверка формы, не admission. Регрессия pending/settled воспроизводит отказ.
-Далее сначала versioned BUY policy в lifecycle, затем публикация/admission. Source collect/fork отдельно.
+24.09: versioned BUY policy реализована в pure replay; старые FREEZE/EMPTY сохраняют
+manifest своего cutoff, BUY выбирает версию по блоку, carry непрерывен.
+Далее публикация/admission и подключение builders/CLI/coordinator; история пока
+локальный opt-in input, не доверенная production policy. Source collect/fork отдельно.
 Сайт/уведомления и статистика частоты routes ещё не реализованы.
 
 ## Текущий шаг к релизу
@@ -202,3 +205,6 @@ Full/fork/live sends не запускались.
 
 Исправление границы 23.09: npm run test:direct-buy — 15/15; миграция существующего
 экземпляра НЕ реализована. Старые snapshots и events не изменялись.
+
+24.09: адресный запуск direct-buy + attempt-lifecycle + monthly-replay — 39/39.
+Подробности и ограничения: DIRECT_BUY_REPLAY.md. Full/fork не запускались.

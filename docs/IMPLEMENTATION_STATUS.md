@@ -121,3 +121,7 @@ validateRouteExtensionCandidate проверяет append-only расширен�
 
 Review 132b6af: миграция BUY manifest при исторических FREEZE не поддержана.
 validateRouteExtensionCandidate проверяет лишь форму; v2 — для нового экземпляра.
+
+24.09: buyPolicyHistory в direct-buy.cjs и cutoff domain в attempt-lifecycle.cjs
+поддерживают локальную историю manifest. Старые FREEZE/EMPTY/TERMINAL сохраняются.
+Интеграция builders/CLI/coordinator и provenance объявлений ещё не подключена.

@@ -1,6 +1,6 @@
 // Permanent accounting/replay format. A source event is NOT proof of fair randomness.
 const {Interface,isAddress,isHexString,ZeroAddress,ZeroHash}=require('ethers');
-const {replay:replayBuys,canonical,hash}=require('./direct-buy.cjs');
+const {replay:replayBuys,canonical,hash,buyPolicyHistory}=require('./direct-buy.cjs');
 const {validateDrawId}=require('./draw-id.cjs');
 
 const ABI=new Interface([
@@ -18,7 +18,8 @@ const lower=x=>x.toLowerCase();
 const requireThat=(ok,message)=>{if(!ok)throw Error(message);};
 function integer(x){const n=Number(BigInt(x));requireThat(Number.isSafeInteger(n)&&n>=0,'Invalid block/index');return n;}
 function bytes32(x,label){requireThat(isHexString(x,32)&&lower(x)!==ZeroHash,'Invalid '+label);return lower(x);}
-function domainFor(manifest,config){
+function domainFor(manifest,config,policyBlock){
+  if(manifest.schema==='buy-policy-history-v1')manifest=buyPolicyHistory(manifest).at(policyBlock);
   requireThat(['attempt-lifecycle-v1','attempt-lifecycle-v2','attempt-lifecycle-v3','attempt-lifecycle-v4'].includes(config.schema),'Unsupported lifecycle schema');
   if(config.monthlySource)requireThat(['attempt-lifecycle-v3','attempt-lifecycle-v4'].includes(config.schema),'Dual sources require lifecycle v3 or v4');
   requireThat(isAddress(config.source)&&lower(config.source)!==ZeroAddress,'Invalid lifecycle source');
@@ -66,11 +67,13 @@ function freshKind(){return {open:0n,consumed:0n,frozen:null};}
 function ordered(a,b){return a.blockNumber-b.blockNumber||a.transactionIndex-b.transactionIndex||a.logIndex-b.logIndex;}
 function lex(a,b){return a<b?-1:a>b?1:0;}
 
-function replayAttempts(manifest,config,deliveredBlocks){
+function replayAttempts(input,config,deliveredBlocks){
   // Validate full chain/tx/receipt/log provenance and recompute BUYs ourselves.
   // No caller-supplied eligible/minted list is accepted.
-  const buyLedger=replayBuys(manifest,deliveredBlocks);
-  const domain=domainFor(manifest,config);
+  const buyLedger=replayBuys(input,deliveredBlocks);
+  const policies=buyPolicyHistory(input),manifest=policies.genesis;
+  const domainAt=height=>domainFor(policies.at(height),config);
+  const domain=domainAt(buyLedger.head.number);
   const blocks=[...new Map(deliveredBlocks.map(b=>[integer(b.number),b])).values()].sort((a,b)=>integer(a.number)-integer(b.number));
   const headers=new Map([[integer(manifest.anchor.number),lower(manifest.anchor.hash)],...blocks.map(b=>[integer(b.number),lower(b.hash)])]);
   const times=new Map(blocks.map(b=>[integer(b.number),integer(b.timestamp)]));
@@ -159,7 +162,7 @@ function replayAttempts(manifest,config,deliveredBlocks){
       requireThat(cutoff.blockNumber>=monthPolicy(currentMonthEpoch).firstBlock&&cutoff.blockNumber<event.blockNumber
         &&headers.get(cutoff.blockNumber)===cutoff.blockHash,'Invalid monthly empty cutoff');
       for(const [address,w] of wallets)requireThat(mintedAt(address,monthPolicy(currentMonthEpoch).firstBlock-1)===w.MONTHLY.consumed,'Old monthly epoch is not empty');
-      requireThat(emptyMonthlyEpochHash(domain,drainingMonthEpoch,cutoff,monthPolicy(drainingMonthEpoch).rulesHash)===bytes32(args.snapshotHash,'snapshot'),'Monthly empty snapshot mismatch');
+      requireThat(emptyMonthlyEpochHash(domainAt(cutoff.blockNumber),drainingMonthEpoch,cutoff,monthPolicy(drainingMonthEpoch).rulesHash)===bytes32(args.snapshotHash,'snapshot'),'Monthly empty snapshot mismatch');
       transitions.push({type,epoch:drainingMonthEpoch,cutoff,snapshotHash:lower(args.snapshotHash),source:ref});drainingMonthEpoch=0;
     }else if(type==='ShortRulesAnnounced'){
       requireThat(!announced&&!drainingEpoch&&integer(args.epoch)===currentEpoch+1,'Invalid announcement');
@@ -179,7 +182,7 @@ function replayAttempts(manifest,config,deliveredBlocks){
       requireThat(cutoff.blockNumber>=policy(currentEpoch).firstBlock&&cutoff.blockNumber<event.blockNumber
         &&headers.get(cutoff.blockNumber)===cutoff.blockHash,'Invalid empty cutoff');
       for(const [address,w] of wallets)requireThat(mintedAt(address,policy(currentEpoch).firstBlock-1)===w.SHORT.consumed,'Old epoch is not empty');
-      requireThat(emptyEpochHash(domain,drainingEpoch,cutoff,policy(drainingEpoch).rulesHash)===bytes32(args.snapshotHash,'snapshot'),'Empty snapshot mismatch');
+      requireThat(emptyEpochHash(domainAt(cutoff.blockNumber),drainingEpoch,cutoff,policy(drainingEpoch).rulesHash)===bytes32(args.snapshotHash,'snapshot'),'Empty snapshot mismatch');
       transitions.push({type,epoch:drainingEpoch,cutoff,snapshotHash:lower(args.snapshotHash),source:ref});
       drainingEpoch=0;
     }else if(type==='MINT'){
@@ -220,7 +223,7 @@ function replayAttempts(manifest,config,deliveredBlocks){
       }
       if(targetEpoch&&kind==='SHORT')requireThat(participants.length>0,'Empty Short must not freeze');
       if(dualMode&&kind==='MONTHLY')requireThat(participants.length>0,'Empty Monthly must not freeze');
-      const snapshot=snapshotFor(domain,drawId,kind,cutoff,rulesHash,participants,targetEpoch),snapshotHash=hash(snapshot);
+      const snapshot=snapshotFor(domainAt(cutoff.blockNumber),drawId,kind,cutoff,rulesHash,participants,targetEpoch),snapshotHash=hash(snapshot);
       requireThat(snapshotHash===bytes32(args.snapshotHash,'snapshot hash'),'Frozen snapshot does not match replay');
       pending[kind]=drawId;
       for(const p of participants){const s=walletFor(p.wallet)[kind];s.open-=BigInt(p.count);s.frozen={drawId,...p};}

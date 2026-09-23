@@ -148,3 +148,42 @@ validateRouteExtensionCandidate проверяет только форму пр�
 исторический domain, новые — действующий; cumulative carry не сбрасывается.
 Только после этого проектировать проверяемую публикацию и rollout. Остановка
 опасного маршрута должна иметь будущую границу, не удалять старую историю.
+
+## 24.09: локальная история BUY-политики
+
+Проблема старых snapshot hashes решена в pure replay через отдельный opt-in input:
+`{schema: "buy-policy-history-v1", versions: [...]}`. Первый элемент содержит исходный
+manifest и fromBlock, равный anchor.number. Каждый следующий — полный manifest,
+fromBlock, announcedAtBlock и announcedBlockHash. Текущий обычный manifest остаётся
+совместимым; подмена его новым целиком по-прежнему не является миграцией.
+
+Проверяются порядок версий, append-only routes, неизменность остальных полей,
+совпадение activation нового route и policy; notice строго раньше activation и
+не раньше начала предыдущей версии. Notice block/hash должен присутствовать на
+переданной ветке. Это локальное свидетельство согласованности, НЕ доказательство
+события публикации/полномочий оператора: произвольную историю нельзя принимать в
+production без следующего admission слоя.
+
+BUY decoder выбирается по блоку сделки. Регистрация, carry и cumulative entries
+пересчитываются одним проходом без сброса на границе версий. Ledger manifestHash
+связывает результат со всей переданной историей; snapshot domain хранит hash только
+manifest, действующего на cutoff. FREEZE после обновления с более ранним cutoff
+по-прежнему использует старый manifest. EMPTY также выбирает domain по cutoff;
+TERMINAL ссылается на сохранённый FREEZE. Хеш старого события не исправляется вручную.
+
+`domainFor(history, config, cutoffBlock)` требует явный блок; выбирать последний
+manifest без cutoff запрещено. Возвращаемый attempt ledger.domain описывает head,
+но исторический draw.snapshot.domain может отличаться — это ожидаемо.
+
+24.09: `node --test test/direct-buy.test.cjs test/attempt-lifecycle.test.cjs
+ test/monthly-replay.test.cjs` — 39/39. Добавленные переходы синтетические поверх
+сохранённого fork evidence: старые pending Short/Monthly, завершение после activation,
+99+1 carry, новый FREEZE, delayed FREEZE с прежним cutoff, historical Monthly EMPTY,
+повтор replay и отказ при неверном notice/порядке/activation. Публичные три BUY
+fixtures по-прежнему проверяются offline. Full/fork не запускались.
+
+Предел пакета: pure BUY/lifecycle replay, не deployment/CLI rollout. Dataset builders,
+RPC policy loader и coordinator пока не принимают историю как production manifest.
+Следующий шаг — проверяемая публикация/admission и затем их подключение с явным
+cutoff. Deactivation опасного route остаётся отдельным изменением модели; текущая
+история позволяет только добавлять маршруты, не переписывать решения прошлого.

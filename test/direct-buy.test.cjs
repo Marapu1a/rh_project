@@ -208,3 +208,46 @@ test('future route extension is NOT a lifecycle upgrade: old frozen and settled 
  assert.equal(canonical(draw.snapshot),originalSnapshot);
  assert.equal(require('../scripts/direct-buy.cjs').validateRouteUpgrade,undefined);
 });
+
+test('versioned BUY history preserves pending and settled snapshots, carry and inclusive route activation',()=>{
+ const {history}=require('./fixtures/attempt-history.cjs');
+ const {replayAttempts,domainFor,snapshotFor}=require('../scripts/attempt-lifecycle.cjs');
+ const h=history();h.buy(99000000n);
+ const old=h.freeze('policy old Short','SHORT',h.head(),[h.participant(1)]);
+ const month=h.freeze('policy old Monthly','MONTHLY',h.head(),[h.participant(1)]);
+ const announcement=h.head(),activation=announcement.blockNumber+2;
+ const next={...copy(h.manifest),schema:'direct-buy-v2',routeVersion:'scheduled-routes-v1',routes:[{id:h.manifest.routeVersion,fromBlock:0},{id:'rh-ur-10-060c0f-v1',fromBlock:activation}]};
+ const policy={schema:'buy-policy-history-v1',versions:[{fromBlock:Number(BigInt(h.manifest.anchor.number)),manifest:copy(h.manifest)},{fromBlock:activation,announcedAtBlock:announcement.blockNumber,announcedBlockHash:announcement.blockHash,manifest:next}]};
+ function newBuy(){h.buy(1000000n);const tx=h.blocks.at(-1).transactions[0].tx;const p=EXECUTE_ABI.parseTransaction({data:tx.input});const [,params]=coder.decode(['bytes','bytes[]'],p.args.inputs[0]);tx.input=EXECUTE_ABI.encodeFunctionData('execute',['0x10',[coder.encode(['bytes','bytes[]'],['0x060c0f',[params[0],coder.encode(['address','uint256'],[h.manifest.quote,1000000n]),coder.encode(['address','uint256'],[h.manifest.token,1n])]])],p.args.deadline]);}
+ const baseline=replayAttempts(h.manifest,h.config,h.blocks);
+ newBuy();assert.equal(h.head().blockNumber,activation-1);
+ newBuy();assert.equal(h.head().blockNumber,activation);
+ let ledger=replayAttempts(policy,h.config,h.blocks);
+ assert.deepEqual(ledger.draws,baseline.draws);
+ assert.equal(ledger.buyLedger.wallets[0].entriesMinted,'2');assert.equal(ledger.buyLedger.wallets[0].carryRaw,'0');
+ assert.equal(ledger.buyLedger.decisions.at(-2).status,'UNSUPPORTED_ROUTE');assert.equal(ledger.buyLedger.decisions.at(-1).status,'ELIGIBLE');
+ h.terminal(old);h.terminal(month);
+ const cutoff=h.head(),drawId=id('policy new Short'),rulesHash=id('test SHORT rules');
+ const snapshot=snapshotFor(domainFor(policy,h.config,cutoff.blockNumber),drawId,'SHORT',cutoff,rulesHash,[h.participant(1,2)]);
+ h.freeze('policy new Short','SHORT',cutoff,[h.participant(1,2)],{snapshotHash:hash(snapshot)});
+ ledger=replayAttempts(policy,h.config,h.blocks);
+ assert.equal(ledger.draws[0].snapshotHash,old.snapshotHash);assert.equal(ledger.draws[1].snapshotHash,month.snapshotHash);
+ assert.equal(ledger.draws[0].status,'CONSUMED');assert.deepEqual(ledger.draws[2].snapshot,snapshot);
+ assert.equal(ledger.draws[2].snapshot.domain.buyManifestHash,hash(next));
+ const again=replayAttempts(policy,h.config,h.blocks);assert.deepEqual(again,ledger);
+ const bad=copy(policy);bad.versions[1].announcedBlockHash=id('orphan');assert.throws(()=>replayAttempts(bad,h.config,h.blocks),/Policy notice/);
+ const retro=copy(policy);retro.versions[1].fromBlock=announcement.blockNumber;assert.throws(()=>replayAttempts(retro,h.config,h.blocks));
+ const changed=copy(policy);changed.versions[1].manifest.routes[0].fromBlock=1;assert.throws(()=>replayAttempts(changed,h.config,h.blocks),/Historical/);
+ assert.throws(()=>domainFor(policy,h.config),/Policy block required/);
+});
+
+test('FREEZE after activation keeps policy of its earlier cutoff; future versions do not rewrite it',()=>{
+ const {history}=require('./fixtures/attempt-history.cjs');const {replayAttempts}=require('../scripts/attempt-lifecycle.cjs');
+ const h=history(),cutoff=h.head(),activation=cutoff.blockNumber+1;
+ const next={...copy(h.manifest),schema:'direct-buy-v2',routeVersion:'scheduled-routes-v1',routes:[{id:h.manifest.routeVersion,fromBlock:0},{id:'rh-ur-10-060c0f-v1',fromBlock:activation}]};
+ const policy={schema:'buy-policy-history-v1',versions:[{fromBlock:Number(BigInt(h.manifest.anchor.number)),manifest:h.manifest},{fromBlock:activation,announcedAtBlock:cutoff.blockNumber,announcedBlockHash:cutoff.blockHash,manifest:next}]};
+ h.empty('activation');const draw=h.freeze('delayed freeze','SHORT',cutoff,[h.participant(1)]);
+ assert.equal(replayAttempts(policy,h.config,h.blocks).draws[0].snapshotHash,draw.snapshotHash);
+ const bad=copy(policy);bad.versions.reverse();assert.throws(()=>replayAttempts(bad,h.config,h.blocks));
+ const mismatch=copy(policy);mismatch.versions[1].manifest.routes[1].fromBlock++;assert.throws(()=>replayAttempts(mismatch,h.config,h.blocks),/activation mismatch/);
+});

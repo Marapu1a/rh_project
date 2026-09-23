@@ -97,8 +97,9 @@ reconciliation. Сохранить независимость действий �
 23.09: [TOKEN/USDG reference](PAIR_USDG_REFERENCE_2026-09-23.md) найден у чужого
 deployment: LP binding и реальные BUY receipts сохранены. Выявлен другой route
 0x060c0f. Adapter и негативные fixtures реализованы opt-in (см. DIRECT_BUY_REPLAY).
-Далее versioned BUY policy в lifecycle (старый snapshot domain должен сохраняться),
-затем публикация/admission policy; collect/claim на fork отдельно.
+24.09: versioned BUY policy в pure lifecycle replay готова, старый snapshot domain
+сохраняется по cutoff. Далее публикация/admission и подключение builders/CLI/
+coordinator; collect/claim на fork отдельно.
 Наш токен ещё не запущен, local guards сохраняются.
 
 - Источник комиссий и venue BUY: проверяемая интеграция конкретной площадки, сохранение
@@ -139,6 +140,6 @@ Sponsor/physical prizes — отдельный слой. Межсетевой br
 [в снимке](archive/snapshots/PROJECT_PROGRESS_BEFORE_REVIEW_2026-09-20.md).
 
 23.09: welcome bonus отклонён. Scheduled direct decoder 0x060c0f реализован
-локально только для нового экземпляра; следующий кусок — versioned BUY policy
-в lifecycle. Обычная замена manifest нарушает исторические frozen hashes.
+локально; versioned policy history теперь поддержана pure replay. Обычная замена
+manifest всё ещё недопустима. Следующий кусок — проверяемая публикация/admission.
 Сайт/объявления/частотная статистика отдельно; публичный запуск не разрешён.

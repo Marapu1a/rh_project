@@ -121,3 +121,13 @@ test('M1 to M2 to M3 preserves cumulative ranges and late M2 OPEN; empty M2 pres
     assert.equal(done.MONTHLY.byEpoch.reduce((s,e)=>s+BigInt(e.consumed)+BigInt(e.open)+BigInt(e.frozen),0n),BigInt(done.MONTHLY.mintedTotal));
   }
 });
+
+test('versioned BUY policy preserves historical Monthly EMPTY and settled draw domains',()=>{
+ const x=fixture(),old=x.freeze(x.artifact());x.consume(old);
+ x.announce();x.wait();x.activate();x.h.buy(100_000000n);x.empty();
+ const baseline=x.run(),notice=x.h.head(),m=x.h.manifest;
+ const next={...structuredClone(m),schema:'direct-buy-v2',routeVersion:'scheduled-routes-v1',routes:[{id:m.routeVersion,fromBlock:0},{id:'rh-ur-10-060c0f-v1',fromBlock:notice.blockNumber+1}]};
+ const policy={schema:'buy-policy-history-v1',versions:[{fromBlock:Number(BigInt(m.anchor.number)),manifest:m},{fromBlock:notice.blockNumber+1,announcedAtBlock:notice.blockNumber,announcedBlockHash:notice.blockHash,manifest:next}]};
+ x.h.empty('BUY policy activation');const result=replayAttempts(policy,x.h.config,x.h.blocks);
+ assert.deepEqual(result.draws,baseline.draws);assert.deepEqual(result.transitions,baseline.transitions);assert.deepEqual(result.wallets,baseline.wallets);
+});
