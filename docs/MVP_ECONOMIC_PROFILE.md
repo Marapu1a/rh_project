@@ -134,3 +134,8 @@ free Short линейно повышает привлекательность dr
 Следующие границы до релиза: календарный/carry/unequal-entry sweep и решение владельца
 по окончательному профилю; реальные fee/swap/RNG параметры сети. Полный прогон контрактов
 для этого отдельного расчётного файла не нужен. Evidence: .local/logs/mvp-economic-sweep.json.
+
+
+Календарный этап выполнен 23.09: [520 прогонов по 120 дней](MVP_CALENDAR_CHECK.md).
+Carry, delayed settlement, monthly win/no-win и остановка торговли проверены в модели.
+Это не утверждение production параметров и не расчёт полной farming profitability.

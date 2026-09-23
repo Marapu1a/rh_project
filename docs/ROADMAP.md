@@ -81,7 +81,8 @@ state/config/lock ошибки остаются stop. Проверка этог�
 По указанию владельца sponsor/merchant обсуждение отложено в отдельную ветку:
 [архив](archive/studies/SPONSOR_PARTNERSHIP_DISCUSSION_2026-09-23.md), без реализации.
 Первый economic slice выполнен: 72 single-draw concentration сценария и 9 funding;
-calendar/carry/unequal-entry модель и окончательное решение по цифрам ещё впереди.
+[Calendar/carry/concentration](MVP_CALENDAR_CHECK.md) проверены 520 модельными прогонами
+по 120 дней. Окончательные параметры и реальные расходы исполнения ещё не закрыты.
 Recovery design для stale lock/hashless tx/replacement и сохранности state остаётся
 до production, с привязкой к выбранному deployment runtime/supervisor. Не выдавать force-clear за
 reconciliation. Сохранить независимость действий при доказанном отказе.

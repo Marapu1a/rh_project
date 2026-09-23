@@ -111,7 +111,13 @@ scripts/mvp-economic-sweep.py: 72 аналитических single-draw сце�
 по wallets и субсидировании Short. Это не full calendar/farming profitability model.
 Контракты/config не менялись; unit/full/fork/live не запускались.
 
-Дальше двигать базовый MVP: окончательная экономика и полноценный calendar sweep,
+Календарный этап выполнен: [MVP_CALENDAR_CHECK](MVP_CALENDAR_CHECK.md),
+13 сценариев × 20 seeds × 2 порядка = 520 прогонов по 120 дней. Инварианты денег/
+попыток/интервалов прошли. scripts/mvp-calendar-model.py использует Short reference
+model; контракты/config не менялись, full/fork/live не запускались. Отдельный риск —
+стоимость множества no-win draws при одном wallet; расходы в этой модели отсутствуют.
+
+Дальше двигать базовый MVP: окончательная экономика с реальными execution costs,
 затем ограниченный реальный integration slice из ROADMAP §4. Не объявлять кандидаты
 утверждёнными и не снимать local guards для запуска на реальной сети. До deployment
 нужны реальные venue/swap/RNG/finality, execution funding, recovery и внешний аудит.
