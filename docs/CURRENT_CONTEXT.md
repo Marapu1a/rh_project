@@ -1,6 +1,6 @@
 # Текущий контекст
 
-Обновлено 23.09.2026: scoped test profiles / compile-once проверены полным прогоном.
+Обновлено 23.09.2026: CLI watch восстанавливает временные RPC read outages; адресная проверка.
 
 ## Где находимся
 
@@ -24,7 +24,7 @@
 Группы и --match добавлены в launcher/review runner; compile-once и per-file timing
 проверены. [Правила и карта выбора](REVIEW_TESTING.md).
 
-## Канонический полный baseline
+## Предыдущий канонический полный baseline
 
 23.09: `npm run test:review` на чистом HEAD `4efca7d` — **341/341**,
 fail/skipped/cancelled 0. Прежние 336 сценариев сохранены, добавлены 5 infrastructure.
@@ -99,17 +99,31 @@ receipt до final-save и после final-save. После смерти child 
 Hashless остаётся stop, known hash учитывается ровно один раз. RPC receipt outage не меняет state.
 Runtime-код не менялся. Детали и границы — [LOCAL_NATIVE_REFILL_RECOVERY](LOCAL_NATIVE_REFILL_RECOVERY.md).
 
-## Ближайший кусок
+## Последний кусок: watch RPC recovery
 
-Полный baseline подтверждён через `npm run test:review` ([процедура](REVIEW_TESTING.md)).
-Role-address casing исправлен в общем builder: checksum identity, точные старые
-case-варианты для resolved migration, прежние pending/domain guards сохранены.
-Role-casing принят review. Тестовый контур проверен: группы, compile-once,
-per-file timing. Один full обоснован изменением общего harness. Role-casing детали в
-[inspector/identity](LOCAL_NATIVE_REFILL_INSPECTOR.md).
-Диагностика готова; runtime repair/reset, автоудаление lock, reconnect-loop и supervisor
-не добавлены. Manifest строится из отдельной deployment-конфигурации, не из проверяемого state.
-Полный сценарий аварийного завершения draw/prize coordinator остаётся отдельной проверкой.
+Тестовая инфраструктура принята review 130a029. Следующий пакет — восстановление
+CLI --watch после временных RPC read outages. Backoff 1–30 s; known receipt сначала
+сверяется по сохранённому hash. Отправка без hash, state/config/lock/cleanup errors,
+смена сети, policy halt и неизвестные ошибки останавливают цикл.
+Нет auto-unlock, reset, replacement, fallback RPC/signers или supervisor.
+Сигналы прерывают ожидание; мгновенная отмена in-flight scan не обещается.
+[Модель и ограничения](LOCAL_PROMO_COORDINATOR.md#watch-временная-недоступность-rpc-23092026).
+
+Проверки 23.09 (actual executedCases, не file wrappers):
+- `npm run test:group -- --profile watch` — 6/6, 0.26 s, compile=0.
+- `npm run test:group -- --profile coordinator --match "watch "` — 8/8,
+  62.2 s вместе с compile; journal recovery и CLI. Первый тестовый fault injection
+  не сработал из-за ethers wrapper; заменён реальным timeout с выключенным automining.
+- `npm run test:group -- --profile coordinator --match "watch CLI|hashless broadcast failure|native refill pending|scheduler isolates known rejection|cleanup"`
+  — 10/10, 87.7 s вместе с compile; финальная CLI/neighbor проверка.
+- `npm run test:group -- --profile infrastructure` — 9/9, 2.19 s, catalog/review guards.
+Выборки пересекаются; не суммировать. Full/fork/live не запускались. Старый full baseline
+выше относится к предыдущему code HEAD, а не ко всему текущему пакету.
+Evidence: `.local/logs/rpc-watch-{final-unit,integration,neighbors,catalog}.log`.
+
+Ближайшая незакрытая эксплуатационная граница: process-death всего coordinator,
+владение stale lock и ограниченный recovery design. Refill process-death уже проверен;
+это не доказательство автоматического перезапуска всей системы.
 
 ## Основные ограничения
 

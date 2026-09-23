@@ -37,7 +37,8 @@
       "test/local-native-refill-process.test.cjs",
       "test/local-native-refill-inspector.test.cjs",
       "test/review-runner.test.cjs",
-      "test/test-launcher.test.cjs"
+      "test/test-launcher.test.cjs",
+      "test/local-rpc-watch.test.cjs"
     ]
   },
   "accounting": {
@@ -93,7 +94,8 @@
       "test/local-scheduler.test.cjs",
       "test/local-execution-budget.test.cjs",
       "test/local-transaction.test.cjs",
-      "test/local-state-lock.test.cjs"
+      "test/local-state-lock.test.cjs",
+      "test/local-rpc-watch.test.cjs"
     ]
   },
   "recovery": {
@@ -105,7 +107,8 @@
       "test/local-native-refill-process.test.cjs",
       "test/local-native-refill-inspector.test.cjs",
       "test/local-transaction.test.cjs",
-      "test/local-state-lock.test.cjs"
+      "test/local-state-lock.test.cjs",
+      "test/local-rpc-watch.test.cjs"
     ]
   },
   "refill": {
@@ -138,6 +141,12 @@
     "files": [
       "test/review-runner.test.cjs",
       "test/test-launcher.test.cjs"
+    ]
+  },
+  "watch": {
+    "compile": false,
+    "files": [
+      "test/local-rpc-watch.test.cjs"
     ]
   }
 }

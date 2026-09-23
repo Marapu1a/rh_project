@@ -1,50 +1,40 @@
-# Review: scoped compile-once test harness
+# Review: bounded watch recovery after transient RPC reads
 
-23.09.2026. Baseline 2a8b57f. Read REVIEW_TESTING and CURRENT_CONTEXT; report reviewed
-HEAD and replace response. User approved profiles + fresh compilation per invocation +
-per-file timing as one bounded test-infrastructure package. Product tests retained.
+23.09.2026. Previous test infrastructure accepted in 130a029. This package returns
+work to runtime automation. Please review actual code; do not infer safety from retries alone.
 
-New launcher selects explicit profiles and optional regex; fullSuite is false whenever
-filtered. Unknown/empty selection fails. Full catalog preserves original 35 files plus
-new infrastructure tests; unrelated drand research suites are not silently added.
-Test groups are a coverage guide, not permission to ignore affected consumers.
+Before: CLI --watch exited on receipt read outage. Now a narrow transport allowlist
+permits backoff 1/2/4/8/16/30 seconds (capped), followed by a fresh coordinator pass.
+Existing journal/locks/identity/reconciliation gate every pass. Single-shot API stays
+single-shot. Config/state errors, cleanup, network change, unknown send/hashless,
+policy halt, unconfirmed receipts and unclassified errors still stop.
 
-Contract profiles compile project once fresh, ignoring inherited artifact env. Workers
-receive a unique absolute artifact and SHA-256; loader rejects missing/partial/corrupt/
-mismatched artifacts without fallback. sourceOverrides always runs solc; outside env,
-compile behaves as before. Existing child CLIs still read artifacts/compiled.json.
-No persistent cache, concurrency remains 1, no snapshot reuse or product scenario removal.
+Known hash + confirmation transport/receipt timeout can resume through reconciliation.
+Known pendingReceipt polls at ordinary pollSeconds. No blind resend, no marker clearing,
+no lock removal, no endpoint/signer failover. No contracts or product math changed.
+Refill broadcast/persistence unknown result is deliberately not relaxed by this package.
 
-Reporter records file wrapper wall time and case time separately. Empty filtered files
-can count as passing wrappers in Node; executedCases prevents a zero-case green result.
-The launcher checks expected full-project compilation count. Compiler fixture tests use
-a separate tiny Probe source: their deliberate compilations are outside that counter.
-Review runner propagates profile/filter and copies structured timing evidence before
-cleanup, separately recording install/test/total durations. Existing failure/cleanup
-semantics remain; no silent green run if invocation evidence is missing.
+Code: local-rpc-watch.cjs, run-local-coordinator.cjs, error metadata in prize-flow,
+scheduler and coordinator; structured HTTP status from the independent replay scanner.
+Temporary retry flags do not authorize journal migration. HTTP request timeout 20 s;
+SIGINT/SIGTERM interrupt waits but cannot promise immediate cancellation of a running scan.
 
-Test risks to inspect: artifact freshness vs integrity, accidental inherited cache,
-sourceOverrides/writeArtifacts behavior, profile coverage, zero-selection semantics,
-Node reporter compatibility, child CLI artifact identity, failure and signal handling,
-retaining evidence through worktree cleanup. Forced OS termination is not a cleanup guarantee.
+Tests: allowlist exclusions incl cleanup/network change; bounded/reset backoff; one-shot
+failure; known receipt polling; abort; real HTTP 503 recovery using ethers. Integration:
+real transaction timeout, mined original, two receipt outages, unchanged pending journal,
+one conversion, next draw; estimate read retry followed by hashless send stop. Actual
+CLI child recovers startup HTTP 503, completes, exits on SIGTERM event. Windows test
+uses IPC to deliver process signal event, not native OS signal delivery.
 
-Addressed locally before canonical full: loader/launcher/review fault tests, two real
-contract files with one project compilation, positive filtered math profile. Exact final
-counts/timings and tested commit will be in CURRENT_CONTEXT. One full run is justified
-for this harness change; do not reintroduce mandatory full after every small step.
+Please focus on false retry permissions at broadcast/cleanup boundaries, propagation
+of worker error metadata, known hash reconciliation, startup failures and stopped state.
+No supervisor/stale-lock/hashless repair or fixture optimization in this package.
+Scoped verification commands/results are recorded in CURRENT_CONTEXT. Do not run full
+solely to review this change: targeted watch + coordinator neighbors is the intended scope.
 
-Comparison: prior Windows baseline 0e5d8ea had 336 cases, 1466.8 s Node test duration;
-case sum 1107.4 s and other overhead 359.4 s. Compile-once can remove repeated compilation,
-not the remaining integration workload. Use compilation + test wall for fair comparison
-because compilation is now outside Node's reported test duration. Prior install was 8 s;
-prior review total was not measured separately, so do not invent a total speedup.
-
-Final evidence: clean HEAD 4efca7d, canonical npm run test:review: 341/341,
-fail/skipped/cancelled=0, install/test/final exit=0, cleanupError=null, checkout removed.
-Compile 17.05 s + test 1112.25 s = 1129.30 s (about 23% below previous 1466.8 s).
-Review total 1136.57 s including install 5.74 s. Project compilation=1, reuse=22.
-No product scenarios removed. Five infrastructure regressions added. Same Windows toolchain.
-Slowest files: coordinator 436.5 s, scheduler 128.3 s, BUY-cycle 83.4 s,
-prize-flow 79.0 s, USDG funding 78.7 s. Do not expand this step into fixture redesign.
-An actual isolated filtered math review also passed: two executed cases, evidence copied,
-cleanup successful. Documentation-only result recording follows the tested code commit.
+Confirmed 23.09: watch 6/6 (0.26 s), coordinator --match "watch " 8 actual cases
+(62.2 s compile+tests), final neighbor filter 10 cases (87.7 s), infrastructure 9/9
+(2.19 s). These overlap; no full/fork/live. An initial test tried overriding tx.wait,
+but ethers replaced that wrapper; the final test uses real automining-off timeout,
+then original mining and controlled receipt-read outages. Do not confuse the old
+341/341 full baseline with validation of this package.

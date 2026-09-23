@@ -73,8 +73,10 @@ Relevant-action block-limit bug также исправлен и покрыт р
 не kill всего draw/prize coordinator; stale lock в runtime не снимается автоматически.
 Storage faults и mined revert покрыты предыдущими тестами. Read-only inspector добавлен:
 [диагностика](LOCAL_NATIVE_REFILL_INSPECTOR.md), JSON/nextAction без изменения state.
-Далее ограниченный recovery design
-для stale lock/hashless tx/replacement и сохранности state. Не выдавать force-clear за
+23.09: CLI --watch получает ограниченный retry временных RPC read outages,
+с backoff и обязательной сверкой known pending перед новой работой. Unknown send,
+state/config/lock ошибки остаются stop. Проверка этого пакета адресная.
+Далее ограниченный recovery design для stale lock/hashless tx/replacement и сохранности state. Не выдавать force-clear за
 reconciliation. Сохранить независимость действий при доказанном отказе.
 
 Сохранить разделение identity/ops; текущая история содержит pending/lastResolved, а не полный journal.

@@ -1,3 +1,4 @@
+const {transientRpc,retryableRead}=require('./local-rpc-watch.cjs');
 const {ethers}=require('ethers');
 const {scan}=require('./replay-direct-buy.cjs');
 const {hash,validateManifest}=require('./direct-buy.cjs');
@@ -155,7 +156,7 @@ async function runScheduler(options,{maxTicks=32,onTick=()=>{}}={}){
             results[kind]={status:'waiting',reason:'executionBudget',budget:e.budget};continue;
           }
           results[kind]=e.code==='LOCAL_EXECUTION_STOPPED'?{status:'stopped',code:e.code,stage:e.stage,transactionHash:e.transactionHash}:
-          {status:'error',message:e.shortMessage||e.message,code:e.code,stage:e.stage,transactionHash:e.transactionHash};
+          {status:'error',message:e.shortMessage||e.message,code:e.code,stage:e.stage,transactionHash:e.transactionHash,transientRpc:transientRpc(e),retryableRpcRead:retryableRead(e)};
           // Unknown send/receipt and unclassified RPC errors stop ALL subsequent kinds/ticks.
           if(!e.definiteRejection&&(e.stage||e.code)){
             await onTick(results);

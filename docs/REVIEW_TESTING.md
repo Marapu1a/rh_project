@@ -110,6 +110,7 @@ npm test, не добавлены в full автоматически.
 | coordinator | coordinator, scheduler, budget, transaction, state-lock | Identity/refill admission: добавить refill; RPC/state recovery: recovery |
 | recovery | executor stability, refill state/executor/process/inspector, transaction/lock | Общие receipt/state primitive: coordinator; полный профиль при неясных связях |
 | refill | planner/state/executor/process/inspector, budget, lock | Автоматический funding в worker: coordinator |
+| watch | transport classification, backoff, HTTP outage, stop | Изменения CLI/journal integration: coordinator с соответствующим --match |
 | math | чистые budget/refill расчёты | Изменение используемой runtime политики: refill/coordinator |
 | smoke | один сквозной BUY → Short/Monthly → claims/next cycle | Не заменяет негативные тесты модулей |
 | infrastructure | launcher/loader/reporter и review runner | Общий harness влияет на весь suite: один full после адресных проверок |
@@ -133,7 +134,7 @@ artifacts/compiled.json остаётся доступен существующи
 через настоящий solc независимо от artifact env; writeArtifacts:false не перезаписывает
 обычный artifact. Постоянного cache между invocation/commit нет. Сохранённый файл отчёта
 не является основанием повторно использовать bytecode в следующем запуске.
-math/refill/infrastructure не требуют предварительной компиляции проекта.
+math/refill/infrastructure/watch не требуют предварительной компиляции проекта.
 Компиляторные fixture-тесты отдельно компилируют маленький Probe в своих временных папках;
 они не входят в счётчик общей компиляции проекта.
 

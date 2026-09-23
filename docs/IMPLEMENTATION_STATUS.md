@@ -106,3 +106,11 @@ export/verify независимого deployment input и manifest support в i
 23.09: test-launcher/test-artifact/test-profiles/test-timing-reporter — именованные
 группы, свежая общая компиляция, строгий loader и per-file timing. Review runner
 поддерживает группы/regex и сохраняет структурированные отчёты вне удаляемого worktree.
+
+### Watch RPC recovery (23.09)
+
+`scripts/local-rpc-watch.cjs` + `run-local-coordinator.cjs`: transport allowlist,
+bounded backoff, known receipt polling, SIGINT/SIGTERM. Worker catches сохраняют
+классификацию read errors; journal/send guards прежние. `test/local-rpc-watch.test.cjs`
+и coordinator regressions; отдельный `watch` профиль не компилирует Solidity.
+Границы/команды: [coordinator](LOCAL_PROMO_COORDINATOR.md).

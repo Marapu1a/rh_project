@@ -1,3 +1,4 @@
+const {transientRpc,retryableRead}=require('./local-rpc-watch.cjs');
 // Bounded local orchestration; job configuration is trusted, not a production deployment attestation.
 const {ethers}=require('ethers');
 const {sendLocalTransaction,receiptOptions}=require('./local-receipt.cjs');
@@ -164,7 +165,7 @@ async function runPrizeFlow({provider,router,executor,job,signal,receiptTimeoutM
     return {...summary(),status:failures.length||unsafe.size?'degraded':remainingInventory.length?'yielded':'idle',remainingInventory};
   }catch(e){
     return {...summary(),status:e.flowStatus||(e.code==='LOCAL_EXECUTION_STOPPED'?'stopped':'error'),reason:e.reason,
-      error:{...current,message:e.message,code:e.code,stage:e.stage,transactionHash:e.transactionHash}};
+      error:{...current,message:e.message,code:e.code,stage:e.stage,transactionHash:e.transactionHash,transientRpc:transientRpc(e),retryableRpcRead:retryableRead(e)}};
   }
 }
 module.exports={validatePrizeFlowJob,runPrizeFlow,MAX_LEGACY,DEFAULT_MAX_STEPS,WORST_CASE_ATTEMPTS};

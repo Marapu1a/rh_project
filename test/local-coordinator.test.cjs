@@ -68,6 +68,88 @@ test('hashless broadcast failure persists a stop across restart, even when signe
   assert.equal((await runCoordinator(f.options)).reason,'unknownHash');assert.equal(sends,1);
   assert.equal(await f.short.pendingDatasetDraw(),ethers.ZeroHash);
 });
+
+test('watch recovers original receipt after transport outage without duplicate conversion or lost journal',async t=>{
+  const {runWatch}=require('../scripts/local-rpc-watch.cjs');
+  const f=await fixture(t),stop=new AbortController();let first=true,conversions=0,reads=0,snapshot;
+  const originalReceipt=f.provider.getTransactionReceipt.bind(f.provider);
+  t.after(()=>{f.provider.getTransactionReceipt=originalReceipt;});
+  const signer={provider:f.provider,getAddress:()=>f.admin.getAddress(),estimateGas:r=>f.admin.estimateGas(r),
+    sendTransaction:async r=>{
+      const converting=r.to.toLowerCase()===f.converter.target.toLowerCase()&&r.data.startsWith(f.converter.interface.getFunction('convert').selector);
+      if(converting)conversions++;
+      if(first&&converting){first=false;await rpc('evm_setAutomine',[false]);}
+      return f.admin.sendTransaction(r);
+    }};
+  f.options.prize.executor=signer;f.options.scheduler.executor=signer;f.options.scheduler.publisher=signer;
+  f.options.receiptTimeoutMs=100;
+  t.after(async()=>{await rpc('evm_mine');await rpc('evm_setAutomine',[true]);});
+  const events=[];
+  const code=await runWatch({watch:true,pollMs:1,signal:stop.signal,pass:()=>runCoordinator(f.options),
+    emit:r=>{events.push(r);if(r.status==='complete')stop.abort();},wait:async()=>{
+      if(stop.signal.aborted)return;
+      assertUnlocked(f.options.statePath);assertUnlocked(f.statePath);
+      if(!snapshot){
+        snapshot=fs.readFileSync(f.options.statePath);
+        assert(JSON.parse(snapshot).pending.transactionHash);
+        assert.equal(JSON.parse(snapshot).pending.action,'convert');
+        await rpc('evm_mine');await rpc('evm_setAutomine',[true]);f.options.receiptTimeoutMs=30000;
+        f.provider.getTransactionReceipt=async hash=>{
+          if(++reads<=2)throw Object.assign(Error('RPC temporarily unavailable'),{code:'ECONNRESET'});
+          return originalReceipt(hash);
+        };
+      }else assert.deepEqual(fs.readFileSync(f.options.statePath),snapshot);
+    }});
+  assert.equal(code,0);assert.equal(conversions,1);assert.equal(events.filter(r=>r.reason==='rpcUnavailable').length,3);
+  assert.equal(JSON.parse(fs.readFileSync(f.options.statePath)).pending,undefined);
+  assert.equal(await f.converter.tokenSold(),480n);assert.notEqual(await f.short.pendingDatasetDraw(),ethers.ZeroHash);
+  assert.equal((await runCoordinator(f.options)).status,'complete');assert.equal(conversions,1);
+});
+
+test('watch retries worker read outage but preserves hashless broadcast stop',async t=>{
+  const {runWatch}=require('../scripts/local-rpc-watch.cjs');
+  const f=await fixture(t);let estimates=0,sends=0;const events=[];
+  f.options.prize.executor={provider:f.provider,getAddress:()=>f.admin.getAddress(),estimateGas:async r=>{
+    if(++estimates===1)throw Object.assign(Error('estimate connection lost'),{code:'ECONNRESET'});return f.admin.estimateGas(r);
+  },sendTransaction:async()=>{sends++;throw Object.assign(Error('send connection lost'),{code:'ECONNRESET'});}};
+  const code=await runWatch({watch:true,pollMs:1,pass:()=>runCoordinator(f.options),emit:r=>events.push(r),wait:async()=>{}});
+  assert.equal(code,1);assert.equal(sends,1);assert.equal(events[0].reason,'rpcUnavailable');
+  assert.equal(events.at(-1).status,'blocked');assert.equal(events.at(-1).pending.transactionHash,undefined);
+  assert.equal((await runCoordinator(f.options)).reason,'unknownHash');assert.equal(sends,1);
+});
+
+test('watch CLI survives startup HTTP outage and SIGTERM ends polling cleanly', {timeout:60000},async t=>{
+  const f=await fixture(t),http=require('node:http'),{fork}=require('node:child_process');let outage=true;
+  const proxy=http.createServer(async(req,res)=>{
+    try{
+      let body='';for await(const chunk of req)body+=chunk;
+      if(outage){res.writeHead(503);res.end('offline');return;}
+      const reply=await fetch(f.options.scheduler.rpcUrl,{method:'POST',headers:{'content-type':'application/json'},body});
+      res.writeHead(reply.status,{'content-type':'application/json'});res.end(await reply.text());
+    }catch(e){res.writeHead(502);res.end(e.message);}
+  });
+  await new Promise(resolve=>proxy.listen(0,'127.0.0.1',resolve));
+  t.after(()=>new Promise(resolve=>{proxy.close(resolve);proxy.closeAllConnections();}));
+  const jobFile=path.join(f.directory,'watch-job.json'),configFile=path.join(f.directory,'watch-config.json');
+  fs.writeFileSync(jobFile,JSON.stringify(f.options.prize.job));fs.writeFileSync(configFile,JSON.stringify(f.config));
+  const child=fork(path.resolve('test/fixtures/coordinator-watch-child.cjs'),['--job',jobFile,'--config',configFile,
+    '--state',f.options.statePath,'--scheduler-state',f.statePath,'--rpc','http://127.0.0.1:'+proxy.address().port,
+    '--executor','0','--publisher','0','--watch'],{silent:true});
+  t.after(()=>{if(child.exitCode===null)child.kill();});
+  const events=[];let buffer='',stderr='';child.stderr.on('data',b=>stderr+=b);
+  child.stdout.on('data',b=>{
+    buffer+=b;let end;
+    while((end=buffer.indexOf('\n'))!==-1){const line=buffer.slice(0,end);buffer=buffer.slice(end+1);
+      if(!line.startsWith('{'))continue;
+      const r=JSON.parse(line);events.push(r);if(r.reason==='rpcUnavailable')outage=false;
+      if(r.status==='complete')child.send('stop');
+    }
+  });
+  const code=await new Promise((resolve,reject)=>{child.once('error',reject);child.once('exit',resolve);});
+  assert.equal(code,0,stderr);assert(events.some(r=>r.reason==='rpcUnavailable'));
+  assert(events.some(r=>r.status==='complete'));assert.equal(events.at(-1).status,'stopped');
+  assertUnlocked(f.options.statePath);assertUnlocked(f.statePath);assert.equal(await f.converter.tokenSold(),480n);
+});
 test('known recipient refusal allows draws, abort stops writes, concurrent coordinator cannot enter',async t=>{
   const f=await fixture(t);await sent(f.quote.blockRecipient(f.options.prize.job.recipients[2]));
   const result=await runCoordinator(f.options,{onEvent:async e=>{if(e.worker==='prize'){

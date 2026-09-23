@@ -1,3 +1,4 @@
+const {retryableRead}=require('./local-rpc-watch.cjs');
 const path=require('node:path');
 const {withState}=require('./local-scheduler-state.cjs');
 const {withTransactionBoundary}=require('./local-receipt.cjs');
@@ -139,17 +140,23 @@ async function runCoordinator({prize,scheduler,statePath,signal,receiptTimeoutMs
             const details=Object.fromEntries(Object.entries({code:error.code,message:error.message,kind:r.haltedKind}).filter(([,v])=>v!==undefined));
             state.pending={...state.pending,...details};save(state);
           }
-          return pendingResult('unknownTransaction');
+          const result=pendingResult('unknownTransaction');
+          // Only a known original hash and a failed confirmation read permit automatic recovery.
+          result.retryableRpcRead=!!state.pending.transactionHash&&error?.stage==='confirm'&&
+            (error.transientRpc===true||error.code==='LOCAL_RECEIPT_TIMEOUT');
+          return result;
         }
         if(results[worker].error?.code==='LOCAL_BUDGET_WAIT')results[worker]={...results[worker],status:'waiting',reason:'executionBudget',budget:state.lastBudget};
         await onEvent({worker,...results[worker]});
-        if(['error','stopped'].includes(results[worker].status))return {status:results[worker].status,haltedWorker:worker,results};
+        if(['error','stopped'].includes(results[worker].status))return {status:results[worker].status,haltedWorker:worker,results,
+          retryableRpcRead:results[worker].error?.retryableRpcRead===true||
+            (!!results[worker].haltedKind&&results[worker].results[results[worker].haltedKind]?.retryableRpcRead===true)};
         if(results[worker].reason==='pendingTransaction')return {status:'blocked',reason:'pendingSigner',results};
       }
       if(nativeRefill){const report=await collectCommitted();if(!report.committedObligations.length){const result=await fund(report,['buffer']);if(result)return result;}}
       return {status:'complete',budgetMode:ops?ops.network.id:'unbudgetedLegacy',results};
     }catch(e){return {status:state.pending?'blocked':'error',requiresReconciliation:!!state.pending,pending:state.pending,
-      haltedWorker:worker,error:{message:e.message,code:e.code,stage:e.stage,transactionHash:e.transactionHash},results};}
+      retryableRpcRead:!state.pending&&retryableRead(e),haltedWorker:worker,error:{message:e.message,code:e.code,stage:e.stage,transactionHash:e.transactionHash},results};}
   },{legacyConfigs,
     validateMigration:nativeRefill?stored=>{
       const history=stored.nativeRefillHistory;

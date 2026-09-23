@@ -8,7 +8,7 @@ async function scan(manifest,rpcUrl,toBlock,lifecycle=null){
   let sequence=0;
   async function rpc(method,params=[]){
     const response=await fetch(rpcUrl,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:++sequence,method,params}),signal:AbortSignal.timeout(20000)});
-    if(!response.ok)throw Error('RPC HTTP '+response.status);
+    if(!response.ok)throw Object.assign(Error('RPC HTTP '+response.status),{code:'RPC_HTTP_ERROR',statusCode:response.status});
     const data=await response.json();if(data.error||data.result==null)throw Error('RPC cannot supply '+method);return data.result;
   }
   if(BigInt(await rpc('eth_chainId'))!==BigInt(manifest.chainId))throw Error('Wrong RPC chain');

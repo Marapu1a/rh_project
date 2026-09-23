@@ -123,3 +123,40 @@ lock. Проверены инъекции write/close EIO: action не начи�
 21.09: при двойном отказе cleanup выбрасывает AggregateError с исходным cause и
 cleanupErrors; primary code/stage/transactionHash/definiteRejection сохраняются.
 Рабочие state/lock размещать на постоянном локальном volume вне синхронизации checkout.
+
+## Watch: временная недоступность RPC (23.09.2026)
+
+`run-local-coordinator.cjs --watch` повторяет bounded pass после подтверждённой
+транспортной ошибки чтения. Новой отправке по-прежнему предшествуют штатные проверки
+identity, lock и journal reconciliation. `runCoordinator` остаётся одноразовым API;
+без --watch CLI не повторяет ошибки.
+
+- `local-rpc-watch.cjs`: allowlist transport errors, interruptible wait и watch loop.
+- Retry delay: 1, 2, 4, 8, 16, 30 секунд, далее 30; успешный pass сбрасывает счётчик.
+  Число попыток не ограничено, частота ограничена. Настройки не меняют state identity.
+- stdout JSON: waiting/rpcUnavailable, retryInMs, consecutiveFailures; для известной
+  транзакции — transactionHash. При отсутствии receipt известного hash — waiting/
+  pendingReceipt с обычным pollSeconds. Это повтор чтения, не resend.
+- Retryable transport: connection reset/refused, transport timeout и указанные в коде
+  аналогичные сетевые ошибки; HTTP 429/502/503/504. Fetch scan передаёт statusCode
+  структурно. Тексты сообщений не используются как основание retry.
+- NETWORK_ERROR при смене сети, contract revert, JSON-RPC semantic error, неверный
+  config/state, storage/cleanup failure, чужой или stale lock, policy halt, unknownHash,
+  unconfirmedReceipt и неизвестные ошибки остаются остановкой. Allowlist намеренно узкий.
+- Worker errors сохраняют ephemeral transientRpc/retryableRpcRead для coordinator;
+  эти флаги не записываются как разрешение в journal. Pending без hash запрещает retry.
+  Известный hash после confirmation transport/receipt timeout допускает новый pass,
+  который сначала сверяет исходную транзакцию. Broadcast/persistence ambiguity не
+  превращается в retry даже при транспортном коде ошибки.
+- Startup signer reads также могут ждать RPC; после успешной инициализации используются
+  прежние provider/signers. Новый RPC endpoint и fallback signer не выбираются.
+- SIGINT/SIGTERM прерывают ожидание. Вызовы RPC получают timeout 20 s на HTTP request;
+  уже выполняемый scan/pass не обещает мгновенной отмены. Завершение процесса,
+  stale lock removal, supervisor, replacement/hashless recovery не реализованы.
+
+Границы проверки: локальный chain31337 и fixtures. CLI child действительно проходит
+HTTP 503 → рабочий проход; для Windows тест доставляет SIGTERM event через IPC,
+а не проверяет нативную доставку OS signal. Реальный mempool timeout и два receipt
+read outages проверены через существующий coordinator: pending остаётся неизменным,
+исходная conversion выполняется один раз. Hashless broadcast остаётся stop.
+Результаты команд — CURRENT_CONTEXT; полного suite в этом пакете нет.
