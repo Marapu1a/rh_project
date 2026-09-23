@@ -117,8 +117,10 @@ collect/claim и актуальная ликвидность ещё не док�
 В [decoder](DIRECT_BUY_REPLAY.md) добавлен opt-in scheduled manifest, direct route
 0x060c0f и helper append-only upgrade с будущим activation block. Старый v1 сохранён.
 Публичные BUY fixtures и негативные проверки проходят; production activation не задана.
-Далее: проверяемая публикация/admission route policy и интеграция выбранного профиля;
-helper пока не подключён к автоматическому rollout. Source collect/fork отдельно.
+Review 132b6af: смена manifest ломает старые snapshot hashes. v2 пока только для
+нового экземпляра. validateRouteUpgrade заменён на validateRouteExtensionCandidate:
+это проверка формы, не admission. Регрессия pending/settled воспроизводит отказ.
+Далее сначала versioned BUY policy в lifecycle, затем публикация/admission. Source collect/fork отдельно.
 Сайт/уведомления и статистика частоты routes ещё не реализованы.
 
 ## Текущий шаг к релизу
@@ -197,3 +199,6 @@ proxy, reroll/reset или подмены random. Immutable destination стар
 Проверки 23.09: npm run test:direct-buy — 14/14; node --test
 test/attempt-lifecycle.test.cjs test/monthly-replay.test.cjs — 21/21.
 Full/fork/live sends не запускались.
+
+Исправление границы 23.09: npm run test:direct-buy — 15/15; миграция существующего
+экземпляра НЕ реализована. Старые snapshots и events не изменялись.

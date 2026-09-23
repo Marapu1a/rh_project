@@ -1,19 +1,17 @@
-# Review: scheduled BUY routes, welcome bonus отменён
+# Review follow-up: граница BUY policy migration
 
-23.09.2026. Владелец отклонил приветственные билеты: entries только за eligible BUY.
-Прежний запрос welcome campaign закрыт, оценивать/реализовывать её не нужно.
+23.09.2026. Замечание 132b6af подтверждено и воспроизведено тестом.
+Полный BUY manifest hash входит в frozen domain; future append меняет старый hash,
+даже если BUY ledger идентичен. TERMINAL не помогает.
 
-Добавлены direct 0x060c0f adapter, opt-in direct-buy-v2 / scheduled-routes-v1 manifest
-с routes [{id,fromBlock}], pinned router hash, validateRouteUpgrade для append-only
-расширения после announcedAtBlock. Старый v1 и его результаты сохранены.
+В этом ограниченном исправлении НЕ реализована миграция. v2 объявлен opt-in только
+для нового экземпляра. validateRouteUpgrade удалён, заменён явно ограниченным
+validateRouteExtensionCandidate (только форма предложения). Production callers нет.
+Добавлена регрессия с pending/settled, без изменения старых events/snapshot hashes.
+npm run test:direct-buy — 15/15. Full/fork не запускались.
 
-Просьба проверить scripts/direct-buy.cjs, test/direct-buy.test.cjs и
-DIRECT_BUY_REPLAY.md. Особое внимание: gross input, SETTLE_ALL/TAKE_ALL limits,
-payer/recipient, duplicate accounting, границы активации и совместимость replay.
-14 targeted tests; три реальные receipt fixtures, остальные мутации синтетические.
-Full/fork не запускались. Source provenance прежний Sourcify match, не recompilation.
-
-Ограничения: helper не доказывает публичность объявления; rollout/coordinator и сайт
-не подключены. Production activation не назначена. JSON можно заменить вручную —
-не выдаём hash/helper за enforcement уже опубликованной политики. Какие минимальные
-admission/publication проверки нужны следующим отдельным шагом? Frozen не трогаем.
+Следующий шаг — versioned BUY policy в lifecycle, затем publication/admission.
+Нужно сохранить старые domains у FREEZE и EMPTY, последовательный carry и новые
+policy boundaries, не доверяя произвольной истории от оператора. Предложите
+минимальную целостную модель и тестовую матрицу; не считать rename исправлением
+миграции. Не удалять buyManifestHash и не переписывать старые frozen snapshots.

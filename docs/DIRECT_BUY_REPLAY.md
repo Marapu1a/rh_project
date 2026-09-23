@@ -115,12 +115,12 @@ source provenance описан выше (Sourcify match, не независим
 Runtime hash совпадает с сохранённым публичным reference. Это ограниченный adapter,
 не общая поддержка UniversalRouter, aggregator или смарт-кошельков.
 
-`validateRouteUpgrade(previous,next,announcedAtBlock)` разрешает только добавление
+`validateRouteExtensionCandidate(previous,next,announcedAtBlock)` разрешает только добавление
 routes, сохраняет старые id/границы и все остальные поля manifest; новые fromBlock
 строго позже announcedAtBlock. Это pure helper, НЕ опубликованный on-chain registry
 политики: достоверность announcement block он не доказывает. Автоматический rollout
-в coordinator и сайт не подключены. Их admission обязан использовать проверяемое
-объявление и этот helper; произвольная подмена manifest не запрещена самим JSON.
+в coordinator и сайт не подключены. Будущий admission требует versioned lifecycle, проверяемого
+объявления и проверки формы кандидата; произвольная подмена manifest не запрещена самим JSON.
 Manifest hash уже связывает replay с политикой. Frozen datasets не пересчитываем.
 Реальные production activation blocks в этом пакете не назначались.
 
@@ -128,3 +128,23 @@ Manifest hash уже связывает replay с политикой. Frozen dat
 activation boundary, старый replay, неверные limits/currency, лишние commands и
 transfers, payer mismatch, noncanonical calldata, failed receipt и append-only upgrade.
 Это offline replay, не новый fork или полный публичный registry/entry replay.
+
+## Исправление границы после review 132b6af
+
+**v2 пока только opt-in для нового экземпляра, не upgrade действующего.**
+Изменение полного manifest hash меняет domain.buyManifestHash старых snapshots.
+Даже добавление маршрута в далёком будущем ломает проверку старого FREEZE; TERMINAL
+не устраняет это. Старые hashes нельзя пересчитывать/подменять ради прохождения.
+
+Ошибочно названный validateRouteUpgrade удалён из exports; вместо него
+validateRouteExtensionCandidate проверяет только форму предложения. Это намеренно
+не совместимый alias, чтобы не оставлять API с ложным обещанием admission.
+Автоматических production callers этого helper не было.
+
+Регрессия воспроизводит неизменный BUY ledger, успешный старый lifecycle replay и
+отказ подменённого manifest как с pending, так и с settled draw. Это фиксация
+известного ограничения, НЕ тест успешной миграции. npm run test:direct-buy — 15/15.
+Далее нужен отдельный versioned BUY policy lifecycle: старые FREEZE/EMPTY используют
+исторический domain, новые — действующий; cumulative carry не сбрасывается.
+Только после этого проектировать проверяемую публикацию и rollout. Остановка
+опасного маршрута должна иметь будущую границу, не удалять старую историю.

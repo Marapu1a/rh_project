@@ -46,9 +46,11 @@ function validateManifest(m){
   ensure(keccak256(coder.encode(['address','address','uint24','int24','address'],key))===low(m.poolId),'Wrong pool id');
   number(m.chainId);number(m.anchor.number);
 }
-// Off-chain admission helper. Caller must supply an independently established publication
-// block; this pure function cannot prove public announcement or enforce deployed policy.
-function validateRouteUpgrade(previous,next,announcedAtBlock){
+// Shape validation ONLY for a proposed extension. NOT an upgrade admission API.
+// Lifecycle snapshots commit the full manifest hash; replacing it breaks old FREEZE
+// verification. A versioned lifecycle policy must be implemented before live upgrades.
+// This function also cannot prove public announcement.
+function validateRouteExtensionCandidate(previous,next,announcedAtBlock){
   validateManifest(previous);validateManifest(next);number(announcedAtBlock);
   ensure(next.schema==='direct-buy-v2','Expected scheduled routes');
   const strip=m=>{const x={...m};delete x.schema;delete x.routeVersion;delete x.routes;return x;};
@@ -187,4 +189,4 @@ function replay(m,deliveredBlocks){
     registrations:[...registrations.values()].sort((a,b)=>a.participant.localeCompare(b.participant)),decisions,
     wallets:[...wallets].sort(([a],[b])=>a.localeCompare(b)).map(([wallet,w])=>({wallet,carryRaw:String(w.carryRaw),entriesMinted:String(w.entriesMinted),shortAttemptsMinted:String(w.entriesMinted),monthlyAttemptsMinted:String(w.entriesMinted)}))};
 }
-module.exports={validateRouteUpgrade,replay,decodeTransaction,canonical,hash,validateManifest,SWAP_ABI,TRANSFER_ABI,REGISTER_ABI,EXECUTE_ABI,SWAP_TYPE};
+module.exports={validateRouteExtensionCandidate,replay,decodeTransaction,canonical,hash,validateManifest,SWAP_ABI,TRANSFER_ABI,REGISTER_ABI,EXECUTE_ABI,SWAP_TYPE};

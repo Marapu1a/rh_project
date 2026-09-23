@@ -183,10 +183,28 @@ test('public route rejects malformed settlement, limits, extra commands and inco
  ({tx})=>{const p=EXECUTE_ABI.parseTransaction({data:tx.input});tx.input=EXECUTE_ABI.encodeFunctionData('execute',['0x1010',[p.args.inputs[0],p.args.inputs[0]],p.args.deadline]);}
  ];for(const mutate of mutations){const x=copy(publicBuys[0]);mutate(x);assert.notEqual(decodeTransaction(scheduled,x.tx,x.receipt)[0].status,'ELIGIBLE');}
 });
-test('route upgrades are append-only and cannot activate before or at announcement',()=>{
- const {validateRouteUpgrade}=require('../scripts/direct-buy.cjs');const next={...m,schema:'direct-buy-v2',routeVersion:'scheduled-routes-v1',routes:[{id:m.routeVersion,fromBlock:0},{id:'rh-ur-10-060c0f-v1',fromBlock:70000001}]};
- validateRouteUpgrade(m,next,70000000);
- assert.throws(()=>validateRouteUpgrade(m,next,70000001),/announcement/);
- const changed=copy(next);changed.routes[0].fromBlock=1;assert.throws(()=>validateRouteUpgrade(m,changed,70000000),/Historical/);
- assert.throws(()=>validateRouteUpgrade(m,{...next,registry:next.router},70000000),/Unrelated/);
+test('route extension candidates are append-only; this is not lifecycle upgrade admission',()=>{
+ const {validateRouteExtensionCandidate}=require('../scripts/direct-buy.cjs');const next={...m,schema:'direct-buy-v2',routeVersion:'scheduled-routes-v1',routes:[{id:m.routeVersion,fromBlock:0},{id:'rh-ur-10-060c0f-v1',fromBlock:70000001}]};
+ validateRouteExtensionCandidate(m,next,70000000);
+ assert.throws(()=>validateRouteExtensionCandidate(m,next,70000001),/announcement/);
+ const changed=copy(next);changed.routes[0].fromBlock=1;assert.throws(()=>validateRouteExtensionCandidate(m,changed,70000000),/Historical/);
+ assert.throws(()=>validateRouteExtensionCandidate(m,{...next,registry:next.router},70000000),/Unrelated/);
+});
+
+test('future route extension is NOT a lifecycle upgrade: old frozen and settled snapshots retain original manifest',()=>{
+ const {history}=require('./fixtures/attempt-history.cjs');
+ const {replayAttempts}=require('../scripts/attempt-lifecycle.cjs');
+ const {validateRouteExtensionCandidate}=require('../scripts/direct-buy.cjs');
+ const h=history();const draw=h.freeze('route upgrade regression','SHORT',h.head(),[h.participant(1)]);
+ const next={...h.manifest,schema:'direct-buy-v2',routeVersion:'scheduled-routes-v1',routes:[{id:h.manifest.routeVersion,fromBlock:0},{id:'rh-ur-10-060c0f-v1',fromBlock:70000001}]};
+ validateRouteExtensionCandidate(h.manifest,next,70000000);
+ assert.deepEqual(replay(h.manifest,h.blocks).wallets,replay(next,h.blocks).wallets);
+ const originalSnapshot=canonical(draw.snapshot);
+ assert.doesNotThrow(()=>replayAttempts(h.manifest,h.config,h.blocks));
+ assert.throws(()=>replayAttempts(next,h.config,h.blocks),/Frozen snapshot does not match replay/);
+ h.terminal(draw);
+ assert.doesNotThrow(()=>replayAttempts(h.manifest,h.config,h.blocks));
+ assert.throws(()=>replayAttempts(next,h.config,h.blocks),/Frozen snapshot does not match replay/);
+ assert.equal(canonical(draw.snapshot),originalSnapshot);
+ assert.equal(require('../scripts/direct-buy.cjs').validateRouteUpgrade,undefined);
 });
