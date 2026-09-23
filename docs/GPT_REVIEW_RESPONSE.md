@@ -3,71 +3,65 @@
 Обновлено: 23.09.2026. Независимое review-мнение, не автоматическое задание.
 При следующем обращении файл полностью перезаписывается.
 
-Просмотрен HEAD `7480522`: три read-only research commits после `cf100ca`.
-Контракты, runtime, продуктовые параметры и local chain guards не менялись.
+Просмотрен HEAD `340fb46472cb4d67900abe6cf05ed0f0f51393b9`.
+Приветственные билеты отклонены владельцем; это решение поддерживаю. Entry остаётся
+следствием eligible BUY, баланс/holding/посещение сайта билет не создают.
 
 ## Вердикт
 
-Исследование полезно, границы в двух dossier в основном сформулированы честно.
-Подтверждённой ошибки в выборе чужого reference или классификации его 11 Swap tx
-не нашёл. Это **не выбранный deployment нашего TOKEN** и не доказательство дохода,
-финальности, работоспособности collect/claim или готовности к запуску.
+Узкий `0x060c0f` decoder по сохранённым трём публичным receipts выглядит корректно:
+SETTLE_ALL сверяет валюту и полный quote debt с `maxAmount`, TAKE_ALL — token credit
+с `minAmount`; payer/recipient и два точных transfers проходят прежние проверки.
+Старый direct route не расширен молча. Активация `fromBlock` включительная, unknown
+и повторные id отклонены. Исторический v1 replay даёт прежние решения о BUY.
 
-Зафиксирована настоящая несовместимость *поддержанного decoder route* с частью
-публичных прямых TOKEN/USDG BUY выбранного reference: 3 tx имеют command `0x10`,
-actions `0x060c0f`, тогда как `direct-buy.cjs` разрешает только `0x060b0e`.
-Пять из 11 — SELL, ещё три — не прямой вызов router; их нельзя просто записать
-в пропущенные eligible BUY. Участие покупателя по чужому registry здесь тоже не
-доказано и не нужно для проверки формы route.
+Но **пакет нельзя считать готовым для upgrade действующего экземпляра**. Найден
+подтверждённый межмодульный дефект в неизменности уже frozen снимков:
 
-Проверил сохранённые raw RPC responses, а не только готовые таблицы:
+1. `attempt-lifecycle.cjs:domainFor()` записывает `buyManifestHash: hash(manifest)`
+   в домен каждого `attempt-snapshot`.
+2. `validateRouteUpgrade()` разрешает append-only добавление будущего маршрута,
+   которое неизбежно меняет hash целого BUY manifest даже до `fromBlock`.
+3. Полный `replayAttempts()` использует один переданный manifest для всей истории.
+   Старый FREEZE event был привязан к старому hash, и пересчитанный snapshot уже
+   не совпадает с сохранённым `snapshotHash`. Исторический BUY ledger при этом
+   остаётся тем же.
 
-- discovery: 20 USDG launch events, шесть обследованных mode1 vault без ошибок
-  getters; выбранная USDG position registered, её poolId совпадает с launch и
-  ownerOf совпадает с vault. У vault есть **вторая позиция**: нельзя считать её
-  автоматически частью того же USDG revenue.
-- inspection: 11/11 sampled receipts соответствуют полученным block headers,
-  anchor перечитан; ошибок `response.error` в discovery/inspection нет.
-- все три прямые BUY имеют ровно один нужный Swap и два TOKEN/USDG Transfer в
-  порядке Swap → USDG payer→PoolManager → TOKEN PoolManager→payer. Quote Transfer
-  равен отрицательной quote delta, TOKEN Transfer — положительной token delta;
-  `maxAmount` в SETTLE_ALL не меньше долга, `minAmount` в TAKE_ALL не больше выдачи.
-  Эти три конкретных исполнения совместимы с gross quote accounting, но не
-  доказывают все будущие формы вызова.
-- в двух более ранних profile snapshots есть по 38 `eth_call` errors от попытки
-  применить одни getters ко всем разным контрактам. Это не success этих getter
-  путей; пригодные handler/launchpad bindings подтверждаются только теми вызовами,
-  которые вернули декодируемое значение. Standard-route API503 и Sourcify400/404
-  отражены в документах, не подменены «готовностью».
+Воспроизвёл без изменения кода: `history()` из `test/fixtures/attempt-history.cjs`,
+старый Short FREEZE, v1 replay успешен; `validateRouteUpgrade(v1,v2,70000000)` успешен,
+новый маршрут включается только с блока 70000001. BUY entries до и после равны 1,
+но `replayAttempts(v2,...)` падает `Frozen snapshot does not match replay`.
+Повторил и после TERMINAL event — тот же отказ. Это не гипотеза про будущий UI,
+а конфликт текущих форматов. Он затрагивает исторические settled draws, поэтому
+условие «просто дождаться, пока pending исчезнет» проблему не решает.
 
-По сохранённому `V4Router.sol` SETTLE_ALL берёт фактический полный долг в валюте,
-проверяет `<= maxAmount` и платит от `msgSender()`; TAKE_ALL берёт полный кредит,
-проверяет `>= minAmount` и отправляет `msgSender()`. В `Lock.sol` прямой внешний
-`execute` закрепляет исходного caller. Значения action `0x0c`/`0x0f` сверены с
-[Actions.sol](https://github.com/Uniswap/v4-periphery/blob/main/src/libraries/Actions.sol).
-Перед production adapter надо закрепить именно ревизию источников, соответствующую
-уже проверенному runtime hash router, а не полагаться на текущий `main` библиотеки.
+Независимые проверки: `npm run test:direct-buy` 14/14; `npm run test:attempts`
+15/15; оба exit 0. Их отдельные зелёные наборы не покрывали переход manifest между
+уже существующим FREEZE/TERMINAL и следующим replay. `git diff --check
+2dfcb60..340fb46` чист. Full/fork не запускал, пользовательский untracked
+`docs/INDEPENDENT_AUDIT_2026-09-19.md` не менял.
 
-Адресная проверка GPT: отдельные assertions на все 3 сохранённые calldata/receipts
-прошли; `node --check` четырёх новых read-only scripts прошёл;
-`git diff --check cf100ca..7480522` чист. Публичный RPC заново не опрашивал:
-проверял воспроизводимость вывода из сохранённого evidence. Full/fork не запускал.
-Пользовательский untracked audit-файл не трогал.
+## Минимальный следующий шаг
 
-## Следующий ограниченный шаг
+Сначала решить **versioned BUY policy в lifecycle**, затем публикацию/rollout:
 
-Теперь есть достаточно материала для **отдельного route-v2 decoder slice** на
-`0x10/0x060c0f`, если native-fee/custom TOKEN/USDG остаётся целевым кандидатом.
-Старый `0x060b0e` оставить самостоятельной версией. Сначала закрепить source/runtime
-provenance для router/actions/lock и внести три реальные положительные fixture;
-затем негативные варианты: чужой pool/quote, extra commands или Swap, payer mismatch,
-лишние transfers, неправильный порядок/суммы, noncanonical params, превышение
-`maxAmount`, output ниже `minAmount`, failure receipt. Только после этого включать
-route-v2 в manifest/replay за явным version/profile binding. Никакой общей
-«принимай 0x0c0f» allowlist по одним трём примерам.
+- полный replay должен выбирать разрешённый decoder по каноническому блоку BUY;
+- каждый старый FREEZE/TERMINAL должен проверяться с тем BUY manifest hash,
+  который был действующим при его snapshot, а новый FREEZE — с новым; нельзя
+  пересчитать старый snapshot с глобально заменённым доменом;
+- регрессия должна содержать существующий frozen draw, завершённый старый draw,
+  добавление будущего маршрута, покупку до/после activation, сохранение carry,
+  и точное совпадение старых snapshot hashes без ручной правки event/снимка;
+- если эту схему пока не готовы реализовать, оставить v2 исследовательским opt-in
+  для нового экземпляра без исторических обязательств; так это и назвать в docs.
 
-Дальнейшие неизвестные вести отдельно: выбранный будущий vault/position/recipient
-для нашего TOKEN, реальный collect/claim из нужной позиции, цена conversion/RNG/draw,
-cutoff/finality. Ноль `claimable` у чужого vault не означает ноль несобранных fees.
-Сначала один проверяемый BUY route, затем revenue adapter; не смешивать их и не
-переутверждать экономику по чужой истории.
+Затем admission/publication: авторизованная и публично проверяемая запись полного
+policy hash, старого policy hash и activation block **до** активации, на канонической
+ветке и с выбранной finality; verifier должен проверить provenance, порядок и
+`validateRouteUpgrade`, а не получать произвольный `announcedAtBlock` от оператора.
+Нужен также способ останавливать *будущие* покупки по опасному route без удаления
+исторических решений: текущий append-only helper умеет только добавлять. Это
+отдельная граница дизайна, не разрешение переписывать frozen.
+
+Никакой production activation сейчас не назначать. Изменение JSON без публикации
+не является новым правилом для покупателей, даже если pure decoder принимает его.
