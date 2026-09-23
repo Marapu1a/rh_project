@@ -1,93 +1,73 @@
 # Постоянный ответ GPT
 
-Обновлено: 23.09.2026. Это независимое мнение, не автоматическое задание Кодексу.
-Следующее обращение полностью заменит этот файл.
+Обновлено: 23.09.2026. Независимое review-мнение, не автоматическое задание.
+При следующем обращении файл полностью перезаписывается.
 
-Рассмотрен HEAD `00ad0f5`: календарная модель кандидата и предыдущий аналитический
-concentration sweep. Спонсорскую ветку пока оставляем в архиве. Числа в
-`MVP_ECONOMIC_PROFILE.md` по-прежнему **не утверждены**.
+Просмотрен HEAD `7480522`: три read-only research commits после `cf100ca`.
+Контракты, runtime, продуктовые параметры и local chain guards не менялись.
 
-## Вердикт по текущему пакету
+## Вердикт
 
-Подтверждённой ошибки в проверенных денежных и attempt-переходах модели не нашёл.
-`funding` переносит raw-unit phase между поступлениями и переправляет переполнение Next
-в Current; creator split с остатком не теряет единицы. Short freeze отделяет новые
-entries от frozen, settlement возвращает невыданное в free и начинает следующий clock
-от результата. Monthly удерживает frozen Current отдельно от поступлений во время pending:
-no-win возвращает старый budget в Current, win переносит только накопленный Next и
-оставляет новые поступления Current на месте. Порядок Short/Monthly в пределах одного
-наблюдения не смешивает их отдельные попытки и резервы.
+Исследование полезно, границы в двух dossier в основном сформулированы честно.
+Подтверждённой ошибки в выборе чужого reference или классификации его 11 Swap tx
+не нашёл. Это **не выбранный deployment нашего TOKEN** и не доказательство дохода,
+финальности, работоспособности collect/claim или готовности к запуску.
 
-Независимо воспроизвёл `python scripts/mvp-calendar-model.py`: exit 0, 520 rows;
-one_wallet Short 85–192, из них no-win 44–141, project=120 USDG за 120 дней;
-medium Short 26–27. `python scripts/mvp-economic-sweep.py`: exit 0.
-`git diff --check b4a89ef..00ad0f5` чист. Full Solidity suite не запускал:
-контракты и runtime здесь не менялись. Пользовательский untracked audit-файл не трогал.
+Зафиксирована настоящая несовместимость *поддержанного decoder route* с частью
+публичных прямых TOKEN/USDG BUY выбранного reference: 3 tx имеют command `0x10`,
+actions `0x060c0f`, тогда как `direct-buy.cjs` разрешает только `0x060b0e`.
+Пять из 11 — SELL, ещё три — не прямой вызов router; их нельзя просто записать
+в пропущенные eligible BUY. Участие покупателя по чужому registry здесь тоже не
+доказано и не нужно для проверки формы route.
 
-Это именно модельные инварианты, а не доказательство корректности реального fee source,
-conversion, cutoff/finality, RNG, исполнения, claim или прибыльности. В частности,
-6-часовая сетка и мгновенная конвертация могут оптимистично передвигать readiness;
-synthetic BUY не связывает оборот, доход и доступные для farming попытки реальным
-рыночным путём. В результатах `paid` — созданный claimable долг, не доставленная выплата.
+Проверил сохранённые raw RPC responses, а не только готовые таблицы:
 
-## Операционная экономика: настоящий стоп-сигнал
+- discovery: 20 USDG launch events, шесть обследованных mode1 vault без ошибок
+  getters; выбранная USDG position registered, её poolId совпадает с launch и
+  ownerOf совпадает с vault. У vault есть **вторая позиция**: нельзя считать её
+  автоматически частью того же USDG revenue.
+- inspection: 11/11 sampled receipts соответствуют полученным block headers,
+  anchor перечитан; ошибок `response.error` в discovery/inspection нет.
+- все три прямые BUY имеют ровно один нужный Swap и два TOKEN/USDG Transfer в
+  порядке Swap → USDG payer→PoolManager → TOKEN PoolManager→payer. Quote Transfer
+  равен отрицательной quote delta, TOKEN Transfer — положительной token delta;
+  `maxAmount` в SETTLE_ALL не меньше долга, `minAmount` в TAKE_ALL не больше выдачи.
+  Эти три конкретных исполнения совместимы с gross quote accounting, но не
+  доказывают все будущие формы вызова.
+- в двух более ранних profile snapshots есть по 38 `eth_call` errors от попытки
+  применить одни getters ко всем разным контрактам. Это не success этих getter
+  путей; пригодные handler/launchpad bindings подтверждаются только теми вызовами,
+  которые вернули декодируемое значение. Standard-route API503 и Sourcify400/404
+  отражены в документах, не подменены «готовностью».
 
-Single-wallet не нарушает conservation, но может быть операционно убыточным: 120 USDG
-условной проектной доли на 85–192 Short settlement, то есть **0,63–1,41 USDG на один
-Short в среднем**, ещё до Monthly, harvest, swap, RNG, RPC, claim UX и резерва на сбои.
-Реальную стоимость мы пока не знаем; это не доказанный убыток, но и «готово к запуску»
-из этих цифр не следует. No-win всё равно расходует исполнение.
+По сохранённому `V4Router.sol` SETTLE_ALL берёт фактический полный долг в валюте,
+проверяет `<= maxAmount` и платит от `msgSender()`; TAKE_ALL берёт полный кредит,
+проверяет `>= minAmount` и отправляет `msgSender()`. В `Lock.sol` прямой внешний
+`execute` закрепляет исходного caller. Значения action `0x0c`/`0x0f` сверены с
+[Actions.sol](https://github.com/Uniswap/v4-periphery/blob/main/src/libraries/Actions.sol).
+Перед production adapter надо закрепить именно ревизию источников, соответствующую
+уже проверенному runtime hash router, а не полагаться на текущий `main` библиотеки.
 
-Не вводить по умолчанию произвольный `min_wallets`: это новая политика допуска и может
-заморозить обеспеченные призы. Правильная граница до freeze — обеспечить native/RNG
-для *полного* обязательства после freeze, в том числе при no-win, из отдельного ops
-источника; при нехватке не начинать новый draw, сохраняя деньги и attempts. Текущий
-локальный execution-budget gate движется в эту сторону, но fixture estimates и
-permissionless обход не доказывают production гарантию. Возможность оператора
-субсидировать draw из bootstrap честно называть субсидией; не обещать, что 10% доля
-автоматически покрывает работу. Нужны стоимость по реальной сети и предел bootstrap/
-spend на период. Если экономика не сходится, владелец выбирает изменение доли,
-порогов/частоты/допуска или явную субсидию — не техника принимает это молча.
+Адресная проверка GPT: отдельные assertions на все 3 сохранённые calldata/receipts
+прошли; `node --check` четырёх новых read-only scripts прошёл;
+`git diff --check cf100ca..7480522` чист. Публичный RPC заново не опрашивал:
+проверял воспроизводимость вывода из сохранённого evidence. Full/fork не запускал.
+Пользовательский untracked audit-файл не трогал.
 
-## Что мешает публичному релизу, а что нет
+## Следующий ограниченный шаг
 
-Блокируют запуск с деньгами:
+Теперь есть достаточно материала для **отдельного route-v2 decoder slice** на
+`0x10/0x060c0f`, если native-fee/custom TOKEN/USDG остаётся целевым кандидатом.
+Старый `0x060b0e` оставить самостоятельной версией. Сначала закрепить source/runtime
+provenance для router/actions/lock и внести три реальные положительные fixture;
+затем негативные варианты: чужой pool/quote, extra commands или Swap, payer mismatch,
+лишние transfers, неправильный порядок/суммы, noncanonical params, превышение
+`maxAmount`, output ниже `minAmount`, failure receipt. Только после этого включать
+route-v2 в manifest/replay за явным version/profile binding. Никакой общей
+«принимай 0x0c0f» allowlist по одним трём примерам.
 
-1. Утверждённый численный профиль, policy пауз/готовности и прозрачная экономика
-   при слабом обороте и Sybil; реальная стоимость исполнения против доступных ops,
-   без смешения prize custody и project funds.
-2. Один конкретный deployment profile: PAIR release/fee epoch/claim path и реально
-   доступные creator assets, поддержанный BUY route, chain finality, EVM/fee model,
-   converter с рыночными guard, production RNG и проверенная стоимость/доставка.
-3. Постоянный indexer/keeper с проверяемыми snapshot/cutoff, reorg/restart и durable
-   reconciliation, владением signer/state/lock; затем fork/canary на выбранной сети.
-4. Reproducible deploy/manifest/verification, monitoring/runbook, внешняя проверка
-   контрактов и условий публичного промо в выбранных юрисдикциях; пригодный интерфейс
-   для wallet, eligibility и claim.
-
-Не блокируют **следующий исследовательский шаг**: статистическая гарантия по 20 seeds,
-все мыслимые формы распределения кошельков, универсальный sponsor API, полный rewrite
-тестов, оптимизация full-runner. Sybil wallet cap — известное ограничение, но при
-положительном farming EV и крупных внешних субсидиях оно превращается в денежный
-релизный риск, а не просто сноску.
-
-## Один следующий шаг
-
-Я бы сейчас сделал **read-only evidence пакета для одного выбранного реального
-PAIR/network profile**, а не новую симуляцию и не замену нескольких заглушек сразу.
-Зафиксировать конкретный release/vault/handler/policy epoch; по публичным tx и source/
-ABI проверить, какой creator revenue фактически доступен, в каких активах и через
-какой collect/claim path; по реальным BUY receipts сверить поддержанный decoder;
-снять network gas/fee и возможные RNG quotes как измерения с датой/блоком, отдельно
-от ценового прогноза. Никаких sends, deployment или снятия chainId=31337 guards.
-
-Результат — короткий compatibility/economics dossier с адресами, block hashes,
-ссылками на raw evidence, единицами измерения и явными `supported/unsupported/unknown`.
-Если release/policy или route не совпадает с текущими допущениями, первым *кодовым*
-срезом после этого станет узкий source/BUY adapter под этот профиль с fork-тестом;
-не подменять fixtures до выбора цели. Параллельное переутверждение процентов на
-основе гипотетических 0,2% оборота сейчас было бы гаданием.
-
-Это не значит отложить экономическое решение бесконечно: после реальных поступлений,
-gas/RNG и bounded farming-cost сценариев владелец выбирает один MVP-профиль. Пока
-операционный запас для low/no-win режима не обеспечен, публичный запуск не готов.
+Дальнейшие неизвестные вести отдельно: выбранный будущий vault/position/recipient
+для нашего TOKEN, реальный collect/claim из нужной позиции, цена conversion/RNG/draw,
+cutoff/finality. Ноль `claimable` у чужого vault не означает ноль несобранных fees.
+Сначала один проверяемый BUY route, затем revenue adapter; не смешивать их и не
+переутверждать экономику по чужой истории.
