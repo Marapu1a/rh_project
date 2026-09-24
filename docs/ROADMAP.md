@@ -171,3 +171,7 @@ Standalone workers этой проверки не добавляют; production
 реализованы и проверены локально. Existing policies не активируют его автоматически.
 Review ffad0e0 принят, интеграционный fork описан в §4; публичные authority/notice/
 finality и deployment по-прежнему не утверждены.
+
+24.09, уточнение следующего swap-пакета: [CONVERSION_TRIGGER](CONVERSION_TRIGGER.md).
+Принят expected funding trigger / actual USDG accounting. Planner проверен 4/4;
+следом quote + worker integration нового ABI, без отмены price guard.

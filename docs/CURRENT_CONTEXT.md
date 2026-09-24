@@ -294,3 +294,15 @@ revert InsufficientHistory, последняя запись старше 11 дн
 Локальная модель: 4 проверки; production code/full suite/fork не менялись/не запускались.
 Прямое подключение hook единственным priceSource не рекомендовано. Следующий шаг —
 replay post-swap истории и исполнимой котировки; oracle/trust model ещё не выбраны.
+
+24.09: принято запускать конвертацию по ожидаемому достаточному Short funding,
+но фиксировать бюджет только по фактическому USDG. GENERAL split сохраняется.
+[CONVERSION_TRIGGER](CONVERSION_TRIGGER.md): чистый planner, адресные unit 4/4.
+Worker ещё не подключён, contracts не менялись, production oracle не выбран.
+Следующий ограниченный шаг — quote/snapshot и новый ABI в worker с receipt recovery;
+триггер не заменяет price guard. Полный suite/fork не запускались.
+
+Следующий шаг уточнён: перед подключением planner пользователь запросил review самой
+модели исполнения. [GPT_REVIEW_REQUEST](GPT_REVIEW_REQUEST.md): нужна ли обязательная
+историческая цена, как ограничить adapter и избежать остановки из-за требования
+закрыть Short target одной порцией. Принятия spot-only защиты пока нет.

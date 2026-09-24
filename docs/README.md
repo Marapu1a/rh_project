@@ -50,6 +50,7 @@
 - [Текущая PAIR fee policy: V1/V2](PAIR_CURRENT_FEE_POLICY.md) — внешние правила и граница применимости.
 
 - [Local Prize Converter](LOCAL_PRIZE_CONVERTER.md) — локальный TOKEN → USDG; подключён к prize-flow worker.
+- [Триггер конвертации](CONVERSION_TRIGGER.md) — Short funding planner; подключение worker отдельно.
 - [Scheduled Prize Converter](SCHEDULED_PRIZE_CONVERTER.md) — объявленная замена adapter, фиксированные destination и price checks; отдельное локальное поколение.
 
 - [Local Prize Flow](LOCAL_PRIZE_FLOW.md) — автоматический collect/harvest/pay/convert/forward и legacy debt.

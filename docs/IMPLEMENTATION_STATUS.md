@@ -161,3 +161,6 @@ collect/claim и FeeRouter bind/harvest/rollover/pay на настоящем ref
 timelocked adapter replacement, immutable price/destination bounds, expected route version.
 Price fixture только в test/contracts; 9/9 converter scenarios. Старый converter и
 prize-flow worker не изменены. [API, trust и открытые зависимости](SCHEDULED_PRIZE_CONVERTER.md).
+
+24.09: [Short conversion trigger](CONVERSION_TRIGGER.md) — pure planner
+scripts/short-conversion-trigger.cjs, 4/4 unit. Не подключён к prize-flow worker.
