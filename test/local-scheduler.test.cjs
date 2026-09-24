@@ -223,3 +223,51 @@ test('unknown activated BUY adapter blocks new datasets but frozen Short and Mon
  assert.deepEqual(['SHORT','MONTHLY'].map(k=>f.readState().jobs[k][0].job.artifact.request.snapshotHash),hashes);
  assertUnlocked(f.statePath);
 });
+
+test('independent pre-begin replay rejects self-consistent forged participants, omitted BUY and request changes without sending',async t=>{
+ const {hash}=require('../scripts/direct-buy.cjs');
+ const sd=require('../scripts/short-dataset.cjs'),md=require('../scripts/monthly-dataset.cjs');
+ const sw=require('../scripts/local-short-executor.cjs'),mw=require('../scripts/local-monthly-executor.cjs');
+ const f=await setup(t,compiled);await registeredBuy(f);
+ await sent(f.registry.connect(f.executor).register());await f.buy(f.executor,100);
+ await advance(30*86400+1);await run(f,1); // Saved only, no begin.
+ const original=f.readState(),nonce=await f.provider.getTransactionCount(await f.admin.getAddress());
+ const forge=mode=>{
+  const state=structuredClone(original);
+  for(const kind of ['SHORT','MONTHLY']){
+   const entry=state.jobs[kind][0],job=entry.job,a=job.artifact,s=a.snapshot,r=a.request;
+   if(mode==='inflate'){
+    s.participants[0].lastAttempt=String(BigInt(s.participants[0].lastAttempt)+10n);
+    s.participants[0].count=String(BigInt(s.participants[0].count)+10n);
+   }else if(mode==='omit')s.participants.pop();
+   else if(kind==='SHORT')r.budget=String(BigInt(r.budget)+1n);
+   else r.campaign=String(BigInt(r.campaign)+1n);
+   r.snapshotHash=hash(s);
+   const attempts=String(s.participants.reduce((sum,p)=>sum+BigInt(p.count),0n));
+   if(kind==='SHORT'){r.expectedCount=String(s.participants.length);r.expectedAttempts=attempts;r.expectedRoot=sd.rootFor(s.participants);}
+   else{r.count=String(s.participants.length);r.attempts=attempts;r.root=md.rootFor(s.participants);}
+   delete job.commitment;job.commitment=hash(job);
+   (kind==='SHORT'?sw.validateJob:mw.validateMonthlyJob)(job); // Old self-consistency checks accept it.
+  }
+  delete state.checksum;state.checksum=hash(state);return state;
+ };
+ for(const mode of ['inflate','omit','request']){
+  const state=forge(mode),bytes=JSON.stringify(state);fs.writeFileSync(f.statePath,bytes);
+  const result=await runScheduler(f.options,{maxTicks:1});
+  assert.equal(result.status,'error',JSON.stringify(result));
+  for(const kind of ['SHORT','MONTHLY'])assert.match(result.results[kind].message,/differs from independent replay/);
+  assert.equal(await f.provider.getTransactionCount(await f.admin.getAddress()),nonce);
+  assert.equal(fs.readFileSync(f.statePath,'utf8'),bytes,'Rejected artifact must not be replaced or marked verified');
+  assertUnlocked(f.statePath);
+ }
+ fs.writeFileSync(f.statePath,JSON.stringify(original));await run(f,1);
+ assert.notEqual(await f.short.activeProposal(),ethers.ZeroHash);
+ assert.notEqual(await f.monthly.activeMonth(),ethers.ZeroHash);
+ // Once begun, the same internally valid forgery is rejected against chain commitments.
+ const begunNonce=await f.provider.getTransactionCount(await f.admin.getAddress());
+ fs.writeFileSync(f.statePath,JSON.stringify(forge('inflate')));
+ const begun=await runScheduler(f.options,{maxTicks:1});
+ assert.equal(begun.status,'error',JSON.stringify(begun));
+ assert.equal(await f.provider.getTransactionCount(await f.admin.getAddress()),begunNonce);
+ for(const kind of ['SHORT','MONTHLY'])assert.equal(begun.results[kind].status,'error');
+});

@@ -1,6 +1,6 @@
 # Текущий контекст
 
-Обновлено 24.09.2026: typed BUY policy и явные режимы admission; новые routes не добавлены.
+Обновлено 24.09.2026: scheduler пересобирает persisted dataset перед первым begin.
 
 ## Где находимся
 
@@ -150,8 +150,10 @@ Review d512733 принят с уточнением владельца: без �
 явный unadmitted research mode и cutoff isolation неизвестных adapters.
 Старый JSON source ABI несовместим: это новый deployment, публичного старого нет.
 Сам source не проверяет семантику будущего decoder; обещания полной доступности нет.
-Следующий релизный gate — независимый replay persisted dataset до первого begin;
-после него один подтверждённый route adapter. Детали в BUY_POLICY_ADMISSION.md.
+Review 9a6a9c1 прочитан. Scheduler теперь независимо пересобирает весь persisted
+artifact перед первым begin, восстанавливая параметры из config и on-chain policy.
+У начатых jobs сохраняется сверка прежних commitments, без пересоздания.
+Границы — LOCAL_PROMO_SCHEDULER.md; следующий шаг — один подтверждённый route adapter.
 
 Ответ GPT b4a89ef прочитан. По указанию пользователя sponsor/merchant ветка отложена;
 [архив обсуждения](archive/studies/SPONSOR_PARTNERSHIP_DISCUSSION_2026-09-23.md).
@@ -242,3 +244,8 @@ venue/RNG прежние fixtures. Evidence и ограничения в BUY_POL
 тестовых ожидания исправлены, финальная выборка 3/3 закрыла их и новый CLI case.
 Frozen completion при неизвестном active adapter подтверждено; full/fork не запускали.
 Команды, timings и пределы — [BUY policy](BUY_POLICY_ADMISSION.md).
+
+24.09, pre-begin replay: scheduler **13/13** и сквозной coordinator **1/1**,
+оба адресных запуска exit 0. Согласованная подмена ranges/participants/request
+отклоняется до отправки; оригинал и begun recovery работают. Команды/evidence —
+[LOCAL_PROMO_SCHEDULER](LOCAL_PROMO_SCHEDULER.md). Full/fork/live не запускались.

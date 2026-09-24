@@ -134,3 +134,9 @@ run-buy-policy-publication.cjs сохраняют preflight/journal, ABI обн�
 buy-policy-runtime.cjs различает admitted/unadmitted; replay CLI/verifiers
 показывают policyStatus. Scheduler проверяет jobs по их cutoff до новой политики.
 [Границы и протокол](BUY_POLICY_ADMISSION.md). Новые routers/BUY формы не добавлены.
+
+24.09: local-promo-scheduler.cjs — общий datasetInput для создания/перепроверки
+request; перед первым begin полный RPC replay на cutoff, policy из контракта,
+сверка всего artifact и proposal id. Никакого persisted verification flag;
+начатые jobs проверяются workers против chain commitments.
+[Пределы защиты](LOCAL_PROMO_SCHEDULER.md).

@@ -102,8 +102,9 @@ exclusive журналом. Контрактный publisher отправляе�
 
 ## Открытые границы
 
-Независимый replay persisted dataset до первого begin остаётся отдельным
-релизным gate: сверка policy hash и checksum не доказывает список участников.
+Независимый replay persisted dataset до первого begin добавлен в scheduler:
+[проверка полного artifact](LOCAL_PROMO_SCHEDULER.md). Low-level workers вне
+scheduler сами историю не пересобирают; их checksum не доказывает участников.
 Нет live deployment/migration JSON source, новых route adapters, oracle, отмены
 активации, сайта или production RNG. Локальные venue/RNG fixtures не изменены.
 

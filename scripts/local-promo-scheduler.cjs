@@ -30,6 +30,16 @@ async function pendingSigner(provider,signers){
   return false;
 }
 const ruleObject=r=>Object.fromEntries(['version','pNumerator','pDenominator','hNumerator','hDenominator'].map(k=>[k,Number(r[k])]));
+// Derive requests from pinned config and chain policy, never mutable job fields.
+function datasetInput(kind,config,manifest,policy,epoch,cutoff,configHash){
+  const isShort=kind==='SHORT';
+  const identity=hash({config:configHash,kind,cutoff:cutoff.hash,epoch:String(epoch)});
+  const drawId=drawIdFor(kind,identity);
+  return {identity,drawId,input:{manifest,lifecycle:config.lifecycle,rules:ruleObject(policy.outcome),
+    ...(isShort?{weights:Array.from(policy.weights,String),minimumUnit:String(policy.minimumUnit)}:{}),
+    request:isShort?{drawId,campaignId:config.campaignId,rulesEpoch:String(epoch),cutoffBlockNumber:cutoff.number,cutoffBlockHash:cutoff.hash,budget:config.shortBudget}:
+      {drawId,campaign:config.campaignId,rulesEpoch:String(epoch),cutoff:cutoff.number,cutoffHash:cutoff.hash}}};
+}
 async function tickKind(kind,o,state,save){
   const {provider,config,publisher,executor,signal}=o,isShort=kind==='SHORT',source=isShort?o.short:o.monthly;
   if(signal?.aborted)return {status:'stopped'};
@@ -104,6 +114,26 @@ async function tickKind(kind,o,state,save){
         {type:2,maxFeePerGas:price,maxPriorityFeePerGas:0},{signal,receiptTimeoutMs:o.receiptTimeoutMs});
       return {status:'progress',action:'closeEmpty',transactionHash:receipt.hash};
     }
+    const begun=isShort?(await source.datasetProposal(selected.job.proposalId)).status!==0n:
+      (await source.month(a.request.drawId)).phase!==0n;
+    if(!begun){
+      check(!selected.started,'Previously started job disappeared; explicit reorg recovery required');
+      // Under scheduler lock; no durable "verified" flag that could outlive a reorg/edit.
+      const historical=await resolveBuyPolicy(config,(m,p)=>provider.send(m,p),cutoff.blockNumber);
+      const blocks=(await scan(historical.manifest,o.rpcUrl,cutoff.blockNumber,config.lifecycle)).blocks;
+      const ledger=replayAttempts(historical.manifest,config.lifecycle,blocks);
+      check(ledger.head.hash===cutoff.blockHash,'Stored job cutoff differs from replay');
+      const epochs=isShort?ledger.shortRules:ledger.monthlyRules;
+      const epoch=BigInt(epochs.drainingEpoch||epochs.currentEpoch);
+      const policy=await source[isShort?'shortEpochPolicy':'monthlyEpochPolicy'](epoch,{blockTag:cutoff.blockNumber});
+      const rebuiltInput=datasetInput(kind,config,historical.manifest,policy,epoch,
+        {number:cutoff.blockNumber,hash:cutoff.blockHash},state.configHash);
+      const rebuilt=(isShort?sd:md).buildFromHistory({...rebuiltInput.input,blocks});
+      check(hash(rebuilt)===hash(a),'Stored job differs from independent replay');
+      if(isShort)check(selected.job.proposalId===ethers.id('scheduler proposal '+rebuiltInput.identity),'Stored proposal identity differs from replay');
+      // Recheck cutoff after policy reads; executors also check canonicality and on-chain state.
+      check((await provider.getBlock(Number(cutoff.blockNumber)))?.hash===cutoff.blockHash,'Stored job cutoff changed during verification');
+    }
     const result=await (isShort?sw.stepShort:mw.stepMonthly)({provider,source,publisher,executor,job:selected.job,signal,receiptTimeoutMs:o.receiptTimeoutMs});
     if(result.status==='progress'){selected.started=true;save(state);}
     if(result.status==='terminal'){
@@ -131,12 +161,7 @@ async function tickKind(kind,o,state,save){
   if(BigInt(epochs.drainingEpoch||epochs.currentEpoch)!==epoch)return wait('finalizedPolicyBoundary');
   const open=ledger.wallets.some(w=>w[kind].byEpoch.some(e=>BigInt(e.epoch)===epoch&&BigInt(e.open)>0n));
   if(!open&&!draining)return wait('empty');
-  const identity=hash({config:state.configHash,kind,cutoff:cutoffHead.hash,epoch:String(epoch)});
-  const drawId=drawIdFor(kind,identity);
-  const input={manifest:buyManifest,lifecycle:config.lifecycle,rules:ruleObject(policy.outcome),
-    ...(isShort?{weights:Array.from(policy.weights,String),minimumUnit:String(policy.minimumUnit)}:{}),
-    request:isShort?{drawId,campaignId:config.campaignId,rulesEpoch:String(epoch),cutoffBlockNumber:cutoffHead.number,cutoffBlockHash:cutoffHead.hash,budget:config.shortBudget}:
-      {drawId,campaign:config.campaignId,rulesEpoch:String(epoch),cutoff:cutoffHead.number,cutoffHash:cutoffHead.hash}};
+  const {identity,drawId,input}=datasetInput(kind,config,buyManifest,policy,epoch,cutoffHead,state.configHash);
   if(isShort&&open)check(BigInt(config.shortBudget)<=await source.maxBudget(at),'Configured Short budget exceeds controller limit');
   const artifact=(isShort?sd:md).buildFromHistory({...input,blocks});
   const entry=artifact.schema.includes('empty-epoch')?{empty:artifact,input}:

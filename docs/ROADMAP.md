@@ -147,7 +147,8 @@ manifest всё ещё недопустима. Публикация/admission с
 24.09: [исследование маршрутов](ROUTE_RESEARCH_2026-09-24.md) завершает read-only
 разведку перед расширением. Typed source/admission реализованы: ids расширяемы
 без JSON и без candidate registry, старый cutoff изолирован от неизвестной версии.
-Далее независимый replay persisted dataset до begin и один подтверждённый route
-adapter с future activation. Новые способы BUY в этом пакете не добавлены.
-Replay persisted dataset перед первым begin остаётся отдельным незакрытым пунктом.
+Независимый replay persisted dataset до begin реализован в scheduler/coordinator:
+полный artifact сравнивается с историей, begun jobs остаются на chain commitments.
+Standalone workers этой проверки не добавляют; production publication отдельно.
+Далее один подтверждённый route adapter с future activation; новых BUY форм пока нет.
 Сайт/объявления/частотная статистика отдельно; публичный запуск не разрешён.

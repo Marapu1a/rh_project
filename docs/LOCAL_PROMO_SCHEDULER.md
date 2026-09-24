@@ -31,6 +31,35 @@ State содержит config hash и историю jobs обоих видов.
 Это локальная файловая сохранность, не гарантия пережить любой отказ диска/питания.
 Checksum защищает от случайной правки, а не от владельца файлов.
 
+### Независимая проверка перед begin (24.09.2026)
+
+Для неначатого Short/Monthly job scheduler под тем же lock повторно загружает
+BUY policy на cutoff, полные канонические blocks/receipts до cutoff и lifecycle
+history. Целевая epoch выводится из replay, её правила читаются из контракта
+на cutoff. Campaign/budget берутся из config, draw/proposal ids детерминированно
+восстанавливаются из configHash, kind, epoch и cutoff hash. Поля job не являются
+источником этих параметров.
+
+Builder пересоздаёт весь artifact: snapshot/participants/ranges/root/request/rules.
+Сравнивается canonical hash полного artifact и Short proposal id. Несовпадение
+останавливает этот вид розыгрыша до broadcast, без замены сохранённого artifact
+или отметки «проверено». Перед worker повторно проверяется cutoff hash.
+Полный replay повторяется при следующей попытке неначатого begin; постоянного
+флага, способного пережить reorg или подмену файла, нет.
+
+Если begin уже существует on-chain, нового списка не строим: worker сверяет
+сохранённый request и snapshot/root commitments с контрактом и продолжает именно
+его. Исчезновение ранее наблюдавшегося begin по-прежнему требует явного recovery.
+Путь closeEmpty сохранён. Несостоявшиеся устаревшие/orphan jobs по прежнему правилу
+retire без отправки begin; уже frozen нельзя заменить таким способом.
+
+Это защита scheduler/coordinator от согласованной подмены локального job, а не
+доказательство честности RPC или защита от злонамеренного publisher с собственным
+кодом. Low-level standalone workers сами полную историю не сканируют; обход
+scheduler не приобретает эту гарантию. Production publication ещё не разрешена.
+Полный scan от anchor может быть дорогим на длинной истории; доказуемый incremental
+replay не добавлен. Не маскировать этот предел постоянным checksum-cache.
+
 Прогресс публикации, seed и settlement берутся из контрактов; локальный счётчик шагов
 не заменяет цепь. Terminal проверяется worker независимо, отметка проверки привязана
 к canonical block. Откат terminal возвращает прежний job в работу, не создаёт новый draw.
@@ -148,3 +177,29 @@ legacy list; unknown Short broadcast/receipt, unknown Monthly broadcast без �
 Short tick, definite estimate rejection с продолжением Monthly; restart только после
 подтверждения исходной pending tx. Прежние reorg/empty/funding/state/cutoff/abort/timeout
 и BUY-cycle также прошли. Денежная математика и Solidity не менялись.
+
+### Проверки pre-begin replay, 24.09.2026
+
+Адресные запуски через `scripts/test-launcher.cjs::runTests`:
+
+```js
+runTests({profile:'pre-begin-replay',selection:{compile:true,
+  files:['test/local-scheduler.test.cjs']}})
+runTests({profile:'pre-begin-coordinator',pattern:'coordinator serializes real prize',
+  selection:{compile:true,files:['test/local-coordinator.test.cjs']}})
+```
+
+Scheduler 13/13, exit 0, 260.0 s включая compile 17.5 s;
+`.local/logs/test-run-6V1o7Q/result.json`.
+Coordinator 1/1, exit 0, 41.9 s включая compile 18.3 s;
+`.local/logs/test-run-2ZDCb1/result.json`.
+Это адресные результаты, не полный baseline проекта; full/fork/live не запускались.
+
+Новое adversarial испытание покрывает Short и Monthly: увеличение ranges, удаление
+покупателя, изменение request с пересчитанными root/snapshot/job/state hashes.
+Старые валидаторы принимают согласованный artifact, новый gate отклоняет до send;
+nonce и bytes файла неизменны. Оригинальные jobs начинают draws, подмена после
+begin отвергается chain commitment проверкой. Соседние сценарии покрывают
+повторные циклы, closeEmpty, cutoff expiry/reorg, policy activation/finality lag,
+завершение frozen после неизвестного adapter и unknown-send остановки.
+Syntax, локальные ссылки и git diff --check прошли.
