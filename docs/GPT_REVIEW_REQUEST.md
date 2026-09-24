@@ -58,3 +58,17 @@ request/snapshot/root commitments с контрактами. Исчезнувш�
 
 Следующий предполагаемый шаг — один подтверждённый дополнительный BUY route
 в текущем router с future activation. Не переходить к универсальному графу маршрутов.
+
+## Дополнение после ответа f84e940: кандидат следующего BUY route
+
+Gate принят review, следующий ограниченный read-only шаг выполнен. См. последний
+раздел ROUTE_RESEARCH_2026-09-24.md и два новых permit evidence JSON.
+Сохранённый 0x0a10 подтверждает Permit2+V4, но это TOKEN→native ETH. Среди пяти
+дополнительных USDG кандидатов три 0x10, два wrapper; positive 0x0a10 BUY не найден.
+Это малая выборка, не отсутствие маршрута. Historical getCode RPC недоступен;
+код свежего runtimeBlock совпадает с pinned hash, эти факты не смешаны.
+Decoder/activation не менялись, новых заглушек нет. Предлагаемый следующий шаг —
+controlled fork исполнения USDG permit+swap на настоящем router/Permit2 с явным
+обозначением test transaction либо подходящий public receipt. Если даёте совет,
+сфокусируйтесь на достаточности такого evidence и проверке permit/settlement,
+не повторяйте весь аудит pre-begin replay.

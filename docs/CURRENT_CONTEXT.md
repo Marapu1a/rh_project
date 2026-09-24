@@ -249,3 +249,9 @@ Frozen completion при неизвестном active adapter подтверж�
 оба адресных запуска exit 0. Согласованная подмена ranges/participants/request
 отклоняется до отправки; оригинал и begun recovery работают. Команды/evidence —
 [LOCAL_PROMO_SCHEDULER](LOCAL_PROMO_SCHEDULER.md). Full/fork/live не запускались.
+
+24.09, следующий ограниченный шаг: проверен кандидат 0x0a10 (Permit2 + V4).
+Сохранённый пример оказался TOKEN→ETH, не USDG BUY; ещё пять USDG кандидатов
+не подтвердили эту форму. Runtime проверен только на свежем блоке: historical
+state RPC недоступен. Adapter не добавлен. Evidence и следующий controlled fork
+план — [ROUTE_RESEARCH](ROUTE_RESEARCH_2026-09-24.md).

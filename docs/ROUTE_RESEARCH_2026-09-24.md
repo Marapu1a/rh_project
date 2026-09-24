@@ -125,3 +125,51 @@ router call и payer=recipient; эту границу нельзя снять о
 систему билетов для каждого кошелька/интерфейса. Поддержка всех возможных calldata
 не обещается. Приоритеты выше основаны на сложности и документированных путях,
 а не доказанной доле рынка.
+
+## Проверка кандидата 0x0a10 после pre-begin replay
+
+24.09.2026. Поддержка decoder НЕ расширена; это законченная read-only проверка
+кандидата, не реализованный BUY adapter.
+
+`0x0a = PERMIT2_PERMIT`, `0x10 = V4_SWAP` по
+[Uniswap reference](https://developers.uniswap.org/docs/protocols/universal-router/concepts/commands).
+Сохранённый `contracts_base_Dispatcher.sol` вызывает Permit2.permit для msgSender(),
+передавая PermitSingle (token/amount/expiration/nonce, spender, sigDeadline) и подпись.
+Это разрешение на списание, не доказательство покупки или размера eligible USDG.
+
+Повторно получены tx/receipt/header для
+`0xee46fd960864754f009c47d93668af0744091f9392b207012aa72f7336d650e2`:
+commands `0x0a10`, actions `0x060b0e`, успешная квитанция и совпавший block hash.
+Но вход — `0x798Cf9C4648638ce25FFA3A7d33b256968Ae06E0`, выход пула — native ETH.
+USDG в этой паре нет. Этот sample нельзя использовать как положительный BUY vector.
+[Сохранённый ответ](../research/permit-route-evidence-2026-09-24.json).
+
+RPC НЕ предоставил historical state для eth_getCode на блоке этой tx. Runtime
+прочитан на отдельном свежем runtimeBlock, hash совпал с нашим pinned router:
+`0x2ce6aaaf9f4151f5e1cbf774668772f17f532ae11b15e9284fd0a072a8b0fbde`.
+Это не подменяет проверку кода на историческом блоке; ошибка сохранена в evidence.
+
+Дополнительно разобраны пять USDG-input Swap кандидатов из прежнего 2000-block
+окна, только среди 77 успешно определённых pools незавершённого init census:
+три direct tx используют `0x10`, две имеют другие top-level targets. Ни одного
+`0x0a10` в этих пяти нет. Среди двух последних есть wrapper перед manager/router;
+их нельзя считать прямыми только по Swap.sender.
+[Tx, Swap и Initialize evidence](../research/permit-usdg-candidates-2026-09-24.json).
+Это не полный поиск и не доказательство отсутствия permit+USDG покупок в сети.
+
+Следующий проверяемый путь — controlled fork test настоящего router/Permit2 с
+USDG и подходящим TOKEN-пулом. До теста проверить доступность необходимого state
+у RPC. Fork transaction будет явно тестовой, не публичной покупкой. Если нужен
+публичный positive receipt — искать ограниченную целевую выборку, не включать
+adapter на основании одной synthetic подстановки calldata в прежний receipt.
+
+После positive execution проверять как минимум exact commands без allow-revert,
+permit token/spender, payer=recipient, фактический USDG settlement, отсутствие
+дополнительных transfers/batch/refunds и activation block. Permit event сам по себе
+не создаёт билетов. Signature semantics должны опираться на исполненный pinned
+router/Permit2, а не на одну длину подписи или ручное восстановление EOA.
+
+Воспроизводимая read-only проверка сохранённого кандидата:
+`node scripts/research-permit-route.cjs NEW_OUTPUT.json`.
+Проверены syntax, структура RPC evidence, направления swap и source hash;
+продуктовые unit/full/fork tests и публичные sends не запускались.

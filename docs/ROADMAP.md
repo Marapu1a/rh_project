@@ -152,3 +152,8 @@ manifest всё ещё недопустима. Публикация/admission с
 Standalone workers этой проверки не добавляют; production publication отдельно.
 Далее один подтверждённый route adapter с future activation; новых BUY форм пока нет.
 Сайт/объявления/частотная статистика отдельно; публичный запуск не разрешён.
+
+24.09: preflight кандидата 0x0a10 завершён без допуска: найденный receipt не USDG
+BUY. Следующий шаг — проверить доступность fork state и исполнить controlled
+USDG permit+swap через настоящий router/Permit2 либо найти подходящий public
+receipt. До positive evidence не расширять decoder и не объявлять поддержку.
