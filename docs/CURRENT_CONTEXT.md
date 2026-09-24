@@ -1,6 +1,6 @@
 # Текущий контекст
 
-Обновлено 24.09.2026: Permit2 BUY adapter реализован, локальная future activation проверена.
+Обновлено 24.09.2026: сквозной Permit2 BUY → admission → Short dataset пройден на local fork.
 
 ## Где находимся
 
@@ -262,4 +262,9 @@ runtime для активного cutoff. Legacy policy не включает м
 После сохранения legacy rejection reason финальная адресная выборка 7/7, 0.56 s.
 Публичная активация и новый fork в этом шаге не выполнялись; подробности —
 [DIRECT_BUY_REPLAY](DIRECT_BUY_REPLAY.md#permit2-buy-adapter-24092026).
-Далее review adapter и оставшаяся release-интеграция ROADMAP §4, без перебора всех routes.
+Review ffad0e0 не выявил blockers. Затем [сквозной fork](PERMIT_BUY_INTEGRATION.md)
+связал настоящий BUY с registry/policy admission и штатным scheduler: до activation 0,
+на activation 1 attempt; подмена budget отвергнута до send, оригинал прошёл begin/publish.
+Повторный scan сохраняет artifact и одну job. RNG/Monthly/claims не исполнялись.
+Fork exit0, offline regression 1/1; full не запускался. Следующий отдельный кусок —
+reference creator revenue collect/claim и связь с FeeRouter; новые routes пока не нужны.

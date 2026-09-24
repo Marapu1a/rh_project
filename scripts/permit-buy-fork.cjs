@@ -9,6 +9,8 @@ const RPC=process.env.RH_RPC_URL||'https://rpc.mainnet.chain.robinhood.com';
 const coder=ethers.AbiCoder.defaultAbiCoder();
 async function main(){
  const out=process.argv[2];if(!out||fs.existsSync(out))throw Error('NEW output required');
+ const integration=process.argv[3]==='--integration';
+ if(process.argv.length>4||process.argv[3]&&!integration)throw Error('Expected NEW_OUTPUT.json [--integration]');
  const e={schema:'permit-buy-fork-v1',mode:'local-fork-only',upstream:RPC,config:cfg,observedAt:new Date().toISOString(),observations:[]};let proxy;
  const rpc=(m,p=[])=>hre.network.provider.send(m,p);
  try{
@@ -43,6 +45,7 @@ async function main(){
   async function sent(label,promise){const tx=await promise,receipt=await tx.wait();e.observations.push({label,transaction:await rpc('eth_getTransactionByHash',[tx.hash]),receipt:await rpc('eth_getTransactionReceipt',[tx.hash])});assert.equal(receipt.status,1);return receipt;}
   e.stage='approve';await sent('ERC20 approves Permit2',quote.approve(PERMIT,ethers.MaxUint256));
   const permit=new ethers.Contract(PERMIT,['function allowance(address,address,address) view returns(uint160 amount,uint48 expiration,uint48 nonce)'],user);
+  async function buy(label='Permit2 + USDG BUY'){
   const previous=await permit.allowance(wallet,cfg.quote,cfg.router);e.allowanceBefore=previous.toArray().map(String);assert.equal(previous.amount,0n,'Test requires no prior Permit2 spending allowance');
   const now=(await provider.getBlock('latest')).timestamp;
   const details={token:cfg.quote,amount:100_000000n,expiration:now+600,nonce:previous.nonce},permitSingle={details,spender:cfg.router,sigDeadline:now+600};
@@ -54,13 +57,18 @@ async function main(){
    coder.encode(['address','uint256','bool'],[cfg.quote,0,true]),coder.encode(['address','address','uint256'],[cfg.token,wallet,0])]]);
   const router=new ethers.Contract(cfg.router,['function execute(bytes,bytes[],uint256) payable'],user);
   e.stage='permit-swap';const qBefore=await quote.balanceOf(wallet),tBefore=await token.balanceOf(wallet);
-  const receipt=await sent('Permit2 + USDG BUY',router.execute('0x0a10',[permitInput,input],now+600,{gasLimit:3000000}));
+  const receipt=await sent(label,router.execute('0x0a10',[permitInput,input],now+600,{gasLimit:3000000}));
   e.actual={quoteSpent:String(qBefore-await quote.balanceOf(wallet)),tokenReceived:String(await token.balanceOf(wallet)-tBefore)};
   assert.equal(e.actual.quoteSpent,'100000000');assert(BigInt(e.actual.tokenReceived)>0n);
   const swaps=receipt.logs.filter(l=>l.address.toLowerCase()===cfg.manager.toLowerCase()&&l.topics[0]===SWAP_ABI.getEvent('Swap').topicHash);assert.equal(swaps.length,1);assert.equal(SWAP_ABI.parseLog(swaps[0]).args.id,cfg.poolId);
   e.transfers=receipt.logs.filter(l=>[cfg.token.toLowerCase(),cfg.quote.toLowerCase()].includes(l.address.toLowerCase())&&l.topics[0]===TRANSFER_ABI.getEvent('Transfer').topicHash).map(l=>({token:l.address,...TRANSFER_ABI.parseLog(l).args.toObject()}));
   e.allowanceAfter=(await permit.allowance(wallet,cfg.quote,cfg.router)).toArray().map(String);
-  assert.equal(e.allowanceAfter[0],'0');assert.equal(BigInt(e.allowanceAfter[2]),previous.nonce+1n);e.stage='complete';
+  assert.equal(e.allowanceAfter[0],'0');assert.equal(BigInt(e.allowanceAfter[2]),previous.nonce+1n);
+  return receipt;
+  }
+  if(integration)await require('./permit-buy-integration.cjs').run({e,cfg,provider,user,quote,rpc,buy,out});
+  else await buy();
+  e.stage='complete';
  }catch(error){e.error=error.stack||String(error);e.errorDetails=error.info||error.error||null;process.exitCode=1;}
  finally{e.proxyStats=proxy?.stats;fs.writeFileSync(out,JSON.stringify(e,(_,v)=>typeof v==='bigint'?v.toString():v,2)+'\n',{flag:'wx'});console.log(JSON.stringify({out,stage:e.stage,error:e.error,actual:e.actual,proxyStats:e.proxyStats}));await proxy?.close();}
 }

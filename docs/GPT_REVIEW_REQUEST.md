@@ -1,55 +1,48 @@
-# GPT: review Permit2 BUY adapter и границы активации
+# GPT: сквозной Permit2 BUY → admission → dataset на fork
 
-24.09.2026. Проверь текущий пакет относительно e271043. Ответ перезапиши в
-GPT_REVIEW_RESPONSE.md; код самостоятельно не меняй. Предыдущий scheduler пакет
-завершён; его границы описаны в LOCAL_PROMO_SCHEDULER.md.
+24.09.2026. Review ffad0e0 принят. Следующий пакет — harness/evidence/regression,
+product modules/contracts не менялись. Ответ перезапиши в GPT_REVIEW_RESPONSE.md;
+код самостоятельно не меняй.
 
-## Что сделали
+## Результат и границы
 
-Промо начисляет attempts за подтверждённую покупку зарегистрированного payer=recipient.
-Не обещаем охват всех routes, в сомнительных случаях не начисляем. Prize math не меняем.
-После успешного controlled fork добавлен один adapter rh-ur-0a10-060b0e-v1:
-PermitSingle + V4 exact-input single USDG BUY через закреплённый router.
-Нет candidate registry, arbitrary plugins, новых контрактов или автоматической
-активации в старых policies. Typed publication/source уже существовали.
+[PERMIT_BUY_INTEGRATION](PERMIT_BUY_INTEGRATION.md) — точные шаги, команда и ограничения.
+Реально исполнен scripts/permit-buy-fork.cjs NEW_OUTPUT.json --integration.
+Helper scripts/permit-buy-integration.cjs использует существующие publishBuyPolicy,
+resolveBuyPolicy, scan, replay, buildFromHistory и runScheduler.
 
-Прочитай актуальный раздел [DIRECT_BUY_REPLAY](DIRECT_BUY_REPLAY.md#permit2-buy-adapter-24092026),
-затем diff scripts/direct-buy.cjs, buy-policy-format.cjs, replay-direct-buy.cjs и тесты.
-Fork evidence: research/permit-buy-fork-positive-2026-09-24.json; ограничения его
-получения в ROUTE_RESEARCH_2026-09-24.md. Новый fork в этом шаге не запускали.
+На свежем fork настоящего reference TOKEN/USDG pool развернули наши registry,
+policy source и локальный dual controller/vault stack. USDG balance только тестового
+wallet искусственный. Router/Permit2/pool не подменялись. Random — LocalRandomFixture.
 
-## На что обратить внимание
+Две реальные покупки по 100 USDG: до future activation 0 attempts, на activation 1.
+Admission читает реальный локальный BuyPolicySource. После 6-часового time advance
+scheduler сохраняет один dataset. В нём меняем budget и пересчитываем job/state hashes:
+pre-begin replay отклоняет подмену без изменения nonce и bytes файла. Возвращаем оригинал:
+штатные begin и publish проходят. Повторный scan старого cutoff даёт тот же artifact.
 
-1. Adapter выбирается по commands + actions; только exact 0x0a10 без ALLOW_REVERT
-   и reserved flags. Canonical execute, permit и swap inputs.
-2. Permit token=quote, spender=router, allowance >= actual input. Gross берётся
-   из прежнего Swap/settlement/delivery, не allowance или maximum calldata amount.
-3. Signature/nonce/deadline проверяет actual Permit2 execution. Мы не дублируем EOA
-   recovery: trusted success receipt и обязательный успех обеих commands — основание.
-   Поддельный JSON receipt offline decoder не может превратить в chain evidence.
-4. Router hash pinned; Permit2 address/hash — фиксированная dependency версии adapter.
-   RPC reader сверяет её только при активном cutoff. End-block runtime check не доказывает
-   неизменность внешнего кода за всю историю. Старые manifest hashes не меняются.
-5. prepare/publish/admission используют новый id и future activation. Synthetic replay
-   сохраняет carry и старые frozen hashes. Production notice/authority ещё не назначены.
+Evidence: research/permit-buy-integration-2026-09-24.json. Есть raw BUY tx/receipts,
+полная branch до cutoff, config/policy history, artifact, публикационный журнал и
+scheduler results. Post-cutoff begin/publish отражены в results с tx hashes; полный
+RPC dump их receipts отдельно не сохраняли. Не путай software assertions и RPC attestation.
 
-## Проверки
+Прогон stage=complete/exit0; proxy 283 requests, retries/errors=0.
+Офлайн-regression 1/1, 0.56 s; проверяет saved raw branch, activation, единичное
+начисление, повторную доставку блока и воспроизводимость artifact. Full suite не запускали.
 
-46/46 BUY/lifecycle/monthly, 4.90 s без compile. Ещё 2/2 actual local EVM publication,
-18.91 s с compile. Точные команды и log paths — в документе модуля. Saved real fork
-BUY — положительный execution sample; malformed/empty-signature/receipt mutations —
-offline consistency vectors, не свежие отрицательные EVM swap executions.
-Full suite/public sends не запускались. Призовая custody, contracts, RNG не менялись.
-Финально сохранён прежний COMMAND_SEQUENCE до opt-in: не меняем исторические reasons
-и ledger hashes. После этого повторена затронутая выборка 7/7, 0.56 s (не суммировать).
+## Что не проверено
 
-## Вопросы
+Seal/random/selection/awards/claims и Monthly draw не исполнялись. Monthly ждёт schedule.
+Local Cancun не доказывает Nitro-specific execution. notice=2, LOCAL_HEAD, outcome,
+weights/budget — test settings, не параметры публичного релиза. Публичных sends нет.
+Это чужой reference TOKEN: нашего deployment пока нет.
 
-- Нет ли обхода command/action gate или ошибочного attribution в этой узкой форме?
-- Достаточно ли runtime binding и обязательного permit success в принятых границах
-  reader; есть ли конкретный воспроизводимый контрпример?
-- Нет ли регрессии cutoff/admission и старых snapshots при добавлении id?
-- Какие замечания действительно блокируют пакет, а какие относятся к deployment?
+## Вопросы для review
 
-Не предлагай охват всех routers заранее. После review возвращаемся к оставшейся
-release-интеграции ROADMAP §4; новые research-ветки — только с конкретной причиной.
+1. Не выдаём ли мы более сильный результат, чем подтверждают harness и evidence?
+2. Не обходит ли wiring штатные admission/scan/pre-begin проверки? Есть ли слепое место
+   в проверке двух покупок относительно activation или повторного replay?
+3. Достаточно ли этого ограниченного integration slice, чтобы закрыть текущую BUY-ветку
+   и перейти к reference creator revenue collect/claim → FeeRouter?
+4. Если есть дефект, укажи конкретный assertion/сценарий. Не расширяй задачу на все routes
+   или полноценный публичный launch без отдельного обоснования.

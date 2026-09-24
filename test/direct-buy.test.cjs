@@ -8,6 +8,26 @@ const evidence=JSON.parse(fs.readFileSync('research/direct-buy/evidence.json','u
 const m=evidence.manifest,blocks=evidence.blocks;
 const copy=x=>structuredClone(x);
 const coder=AbiCoder.defaultAbiCoder();
+test('saved Permit2 integration branch reproduces activation, single attempt and scheduler artifact',()=>{
+ const e=require('../research/permit-buy-integration-2026-09-24.json'),i=e.integration;
+ const {buildFromHistory}=require('../scripts/short-dataset.cjs');
+ assert.equal(e.stage,'complete');assert.equal(i.policyStatus.mode,'admitted');
+ const input=i.replayInput,ledger=replay(input.manifest,input.blocks);
+ const before=ledger.decisions.find(d=>d.transactionHash===i.buyHashes.before),after=ledger.decisions.find(d=>d.transactionHash===i.buyHashes.after);
+ assert.equal(before.reason,'COMMAND_SEQUENCE');assert.equal(before.entriesMinted,'0');
+ assert.equal(after.blockNumber,i.activation);assert.equal(after.status,'ELIGIBLE');assert.equal(after.entriesMinted,'1');
+ assert.equal(ledger.wallets.length,1);assert.equal(ledger.wallets[0].entriesMinted,'1');assert.equal(ledger.wallets[0].carryRaw,'0');
+ assert.equal(hash(buildFromHistory(input)),i.artifactHash);
+ const duplicate={...input,blocks:[...input.blocks,copy(input.blocks.at(-1))]};
+ assert.equal(hash(buildFromHistory(duplicate)),i.artifactHash);
+ const changed=copy(i.artifact);changed.request.budget=String(BigInt(changed.request.budget)+15n);
+ assert.notEqual(hash(changed),hash(buildFromHistory(input)));
+ assert.deepEqual(i.runs.map(r=>r.results.SHORT.action||r.results.SHORT.status),['saveJob','error','begin','publish']);
+ assert.match(i.runs[1].results.SHORT.message,/independent replay/);
+ assert.equal(i.finalState.jobs.SHORT.length,1);
+ assert.equal(hash(i.finalState.jobs.SHORT[0].job.artifact),i.artifactHash);
+ // Offline consistency over raw fork history; recorded admitted/run labels are not RPC attestation.
+});
 const permitEvidence=require('../research/permit-buy-fork-positive-2026-09-24.json');
 const permitSample=permitEvidence.observations.at(-1);
 const permitName='rh-ur-0a10-060b0e-v1';

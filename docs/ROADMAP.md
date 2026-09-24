@@ -100,8 +100,11 @@ deployment: LP binding и реальные BUY receipts сохранены. Вы
 24.09: versioned BUY policy в pure lifecycle replay готова, старый snapshot domain
 сохраняется по cutoff. 24.09 [публикация BUY policy](BUY_POLICY_ADMISSION.md)
 соединена: source → prepare/publish → admission + completeness → builders → scheduler.
-Далее deployment bindings/finality/notice и review риска авторизованного неверного
-JSON; source collect/claim на fork остаётся отдельной интеграцией.
+JSON заменён typed ids; остаточная власть publisher описана в BUY_POLICY_ADMISSION.
+24.09: [сквозной Permit2 fork](PERMIT_BUY_INTEGRATION.md) связал BUY, future activation,
+admission, dataset и pre-begin gate scheduler; оригинал прошёл begin/publish.
+Deployment bindings/finality/notice остаются открыты. Следующий отдельный пакет —
+reference source collect/claim на fork и связь с FeeRouter.
 Наш токен ещё не запущен, local guards сохраняются.
 
 - Источник комиссий и venue BUY: проверяемая интеграция конкретной площадки, сохранение
@@ -158,5 +161,5 @@ Standalone workers этой проверки не добавляют; production
 свежий fork работает после mining local Cancun block. Подробности в ROUTE_RESEARCH.
 Узкий decoder rh-ur-0a10-060b0e-v1, negative vectors и typed future activation
 реализованы и проверены локально. Existing policies не активируют его автоматически.
-Далее review пакета и оставшаяся release-интеграция §4; публичные authority/notice/
+Review ffad0e0 принят, интеграционный fork описан в §4; публичные authority/notice/
 finality и deployment по-прежнему не утверждены.

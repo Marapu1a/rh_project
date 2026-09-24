@@ -146,3 +146,8 @@ buy-policy-format.cjs знает новый id. replay-direct-buy.cjs прове
 Permit2 runtime на активном cutoff; старые cutoff не получают новую зависимость.
 Локальные publication/replay проверены; production activation отсутствует.
 [Точные границы и проверки](DIRECT_BUY_REPLAY.md#permit2-buy-adapter-24092026).
+
+24.09: permit-buy-fork.cjs --integration вызывает permit-buy-integration.cjs:
+реальный BUY на fork → typed admission → штатный scheduler → begin/publish.
+Coherent budget tamper отвергается pre-begin replay до send. Production modules
+не менялись; [evidence, воспроизведение и ограничения](PERMIT_BUY_INTEGRATION.md).

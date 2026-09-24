@@ -68,3 +68,4 @@
 - [PAIR/network read-only dossier 23.09](PAIR_PROFILE_EVIDENCE_2026-09-23.md).
 - [Публичный TOKEN/USDG reference и BUY route gap](PAIR_USDG_REFERENCE_2026-09-23.md).
 - [Составные маршруты покупки и граница поддержки промо](ROUTE_RESEARCH_2026-09-24.md).
+- [Permit2 BUY → admission → Short dataset на fork](PERMIT_BUY_INTEGRATION.md).
