@@ -72,3 +72,14 @@ controlled fork исполнения USDG permit+swap на настоящем ro
 обозначением test transaction либо подходящий public receipt. Если даёте совет,
 сфокусируйтесь на достаточности такого evidence и проверке permit/settlement,
 не повторяйте весь аудит pre-begin replay.
+
+## Следующее дополнение: positive fork execution получен
+
+Прежний план controlled fork выполнен. Последний раздел ROUTE_RESEARCH описывает
+успешный реальный router/Permit2 USDG BUY на local31337: 100 USDG, два Transfers,
+тот же payer/recipient, nonce 0→1 и нулевой остаток allowance. Evidence сохранён.
+Старый архивный блок недоступен, свежий fork доступен; локальный mining блока
+перед eth_call устраняет ошибку Hardhat о неизвестной historical hardfork history.
+Не подменяли code/pool reserves, только test wallet USDG balance. Decoder пока
+отказывает COMMAND_SEQUENCE. Следующий implementation — только 0x0a10/0x060b0e,
+negative vectors и activation; не универсальная поддержка Permit2/любых маршрутов.

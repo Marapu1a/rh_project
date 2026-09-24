@@ -173,3 +173,53 @@ router/Permit2, а не на одну длину подписи или ручн�
 `node scripts/research-permit-route.cjs NEW_OUTPUT.json`.
 Проверены syntax, структура RPC evidence, направления swap и source hash;
 продуктовые unit/full/fork tests и публичные sends не запускались.
+
+## Controlled fork: положительный Permit2 + USDG BUY
+
+24.09.2026. Предыдущий пробел positive execution закрыт для одной узкой формы.
+Это LOCAL fork, не публичная сделка нашего проекта и не activation adapter.
+
+Команда: `node scripts/permit-buy-fork.cjs NEW_OUTPUT.json`.
+Upstream по умолчанию официальный RPC, замена через RH_RPC_URL. Upstream доступен
+только через existing read-only proxy; отправки идут в Hardhat chain31337.
+Выходной файл не перезаписывается. Подмена кода router/Permit2/pool отсутствует.
+
+Evidence:
+- [Проверка доступности RPC](../research/permit-buy-fork-probe-2026-09-24.json).
+- [Диагностика первого исполнения](../research/permit-buy-fork-diagnostic-2026-09-24.json).
+- [Успешный fork](../research/permit-buy-fork-positive-2026-09-24.json).
+
+Старый block 0x3c89e39 недоступен: официальный endpoint не хранит historical
+state, blockreq public ограничен последними 32768 блоками. Оба возвращают
+текущий router code. Fork свежего блока доступен.
+
+Первый запуск свежего fork прочитал runtime, но eth_call на самом fork block
+отклонён Hardhat: для chain4663 не задана история hardfork. Это НЕ revert USDG:
+публичный decimals() вернул 6, внутренний trace тоже сообщил ошибку выбора hardfork.
+Решение harness — evm_mine пустого локального блока перед исполнением. Не задаём
+выдуманную историю hardfork сети и не заменяем USDG. Исполнение после fork идёт
+по настроенному локальному Cancun; Nitro-specific execution этим не сертифицирован.
+
+Успешный run: исходный блок **0x43f3b4e**, первый локальный **0x43f3b4f**.
+Пул и TOKEN — ранее найденный существующий public reference, не наш deployment.
+Тестовому Hardhat wallet изменён только USDG balance storage slot (1000 USDG);
+пул/его ликвидность и остальные контракты не редактировались. Native gas оплачивает
+локальный Hardhat account. Это искусственный тестовый капитал, не public funding.
+
+Затем настоящий ERC20 approve даёт доступ Permit2. Прямого Permit2 approve для
+router нет: allowance до swap = 0. Пользователь подписывает PermitSingle EIP-712
+с domain chain31337. Router execute commands **0x0a10**, actions **0x060b0e**:
+- успешный receipt, ровно один Swap нужного pool id;
+- фактически списано **100000000 raw USDG = 100 nominal USDG**;
+- TOKEN доставлен тому же payer, положительный balance delta;
+- ровно два TOKEN/USDG Transfer: payer→manager, manager→payer;
+- nonce Permit2 **0→1**, allowance после обмена = 0 (лимит 100 USDG израсходован);
+- runtime hashes шести контрактов сохранены, router совпадает с pinned hash;
+- read proxy: 202 requests, 0 retries, 0 errors.
+
+Проверены script syntax и offline assertions evidence. Текущий production decoder
+на этом receipt возвращает `COMMAND_SEQUENCE`: случайного допуска не произошло.
+Регистрации/выдачи билетов и нового adapter в этом шаге нет, signature-negative
+vectors ещё не выполнены. Full suite не требуется: runtime код проекта не менялся.
+Следующий пакет — decoder именно для этой формы, negative vectors и versioned
+future activation; не обобщать результат на multihop, другие routers или recipients.

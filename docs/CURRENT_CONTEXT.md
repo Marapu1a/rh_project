@@ -1,6 +1,6 @@
 # Текущий контекст
 
-Обновлено 24.09.2026: scheduler пересобирает persisted dataset перед первым begin.
+Обновлено 24.09.2026: controlled fork подтвердил Permit2 + USDG BUY; decoder пока прежний.
 
 ## Где находимся
 
@@ -250,8 +250,10 @@ Frozen completion при неизвестном active adapter подтверж�
 отклоняется до отправки; оригинал и begun recovery работают. Команды/evidence —
 [LOCAL_PROMO_SCHEDULER](LOCAL_PROMO_SCHEDULER.md). Full/fork/live не запускались.
 
-24.09, следующий ограниченный шаг: проверен кандидат 0x0a10 (Permit2 + V4).
-Сохранённый пример оказался TOKEN→ETH, не USDG BUY; ещё пять USDG кандидатов
-не подтвердили эту форму. Runtime проверен только на свежем блоке: historical
-state RPC недоступен. Adapter не добавлен. Evidence и следующий controlled fork
-план — [ROUTE_RESEARCH](ROUTE_RESEARCH_2026-09-24.md).
+24.09: кандидат 0x0a10 проверен на свежем local fork настоящего router/Permit2
+и существующего public reference pool. Успешно потрачено 100 USDG, TOKEN получен
+тем же payer, nonce permit 0→1. Исправлена только настройка harness: пустой local
+block после fork устраняет отсутствие historical hardfork config chain4663.
+Код/балансы пула не заменялись; искусственный USDG capital только у test wallet.
+Decoder пока отклоняет COMMAND_SEQUENCE; next — узкий adapter + negative vectors
+и future activation. Evidence/границы — [ROUTE_RESEARCH](ROUTE_RESEARCH_2026-09-24.md).

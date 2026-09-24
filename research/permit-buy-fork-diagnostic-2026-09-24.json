@@ -1,0 +1,115 @@
+{
+  "schema": "permit-buy-fork-v1",
+  "mode": "local-fork-only",
+  "upstream": "https://rpc.mainnet.chain.robinhood.com",
+  "config": {
+    "chainId": 4663,
+    "router": "0x8876789976decbfcbbbe364623c63652db8c0904",
+    "manager": "0x8366a39cc670b4001a1121b8f6a443a643e40951",
+    "hook": "0x438B86C71840C3B4df3F839aEd6bb889E2D780c0",
+    "token": "0x2B9495821247E9b3790E9e18f8498bEE6f5A5555",
+    "quote": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+    "poolKey": [
+      "0x2B9495821247E9b3790E9e18f8498bEE6f5A5555",
+      "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+      "10000",
+      "200",
+      "0x438B86C71840C3B4df3F839aEd6bb889E2D780c0"
+    ],
+    "poolId": "0xcba8f1e548abf84741726c3a31ed56522794682171520a2b72280f99aa59b03e"
+  },
+  "observedAt": "2026-09-24T09:11:04.387Z",
+  "observations": [],
+  "stage": "usdg-decimals",
+  "forkBlock": {
+    "hash": "0x9ad91a724a28935057160cda8e6cdbbec6596fbcbed22ade51248f4b06f78576",
+    "parentHash": "0x79e248725be948613ad14fea9917cd5575981d77294993c9bdb7fe40515172b0",
+    "sha3Uncles": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+    "stateRoot": "0x04b1735a935256535e12f06d65dd65c0b6ab4306b76f372fc59e2eb64faf51fa",
+    "transactionsRoot": "0x221980e9c3ee7366fa7b56d8ea11ea6849408a35fa02d6e24643ca6dd5e61df7",
+    "receiptsRoot": "0xec13ab6f359d73216d6ff26c222ed07ca1c498f3780420ca28e37d02b1e685f0",
+    "number": "0x43f393a",
+    "gasUsed": "0xf9d7d",
+    "gasLimit": "0x4000000000000",
+    "extraData": "0xf1d60868928bf4153e2d95d5e50c2b8234000d4609387a93d639c1c39f0c92d3",
+    "logsBloom": "0x0040100080008020000000410008020000000000104408000000082000000000001c000000000308041a8003000000000000040204022020000002800022008002002000400040080020041a0020000802c00000204004220001000200000200000000008248001000000002010028000000c000300040000000005600880000008000000000000000008000010000080088000001100200020001102004001002000000000000040040812000000000a00000820000004010000200000004008040042280000060010100001000000000c000002000000100021000800820000011080000100000004200010100008040400000201400005002110402000000",
+    "timestamp": "0x6ab4e91b",
+    "difficulty": "0x1",
+    "totalDifficulty": "0xc70d808a128d7380000",
+    "uncles": [],
+    "transactions": [
+      "0x68f38315f640dabb851308746ee31f56f62b27de30046a4e92983ace97d648be",
+      "0xb1d2d7d018b76cb192d5b9f96fb4e99e834b8c1a6ba88f1f76a6fabcb3bf85ee",
+      "0x6d0af7d97b2a6b6b03addeaa3db74610619ff19a384146d199d1b84208c368f2",
+      "0x0e255cf37d3ea2697655f7e9c7e60ed878a902780358ab0bc42f4e080406d43f",
+      "0x9220e15b720742a45e9679e278521b35ef390a5d419ecc8998de30e93789b527",
+      "0x5fa72a1cfc44be5c105c20be159262b5841cf689c8a8aab4d33016c28ed98130",
+      "0x889927be1aab4c1fffc02e5d9518dd782f480248773852f0965722ebcc4bd21d",
+      "0x26d10c689d04b9066a9345818db11a8f6b52457d25893018c7f8a9feb92c26d5",
+      "0x4ff3e39973daefbe9b00fdc15b2fcfd443ce842b039ac862593e7a02ecf87b10",
+      "0xb7d62ca6cfc3bdec6d214b7c53de0aa19e39015c0bf348200d3b4e3e6d2a46e2",
+      "0xc99e9f9edf79b6c6c67a515614617d177c2befdb62cf677e3f5aa6691efc89ed"
+    ],
+    "size": "0x16d1",
+    "mixHash": "0x0000000000000a8d00000000018d6f82000000000000003d0000000000000000",
+    "nonce": "0x000000000004d47e",
+    "baseFeePerGas": "0x2a258d0",
+    "miner": "0xa4b000000000000000000073657175656e636572"
+  },
+  "wallet": "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
+  "codeHashes": {
+    "router": "0x2ce6aaaf9f4151f5e1cbf774668772f17f532ae11b15e9284fd0a072a8b0fbde",
+    "manager": "0xbd3881180b547f5fe817545743cfb4343e96b1bc6640dcd70c106b0066e95626",
+    "hook": "0x61be10dbf714fa832ac3179b3f24f2c60f244f6ea79b06655dd866b93e67837a",
+    "token": "0x88abbe445a62808c076fc83c515e68735cf6f082742930a80171309a287c4454",
+    "quote": "0x864cc9ad53b338b82da1f7cab85ab0b3d5c8861acb422b6fec63cf36234f36a6",
+    "permit": "0x5208783f52488f7d3493e5e38311ab707c1d75457fe472a19b0b4d57d66a7fca"
+  },
+  "callError": {
+    "error": {
+      "code": -32000,
+      "data": null,
+      "message": "No known hardfork for execution on historical block 71252282 (relative to fork block number 71252282) in chain with id 4663. The node was not configured with a hardfork activation history."
+    },
+    "payload": {
+      "method": "eth_call",
+      "params": [
+        {
+          "from": "0x3c44cdddb6a900fa2b585dd299e03d12fa4293bc",
+          "to": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+          "data": "0x313ce567"
+        },
+        "latest"
+      ],
+      "id": 16,
+      "jsonrpc": "2.0"
+    }
+  },
+  "traceError": "ProviderError: No known hardfork for execution on historical block 71252282 (relative to fork block number 71252282) in chain with id 4663. The node was not configured with a hardfork activation history.",
+  "error": "Error: missing revert data (action=\"call\", data=null, reason=null, transaction={ \"data\": \"0x313ce567\", \"from\": \"0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC\", \"to\": \"0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168\" }, invocation=null, revert=null, code=CALL_EXCEPTION, version=6.17.0)\n    at makeError (D:\\sites\\rh_project\\node_modules\\ethers\\lib.commonjs\\utils\\errors.js:137:21)\n    at getBuiltinCallException (D:\\sites\\rh_project\\node_modules\\ethers\\lib.commonjs\\abi\\abi-coder.js:105:37)\n    at AbiCoder.getBuiltinCallException (D:\\sites\\rh_project\\node_modules\\ethers\\lib.commonjs\\abi\\abi-coder.js:206:16)\n    at BrowserProvider.getRpcError (D:\\sites\\rh_project\\node_modules\\ethers\\lib.commonjs\\providers\\provider-jsonrpc.js:695:43)\n    at BrowserProvider.getRpcError (D:\\sites\\rh_project\\node_modules\\ethers\\lib.commonjs\\providers\\provider-browser.js:78:22)\n    at D:\\sites\\rh_project\\node_modules\\ethers\\lib.commonjs\\providers\\provider-jsonrpc.js:302:45",
+  "errorDetails": {
+    "error": {
+      "code": -32000,
+      "data": null,
+      "message": "No known hardfork for execution on historical block 71252282 (relative to fork block number 71252282) in chain with id 4663. The node was not configured with a hardfork activation history."
+    },
+    "payload": {
+      "method": "eth_call",
+      "params": [
+        {
+          "from": "0x3c44cdddb6a900fa2b585dd299e03d12fa4293bc",
+          "to": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+          "data": "0x313ce567"
+        },
+        "latest"
+      ],
+      "id": 16,
+      "jsonrpc": "2.0"
+    }
+  },
+  "proxyStats": {
+    "requests": 141,
+    "retries": 0,
+    "errors": 0
+  }
+}
