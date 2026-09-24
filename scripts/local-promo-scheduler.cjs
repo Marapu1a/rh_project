@@ -1,7 +1,7 @@
 const {transientRpc,retryableRead}=require('./local-rpc-watch.cjs');
 const {ethers}=require('ethers');
 const {scan}=require('./replay-direct-buy.cjs');
-const {hash,validateManifest}=require('./direct-buy.cjs');
+const {hash,validateManifest,buyPolicyHistory}=require('./direct-buy.cjs');
 const {domainFor,replayAttempts}=require('./attempt-lifecycle.cjs');
 const {verifyDualBindings}=require('./dual-bindings.cjs');
 const sd=require('./short-dataset.cjs'),md=require('./monthly-dataset.cjs');
@@ -10,10 +10,12 @@ const {drawIdFor}=require('./draw-id.cjs');
 const {withState}=require('./local-scheduler-state.cjs');
 const {sendLocalTransaction,receiptOptions}=require('./local-receipt.cjs');
 const check=(ok,msg)=>{if(!ok)throw Error(msg);},zero=ethers.ZeroHash;
+const {resolveBuyPolicy}=require('./buy-policy-runtime.cjs');
 const wait=reason=>({status:'waiting',reason});
 function validateConfig(c,rpcUrl){
   check(c.schema==='local-promo-scheduler-v1'&&c.cutoffMode==='LOCAL_HEAD','Explicit local scheduler config required');
   validateManifest(c.manifest);check(String(c.manifest.chainId)==='31337'&&c.lifecycle.schema==='attempt-lifecycle-v4','Local v4 only');
+  if(c.buyPolicy)check(c.buyPolicy.genesisHash===hash(c.manifest)&&String(c.buyPolicy.chainId)===String(c.manifest.chainId)&&c.buyPolicy.instanceId===c.lifecycle.instanceId,'BUY policy binding mismatch');
   check(BigInt(c.campaignId)>0n&&BigInt(c.shortBudget)>0n,'Invalid campaign/budget');
   check(Number.isInteger(c.chunkSize)&&c.chunkSize>0&&c.chunkSize<=64,'Invalid chunk size');
   const url=new URL(rpcUrl);
@@ -31,7 +33,10 @@ const ruleObject=r=>Object.fromEntries(['version','pNumerator','pDenominator','h
 async function tickKind(kind,o,state,save){
   const {provider,config,publisher,executor,signal}=o,isShort=kind==='SHORT',source=isShort?o.short:o.monthly;
   if(signal?.aborted)return {status:'stopped'};
+  const resolved=await resolveBuyPolicy(config,(m,p)=>provider.send(m,p));
+  // Execution state is live; finalized is only the admission/dataset cutoff.
   const head=await provider.getBlock('latest'),at={blockTag:head.number};
+  const buyManifest=resolved.manifest;
   const active=await source[isShort?'activeProposal':'activeMonth'](at);
   const pending=await source[isShort?'pendingDatasetDraw':'pendingMonth'](at);
   const current=await source[isShort?'currentShortEpoch':'currentMonthlyEpoch'](at);
@@ -39,6 +44,14 @@ async function tickKind(kind,o,state,save){
   let selected;
   for(const entry of state.jobs[kind]){
     if(entry.retired)continue;
+    if(config.buyPolicy){
+      const artifact=entry.empty||entry.job.artifact;
+      const snapshot=artifact.snapshot||artifact;
+      const cutoff=snapshot.cutoff.blockNumber;
+      check(cutoff<=resolved.admission.checkpoint.number,'Stored job cutoff is not finalized');
+      const expected=hash(buyPolicyHistory(buyManifest).at(cutoff));
+      check(snapshot.domain.buyManifestHash===expected,'Stored job BUY policy mismatch');
+    }
     if(entry.empty){
       if(BigInt(entry.empty.epoch)===draining){selected=entry;break;}
       continue;
@@ -79,8 +92,9 @@ async function tickKind(kind,o,state,save){
       if(!publisher||(await publisher.getAddress()).toLowerCase()!==(await source.publisher()).toLowerCase())return wait('publisher');
       if(active!==zero||pending!==zero)return wait('otherDraw');
       // Rebuild from public history rather than trusting an empty assertion from disk.
-      const blocks=(await scan(config.manifest,o.rpcUrl,cutoff.blockNumber,config.lifecycle)).blocks;
-      const rebuilt=(isShort?sd:md).buildFromHistory({...selected.input,blocks});
+      const historical=await resolveBuyPolicy(config,(m,p)=>provider.send(m,p),cutoff.blockNumber);
+      const blocks=(await scan(historical.manifest,o.rpcUrl,cutoff.blockNumber,config.lifecycle)).blocks;
+      const rebuilt=(isShort?sd:md).buildFromHistory({...selected.input,manifest:historical.manifest,blocks});
       check(hash(rebuilt)===hash(selected.empty),'Empty epoch differs from replay');
       const price=(await provider.getFeeData()).gasPrice;
       if(price==null||price>await source.maxGasPrice())return wait('gasPrice');
@@ -108,19 +122,20 @@ async function tickKind(kind,o,state,save){
   const policy=await source[isShort?'shortEpochPolicy':'monthlyEpochPolicy'](epoch,at);
   const currentPolicy=await source[isShort?'shortEpochPolicy':'monthlyEpochPolicy'](current,at);
   if(BigInt(head.number)<currentPolicy.firstBlock)return wait('epochBoundary');
-  const blocks=(await scan(config.manifest,o.rpcUrl,head.number,config.lifecycle)).blocks;
-  const ledger=replayAttempts(config.manifest,config.lifecycle,blocks);
-  check(ledger.head.hash===head.hash,'Chain changed during scheduler scan');
+  const cutoffHead=resolved.admission?await provider.getBlock(resolved.admission.checkpoint.number):head;
+  const blocks=(await scan(buyManifest,o.rpcUrl,cutoffHead.number,config.lifecycle)).blocks;
+  const ledger=replayAttempts(buyManifest,config.lifecycle,blocks);
+  check(ledger.head.hash===cutoffHead.hash,'Chain changed during scheduler scan');
   const epochs=isShort?ledger.shortRules:ledger.monthlyRules;
-  check(BigInt(epochs.drainingEpoch||epochs.currentEpoch)===epoch,'Epoch changed during scan');
+  if(BigInt(epochs.drainingEpoch||epochs.currentEpoch)!==epoch)return wait('finalizedPolicyBoundary');
   const open=ledger.wallets.some(w=>w[kind].byEpoch.some(e=>BigInt(e.epoch)===epoch&&BigInt(e.open)>0n));
   if(!open&&!draining)return wait('empty');
-  const identity=hash({config:state.configHash,kind,cutoff:head.hash,epoch:String(epoch)});
+  const identity=hash({config:state.configHash,kind,cutoff:cutoffHead.hash,epoch:String(epoch)});
   const drawId=drawIdFor(kind,identity);
-  const input={manifest:config.manifest,lifecycle:config.lifecycle,rules:ruleObject(policy.outcome),
+  const input={manifest:buyManifest,lifecycle:config.lifecycle,rules:ruleObject(policy.outcome),
     ...(isShort?{weights:Array.from(policy.weights,String),minimumUnit:String(policy.minimumUnit)}:{}),
-    request:isShort?{drawId,campaignId:config.campaignId,rulesEpoch:String(epoch),cutoffBlockNumber:head.number,cutoffBlockHash:head.hash,budget:config.shortBudget}:
-      {drawId,campaign:config.campaignId,rulesEpoch:String(epoch),cutoff:head.number,cutoffHash:head.hash}};
+    request:isShort?{drawId,campaignId:config.campaignId,rulesEpoch:String(epoch),cutoffBlockNumber:cutoffHead.number,cutoffBlockHash:cutoffHead.hash,budget:config.shortBudget}:
+      {drawId,campaign:config.campaignId,rulesEpoch:String(epoch),cutoff:cutoffHead.number,cutoffHash:cutoffHead.hash}};
   if(isShort&&open)check(BigInt(config.shortBudget)<=await source.maxBudget(at),'Configured Short budget exceeds controller limit');
   const artifact=(isShort?sd:md).buildFromHistory({...input,blocks});
   const entry=artifact.schema.includes('empty-epoch')?{empty:artifact,input}:

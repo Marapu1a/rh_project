@@ -23,7 +23,10 @@ async function main(){
     if(!options['--manifest']||!options['--rpc']||!options['--to-block'])throw Error('Supply --example, --evidence FILE or --manifest FILE --rpc URL --to-block N');
     const config=JSON.parse(fs.readFileSync(options['--manifest'],'utf8'));
     domainFor(config.manifest,config.lifecycle);
-    const raw=await scan(config.manifest,options['--rpc'],options['--to-block'],config.lifecycle);
+    const {JsonRpcProvider}=require('ethers');
+    const provider=new JsonRpcProvider(options['--rpc']);
+    const resolved=await require('./buy-policy-runtime.cjs').resolveBuyPolicy(config,(m,p)=>provider.send(m,p),Number(options['--to-block']));
+    const raw=await scan(resolved.manifest,options['--rpc'],options['--to-block'],config.lifecycle);
     if(config.lifecycle.schema!=='attempt-lifecycle-v1'){
       const {JsonRpcProvider}=require('ethers');
       await require('./short-dataset.cjs').verifyEpochGenesis(new JsonRpcProvider(options['--rpc']),

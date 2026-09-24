@@ -262,8 +262,10 @@ test('policy admission loads only authorized finalized notices with full manifes
   const trust={chainId:h.manifest.chainId,source,publisher,instanceId:h.config.instanceId,sourceCodeHash:keccak256('0x6000'),genesisHash:hash(h.manifest),noticeBlocks:2};
   h.append('policy notice',source,'0x',[h.log(ABI,'BuyPolicyAnnounced',[trust.instanceId,hash(h.manifest),hash(next),fromBlock,canonical(next)],source)]);
   const log=h.blocks.at(-1).transactions[0].receipt.logs[0],pair=h.blocks.at(-1).transactions[0];
+  const sourceState={instanceId:trust.instanceId,genesisHash:trust.genesisHash,publisher:trust.publisher,noticeBlocks:2,publishedCount:1,currentHash:hash(next),lastFromBlock:fromBlock};
   h.empty('activate wait');h.empty('activate');const head=h.blocks.at(-1);let logs=[log],code='0x6000';
   const rpc=async(method,params)=>{
+   if(method==='eth_call'){const name=ABI.parseTransaction({data:params[0].data}).name;return ABI.encodeFunctionResult(name,[sourceState[name]]);}
    if(method==='eth_chainId')return '0x7a69';
    if(method==='eth_getCode')return code;
    if(method==='eth_getLogs')return copy(logs);
@@ -294,7 +296,7 @@ test('policy admission loads only authorized finalized notices with full manifes
   x=>{const a=ABI.parseLog(x.log).args;Object.assign(x.log,ABI.encodeEventLog('BuyPolicyAnnounced',[id('other instance'),a.previousHash,a.nextHash,a.fromBlock,a.manifest]));},
   x=>{const a=ABI.parseLog(x.log).args;Object.assign(x.log,ABI.encodeEventLog('BuyPolicyAnnounced',[a.instanceId,a.previousHash,a.nextHash,BigInt(x.log.blockNumber),a.manifest]));}
  ]){const x=fixture();mutate(x);await assert.rejects(loadBuyPolicy({trust:x.trust,genesis:x.h.manifest,rpc:x.rpc}));}
- const missing=fixture();missing.setLogs([]);assert.equal((await loadBuyPolicy({trust:missing.trust,genesis:missing.h.manifest,rpc:missing.rpc})).history.versions.length,1);
+ const missing=fixture();missing.setLogs([]);await assert.rejects(loadBuyPolicy({trust:missing.trust,genesis:missing.h.manifest,rpc:missing.rpc}),/Incomplete policy history/);
  const reorg=fixture();let count=0;const changing=async(m,p)=>{const v=await reorg.rpc(m,p);if(m==='eth_getBlockByNumber'&&p[0]!=='finalized'&&BigInt(p[0])===BigInt(reorg.h.head().blockNumber)&&++count===1)v.hash=id('changed checkpoint');return v;};
  await assert.rejects(loadBuyPolicy({trust:reorg.trust,genesis:reorg.h.manifest,rpc:changing}),/checkpoint changed/);
  const noFinal=fixture();await assert.rejects(loadBuyPolicy({trust:noFinal.trust,genesis:noFinal.h.manifest,rpc:async(m,p)=>m==='eth_getBlockByNumber'&&p[0]==='finalized'?null:noFinal.rpc(m,p)}),/Missing block/);

@@ -7,7 +7,7 @@ async function setup(t,compiled){
   const f=await fixture(compiled,{quoteName:'LocalUSDGFixture'});
   const market=await f.deploy('LocalBuyFixture',[f.token.target,f.quote.target]),coder=ethers.AbiCoder.defaultAbiCoder();
   const key=[...[f.token.target,f.quote.target].sort((a,b)=>BigInt(a)<BigInt(b)?-1:1),10000,200,market.target];
-  const manifest={schema:'direct-buy-v1',routeVersion:'rh-ur-10-060b0e-v1',chainId:'31337',quoteDecimals:6,entryThresholdRaw:'100000000',
+  const manifest={schema:'direct-buy-v1',routerProfile:'local-fixture',routeVersion:'rh-ur-10-060b0e-v1',chainId:'31337',quoteDecimals:6,entryThresholdRaw:'100000000',
     router:market.target,manager:market.target,hook:market.target,token:f.token.target,quote:f.quote.target,registry:f.registry.target,poolKey:key,
     poolId:ethers.keccak256(coder.encode(['address','address','uint24','int24','address'],key)),anchor:{number:f.anchor.number,hash:f.anchor.hash},codeHashes:{}};
   for(const name of ['router','manager','hook','token','quote','registry'])manifest.codeHashes[name]=ethers.keccak256(await f.provider.getCode(manifest[name]));

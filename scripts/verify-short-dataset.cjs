@@ -14,6 +14,8 @@ async function main(){
   if(!options['--input']||!options['--output'])throw Error('Required: --input FILE --output FILE [--rpc URL --proposal ID]');
   const input=JSON.parse(fs.readFileSync(options['--input'],'utf8'));
   if(options['--rpc']){
+    const policyProvider=new ethers.JsonRpcProvider(options['--rpc']);
+    try{input.manifest=(await require('./buy-policy-runtime.cjs').resolveBuyPolicy(input,(m,p)=>policyProvider.send(m,p),Number(input.request.cutoffBlockNumber))).manifest;}finally{policyProvider.destroy();}
     const raw=await scan(input.manifest,options['--rpc'],String(input.request.cutoffBlockNumber),input.lifecycle);input.blocks=raw.blocks;
   }
   const artifact=buildFromHistory(input);

@@ -98,9 +98,10 @@ reconciliation. Сохранить независимость действий �
 deployment: LP binding и реальные BUY receipts сохранены. Выявлен другой route
 0x060c0f. Adapter и негативные fixtures реализованы opt-in (см. DIRECT_BUY_REPLAY).
 24.09: versioned BUY policy в pure lifecycle replay готова, старый snapshot domain
-сохраняется по cutoff. 24.09 добавлен [admission reader](BUY_POLICY_ADMISSION.md)
-на синтетическом RPC; реальный source/полномочия/finality ещё не выбраны.
-Далее закрыть эти bindings, затем подключить builders/CLI/coordinator; collect/claim на fork отдельно.
+сохраняется по cutoff. 24.09 [публикация BUY policy](BUY_POLICY_ADMISSION.md)
+соединена: source → prepare/publish → admission + completeness → builders → scheduler.
+Далее deployment bindings/finality/notice и review риска авторизованного неверного
+JSON; source collect/claim на fork остаётся отдельной интеграцией.
 Наш токен ещё не запущен, local guards сохраняются.
 
 - Источник комиссий и venue BUY: проверяемая интеграция конкретной площадки, сохранение

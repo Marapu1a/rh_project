@@ -122,11 +122,13 @@ Review 132b6af: смена manifest ломает старые snapshot hashes. v
 это проверка формы, не admission. Регрессия pending/settled воспроизводит отказ.
 24.09: versioned BUY policy реализована в pure replay; старые FREEZE/EMPTY сохраняют
 manifest своего cutoff, BUY выбирает версию по блоку, carry непрерывен.
-24.09: добавлен [read-only admission prototype](BUY_POLICY_ADMISSION.md): RPC notices,
-полный manifest в event, pinned trust root, sender/runtime/hash-chain/notice/finalized
-checks. 18/18 direct-buy tests, новые RPC fixtures синтетические.
-Далее реальный source/полномочия/finality и подключение builders/CLI/coordinator;
-production publication не реализована, pure input сам по себе не доверенный. Source collect/fork отдельно.
+24.09: [цепочка BUY policy](BUY_POLICY_ADMISSION.md) доведена до контракта
+BuyPolicySource, exact-byte prepare/publish, completeness по getters, RPC CLI,
+cutoff-aware builders и scheduler/coordinator. Конфигурация источника постоянна;
+новые версии не меняют identity и старые snapshot hashes. Сквозной EVM тест проходит.
+Production authority/notice/finality не назначены; local guards сохранены.
+Авторизованный обход preflight с неверным JSON остаётся явным риском доступности.
+Source collect/fork отдельно.
 Сайт/уведомления и статистика частоты routes ещё не реализованы.
 
 ## Текущий шаг к релизу
@@ -211,3 +213,7 @@ Full/fork/live sends не запускались.
 
 24.09: адресный запуск direct-buy + attempt-lifecycle + monthly-replay — 39/39.
 Подробности и ограничения: DIRECT_BUY_REPLAY.md. Full/fork не запускались.
+
+24.09, завершение BUY policy: targeted пакет 59/59, после финальных изменений
+повтор затронутых 3/3 (не суммировать). Локальная EVM, реальный source/publish;
+venue/RNG прежние fixtures. Evidence и ограничения в BUY_POLICY_ADMISSION.md.

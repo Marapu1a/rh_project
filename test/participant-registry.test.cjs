@@ -87,3 +87,45 @@ test('canonical reorg rollback removes orphaned registration and allows a new op
   await (await registry.register()).wait();
   assert.equal((await registry.queryFilter(registry.filters.Registered())).length,1);
 });
+
+test('real BUY policy source enforces authority, commitments and completeness; publication runs exact dry-run bytes',async()=>{
+ const {hash}=require('../scripts/direct-buy.cjs');const {loadBuyPolicy,ABI}=require('../scripts/buy-policy-admission.cjs');
+ const {prepareBuyPolicy,publishBuyPolicy}=require('../scripts/publish-buy-policy.cjs');
+ const raw=(m,p)=>hre.network.provider.send(m,p);
+ const manifest=structuredClone(require('../research/direct-buy/evidence.json').manifest);
+ const anchor=await raw('eth_getBlockByNumber',['latest',false]);manifest.anchor={number:anchor.number,hash:anchor.hash};
+ const source=await deploy('BuyPolicySource',[ethers.id('policy instance'),hash(manifest),await alice.getAddress(),2]);
+ const trust={chainId:31337,instanceId:await source.instanceId(),source:source.target,publisher:await alice.getAddress(),genesisHash:hash(manifest),noticeBlocks:2,sourceCodeHash:ethers.keccak256(await provider.getCode(source.target))};
+ assert.equal((await loadBuyPolicy({trust,genesis:manifest,rpc:raw})).history.versions.length,1);
+ const fromBlock=Number(BigInt(await raw('eth_blockNumber',[])))+8;
+ const next={...structuredClone(manifest),schema:'direct-buy-v2',routeVersion:'scheduled-routes-v1',routes:[{id:manifest.routeVersion,fromBlock:0},{id:'rh-ur-10-060c0f-v1',fromBlock}]};
+ const prepared=await prepareBuyPolicy({trust,genesis:manifest,next,rpc:raw});
+ assert.equal(await source.publishedCount(),0n);
+ await assert.rejects(source.connect(bob).announce.staticCall(hash(manifest),hash(next),fromBlock,require('../scripts/direct-buy.cjs').canonical(next)));
+ await assert.rejects(source.announce.staticCall(hash(manifest),hash(next),fromBlock,'{}'));
+ await assert.rejects(source.announce.staticCall(ethers.id('bad'),hash(next),fromBlock,require('../scripts/direct-buy.cjs').canonical(next)));
+ const journal=[];const tx=await publishBuyPolicy({trust,genesis:manifest,next,rpc:raw,signer:alice,persist:async row=>journal.push(structuredClone(row))});
+ const receipt=await tx.wait();assert.deepEqual(journal.map(x=>x.status),['prepared','broadcast']);
+ assert.equal(tx.data,prepared.request.data);assert.equal(await source.publishedCount(),1n);assert.equal(await source.currentHash(),hash(next));
+ const loaded=await loadBuyPolicy({trust,genesis:manifest,rpc:raw});assert.equal(loaded.history.versions[1].manifest.routeVersion,'scheduled-routes-v1');
+ assert.equal(loaded.evidence[0].transactionHash,tx.hash);
+ await assert.rejects(loadBuyPolicy({trust,genesis:manifest,rpc:async(m,p)=>m==='eth_getLogs'?[]:raw(m,p)}),/Incomplete policy history/);
+ await assert.rejects(source.announce.staticCall(hash(manifest),hash(next),fromBlock,require('../scripts/direct-buy.cjs').canonical(next)));
+ console.log('BUY policy publication gasUsed='+receipt.gasUsed+' manifestBytes='+Buffer.byteLength(require('../scripts/direct-buy.cjs').canonical(next)));
+});
+
+test('policy source accepts a contract publisher; loader does not confuse outer sender with authority',async()=>{
+ const {hash,canonical}=require('../scripts/direct-buy.cjs'),{loadBuyPolicy}=require('../scripts/buy-policy-admission.cjs');
+ const {prepareBuyPolicy}=require('../scripts/publish-buy-policy.cjs');const raw=(m,p)=>hre.network.provider.send(m,p);
+ const manifest=structuredClone(require('../research/direct-buy/evidence.json').manifest),anchor=await raw('eth_getBlockByNumber',['latest',false]);manifest.anchor={number:anchor.number,hash:anchor.hash};
+ const wallet=await deploy('PolicyWalletFixture');
+ const source=await deploy('BuyPolicySource',[ethers.id('wallet instance'),hash(manifest),wallet.target,2]);
+ const trust={chainId:31337,instanceId:await source.instanceId(),source:source.target,publisher:wallet.target,genesisHash:hash(manifest),noticeBlocks:2,sourceCodeHash:ethers.keccak256(await provider.getCode(source.target))};
+ const fromBlock=Number(BigInt(await raw('eth_blockNumber',[])))+8;
+ const next={...structuredClone(manifest),schema:'direct-buy-v2',routeVersion:'scheduled-routes-v1',routes:[{id:manifest.routeVersion,fromBlock:0},{id:'rh-ur-10-060c0f-v1',fromBlock}]};
+ const bad=structuredClone(next);bad.routes[1].id='unknown';await assert.rejects(prepareBuyPolicy({trust,genesis:manifest,next:bad,rpc:raw}));assert.equal(await source.publishedCount(),0n);
+ const ready=await prepareBuyPolicy({trust,genesis:manifest,next,rpc:raw});
+ await assert.rejects(source.announce.staticCall(hash(manifest),hash(next),fromBlock,canonical(next)));
+ await (await wallet.execute(source.target,ready.request.data)).wait();
+ assert.equal((await loadBuyPolicy({trust,genesis:manifest,rpc:raw})).history.versions.length,2);
+});

@@ -1,8 +1,8 @@
-// Read-only admission prototype. Trust root is supplied by deployment policy, never notices.
-// No contract deployment, signing, state writes, or fallback from finalized to latest.
+// Read-only BuyPolicySource admission. Trust root is supplied by deployment policy, never notices.
+// No signing, state writes, or fallback from finalized to latest.
 const {Interface,isAddress,isHexString,ZeroAddress,ZeroHash,keccak256}=require('ethers');
 const {validateManifest,buyPolicyHistory,canonical,hash}=require('./direct-buy.cjs');
-const ABI=new Interface(['event BuyPolicyAnnounced(bytes32 indexed instanceId,bytes32 indexed previousHash,bytes32 indexed nextHash,uint256 fromBlock,string manifest)']);
+const ABI=new Interface(['function instanceId() view returns(bytes32)','function genesisHash() view returns(bytes32)','function publisher() view returns(address)','function noticeBlocks() view returns(uint256)','function publishedCount() view returns(uint256)','function currentHash() view returns(bytes32)','function lastFromBlock() view returns(uint256)','function announce(bytes32 previousHash,bytes32 nextHash,uint256 fromBlock,string manifest)','event BuyPolicyAnnounced(bytes32 indexed instanceId,bytes32 indexed previousHash,bytes32 indexed nextHash,uint256 fromBlock,string manifest)']);
 const check=(ok,message)=>{if(!ok)throw Error(message);};
 const low=x=>x.toLowerCase();
 const num=x=>{const n=Number(BigInt(x));check(Number.isSafeInteger(n)&&n>=0,'Invalid block/index');return n;};
@@ -20,6 +20,10 @@ async function loadBuyPolicy({trust,genesis,rpc}){
  const anchor=await block(tag(genesis.anchor.number));check(low(anchor.hash)===low(genesis.anchor.hash),'Genesis anchor changed');
  const final=await block('finalized'),height=num(final.number);check(height>=num(anchor.number),'Finalized before genesis');
  await code(height);
+ const read=async name=>ABI.decodeFunctionResult(name,await rpc('eth_call',[{to:trust.source,data:ABI.encodeFunctionData(name)},tag(height)]))[0];
+ check(low(await read('instanceId'))===low(trust.instanceId)&&low(await read('genesisHash'))===low(trust.genesisHash),'Source identity mismatch');
+ check(low(await read('publisher'))===low(trust.publisher)&&num(await read('noticeBlocks'))===trust.noticeBlocks,'Source authority/notice mismatch');
+ const count=num(await read('publishedCount')),currentHash=low(await read('currentHash')),lastFrom=num(await read('lastFromBlock'));
  const logs=await rpc('eth_getLogs',[{address:trust.source,fromBlock:tag(genesis.anchor.number),toBlock:tag(height),topics:[ABI.getEvent('BuyPolicyAnnounced').topicHash,trust.instanceId]}]);
  check(Array.isArray(logs),'Missing notices');
  const history={schema:'buy-policy-history-v1',versions:[{fromBlock:num(genesis.anchor.number),manifest:genesis}]};
@@ -35,7 +39,8 @@ async function loadBuyPolicy({trust,genesis,rpc}){
   check(low(tx.hash)===low(l.transactionHash)&&low(receipt.transactionHash)===low(tx.hash),'Notice transaction mismatch');
   check(low(tx.blockHash)===low(header.hash)&&low(receipt.blockHash)===low(header.hash)&&num(tx.blockNumber)===n&&num(receipt.blockNumber)===n,'Notice provenance mismatch');
   check(num(tx.transactionIndex)===num(l.transactionIndex)&&num(receipt.transactionIndex)===num(l.transactionIndex),'Notice index mismatch');
-  check(tx.to&&low(tx.to)===low(trust.source)&&low(tx.from)===low(trust.publisher),'Unauthorized notice publisher');
+  // Authorization is enforced by pinned source code + immutable publisher, including contract wallets.
+  check(tx.to,'Missing transaction target');
   check(receipt.to&&low(receipt.to)===low(tx.to)&&low(receipt.from)===low(tx.from),'Notice sender mismatch');
   const matches=receipt.logs.filter(x=>num(x.logIndex)===num(l.logIndex));
   check(matches.length===1&&canonical(matches[0])===canonical(l),'Notice receipt mismatch');
@@ -49,10 +54,12 @@ async function loadBuyPolicy({trust,genesis,rpc}){
   buyPolicyHistory(history);
   evidence.push({transactionHash:low(tx.hash),logIndex:num(l.logIndex),blockNumber:n,blockHash:low(header.hash),manifestHash:hash(manifest)});
  }
+ check(evidence.length===count&&hash(history.versions.at(-1).manifest)===currentHash&&
+  (count?history.versions.at(-1).fromBlock:0)===lastFrom,'Incomplete policy history');
  check(low((await block(tag(height))).hash)===low(final.hash),'Finalized checkpoint changed');
  const finalAfter=await block('finalized');check(num(finalAfter.number)>=height,'Finalized head regressed');
  if(num(finalAfter.number)===height)check(low(finalAfter.hash)===low(final.hash),'Finalized checkpoint changed');
  return {schema:'buy-policy-admission-v1',history,trustHash:hash(trust),checkpoint:{number:height,hash:low(final.hash)},evidence,
-  limitation:'RPC finalized assertion; not an independent consensus proof. Deployment trust source and publication contract not supplied by this module.'};
+  limitation:'RPC finalized assertion; not an independent consensus proof. Deployment trust and network finality require independent verification.'};
 }
 module.exports={ABI,loadBuyPolicy};

@@ -1,6 +1,6 @@
 const {ethers}=require('ethers');
 const outcome=require('./short-outcome.cjs');
-const {replayAttempts,snapshotFor,emptyEpochHash}=require('./attempt-lifecycle.cjs');
+const {replayAttempts,domainFor,snapshotFor,emptyEpochHash}=require('./attempt-lifecycle.cjs');
 const {hash,canonical}=require('./direct-buy.cjs');
 const coder=ethers.AbiCoder.defaultAbiCoder();
 const REQUEST='tuple(bytes32 drawId,uint64 campaignId,uint64 rulesEpoch,uint256 cutoffBlockNumber,bytes32 cutoffBlockHash,bytes32 snapshotHash,bytes32 expectedRoot,uint256 expectedCount,uint256 expectedAttempts,uint256 budget)';
@@ -29,6 +29,7 @@ function buildFromHistory(input){
   const r=input.request;
   check(!ledger.draws.some(d=>d.drawId.toLowerCase()===r.drawId.toLowerCase()),'Draw identity already used');
   check(BigInt(ledger.head.number)===BigInt(r.cutoffBlockNumber)&&ledger.head.hash.toLowerCase()===r.cutoffBlockHash.toLowerCase(),'Replay must end exactly at cutoff');
+  const snapshotDomain=domainFor(input.manifest,input.lifecycle,ledger.head.number);
   let participants=ledger.wallets.filter(w=>BigInt(w.SHORT.open)>0n).map(w=>({wallet:w.wallet,
     count:w.SHORT.open,firstAttempt:String(BigInt(w.SHORT.mintedTotal)-BigInt(w.SHORT.open)+1n),lastAttempt:w.SHORT.mintedTotal}));
   const policyHash=rulesHash(input.rules,input.weights,input.minimumUnit);
@@ -42,11 +43,11 @@ function buildFromHistory(input){
   }
   if(participants.length===0&&ledger.shortRules?.drainingEpoch){
     const epoch=ledger.shortRules.drainingEpoch,cutoff={blockNumber:ledger.head.number,blockHash:ledger.head.hash};
-    return {schema:'short-empty-epoch-artifact-v1',domain:ledger.domain,epoch:String(epoch),cutoff,rulesHash:policyHash,
-      snapshotHash:emptyEpochHash(ledger.domain,epoch,cutoff,policyHash)};
+    return {schema:'short-empty-epoch-artifact-v1',domain:snapshotDomain,epoch:String(epoch),cutoff,rulesHash:policyHash,
+      snapshotHash:emptyEpochHash(snapshotDomain,epoch,cutoff,policyHash)};
   }
   check(participants.length>0,'No OPEN Short participants');
-  const snapshot=snapshotFor(ledger.domain,r.drawId,'SHORT',{blockNumber:ledger.head.number,blockHash:ledger.head.hash},policyHash,participants,r.rulesEpoch);
+  const snapshot=snapshotFor(snapshotDomain,r.drawId,'SHORT',{blockNumber:ledger.head.number,blockHash:ledger.head.hash},policyHash,participants,r.rulesEpoch);
   const request={...r,snapshotHash:hash(snapshot),expectedRoot:rootFor(participants),expectedCount:participants.length,
     expectedAttempts:String(participants.reduce((sum,p)=>sum+BigInt(p.count),0n))};
   coder.encode([REQUEST],[request]);

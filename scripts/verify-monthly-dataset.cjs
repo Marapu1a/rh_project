@@ -8,7 +8,11 @@ async function main(){
   }
   if(!options['--input']||!options['--output'])throw Error('Required --input FILE --output FILE [--rpc URL --publication yes]');
   const input=JSON.parse(fs.readFileSync(options['--input'],'utf8'));
-  if(options['--rpc'])input.blocks=(await scan(input.manifest,options['--rpc'],String(input.request.cutoff),input.lifecycle)).blocks;
+  if(options['--rpc']){
+    const policyProvider=new ethers.JsonRpcProvider(options['--rpc']);
+    try{input.manifest=(await require('./buy-policy-runtime.cjs').resolveBuyPolicy(input,(m,p)=>policyProvider.send(m,p),Number(input.request.cutoff))).manifest;}finally{policyProvider.destroy();}
+    input.blocks=(await scan(input.manifest,options['--rpc'],String(input.request.cutoff),input.lifecycle)).blocks;
+  }
   const artifact=buildFromHistory(input),domain=artifact.snapshot?.domain||artifact.domain;let publication=null;
   const provider=options['--rpc']?new ethers.JsonRpcProvider(options['--rpc']):null;
   if(provider){

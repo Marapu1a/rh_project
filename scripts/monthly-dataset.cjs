@@ -1,5 +1,5 @@
 const {ethers}=require('ethers'),{hash,canonical}=require('./direct-buy.cjs'),outcome=require('./short-outcome.cjs');
-const {replayAttempts,snapshotFor,emptyMonthlyEpochHash}=require('./attempt-lifecycle.cjs');
+const {replayAttempts,domainFor,snapshotFor,emptyMonthlyEpochHash}=require('./attempt-lifecycle.cjs');
 const {validateDrawId}=require('./draw-id.cjs');
 const INPUT='tuple(bytes32 drawId,bytes32 snapshotHash,bytes32 root,uint64 campaign,uint64 rulesEpoch,uint256 cutoff,bytes32 cutoffHash,uint256 count,uint256 attempts)';
 const coder=ethers.AbiCoder.defaultAbiCoder(),check=(ok,msg)=>{if(!ok)throw Error(msg);};
@@ -13,6 +13,7 @@ function buildFromHistory(input){
   check(!ledger.pending.MONTHLY,'Monthly already pending');validateDrawId(r.drawId,'MONTHLY');
   check(!ledger.draws.some(d=>d.drawId===r.drawId.toLowerCase()),'Draw identity already used');
   check(BigInt(ledger.head.number)===BigInt(r.cutoff)&&ledger.head.hash.toLowerCase()===r.cutoffHash.toLowerCase(),'Replay must end exactly at cutoff');
+  const snapshotDomain=domainFor(input.manifest,input.lifecycle,ledger.head.number);
   const target=state.drainingEpoch||state.currentEpoch,policyHash=outcome.rulesHash(input.rules);
   check(BigInt(r.rulesEpoch)===BigInt(target),'Wrong monthly target epoch');
   check(policyHash===state.epochs.find(e=>e.epoch===target).rulesHash,'Wrong monthly epoch policy');
@@ -20,10 +21,10 @@ function buildFromHistory(input){
   const participants=ledger.wallets.flatMap(w=>{const e=w.MONTHLY.byEpoch.find(e=>e.epoch===String(target));
     return e&&BigInt(e.open)>0n?[{wallet:w.wallet,count:e.open,firstAttempt:e.firstOpenAttempt,lastAttempt:e.lastOpenAttempt}]:[];});
   const cutoff={blockNumber:ledger.head.number,blockHash:ledger.head.hash};
-  if(!participants.length&&state.drainingEpoch)return {schema:'monthly-empty-epoch-artifact-v1',domain:ledger.domain,epoch:String(target),cutoff,rulesHash:policyHash,
-    snapshotHash:emptyMonthlyEpochHash(ledger.domain,target,cutoff,policyHash)};
+  if(!participants.length&&state.drainingEpoch)return {schema:'monthly-empty-epoch-artifact-v1',domain:snapshotDomain,epoch:String(target),cutoff,rulesHash:policyHash,
+    snapshotHash:emptyMonthlyEpochHash(snapshotDomain,target,cutoff,policyHash)};
   check(participants.length>0,'No OPEN Monthly participants');
-  const snapshot=snapshotFor(ledger.domain,r.drawId,'MONTHLY',cutoff,policyHash,participants,target);
+  const snapshot=snapshotFor(snapshotDomain,r.drawId,'MONTHLY',cutoff,policyHash,participants,target);
   const request={...r,snapshotHash:hash(snapshot),root:rootFor(participants),count:participants.length,attempts:String(participants.reduce((s,p)=>s+BigInt(p.count),0n))};
   coder.encode([INPUT],[request]);check(BigInt(r.campaign)>0,'Invalid campaign');
   return {schema:'monthly-dataset-artifact-v1',snapshot,request,rules:input.rules};

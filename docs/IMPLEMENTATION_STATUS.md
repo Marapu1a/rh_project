@@ -129,3 +129,8 @@ validateRouteExtensionCandidate проверяет лишь форму; v2 — �
 24.09: buy-policy-admission.cjs — отдельный read-only loader из закреплённого
 источника событий с полными manifests. [Границы](BUY_POLICY_ADMISSION.md): synthetic
 RPC tests, без контракта публикации/deployment и интеграции исполнителей.
+
+24.09, завершение цепочки: contracts/BuyPolicySource.sol; publish-buy-policy.cjs и
+run-buy-policy-publication.cjs; buy-policy-runtime.cjs. Loader сверяет count/hash
+с состоянием source. RPC CLI и scheduler/coordinator используют admission; builders
+явно выбирают cutoff domain. Детали/ограничения — BUY_POLICY_ADMISSION.md.

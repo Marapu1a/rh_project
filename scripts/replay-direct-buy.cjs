@@ -1,10 +1,10 @@
 const fs=require('node:fs');
 const {keccak256}=require('ethers');
-const {replay,canonical,hash,validateManifest}=require('./direct-buy.cjs');
+const {replay,canonical,hash,validateManifest,buyPolicyHistory}=require('./direct-buy.cjs');
 
 // Independent reader: fetch whole blocks and every receipt, not an operator BUY list.
-async function scan(manifest,rpcUrl,toBlock,lifecycle=null){
-  validateManifest(manifest);
+async function scan(input,rpcUrl,toBlock,lifecycle=null){
+  const manifest=buyPolicyHistory(input).genesis;
   let sequence=0;
   async function rpc(method,params=[]){
     const response=await fetch(rpcUrl,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:++sequence,method,params}),signal:AbortSignal.timeout(20000)});
@@ -37,7 +37,7 @@ async function scan(manifest,rpcUrl,toBlock,lifecycle=null){
     blocks.push({number:block.number,hash:block.hash,parentHash:block.parentHash,timestamp:block.timestamp,transactions});
   }
   if((await rpc('eth_getBlockByNumber',[tag(toBlock),false])).hash!==head.hash)throw Error('Chain changed during scan; retry canonical range');
-  return {manifest,blocks};
+  return {manifest:input,blocks};
 }
 async function main(){
   const args=process.argv.slice(2),options={};
@@ -50,7 +50,9 @@ async function main(){
   }else{
     if(!options['--rpc']||!options['--manifest']||!options['--to-block'])throw Error('Supply --evidence FILE or --manifest FILE --rpc URL --to-block N');
     const saved=JSON.parse(fs.readFileSync(options['--manifest'],'utf8'));
-    input=await scan(saved.manifest||saved,options['--rpc'],options['--to-block']);
+    const {JsonRpcProvider}=require('ethers'),provider=new JsonRpcProvider(options['--rpc']);
+    let resolved;try{resolved=await require('./buy-policy-runtime.cjs').resolveBuyPolicy(saved.manifest?saved:{manifest:saved},(m,p)=>provider.send(m,p),Number(options['--to-block']));}finally{provider.destroy();}
+    input=await scan(resolved.manifest,options['--rpc'],options['--to-block']);
   }
   const ledger=replay(input.manifest,input.blocks);
   const result={ledger,ledgerHash:hash(ledger)};

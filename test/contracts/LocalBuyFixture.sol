@@ -20,13 +20,18 @@ contract LocalBuyFixture {
     function execute(bytes calldata commands,bytes[] calldata inputs,uint256 deadline) external payable {
         require(msg.value==0 && block.timestamp<=deadline && keccak256(commands)==keccak256(hex"10") && inputs.length==1,"route");
         (bytes memory actions,bytes[] memory parameters)=abi.decode(inputs[0],(bytes,bytes[]));
-        require(keccak256(actions)==keccak256(hex"060b0e") && parameters.length==3,"actions");
+        bool all=keccak256(actions)==keccak256(hex"060c0f");
+        require((all || keccak256(actions)==keccak256(hex"060b0e")) && parameters.length==3,"actions");
         SwapInput memory s=abi.decode(parameters[0],(SwapInput));
-        {
+        if(all){
+            (address currency,uint256 maximum)=abi.decode(parameters[1],(address,uint256));
+            (address take,uint256 minimum)=abi.decode(parameters[2],(address,uint256));
+            require(currency==address(quote) && maximum>=s.amount && take==address(token) && minimum<=uint256(s.amount)*2,"all settlement");
+        } else {
             (address currency,uint256 amount,bool user)=abi.decode(parameters[1],(address,uint256,bool));
             require(currency==address(quote) && amount==0 && user,"payment route");
         }
-        {
+        if(!all){
             (address take,address recipient,uint256 takeAmount)=abi.decode(parameters[2],(address,address,uint256));
             require(take==address(token) && recipient==msg.sender && takeAmount==0,"delivery route");
         }
