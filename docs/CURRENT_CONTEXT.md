@@ -286,3 +286,11 @@ priceSource с freshness/slippage checks. Старый converter/worker не м�
 Локально 9/9 converter tests, 45.95 s с compile; реального oracle/DEX и нового fork нет.
 Следующий шаг — выбрать и проверить источник цены и затем соединить venue/new worker;
 не объявлять тестовую PriceFixture рыночной защитой или готовым deployment.
+
+24.09: [исследование цены](PRICE_SOURCE_RESEARCH.md) выявило встроенный PAIR TWAP,
+но pre-swap sampling некорректно представляет post-swap интервалы в редких сделках.
+Read-only block 0x4412069: runtime/source hashes совпали с manifest, reference quote
+revert InsufficientHistory, последняя запись старше 11 дней. Не обобщать на все пулы.
+Локальная модель: 4 проверки; production code/full suite/fork не менялись/не запускались.
+Прямое подключение hook единственным priceSource не рекомендовано. Следующий шаг —
+replay post-swap истории и исполнимой котировки; oracle/trust model ещё не выбраны.

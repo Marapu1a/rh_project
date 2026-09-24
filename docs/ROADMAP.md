@@ -116,6 +116,9 @@ Deployment bindings/finality/notice остаются открыты. 24.09 [refe
   [Механизм и обязательные price checks](SCHEDULED_PRIZE_CONVERTER.md) реализованы локально,
   9/9 tests. Отдельно выбрать реальный источник цены и подключить venue/worker нового ABI.
   Immutable priceSource остаётся внешней границей доступности; burn не добавлен.
+  [Исследование цены 24.09](PRICE_SOURCE_RESEARCH.md): reference hook stale;
+  pre-swap sampling расходится с post-swap интервалами. Не выбран production oracle.
+  Следующий bounded шаг — replay истории/исполнения, затем выбор источника.
 - RNG: finality/future-round binding, delivery/fees, production provider/adapter;
   без fallback seed или reroll. Доказать readiness до freeze, измерить runtime/gas заново.
 

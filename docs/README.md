@@ -71,3 +71,4 @@
 - [Составные маршруты покупки и граница поддержки промо](ROUTE_RESEARCH_2026-09-24.md).
 - [Permit2 BUY → admission → Short dataset на fork](PERMIT_BUY_INTEGRATION.md).
 - [Reference collect/claim → FeeRouter и rollover на fork](FEE_SOURCE_INTEGRATION.md).
+- [Источники цены TOKEN/USDG и ограничение PAIR TWAP](PRICE_SOURCE_RESEARCH.md).
