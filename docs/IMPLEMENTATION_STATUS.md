@@ -156,3 +156,8 @@ Coherent budget tamper отвергается pre-begin replay до send. Produc
 collect/claim и FeeRouter bind/harvest/rollover/pay на настоящем reference vault.
 Штатная смена recipient только при LOCAL controller impersonation. FeeRouter.sol
 не менялся. [Точные допущения и данные](FEE_SOURCE_INTEGRATION.md).
+
+24.09: LocalScheduledPrizeConverter + IPrizePriceSource — новое локальное поколение:
+timelocked adapter replacement, immutable price/destination bounds, expected route version.
+Price fixture только в test/contracts; 9/9 converter scenarios. Старый converter и
+prize-flow worker не изменены. [API, trust и открытые зависимости](SCHEDULED_PRIZE_CONVERTER.md).

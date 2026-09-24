@@ -2,6 +2,85 @@ const {test}=require('node:test'),assert=require('node:assert/strict'),{ethers}=
 const {compile}=require('../scripts/compile.cjs');
 const {fixture,sent,advance}=require('./fixtures/local-controllers.cjs');
 const compiled=compile();
+async function scheduled(){
+ const f=await fixture(compiled),adapter=await f.deploy('PrizeSwapFixture',[f.token.target,f.quote.target,3,1]);
+ const replacement=await f.deploy('PrizeSwapFixture',[f.token.target,f.quote.target,3,1]);
+ const price=await f.deploy('PrizePriceFixture',[f.token.target,f.quote.target]);
+ const limits={maxInput:1000,maxHorizon:300,maxPriceAge:3600,slippageBps:100,notice:60};
+ const c=await f.deploy('LocalScheduledPrizeConverter',[f.token.target,f.quote.target,f.vault.target,adapter.target,price.target,await f.admin.getAddress(),limits]);
+ const fresh=async(n=3,d=1)=>sent(price.set(n,d,(await f.provider.getBlock('latest')).timestamp,false));
+ await fresh();await sent(f.token.mint(c.target,100));await sent(f.quote.mint(adapter.target,10000));await sent(f.quote.mint(replacement.target,10000));await sent(c.sync());
+ const digest=async r=>ethers.keccak256(await f.provider.getCode(r.target));
+ const deadline=async()=>(await f.provider.getBlock('latest')).timestamp+120;
+ return {...f,c,adapter,replacement,price,limits,fresh,digest,deadline};
+}
+
+test('scheduled converter replaces broken adapter after notice without moving prize destination',async()=>{
+ const f=await scheduled(),{c}=f;
+ await sent(f.adapter.setFailure(1));await assert.rejects(async()=>c.convert(100,await f.deadline(),1));
+ await sent(f.quote.mint(c.target,7));const before=await f.quote.balanceOf(f.vault.target);
+ await sent(c.connect(f.executor).forwardQuote());assert.equal(await f.quote.balanceOf(f.vault.target)-before,7n);
+ await assert.rejects(async()=>c.connect(f.executor).announceAdapter(f.replacement.target,await f.digest(f.replacement)));
+ await sent(c.announceAdapter(f.replacement.target,await f.digest(f.replacement)));
+ const pending=await c.pending();assert.equal(pending.id,1n);
+ await assert.rejects(c.activateAdapter(1));await assert.rejects(async()=>c.announceAdapter(f.replacement.target,await f.digest(f.replacement)));
+ // Hardhat-only hostile runtime replacement proves activation never calls the old route.
+ await require('hardhat').network.provider.send('hardhat_setCode',[f.adapter.target,'0x60006000fd']);
+ await advance(61);await sent(c.connect(f.executor).activateAdapter(1));
+ assert.equal(await c.adapterVersion(),2n);assert.equal(await c.vault(),f.vault.target);assert.equal(await c.priceSource(),f.price.target);
+ await assert.rejects(c.activateAdapter(1));await assert.rejects(async()=>c.convert(100,await f.deadline(),1));
+ await sent(c.connect(f.executor).convert(100,await f.deadline(),2));await sent(c.forwardQuote());
+ assert.equal(await f.quote.balanceOf(f.vault.target)-before,307n);
+ assert.equal(await f.token.allowance(c.target,f.adapter.target),0n);assert.equal(await f.token.allowance(c.target,f.replacement.target),0n);
+ assert.equal(await c.remainingToken(),0n);assert.equal(await c.heldQuote(),0n);
+ for(const name of ['withdraw','setVault','setPriceSource','setSlippage','execute','burn'])assert.equal(c.interface.getFunction(name),null);
+});
+
+test('scheduled converter cancellations, stale ids and changed candidate runtime cannot bypass notice',async()=>{
+ const f=await scheduled(),{c}=f;
+ await assert.rejects(c.cancelAdapter(0));await assert.rejects(c.activateAdapter(0));
+ await assert.rejects(c.announceAdapter(f.replacement.target,ethers.ZeroHash));
+ const wrong=await f.deploy('PrizeSwapFixture',[f.quote.target,f.token.target,3,1]);
+ await assert.rejects(async()=>c.announceAdapter(wrong.target,await f.digest(wrong)));
+ await sent(c.announceAdapter(f.replacement.target,await f.digest(f.replacement)));
+ await assert.rejects(c.connect(f.executor).cancelAdapter(1));await sent(c.cancelAdapter(1));
+ await assert.rejects(c.activateAdapter(1));await assert.rejects(c.cancelAdapter(1));
+ await sent(c.announceAdapter(f.replacement.target,await f.digest(f.replacement)));assert.equal((await c.pending()).id,2n);
+ await advance(61);await assert.rejects(c.activateAdapter(1));
+ await require('hardhat').network.provider.send('hardhat_setCode',[f.replacement.target,'0x60006000fd']);
+ await assert.rejects(c.activateAdapter(2));assert.equal(await c.adapterVersion(),1n);
+ await sent(c.cancelAdapter(2));await sent(c.convert(100,await f.deadline(),1));
+});
+
+test('scheduled converter enforces fresh independent price, portion, deadline and actual output',async()=>{
+ const f=await scheduled(),{c}=f,now=(await f.provider.getBlock('latest')).timestamp;
+ assert.equal(await c.minimumOutput(100),297n);
+ for(const [n,d,time,failed] of [[0,1,now,false],[3,0,now,false],[3,1,0,false],[3,1,now+10000,false],[3,1,now-3601,false],[3,1,now,true]]){
+  await sent(f.price.set(n,d,time,failed));await assert.rejects(async()=>c.convert(100,await f.deadline(),1));
+  assert.equal(await c.tokenSold(),0n);assert.equal(await f.token.balanceOf(c.target),100n);assert.equal(await f.token.allowance(c.target,f.adapter.target),0n);
+ }
+ await f.fresh();
+ for(const [amount,deadline] of [[0,now+200],[1001,now+200],[1,now-1],[1,now+10000]])await assert.rejects(c.convert(amount,deadline,1));
+ for(const mode of [1,2,3,4,5]){
+  await sent(f.adapter.setFailure(mode));await assert.rejects(async()=>c.convert(100,await f.deadline(),1));
+  assert.equal(await c.tokenSold(),0n);assert.equal(await f.token.balanceOf(c.target),100n);assert.equal(await f.token.allowance(c.target,f.adapter.target),0n);
+ }
+ await sent(f.adapter.setFailure(0));await f.fresh(4,1);await assert.rejects(async()=>c.convert(100,await f.deadline(),1));
+ await f.fresh(3,2);assert.equal(await c.minimumOutput(1),2n); // conservative upward rounding twice
+ await sent(c.convert(100,await f.deadline(),1));assert.equal(await c.tokenSold(),100n);assert.equal(await c.heldQuote(),300n);
+});
+
+test('scheduled converter forwards existing quote despite unavailable price and rejects price code drift',async()=>{
+ const f=await scheduled(),{c}=f,before=await f.quote.balanceOf(f.vault.target);
+ await sent(f.quote.mint(c.target,13));await sent(f.price.set(3,1,1,true));
+ await sent(c.forwardQuote());assert.equal(await f.quote.balanceOf(f.vault.target)-before,13n);
+ await require('hardhat').network.provider.send('hardhat_setCode',[f.price.target,'0x60006000fd']);
+ await assert.rejects(async()=>c.convert(100,await f.deadline(),1));
+ await sent(c.announceAdapter(f.replacement.target,await f.digest(f.replacement)));await advance(61);
+ await sent(c.activateAdapter(1));await assert.rejects(async()=>c.convert(100,await f.deadline(),2));
+ assert.equal(await f.token.balanceOf(c.target),100n);
+ await sent(c.forwardQuote());assert.equal(await f.quote.balanceOf(f.vault.target)-before,13n);
+});
 async function setup(){
   const f=await fixture(compiled);
   const adapter=await f.deploy('PrizeSwapFixture',[f.token.target,f.quote.target,3,1]);

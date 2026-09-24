@@ -1,5 +1,9 @@
 # Локальный призовой конвертер
 
+24.09: пользователь выбрал заменяемый adapter с задержкой. Это реализовано отдельным
+[LocalScheduledPrizeConverter](SCHEDULED_PRIZE_CONVERTER.md); описанный ниже старый
+контракт не менялся. Рыночный источник цены и новый worker profile пока не подключены.
+
 20.09.2026. Ограниченный контрактный proof для chainId 31337, не production swap.
 Код: [LocalPrizeConverter](../contracts/LocalPrizeConverter.sol),
 [IPrizeSwapAdapter](../contracts/IPrizeSwapAdapter.sol),

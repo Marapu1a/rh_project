@@ -112,7 +112,10 @@ Deployment bindings/finality/notice остаются открыты. 24.09 [refe
 - Источник комиссий и venue BUY: проверяемая интеграция конкретной площадки, сохранение
   rollover semantics, code/binding evidence и воспроизводимый decoder.
 - Реальный swap: ликвидность/price guard/slippage/deadline и immutable prize destination.
-  Отдельно решить судьбу застрявшего inventory при отказе immutable adapter.
+  24.09 выбран объявляемый с задержкой replacement adapter без смены назначения денег.
+  [Механизм и обязательные price checks](SCHEDULED_PRIZE_CONVERTER.md) реализованы локально,
+  9/9 tests. Отдельно выбрать реальный источник цены и подключить venue/worker нового ABI.
+  Immutable priceSource остаётся внешней границей доступности; burn не добавлен.
 - RNG: finality/future-round binding, delivery/fees, production provider/adapter;
   без fallback seed или reroll. Доказать readiness до freeze, измерить runtime/gas заново.
 

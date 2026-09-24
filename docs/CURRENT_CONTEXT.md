@@ -1,6 +1,6 @@
 # Текущий контекст
 
-Обновлено 24.09.2026: reference collect/claim → FeeRouter и rollover пройдены на local fork.
+Обновлено 24.09.2026: механизм объявленной смены prize adapter и price checks проверен локально.
 
 ## Где находимся
 
@@ -277,3 +277,12 @@ Production contracts не менялись. Публичных полномоч�
 Blockreq exit0. Следующий отдельный кусок — реальный venue TOKEN→USDG converter/guard;
 публичный launch/RNG/source bindings всё ещё не готовы.
 Адресная regression + failure/epoch/rollover neighbors: 4/4, 22.84 s с compile; не full.
+
+24.09: пользователь выбрал заменяемый adapter с notice, неизменными destination и
+price limits; burn отложен. Согласован ограниченный шаг: механизм и проверки сейчас,
+конкретный рынок/источник цены отдельно. [LocalScheduledPrizeConverter](SCHEDULED_PRIZE_CONVERTER.md)
+добавляет announce/cancel/permissionless activate, stale version guard и immutable
+priceSource с freshness/slippage checks. Старый converter/worker не менялись.
+Локально 9/9 converter tests, 45.95 s с compile; реального oracle/DEX и нового fork нет.
+Следующий шаг — выбрать и проверить источник цены и затем соединить venue/new worker;
+не объявлять тестовую PriceFixture рыночной защитой или готовым deployment.
