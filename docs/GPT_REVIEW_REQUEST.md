@@ -1,85 +1,55 @@
-# GPT: независимый replay persisted job перед первым begin
+# GPT: review Permit2 BUY adapter и границы активации
 
-24.09.2026. Пакет после review 9a6a9c1. Просьба проверить diff и раздел
-«Независимая проверка перед begin» в LOCAL_PROMO_SCHEDULER.md.
-Ответ перезаписать в GPT_REVIEW_RESPONSE.md; код самостоятельно не менять.
+24.09.2026. Проверь текущий пакет относительно e271043. Ответ перезапиши в
+GPT_REVIEW_RESPONSE.md; код самостоятельно не меняй. Предыдущий scheduler пакет
+завершён; его границы описаны в LOCAL_PROMO_SCHEDULER.md.
 
-## Что изменено
+## Что сделали
 
-В local-promo-scheduler.cjs перед первым begin/beginMonth под существующим lock:
-- повторно load policy на cutoff сохранённого job;
-- scan полных канонических blocks/receipts и replay BUY/lifecycle;
-- epoch из replay, outcome/weights/minimumUnit из on-chain policy НА cutoff;
-- campaign/budget из config; draw id из configHash/kind/epoch/cutoff hash;
-- общая datasetInput используется при первоначальном создании и перепроверке;
-- buildFromHistory и сравнение canonical hash ВСЕГО artifact, затем Short proposal id;
-- повторная проверка cutoff hash перед передачей worker.
+Промо начисляет attempts за подтверждённую покупку зарегистрированного payer=recipient.
+Не обещаем охват всех routes, в сомнительных случаях не начисляем. Prize math не меняем.
+После успешного controlled fork добавлен один adapter rh-ur-0a10-060b0e-v1:
+PermitSingle + V4 exact-input single USDG BUY через закреплённый router.
+Нет candidate registry, arbitrary plugins, новых контрактов или автоматической
+активации в старых policies. Typed publication/source уже существовали.
 
-При несовпадении — ошибка до broadcast, без замены job или persisted verified flag.
-Если on-chain begin уже есть — нового artifact не строим. Прежние workers сравнивают
-request/snapshot/root commitments с контрактами. Исчезнувший ранее начатый job
-остаётся explicit recovery, без повторного begin/reroll. closeEmpty не изменён.
-Старый механизм retire для неначатого orphan/expired cutoff сохранён; это не reset
-уже frozen draw. Два вида draws сохраняют существующую изоляцию ошибок.
+Прочитай актуальный раздел [DIRECT_BUY_REPLAY](DIRECT_BUY_REPLAY.md#permit2-buy-adapter-24092026),
+затем diff scripts/direct-buy.cjs, buy-policy-format.cjs, replay-direct-buy.cjs и тесты.
+Fork evidence: research/permit-buy-fork-positive-2026-09-24.json; ограничения его
+получения в ROUTE_RESEARCH_2026-09-24.md. Новый fork в этом шаге не запускали.
 
-## Проверка, которую добавили
+## На что обратить внимание
 
-Сначала сохраняем реальные Short/Monthly jobs без begin, затем по очереди:
-1. Увеличиваем участнику диапазон попыток.
-2. Удаляем реально купившего участника из snapshot.
-3. Меняем request budget/campaign.
+1. Adapter выбирается по commands + actions; только exact 0x0a10 без ALLOW_REVERT
+   и reserved flags. Canonical execute, permit и swap inputs.
+2. Permit token=quote, spender=router, allowance >= actual input. Gross берётся
+   из прежнего Swap/settlement/delivery, не allowance или maximum calldata amount.
+3. Signature/nonce/deadline проверяет actual Permit2 execution. Мы не дублируем EOA
+   recovery: trusted success receipt и обязательный успех обеих commands — основание.
+   Поддельный JSON receipt offline decoder не может превратить в chain evidence.
+4. Router hash pinned; Permit2 address/hash — фиксированная dependency версии adapter.
+   RPC reader сверяет её только при активном cutoff. End-block runtime check не доказывает
+   неизменность внешнего кода за всю историю. Старые manifest hashes не меняются.
+5. prepare/publish/admission используют новый id и future activation. Synthetic replay
+   сохраняет carry и старые frozen hashes. Production notice/authority ещё не назначены.
 
-Пересчитываем roots, snapshot hashes, job commitments и state checksum.
-Старые validateJob/validateMonthlyJob принимают согласованную подмену.
-Новый replay отклоняет обе схемы; nonce не меняется, файл остаётся байт-в-байт.
-Восстановленный оригинал начинает оба draws. После begin согласованная подмена
-отклоняется уже сравнением с chain commitments без новой отправки.
+## Проверки
 
-Соседние сценарии: повторные циклы, empty/draining, stale/orphan cutoff,
-известный/неизвестный adapter после старого frozen, finality lag, unknown sends.
-Отдельно один сквозной coordinator scenario для общего signer/порядка отправок.
-Точные результаты и пределы записаны в LOCAL_PROMO_SCHEDULER.md.
+46/46 BUY/lifecycle/monthly, 4.90 s без compile. Ещё 2/2 actual local EVM publication,
+18.91 s с compile. Точные команды и log paths — в документе модуля. Saved real fork
+BUY — положительный execution sample; malformed/empty-signature/receipt mutations —
+offline consistency vectors, не свежие отрицательные EVM swap executions.
+Full suite/public sends не запускались. Призовая custody, contracts, RNG не менялись.
+Финально сохранён прежний COMMAND_SEQUENCE до opt-in: не меняем исторические reasons
+и ledger hashes. После этого повторена затронутая выборка 7/7, 0.56 s (не суммировать).
 
-## Не выдавать за решённое
+## Вопросы
 
-- Это scheduler/coordinator gate. Standalone low-level workers не сканируют BUY
-  history и прямой вызов publisher своим кодом не защищён этим off-chain gate.
-- Полный scan от anchor может стать дорогим. Incremental cache/proof не добавлены;
-  не оптимизировать безопасность постоянным признаком «когда-то проверено».
-- RPC/finality всё ещё доверенная внешняя граница. Это независимость от mutable
-  job artifact, а не от RPC или скомпрометированного config/кода.
-- Unknown adapter, публикация source, реальные routes/venue/RNG не менялись.
-- Публичный deployment не разрешён; только существующие local31337 guards.
+- Нет ли обхода command/action gate или ошибочного attribution в этой узкой форме?
+- Достаточно ли runtime binding и обязательного permit success в принятых границах
+  reader; есть ли конкретный воспроизводимый контрпример?
+- Нет ли регрессии cutoff/admission и старых snapshots при добавлении id?
+- Какие замечания действительно блокируют пакет, а какие относятся к deployment?
 
-Проверьте, что нет обхода через самосогласованные поля запроса/правила/ids,
-что begin/resume различаются по on-chain state и старые frozen не пересобираются.
-Достаточен ли этот gate в пределах текущего scheduler? Какие пути publication
-понадобится явно закрыть/связать при будущем production executor?
-
-Следующий предполагаемый шаг — один подтверждённый дополнительный BUY route
-в текущем router с future activation. Не переходить к универсальному графу маршрутов.
-
-## Дополнение после ответа f84e940: кандидат следующего BUY route
-
-Gate принят review, следующий ограниченный read-only шаг выполнен. См. последний
-раздел ROUTE_RESEARCH_2026-09-24.md и два новых permit evidence JSON.
-Сохранённый 0x0a10 подтверждает Permit2+V4, но это TOKEN→native ETH. Среди пяти
-дополнительных USDG кандидатов три 0x10, два wrapper; positive 0x0a10 BUY не найден.
-Это малая выборка, не отсутствие маршрута. Historical getCode RPC недоступен;
-код свежего runtimeBlock совпадает с pinned hash, эти факты не смешаны.
-Decoder/activation не менялись, новых заглушек нет. Предлагаемый следующий шаг —
-controlled fork исполнения USDG permit+swap на настоящем router/Permit2 с явным
-обозначением test transaction либо подходящий public receipt. Если даёте совет,
-сфокусируйтесь на достаточности такого evidence и проверке permit/settlement,
-не повторяйте весь аудит pre-begin replay.
-
-## Следующее дополнение: positive fork execution получен
-
-Прежний план controlled fork выполнен. Последний раздел ROUTE_RESEARCH описывает
-успешный реальный router/Permit2 USDG BUY на local31337: 100 USDG, два Transfers,
-тот же payer/recipient, nonce 0→1 и нулевой остаток allowance. Evidence сохранён.
-Старый архивный блок недоступен, свежий fork доступен; локальный mining блока
-перед eth_call устраняет ошибку Hardhat о неизвестной historical hardfork history.
-Не подменяли code/pool reserves, только test wallet USDG balance. Decoder пока
-отказывает COMMAND_SEQUENCE. Следующий implementation — только 0x0a10/0x060b0e,
-negative vectors и activation; не универсальная поддержка Permit2/любых маршрутов.
+Не предлагай охват всех routers заранее. После review возвращаемся к оставшейся
+release-интеграции ROADMAP §4; новые research-ветки — только с конкретной причиной.

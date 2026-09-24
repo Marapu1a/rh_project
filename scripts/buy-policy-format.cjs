@@ -2,7 +2,7 @@
 // Id is a specification/version commitment, NOT a digest/proof of executable code.
 const {id,AbiCoder,keccak256}=require('ethers');
 const {validateRouteExtensionCandidate}=require('./direct-buy.cjs');
-const names=['rh-ur-10-060b0e-v1','rh-ur-10-060c0f-v1'];
+const names=['rh-ur-10-060b0e-v1','rh-ur-10-060c0f-v1','rh-ur-0a10-060b0e-v1'];
 const routesOf=m=>m.routes||[{id:m.routeVersion,fromBlock:0}];
 const adapterId=name=>{if(!names.includes(name))throw Error('Unsupported adapter '+name);return id(name);};
 const initialAdapters=m=>routesOf(m).map(r=>adapterId(r.id));

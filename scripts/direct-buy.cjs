@@ -15,7 +15,10 @@ function canonical(value){
   return JSON.stringify(value);
 }
 function hash(value){return keccak256(toUtf8Bytes(canonical(value)));}
-const ROUTES=Object.freeze({'rh-ur-10-060b0e-v1':'0x060b0e','rh-ur-10-060c0f-v1':'0x060c0f'});
+const ROUTES=Object.freeze({'rh-ur-10-060b0e-v1':'0x10:0x060b0e','rh-ur-10-060c0f-v1':'0x10:0x060c0f','rh-ur-0a10-060b0e-v1':'0x0a10:0x060b0e'});
+const PERMIT_ROUTE='rh-ur-0a10-060b0e-v1';
+const PERMIT_TYPE='((address,uint160,uint48,uint48),address,uint256)';
+const PERMIT2=Object.freeze({address:'0x000000000022d473030f116ddee9f6b43ac78ba3',codeHash:'0x5208783f52488f7d3493e5e38311ab707c1d75457fe472a19b0b4d57d66a7fca'});
 const ROUTER_HASH='0x2ce6aaaf9f4151f5e1cbf774668772f17f532ae11b15e9284fd0a072a8b0fbde';
 function routePolicy(m){
   if(m.schema==='direct-buy-v2'){
@@ -25,6 +28,7 @@ function routePolicy(m){
     const seen=new Set();
     for(const r of m.routes){
       ensure(Object.hasOwn(ROUTES,r.id)&&!seen.has(r.id),'Unknown/duplicate route');
+      if(r.id===PERMIT_ROUTE)ensure(m.codeHashes?.router===ROUTER_HASH,'Unsupported Permit2 router runtime');
       ensure(typeof r.fromBlock==='number'&&Number.isSafeInteger(r.fromBlock)&&r.fromBlock>=0,'Invalid activation block');
       seen.add(r.id);
     }
@@ -32,6 +36,12 @@ function routePolicy(m){
   }
   ensure(m.schema==='direct-buy-v1'&&m.routeVersion==='rh-ur-10-060b0e-v1'&&m.routes===undefined,'Unsupported schema/route');
   return [{id:m.routeVersion,fromBlock:0}];
+}
+// Dependencies belong to the versioned adapter, not mutable manifest fields.
+// Historical cutoffs before activation must not acquire the new dependency.
+function routeDependencies(input,height){
+  const m=buyPolicyHistory(input).at(number(height));
+  return routePolicy(m).some(r=>r.id===PERMIT_ROUTE&&r.fromBlock<=number(height))?[PERMIT2]:[];
 }
 function validateManifest(m){
   routePolicy(m);
@@ -109,18 +119,29 @@ function decodeTransaction(m,tx,receipt){
     try{
       ensure(BigInt(receipt.status)===1n,'Failed transaction');
       const parsed=EXECUTE_ABI.parseTransaction({data:tx.input});
-      if(!parsed||parsed.args.commands!=='0x10'||parsed.args.inputs.length!==1)return result('UNSUPPORTED_ROUTE','COMMAND_SEQUENCE');
-      if(low(EXECUTE_ABI.encodeFunctionData('execute',parsed.args))!==low(tx.input))return result('UNSUPPORTED_ROUTE','NON_CANONICAL_CALLDATA');
-      const [actions,parameters]=decodeCanonical(['bytes','bytes[]'],parsed.args.inputs[0]);
-      // Research-only projections without a schema retain legacy decoding only.
+      if(!parsed)return result('UNSUPPORTED_ROUTE','COMMAND_SEQUENCE');
+      const commands=parsed.args.commands,hasPermit=commands==='0x0a10';
+      if((commands!=='0x10'&&!hasPermit)||parsed.args.inputs.length!==(hasPermit?2:1))return result('UNSUPPORTED_ROUTE','COMMAND_SEQUENCE');
+      // Preserve legacy decisions/hashes, including rejection reasons before opt-in.
       const policy=m.schema===undefined?[{id:'rh-ur-10-060b0e-v1',fromBlock:0}]:routePolicy(m);
-      const route=policy.find(r=>ROUTES[r.id]===actions);
+      if(hasPermit&&!policy.some(r=>r.id===PERMIT_ROUTE))return result('UNSUPPORTED_ROUTE','COMMAND_SEQUENCE');
+      if(low(EXECUTE_ABI.encodeFunctionData('execute',parsed.args))!==low(tx.input))return result('UNSUPPORTED_ROUTE','NON_CANONICAL_CALLDATA');
+      const [actions,parameters]=decodeCanonical(['bytes','bytes[]'],parsed.args.inputs[hasPermit?1:0]);
+      const route=policy.find(r=>ROUTES[r.id]===commands+':'+actions);
       if(!route||parameters.length!==3)return result('UNSUPPORTED_ROUTE','ACTION_SEQUENCE');
       if(number(log.blockNumber)<route.fromBlock)return result('UNSUPPORTED_ROUTE','ROUTE_NOT_ACTIVE');
       const [spec]=decodeCanonical([SWAP_TYPE],parameters[0]);
       const [key,zeroForOne,amountIn,minimum,price,hookData]=spec;
       if(keccak256(coder.encode(['address','address','uint24','int24','address'],key))!==low(m.poolId))return result('AMBIGUOUS','CALLDATA_POOL_MISMATCH');
       if(zeroForOne!==quote0||amountIn===0n||price!==0n||hookData!=='0x')return result('UNSUPPORTED_ROUTE','SWAP_PARAMETERS');
+      if(hasPermit){
+        const [permit,signature]=decodeCanonical([PERMIT_TYPE,'bytes'],parsed.args.inputs[0]);
+        // Signature/nonce/deadline validity is enforced by actual Permit2 execution:
+        // exact commands prohibit ALLOW_REVERT. Do not invent a second EOA-only verifier.
+        if(low(permit[0][0])!==low(m.quote)||low(permit[1])!==low(m.router)||signature==='0x')
+          return result('UNSUPPORTED_ROUTE','PERMIT_PARAMETERS');
+        if(permit[0][1]<-q)return result('AMBIGUOUS','PERMIT_AMOUNT_MISMATCH');
+      }
       const payer=low(tx.from);let recipient=payer;
       if(actions==='0x060b0e'){
         const [settleCurrency,settleAmount,payerIsUser]=decodeCanonical(['address','uint256','bool'],parameters[1]);
@@ -214,4 +235,4 @@ function replay(input,deliveredBlocks){
     registrations:[...registrations.values()].sort((a,b)=>a.participant.localeCompare(b.participant)),decisions,
     wallets:[...wallets].sort(([a],[b])=>a.localeCompare(b)).map(([wallet,w])=>({wallet,carryRaw:String(w.carryRaw),entriesMinted:String(w.entriesMinted),shortAttemptsMinted:String(w.entriesMinted),monthlyAttemptsMinted:String(w.entriesMinted)}))};
 }
-module.exports={buyPolicyHistory,validateRouteExtensionCandidate,replay,decodeTransaction,canonical,hash,validateManifest,SWAP_ABI,TRANSFER_ABI,REGISTER_ABI,EXECUTE_ABI,SWAP_TYPE};
+module.exports={buyPolicyHistory,validateRouteExtensionCandidate,replay,decodeTransaction,canonical,hash,validateManifest,routeDependencies,PERMIT_TYPE,SWAP_ABI,TRANSFER_ABI,REGISTER_ABI,EXECUTE_ABI,SWAP_TYPE};

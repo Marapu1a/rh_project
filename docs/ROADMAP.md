@@ -150,10 +150,13 @@ manifest всё ещё недопустима. Публикация/admission с
 Независимый replay persisted dataset до begin реализован в scheduler/coordinator:
 полный artifact сравнивается с историей, begun jobs остаются на chain commitments.
 Standalone workers этой проверки не добавляют; production publication отдельно.
-Далее один подтверждённый route adapter с future activation; новых BUY форм пока нет.
+Подтверждённый Permit2 adapter завершён ниже; дальнейшее расширение — по новым evidence.
 Сайт/объявления/частотная статистика отдельно; публичный запуск не разрешён.
 
 24.09: positive 0x0a10/0x060b0e USDG BUY получен на controlled local fork
 настоящего router/Permit2 и существующего reference pool. Historical block недоступен,
 свежий fork работает после mining local Cancun block. Подробности в ROUTE_RESEARCH.
-Далее узкий decoder + negative vectors + future activation. Поддержка пока не включена.
+Узкий decoder rh-ur-0a10-060b0e-v1, negative vectors и typed future activation
+реализованы и проверены локально. Existing policies не активируют его автоматически.
+Далее review пакета и оставшаяся release-интеграция §4; публичные authority/notice/
+finality и deployment по-прежнему не утверждены.

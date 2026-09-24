@@ -140,3 +140,9 @@ request; перед первым begin полный RPC replay на cutoff, poli
 сверка всего artifact и proposal id. Никакого persisted verification flag;
 начатые jobs проверяются workers против chain commitments.
 [Пределы защиты](LOCAL_PROMO_SCHEDULER.md).
+
+24.09: direct-buy.cjs добавил rh-ur-0a10-060b0e-v1 (PermitSingle + direct USDG BUY),
+buy-policy-format.cjs знает новый id. replay-direct-buy.cjs проверяет фиксированный
+Permit2 runtime на активном cutoff; старые cutoff не получают новую зависимость.
+Локальные publication/replay проверены; production activation отсутствует.
+[Точные границы и проверки](DIRECT_BUY_REPLAY.md#permit2-buy-adapter-24092026).

@@ -8,7 +8,8 @@
 В этом поколении расширяется способ доказать ту же покупку: TOKEN, pool,
 зарегистрированный payer=recipient, nominal USDG и отсутствие двойного зачёта.
 Изменение оценки через оракул, бенефициара или основания начисления — отдельное
-решение о новом поколении. Новые маршруты сейчас НЕ добавлены.
+решение о новом поколении. Каталог теперь включает Permit2 BUY adapter;
+[точная форма и проверки](DIRECT_BUY_REPLAY.md#permit2-buy-adapter-24092026).
 
 Новый decoder release может расширить каталог versioned adapter ids без замены
 source. Это возможность протокола публикации, не готовая поддержка любого router:
@@ -105,7 +106,7 @@ exclusive журналом. Контрактный publisher отправляе�
 Независимый replay persisted dataset до первого begin добавлен в scheduler:
 [проверка полного artifact](LOCAL_PROMO_SCHEDULER.md). Low-level workers вне
 scheduler сами историю не пересобирают; их checksum не доказывает участников.
-Нет live deployment/migration JSON source, новых route adapters, oracle, отмены
+Нет live deployment/migration JSON source, oracle, отмены
 активации, сайта или production RNG. Локальные venue/RNG fixtures не изменены.
 
 ## Проверки пакета typed source, 24.09.2026

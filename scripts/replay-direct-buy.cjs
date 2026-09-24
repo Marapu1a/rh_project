@@ -1,6 +1,6 @@
 const fs=require('node:fs');
 const {keccak256}=require('ethers');
-const {replay,canonical,hash,validateManifest,buyPolicyHistory}=require('./direct-buy.cjs');
+const {replay,canonical,hash,validateManifest,buyPolicyHistory,routeDependencies}=require('./direct-buy.cjs');
 
 // Independent reader: fetch whole blocks and every receipt, not an operator BUY list.
 async function scan(input,rpcUrl,toBlock,lifecycle=null){
@@ -17,6 +17,10 @@ async function scan(input,rpcUrl,toBlock,lifecycle=null){
   if(anchor.hash.toLowerCase()!==manifest.anchor.hash.toLowerCase())throw Error('Anchor is not canonical');
   if(BigInt(toBlock)<=BigInt(manifest.anchor.number))throw Error('Empty range');
   const head=await rpc('eth_getBlockByNumber',[tag(toBlock),false]);
+  for(const dependency of routeDependencies(input,toBlock)){
+    const code=await rpc('eth_getCode',[dependency.address,tag(toBlock)]);
+    if(code==='0x'||keccak256(code)!==dependency.codeHash)throw Error('Unexpected BUY adapter dependency runtime');
+  }
   for(const field of ['router','manager','hook','token','quote','registry']){
     const code=await rpc('eth_getCode',[manifest[field],tag(toBlock)]);
     if(code==='0x'||keccak256(code)!==manifest.codeHashes[field])throw Error('Unexpected '+field+' runtime; review deployment binding');

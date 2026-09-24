@@ -1,5 +1,67 @@
 # Direct BUY → билеты: decoder и replay v1
 
+## Permit2 BUY adapter, 24.09.2026
+
+Текущий каталог дополнен **rh-ur-0a10-060b0e-v1**. Только execute(bytes,bytes[],uint256),
+commands=0x0a10: PERMIT2_PERMIT, затем V4_SWAP с actions=0x060b0e. Совпадение
+commands И actions обязательно; прежний adapter не разрешает новый путь.
+0x060c0f с permit, ALLOW_REVERT/reserved flags, batch, лишние команды, multihop,
+другой router/recipient и wrappers не поддержаны. Разделы ниже — история этапов.
+
+Основание — [реально исполненная fork-покупка](../research/permit-buy-fork-positive-2026-09-24.json)
+и сохранённые Dispatcher/UniversalRouter sources. Fixture chain31337, чужой public
+reference pool, только кошелёк искусственно профинансирован; не наш mainnet deployment.
+
+Внешний execute, оба inputs и PermitSingle канонически перекодируются. Permit token
+должен быть USDG, spender — router, signature непустая, permit amount не меньше
+фактически списанного USDG. Больший allowance не увеличивает gross BUY: используется
+прежний actual Swap + два точных Transfer, registered payer=recipient.
+Nonce, signature и deadlines проверяет настоящий Permit2 во время исполнения;
+decoder НЕ восстанавливает подпись EOA отдельно. Успешный receipt с точным 0x0a10
+означает обязательный success permit (ALLOW_REVERT запрещён). Синтетический JSON
+с выдуманным success этим не становится подлинным: необходим доверенный RPC/provenance.
+
+Router hash pinned; для этого adapter local-fixture router exception недопустим.
+Зависимость версии фиксирована в decoder:
+
+- Permit2: 0x000000000022d473030f116ddee9f6b43ac78ba3;
+- runtime: 0x5208783f52488f7d3493e5e38311ab707c1d75457fe472a19b0b4d57d66a7fca.
+
+RPC scan проверяет dependency на toBlock, если adapter активен по policy этого cutoff.
+Адрес/hash не добавляются в старый manifest, его identity не меняется. Полная
+историческая неизменность внешнего кода этим не доказана (прежняя граница reader).
+Offline replay проверяет supplied evidence, не загружает code из RPC.
+
+Новый id проходит существующие prepare/publish/admission. Локально проверены
+настоящий BuyPolicySource, exact dry-run/send bytes, authority, commitment,
+completeness и включение с fromBlock. Публичная активация не выполнялась; authority,
+notice и finality для deployment всё ещё требуют отдельной фиксации.
+
+Проверки 24.09 (адресные, не full baseline), вызовы scripts/test-launcher.cjs:
+
+```js
+runTests({profile:'permit-buy-targeted',selection:{compile:false,files:[
+ 'test/direct-buy.test.cjs','test/attempt-lifecycle.test.cjs','test/monthly-replay.test.cjs'
+]}})
+runTests({profile:'permit-publication',pattern:'real BUY policy source',
+ selection:{compile:true,files:['test/participant-registry.test.cjs']}})
+```
+
+46/46, 4.90 s, compile=0; publication 2/2, 18.91 s включая compile 17.41 s.
+Оба exit0. Логи: .local/logs/test-run-3W6FB3/result.json и test-run-VGVIAf/result.json.
+Проверены saved real BUY, malformed/flagged/reordered commands, canonical permit,
+неверные token/spender/amount, failed receipt, gift/payer/pool/hook/extra transfers,
+missing/mismatched RPC Permit2 runtime. Synthetic activation branch проверяет 99+1,
+старый frozen hash и completion, повтор replay и запрет duplicate/retroactive extension.
+Эти synthetic vectors НЕ являются повторным исполнением signature-negative swap на EVM.
+Свежий fork/full/public sends в этом пакете не запускались; контракты/призы не менялись.
+
+Финальная проверка обнаружила важную совместимость: до opt-in сохранён прежний
+reason COMMAND_SEQUENCE для permit-покупок, чтобы не менять исторические ledger hashes.
+После исправления адресно повторены 7/7, 0.56 s (не суммировать с 46/46):
+runTests profile=permit-final, pattern="Permit2|replay is deterministic|scheduled routes",
+compile=false, files=[test/direct-buy.test.cjs]. Лог test-run-uFhCjm/result.json.
+
 > Справка по модулю/эксперименту. Общий текущий статус — [CURRENT_CONTEXT](CURRENT_CONTEXT.md);
 > даты и результаты ниже относятся к указанным этапам, а не задают следующий шаг проекта.
 

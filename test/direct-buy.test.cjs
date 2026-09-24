@@ -8,6 +8,104 @@ const evidence=JSON.parse(fs.readFileSync('research/direct-buy/evidence.json','u
 const m=evidence.manifest,blocks=evidence.blocks;
 const copy=x=>structuredClone(x);
 const coder=AbiCoder.defaultAbiCoder();
+const permitEvidence=require('../research/permit-buy-fork-positive-2026-09-24.json');
+const permitSample=permitEvidence.observations.at(-1);
+const permitName='rh-ur-0a10-060b0e-v1';
+const {PERMIT_TYPE,routeDependencies}=require('../scripts/direct-buy.cjs');
+function permitManifest(){return {...copy(m),...copy(permitEvidence.config),chainId:31337,
+ schema:'direct-buy-v2',routeVersion:'scheduled-routes-v1',codeHashes:copy(permitEvidence.codeHashes),
+ routes:[{id:m.routeVersion,fromBlock:0},{id:permitName,fromBlock:Number(BigInt(permitSample.transaction.blockNumber))}]};}
+function mutatePermit(change){
+ const tx=copy(permitSample.transaction),receipt=copy(permitSample.receipt);
+ const call=EXECUTE_ABI.parseTransaction({data:tx.input});
+ const state={commands:call.args.commands,inputs:Array.from(call.args.inputs),deadline:call.args.deadline,tx,receipt};
+ change(state);tx.input=EXECUTE_ABI.encodeFunctionData('execute',[state.commands,state.inputs,state.deadline]);
+ return decodeTransaction(permitManifest(),tx,receipt)[0];
+}
+
+test('Permit2 saved real fork BUY requires its own activated adapter; volume is actual spend',()=>{
+ const manifest=permitManifest(),tx=permitSample.transaction,r=permitSample.receipt;
+ assert.equal(permitEvidence.stage,'complete');
+ const d=decodeTransaction(manifest,tx,r)[0];
+ assert.equal(d.status,'ELIGIBLE');assert.equal(d.grossQuoteRaw,'100000000');
+ assert.equal(d.payer,tx.from);assert.equal(d.recipient,tx.from);
+ manifest.routes[1].fromBlock++;assert.equal(decodeTransaction(manifest,tx,r)[0].reason,'ROUTE_NOT_ACTIVE');
+ manifest.routes.pop();assert.equal(decodeTransaction(manifest,tx,r)[0].reason,'COMMAND_SEQUENCE');
+ assert.equal(decodeTransaction(permitEvidence.config,tx,r)[0].reason,'COMMAND_SEQUENCE');
+ // Synthetic receipt consistency vectors, not newly executed on-chain permits.
+ assert.equal(mutatePermit(s=>{const [p,sig]=coder.decode([PERMIT_TYPE,'bytes'],s.inputs[0]);const a=p.toArray(true);a[0][1]*=10n;s.inputs[0]=coder.encode([PERMIT_TYPE,'bytes'],[a,sig]);}).grossQuoteRaw,'100000000');
+});
+
+test('Permit2 adapter rejects extra/reordered/flagged commands, wrong permit and noncanonical bytes',()=>{
+ for(const commands of ['0x8a10','0x0a90','0x4a10','0x0a50','0x100a','0x0a0a10','0x10'])
+  assert.notEqual(mutatePermit(s=>s.commands=commands).status,'ELIGIBLE',commands);
+ for(const change of [s=>s.inputs.pop(),s=>s.inputs.push(s.inputs[0]),s=>s.inputs.reverse(),s=>s.inputs[0]+='00',s=>s.inputs[0]='0x12'])
+  assert.notEqual(mutatePermit(change).status,'ELIGIBLE');
+ for(const change of [p=>p[0][0]=m.token,p=>p[1]=m.registry,p=>p[0][1]=99999999n]){
+  const d=mutatePermit(s=>{const [p,sig]=coder.decode([PERMIT_TYPE,'bytes'],s.inputs[0]);const a=p.toArray(true);change(a);s.inputs[0]=coder.encode([PERMIT_TYPE,'bytes'],[a,sig]);});
+  assert.notEqual(d.status,'ELIGIBLE');
+ }
+ assert.notEqual(mutatePermit(s=>{const [p]=coder.decode([PERMIT_TYPE,'bytes'],s.inputs[0]);s.inputs[0]=coder.encode([PERMIT_TYPE,'bytes'],[p,'0x']);}).status,'ELIGIBLE');
+ assert.notEqual(mutatePermit(s=>s.receipt.status='0x0').status,'ELIGIBLE');
+ assert.notEqual(mutatePermit(s=>s.tx.to=m.registry).status,'ELIGIBLE');
+});
+
+test('Permit2 adapter retains strict payer, pool, action and transfer attribution',()=>{
+ for(const change of [
+  s=>s.tx.from=m.registry,
+  s=>s.tx.value='0x1',
+  s=>s.receipt.logs=s.receipt.logs.filter(l=>l.address.toLowerCase()!==permitEvidence.config.quote.toLowerCase()),
+  s=>s.receipt.logs.push(copy(s.receipt.logs.find(l=>l.address.toLowerCase()===permitEvidence.config.quote.toLowerCase()))),
+  s=>s.receipt.logs.push(copy(s.receipt.logs.find(l=>l.address.toLowerCase()===permitEvidence.config.manager.toLowerCase())))
+ ])assert.notEqual(mutatePermit(change).status,'ELIGIBLE');
+ for(const kind of ['gift','payer','hook','direction','actions','pool']){
+  const d=mutatePermit(s=>{const [actions,p]=coder.decode(['bytes','bytes[]'],s.inputs[1]);const a=Array.from(p);
+   if(kind==='gift')a[2]=coder.encode(['address','address','uint256'],[permitEvidence.config.token,m.registry,0]);
+   if(kind==='payer')a[1]=coder.encode(['address','uint256','bool'],[permitEvidence.config.quote,0,false]);
+   if(['hook','direction','pool'].includes(kind)){const spec=coder.decode([SWAP_TYPE],a[0])[0].toArray(true);if(kind==='hook')spec[5]='0x01';if(kind==='direction')spec[1]=!spec[1];if(kind==='pool')spec[0][2]++;a[0]=coder.encode([SWAP_TYPE],[spec]);}
+   s.inputs[1]=coder.encode(['bytes','bytes[]'],[kind==='actions'?'0x060c0f':actions,a]);
+  });assert.notEqual(d.status,'ELIGIBLE',kind);
+ }
+});
+
+test('Permit2 typed extension preserves old frozen commitments and carry at activation',()=>{
+ const {history}=require('./fixtures/attempt-history.cjs');const {extend}=require('../scripts/buy-policy-format.cjs');
+ const {replayAttempts}=require('../scripts/attempt-lifecycle.cjs');
+ const h=history();h.buy(99000000n);const old=h.freeze('permit pending','SHORT',h.head(),[h.participant(1)]);
+ const announcement=h.head(),activation=announcement.blockNumber+2;
+ const next=extend(h.manifest,adapterId(permitName),activation,announcement.blockNumber);
+ const policy={schema:'buy-policy-history-v1',versions:[{fromBlock:Number(BigInt(h.manifest.anchor.number)),manifest:h.manifest},{fromBlock:activation,announcedAtBlock:announcement.blockNumber,announcedBlockHash:announcement.blockHash,manifest:next}]};
+ function buy(){h.buy(1000000n);const tx=h.blocks.at(-1).transactions[0].tx,call=EXECUTE_ABI.parseTransaction({data:tx.input});
+  const permit=coder.encode([PERMIT_TYPE,'bytes'],[[[h.manifest.quote,1000000n,9999999999n,0],h.manifest.router,9999999999n],'0x01']);
+  tx.input=EXECUTE_ABI.encodeFunctionData('execute',['0x0a10',[permit,...call.args.inputs],call.args.deadline]);}
+ // Synthetic branch tests receipt-based replay, not signature validity.
+ buy();assert.notEqual(replay(policy,h.blocks).decisions.at(-1).status,'ELIGIBLE');
+ assert.deepEqual(routeDependencies(policy,activation-1),[]);
+ buy();const ledger=replay(policy,h.blocks);assert.equal(ledger.decisions.at(-1).entriesMinted,'1');
+ assert.equal(ledger.wallets[0].carryRaw,'0');assert.equal(ledger.wallets[0].entriesMinted,'2');
+ assert.equal(routeDependencies(policy,activation)[0].codeHash,permitEvidence.codeHashes.permit);
+ assert.equal(replayAttempts(policy,h.config,h.blocks).draws[0].snapshotHash,old.snapshotHash);
+ h.terminal(old);assert.equal(replayAttempts(policy,h.config,h.blocks).draws[0].snapshotHash,old.snapshotHash);
+ assert.throws(()=>extend(h.manifest,adapterId(permitName),announcement.blockNumber,announcement.blockNumber),/Activation/);
+ assert.throws(()=>extend(next,adapterId(permitName),activation+2,activation),/duplicate/);
+ const bad=permitManifest();bad.codeHashes.router=id('wrong');assert.throws(()=>routeDependencies(bad,activation),/runtime/);
+ assert.equal(hash(replay(policy,h.blocks)),hash(replay(policy,copy(h.blocks))));
+});
+
+test('Permit2 active RPC dependency rejects missing or mismatched code before scanning receipts',async()=>{
+ const {scan}=require('../scripts/replay-direct-buy.cjs'),http=require('node:http');const manifest=permitManifest();
+ const to=Number(BigInt(permitSample.transaction.blockNumber));let code='0x',reads=0;
+ const server=http.createServer(async(req,res)=>{let body='';for await(const c of req)body+=c;const q=JSON.parse(body);let result;
+  if(q.method==='eth_chainId')result='0x7a69';
+  if(q.method==='eth_getBlockByNumber')result={hash:manifest.anchor.hash};
+  if(q.method==='eth_getCode'){assert.equal(q.params[0],routeDependencies(manifest,to)[0].address);reads++;result=code;}
+  res.end(JSON.stringify({id:q.id,jsonrpc:'2.0',result}));});
+ await new Promise(r=>server.listen(0,'127.0.0.1',r));
+ try{const url='http://127.0.0.1:'+server.address().port;
+  await assert.rejects(scan(manifest,url,to),/adapter dependency runtime/);
+  code='0x6001';await assert.rejects(scan(manifest,url,to),/adapter dependency runtime/);assert.equal(reads,2);
+ }finally{server.closeAllConnections();await new Promise(r=>server.close(r));}
+});
 function transaction(label,branch=blocks){const h=evidence.observations.find(o=>o.label===label).hash;return branch.flatMap(b=>b.transactions).find(t=>t.tx.hash===h);}
 function decision(label){const t=transaction(label);return decodeTransaction(m,t.tx,t.receipt);}
 

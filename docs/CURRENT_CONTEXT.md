@@ -1,6 +1,6 @@
 # Текущий контекст
 
-Обновлено 24.09.2026: controlled fork подтвердил Permit2 + USDG BUY; decoder пока прежний.
+Обновлено 24.09.2026: Permit2 BUY adapter реализован, локальная future activation проверена.
 
 ## Где находимся
 
@@ -255,5 +255,11 @@ Frozen completion при неизвестном active adapter подтверж�
 тем же payer, nonce permit 0→1. Исправлена только настройка harness: пустой local
 block после fork устраняет отсутствие historical hardfork config chain4663.
 Код/балансы пула не заменялись; искусственный USDG capital только у test wallet.
-Decoder пока отклоняет COMMAND_SEQUENCE; next — узкий adapter + negative vectors
-и future activation. Evidence/границы — [ROUTE_RESEARCH](ROUTE_RESEARCH_2026-09-24.md).
+Этот evidence теперь покрыт adapter rh-ur-0a10-060b0e-v1. Commands/actions,
+PermitSingle и фактический settlement проверяются; RPC scan закрепляет Permit2
+runtime для активного cutoff. Legacy policy не включает маршрут автоматически.
+Адресно: BUY/lifecycle/monthly 46/46 (4.90 s), EVM publication 2/2 (18.91 s с compile).
+После сохранения legacy rejection reason финальная адресная выборка 7/7, 0.56 s.
+Публичная активация и новый fork в этом шаге не выполнялись; подробности —
+[DIRECT_BUY_REPLAY](DIRECT_BUY_REPLAY.md#permit2-buy-adapter-24092026).
+Далее review adapter и оставшаяся release-интеграция ROADMAP §4, без перебора всех routes.

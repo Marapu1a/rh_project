@@ -89,7 +89,7 @@ test('canonical reorg rollback removes orphaned registration and allows a new op
   assert.equal((await registry.queryFilter(registry.filters.Registered())).length,1);
 });
 
-test('real BUY policy source enforces authority, commitments and completeness; publication runs exact dry-run bytes',async()=>{
+for(const routeName of ['rh-ur-10-060c0f-v1','rh-ur-0a10-060b0e-v1'])test('real BUY policy source enforces authority, commitments and completeness; publication runs exact dry-run bytes '+routeName,async()=>{
  const {hash}=require('../scripts/direct-buy.cjs');const {loadBuyPolicy,ABI}=require('../scripts/buy-policy-admission.cjs');
  const {prepareBuyPolicy,publishBuyPolicy}=require('../scripts/publish-buy-policy.cjs');
  const raw=(m,p)=>hre.network.provider.send(m,p);
@@ -99,7 +99,7 @@ test('real BUY policy source enforces authority, commitments and completeness; p
  const trust={chainId:31337,instanceId:await source.instanceId(),source:source.target,publisher:await alice.getAddress(),genesisHash:hash(manifest),noticeBlocks:2,sourceCodeHash:ethers.keccak256(await provider.getCode(source.target))};
  assert.equal((await loadBuyPolicy({trust,genesis:manifest,rpc:raw})).history.versions.length,1);
  const fromBlock=Number(BigInt(await raw('eth_blockNumber',[])))+8;
- const next={...structuredClone(manifest),schema:'direct-buy-v2',routeVersion:'scheduled-routes-v1',routes:[{id:manifest.routeVersion,fromBlock:0},{id:'rh-ur-10-060c0f-v1',fromBlock}]};
+ const next={...structuredClone(manifest),schema:'direct-buy-v2',routeVersion:'scheduled-routes-v1',routes:[{id:manifest.routeVersion,fromBlock:0},{id:routeName,fromBlock}]};
  const prepared=await prepareBuyPolicy({trust,genesis:manifest,next,rpc:raw});
  assert.equal(await source.publishedCount(),0n);
  await assert.rejects(source.connect(bob).announce.staticCall(hash(manifest),adapterId(next.routes[1].id),fromBlock));
@@ -112,6 +112,11 @@ test('real BUY policy source enforces authority, commitments and completeness; p
  assert.equal(loaded.evidence[0].transactionHash,tx.hash);
  await assert.rejects(loadBuyPolicy({trust,genesis:manifest,rpc:async(m,p)=>m==='eth_getLogs'?[]:raw(m,p)}),/Incomplete policy history/);
  await assert.rejects(source.announce.staticCall(hash(manifest),adapterId(next.routes[1].id),fromBlock));
+ const {buyPolicyHistory}=require('../scripts/direct-buy.cjs');
+ assert.equal(hash(buyPolicyHistory(loaded.history).at(fromBlock-1)),hash(manifest));
+ while(Number(BigInt(await raw('eth_blockNumber',[])))<fromBlock)await raw('evm_mine',[]);
+ const active=await loadBuyPolicy({trust,genesis:manifest,rpc:raw});
+ assert.equal(hash(buyPolicyHistory(active.history).at(fromBlock)),hash(next));
  console.log('BUY policy publication gasUsed='+receipt.gasUsed+' calldataBytes='+((prepared.request.data.length-2)/2));
 });
 
