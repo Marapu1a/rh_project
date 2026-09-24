@@ -1,0 +1,31 @@
+{
+  "schema": "permit-buy-fork-v1",
+  "mode": "local-fork-only",
+  "upstream": "https://rpc.mainnet.chain.robinhood.com",
+  "config": {
+    "chainId": 4663,
+    "router": "0x8876789976decbfcbbbe364623c63652db8c0904",
+    "manager": "0x8366a39cc670b4001a1121b8f6a443a643e40951",
+    "hook": "0x438B86C71840C3B4df3F839aEd6bb889E2D780c0",
+    "token": "0x2B9495821247E9b3790E9e18f8498bEE6f5A5555",
+    "quote": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+    "poolKey": [
+      "0x2B9495821247E9b3790E9e18f8498bEE6f5A5555",
+      "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+      "10000",
+      "200",
+      "0x438B86C71840C3B4df3F839aEd6bb889E2D780c0"
+    ],
+    "poolId": "0xcba8f1e548abf84741726c3a31ed56522794682171520a2b72280f99aa59b03e"
+  },
+  "observedAt": "2026-09-24T11:57:55.787Z",
+  "observations": [],
+  "stage": "fork",
+  "error": "Error: The response reported error `-32000`: `Read proxy transport failure: upstream HTTP 403`. (optional data: None). Request: {\"jsonrpc\":\"2.0\",\"method\":\"eth_blockNumber\",\"params\":[],\"id\":34}",
+  "errorDetails": null,
+  "proxyStats": {
+    "requests": 147,
+    "retries": 30,
+    "errors": 9
+  }
+}

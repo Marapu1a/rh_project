@@ -81,5 +81,5 @@ Monthly не запускался, его контроллер нужен для
 боевого price/slippage guard, creator collect/claim или TOKEN→USDG prize conversion.
 Публичных sends не было. Для нашего будущего TOKEN нужны отдельные deployment bindings.
 
-Следующий независимый integration slice — источник creator revenue: collect/claim на
-reference vault и граница FeeRouter. Это отдельная задача, не продолжение охоты за routes.
+Источник creator revenue проверен следующим независимым шагом:
+[collect/claim на reference vault и граница FeeRouter](FEE_SOURCE_INTEGRATION.md).

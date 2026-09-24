@@ -1,5 +1,9 @@
 # FeeRouter: атомарная граница кампаний
 
+**24.09:** [новая проверка на существующем reference vault](FEE_SOURCE_INTEGRATION.md)
+подтвердила collect/claim и rollover при явно условном LOCAL назначении router recipient.
+Контракт не изменён; это не полномочия над публичным reference deployment.
+
 > Технический отчёт о существующем прототипе. Новые продуктовые правила — [PRODUCT_SPEC](PRODUCT_SPEC.md); карта реализации — [IMPLEMENTATION_STATUS](IMPLEMENTATION_STATUS.md).
 
 **Обновление 12.09:** rollover успешно проверен на свежем fork с новой действующей фабрикой PAIR, вместе с PromoVault и claim. См. [актуальный результат](archive/ECONOMICS_FORK_2026-09-12.md). Ниже сохранены результаты и ограничения предыдущей попытки на историческом состоянии.

@@ -5,6 +5,32 @@ const hre = require('hardhat');
 const {compile} = require('../scripts/compile.cjs');
 const compiled = compile();
 
+test('saved reference fork source claims and FeeRouter rollover reconcile with raw receipts',()=>{
+ const e=require('../research/fee-source-integration-success-2026-09-24.json'),s=e.sourceIntegration;
+ assert.equal(e.stage,'complete');assert.equal(s.success,true);assert.equal(s.originalBindingRejected,true);assert.equal(s.staleRejected,true);
+ const abi=new ethers.Interface(compiled.FeeRouter.abi),transfer=new ethers.Interface(['event Transfer(address indexed from,address indexed to,uint256 value)']);
+ const events=s.transactions.flatMap(t=>{assert.equal(t.receipt.status,'0x1');return t.receipt.logs.filter(l=>l.address.toLowerCase()===s.router.toLowerCase()).map(l=>abi.parseLog(l));});
+ assert.equal(events.filter(x=>x.name==='CampaignClosed').length,1);
+ assert.equal(events.find(x=>x.name==='SourceBound').args.vault.toLowerCase(),s.binding.vault.toLowerCase());
+ for(const row of s.rollover){
+  const recognized=id=>events.filter(x=>x.name==='RevenueRecognized'&&x.args.campaignId===id&&x.args.asset.toLowerCase()===row.asset.toLowerCase()).reduce((sum,x)=>sum+x.args.amount,0n);
+  assert.equal(recognized(1n),BigInt(row.oldTotal));assert.equal(recognized(2n),23n);
+  const paid=events.filter(x=>x.name==='Paid'&&x.args.asset.toLowerCase()===row.asset.toLowerCase()).reduce((sum,x)=>sum+x.args.amount,0n);
+  assert.equal(paid,BigInt(row.oldTotal));assert.equal(row.paidOld,row.oldTotal);
+  const credited=events.filter(x=>x.name==='Credited'&&x.args.asset.toLowerCase()===row.asset.toLowerCase()).reduce((sum,x)=>sum+x.args.amount,0n);
+  assert.equal(credited-paid,23n);
+ }
+ for(const c of s.claims){
+  assert.equal(c.due,c.received);if(c.due==='0')continue;
+  const tx=s.transactions.find(t=>t.label==='claim original recipient '+c.asset);assert(tx);
+  const received=tx.receipt.logs.filter(l=>l.address.toLowerCase()===c.asset.toLowerCase()&&l.topics[0]===transfer.getEvent('Transfer').topicHash)
+   .map(l=>transfer.parseLog(l).args).filter(a=>a.from.toLowerCase()===s.binding.vault.toLowerCase()&&a.to.toLowerCase()===s.binding.recipient.toLowerCase()).reduce((sum,a)=>sum+a.value,0n);
+  assert.equal(received,BigInt(c.due));
+ }
+ assert(BigInt(s.harvest.find(x=>x.asset.toLowerCase()===e.config.quote.toLowerCase()).received)>0n);
+ // Saved-receipt consistency, not independent public-chain authentication.
+});
+
 test('dependency audit: failed external collection blocks rollover but not old credits or direct income',async()=>{
   const {router,source,quote,promo,endsAt,recipients}=await fixture();
   await (await quote.mint(router.target,70)).wait();

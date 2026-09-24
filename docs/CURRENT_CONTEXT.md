@@ -1,6 +1,6 @@
 # Текущий контекст
 
-Обновлено 24.09.2026: сквозной Permit2 BUY → admission → Short dataset пройден на local fork.
+Обновлено 24.09.2026: reference collect/claim → FeeRouter и rollover пройдены на local fork.
 
 ## Где находимся
 
@@ -266,5 +266,14 @@ Review ffad0e0 не выявил blockers. Затем [сквозной fork](PE
 связал настоящий BUY с registry/policy admission и штатным scheduler: до activation 0,
 на activation 1 attempt; подмена budget отвергнута до send, оригинал прошёл begin/publish.
 Повторный scan сохраняет artifact и одну job. RNG/Monthly/claims не исполнялись.
-Fork exit0, offline regression 1/1; full не запускался. Следующий отдельный кусок —
-reference creator revenue collect/claim и связь с FeeRouter; новые routes пока не нужны.
+Fork exit0, offline regression 1/1; full не запускался.
+
+24.09: [source integration](FEE_SOURCE_INTEGRATION.md) проверила настоящий collect/claim
+с исходным recipient и bind rejection. После явно условной LOCAL impersonation
+policyController штатный transitionFeeSharingAtomic назначил FeeRouter: collect/harvest,
+rollover с pending fees/direct transfers, старые unpaid payouts и новая campaign прошли.
+Production contracts не менялись. Публичных полномочий над reference нет; только одна
+позиция TOKEN/USDG. Official RPC403 и signer harness issue сохранены, финал через
+Blockreq exit0. Следующий отдельный кусок — реальный venue TOKEN→USDG converter/guard;
+публичный launch/RNG/source bindings всё ещё не готовы.
+Адресная regression + failure/epoch/rollover neighbors: 4/4, 22.84 s с compile; не full.

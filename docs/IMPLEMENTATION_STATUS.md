@@ -151,3 +151,8 @@ Permit2 runtime на активном cutoff; старые cutoff не полу�
 реальный BUY на fork → typed admission → штатный scheduler → begin/publish.
 Coherent budget tamper отвергается pre-begin replay до send. Production modules
 не менялись; [evidence, воспроизведение и ограничения](PERMIT_BUY_INTEGRATION.md).
+
+24.09: permit-buy-fork.cjs --source + fee-source-integration.cjs проверяют source
+collect/claim и FeeRouter bind/harvest/rollover/pay на настоящем reference vault.
+Штатная смена recipient только при LOCAL controller impersonation. FeeRouter.sol
+не менялся. [Точные допущения и данные](FEE_SOURCE_INTEGRATION.md).

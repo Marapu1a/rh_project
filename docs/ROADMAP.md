@@ -103,8 +103,10 @@ deployment: LP binding и реальные BUY receipts сохранены. Вы
 JSON заменён typed ids; остаточная власть publisher описана в BUY_POLICY_ADMISSION.
 24.09: [сквозной Permit2 fork](PERMIT_BUY_INTEGRATION.md) связал BUY, future activation,
 admission, dataset и pre-begin gate scheduler; оригинал прошёл begin/publish.
-Deployment bindings/finality/notice остаются открыты. Следующий отдельный пакет —
-reference source collect/claim на fork и связь с FeeRouter.
+Deployment bindings/finality/notice остаются открыты. 24.09 [reference source fork](FEE_SOURCE_INTEGRATION.md)
+проверил collect/claim и, при LOCAL назначении FeeRouter штатным policy API, harvest/rollover/pay.
+Это условная source integration, не наши публичные права над reference vault.
+Следующий отдельный пакет — реальный venue TOKEN→USDG converter и price/slippage guard.
 Наш токен ещё не запущен, local guards сохраняются.
 
 - Источник комиссий и venue BUY: проверяемая интеграция конкретной площадки, сохранение
