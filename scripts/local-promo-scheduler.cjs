@@ -33,10 +33,8 @@ const ruleObject=r=>Object.fromEntries(['version','pNumerator','pDenominator','h
 async function tickKind(kind,o,state,save){
   const {provider,config,publisher,executor,signal}=o,isShort=kind==='SHORT',source=isShort?o.short:o.monthly;
   if(signal?.aborted)return {status:'stopped'};
-  const resolved=await resolveBuyPolicy(config,(m,p)=>provider.send(m,p));
   // Execution state is live; finalized is only the admission/dataset cutoff.
   const head=await provider.getBlock('latest'),at={blockTag:head.number};
-  const buyManifest=resolved.manifest;
   const active=await source[isShort?'activeProposal':'activeMonth'](at);
   const pending=await source[isShort?'pendingDatasetDraw':'pendingMonth'](at);
   const current=await source[isShort?'currentShortEpoch':'currentMonthlyEpoch'](at);
@@ -48,8 +46,9 @@ async function tickKind(kind,o,state,save){
       const artifact=entry.empty||entry.job.artifact;
       const snapshot=artifact.snapshot||artifact;
       const cutoff=snapshot.cutoff.blockNumber;
-      check(cutoff<=resolved.admission.checkpoint.number,'Stored job cutoff is not finalized');
-      const expected=hash(buyPolicyHistory(buyManifest).at(cutoff));
+      const historical=await resolveBuyPolicy(config,(m,p)=>provider.send(m,p),cutoff);
+      check(cutoff<=historical.admission.checkpoint.number,'Stored job cutoff is not finalized');
+      const expected=hash(buyPolicyHistory(historical.manifest).at(cutoff));
       check(snapshot.domain.buyManifestHash===expected,'Stored job BUY policy mismatch');
     }
     if(entry.empty){
@@ -113,6 +112,8 @@ async function tickKind(kind,o,state,save){
     return result;
   }
   if(active!==zero||pending!==zero)return wait('missingJob');
+  const resolved=await resolveBuyPolicy(config,(m,p)=>provider.send(m,p));
+  const buyManifest=resolved.manifest;
   const last=await source[isShort?'lastShortTerminalAt':'lastMonthAt'](at);
   const interval=await source[isShort?'SHORT_INTERVAL':'monthlyInterval'](at);
   if(BigInt(head.timestamp)<last+interval)return wait('schedule');

@@ -1,117 +1,139 @@
-# BUY policy: публикация, admission и исполнение
+# BUY policy: типизированные расширения и admission
 
-24.09.2026. Реализована цепочка с настоящим BuyPolicySource и подключением к
-существующему scheduler. Публичный deployment не выполнялся. Venue и RNG сквозного
-локального теста — прежние стенды, а не новая интеграция PAIR/RNG.
+24.09.2026. Новая версия source для нового deployment. Старый JSON ABI не
+совместим; публичного deployment у проекта нет. Prize custody и payout math не менялись.
 
-## Контракт и полномочия
+## Граница поколения
 
-contracts/BuyPolicySource.sol — без proxy, custody, reset, setters или смены ключа.
-В constructor задаются immutable instanceId, genesisHash, publisher и noticeBlocks.
-Права publisher ограничены записью новых commitments; получателей/призы он через
-этот контракт не меняет. Publisher может быть EOA либо контрактным кошельком.
-Реальный адрес, сеть и notice ещё не назначены; тестовые числа не параметры запуска.
-Для EOA потеря/компрометация одного ключа — риск доступности будущих обновлений.
-Изменение владельцев Safe относится к политике самого Safe, а не скрытому setter.
+В этом поколении расширяется способ доказать ту же покупку: TOKEN, pool,
+зарегистрированный payer=recipient, nominal USDG и отсутствие двойного зачёта.
+Изменение оценки через оракул, бенефициара или основания начисления — отдельное
+решение о новом поколении. Новые маршруты сейчас НЕ добавлены.
 
-announce проверяет msg.sender, previousHash == currentHash, hash полных bytes,
-ненулевое изменение, будущую границу с notice и порядок. До activation предыдущей
-версии следующую публиковать нельзя. publishedCount/currentHash/lastFromBlock
-позволяют независимо от getLogs сверить полноту истории. Номер блока получаем через
-существующий ChainBlocks: Robinhood/Nitro и обычная EVM используют координаты RPC.
+Новый decoder release может расширить каталог versioned adapter ids без замены
+source. Это возможность протокола публикации, не готовая поддержка любого router:
+сам adapter, runtime binding, attribution и tests ещё должны быть реализованы.
+Одно имя версии нельзя переиспользовать для другой семантики. Id равен keccak256
+имени версии; это обязательство по идентификатору спецификации, НЕ hash JS-кода
+и не доказательство его правильности. Воспроизводимость executable release ещё
+требует дисциплины версий/аудита; в этом пакете не добавлен произвольный plugin loader.
 
-**Остаточный риск:** контракт не разбирает JSON и не доказывает семантику decoder.
-Авторизованный прямой вызов с неверным, но правильно захешированным manifest может
-заблокировать admission. Обязательная штатная процедура — prepare/dry-run. Это
-операционная защита, не невозможность обхода владельцем ключа. Автоматического
-skip/reset плохого объявления нет. До публичного deployment это должно быть
-принято как риск либо решено отдельным пересмотром формата публикации.
+## Контракт
 
-## Публикация
+`BuyPolicySource` не имеет proxy, prize custody, reset или смены publisher.
+Constructor: instanceId, genesisHash, publisher, noticeBlocks, initialAdapters.
+Начальные ids непустые/уникальные; их ordered hash закреплён immutable.
+`SCHEMA_VERSION=1` — версия нового typed wire protocol, не прежнего JSON API.
 
-scripts/publish-buy-policy.cjs: prepareBuyPolicy загружает доверенную историю,
-проверяет полный candidate, canonical bytes, notice с запасом хотя бы на один
-блок, выполняет eth_call и estimateGas ровно для публикуемых bytes. Задержка
-включения может привести к безопасному revert, а не сокращению notice.
+`announce(previousHash, adapterId, fromBlock)` добавляет ровно один id.
+Контракт отклоняет чужого sender, неверного parent, нулевой/повторный id (включая
+начальные), раннюю/неупорядоченную активацию, второе объявление до предыдущей
+активации и блок за пределом JS safe integer. Время — ChainBlocks/RPC координаты.
+Нет произвольного JSON, nextHash вызывающий не задаёт:
 
-publishBuyPolicy использует signer и обязательный persist callback: intent с nonce
-сохраняется до send; hash — после. Ошибка send записывается как send-unknown,
-автоповтора нет. Если запись после broadcast не удалась, остаётся исходный intent:
-проверять nonce/receipt, не отправлять повторно вслепую. persist обязан быть durable.
-Для контрактного кошелька готовые calldata отправляются через его штатный workflow;
-source проверяет msg.sender, loader не путает outer tx.from с publisher.
-
-CLI подготовки (config содержит genesis manifest и buyPolicy trust):
-
-```powershell
-node scripts/run-buy-policy-publication.cjs --config config.json --next next.json --rpc URL --output prepared.json
+```text
+nextHash = keccak256(abi.encode(previousHash, uint256(1), adapterId, fromBlock))
 ```
 
-Output не перезаписывается. Для локальной chain31337 есть --local-signer INDEX
---journal FILE: эксклюзивный journal, fsync и atomic replacement перед broadcast.
-Существующий journal блокирует повтор; CLI не управляет production private keys.
-Для публичного кошелька используйте prepared calldata после deployment review.
-Это отдельная операция изменения правил; routine draws ручных действий не требуют.
+`currentHash` — цепочка ОБЪЯВЛЕНИЙ, не hash восстановленного manifest.
+`publishedCount/currentHash/lastFromBlock` проверяют полноту событий.
+Manifest hash продолжает связывать dataset с правилами его cutoff.
 
-## Независимый admission
+**Честный остаточный риск:** source допускает новый ненулевой id без знания его
+семантики. Невозможно проверить произвольный будущий off-chain decoder в этом
+контракте. Ошибочный/неподготовленный id от уполномоченного publisher потребует
+исправленного выпуска индексера и может остановить новые datasets с активации.
+Нет автоматического skip/cancel или обещания восстановить любую ошибку. Обычный
+prepare отклоняет неизвестный id до send; прямой авторизованный вызов может его
+обойти. Устранён arbitrary JSON/parser payload, не вся власть publisher над доступностью.
 
-buy-policy-admission.cjs читает pinned chain/source/runtime/publisher/genesis/instance
-и notice. На finalized checkpoint сверяет getters контракта с trust, events с receipts
-и canonical headers, полный JSON с nextHash, previousHash, notice и append-only routes.
-Число событий, последний hash и activation сверяются с состоянием source; пропуск
-последнего события теперь ошибка, genesis-only при count>0 невозможен.
-Checkpoint перечитывается; fallback с finalized на latest отсутствует. Рост finalized
-допустим, смена/регресс checkpoint запрещены.
+## Admission и cutoff
 
-Полнота теперь проверяется двумя RPC путями, но это не consensus light client:
-лживый RPC может согласованно подменить оба. Семантика finalized конкретной сети
-остаётся deployment gate. Runtime hash не заменяет аудит source и immutable bindings.
-В тестах контрактный publisher — простой wallet fixture, не сертификация Safe.
+`buy-policy-admission.cjs` сверяет chain/anchor, pinned runtime, schema, genesis
+adapters, immutable identity/authority/notice, все finalized events с receipt и
+block provenance, typed commitment chain и completeness getters. Publisher может
+быть контрактным кошельком: внешний tx.from не подменяет source.msg.sender.
 
-## Подключение потребителей
+`buy-policy-format.cjs` восстанавливает manifest из trusted genesis и известных
+ids, не принимает произвольные поля от publisher. Прошлые routes не заменяются.
+Неизвестный будущий id возвращается в pendingAdapters, а текущая политика работает.
+На cutoff >= его fromBlock старый decoder выдаёт `BUY adapter update required`.
+При запросе старого cutoff после новой активации прежний manifest доступен;
+полная цепочка announcements всё равно проверяется. Returned history применима
+к admitted cutoff, не является разрешением сканировать будущие блоки.
 
-buy-policy-runtime.cjs разрешает только genesis + pinned buyPolicy конфигурацию,
-получает историю из сети и оставляет prefix объявлений на cutoff. RPC CLI не принимает
-произвольный history вместо genesis. Offline evidence по-прежнему явно недоверенный.
+Scheduler проверяет сохранённые jobs на их собственном cutoff до загрузки новой
+политики для нового dataset. Поэтому неизвестная активная версия не блокирует
+завершение ранее frozen Short/Monthly. Отключение source/RPC всё ещё может мешать
+admission; offline bypass для исполнения не добавлен.
 
-Подключены replay-attempts/replay-direct-buy, verify-short-dataset/verify-monthly-dataset
-и local-promo-scheduler, вызываемый coordinator. Builders явно берут domain на cutoff.
-Scheduler читает live state для исполнения существующих jobs, finalized checkpoint
-для нового dataset. Нельзя считать старое finalized состояние отсутствием уже
-отправленного begin. При несовпадении эпох на cutoff ожидание finalizedPolicyBoundary.
+## Режим доверия
 
-Конфигурация содержит genesis и постоянный trust; добавление версии не меняет её
-identity и не требует миграции state. Источник/trust задним числом не подменяем:
-изменение config по-прежнему блокирует сохранённый state. Для старого deployment,
-где source ещё не был закреплён, автоматической привязки/миграции нет.
-Перед исполнением сохранённого задания проверяется buyManifestHash его cutoff.
-Старые snapshots не переписываются, старые попытки/остатки не сбрасываются.
+`resolveBuyPolicy` при наличии buyPolicy возвращает `policyStatus.mode=admitted`.
+Без trust публичная конфигурация и любой v2 genesis отклоняются по умолчанию.
+Для read-only исследования разрешено явно `buyPolicyMode: "unadmitted"`:
+это отдельный результат, не проверенное обновление публичного instance.
+`buyPolicyMode: "admitted"` требует trust; конфликт mode/trust отвергается.
+Только прежний v1 genesis chain31337 сохраняет local fixture compatibility;
+он также маркируется unadmitted. Удаление trust из существующего scheduler config
+дополнительно меняет identity и не допускается сохранённым state.
 
-## Проверка и реальные границы
+RPC replay-direct-buy/replay-attempts и Short/Monthly verifiers публикуют
+policyStatus отдельно от artifact/ledger hashes. Offline evidence тоже unadmitted.
+Сверка ledger проверяет содержимое, не принимает provenance label чужого файла
+за собственную аттестацию. Разрешение deployment должно закреплять доверенный
+источник вне редактируемых research inputs; production deployment пока отсутствует.
 
-Сквозной тест local-scheduler: реальные deployment source, prepare CLI, транзакция
-announce, RPC admission, старые frozen Short/Monthly, BUY нового route с ERC20
-transfers, завершение старых и следующих циклов, отказ при подмене persisted job.
-Используется существующий LocalBuyFixture, расширенный второй settlement формой.
-Только для chain31337 он отмечается routerProfile=local-fixture; публичный decoder
-сохраняет проверку закреплённого настоящего router runtime hash.
+## Выпуск расширения
 
-Отдельно проверены EOA/контрактный publisher, чужой sender, неверные hash/parent,
-повторная публикация, неизвестный route до send и пропуск последнего RPC notice.
-Итоговый замер EVM: 109562 gas для manifest 1371 bytes (обычная EVM chain31337).
-Это не стоимость в USDG и не замер Nitro precompile overhead.
+1. Подготовить adapter, version id, проверяемый runtime/settlement и vectors.
+2. Обновить индексер/verifier; проверить реальные примеры и отрицательные случаи.
+3. `prepareBuyPolicy` восстанавливает previous, проверяет единственное расширение,
+   mining margin, exact typed eth_call и estimateGas. Возвращает nextHash цепочки
+   отдельно от manifestHash; receipt не переоценивается как доказательство finality.
+4. Опубликовать future activation. `publishBuyPolicy` сохраняет intent/nonce до
+   send, затем hash; неизвестный исход не отправляется автоматически повторно.
+5. Прежние покупки/frozen commitments не переписывать; сообщить пользователям
+   действующую границу поддержки. Отдельного реестра кандидатов нет.
 
-Production gates: конкретные source/authority/genesis/runtime, finality и срок
-notice, review остаточного риска неверного авторизованного JSON. Автоматика остаётся
-за existing local chain31337 guards; этот пакет их не снимает и проект целиком
-production-ready не объявляет. Deactivation route и аварийная смена источника не
-реализованы, исторические обязательства не сбрасываются.
+CLI `run-buy-policy-publication.cjs` готовит bytes; send остаётся local31337 с
+exclusive журналом. Контрактный publisher отправляет подготовленный вызов своим
+механизмом. Его полномочия, production notice и finality ещё не утверждены.
 
-Проверки 24.09: custom test-launcher selection из participant-registry, direct-buy,
-attempt-lifecycle, monthly-replay, local-scheduler — 59/59, compile once 18.2 s,
-весь targeted пакет 208.6 s. Evidence `.local/logs/test-run-12I3zG/result.json`.
-После финального разделения live execution/finalized cutoff и CLI-подключения —
-адресный --match "BUY policy publication|Monthly CLI|policy admission": 3/3,
-включая искусственно отстающий finalized и prepare CLI поверх реальной локальной EVM.
-Evidence `.local/logs/test-run-NycuiN/result.json`, 70.8 s включая compile.
-Выборки пересекаются, не суммировать; full/fork/mainnet sends не запускались.
+## Открытые границы
+
+Независимый replay persisted dataset до первого begin остаётся отдельным
+релизным gate: сверка policy hash и checksum не доказывает список участников.
+Нет live deployment/migration JSON source, новых route adapters, oracle, отмены
+активации, сайта или production RNG. Локальные venue/RNG fixtures не изменены.
+
+## Проверки пакета typed source, 24.09.2026
+
+Адресный compile-once запуск через test-launcher.runTests:
+
+```js
+runTests({profile:'buy-policy-targeted', selection:{compile:true, files:[
+  'test/participant-registry.test.cjs', 'test/direct-buy.test.cjs',
+  'test/attempt-lifecycle.test.cjs', 'test/monthly-replay.test.cjs',
+  'test/local-scheduler.test.cjs'
+]}})
+```
+
+62 сценария: 60 прошли, 2 упали из-за старого mock event ABI и ожидания нового
+цикла в том же terminal pass. Тесты исправлены; первая проверка не названа зелёной.
+Evidence `.local/logs/test-run-Q62Tdr/result.json`, 247.4 s, compile 16.2 s.
+Финальная адресная проверка:
+
+```js
+runTests({profile:'buy-policy-final', pattern:'policy admission|BUY CLI|unknown activated BUY',
+ selection:{compile:true,files:['test/direct-buy.test.cjs','test/local-scheduler.test.cjs']}})
+```
+
+3/3, exit 0, 46.1 s включая compile 17.6 s:
+`.local/logs/test-run-yfL2lu/result.json`. Включены оба исправленных сценария и
+дополнительный child CLI тест. После этого продуктовый код не менялся, кроме
+try/finally cleanup RPC provider в replay-attempts, проверенного syntax и example CLI.
+Это совокупные адресные результаты, НЕ полный baseline на HEAD.
+Дополнительно offline attempts CLI выдаёт unadmitted; syntax/links/diff проверены.
+Full/fork/live sends не запускались. Во время тестов только локальная chain31337.
+Typed announce: 97443 gas / 100 calldata bytes в локальном fixture; не цена сети.

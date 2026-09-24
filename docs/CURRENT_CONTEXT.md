@@ -1,6 +1,6 @@
 # Текущий контекст
 
-Обновлено 24.09.2026: исследованы составные BUY routes; production support не расширен.
+Обновлено 24.09.2026: typed BUY policy и явные режимы admission; новые routes не добавлены.
 
 ## Где находимся
 
@@ -127,7 +127,8 @@ BuyPolicySource, exact-byte prepare/publish, completeness по getters, RPC CLI,
 cutoff-aware builders и scheduler/coordinator. Конфигурация источника постоянна;
 новые версии не меняют identity и старые snapshot hashes. Сквозной EVM тест проходит.
 Production authority/notice/finality не назначены; local guards сохранены.
-Авторизованный обход preflight с неверным JSON остаётся явным риском доступности.
+JSON API заменён typed adapter activation. Ошибочный неизвестный id от publisher
+всё ещё способен остановить новые datasets с активации; история старого cutoff доступна.
 Source collect/fork отдельно.
 Сайт/уведомления и статистика частоты routes ещё не реализованы.
 
@@ -144,10 +145,13 @@ pool-Swap-first discovery, attribution и расширяемые adapters. Вл�
 quote последнего пула; PAIR AUTO и wallet aggregators требуют отдельной атрибуции.
 Предложение — расширяемые проверенные adapters, не decoder на каждый ERC20.
 Правило nominal USDG не изменено, новый route пока не реализован.
-Review 0720f26 оставляет открытыми arbitrary-JSON source, optional admission и
-независимый replay persisted dataset до первого begin. Ближайший implementation
-пакет — source/admission с сохранением возможности новых adapters; затем один
-реальный multihop slice. Подробности и пределы evidence — в документе выше.
+Review d512733 принят с уточнением владельца: без отдельного candidate registry.
+Реализованы typed source announcements, детерминированная сборка manifests,
+явный unadmitted research mode и cutoff isolation неизвестных adapters.
+Старый JSON source ABI несовместим: это новый deployment, публичного старого нет.
+Сам source не проверяет семантику будущего decoder; обещания полной доступности нет.
+Следующий релизный gate — независимый replay persisted dataset до первого begin;
+после него один подтверждённый route adapter. Детали в BUY_POLICY_ADMISSION.md.
 
 Ответ GPT b4a89ef прочитан. По указанию пользователя sponsor/merchant ветка отложена;
 [архив обсуждения](archive/studies/SPONSOR_PARTNERSHIP_DISCUSSION_2026-09-23.md).
@@ -233,3 +237,8 @@ Full/fork/live sends не запускались.
 24.09, завершение BUY policy: targeted пакет 59/59, после финальных изменений
 повтор затронутых 3/3 (не суммировать). Локальная EVM, реальный source/publish;
 venue/RNG прежние fixtures. Evidence и ограничения в BUY_POLICY_ADMISSION.md.
+
+24.09, проверка typed policy: основной адресный запуск — 60/62; два устаревших
+тестовых ожидания исправлены, финальная выборка 3/3 закрыла их и новый CLI case.
+Frozen completion при неизвестном active adapter подтверждено; full/fork не запускали.
+Команды, timings и пределы — [BUY policy](BUY_POLICY_ADMISSION.md).

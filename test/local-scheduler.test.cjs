@@ -1,3 +1,4 @@
+const {initialAdapters,adapterId,commitment}=require('../scripts/buy-policy-format.cjs');
 const {inspectLock}=require('../scripts/local-scheduler-state.cjs');
 function assertUnlocked(file){const info=inspectLock(file+'.lock');assert.equal(info.exists,false,JSON.stringify({parentPid:process.pid,...info}));}
 const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),{ethers}=require('ethers');
@@ -155,7 +156,7 @@ test('BUY policy publication to scheduler: old frozen jobs survive, new route cr
  const {publishBuyPolicy}=require('../scripts/publish-buy-policy.cjs');
  const {loadBuyPolicy}=require('../scripts/buy-policy-admission.cjs');
  const f=await setup(t,compiled);
- const policy=await f.deploy('BuyPolicySource',[f.config.lifecycle.instanceId,hash(f.config.manifest),await f.admin.getAddress(),2]);
+ const policy=await f.deploy('BuyPolicySource',[f.config.lifecycle.instanceId,hash(f.config.manifest),await f.admin.getAddress(),2,initialAdapters(f.config.manifest)]);
  const trust={chainId:31337,source:policy.target,sourceCodeHash:ethers.keccak256(await f.provider.getCode(policy.target)),publisher:await f.admin.getAddress(),instanceId:f.config.lifecycle.instanceId,genesisHash:hash(f.config.manifest),noticeBlocks:2};
  f.config.buyPolicy=trust;
  await registeredBuy(f);await advance(30*86400+1);await run(f);
@@ -171,7 +172,7 @@ test('BUY policy publication to scheduler: old frozen jobs survive, new route cr
  const execFile=require('node:util').promisify(require('node:child_process').execFile);
  const beforePrepare=await policy.publishedCount();
  await execFile(process.execPath,['scripts/run-buy-policy-publication.cjs','--config',configFile,'--next',nextFile,'--rpc',f.options.rpcUrl,'--output',preparedFile],{timeout:30000});
- assert.equal(await policy.publishedCount(),beforePrepare);assert.equal(JSON.parse(fs.readFileSync(preparedFile)).nextHash,hash(next));
+ assert.equal(await policy.publishedCount(),beforePrepare);assert.equal(JSON.parse(fs.readFileSync(preparedFile)).manifestHash,hash(next));
  const journal=path.join(f.directory,'policy-publication.json');
  const tx=await publishBuyPolicy({trust,genesis:f.config.manifest,next,signer:f.admin,rpc,persist:async row=>fs.writeFileSync(journal,JSON.stringify(row))});await tx.wait();
  for(let i=0;i<8;i++)await rpc('evm_mine');
@@ -197,4 +198,28 @@ test('BUY policy publication to scheduler: old frozen jobs survive, new route cr
  const changed=f.readState();changed.jobs.SHORT[0].job.artifact.snapshot.domain.buyManifestHash=ethers.id('forged');delete changed.checksum;
  fs.writeFileSync(f.statePath,JSON.stringify({...changed,checksum:hash(changed)}));
  const rejected=await runScheduler(f.options,{maxTicks:1});assert.equal(rejected.status,'error');assert.match(rejected.results.SHORT.message,/policy mismatch/);
+});
+
+test('unknown activated BUY adapter blocks new datasets but frozen Short and Monthly finish',async t=>{
+ const {hash}=require('../scripts/direct-buy.cjs');
+ const f=await setup(t,compiled);
+ const policy=await f.deploy('BuyPolicySource',[f.config.lifecycle.instanceId,hash(f.config.manifest),await f.admin.getAddress(),2,initialAdapters(f.config.manifest)]);
+ f.config.buyPolicy={chainId:31337,source:policy.target,sourceCodeHash:ethers.keccak256(await f.provider.getCode(policy.target)),publisher:await f.admin.getAddress(),instanceId:f.config.lifecycle.instanceId,genesisHash:hash(f.config.manifest),noticeBlocks:2};
+ await registeredBuy(f);await advance(30*86400+1);await run(f);
+ const saved=f.readState(),hashes=['SHORT','MONTHLY'].map(k=>saved.jobs[k][0].job.artifact.request.snapshotHash);
+ const from=Number(BigInt(await rpc('eth_blockNumber')))+4;
+ await sent(policy.announce(hash(f.config.manifest),ethers.id('not-installed-v3'),from));
+ for(let i=0;i<5;i++)await rpc('evm_mine');
+ for(const kind of ['SHORT','MONTHLY']){
+  const c=kind==='SHORT'?f.short:f.monthly;
+  await sent(f.random.deliver(await c.drawRequest(saved.jobs[kind][0].job.artifact.request.drawId),ethers.ZeroHash));
+ }
+ await run(f); // terminal is a completed pass; the next pass considers a new dataset.
+ const result=await runScheduler(f.options,{maxTicks:1});
+ assert.equal(result.status,'error',JSON.stringify(result));
+ for(const kind of ['SHORT','MONTHLY'])assert.match(result.results[kind].message,/adapter update required/);
+ assert.equal((await f.short.settlements(saved.jobs.SHORT[0].job.artifact.request.drawId)).phase,3n);
+ assert.equal((await f.monthly.month(saved.jobs.MONTHLY[0].job.artifact.request.drawId)).phase,5n);
+ assert.deepEqual(['SHORT','MONTHLY'].map(k=>f.readState().jobs[k][0].job.artifact.request.snapshotHash),hashes);
+ assertUnlocked(f.statePath);
 });

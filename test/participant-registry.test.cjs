@@ -1,3 +1,4 @@
+const {initialAdapters,adapterId,commitment}=require('../scripts/buy-policy-format.cjs');
 const {test,before}=require('node:test');
 const assert=require('node:assert/strict');
 const {ethers}=require('ethers');
@@ -94,24 +95,24 @@ test('real BUY policy source enforces authority, commitments and completeness; p
  const raw=(m,p)=>hre.network.provider.send(m,p);
  const manifest=structuredClone(require('../research/direct-buy/evidence.json').manifest);
  const anchor=await raw('eth_getBlockByNumber',['latest',false]);manifest.anchor={number:anchor.number,hash:anchor.hash};
- const source=await deploy('BuyPolicySource',[ethers.id('policy instance'),hash(manifest),await alice.getAddress(),2]);
+ const source=await deploy('BuyPolicySource',[ethers.id('policy instance'),hash(manifest),await alice.getAddress(),2,initialAdapters(manifest)]);
  const trust={chainId:31337,instanceId:await source.instanceId(),source:source.target,publisher:await alice.getAddress(),genesisHash:hash(manifest),noticeBlocks:2,sourceCodeHash:ethers.keccak256(await provider.getCode(source.target))};
  assert.equal((await loadBuyPolicy({trust,genesis:manifest,rpc:raw})).history.versions.length,1);
  const fromBlock=Number(BigInt(await raw('eth_blockNumber',[])))+8;
  const next={...structuredClone(manifest),schema:'direct-buy-v2',routeVersion:'scheduled-routes-v1',routes:[{id:manifest.routeVersion,fromBlock:0},{id:'rh-ur-10-060c0f-v1',fromBlock}]};
  const prepared=await prepareBuyPolicy({trust,genesis:manifest,next,rpc:raw});
  assert.equal(await source.publishedCount(),0n);
- await assert.rejects(source.connect(bob).announce.staticCall(hash(manifest),hash(next),fromBlock,require('../scripts/direct-buy.cjs').canonical(next)));
- await assert.rejects(source.announce.staticCall(hash(manifest),hash(next),fromBlock,'{}'));
- await assert.rejects(source.announce.staticCall(ethers.id('bad'),hash(next),fromBlock,require('../scripts/direct-buy.cjs').canonical(next)));
+ await assert.rejects(source.connect(bob).announce.staticCall(hash(manifest),adapterId(next.routes[1].id),fromBlock));
+ await assert.rejects(source.announce.staticCall(hash(manifest),ethers.ZeroHash,fromBlock));
+ await assert.rejects(source.announce.staticCall(ethers.id('bad'),adapterId(next.routes[1].id),fromBlock));
  const journal=[];const tx=await publishBuyPolicy({trust,genesis:manifest,next,rpc:raw,signer:alice,persist:async row=>journal.push(structuredClone(row))});
  const receipt=await tx.wait();assert.deepEqual(journal.map(x=>x.status),['prepared','broadcast']);
- assert.equal(tx.data,prepared.request.data);assert.equal(await source.publishedCount(),1n);assert.equal(await source.currentHash(),hash(next));
+ assert.equal(tx.data,prepared.request.data);assert.equal(await source.publishedCount(),1n);assert.equal(await source.currentHash(),prepared.nextHash);
  const loaded=await loadBuyPolicy({trust,genesis:manifest,rpc:raw});assert.equal(loaded.history.versions[1].manifest.routeVersion,'scheduled-routes-v1');
  assert.equal(loaded.evidence[0].transactionHash,tx.hash);
  await assert.rejects(loadBuyPolicy({trust,genesis:manifest,rpc:async(m,p)=>m==='eth_getLogs'?[]:raw(m,p)}),/Incomplete policy history/);
- await assert.rejects(source.announce.staticCall(hash(manifest),hash(next),fromBlock,require('../scripts/direct-buy.cjs').canonical(next)));
- console.log('BUY policy publication gasUsed='+receipt.gasUsed+' manifestBytes='+Buffer.byteLength(require('../scripts/direct-buy.cjs').canonical(next)));
+ await assert.rejects(source.announce.staticCall(hash(manifest),adapterId(next.routes[1].id),fromBlock));
+ console.log('BUY policy publication gasUsed='+receipt.gasUsed+' calldataBytes='+((prepared.request.data.length-2)/2));
 });
 
 test('policy source accepts a contract publisher; loader does not confuse outer sender with authority',async()=>{
@@ -119,13 +120,59 @@ test('policy source accepts a contract publisher; loader does not confuse outer 
  const {prepareBuyPolicy}=require('../scripts/publish-buy-policy.cjs');const raw=(m,p)=>hre.network.provider.send(m,p);
  const manifest=structuredClone(require('../research/direct-buy/evidence.json').manifest),anchor=await raw('eth_getBlockByNumber',['latest',false]);manifest.anchor={number:anchor.number,hash:anchor.hash};
  const wallet=await deploy('PolicyWalletFixture');
- const source=await deploy('BuyPolicySource',[ethers.id('wallet instance'),hash(manifest),wallet.target,2]);
+ const source=await deploy('BuyPolicySource',[ethers.id('wallet instance'),hash(manifest),wallet.target,2,initialAdapters(manifest)]);
  const trust={chainId:31337,instanceId:await source.instanceId(),source:source.target,publisher:wallet.target,genesisHash:hash(manifest),noticeBlocks:2,sourceCodeHash:ethers.keccak256(await provider.getCode(source.target))};
  const fromBlock=Number(BigInt(await raw('eth_blockNumber',[])))+8;
  const next={...structuredClone(manifest),schema:'direct-buy-v2',routeVersion:'scheduled-routes-v1',routes:[{id:manifest.routeVersion,fromBlock:0},{id:'rh-ur-10-060c0f-v1',fromBlock}]};
  const bad=structuredClone(next);bad.routes[1].id='unknown';await assert.rejects(prepareBuyPolicy({trust,genesis:manifest,next:bad,rpc:raw}));assert.equal(await source.publishedCount(),0n);
  const ready=await prepareBuyPolicy({trust,genesis:manifest,next,rpc:raw});
- await assert.rejects(source.announce.staticCall(hash(manifest),hash(next),fromBlock,canonical(next)));
+ await assert.rejects(source.announce.staticCall(hash(manifest),adapterId(next.routes[1].id),fromBlock));
  await (await wallet.execute(source.target,ready.request.data)).wait();
  assert.equal((await loadBuyPolicy({trust,genesis:manifest,rpc:raw})).history.versions.length,2);
+});
+
+test('typed BUY policy rejects malformed transitions and isolates unknown adapters by cutoff',async()=>{
+ const {hash}=require('../scripts/direct-buy.cjs'),{loadBuyPolicy}=require('../scripts/buy-policy-admission.cjs');
+ const {resolveBuyPolicy}=require('../scripts/buy-policy-runtime.cjs');
+ const raw=(m,p)=>hre.network.provider.send(m,p);
+ const manifest=structuredClone(require('../research/direct-buy/evidence.json').manifest);
+ const anchor=await raw('eth_getBlockByNumber',['latest',false]);manifest.anchor={number:anchor.number,hash:anchor.hash};
+ const source=await deploy('BuyPolicySource',[ethers.id('extensible instance'),hash(manifest),await alice.getAddress(),2,initialAdapters(manifest)]);
+ const trust={chainId:31337,instanceId:await source.instanceId(),source:source.target,publisher:await alice.getAddress(),genesisHash:hash(manifest),noticeBlocks:2,sourceCodeHash:ethers.keccak256(await provider.getCode(source.target))};
+ const n=Number(BigInt(await raw('eth_blockNumber',[]))),future=ethers.id('future-reviewed-adapter-v1'),from=n+6;
+ await assert.rejects(source.announce.staticCall(hash(manifest),initialAdapters(manifest)[0],from));
+ await assert.rejects(source.announce.staticCall(hash(manifest),future,n+1));
+ await assert.rejects(source.announce.staticCall(hash(manifest),future,9007199254740992n));
+ // Old JSON ABI has no matching function, even with an authorized caller.
+ const old=new ethers.Interface(['function announce(bytes32,bytes32,uint256,string)']);
+ await assert.rejects(raw('eth_call',[{from:await alice.getAddress(),to:source.target,data:old.encodeFunctionData('announce',[hash(manifest),ethers.id('{}'),from,'{}'])},'latest']));
+ assert.equal(await source.publishedCount(),0n);
+ const snap=await raw('evm_snapshot',[]);
+ await (await source.announce(hash(manifest),future,from)).wait();
+ const pending=await loadBuyPolicy({trust,genesis:manifest,rpc:raw});
+ assert.equal(pending.pendingAdapters[0].adapterId,future);assert.equal(pending.history.versions.length,1);
+ await assert.rejects(source.announce.staticCall(await source.currentHash(),ethers.id('another'),from+1));
+ for(let i=0;i<7;i++)await raw('evm_mine',[]);
+ await assert.rejects(loadBuyPolicy({trust,genesis:manifest,rpc:raw}),/adapter update required/);
+ const past=await resolveBuyPolicy({manifest,buyPolicy:trust},raw,from-1);
+ assert.equal(past.policyStatus.mode,'admitted');assert.equal(hash(past.manifest.versions[0].manifest),hash(manifest));
+ await assert.rejects(source.announce.staticCall(await source.currentHash(),future,from+20));
+ await assert.rejects(loadBuyPolicy({trust,genesis:manifest,rpc:async(m,p)=>m==='eth_getLogs'?[]:raw(m,p),cutoff:from-1}),/Incomplete/);
+ assert.equal(await raw('evm_revert',[snap]),true);
+ assert.equal((await loadBuyPolicy({trust,genesis:manifest,rpc:raw})).evidence.length,0);
+});
+
+test('BUY policy trust is explicit for public or v2 genesis; offline mode is visibly unadmitted',async()=>{
+ const {resolveBuyPolicy}=require('../scripts/buy-policy-runtime.cjs');
+ const m=structuredClone(require('../research/direct-buy/evidence.json').manifest);
+ m.chainId=4663;
+ const noRpc=()=>{throw Error('unexpected RPC');};
+ await assert.rejects(resolveBuyPolicy({manifest:m},noRpc),/trust required/);
+ const result=await resolveBuyPolicy({manifest:m,buyPolicyMode:'unadmitted'},noRpc);
+ assert.equal(result.policyStatus.mode,'unadmitted');
+ m.chainId=31337;m.schema='direct-buy-v2';m.routeVersion='scheduled-routes-v1';m.routes=[{id:'rh-ur-10-060b0e-v1',fromBlock:0}];
+ await assert.rejects(resolveBuyPolicy({manifest:m},noRpc),/trust required/);
+ await assert.rejects(resolveBuyPolicy({manifest:m,buyPolicyMode:'admitted'},noRpc),/trust required/);
+ await assert.rejects(resolveBuyPolicy({manifest:m,buyPolicyMode:'typo'},noRpc),/Unknown/);
+ assert.equal((await resolveBuyPolicy({manifest:m,buyPolicyMode:'unadmitted'},noRpc)).policyStatus.mode,'unadmitted');
 });

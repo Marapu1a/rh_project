@@ -43,7 +43,7 @@ async function main(){
   const args=process.argv.slice(2),options={};
   const allowed=new Set(['--evidence','--manifest','--rpc','--to-block','--output','--verify']);
   for(let i=0;i<args.length;i+=2){if(!allowed.has(args[i])||!args[i+1]||options[args[i]])throw Error('Invalid/duplicate option');options[args[i]]=args[i+1];}
-  let input;
+  let input,policyStatus={mode:'unadmitted',reason:'Offline evidence; no source admission'};
   if(options['--evidence']){
     if(options['--rpc']||options['--manifest']||options['--to-block'])throw Error('Choose saved evidence or independent RPC scan');
     input=JSON.parse(fs.readFileSync(options['--evidence'],'utf8'));
@@ -52,16 +52,17 @@ async function main(){
     const saved=JSON.parse(fs.readFileSync(options['--manifest'],'utf8'));
     const {JsonRpcProvider}=require('ethers'),provider=new JsonRpcProvider(options['--rpc']);
     let resolved;try{resolved=await require('./buy-policy-runtime.cjs').resolveBuyPolicy(saved.manifest?saved:{manifest:saved},(m,p)=>provider.send(m,p),Number(options['--to-block']));}finally{provider.destroy();}
+    policyStatus=resolved.policyStatus;
     input=await scan(resolved.manifest,options['--rpc'],options['--to-block']);
   }
   const ledger=replay(input.manifest,input.blocks);
-  const result={ledger,ledgerHash:hash(ledger)};
+  const result={ledger,ledgerHash:hash(ledger),policyStatus};
   if(options['--verify']){
     const claimed=JSON.parse(fs.readFileSync(options['--verify'],'utf8'));
-    if(canonical(claimed)!==canonical(result))throw Error('Published ledger differs from independently replayed history');
+    if(claimed.ledgerHash!==result.ledgerHash||canonical(claimed.ledger)!==canonical(ledger))throw Error('Published ledger differs from independently replayed history');
   }
   if(options['--output'])fs.writeFileSync(options['--output'],canonical(result)+'\n');
-  console.log(JSON.stringify({candidates:ledger.decisions.length,wallets:ledger.wallets,ledgerHash:result.ledgerHash,finality:ledger.finality},null,2));
+  console.log(JSON.stringify({policyStatus,candidates:ledger.decisions.length,wallets:ledger.wallets,ledgerHash:result.ledgerHash,finality:ledger.finality},null,2));
 }
 module.exports={scan};
 if(require.main===module)main().catch(e=>{console.error(e.message);process.exitCode=1;});

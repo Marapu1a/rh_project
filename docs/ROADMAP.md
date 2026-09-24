@@ -145,8 +145,9 @@ Sponsor/physical prizes — отдельный слой. Межсетевой br
 локально; versioned policy history теперь поддержана pure replay. Обычная замена
 manifest всё ещё недопустима. Публикация/admission связаны локально в 55b23a0.
 24.09: [исследование маршрутов](ROUTE_RESEARCH_2026-09-24.md) завершает read-only
-разведку перед расширением: сначала source/admission fixes из review 0720f26,
-затем один подтверждённый multihop adapter с future activation. Не ограничивать
-дизайн навсегда двумя direct routes; arbitrary JSON при этом не оставлять.
+разведку перед расширением. Typed source/admission реализованы: ids расширяемы
+без JSON и без candidate registry, старый cutoff изолирован от неизвестной версии.
+Далее независимый replay persisted dataset до begin и один подтверждённый route
+adapter с future activation. Новые способы BUY в этом пакете не добавлены.
 Replay persisted dataset перед первым begin остаётся отдельным незакрытым пунктом.
 Сайт/объявления/частотная статистика отдельно; публичный запуск не разрешён.

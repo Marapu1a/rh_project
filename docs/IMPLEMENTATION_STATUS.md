@@ -122,15 +122,15 @@ validateRouteExtensionCandidate проверяет append-only расширен�
 Review 132b6af: миграция BUY manifest при исторических FREEZE не поддержана.
 validateRouteExtensionCandidate проверяет лишь форму; v2 — для нового экземпляра.
 
-24.09: buyPolicyHistory в direct-buy.cjs и cutoff domain в attempt-lifecycle.cjs
-поддерживают локальную историю manifest. Старые FREEZE/EMPTY/TERMINAL сохраняются.
-Интеграция builders/CLI/coordinator и provenance объявлений ещё не подключена.
+24.09: buyPolicyHistory/direct-buy и cutoff domain/attempt-lifecycle поддерживают
+историю manifests; старые FREEZE/EMPTY/TERMINAL сохраняются.
 
-24.09: buy-policy-admission.cjs — отдельный read-only loader из закреплённого
-источника событий с полными manifests. [Границы](BUY_POLICY_ADMISSION.md): synthetic
-RPC tests, без контракта публикации/deployment и интеграции исполнителей.
-
-24.09, завершение цепочки: contracts/BuyPolicySource.sol; publish-buy-policy.cjs и
-run-buy-policy-publication.cjs; buy-policy-runtime.cjs. Loader сверяет count/hash
-с состоянием source. RPC CLI и scheduler/coordinator используют admission; builders
-явно выбирают cutoff domain. Детали/ограничения — BUY_POLICY_ADMISSION.md.
+24.09, текущая цепочка: contracts/BuyPolicySource.sol публикует typed adapter ids
+и future activation; buy-policy-format.cjs восстанавливает manifest.
+buy-policy-admission.cjs проверяет immutable bindings, schema/genesis adapters,
+полную commitment chain и finalized provenance; неизвестная версия запрещена
+на/после activation, старый cutoff доступен. publish-buy-policy.cjs и
+run-buy-policy-publication.cjs сохраняют preflight/journal, ABI обновлён.
+buy-policy-runtime.cjs различает admitted/unadmitted; replay CLI/verifiers
+показывают policyStatus. Scheduler проверяет jobs по их cutoff до новой политики.
+[Границы и протокол](BUY_POLICY_ADMISSION.md). Новые routers/BUY формы не добавлены.

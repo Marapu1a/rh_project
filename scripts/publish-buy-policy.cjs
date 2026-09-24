@@ -1,3 +1,4 @@
+const {adapterId,commitment}=require('./buy-policy-format.cjs');
 const {ABI,loadBuyPolicy}=require('./buy-policy-admission.cjs');
 const {canonical,hash,buyPolicyHistory}=require('./direct-buy.cjs');
 async function prepareBuyPolicy({trust,genesis,next,rpc}){
@@ -6,18 +7,20 @@ async function prepareBuyPolicy({trust,genesis,next,rpc}){
  const head=await rpc('eth_getBlockByNumber',['latest',false]);
  const height=Number(BigInt(head.number));
  const added=next.routes?.slice(previous.routes?.length??1);
- if(!added?.length)throw Error('No added routes');
+ if(added?.length!==1)throw Error('Exactly one added route required');
+ if(admission.pendingAdapters.length)throw Error('Update decoder before another publication');
  const fromBlock=added[0].fromBlock;
  if(fromBlock-height<=trust.noticeBlocks)throw Error('Insufficient publication mining margin');
  const history=structuredClone(admission.history);
  history.versions.push({manifest:next,fromBlock,announcedAtBlock:height,announcedBlockHash:head.hash});
  buyPolicyHistory(history);
- const data=ABI.encodeFunctionData('announce',[hash(previous),hash(next),fromBlock,canonical(next)]);
+ const adapter=adapterId(added[0].id),nextHash=commitment(admission.currentHash,adapter,fromBlock);
+ const data=ABI.encodeFunctionData('announce',[admission.currentHash,adapter,fromBlock]);
  const request={from:trust.publisher,to:trust.source,data,value:'0x0'};
  // Exact bytes, checked against current source state and immutable publisher.
  await rpc('eth_call',[request,'latest']);
  const gas=await rpc('eth_estimateGas',[request]);
- return {schema:'buy-policy-publication-v1',trustHash:hash(trust),previousHash:hash(previous),nextHash:hash(next),fromBlock,request,estimatedGas:gas,checkpoint:admission.checkpoint};
+ return {schema:'buy-policy-publication-v2',trustHash:hash(trust),previousHash:admission.currentHash,nextHash,manifestHash:hash(next),adapterId:adapter,fromBlock,request,estimatedGas:gas,checkpoint:admission.checkpoint};
 }
 // No automatic retry on send errors. Caller retains intent and reconciles nonce/hash.
 async function publishBuyPolicy({trust,genesis,next,signer,persist,rpc}){

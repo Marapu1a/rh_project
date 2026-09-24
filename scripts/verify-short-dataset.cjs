@@ -13,9 +13,10 @@ async function main(){
   }
   if(!options['--input']||!options['--output'])throw Error('Required: --input FILE --output FILE [--rpc URL --proposal ID]');
   const input=JSON.parse(fs.readFileSync(options['--input'],'utf8'));
+  let policyStatus={mode:'unadmitted',reason:'Offline evidence; no source admission'};
   if(options['--rpc']){
     const policyProvider=new ethers.JsonRpcProvider(options['--rpc']);
-    try{input.manifest=(await require('./buy-policy-runtime.cjs').resolveBuyPolicy(input,(m,p)=>policyProvider.send(m,p),Number(input.request.cutoffBlockNumber))).manifest;}finally{policyProvider.destroy();}
+    try{const resolved=await require('./buy-policy-runtime.cjs').resolveBuyPolicy(input,(m,p)=>policyProvider.send(m,p),Number(input.request.cutoffBlockNumber));input.manifest=resolved.manifest;policyStatus=resolved.policyStatus;}finally{policyProvider.destroy();}
     const raw=await scan(input.manifest,options['--rpc'],String(input.request.cutoffBlockNumber),input.lifecycle);input.blocks=raw.blocks;
   }
   const artifact=buildFromHistory(input);
@@ -35,7 +36,7 @@ async function main(){
   }
   const nextAction=artifact.schema==='short-empty-epoch-artifact-v1'
     ?{method:'closeEmpty',args:[artifact.cutoff.blockNumber,artifact.cutoff.blockHash,artifact.snapshotHash]}:null;
-  fs.writeFileSync(options['--output'],canonical({artifact,artifactHash:hash(artifact),publication,nextAction,
+  fs.writeFileSync(options['--output'],canonical({artifact,artifactHash:hash(artifact),publication,nextAction,policyStatus,
     provenance:options['--rpc']?'Replayed through selected RPC; finality not certified':'Offline evidence; authenticity not certified'})+'\n');
   console.log('Dataset artifact verified and written');
 }

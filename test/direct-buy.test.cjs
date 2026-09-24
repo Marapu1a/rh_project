@@ -1,3 +1,4 @@
+const {adapterId,commitment,genesisAdaptersHash}=require('../scripts/buy-policy-format.cjs');
 const {test}=require('node:test');
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
@@ -252,7 +253,7 @@ test('FREEZE after activation keeps policy of its earlier cutoff; future version
  const mismatch=copy(policy);mismatch.versions[1].manifest.routes[1].fromBlock++;assert.throws(()=>replayAttempts(mismatch,h.config,h.blocks),/activation mismatch/);
 });
 
-test('policy admission loads only authorized finalized notices with full manifests; preserves old snapshot',async()=>{
+test('policy admission loads only authorized finalized notices with typed commitments; preserves old snapshot',async()=>{
  const {loadBuyPolicy,ABI}=require('../scripts/buy-policy-admission.cjs');
  const {history}=require('./fixtures/attempt-history.cjs');const {replayAttempts}=require('../scripts/attempt-lifecycle.cjs');
  function fixture(){
@@ -260,9 +261,9 @@ test('policy admission loads only authorized finalized notices with full manifes
   const notice=h.head().blockNumber+1,fromBlock=notice+2;
   const next={...copy(h.manifest),schema:'direct-buy-v2',routeVersion:'scheduled-routes-v1',routes:[{id:h.manifest.routeVersion,fromBlock:0},{id:'rh-ur-10-060c0f-v1',fromBlock}]};
   const trust={chainId:h.manifest.chainId,source,publisher,instanceId:h.config.instanceId,sourceCodeHash:keccak256('0x6000'),genesisHash:hash(h.manifest),noticeBlocks:2};
-  h.append('policy notice',source,'0x',[h.log(ABI,'BuyPolicyAnnounced',[trust.instanceId,hash(h.manifest),hash(next),fromBlock,canonical(next)],source)]);
+  h.append('policy notice',source,'0x',[h.log(ABI,'BuyPolicyAnnounced',[trust.instanceId,hash(h.manifest),commitment(hash(h.manifest),adapterId(next.routes[1].id),fromBlock),adapterId(next.routes[1].id),fromBlock],source)]);
   const log=h.blocks.at(-1).transactions[0].receipt.logs[0],pair=h.blocks.at(-1).transactions[0];
-  const sourceState={instanceId:trust.instanceId,genesisHash:trust.genesisHash,publisher:trust.publisher,noticeBlocks:2,publishedCount:1,currentHash:hash(next),lastFromBlock:fromBlock};
+  const sourceState={instanceId:trust.instanceId,genesisHash:trust.genesisHash,publisher:trust.publisher,noticeBlocks:2,publishedCount:1,currentHash:commitment(hash(h.manifest),adapterId(next.routes[1].id),fromBlock),lastFromBlock:fromBlock,SCHEMA_VERSION:1,genesisAdaptersHash:genesisAdaptersHash(h.manifest)};
   h.empty('activate wait');h.empty('activate');const head=h.blocks.at(-1);let logs=[log],code='0x6000';
   const rpc=async(method,params)=>{
    if(method==='eth_call'){const name=ABI.parseTransaction({data:params[0].data}).name;return ABI.encodeFunctionResult(name,[sourceState[name]]);}
@@ -291,13 +292,27 @@ test('policy admission loads only authorized finalized notices with full manifes
   x=>{x.setLogs([x.log,x.log]);},
   x=>{x.log.removed=true;},
   x=>{x.pair.receipt.logs=[];},
-  x=>{const a=ABI.parseLog(x.log).args;Object.assign(x.log,ABI.encodeEventLog('BuyPolicyAnnounced',[a.instanceId,a.previousHash,id('false manifest'),a.fromBlock,a.manifest]));},
-  x=>{const a=ABI.parseLog(x.log).args;Object.assign(x.log,ABI.encodeEventLog('BuyPolicyAnnounced',[a.instanceId,id('wrong parent'),a.nextHash,a.fromBlock,a.manifest]));},
-  x=>{const a=ABI.parseLog(x.log).args;Object.assign(x.log,ABI.encodeEventLog('BuyPolicyAnnounced',[id('other instance'),a.previousHash,a.nextHash,a.fromBlock,a.manifest]));},
-  x=>{const a=ABI.parseLog(x.log).args;Object.assign(x.log,ABI.encodeEventLog('BuyPolicyAnnounced',[a.instanceId,a.previousHash,a.nextHash,BigInt(x.log.blockNumber),a.manifest]));}
+  x=>{const a=ABI.parseLog(x.log).args;Object.assign(x.log,ABI.encodeEventLog('BuyPolicyAnnounced',[a.instanceId,a.previousHash,id('false commitment'),a.adapterId,a.fromBlock]));},
+  x=>{const a=ABI.parseLog(x.log).args;Object.assign(x.log,ABI.encodeEventLog('BuyPolicyAnnounced',[a.instanceId,id('wrong parent'),a.nextHash,a.adapterId,a.fromBlock]));},
+  x=>{const a=ABI.parseLog(x.log).args;Object.assign(x.log,ABI.encodeEventLog('BuyPolicyAnnounced',[id('other instance'),a.previousHash,a.nextHash,a.adapterId,a.fromBlock]));},
+  x=>{const a=ABI.parseLog(x.log).args;Object.assign(x.log,ABI.encodeEventLog('BuyPolicyAnnounced',[a.instanceId,a.previousHash,a.nextHash,a.adapterId,BigInt(x.log.blockNumber)]));}
  ]){const x=fixture();mutate(x);await assert.rejects(loadBuyPolicy({trust:x.trust,genesis:x.h.manifest,rpc:x.rpc}));}
  const missing=fixture();missing.setLogs([]);await assert.rejects(loadBuyPolicy({trust:missing.trust,genesis:missing.h.manifest,rpc:missing.rpc}),/Incomplete policy history/);
  const reorg=fixture();let count=0;const changing=async(m,p)=>{const v=await reorg.rpc(m,p);if(m==='eth_getBlockByNumber'&&p[0]!=='finalized'&&BigInt(p[0])===BigInt(reorg.h.head().blockNumber)&&++count===1)v.hash=id('changed checkpoint');return v;};
  await assert.rejects(loadBuyPolicy({trust:reorg.trust,genesis:reorg.h.manifest,rpc:changing}),/checkpoint changed/);
  const noFinal=fixture();await assert.rejects(loadBuyPolicy({trust:noFinal.trust,genesis:noFinal.h.manifest,rpc:async(m,p)=>m==='eth_getBlockByNumber'&&p[0]==='finalized'?null:noFinal.rpc(m,p)}),/Missing block/);
+});
+
+test('BUY CLI rejects missing public trust and labels offline evidence unadmitted',()=>{
+ const fs=require('node:fs'),os=require('node:os'),path=require('node:path'),{spawnSync}=require('node:child_process');
+ const dir=fs.mkdtempSync(path.join(os.tmpdir(),'buy-policy-cli-'));
+ try{
+  const output=path.join(dir,'out.json'),config=path.join(dir,'config.json');
+  const m=copy(require('../research/direct-buy/evidence.json').manifest);m.chainId=4663;
+  fs.writeFileSync(config,JSON.stringify({manifest:m}));
+  const rejected=spawnSync(process.execPath,['scripts/replay-direct-buy.cjs','--manifest',config,'--rpc','http://127.0.0.1:1','--to-block','70000000','--output',output],{encoding:'utf8',timeout:10000});
+  assert.equal(rejected.status,1);assert.match(rejected.stderr,/trust required/);assert.equal(fs.existsSync(output),false);
+  const offline=spawnSync(process.execPath,['scripts/replay-direct-buy.cjs','--evidence','research/direct-buy/evidence.json','--output',output],{encoding:'utf8',timeout:10000});
+  assert.equal(offline.status,0,offline.stderr);assert.equal(JSON.parse(fs.readFileSync(output)).policyStatus.mode,'unadmitted');
+ }finally{fs.rmSync(dir,{recursive:true,force:true});}
 });
