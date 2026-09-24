@@ -143,5 +143,10 @@ Sponsor/physical prizes — отдельный слой. Межсетевой br
 
 23.09: welcome bonus отклонён. Scheduled direct decoder 0x060c0f реализован
 локально; versioned policy history теперь поддержана pure replay. Обычная замена
-manifest всё ещё недопустима. Следующий кусок — проверяемая публикация/admission.
+manifest всё ещё недопустима. Публикация/admission связаны локально в 55b23a0.
+24.09: [исследование маршрутов](ROUTE_RESEARCH_2026-09-24.md) завершает read-only
+разведку перед расширением: сначала source/admission fixes из review 0720f26,
+затем один подтверждённый multihop adapter с future activation. Не ограничивать
+дизайн навсегда двумя direct routes; arbitrary JSON при этом не оставлять.
+Replay persisted dataset перед первым begin остаётся отдельным незакрытым пунктом.
 Сайт/объявления/частотная статистика отдельно; публичный запуск не разрешён.
