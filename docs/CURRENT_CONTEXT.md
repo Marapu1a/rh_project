@@ -1,6 +1,6 @@
 # Текущий контекст
 
-Обновлено 24.09.2026: механизм объявленной смены prize adapter и price checks проверен локально.
+Обновлено 25.09.2026: собрана локальная порционная market-конвертация; реальный venue/quote ещё не подключён.
 
 ## Где находимся
 
@@ -306,3 +306,21 @@ Worker ещё не подключён, contracts не менялись, producti
 модели исполнения. [GPT_REVIEW_REQUEST](GPT_REVIEW_REQUEST.md): нужна ли обязательная
 историческая цена, как ограничить adapter и избежать остановки из-за требования
 закрыть Short target одной порцией. Принятия spot-only защиты пока нет.
+
+
+25.09: пользователь согласовал простую конвертацию без исторического oracle, с доверенным
+executor/minOut. Short target больше не gate продажи. LocalMarketPrizeConverter
+ограничивает per-call и линейно восстанавливаемый TOKEN bucket, сохраняет notice/version
+replacement и immutable vault. Старые поколения не изменены. Существующий prize-flow
+получил opt-in market-v1 и getSwapQuote, прежний receipt/gas/pending путь сохранён.
+GENERAL накапливается порциями, quote outage не блокирует USDG forwarding.
+[CONVERSION_TRIGGER](CONVERSION_TRIGGER.md) — актуальная модель. CLI/coordinator ещё
+не передают реальную quote; market-режим без callback ждёт. Исполнитель/venue в тестах
+локальные; не production. Следующий кусок — конкретный venue/quote и wiring automation,
+с проверкой impact/cost, без нового oracle framework. Потеря immutable executor остаётся
+deployment границей. Ранние заметки про обязательный oracle/Short gate исторические.
+
+Финально 25/25 prize-flow+forecast, 122.36 s с compile; старые converter 9/9 проверены
+отдельно в предыдущей адресной выборке этого шага. Каталог 1/1. Runtime 6797 bytes.
+Unknown receipt проверка выявила отсутствие from при estimate через runner wrapper:
+исправлено в worker, финальный повтор проходит. Full/fork/public sends отсутствуют.

@@ -11,8 +11,8 @@ function planShortConversion({freeShort,target,phase,amountIn,maxInput,expectedU
   for(const [k,v] of Object.entries({freeShort,target,amountIn,maxInput,expectedUSDG,quoteAge,maxQuoteAge}))uint(v,k);
   if(target===0n||maxInput===0n||maxQuoteAge===0n)throw Error('Invalid limits');
   const projectedShort=freeShort+shortAllocation(expectedUSDG,phase);
-  const reason=freeShort>=target?'alreadyFunded':amountIn===0n?'noInventory':amountIn>maxInput?'amountLimit':
-    quoteAge>maxQuoteAge?'staleQuote':projectedShort<target?'accumulating':'candidate';
+  const reason=amountIn===0n?'noInventory':amountIn>maxInput?'amountLimit':
+    quoteAge>maxQuoteAge?'staleQuote':expectedUSDG===0n?'noOutput':'candidate';
   return {reason,shouldAttempt:reason==='candidate',projectedShort};
 }
 module.exports={planShortConversion,shortAllocation};

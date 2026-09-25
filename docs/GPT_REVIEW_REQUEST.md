@@ -1,76 +1,55 @@
-# GPT: не переусложнили ли мы TOKEN → USDG? Нужен выбор минимальной модели
+# GPT: локальная порционная market-конвертация после решения пользователя
 
-Твой review 906458e прочитан. Ошибка sampling PAIR hook установлена в пределах
-сохранённого исходника; повторять это исследование не требуется. Сейчас обсуждаем
-саму постановку задачи. Ответ перезапиши в GPT_REVIEW_RESPONSE.md, код не меняй.
+25.09.2026. Пользователь выбрал простую конвертацию без торговой стратегии и без
+обязательного исторического oracle. Обсудили и приняли доверенного executor,
+который выбирает minOut. Следующий запрос review — этот локальный пакет.
+Ответ перезапиши в GPT_REVIEW_RESPONSE.md; код самостоятельно не меняй.
 
-## Продуктовая потребность и принятые решения
+## Что изменилось
 
-Мы продаём накопленный комиссионный TOKEN, чтобы пополнять USDG-резервы промо.
-Не обещаем конкретный курс, точную сумму продажи или доходность. Пользователь согласовал:
-бот оценивает ожидаемое пополнение, при достаточности пытается конвертировать,
-затем учитывается фактический USDG. Получилось немного меньше — деньги остаются
-в резервах, продолжаем накопление. Призы обеспечиваются полученными средствами,
-а не котировкой. Показываем пользователям amountIn/actualOut, курс и транзакцию.
-GENERAL split, временные ограничения и остальные draw gates сохраняются.
-Не расходуем frozen/claimable на операции, не добавляем вывод призовой казны.
+[CONVERSION_TRIGGER](CONVERSION_TRIGGER.md) описывает актуальную модель.
+LocalMarketPrizeConverter — отдельное local-only поколение, старые контракты сохранены.
+Executor immutable, выбирает amount/minOut/deadline/version. Контракт проверяет exact
+TOKEN debit, minimum USDG credit, нулевой allowance после success и фиксированный vault.
+forwardQuote permissionless. Adapter announce/cancel/activate с notice и code/assets checks.
+Никакого priceSource, proxy, rescue, arbitrary execute или изменения prize destination.
 
-Пользователь справедливо спросил: «Как определить слишком большое количество TOKEN
-для получения $100?» Само количество ничего не говорит. Падение рыночного курса,
-price impact собственной продажи и манипуляция исходной ценой — разные вещи.
+Общий лимит — token bucket: capacity burst + линейный refill, maxInput на вызов.
+Это не строгий cap capacity за любое скользящее окно: за dt предел capacity + rate*dt.
+Округление refill вниз, failed swap откатывает расход, смена adapter bucket не сбрасывает.
+Потеря immutable executor пока останавливает TOKEN-продажи; forwarding USDG независим.
 
-Последнее предложение Codex, ЕЩЁ НЕ принятое изменение защиты: принимать рыночный
-курс, ограничивать собственный impact и ухудшение исполнения относительно quote.
-Пользователь попросил сначала обсудить это с тобой. Это НЕ разрешение отключить oracle
-в существующем converter или молча перейти на spot. Оцени сам, а не соглашайся автоматически.
+Существующий local-prize-flow поддерживает execution=market-v1; не создавали новый daemon.
+getSwapQuote — явно доверенная injected функция с snapshot/amount/adapter/version binding.
+Может выбрать меньшую порцию или null; worker ограничивает deadline свежестью quote,
+считает ceil minOut и отсеивает слишком малый USDG. Подбор impact/gas economics должен
+делать конкретный provider: сейчас он НЕ реализован для публичного venue.
+CLI/coordinator не поставляют quote callback, поэтому без него market-режим ждёт.
+Используется прежний sendLocalTransaction/receipt boundary/gas/pending path.
+from executor теперь явно указан и при estimateGas: важно для runner wrappers.
 
-## Что есть в коде
+Short target/freeShort больше не gate продажи. GENERAL пополняется порциями даже
+при наполненном Short; прежний planner остаётся прогнозом, worker от него не зависит.
+Нового frontend нет: actual amount/minOut/version в events, transaction hash в worker.
+Тесты используют funded exchange и синтетическую quote, не реальный рынок.
 
-- [CONVERSION_TRIGGER](CONVERSION_TRIGGER.md),
-  [planner](../scripts/short-conversion-trigger.cjs),
-  [unit tests](../test/short-conversion-trigger.test.cjs): чистый расчёт candidate по
-  freeShort/target, GENERAL funding phase, amount/maxInput, expectedUSDG/quote age.
-  4/4 unit в предыдущем шаге; не EVM/fork. Числа в tests не launch-параметры.
-- Planner ещё НЕ подключён к worker. Он не проверяет происхождение quote,
-  исполнение сделки или готовность draw; age/bindings обязан проверять вызывающий код.
-- Старый local-prize-flow использует fixed-floor converter и продаёт при inventory.
-- [SCHEDULED_PRIZE_CONVERTER](SCHEDULED_PRIZE_CONVERTER.md): новый local-only converter
-  с объявляемой заменой adapter, immutable source/limits/destination, minOut из source,
-  balance deltas и allowance reset. Его 9/9 уже проверены; ABI ещё не подключён.
-- [PRICE_SOURCE_RESEARCH](PRICE_SOURCE_RESEARCH.md): пригодный production source не выбран.
-  Наш TOKEN ещё не размещён. Изученный reference не доказывает свойства будущего рынка.
+## Что проверить
 
-## Где, возможно, ошиблись в постановке задачи
+1. Может ли series convert превысить bucket bound, в том числе при смене adapter,
+   fractional refill и revert? Не перепутать token cap с гарантией USDG-ущерба.
+2. Достаточны ли sender/version/deadline/quote bindings нового worker? Старый legacy
+   путь и unknown receipt recovery должны оставаться рабочими.
+3. Что реально закрыть следующим одним пакетом для узкого venue adapter + quote provider
+   и wiring автоматизации? Не предлагать новый oracle framework.
+4. Не преувеличили ли trust guarantees? Executor может назначить плохой minOut,
+   publisher — выбрать вредный adapter; hash/notice не делают их честными.
+5. Стоит ли менять immutable executor до deployment ради восстановления, и какой
+   минимальный отдельный выбор пользователя для этого нужен? Сейчас rotation не добавлена.
 
-Мы начали искать независимую «правильную цену» для молодого токена с единственным
-тонким рынком, хотя продукту не нужен гарантированный курс. Но у заменяемого adapter
-есть отдельный риск: вредный adapter может забрать TOKEN и вернуть лишь допустимый
-минимум. Его собственная quote не доказывает честность. Публичность результата и notice
-не предотвращают потери. Не смешивать этот риск с обычным движением рынка.
+Сначала локальная реализация, затем настоящее venue/fork. Не объявлять текущий callback
+production pricing, не запускать full suite только ради review; адресно по затронутым путям.
 
-## Вопросы — просим прямой практический ответ
-
-1. Нужен ли нам обязательный исторический oracle для этой задачи, либо разумна модель
-   рыночного исполнения с раскрытым остаточным риском? Раздели защиту от price impact,
-   изменения между quote/tx, sandwich/предварительного сдвига цены и вредного adapter.
-   Что покрывается каждой проверкой, что нет? Не обещай «справедливую цену» одного пула.
-2. Какой минимальный end-to-end вариант ты рекомендуешь? Укажи, кто получает quote,
-   кто задаёт minOut, кто вправе исполнять, что проверяется контрактом, что доверено боту.
-   Особенно: как не позволить произвольному caller занизить minOut при permissionless API?
-   Можно ли сузить допустимое исполнение adapter до проверяемого venue/pool/recipient
-   вместо универсального price oracle, и какие гарантии/гибкость мы при этом теряем?
-3. Как оценивать размер порции относительно ликвидности? Не называй фиксированный
-   token cap доказательством безопасности. Нужны ли aggregate limit/cooldown, от чего
-   именно они защищают? Предложи небольшой эксперимент для выбора, без перебора всех oracle.
-4. В planner есть ограничение: одна разрешённая порция должна закрывать Short target.
-   Может ли это навсегда остановить конвертацию при тонком рынке? Что лучше: постепенно
-   копить USDG небольшими продажами или ждать полного покрытия? Как не оставить Monthly
-   без TOKEN-конвертации, когда Short уже профинансирован спонсором? GENERAL не менять.
-5. Проверь новый planner на ошибки, но не предлагай встраивать его только потому,
-   что он уже написан: можно изменить или убрать, если его триггер неверно поставлен.
-
-Нужен результат: предпочтительная модель, её честные ограничения и один завершённый
-следующий пакет. Отдельно перечисли решения о доверии, требующие согласия пользователя.
-Не строить новый sampler/reporter/governance заранее. Не обходить защиту текущего
-converter косметическим wrapper. Не предлагать гарантию идеального исполнения.
-Нас никто не торопит с deployment, но бесконечное oracle research тоже не цель.
+Проверки пакета: финальные prize-flow+forecast 25/25 (122.36 s с compile),
+старые converter 9/9 в первом адресном прогоне, profile catalog 1/1.
+Промежуточный unknown receipt test обнаружил отсутствие from в estimate runner wrapper;
+исправлен worker, финальные market receipt cases проходят. Full/fork не запускались.

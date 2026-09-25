@@ -118,7 +118,9 @@ Deployment bindings/finality/notice остаются открыты. 24.09 [refe
   Immutable priceSource остаётся внешней границей доступности; burn не добавлен.
   [Исследование цены 24.09](PRICE_SOURCE_RESEARCH.md): reference hook stale;
   pre-swap sampling расходится с post-swap интервалами. Не выбран production oracle.
-  Следующий bounded шаг — replay истории/исполнения, затем выбор источника.
+  25.09 пользователь выбрал market execution с доверенным executor, без обязательного
+  oracle. [Порционная модель](CONVERSION_TRIGGER.md) реализована локально в converter/worker.
+  Далее конкретный venue/quote с impact/cost и wiring CLI/coordinator; публичный запуск не готов.
 - RNG: finality/future-round binding, delivery/fees, production provider/adapter;
   без fallback seed или reroll. Доказать readiness до freeze, измерить runtime/gas заново.
 
@@ -175,3 +177,5 @@ finality и deployment по-прежнему не утверждены.
 24.09, уточнение следующего swap-пакета: [CONVERSION_TRIGGER](CONVERSION_TRIGGER.md).
 Принят expected funding trigger / actual USDG accounting. Planner проверен 4/4;
 следом quote + worker integration нового ABI, без отмены price guard.
+
+25.09: Short-only gate отменён; порционное GENERAL funding — актуальный план.

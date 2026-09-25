@@ -3,13 +3,13 @@ const {compile}=require('../scripts/compile.cjs');
 const {fixture,sent,advance,rpc}=require('./fixtures/local-controllers.cjs');
 const {runPrizeFlow}=require('../scripts/local-prize-flow.cjs');
 const compiled=compile();
-async function setup(){
+async function setup(market=false){
   const f=await fixture(compiled),project=await (await f.provider.getSigner(4)).getAddress();
   const adapter=await f.deploy('PrizeSwapFixture',[f.token.target,f.quote.target,3,1]);
   const make=async(vault=f.vault.target)=>f.deploy('LocalPrizeConverter',[f.token.target,f.quote.target,vault,adapter.target,2,1,1000,300]);
-  const converter=await make();
+  const converter=market?await f.deploy('LocalMarketPrizeConverter',[f.token.target,f.quote.target,f.vault.target,adapter.target,await f.executor.getAddress(),await f.admin.getAddress(),[1000,300,1000,3600,60]]):await make();
   const descriptor=(c,vault=f.vault.target)=>({kind:'converter',address:c.target,vault,adapter:adapter.target,
-    floorNumerator:'2',floorDenominator:'1',maxInput:'1000',maxHorizon:'300',swapLimit:'1000',deadlineSeconds:'120'});
+    ...(market?{execution:'market-v1',executor:f.executor.address,capacity:'1000',refillSeconds:'3600',version:'1',maxQuoteAge:'30',minUSDG:'1',slippageBps:100}:{floorNumerator:'2',floorDenominator:'1'}),maxInput:'1000',maxHorizon:'300',swapLimit:'1000',deadlineSeconds:'120'});
   const end=(await f.provider.getBlock('latest')).timestamp+1000,recipients=[converter.target,ethers.ZeroAddress,project],bps=[8000,0,2000];
   const router=await f.deploy('FeeRouter',[await f.admin.getAddress(),f.token.target,f.quote.target,[end,recipients,bps]]);
   const source=await f.deploy('MockPairVault',[f.token.target,router.target]);await sent(router.bindSource(source.target,123));
@@ -17,9 +17,63 @@ async function setup(){
   const job={schema:'local-prize-flow-v1',chainId:'31337',router:router.target,token:f.token.target,quote:f.quote.target,
     campaignId:'1',recipients,bps,active:descriptor(converter),legacy:[],source:{vault:source.target,positionId:'123',epoch:'1'},
     distribution:'GENERAL',pollSeconds:300,maxGasPrice:'1000000000000'};
-  const options={provider:f.provider,router,executor:f.executor,job};
+  const options={provider:f.provider,router,executor:f.executor,job,...(market?{getSwapQuote:async q=>({...q,blockHash:q.block.hash,amountOut:q.amountIn*3n})}:{})};
   return {...f,project,adapter,converter,make,descriptor,router,source,job,options};
 }
+test('market flow gradually funds GENERAL even with Short already funded; bucket blocks repeated sales',async()=>{
+  const f=await setup(true);await sent(f.token.mint(f.converter.target,2500));
+  await sent(f.quote.mint(f.vault.target,1000));await sent(f.vault.syncUSDG());
+  const first=await runPrizeFlow(f.options);assert.equal(first.status,'yielded');
+  assert.equal(await f.converter.tokenSold(),1000n);
+  assert.equal(await f.converter.quoteForwarded(),3000n);
+  const steps=[];await runPrizeFlow(f.options,{onStep:e=>steps.push(e)});
+  assert((await f.converter.tokenSold())<1010n); // Small elapsed-time refill only, not another full cap.
+  await advance(3601);await runPrizeFlow(f.options);
+  assert((await f.converter.tokenSold())>=2000n);
+  assert((await f.vault.freeCurrent())>0n);assert.equal(await f.token.allowance(f.converter.target,f.adapter.target),0n);
+});
+test('market flow quote outage does not block direct USDG; wrong quote binding cannot sell',async()=>{
+  const f=await setup(true);await queue(f,50,100);
+  const before=await f.quote.balanceOf(f.vault.target);
+  f.options.getSwapQuote=async()=>null;
+  await runPrizeFlow(f.options);assert.equal(await f.converter.tokenSold(),0n);
+  assert.equal(await f.quote.balanceOf(f.vault.target)-before,80n);
+  f.options.getSwapQuote=async q=>({...q,blockHash:q.block.hash,amountIn:q.amountIn+1n,amountOut:100n});
+  assert.equal((await runPrizeFlow(f.options)).status,'error');assert.equal(await f.converter.tokenSold(),0n);
+});
+test('market quote can choose smaller portion; stale quote waits; low executor minimum is explicit trust',async()=>{
+  const f=await setup(true);await sent(f.token.mint(f.converter.target,100));
+  f.options.getSwapQuote=async q=>({...q,blockHash:q.block.hash,amountIn:10n,amountOut:30n});
+  await runPrizeFlow(f.options);assert.equal(await f.converter.tokenSold(),10n);
+  f.options.getSwapQuote=async q=>{await advance(31);return {...q,blockHash:q.block.hash,amountOut:q.amountIn*3n};};
+  const events=[];await runPrizeFlow(f.options,{onStep:e=>events.push(e)});
+  assert(events.some(e=>e.reason==='staleQuote'));assert.equal(await f.converter.tokenSold(),10n);
+  // A trusted executor may accept a worse price. This is a demonstrated boundary, not an oracle.
+  await sent(f.adapter.setFailure(2));
+  await sent(f.converter.connect(f.executor).convert(10,1,(await f.provider.getBlock('latest')).timestamp+60,1));
+  assert.equal(await f.converter.tokenSold(),20n);assert.equal(await f.quote.balanceOf(f.converter.target),10n);
+});
+test('market converter authority, actual output, rate rollback, reentrancy and route notice',async()=>{
+  const f=await setup(true),c=f.converter,deadline=async()=>(await f.provider.getBlock('latest')).timestamp+120;
+  await sent(f.token.mint(c.target,2000));
+  await assert.rejects(async()=>c.convert(100,1,await deadline(),1));
+  for(const mode of [2,3,4,5]){
+    await sent(f.adapter.setFailure(mode));
+    await assert.rejects(async()=>c.connect(f.executor).convert(100,290,await deadline(),1));
+    assert.equal(await c.availableToSell(),1000n);assert.equal(await c.tokenSold(),0n);
+    assert.equal(await f.token.allowance(c.target,f.adapter.target),0n);
+  }
+  await sent(f.adapter.setFailure(0));
+  await assert.rejects(async()=>c.connect(f.executor).convert(100,0,await deadline(),1));
+  await sent(c.connect(f.executor).convert(1000,2900,await deadline(),1));
+  await assert.rejects(async()=>c.connect(f.executor).convert(1000,1,await deadline(),1));
+  const next=await f.deploy('PrizeSwapFixture',[f.token.target,f.quote.target,3,1]);
+  await sent(c.announceAdapter(next.target,ethers.keccak256(await f.provider.getCode(next.target))));
+  await assert.rejects(c.activateAdapter(1));await advance(61);await sent(c.activateAdapter(1));
+  assert((await c.availableToSell())<1000n); // Activation cannot refill bucket.
+  await assert.rejects(async()=>c.connect(f.executor).convert(1,1,await deadline(),1));
+  await sent(c.forwardQuote());assert.equal(await c.quoteForwarded(),3000n);
+});
 async function roll(f,recipients=f.job.recipients,bps=f.job.bps){
   await advance(1001);const end=(await f.provider.getBlock('latest')).timestamp+1000;
   await sent(f.router.rollCampaign(f.job.campaignId,[end,recipients,bps]));
@@ -87,8 +141,8 @@ test('two blocked legacy project credits cannot starve current converter or sour
   assert.equal(await f.quote.balanceOf(f.project),10n);assert.equal(await f.token.balanceOf(f.project),10n);
   assert.equal(await f.source.collections(),before+1n);assert.equal(await f.converter.tokenSold(),640n);
 });
-for(const method of ['forwardQuote','convert'])test('unknown '+method+' receipt stops and preserves hash; confirmed tx resumes once',async()=>{
-  const f=await setup(),before=await f.quote.balanceOf(f.vault.target);await queue(f,0,100);
+for(const market of [false,true])for(const method of ['forwardQuote','convert'])test((market?'market ':'')+'unknown '+method+' receipt stops and preserves hash; confirmed tx resumes once',async()=>{
+  const f=await setup(market),before=await f.quote.balanceOf(f.vault.target);await queue(f,0,100);
   await sent((method==='convert'?f.token:f.quote).mint(f.converter.target,10));
   const selector=f.converter.interface.getFunction(method).selector;let tx,blocked=false,after=0;
   const executor={provider:f.provider,getAddress:()=>f.executor.getAddress(),sendTransaction:async request=>{
@@ -100,7 +154,7 @@ for(const method of ['forwardQuote','convert'])test('unknown '+method+' receipt 
   }};
   try{
     const result=await runPrizeFlow({...f.options,executor,receiptTimeoutMs:100});
-    assert.equal(result.status,'error');assert.equal(result.error.stage,'confirm');assert.equal(result.error.transactionHash,tx.hash);assert.equal(after,0);
+    assert.equal(result.status,'error',JSON.stringify(result));assert.equal(result.error.stage,'confirm');assert.equal(result.error.transactionHash,tx.hash);assert.equal(after,0);
     if(method==='forwardQuote')assert.equal(await f.source.collections(),0n);
   }finally{await rpc('evm_mine');await rpc('evm_setAutomine',[true]);if(tx)await tx.wait();}
   assert.equal((await runPrizeFlow(f.options)).status,'idle');

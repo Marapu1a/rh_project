@@ -17,6 +17,10 @@ const converterABI=['function projectToken() view returns(address)','function qu
   'function vault() view returns(address)','function adapter() view returns(address)',
   ...['floorNumerator','floorDenominator','maxInput','maxHorizon'].map(k=>`function ${k}() view returns(uint256)`),
   'function convert(uint256,uint256)','function forwardQuote()'];
+const marketABI=converterABI.filter(x=>!x.includes('floorNumerator')&&!x.includes('floorDenominator')&&!x.includes('convert(')).concat([
+  'function executor() view returns(address)','function adapterVersion() view returns(uint256)',
+  'function capacity() view returns(uint256)','function refillSeconds() view returns(uint256)',
+  'function availableToSell() view returns(uint256)','function convert(uint256,uint256,uint256,uint256)']);
 function validatePrizeFlowJob(j){
   check(j.schema==='local-prize-flow-v1'&&String(j.chainId)==='31337','Local prize flow only');
   for(const k of ['router','token','quote'])check(address(j[k]),'Invalid '+k);
@@ -38,8 +42,13 @@ function validatePrizeFlowJob(j){
       check(!j.recipients.some(a=>same(a,e.address)),'Legacy duplicates active recipient');
     }
     if(e.kind==='converter'){
+      check(e.execution===undefined||e.execution==='market-v1','Unknown execution mode');
       check(address(e.vault)&&address(e.adapter),'Invalid converter bindings');
-      for(const k of ['floorNumerator','floorDenominator','maxInput','maxHorizon','swapLimit','deadlineSeconds'])check(BigInt(e[k])>0n,'Invalid '+k);
+      for(const k of [...(e.execution==='market-v1'?['capacity','refillSeconds','version','maxQuoteAge','minUSDG']:['floorNumerator','floorDenominator']),'maxInput','maxHorizon','swapLimit','deadlineSeconds'])check(BigInt(e[k])>0n,'Invalid '+k);
+      if(e.execution==='market-v1'){
+        check(address(e.executor)&&BigInt(e.capacity)>=BigInt(e.maxInput),'Invalid market authority/limits');
+        check(Number.isInteger(e.slippageBps)&&e.slippageBps>=0&&e.slippageBps<10000,'Invalid slippage');
+      }
       check(BigInt(e.swapLimit)<=BigInt(e.maxInput)&&BigInt(e.deadlineSeconds)<=BigInt(e.maxHorizon),'Swap limits exceed contract');
     }
   }
@@ -51,7 +60,7 @@ function validatePrizeFlowJob(j){
   for(const e of j.legacy.filter(e=>e.kind==='project'))check(!vaults.some(v=>same(v,e.address)),'Project recipient is a prize vault');
   return j;
 }
-async function runPrizeFlow({provider,router,executor,job,signal,receiptTimeoutMs=30000},{maxSteps=DEFAULT_MAX_STEPS,onStep=()=>{},signal:overrideSignal}={}){
+async function runPrizeFlow({provider,router,executor,job,signal,receiptTimeoutMs=30000,getSwapQuote},{maxSteps=DEFAULT_MAX_STEPS,onStep=()=>{},signal:overrideSignal}={}){
   signal=overrideSignal??signal;
   const failures=[],unsafe=new Map(),skipped=new Set();let steps=0,current,lastConfirmed;
   const summary=()=>({failures:[...failures],unsafeDebt:[...unsafe.values()],steps,lastConfirmed});
@@ -82,9 +91,14 @@ async function runPrizeFlow({provider,router,executor,job,signal,receiptTimeoutM
       check(same(await vault.projectToken(at),job.token)&&same(await vault.quoteToken(at),job.quote),'Vault assets mismatch');
       vaults.set(lower(vAddress),vault);
       if(e.kind==='converter'){
-        const c=new ethers.Contract(e.address,converterABI,provider);
+        const market=e.execution==='market-v1';
+        const c=new ethers.Contract(e.address,market?marketABI:converterABI,provider);
         check(same(await c.projectToken(at),job.token)&&same(await c.quoteToken(at),job.quote)&&same(await c.vault(at),e.vault)&&same(await c.adapter(at),e.adapter),'Converter binding mismatch');
-        for(const k of ['floorNumerator','floorDenominator','maxInput','maxHorizon'])check(await c[k](at)===BigInt(e[k]),'Converter '+k+' mismatch');
+        for(const k of [...(market?['capacity','refillSeconds']:['floorNumerator','floorDenominator']),'maxInput','maxHorizon'])check(await c[k](at)===BigInt(e[k]),'Converter '+k+' mismatch');
+        if(market){
+          check(same(await c.executor(at),e.executor)&&await c.adapterVersion(at)===BigInt(e.version),'Market executor/version mismatch');
+          if(executor)check(same(await executor.getAddress(),e.executor),'Wrong market executor');
+        }
         const adapter=new ethers.Contract(e.adapter,['function tokenIn() view returns(address)','function tokenOut() view returns(address)'],provider);
         check(same(await adapter.tokenIn(at),job.token)&&same(await adapter.tokenOut(at),job.quote),'Adapter assets mismatch');
         converters.push({...e,contract:c});
@@ -109,7 +123,7 @@ async function runPrizeFlow({provider,router,executor,job,signal,receiptTimeoutM
       steps++;
       let receipt;
       try{receipt=await sendLocalTransaction(target.connect(executor)[method],args,
-        {type:2,maxFeePerGas:price,maxPriorityFeePerGas:0},{signal,receiptTimeoutMs});}
+        {from:sender,type:2,maxFeePerGas:price,maxPriorityFeePerGas:0},{signal,receiptTimeoutMs});}
       catch(e){
         if(!isolated||!e.definiteRejection)throw e;
         skipped.add(id);const failure={...current,message:e.message,code:e.code,stage:e.stage,transactionHash:e.transactionHash};
@@ -157,7 +171,31 @@ async function runPrizeFlow({provider,router,executor,job,signal,receiptTimeoutM
       const balance=await token.balanceOf(c.address),portion=BigInt(c.swapLimit);
       if(balance>0n){
         const head=await provider.getBlock('latest'),deadline=BigInt(head.timestamp)+BigInt(c.deadlineSeconds);
-        if(await send('convert',c.contract,'convert',[balance<portion?balance:portion,deadline]))await forward(c);
+        let amount=balance<portion?balance:portion,args=[amount,deadline];
+        if(c.execution==='market-v1'){
+          const allowed=await c.contract.availableToSell({blockTag:head.number});
+          amount=amount<allowed?amount:allowed;
+          const waiting=async reason=>onStep({status:'waiting',action:'convert',target:c.address,reason});
+          if(amount===0n){await waiting('saleLimit');continue;}
+          if(!getSwapQuote){await waiting('quoteUnavailable');continue;}
+          // Quote selection/impact/cost policy is trusted executor logic, not an oracle.
+          let q;
+          try{q=await getSwapQuote({converter:c.address,adapter:c.adapter,token:job.token,quote:job.quote,amountIn:amount,version:BigInt(c.version),block:head});}
+          catch(e){await waiting('quoteUnavailable');continue;}
+          if(!q){await waiting('quoteUnavailable');continue;}
+          check(q.blockHash===head.hash&&typeof q.amountIn==='bigint'&&q.amountIn>0n&&q.amountIn<=amount&&q.version===BigInt(c.version)&&same(q.adapter,c.adapter)&&typeof q.amountOut==='bigint'&&q.amountOut>0n,'Invalid market quote binding');
+          amount=q.amountIn;
+          const latest=await provider.getBlock('latest');
+          if(latest.timestamp<head.timestamp||BigInt(latest.timestamp-head.timestamp)>BigInt(c.maxQuoteAge)||latest.timestamp>Number(deadline)){
+            await waiting('staleQuote');continue;
+          }
+          if((await provider.getBlock(head.number))?.hash!==head.hash){await waiting('quoteChainChanged');continue;}
+          const minimum=(q.amountOut*BigInt(10000-c.slippageBps)+9999n)/10000n;
+          if(minimum<BigInt(c.minUSDG)){await waiting('uneconomicPortion');continue;}
+          const quoteDeadline=BigInt(head.timestamp)+BigInt(c.maxQuoteAge);
+          args=[amount,minimum,deadline<quoteDeadline?deadline:quoteDeadline,BigInt(c.version)];
+        }
+        if(await send('convert',c.contract,'convert',args))await forward(c);
       }
     }
     const remainingInventory=[];

@@ -164,3 +164,8 @@ prize-flow worker не изменены. [API, trust и открытые зав�
 
 24.09: [Short conversion trigger](CONVERSION_TRIGGER.md) — pure planner
 scripts/short-conversion-trigger.cjs, 4/4 unit. Не подключён к prize-flow worker.
+
+25.09: LocalMarketPrizeConverter и opt-in market-v1 в existing local-prize-flow:
+trusted executor, positive minOut, exact deltas, TOKEN bucket, delayed route replacement.
+Short forecast больше не блокирует продажи до target. [Модуль](CONVERSION_TRIGGER.md).
+getSwapQuote — injected trusted boundary, реального provider/CLI wiring пока нет.

@@ -27,6 +27,7 @@
       "test/local-scheduler.test.cjs",
       "test/local-transaction.test.cjs",
       "test/local-prize-converter.test.cjs",
+      "test/short-conversion-trigger.test.cjs",
       "test/local-prize-flow.test.cjs",
       "test/local-coordinator.test.cjs",
       "test/local-execution-budget.test.cjs",
@@ -48,6 +49,7 @@
       "test/promo-vault.test.cjs",
       "test/local-usdg-funding.test.cjs",
       "test/local-prize-converter.test.cjs",
+      "test/short-conversion-trigger.test.cjs",
       "test/local-prize-flow.test.cjs"
     ]
   },
