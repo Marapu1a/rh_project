@@ -1,6 +1,6 @@
 # Текущий контекст
 
-Обновлено 25.09.2026: собрана локальная порционная market-конвертация; реальный venue/quote ещё не подключён.
+Обновлено 25.09.2026: настоящий V4 TOKEN→USDG маршрут проверен на fork, quote автоматически подключён к worker.
 
 ## Где находимся
 
@@ -324,3 +324,13 @@ deployment границей. Ранние заметки про обязател
 отдельно в предыдущей адресной выборке этого шага. Каталог 1/1. Runtime 6797 bytes.
 Unknown receipt проверка выявила отсутствие from при estimate через runner wrapper:
 исправлено в worker, финальный повтор проходит. Full/fork/public sends отсутствуют.
+
+
+25.09: [V4 market execution](V4_MARKET_EXECUTION.md) закрыла reference маршрут:
+LocalV4PrizeAdapter + eth_call того же convert возвращают исполнимый output;
+worker автоматически подбирает порцию по относительному impact и native gas cap.
+marketQuote в job работает через CLI/coordinator, без injected callback вручную.
+Fork block0x44b4d1d: 7.258891 USDG получено и распределено GENERAL, allowances zero.
+Капитал BUY искусственный USDG, fee source mock, draw authority inert; pool/router
+настоящие. Не публичный deployment. 24/24 prize-flow и 1/1 coordinator адресно.
+Следом launch bindings/параметры liquidity/cost/executor recovery; новый oracle не нужен.

@@ -169,3 +169,7 @@ scripts/short-conversion-trigger.cjs, 4/4 unit. Не подключён к prize
 trusted executor, positive minOut, exact deltas, TOKEN bucket, delayed route replacement.
 Short forecast больше не блокирует продажи до target. [Модуль](CONVERSION_TRIGGER.md).
 getSwapQuote — injected trusted boundary, реального provider/CLI wiring пока нет.
+
+25.09: LocalV4PrizeAdapter, v4-market-quote.cjs и auto wiring в prize-flow через
+job.marketQuote (в descriptor). Converter convert возвращает actual amountOut для
+eth_call. CLI/coordinator используют общий путь; [fork и пределы](V4_MARKET_EXECUTION.md).

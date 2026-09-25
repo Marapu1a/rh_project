@@ -50,7 +50,7 @@
 - [Текущая PAIR fee policy: V1/V2](PAIR_CURRENT_FEE_POLICY.md) — внешние правила и граница применимости.
 
 - [Local Prize Converter](LOCAL_PRIZE_CONVERTER.md) — локальный TOKEN → USDG; подключён к prize-flow worker.
-- [Порционная конвертация](CONVERSION_TRIGGER.md) — market executor, лимиты и opt-in prize-flow; реальный venue/quote ещё не подключён.
+- [Порционная конвертация](CONVERSION_TRIGGER.md) — market executor, лимиты и opt-in prize-flow; V4 venue/quote проверены на reference fork.
 - [Scheduled Prize Converter](SCHEDULED_PRIZE_CONVERTER.md) — объявленная замена adapter, фиксированные destination и price checks; отдельное локальное поколение.
 
 - [Local Prize Flow](LOCAL_PRIZE_FLOW.md) — автоматический collect/harvest/pay/convert/forward и legacy debt.
@@ -73,3 +73,5 @@
 - [Permit2 BUY → admission → Short dataset на fork](PERMIT_BUY_INTEGRATION.md).
 - [Reference collect/claim → FeeRouter и rollover на fork](FEE_SOURCE_INTEGRATION.md).
 - [Источники цены TOKEN/USDG и ограничение PAIR TWAP](PRICE_SOURCE_RESEARCH.md).
+
+- [V4 market execution](V4_MARKET_EXECUTION.md) — настоящий маршрут, simulation quote, CLI/coordinator и fork.

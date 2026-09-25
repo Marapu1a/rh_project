@@ -104,7 +104,7 @@ contract LocalMarketPrizeConverter is ReentrancyGuard {
         if(dt!=0 || dq!=0)emit InventoryObserved(dt,dq);
     }
     /// Expected version prevents a queued execution from silently switching to a different adapter.
-    function convert(uint256 amount,uint256 minOut,uint256 deadline,uint256 expectedVersion) external nonReentrant {
+    function convert(uint256 amount,uint256 minOut,uint256 deadline,uint256 expectedVersion) external nonReentrant returns(uint256 amountOut) {
         if(msg.sender!=executor)revert Unauthorized();
         if(minOut==0 || expectedVersion!=adapterVersion || amount==0 || amount>maxInput || deadline<block.timestamp ||
             deadline-block.timestamp>maxHorizon)revert InvalidSwap();
@@ -119,6 +119,7 @@ contract LocalMarketPrizeConverter is ReentrancyGuard {
         if(afterToken!=beforeToken-amount || afterQuote<beforeQuote || afterQuote-beforeQuote<minOut)revert BalanceMismatch();
         tokenSold+=amount;quoteObserved+=afterQuote-beforeQuote;
         emit Converted(adapterVersion,amount,afterQuote-beforeQuote,minOut);
+        return afterQuote-beforeQuote;
     }
     function forwardQuote() external nonReentrant {
         _sync();uint256 amount=heldQuote();if(amount==0)return;

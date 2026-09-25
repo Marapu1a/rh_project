@@ -3,6 +3,22 @@ const {compile}=require('../scripts/compile.cjs');
 const {fixture,sent,advance,rpc}=require('./fixtures/local-controllers.cjs');
 const {runPrizeFlow}=require('../scripts/local-prize-flow.cjs');
 const compiled=compile();
+test('saved V4 market fork ties actual swap, converter output and GENERAL balances',()=>{
+  const e=require('../research/v4-market-fork-success-2026-09-25.json'),x=e.marketIntegration;
+  assert.equal(e.stage,'complete');assert.equal(x.complete,true);assert.equal(e.proxyStats.errors,0);
+  assert.equal(e.codeHashes.router,'0x2ce6aaaf9f4151f5e1cbf774668772f17f532ae11b15e9284fd0a072a8b0fbde');
+  const converterABI=new ethers.Interface(compiled.LocalMarketPrizeConverter.abi);
+  const logs=x.receipts.flatMap(r=>r.logs);
+  const converted=logs.filter(l=>l.address.toLowerCase()===x.job.active.address.toLowerCase()&&l.topics[0]===converterABI.getEvent('Converted').topicHash);
+  assert.equal(converted.length,1);const actual=converterABI.parseLog(converted[0]).args;
+  assert.equal(String(actual.amountOut),x.balances.vault);assert.equal(String(actual.amountIn),x.balances.sold);
+  assert(actual.amountOut>=actual.minimumOut);assert.equal(String(actual.amountOut),x.quote.amountOut);
+  const {SWAP_ABI}=require('../scripts/direct-buy.cjs');
+  const swaps=logs.filter(l=>l.address.toLowerCase()===e.config.manager.toLowerCase()&&l.topics[0]===SWAP_ABI.getEvent('Swap').topicHash);
+  assert.equal(swaps.length,1);assert.equal(SWAP_ABI.parseLog(swaps[0]).args.id,e.config.poolId);
+  assert.equal(BigInt(x.balances.short)+BigInt(x.balances.current)+BigInt(x.balances.next),actual.amountOut);
+  assert(x.observations.some(r=>r.reason==='priceImpact'));
+});
 async function setup(market=false){
   const f=await fixture(compiled),project=await (await f.provider.getSigner(4)).getAddress();
   const adapter=await f.deploy('PrizeSwapFixture',[f.token.target,f.quote.target,3,1]);
@@ -20,6 +36,29 @@ async function setup(market=false){
   const options={provider:f.provider,router,executor:f.executor,job,...(market?{getSwapQuote:async q=>({...q,blockHash:q.block.hash,amountOut:q.amountIn*3n})}:{})};
   return {...f,project,adapter,converter,make,descriptor,router,source,job,options};
 }
+async function simulationPolicy(f){
+  delete f.options.getSwapQuote;
+  f.job.active.marketQuote={kind:'v4-simulation-v1',converterHash:ethers.keccak256(await f.provider.getCode(f.converter.target)),
+    adapterHash:ethers.keccak256(await f.provider.getCode(f.adapter.target)),sampleInput:'10',minSampleOutput:'1',maxImpactBps:100,
+    maxCandidates:8,maxGasCostWei:'100000000000000000',gasMarginBps:12000};
+}
+test('market automatic simulation selects a smaller portion without persisting quote state',async()=>{
+  const f=await setup(true);await simulationPolicy(f);await sent(f.token.mint(f.converter.target,100));await sent(f.adapter.setFailure(6));
+  const quote=require('../scripts/v4-market-quote.cjs').createV4MarketQuote({provider:f.provider,job:f.job});
+  const request={converter:f.converter.target,adapter:f.adapter.target,token:f.token.target,quote:f.quote.target,amountIn:100n,version:1n,block:await f.provider.getBlock('latest')};
+  const q=await quote(request);assert(q.amountIn<100n);assert.equal(await f.converter.tokenSold(),0n);assert.equal(await f.token.balanceOf(f.converter.target),100n);
+  const steps=[];const result=await runPrizeFlow(f.options,{onStep:r=>steps.push(r)});
+  assert.equal(result.status,'yielded',JSON.stringify(result));assert.equal(await f.converter.tokenSold(),q.amountIn);
+  assert.equal(await f.converter.quoteForwarded(),q.amountOut);assert(steps.some(r=>r.reason==='candidate'));
+});
+test('market simulation policy rejects excessive gas/runtime drift while USDG still forwards',async()=>{
+  const f=await setup(true);await simulationPolicy(f);await queue(f,50,100);
+  f.job.active.marketQuote.maxGasCostWei='1';const events=[];
+  await runPrizeFlow(f.options,{onStep:r=>events.push(r)});assert.equal(await f.converter.tokenSold(),0n);assert.equal(await f.converter.quoteForwarded(),80n);
+  assert(events.some(r=>r.reason==='gasCost'));
+  f.job.active.marketQuote.maxGasCostWei='100000000000000000';f.job.active.marketQuote.adapterHash=ethers.ZeroHash;
+  await runPrizeFlow(f.options);assert.equal(await f.converter.tokenSold(),0n);
+});
 test('market flow gradually funds GENERAL even with Short already funded; bucket blocks repeated sales',async()=>{
   const f=await setup(true);await sent(f.token.mint(f.converter.target,2500));
   await sent(f.quote.mint(f.vault.target,1000));await sent(f.vault.syncUSDG());
@@ -179,8 +218,8 @@ test('bounded portions/steps, gas/abort and source epoch drift do not silently r
   await sent(f.source.setEpoch(2));await sent(f.source.fund(f.quote.target,100));const count=await f.source.collections();
   assert.equal((await runPrizeFlow(f.options)).status,'degraded');assert.equal(await f.source.collections(),count);assert.equal(await f.source.due(f.quote.target),0n);
 });
-test('prize flow CLI performs the full local collection/conversion pass',async t=>{
-  const f=await setup(),http=require('node:http'),fs=require('node:fs'),path=require('node:path');await queue(f);
+for(const market of [false,true])test((market?'market ':'')+'prize flow CLI performs the full local collection/conversion pass',async t=>{
+  const f=await setup(market),http=require('node:http'),fs=require('node:fs'),path=require('node:path');if(market)await simulationPolicy(f);await queue(f);
   const server=http.createServer(async(req,res)=>{
     let body='';for await(const part of req)body+=part;const request=JSON.parse(body);
     async function handle(q){try{return {jsonrpc:'2.0',id:q.id,result:await rpc(q.method,q.params)};}

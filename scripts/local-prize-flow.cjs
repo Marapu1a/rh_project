@@ -46,6 +46,7 @@ function validatePrizeFlowJob(j){
       check(address(e.vault)&&address(e.adapter),'Invalid converter bindings');
       for(const k of [...(e.execution==='market-v1'?['capacity','refillSeconds','version','maxQuoteAge','minUSDG']:['floorNumerator','floorDenominator']),'maxInput','maxHorizon','swapLimit','deadlineSeconds'])check(BigInt(e[k])>0n,'Invalid '+k);
       if(e.execution==='market-v1'){
+        if(e.marketQuote)require('./v4-market-quote.cjs').validateMarketQuote(e.marketQuote);
         check(address(e.executor)&&BigInt(e.capacity)>=BigInt(e.maxInput),'Invalid market authority/limits');
         check(Number.isInteger(e.slippageBps)&&e.slippageBps>=0&&e.slippageBps<10000,'Invalid slippage');
       }
@@ -67,6 +68,9 @@ async function runPrizeFlow({provider,router,executor,job,signal,receiptTimeoutM
   const halt=(status,reason)=>{throw Object.assign(new Error(reason),{flowStatus:status,reason});};
   try{
     validatePrizeFlowJob(job);receiptOptions(receiptTimeoutMs);
+    if(!getSwapQuote&&[job.active,...job.legacy].some(e=>e.execution==='market-v1'&&e.marketQuote))
+      getSwapQuote=require('./v4-market-quote.cjs').createV4MarketQuote({provider,job,
+        onQuote:report=>onStep({status:'observation',action:'marketQuote',...report})});
     check(Number.isInteger(maxSteps)&&maxSteps>0&&maxSteps<=256,'Invalid step limit');
     if(signal?.aborted)halt('stopped','aborted');
     check((await provider.getNetwork()).chainId===31337n&&same(router.target,job.router),'Wrong chain/router');

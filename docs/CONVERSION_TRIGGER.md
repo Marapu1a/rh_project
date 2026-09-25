@@ -48,8 +48,9 @@ quote; minUSDG отсекает слишком маленький результ
 Malformed binding даёт error без продажи. Истёкшая quote ждёт. Bucket уменьшает порцию.
 Неизвестный receipt останавливает проход; hash сохраняется для существующего recovery,
 повторная продажа до выяснения результата не является разрешённым retry.
-CLI/coordinator пока не поставляют production callback: в market-режиме будут ждать quote.
-В тестах callback и venue искусственные. Не объявлять это готовым рыночным исполнением.
+25.09 подключена [симуляция настоящего V4 маршрута](V4_MARKET_EXECUTION.md):
+при marketQuote в job worker создаёт provider автоматически, включая CLI/coordinator.
+Без quote policy/callback режим ждёт. Публичный deployment всё ещё не выполнен.
 
 `short-conversion-trigger.cjs` сохранён как чистый прогноз GENERAL Short-доли;
 target/freeShort больше не запрещают продажу. Worker от него не зависит.
@@ -62,8 +63,9 @@ Executor может выбрать плохой minOut, publisher — плохо
 нет. Ключ executor пока immutable: его потеря останавливает TOKEN-продажи, USDG forwarding
 остаётся доступен. Это открытая deployment граница; rotation/rescue не добавлены.
 
-Следующий пакет — конкретный узкий venue adapter и реальный quote provider с impact/cost
-проверкой, затем wiring CLI/coordinator и fork. Не вводить фиктивные production котировки.
+Узкий venue adapter, simulation quote с impact/native cost cap и автоматическое wiring
+проверены локально и на [reference fork](V4_MARKET_EXECUTION.md). Далее deployment
+bindings/ликвидность/параметры нашего токена и эксплуатационные роли.
 Сайт должен читать фактические события/receipts; frontend этим шагом не менялся.
 
 Проверки 25.09: финальная адресная выборка prize-flow + forecast 25/25,

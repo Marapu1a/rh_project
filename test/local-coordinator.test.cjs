@@ -8,10 +8,10 @@ const {runScheduler}=require('../scripts/local-promo-scheduler.cjs');
 const {opsProfile}=require('./fixtures/execution-budget.cjs');
 const {transactionCost}=require('../scripts/local-execution-budget.cjs');
 const compiled=compile();
-async function fixture(t){
+async function fixture(t,market=false){
   const f=await setup(t,compiled),project=await (await f.provider.getSigner(4)).getAddress();
   const adapter=await f.deploy('PrizeSwapFixture',[f.token.target,f.quote.target,3,1]);
-  const converter=await f.deploy('LocalPrizeConverter',[f.token.target,f.quote.target,f.vault.target,adapter.target,2,1,1000,300]);
+  const converter=market?await f.deploy('LocalMarketPrizeConverter',[f.token.target,f.quote.target,f.vault.target,adapter.target,await f.admin.getAddress(),await f.admin.getAddress(),[1000,300,1000,3600,60]]):await f.deploy('LocalPrizeConverter',[f.token.target,f.quote.target,f.vault.target,adapter.target,2,1,1000,300]);
   const recipients=[converter.target,ethers.ZeroAddress,project],bps=[8000,0,2000];
   const router=await f.deploy('FeeRouter',[await f.admin.getAddress(),f.token.target,f.quote.target,[(await f.provider.getBlock('latest')).timestamp+10000000,recipients,bps]]);
   const source=await f.deploy('MockPairVault',[f.token.target,router.target]);await sent(router.bindSource(source.target,123));
@@ -19,14 +19,17 @@ async function fixture(t){
   const job={schema:'local-prize-flow-v1',chainId:'31337',router:router.target,token:f.token.target,quote:f.quote.target,campaignId:'1',recipients,bps,
     active:{kind:'converter',address:converter.target,vault:f.vault.target,adapter:adapter.target,floorNumerator:'2',floorDenominator:'1',maxInput:'1000',maxHorizon:'300',swapLimit:'1000',deadlineSeconds:'120'},
     legacy:[],source:{vault:source.target,positionId:'123',epoch:'1'},distribution:'GENERAL',pollSeconds:300,maxGasPrice:'1000000000000'};
+  if(market)Object.assign(job.active,{execution:'market-v1',executor:await f.admin.getAddress(),capacity:'1000',refillSeconds:'3600',version:'1',maxQuoteAge:'120',minUSDG:'1',slippageBps:100,
+    marketQuote:{kind:'v4-simulation-v1',converterHash:ethers.keccak256(await f.provider.getCode(converter.target)),adapterHash:ethers.keccak256(await f.provider.getCode(adapter.target)),
+      sampleInput:'10',minSampleOutput:'1',maxImpactBps:100,maxCandidates:8,maxGasCostWei:'100000000000000000',gasMarginBps:12000}});
   const options={statePath:path.join(f.directory,'coordinator.json'),prize:{provider:f.provider,router,job,executor:f.admin},scheduler:{...f.options,executor:f.admin}};
   await sent(f.registry.register());await f.buy(f.admin,100);await advance(30*86400+1);
   await runScheduler(options.scheduler,{maxTicks:1});assertUnlocked(f.statePath);
   await sent(source.queueFees(f.token.target,600));await sent(source.queueFees(f.quote.target,100));
   return {...f,router,source,converter,options};
 }
-test('coordinator serializes real prize and draw transactions with one signer; repeat does not repay or refreeze',async t=>{
-  const f=await fixture(t),before=await f.quote.balanceOf(f.vault.target),events=[];
+for(const market of [false,true])test((market?'market ':'')+'coordinator serializes real prize and draw transactions with one signer; repeat does not repay or refreeze',async t=>{
+  const f=await fixture(t,market),before=await f.quote.balanceOf(f.vault.target),events=[];
   const result=await runCoordinator(f.options,{onEvent:e=>events.push(e.worker)});
   assert.equal(result.status,'complete',JSON.stringify(result));assert.deepEqual(events,['prize','draw']);
   assert.equal(await f.quote.balanceOf(f.vault.target)-before,1520n);assert.equal(await f.converter.tokenSold(),480n);

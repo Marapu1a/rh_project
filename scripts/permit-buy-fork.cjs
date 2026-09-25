@@ -11,7 +11,8 @@ async function main(){
  const out=process.argv[2];if(!out||fs.existsSync(out))throw Error('NEW output required');
  const integration=process.argv[3]==='--integration';
  const source=process.argv[3]==='--source';
- if(process.argv.length>4||process.argv[3]&&!integration&&!source)throw Error('Expected NEW_OUTPUT.json [--integration|--source]');
+ const market=process.argv[3]==='--market';
+ if(process.argv.length>4||process.argv[3]&&!integration&&!source&&!market)throw Error('Expected NEW_OUTPUT.json [--integration|--source|--market]');
  const e={schema:'permit-buy-fork-v1',mode:'local-fork-only',upstream:RPC,config:cfg,observedAt:new Date().toISOString(),observations:[]};let proxy;
  const rpc=(m,p=[])=>hre.network.provider.send(m,p);
  try{
@@ -69,6 +70,7 @@ async function main(){
   }
   if(integration)await require('./permit-buy-integration.cjs').run({e,cfg,provider,user,quote,rpc,buy,out});
   else if(source)await require('./fee-source-integration.cjs').run({e,cfg,provider,user,rpc,buy});
+  else if(market)await require('./v4-market-integration.cjs').run({e,cfg,provider,user,rpc,buy});
   else await buy();
   e.stage='complete';
  }catch(error){e.error=error.stack||String(error);e.errorDetails=error.info||error.error||null;process.exitCode=1;}

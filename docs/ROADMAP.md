@@ -120,7 +120,9 @@ Deployment bindings/finality/notice остаются открыты. 24.09 [refe
   pre-swap sampling расходится с post-swap интервалами. Не выбран production oracle.
   25.09 пользователь выбрал market execution с доверенным executor, без обязательного
   oracle. [Порционная модель](CONVERSION_TRIGGER.md) реализована локально в converter/worker.
-  Далее конкретный venue/quote с impact/cost и wiring CLI/coordinator; публичный запуск не готов.
+  [V4 venue/quote](V4_MARKET_EXECUTION.md) + wiring CLI/coordinator проверены локально
+  и на reference fork. Далее launch bindings, параметры ликвидности/cost и executor recovery.
+  Публичный запуск не готов.
 - RNG: finality/future-round binding, delivery/fees, production provider/adapter;
   без fallback seed или reroll. Доказать readiness до freeze, измерить runtime/gas заново.
 

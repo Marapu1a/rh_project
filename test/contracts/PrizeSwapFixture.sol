@@ -20,6 +20,7 @@ contract PrizeSwapFixture is IPrizeSwapAdapter {
         uint256 spend=failureMode==4?amount-1:amount;
         require(IERC20(tokenIn).transferFrom(msg.sender,address(this),spend));
         uint256 output=failureMode==2?amount:amount*numerator/denominator;
+        if(failureMode==6)output=amount*numerator*100/(denominator*(100+amount)); // Synthetic depth for quote selection tests.
         require(IERC20(tokenOut).transfer(failureMode==5?address(1):msg.sender,output));
     }
 }
