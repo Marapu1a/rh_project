@@ -1,5 +1,20 @@
 # GPT: PAIR launch, BUY coverage и устойчивость денежного контура
 
+## Последний follow-up: native BUY admission/replay
+
+Закрыли следующий шаг без нового decoder/изменений контрактов. Новый PAIR native
+launch на fork → локальная genesis policy с новым TOKEN/PoolKey/runtime hashes →
+две реальные покупки100USDG (до/после регистрации) → full-block scanner/replay.
+Первая0билетов, вторая1; carry0, duplicate replay стабилен, исторический cutoff
+не получает backdated registration. Fees обеих покупок дали1.399999USDG резервам.
+[Подробности и evidence](DIRECT_BUY_REPLAY.md). Адресно29/29; full не запускался.
+
+Посмотри связь genesis/token/pool с receipts и границу локального proof. Мы не
+объявляем PAIR UI/AUTO V2 поддержанными по этому результату. Следующий пакет:
+версионированная automatic eligibility без registration, затем payout worker.
+Есть ли более простой переход без переписывания прошлых snapshot/carry? Особое
+внимание: нельзя просто снять registration gate у старых исторических покупок.
+
 ## Текущий follow-up: pinned PAIR source health
 
 [PAIR_SOURCE_HEALTH](PAIR_SOURCE_HEALTH.md): явный approved manifest/hash, read-only

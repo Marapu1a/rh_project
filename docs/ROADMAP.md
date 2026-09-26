@@ -1,5 +1,11 @@
 # План разработки
 
+26.09: native BUY/admission/replay завершён: существующий direct decoder подходит
+новому mode1 TOKEN/USDG pool, реальные fork receipts воспроизводят ticket ledger.
+Следующий bounded шаг — спроектировать и реализовать версию automatic eligibility:
+явная граница новых правил, неизменность старых snapshot/carry и честные условия сайта.
+Автоматические выплаты — после этого; PAIR UI/новые маршруты не считаются доказанными.
+
 26.09: [pinned source manifest/monitor](PAIR_SOURCE_HEALTH.md) реализован и проверен
 на новом native fork. Read-only diagnostics, без auto-accept и общего coordinator stop.
 Следующий bounded шаг — native BUY→admission/replay; затем версионированная automatic

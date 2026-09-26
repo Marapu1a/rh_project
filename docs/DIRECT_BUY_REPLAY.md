@@ -1,5 +1,37 @@
 # Direct BUY → билеты: decoder и replay v1
 
+## Новый PAIR native launch: admission/replay, 26.09.2026
+
+[scripts/native-buy-replay-integration.cjs](../scripts/native-buy-replay-integration.cjs)
+подключён в native launch harness после nonce-sensitive bootstrap. Создаёт локальные
+ParticipantRegistry и BuyPolicySource с genesis hash нового TOKEN/PoolKey и runtime
+pins. Использует существующий `rh-ur-10-060b0e-v1`; decoder и контракты не менялись.
+
+На свежем fork выполнены две покупки по100USDG: первая до регистрации исключается
+с `NOT_REGISTERED_AT_SWAP`, вторая после регистрации даёт1entry/carry0. Сканер читает
+все блоки/receipts диапазона, policy проходит admission; replay восстанавливает ledger.
+Сохранены raw history, trust/manifest, решения и hash. Повторный блок не удваивает
+билеты; исторический cutoff до регистрации не получает билет задним числом.
+Обе покупки при этом генерируют комиссии:1.399999USDG → Short0.700000,
+Current0.466666, Next0.233333. Право на билет не является условием сбора LP fees.
+
+Evidence: [buy-admission-2026-09-26.json](../research/native-launch/buy-admission-2026-09-26.json),
+upstream anchor `0x45bffe2`, local chain31337. Команды:
+
+```powershell
+node scripts/native-launch-fork.cjs NEW_OUTPUT.json
+node --test test/native-buy-admission.test.cjs test/native-launch-evidence.test.cjs test/direct-buy.test.cjs
+```
+
+Новый fork complete, upstream403requests/7retries/0errors;29/29 адресных offline
+тестов за1.71s. Лог `.local/logs/native-buy-admission-tests.log`; full suite не запускался.
+Новый файл тестов включён в full и профиль, содержащий native launch evidence.
+
+Ограничения: genesis и регистрация локальные, USDG покупателя искусственно пополнен,
+minOut1 — тестовый. Offline evidence проверяет согласованность, не удостоверяет
+mainnet. Не доказаны UI PAIR/AUTO V2, automatic eligibility, draw/RNG и payout.
+Текущий registration gate сохраняется; его отмена требует новой версии правил.
+
 ## PAIR AUTO USDG adapter, 25.09.2026
 
 `rh-pair-auto-usdg-v1` — отдельный typed id, прямой buyExactInput pinned V1

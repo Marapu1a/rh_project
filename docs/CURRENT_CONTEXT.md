@@ -1,5 +1,12 @@
 # Текущий контекст
 
+26.09: native BUY → admitted policy → full-block scan → replay проверен на новом
+fork PAIR. До регистрации BUY100 не даёт билет; после регистрации BUY100 даёт1,
+carry0; повторное чтение не удваивает результат. Комиссии обеих покупок дали
+1.399999USDG резервам. Адресно29/29, без full suite. [Детали](DIRECT_BUY_REPLAY.md).
+Следующий шаг — отдельная версия automatic eligibility без registration gate;
+потом payout worker. Текущие правила регистрации этим proof не отменяются.
+
 26.09: [PAIR source health](PAIR_SOURCE_HEALTH.md) готов как read-only CLI/watch с
 независимо закреплённым manifest hash. Проверяет code/implementation/source bindings,
 epoch/recipient/LP на одном блоке; future launch changes отдельно. Не gate, не rebind.

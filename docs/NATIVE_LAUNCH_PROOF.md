@@ -111,7 +111,8 @@ report `.local/logs/test-run-XTjG1q/result.json`. Дополнительно sav
 ## Что ещё не закрыто
 
 - Покупка доказана через Universal Router напрямую в новый native pool, **не**
-  через UI/AUTO aggregator PAIR. Новый V2 eligibility/admission/ledger здесь не проверялся.
+  через UI/AUTO aggregator PAIR. Admission/ledger для этого direct native route теперь проверены отдельным
+  [расширением](DIRECT_BUY_REPLAY.md), с действующим registration gate.
 - Draw authority в этом funding proof — inert adapter, как в предыдущем market fork.
   Настоящие Short/Monthly/RNG, automatic eligibility/payout и production версии отдельно.
 - Конкретный deployment profile ещё требует решения; успешный fork показывает

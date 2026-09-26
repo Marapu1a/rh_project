@@ -13,7 +13,7 @@ const rpc=(method,params=[])=>hre.network.provider.send(method,params);
 async function main(){
  const out=process.argv[2];assert(out&&!fs.existsSync(out)&&process.argv.length===3,'NEW_OUTPUT.json required');
  const e={schema:'native-launch-fork-v1',observedAt:new Date().toISOString(),upstream:process.env.RH_RPC_URL||'https://robinhood-mainnet-rpc.blockreq.com/v1/rpc/public',
-  assumptions:['Local chain31337 only; ordinary creator, no impersonation','Only trader USDG balance is artificially funded; local signers have sandbox ETH','100% internal promo policy is a test parameter, not approved project allocation','PromoVault uses inert adapter as local draw authority; no RNG/draw/eligibility/payout proof'],transactions:[]};
+  assumptions:['Local chain31337 only; ordinary creator, no impersonation','Only trader USDG balance is artificially funded; local signers have sandbox ETH','100% internal promo policy is a test parameter, not approved project allocation','PromoVault uses inert adapter as local draw authority; no RNG/draw/payout proof; eligibility uses local registration policy'],transactions:[]};
  let proxy;
  function stage(value){e.stage=value;console.log(value);}
  try{
@@ -65,17 +65,21 @@ async function main(){
   e.prizePath={adapter:adapter.target,vault:prize.target,converter:converter.target};
   stage('binding-negatives');for(const id of [0n,position+1000000000n]){await assert.rejects(router.bindSource.staticCall(vaultAddress,id));assert.equal(await router.pairVault(),ethers.ZeroAddress);}e.invalidPositionsRejected=true;
   await sent('bind registered USDG source',router.bindSource(vaultAddress,position));assert.equal(await router.sourceEpoch(),1n);await assert.rejects(router.bindSource.staticCall(vaultAddress,position));
+  stage('prepare-buy-admission');const admission=await require('./native-buy-replay-integration.cjs').prepare({provider,user:buyer,rpc,compiled,config:{router:reference.router,manager,token:predicted,quote:quoteAddress,poolKey:key,poolId:pos[2]}});
   stage('buyer-funding');const quote=new ethers.Contract(quoteAddress,erc,buyer),token=new ethers.Contract(predicted,erc,buyer);assert.equal(await quote.decimals(),6n);
   const trace=await rpc('debug_traceCall',[{to:quoteAddress,data:quote.interface.encodeFunctionData('balanceOf',[wallet])},'latest',{}]);let used;
   for(const slot of [...new Set(trace.structLogs.filter(l=>l.op==='SLOAD').map(l=>'0x'+l.stack.at(-1)))]){const snap=await rpc('evm_snapshot');await rpc('hardhat_setStorageAt',[quoteAddress,slot,ethers.zeroPadValue(ethers.toBeHex(1000_000000n),32)]);try{if(await quote.balanceOf(wallet)===1000_000000n){used=slot;break;}}catch{/* A proxy control slot is not the wallet balance; restore before the next probe. */}await rpc('evm_revert',[snap]);}assert(used);e.sandboxFunding={address:wallet,slot:used,amount:'1000000000'};
   await sent('buyer USDG approves Permit2',quote.approve(PERMIT,ethers.MaxUint256));const permit=new ethers.Contract(PERMIT,['function approve(address,address,uint160,uint48)'],buyer);
-  await sent('buyer Permit2 allowance',permit.approve(quoteAddress,reference.router,100_000000n,deadline));
+  await sent('buyer Permit2 allowance',permit.approve(quoteAddress,reference.router,200_000000n,deadline));
   // Ordinary buyer trades after the real copied launch-protection interval, never by mutating TOKEN state.
   const restrictions=await new ethers.Contract(predicted,['function restrictionsEndBlock() view returns(uint256)'],provider).restrictionsEndBlock();while(BigInt(await rpc('eth_blockNumber'))<=restrictions)await rpc('evm_mine');
-  stage('native-pool-buy');const ur=new ethers.Contract(reference.router,['function execute(bytes,bytes[],uint256) payable'],buyer),before=await quote.balanceOf(wallet);
+  stage('native-pool-buy');const ur=new ethers.Contract(reference.router,['function execute(bytes,bytes[],uint256) payable'],buyer);
   const swap=coder.encode(['bytes','bytes[]'],['0x060b0e',[coder.encode([SWAP_TYPE],[[key,key[0].toLowerCase()===quoteAddress,100_000000n,1n,0,'0x']]),coder.encode(['address','uint256','bool'],[quoteAddress,0,true]),coder.encode(['address','address','uint256'],[predicted,wallet,0])]]);
+  const unregistered=await sent('BUY before registration (no ticket)',ur.execute('0x10',[swap],deadline,{gasLimit:3000000}));
+  await sent('register buyer',admission.registry.register());const before=await quote.balanceOf(wallet),tokenBefore=await token.balanceOf(wallet);
   const bought=await sent('ordinary USDG buy through Universal Router',ur.execute('0x10',[swap],deadline,{gasLimit:3000000}));assert.equal(before-await quote.balanceOf(wallet),100_000000n);assert(await token.balanceOf(wallet)>0n);
-  const swaps=bought.logs.filter(l=>l.address.toLowerCase()===manager.toLowerCase()&&l.topics[0]===SWAP_ABI.getEvent('Swap').topicHash);assert.equal(swaps.length,1);assert.equal(SWAP_ABI.parseLog(swaps[0]).args.id,pos[2]);e.buy={usdSpent:'100000000',tokenReceived:await token.balanceOf(wallet),transaction:bought.hash,route:'Universal Router direct native V4 pool; not PAIR UI/aggregator proof'};
+  const swaps=bought.logs.filter(l=>l.address.toLowerCase()===manager.toLowerCase()&&l.topics[0]===SWAP_ABI.getEvent('Swap').topicHash);assert.equal(swaps.length,1);assert.equal(SWAP_ABI.parseLog(swaps[0]).args.id,pos[2]);e.buy={usdSpent:'100000000',tokenReceived:(await token.balanceOf(wallet))-tokenBefore,transaction:bought.hash,route:'Universal Router direct native V4 pool; not PAIR UI/aggregator proof'};
+  stage('buy-admission-replay');e.buyAdmission=await require('./native-buy-replay-integration.cjs').finish({rpc,setup:admission.setup,before:unregistered.hash,after:bought.hash});
   stage('collect-claim-fund');await sent('collect new LP fees',router.collect({gasLimit:4000000}));e.claims=[];
   for(const asset of [predicted,quoteAddress]){const due=await source.claimable(1,router.target,asset);await sent('harvest '+asset,router.harvest(asset,1));assert.equal(await router.received(1,asset),due);assert.equal(await router.credit(asset,converter.target),due);await sent('pay converter '+asset,router.pay(asset,converter.target));assert.equal(await router.credit(asset,converter.target),0n);e.claims.push({asset,due});}
   assert(e.claims[1].due>0n);await sent('forward earned USDG into reserves',converter.forwardQuote());const reserves=[await prize.freeShort(),await prize.freeCurrent(),await prize.freeNext()];assert.equal(reserves.reduce((a,b)=>a+b,0n),e.claims[1].due);assert.equal(await quote.balanceOf(prize.target),e.claims[1].due);assert.equal(await quote.balanceOf(converter.target),0n);e.result={reserves,receivedUSDG:e.claims[1].due,routerAccounted:await router.accounted(quoteAddress)};assert.equal(e.result.routerAccounted,0n);
