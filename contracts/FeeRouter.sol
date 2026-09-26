@@ -13,9 +13,15 @@ interface IPairNativeVault {
     function epoch() external view returns (uint64);
     function epochRecipientCount(uint64 which) external view returns (uint256);
     function epochRecipient(uint64 which, uint256 index) external view returns (address, uint16);
+    function positions(uint256 id) external view returns (bool registered, address quote, bytes32 poolId);
+    function positionManager() external view returns (address);
     function collectFees(uint256 positionId) external;
     function claimable(uint64 which, address recipient, address asset) external view returns (uint256);
     function claim(address asset, uint64 which) external returns (uint256);
+}
+
+interface IPairPositionOwner {
+    function ownerOf(uint256 id) external view returns (address);
 }
 
 /// @notice Prototype for standard TOKEN/USDG assets and PAIR native fee vaults.
@@ -78,6 +84,13 @@ contract FeeRouter is Ownable2Step, ReentrancyGuard {
         if (source.epochRecipientCount(e) != 1) revert InvalidConfiguration();
         (address recipient, uint16 share) = source.epochRecipient(e, 0);
         if (recipient != address(this) || share != 10000) revert InvalidConfiguration();
+        (bool registered, address quote, bytes32 poolId) = source.positions(position);
+        if (position == 0 || !registered || quote != quoteToken || poolId == bytes32(0))
+            revert InvalidConfiguration();
+        // The verified native vault validates PoolKey when registering a position.
+        // Recheck current NFT custody before committing the irreversible binding.
+        if (IPairPositionOwner(source.positionManager()).ownerOf(position) != vault)
+            revert InvalidConfiguration();
         pairVault = source;
         positionId = position;
         sourceEpoch = e;

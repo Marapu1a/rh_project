@@ -283,3 +283,18 @@ test('rollover cannot reenter even when callback caller is the owner',async()=>{
   assert.equal(await source.collections(),1n);
   assert.equal(await router.credit(token.target,promo.target),101n);
 });
+
+test('binding rejects wrong, unregistered, wrong-quote and foreign-owned positions without consuming binding',async()=>{
+ const {token,quote,endsAt,recipients}=await fixture();
+ const fresh=await deploy('FeeRouter',[await admin.getAddress(),token.target,quote.target,[endsAt,recipients,[10000,0,0]]]);
+ const source=await deploy('MockPairVault',[token.target,fresh.target]);
+ async function rejected(id){await rejects(()=>fresh.bindSource(source.target,id));assert.equal(await fresh.pairVault(),ethers.ZeroAddress);assert.equal(await fresh.sourceEpoch(),0n);}
+ await rejected(0);await rejected(124);
+ await(await source.setPosition(false,quote.target,ethers.ZeroAddress)).wait();await rejected(123);
+ await(await source.setPosition(true,token.target,ethers.ZeroAddress)).wait();await rejected(123);
+ await(await source.setPosition(true,quote.target,await keeper.getAddress())).wait();await rejected(123);
+ await(await source.setPosition(true,quote.target,ethers.ZeroAddress)).wait();
+ await(await fresh.bindSource(source.target,123)).wait();
+ assert.equal(await fresh.positionId(),123n);assert.equal(await source.collections(),0n);
+ await rejects(()=>fresh.bindSource(source.target,123));
+});

@@ -3,6 +3,7 @@
     "compile": true,
     "files": [
       "test/fee-router.test.cjs",
+      "test/native-launch-evidence.test.cjs",
       "test/promo-vault.test.cjs",
       "test/short-prize-basket.test.cjs",
       "test/participant-registry.test.cjs",
@@ -48,6 +49,7 @@
     "compile": true,
     "files": [
       "test/fee-router.test.cjs",
+      "test/native-launch-evidence.test.cjs",
       "test/promo-vault.test.cjs",
       "test/local-usdg-funding.test.cjs",
       "test/local-prize-converter.test.cjs",

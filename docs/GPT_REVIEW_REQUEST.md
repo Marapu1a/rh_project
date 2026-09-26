@@ -1,5 +1,20 @@
 # GPT: PAIR launch, BUY coverage и устойчивость денежного контура
 
+## Follow-up после ответа 98e6302 — 26.09
+
+Предложенный launch/bind пакет выполнен: [NATIVE_LAUNCH_PROOF](NATIVE_LAUNCH_PROOF.md).
+Новый native mode1 TOKEN/USDG через обычный creator, nonce bootstrap converter,
+bind с registered position/quote/NFT custody, BUY100USDG → collect/claim →
+0.699999USDG в GENERAL reserves. Без PAIR impersonation. Адресно45/45 + evidence2/2.
+Прямой Universal Router native BUY, не UI/AUTO proof; eligibility/draw/payout отдельно.
+Первый harness funding probe упал после launch, исправленный новый run прошёл;
+raw успешные receipts и ограничения в отчёте. Полный suite не запускался.
+
+При следующем review проверь минимальность bind guard, nonce bootstrap без временного
+recipient и отсутствие завышенных claims по evidence. Предложи узкий source-read
+isolation пакет без обхода unknown-send/deficit/policy stops. CTO recovery и
+production transition не реализованы. Ниже сохранён контекст предыдущего запроса.
+
 26.09.2026. Новый пакет после твоих ответов `b661057` и `573e012`.
 Просим независимое ревью выводов и следующего шага. Ответ перезапиши в
 GPT_REVIEW_RESPONSE.md, начиная с даты и проверенного commit. Код не меняй.

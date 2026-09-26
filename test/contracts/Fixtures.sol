@@ -53,6 +53,23 @@ contract MockPairVault {
     bytes public callbackResult;
     bool public callbackSucceeded;
     constructor(address token, address to) { projectToken = token; recipient = to; }
+    bool public positionRegistered = true;
+    address public positionQuoteOverride;
+    address public positionOwnerOverride;
+    function setPosition(bool registered, address quote, address owner) external {
+        positionRegistered = registered; positionQuoteOverride = quote; positionOwnerOverride = owner;
+    }
+    function positions(uint256 id) external view returns (bool, address, bytes32) {
+        (bool ok, bytes memory result) = recipient.staticcall(abi.encodeWithSignature("quoteToken()"));
+        address quote = positionQuoteOverride;
+        if (quote == address(0) && ok && result.length == 32) quote = abi.decode(result,(address));
+        return (id == 123 && positionRegistered, quote, bytes32(uint256(1)));
+    }
+    function positionManager() external view returns (address) { return address(this); }
+    function ownerOf(uint256 id) external view returns (address) {
+        require(id == 123, "unknown NFT");
+        return positionOwnerOverride == address(0) ? address(this) : positionOwnerOverride;
+    }
     function epochRecipientCount(uint64) external pure returns (uint256) { return 1; }
     function epochRecipient(uint64, uint256) external view returns (address, uint16) { return (recipient,10000); }
     function fund(address asset, uint256 amount) external {

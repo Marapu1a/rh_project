@@ -1,19 +1,24 @@
 # План разработки
 
-26.09: пакет PAIR/AUTO передаётся на [ревью GPT](GPT_REVIEW_REQUEST.md), без изменения
-очерёдности ниже. В релизном плане сохранить automatic eligibility/payout из прежнего
+26.09: выполнен [native launch proof](NATIVE_LAUNCH_PROOF.md): новый проект без PAIR
+impersonation, bootstrap, проверенный bind, BUY→collect→claim→GENERAL. Неверная
+позиция больше не расходует одноразовую привязку. Дальше source read failure isolation,
+затем pinned health check; native BUY eligibility и automatic payout всё ещё до релиза.
+
+26.09: пакет PAIR/AUTO прошёл [ревью GPT](GPT_REVIEW_RESPONSE.md); launch/bind замечания
+закрыты пакетом выше. В релизном плане сохранить automatic eligibility/payout из прежнего
 обсуждения: пока register-before-BUY и отсутствие payout-worker остаются фактом кода.
 
 26.09: fresh native mode1 graph и денежная цепочка сверены; подтверждена внешняя
 граница CTO/recipient replacement. [Аудит и порядок укрепления](PAIR_DEPENDENCY_BOUNDARY.md).
-Далее: настоящий новый launch→FeeRouter на local fork; затем worker source-failure
+Launch→FeeRouter на local fork выполнен; далее worker source-failure
 isolation и pinned health check. Recovery epoch/source требует отдельного accounting
 решения; не считать произвольную замену source готовой или безопасной.
 
 25.09 launch compatibility: AUTO относится к V1, текущий FeeRouter source — к V2 native.
 Единого launch profile пока нет. Рекомендован к проверке V2 native TOKEN/USDG
 с единственным recipient=FeeRouter; это ещё не утверждённый режим запуска.
-Следующий пакет — fresh release graph и создание такой связки на fork.
+Fresh release graph и создание такой связки на fork проверены 26.09, см. выше.
 [Сверка и ограничения](PAIR_LAUNCH_COMPATIBILITY.md).
 
 25.09: PAIR выбран. Manual/AUTO research и узкий V1 AUTO adapter завершены локально:

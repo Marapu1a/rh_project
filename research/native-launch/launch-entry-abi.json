@@ -1,0 +1,139 @@
+{
+  "source": "https://sourcify.dev/server/v2/contract/4663/0x8000b64b62837a1511e302c62354e1bc39b5641a?fields=all",
+  "implementation": "0x8000b64b62837a1511e302c62354e1bc39b5641a",
+  "runtimeHash": "0x12ba8b9e917f08c014e3823e4cad6bab4ee183df3c9ed9116e9edff7de13457f",
+  "abi": [
+    {
+      "name": "launchV2Token",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "p",
+          "type": "tuple",
+          "components": [
+            {
+              "name": "name",
+              "type": "string",
+              "internalType": "string"
+            },
+            {
+              "name": "symbol",
+              "type": "string",
+              "internalType": "string"
+            },
+            {
+              "name": "metadataURI",
+              "type": "string",
+              "internalType": "string"
+            },
+            {
+              "name": "metadataHash",
+              "type": "bytes32",
+              "internalType": "bytes32"
+            },
+            {
+              "name": "allocations",
+              "type": "tuple[]",
+              "components": [
+                {
+                  "name": "quoteToken",
+                  "type": "address",
+                  "internalType": "address"
+                },
+                {
+                  "name": "weightBps",
+                  "type": "uint16",
+                  "internalType": "uint16"
+                }
+              ],
+              "internalType": "struct PairLaunchpadV5Storage.PairAllocation[]"
+            },
+            {
+              "name": "modeId",
+              "type": "uint32",
+              "internalType": "uint32"
+            },
+            {
+              "name": "modeConfiguration",
+              "type": "bytes",
+              "internalType": "bytes"
+            },
+            {
+              "name": "feeRecipients",
+              "type": "address[]",
+              "internalType": "address[]"
+            },
+            {
+              "name": "feeSharesBps",
+              "type": "uint16[]",
+              "internalType": "uint16[]"
+            },
+            {
+              "name": "developerBuyRecipient",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "developerBuy",
+              "type": "tuple",
+              "components": [
+                {
+                  "name": "ethAmountIn",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "projectAmountOutMinimum",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "allocations",
+                  "type": "tuple[]",
+                  "components": [
+                    {
+                      "name": "quoteToken",
+                      "type": "address",
+                      "internalType": "address"
+                    },
+                    {
+                      "name": "ethAmountIn",
+                      "type": "uint256",
+                      "internalType": "uint256"
+                    },
+                    {
+                      "name": "projectAmountOutMinimum",
+                      "type": "uint256",
+                      "internalType": "uint256"
+                    }
+                  ],
+                  "internalType": "struct PairLaunchpadV5Storage.LaunchV2TokenBuyAllocation[]"
+                }
+              ],
+              "internalType": "struct PairLaunchpadV5Storage.LaunchV2TokenDeveloperBuy"
+            },
+            {
+              "name": "deadline",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "userSalt",
+              "type": "bytes32",
+              "internalType": "bytes32"
+            }
+          ],
+          "internalType": "struct PairLaunchpadV5Storage.LaunchV2TokenParams"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "projectToken",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "payable"
+    }
+  ]
+}

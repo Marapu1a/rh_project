@@ -1,5 +1,11 @@
 # Reference source → FeeRouter: fresh local fork
 
+## Обновление 26.09
+
+Новый [native launch proof](NATIVE_LAUNCH_PROOF.md) прошёл без impersonation PAIR owner:
+новый TOKEN/USDG с FeeRouter recipient и поступлением в reserves. Описание ниже —
+предыдущий reference fork с явно указанной локальной подменой полномочий.
+
 24.09.2026. Проверка существующего PAIR native TOKEN/USDG vault и FeeRouter.
 Production-контракты не менялись. [Текущий контекст](CURRENT_CONTEXT.md).
 

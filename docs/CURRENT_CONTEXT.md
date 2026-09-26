@@ -1,21 +1,27 @@
 # Текущий контекст
 
-26.09: [обращение GPT](GPT_REVIEW_REQUEST.md) обновлено всем пакетом после 573e012:
-AUTO evidence, launch compatibility, fee/CTO trust boundary и вопросы recovery.
-Ожидаем новый ответ; GPT_REVIEW_RESPONSE от 25.09 — предыдущее обсуждение.
+26.09: [native launch proof](NATIVE_LAUNCH_PROOF.md) завершён на новом fork:
+обычный creator → TOKEN/USDG mode1 → FeeRouter → BUY100USDG → 0.699999USDG в reserves.
+Bootstrap использует проверенный будущий converter address, PAIR owner не impersonated.
+bindSource проверяет регистрацию/quote/NFT custody до необратимой записи.
+Адресно45/45 + saved evidence2/2; full не запускался. Следующий шаг — source read
+failure isolation. UI PAIR/V2 eligibility, automatic payout и production остаются открыты.
+
+26.09: ответ GPT на пакет после573e012 получен в98e6302; его следующий launch/bind
+пакет выполнен, детали выше. [Обращение](GPT_REVIEW_REQUEST.md) сохранено для контекста.
 Automatic eligibility без регистрации и payout-worker остаются незакрытыми задачами.
 
 26.09: [PAIR dependency audit](PAIR_DEPENDENCY_BOUNDARY.md) подтвердил текущий native
 mode1 graph, 1% LP fee и 70/30 collected revenue; registry CTO может менять recipients
 существующего vault. FeeRouter source одноразовый, epoch change блокирует rollover;
 старые credits доступны, но source read errors ещё недостаточно изолированы в worker.
-Read-only snapshot block72884069; runtime проекта не менялся. Следующий шаг — новый
-mode1 launch с FeeRouter на fork без impersonation PAIR owner, затем изоляция source.
+Read-only snapshot block72884069; в самом аудите runtime не менялся. Предложенный
+mode1 launch с FeeRouter затем проверен в пакете выше; изоляция source ещё впереди.
 
 25.09 launch compatibility: AUTO относится к V1, текущий FeeRouter source — к V2 native.
 Единого launch profile пока нет. Рекомендован к проверке V2 native TOKEN/USDG
 с единственным recipient=FeeRouter; это ещё не утверждённый режим запуска.
-Следующий пакет — fresh release graph и создание такой связки на fork.
+Fresh release graph и создание такой связки на fork закрыты 26.09; см. результат выше.
 [Сверка и ограничения](PAIR_LAUNCH_COMPATIBILITY.md).
 
 25.09: PAIR выбран площадкой выпуска. Узкий V1 AUTO adapter реализован: USDG funding,

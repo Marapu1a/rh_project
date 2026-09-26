@@ -1,5 +1,9 @@
 # PAIR: совместимость профиля запуска, 25.09.2026
 
+Обновление26.09: [новый native launch proof](NATIVE_LAUNCH_PROOF.md) закрыл создание
+TOKEN/USDG mode1 с FeeRouter без PAIR impersonation. V1 AUTO не стал native V2 adapter;
+проверен прямой Universal Router BUY, UI/AUTO native остаётся отдельно. Ниже срез25.09.
+
 Статус: read-only сверка, не утверждённый deployment. PAIR выбран пользователем;
 поколение/режим/пулы пока не зафиксированы. [Evidence](../research/pair-launch-compatibility-2026-09-25.json).
 

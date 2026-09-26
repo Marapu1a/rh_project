@@ -1,5 +1,9 @@
 # PAIR: денежная цепочка и границы изменений
 
+Обновление26.09: [native launch proof](NATIVE_LAUNCH_PROOF.md) завершён;
+bindSource теперь проверяет registered position/quote/NFT custody. Описание ниже
+фиксирует состояние аудита до этого пакета; CTO/recovery/source isolation не закрыты.
+
 26.09.2026. Read-only аудит выбранного кандидата: native Launch V2, mode 1,
 один TOKEN/USDG pool. Это не утверждение deployment-профиля и не полный аудит PAIR.
 [Снимок RPC/API](../research/pair-dependency-audit-2026-09-26.json),
