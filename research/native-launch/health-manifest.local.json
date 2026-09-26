@@ -1,0 +1,72 @@
+{
+  "schema": "pair-source-health-v1",
+  "chainId": "31337",
+  "anchor": {
+    "number": 73101298,
+    "hash": "0x13f3a00599ef10d4d4cc00bb3a01760e014961b3cd31f202552f18e9438857ed"
+  },
+  "contracts": {
+    "token": {
+      "address": "0x8cD980Cd05BCD02AFDEA0d128241F638962C5555",
+      "codeHash": "0x88abbe445a62808c076fc83c515e68735cf6f082742930a80171309a287c4454",
+      "implementation": {
+        "kind": "eip1167",
+        "address": "0x12892a7c96E948105fC99A6C0512613a5d3Cc277",
+        "codeHash": "0x97dc1b8eab2259b7653032390c83fa8a61a1c10cceaefd32c97d5a946cf8884b"
+      }
+    },
+    "quote": {
+      "address": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+      "codeHash": "0x864cc9ad53b338b82da1f7cab85ab0b3d5c8861acb422b6fec63cf36234f36a6",
+      "implementation": {
+        "kind": "eip1967",
+        "address": "0x68184C449E1a8f34fA18d289737129FD27B66f8F",
+        "codeHash": "0x3a551ac5c744af57e68a1d1431ac403c0f516ffd7d224a75746aee11fc4f3baf"
+      }
+    },
+    "feeRouter": {
+      "address": "0x17a405D74A3EA82123DB52590a8aE729827Bb3d8",
+      "codeHash": "0xdd6b970a9c937f4175e33a5524f26eb572b57b55483d0f2ac7d3f5ca5d0ad52e",
+      "implementation": null
+    },
+    "vault": {
+      "address": "0xaFAe20128893b40AdFAC65b79A3177C42E778b58",
+      "codeHash": "0x78586e24ce4f673ab1285b7a862e897e085eab16d22d5d6de6e3944f41364af8",
+      "implementation": null
+    },
+    "positionManager": {
+      "address": "0x58daec3116aae6D93017bAAea7749052E8a04fA7",
+      "codeHash": "0xc873e135dc9aaec88489cfbad146b4cb49d6a32e0d80326377784b7ba17670b2",
+      "implementation": null
+    },
+    "hook": {
+      "address": "0x438B86C71840C3B4df3F839aEd6bb889E2D780c0",
+      "codeHash": "0x61be10dbf714fa832ac3179b3f24f2c60f244f6ea79b06655dd866b93e67837a",
+      "implementation": null
+    },
+    "poolManager": {
+      "address": "0x8366a39CC670B4001A1121B8F6A443A643e40951",
+      "codeHash": "0xbd3881180b547f5fe817545743cfb4343e96b1bc6640dcd70c106b0066e95626",
+      "implementation": null
+    },
+    "registry": {
+      "address": "0x34b34d3f409c562ff2d16f211f516e30695b3809",
+      "codeHash": "0xbe1efd266a976371dabb823021d61152ce06c41ef69ec00262ba76d0ab920d7b",
+      "implementation": null
+    }
+  },
+  "positionId": "3310998",
+  "sourceEpoch": "1",
+  "poolKey": [
+    "0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168",
+    "0x8cD980Cd05BCD02AFDEA0d128241F638962C5555",
+    10000,
+    200,
+    "0x438B86C71840C3B4df3F839aEd6bb889E2D780c0"
+  ],
+  "futureLaunch": {
+    "coordinator": "0xddc69cbfb38f3f24d23b980c9e156c62a431687b",
+    "handler": "0x8db10025017a30ab83a2a1a25e8871560357864f",
+    "version": "5"
+  }
+}

@@ -58,6 +58,11 @@ Review 20.09: [открытые custody/execution дефекты и исправ
 distribute/conversion продолжаются с degraded report. Contract errors/deficit/unknown
 send сохраняют stop, coordinator journal и порядок workers не менялись.
 
+26.09: [PAIR source health](PAIR_SOURCE_HEALTH.md), pair-source-health.cjs и
+inspect-pair-source.cjs: independent manifest hash, runtime/implementation/bindings,
+coherent read block, source drift отдельно от future launch. Read-only CLI/watch,
+проверен на новом native launch fork; не admission/автоматический gate workers.
+
 20.09: error context отделён от lastConfirmed; draw workers/closeEmpty используют общий tx classifier, scheduler глобально останавливается на unknown outcome. Подробнее LOCAL_PRIZE_FLOW и LOCAL_PROMO_SCHEDULER.
 
 20.09: [самопроверка и переносимость](LOCAL_REVIEW_AND_PORTABILITY.md) — открытые границы

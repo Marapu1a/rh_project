@@ -42,7 +42,8 @@
       "test/local-native-refill-inspector.test.cjs",
       "test/review-runner.test.cjs",
       "test/test-launcher.test.cjs",
-      "test/local-rpc-watch.test.cjs"
+      "test/local-rpc-watch.test.cjs",
+      "test/pair-source-health.test.cjs"
     ]
   },
   "accounting": {
@@ -154,7 +155,8 @@
   "watch": {
     "compile": false,
     "files": [
-      "test/local-rpc-watch.test.cjs"
+      "test/local-rpc-watch.test.cjs",
+      "test/pair-source-health.test.cjs"
     ]
   }
 }

@@ -1,5 +1,22 @@
 # GPT: PAIR launch, BUY coverage и устойчивость денежного контура
 
+## Текущий follow-up: pinned PAIR source health
+
+[PAIR_SOURCE_HEALTH](PAIR_SOURCE_HEALTH.md): явный approved manifest/hash, read-only
+CLI/watch, сеть/anchor/runtime/implementation/epoch/recipient/LP bindings. Source drift
+отдельно от изменений future launch; unknown reads/reorg не дают чистого match.
+Не читает latest PAIR API как настройки, не шлёт tx, не меняет journal и не gate draw.
+Manifest candidate экспортируется новым native fork harness только как candidate.
+Проверено17unit/CLI +1saved evidence +3anchor negatives; CLI watch отдельно расширен
+и проверен (пересекается с17). Новый полный native fork: match/0issues/36observations.
+
+Для следующего review: проверь независимость expected hash от проверяемого baseline,
+согласованность блока, proxy/clone coverage, отсутствие ложного source failure при
+future release rotation и отсутствие обещания collection/prize readiness из match.
+RPC доверенный, поддержана явная одноуровневая delegation, а не произвольные proxies.
+Следующий bounded шаг — native BUY→admission/replay; используй текущий decoder,
+если он подходит по доказанному calldata/receipt, не создавай новый adapter по названию UI.
+
 ## Текущий follow-up после 9e2e237: source-read isolation
 
 Реализована узкая изоляция в [LOCAL_PRIZE_FLOW](LOCAL_PRIZE_FLOW.md): только

@@ -1,12 +1,18 @@
 # Текущий контекст
 
+26.09: [PAIR source health](PAIR_SOURCE_HEALTH.md) готов как read-only CLI/watch с
+независимо закреплённым manifest hash. Проверяет code/implementation/source bindings,
+epoch/recipient/LP на одном блоке; future launch changes отдельно. Не gate, не rebind.
+Unit/CLI17/17 + saved evidence1/1 + anchor negatives3/3. Новый native fork: match,
+0issues/36observations. Далее native BUY eligibility/admission, automatic участие/payout.
+
 26.09: [source-read isolation](LOCAL_PRIZE_FLOW.md) добавлена в prize-flow: только
 transient epoch/claimable read errors пропускают остаток source lane; local inventory
 продолжает обрабатываться с degraded report. Unknown sends, contract/read corruption,
 deficit и policy mismatch остаются stop. Source rebind/epoch adoption не добавлены.
 Адресно26pass + исправленный fixture deficit1/1; единый зелёный27/27 не заявляется.
 Full/fork не запускались, подробности и команды в модуле.
-Далее — pinned deployment/health manifest; native eligibility и payout остаются до релиза.
+Pinned source manifest/health добавлен следующим пакетом выше; native eligibility и payout до релиза.
 
 26.09: [native launch proof](NATIVE_LAUNCH_PROOF.md) завершён на новом fork:
 обычный creator → TOKEN/USDG mode1 → FeeRouter → BUY100USDG → 0.699999USDG в reserves.
