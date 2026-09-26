@@ -270,3 +270,48 @@ test('maximum legacy converter list finishes at default bound',async()=>{
   assert(result.steps<=WORST_CASE_ATTEMPTS);assert(WORST_CASE_ATTEMPTS<=DEFAULT_MAX_STEPS);
   assert.equal(old.length,8);for(const c of old){assert.equal(await f.token.balanceOf(c.address),0n);assert.equal(await f.quote.balanceOf(c.address),0n);}
 });
+
+for(const method of ['epoch','quoteClaimable','tokenClaimable'])test('source isolation: transient '+method+' preserves inventory work and next-pass claims',async t=>{
+ const f=await setup(),{callFault}=require('./fixtures/call-fault.cjs'),before=await f.quote.balanceOf(f.vault.target);
+ await sent(f.token.mint(f.converter.target,10));await sent(f.source.queueFees(f.quote.target,100));await sent(f.source.queueFees(f.token.target,20));
+ const selector=f.source.interface.getFunction(method==='epoch'?'epoch':'claimable').selector;
+ const asset=method==='tokenClaimable'?f.token.target:f.quote.target;
+ const fault=callFault(f.provider,r=>r.to?.toLowerCase()===f.source.target.toLowerCase()&&r.data.startsWith(selector)&&(method==='epoch'||r.data.toLowerCase().endsWith(asset.slice(2).toLowerCase())),Object.assign(Error('source timeout'),{code:'TIMEOUT'}));t.after(()=>fault.restore());
+ const events=[],first=await runPrizeFlow(f.options,{onStep:e=>events.push(e)});
+ assert.equal(first.status,'degraded',JSON.stringify(first));assert.equal(fault.hits,1);assert.equal(first.failures.filter(x=>x.reason==='sourceReadUnavailable').length,1);
+ assert.equal(events.filter(x=>x.reason==='sourceReadUnavailable').length,1);assert.equal(await f.converter.tokenSold(),10n);
+ assert.equal(await f.source.collections(),method==='epoch'?0n:1n);
+ assert.equal(await f.quote.balanceOf(f.vault.target)-before,method==='tokenClaimable'?110n:30n);
+ if(method!=='epoch')assert.equal(await f.source.due(f.token.target),20n);
+ fault.restore();assert.equal((await runPrizeFlow(f.options)).status,'idle');
+ assert.equal(await f.converter.tokenSold(),26n);assert.equal(await f.quote.balanceOf(f.vault.target)-before,158n);
+ assert.equal(await f.source.due(f.quote.target),0n);assert.equal(await f.source.due(f.token.target),0n);
+ assert.equal((await runPrizeFlow(f.options)).status,'idle');assert.equal(await f.quote.balanceOf(f.vault.target)-before,158n);
+});
+
+for(const code of ['CALL_EXCEPTION','BAD_DATA'])test('source isolation: '+code+' is fatal and cannot reach conversion',async t=>{
+ const f=await setup(),{callFault}=require('./fixtures/call-fault.cjs');await sent(f.token.mint(f.converter.target,10));
+ const fault=callFault(f.provider,r=>r.to?.toLowerCase()===f.source.target.toLowerCase(),Object.assign(Error('source contract failure'),{code}));t.after(()=>fault.restore());
+ const r=await runPrizeFlow(f.options);assert.equal(r.status,'error');assert.equal(r.error.code,code);assert.equal(r.failures.length,0);assert.equal(await f.converter.tokenSold(),0n);
+});
+
+test('source isolation: observer error is not swallowed by the read catch',async t=>{
+ const f=await setup(),{callFault}=require('./fixtures/call-fault.cjs');await sent(f.token.mint(f.converter.target,10));
+ const fault=callFault(f.provider,r=>r.to?.toLowerCase()===f.source.target.toLowerCase(),Object.assign(Error('source timeout'),{code:'TIMEOUT'}));t.after(()=>fault.restore());
+ const r=await runPrizeFlow(f.options,{onStep:e=>{if(e.reason==='sourceReadUnavailable')throw Object.assign(Error('observer timeout'),{code:'TIMEOUT'});}});
+ assert.equal(r.status,'error');assert.equal(r.error.message,'observer timeout');assert.equal(await f.converter.tokenSold(),0n);
+});
+
+for(const kind of ['policy','deficit','localRead'])test('source isolation: '+kind+' still stops before PAIR access',async t=>{
+ const f=await setup(),{callFault}=require('./fixtures/call-fault.cjs');
+ let fault;
+ if(kind==='policy')f.job.bps=[7000,0,3000];
+ if(kind==='deficit'){
+  await sent(f.quote.mint(f.router.target,10));await sent(f.router.sync(f.quote.target));
+  await sent(f.quote.blockRecipient(f.project)); // Allow the fixture burn's zero destination.
+  await sent(f.quote.burn(f.router.target,1)); // Fixture-only loss below accounted credits.
+ }
+ if(kind==='localRead'){fault=callFault(f.provider,r=>r.to?.toLowerCase()===f.quote.target.toLowerCase()&&r.data.startsWith('0x70a08231'),Object.assign(Error('local balance timeout'),{code:'TIMEOUT'}));t.after(()=>fault.restore());}
+ const r=await runPrizeFlow(f.options);assert.equal(r.status,'error');assert.equal(r.failures.length,0);assert.equal(await f.source.collections(),0n);
+ assert.match(r.error.message,kind==='policy'?/Policy mismatch/:kind==='deficit'?/Router asset deficit/:/local balance timeout/);
+});

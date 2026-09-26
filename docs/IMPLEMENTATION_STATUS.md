@@ -54,6 +54,10 @@ Review 20.09: [открытые custody/execution дефекты и исправ
 
 20.09: [Local Prize Flow](LOCAL_PRIZE_FLOW.md), scripts/local-prize-flow.cjs — отдельный job/CLI для converter и bounded legacy recipients; старый USDG API сохранён.
 
+26.09: source epoch/claimable transient read failures изолированы до следующего pass;
+distribute/conversion продолжаются с degraded report. Contract errors/deficit/unknown
+send сохраняют stop, coordinator journal и порядок workers не менялись.
+
 20.09: error context отделён от lastConfirmed; draw workers/closeEmpty используют общий tx classifier, scheduler глобально останавливается на unknown outcome. Подробнее LOCAL_PRIZE_FLOW и LOCAL_PROMO_SCHEDULER.
 
 20.09: [самопроверка и переносимость](LOCAL_REVIEW_AND_PORTABILITY.md) — открытые границы

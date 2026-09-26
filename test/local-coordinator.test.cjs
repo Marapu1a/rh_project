@@ -531,3 +531,28 @@ for(const refill of [false,true])test('role casing migration preserves resolved 
  const noPublisher=buildCoordinatorIdentity({...input,roles:{...input.roles,publisher:null}});
  assert.equal(noPublisher.config.roles.publisher,null);assert(noPublisher.legacyConfigs.length<=21);
 });
+
+for(const ops of [false,true])test('source isolation: coordinator continues draw with '+(ops?'ops':'legacy')+' ordering',async t=>{
+ const f=await fixture(t),{callFault}=require('./fixtures/call-fault.cjs');if(ops)f.options.ops=opsProfile();
+ await sent(f.token.mint(f.converter.target,10));const before=await f.quote.balanceOf(f.vault.target);
+ const fault=callFault(f.provider,r=>r.to?.toLowerCase()===f.source.target.toLowerCase()&&r.data.startsWith(f.source.interface.getFunction('epoch').selector),Object.assign(Error('source timeout'),{code:'TIMEOUT'}));t.after(()=>fault.restore());
+ const events=[],r=await runCoordinator(f.options,{onEvent:e=>events.push(e.worker)});
+ assert.equal(r.status,'complete',JSON.stringify(r));assert.equal(r.results.prize.status,'degraded');assert.equal(r.results.prize.failures[0].reason,'sourceReadUnavailable');
+ assert.deepEqual(events,ops?['draw','prize']:['prize','draw']);assert.equal(await f.converter.tokenSold(),10n);assert.equal(await f.quote.balanceOf(f.vault.target)-before,30n);
+ assert.notEqual(await f.short.pendingDatasetDraw(),ethers.ZeroHash);assert.equal(await f.source.collections(),0n);
+ assert(!JSON.parse(fs.readFileSync(f.options.statePath,'utf8')).pending);
+});
+
+for(const method of ['collect','harvest'])test('source isolation: unknown '+method+' receipt stops both workers until reconciled',async t=>{
+ const f=await fixture(t);let pending,triggered=false,sends=0;
+ const selector=f.router.interface.getFunction(method).selector;
+ const signer={provider:f.provider,getAddress:()=>f.admin.getAddress(),estimateGas:r=>f.admin.estimateGas(r),sendTransaction:async r=>{sends++;if(!triggered&&r.to.toLowerCase()===f.router.target.toLowerCase()&&r.data.startsWith(selector)){triggered=true;await rpc('evm_setAutomine',[false]);pending=await f.admin.sendTransaction(r);return pending;}return f.admin.sendTransaction(r);}};
+ f.options.prize.executor=signer;f.options.receiptTimeoutMs=100;
+ try{
+  const first=await runCoordinator(f.options);assert.equal(first.status,'blocked',JSON.stringify(first));assert.equal(first.pending.transactionHash,pending.hash);assert.equal(first.pending.worker,'prize');
+  assert.equal(await f.converter.tokenSold(),0n);assert.equal(await f.short.pendingDatasetDraw(),ethers.ZeroHash);
+  const count=sends;assert.equal((await runCoordinator(f.options)).reason,'pendingReceipt');assert.equal(sends,count);
+  await rpc('evm_mine');await rpc('evm_setAutomine',[true]);f.options.receiptTimeoutMs=30000;
+  assert.equal((await runCoordinator(f.options)).status,'complete');assert.equal(await f.converter.tokenSold(),480n);assert(!JSON.parse(fs.readFileSync(f.options.statePath,'utf8')).pending);
+ }finally{await rpc('evm_mine');await rpc('evm_setAutomine',[true]);}
+});

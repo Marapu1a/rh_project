@@ -1,9 +1,14 @@
 # План разработки
 
+26.09: узкая [source-read isolation](LOCAL_PRIZE_FLOW.md) реализована без новых прав
+и без ослабления transaction reconciliation. Следующий пакет — pinned deployment/health
+manifest, затем native BUY eligibility и automatic payout. Recovery постоянной поломки
+source остаётся отдельным решением, transient RPC handling его не заменяет.
+
 26.09: выполнен [native launch proof](NATIVE_LAUNCH_PROOF.md): новый проект без PAIR
 impersonation, bootstrap, проверенный bind, BUY→collect→claim→GENERAL. Неверная
-позиция больше не расходует одноразовую привязку. Дальше source read failure isolation,
-затем pinned health check; native BUY eligibility и automatic payout всё ещё до релиза.
+позиция больше не расходует одноразовую привязку. Source read failure isolation добавлена;
+далее pinned health check; native BUY eligibility и automatic payout всё ещё до релиза.
 
 26.09: пакет PAIR/AUTO прошёл [ревью GPT](GPT_REVIEW_RESPONSE.md); launch/bind замечания
 закрыты пакетом выше. В релизном плане сохранить automatic eligibility/payout из прежнего

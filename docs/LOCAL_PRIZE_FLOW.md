@@ -15,12 +15,60 @@
    оба policy assets; это их уже выделенная доля, её worker не конвертирует.
 3. Один collect при совпадении source epoch; harvest claimable USDG, затем TOKEN.
    Epoch drift запрещает collect, но допускает старые bound-epoch claims.
+   Временный transport failure чтения source пропускает остаток collect/harvest
+   в текущем pass; операции с уже имеющимися средствами продолжаются (см. ниже).
 4. Повторить распределение: свежий USDG доходит до vault прежде swap.
 5. Не более одной convert-порции на каждый converter, затем forward полученного USDG.
    При definite forward failure в этом pass не продаём дополнительный TOKEN этого converter.
 
 Каждая tx отдельная: late failure не откатывает прежние успешные операции. USDG не ждёт
 успешного swap. Пустой collect по-прежнему может расходовать gas.
+
+## Изоляция source reads, 26.09.2026
+
+Только вызовы `source.epoch()` / `source.claimable(...)` после первого distribute
+обёрнуты в обработку `retryableRead` из existing local-rpc-watch. Это транспортные
+timeouts/reset/допущенные HTTP ошибки, не общий catch источника. При первой такой
+ошибке failures и onStep получают `reason: sourceReadUnavailable`, method/target
+и asset для claimable; итоговый нормальный проход имеет status=degraded.
+В этом pass не будет дальнейших source reads/collect/harvest, но второй distribute,
+ограниченная conversion и forwarding проверенного inventory продолжаются.
+
+Успешные collect или первый harvest до позднего read failure уже подтверждены;
+они не откатываются. Следующий pass повторно читает источник, и обычные claimable/
+credits не допускают двойной выплаты. Внутреннего retry-loop и принятия новой epoch нет.
+
+CALL_EXCEPTION, BAD_DATA, неверные bindings/policy, deficit и local balance read errors
+сохраняют прежнюю остановку. Send/receipt processing и onStep callbacks находятся
+вне read catch. Definite send rejection изолируется прежним send helper; unknown send
+останавливает worker и coordinator с pending journal. Это не механизм переживания
+любой поломки PAIR; при недоступности общего RPC локальное продолжение тоже может упасть.
+
+Coordinator не менялся: degraded prize допускает draw при legacy порядке prize→draw;
+с ops порядок draw→prize. Проверка state.pending остаётся раньше дальнейшего запуска.
+Итог coordinator=complete означает завершённый pass, не отсутствие ошибок источника:
+`results.prize.status=degraded` и failures должны оставаться видимыми в отчёте.
+
+Адресные проверки26.09 (не full):
+
+```powershell
+node -e "require('./scripts/test-launcher.cjs').runTests({profile:'source-isolation-targeted',pattern:'source isolation:|flow collects both|broken swap|bounded portions|unknown.*receipt|pending receipt blocks|hashless broadcast|serializes real',selection:{compile:true,files:['test/local-prize-flow.test.cjs','test/local-coordinator.test.cjs']}}).then(r=>process.exitCode=r.exitCode)"
+node --test --test-name-pattern="source isolation: deficit" test/local-prize-flow.test.cjs
+```
+
+Первый адресный прогон:26pass/1fail, 285.63s с одной compilation20.66s;
+failure был в подготовке нового deficit-теста: MockToken по умолчанию блокирует
+zero recipient и не позволял fixture burn. Подготовка исправлена без изменения
+worker; отдельно deficit1/1, 23.69s включая compilation. Все27 выбранных сценариев
+имеют успешный результат, но единого повторного зелёного прогона27/27 не заявляем.
+Уже прошедшие проверки не повторялись. Логи `.local/logs/source-isolation-tests.log`,
+`.local/logs/source-isolation-deficit.log`, report `test-run-cTA7fj/result.json`.
+
+Покрыты epoch/обе claimable transport failures и последующий recovery без двойной
+выплаты; late read после confirmed collect/harvest; CALL_EXCEPTION/BAD_DATA и
+observer errors; deficit/policy/local balance stops; source epoch drift; оба порядка
+coordinator; unknown collect/harvest и соседние convert/forward receipt сценарии.
+Solidity, job schema, chain gates и transaction journal не менялись; fork/live не запускались.
 
 ## Job / запуск
 

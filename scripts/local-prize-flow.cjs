@@ -163,11 +163,31 @@ async function runPrizeFlow({provider,router,executor,job,signal,receiptTimeoutM
       // Also forwards direct donations when no router debt exists.
       for(const c of converters)await forward(c);
     }
+    // Catch only source eth_call transport failures, never sends or observer callbacks.
+    // A failed read skips the rest of the source lane for this pass, not local inventory.
+    async function readSource(method,args=[],asset){
+      let failure;
+      try{return await source[method](...args);}
+      catch(e){
+        if(!retryableRead(e))throw e;
+        failure={action:'sourceRead',method,target:source.target,reason:'sourceReadUnavailable',
+          ...(asset?{asset}:{}),code:e.code,message:e.message};
+      }
+      failures.push(failure);
+      await onStep({status:'degraded',...failure});
+      return undefined;
+    }
     await distribute();
-    if(await source.epoch()===BigInt(job.source.epoch))await send('collect',router,'collect');
-    else failures.push({action:'collect',reason:'sourceEpochChanged'});
-    for(const asset of [job.quote,job.token])if(await source.claimable(job.source.epoch,router.target,asset)>0n)
-      await send('harvest',router,'harvest',[asset,job.source.epoch],asset);
+    const sourceEpoch=await readSource('epoch');
+    if(sourceEpoch!==undefined){
+      if(sourceEpoch===BigInt(job.source.epoch))await send('collect',router,'collect');
+      else failures.push({action:'collect',reason:'sourceEpochChanged'});
+      for(const asset of [job.quote,job.token]){
+        const due=await readSource('claimable',[job.source.epoch,router.target,asset],asset);
+        if(due===undefined)break;
+        if(due>0n)await send('harvest',router,'harvest',[asset,job.source.epoch],asset);
+      }
+    }
     await distribute();
     // At most one portion per converter/pass. This is NOT an on-chain rate limit.
     for(const c of converters){

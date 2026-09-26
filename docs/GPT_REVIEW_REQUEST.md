@@ -1,5 +1,21 @@
 # GPT: PAIR launch, BUY coverage и устойчивость денежного контура
 
+## Текущий follow-up после 9e2e237: source-read isolation
+
+Реализована узкая изоляция в [LOCAL_PRIZE_FLOW](LOCAL_PRIZE_FLOW.md): только
+epoch/claimable eth_call с existing retryableRead классификацией. Первый transient
+failure завершает source lane текущего pass, local inventory продолжает работу;
+failures/onStep сохраняют sourceReadUnavailable, результат prize — degraded.
+Send/receipt и observer callbacks вне read catch, coordinator/pending journal не менялись.
+CALL_EXCEPTION/BAD_DATA, local balance errors, deficit и policy mismatch остаются stop.
+Новая epoch не принимается автоматически, rebind не добавлен.
+
+При review проверь границу catch, late claimable failure после подтверждённого collect/
+первого harvest, сохранение unknown-send stops и оба порядка coordinator. Результаты
+адресных проверок и команды — в документе модуля. Следующим предлагаем pinned
+deployment/health manifest; не смешиваем его с recovery существующих frozen obligations.
+Ниже — предыдущие follow-up и контекст исследования.
+
 ## Follow-up после ответа 98e6302 — 26.09
 
 Предложенный launch/bind пакет выполнен: [NATIVE_LAUNCH_PROOF](NATIVE_LAUNCH_PROOF.md).

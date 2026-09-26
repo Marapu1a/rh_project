@@ -1,11 +1,19 @@
 # Текущий контекст
 
+26.09: [source-read isolation](LOCAL_PRIZE_FLOW.md) добавлена в prize-flow: только
+transient epoch/claimable read errors пропускают остаток source lane; local inventory
+продолжает обрабатываться с degraded report. Unknown sends, contract/read corruption,
+deficit и policy mismatch остаются stop. Source rebind/epoch adoption не добавлены.
+Адресно26pass + исправленный fixture deficit1/1; единый зелёный27/27 не заявляется.
+Full/fork не запускались, подробности и команды в модуле.
+Далее — pinned deployment/health manifest; native eligibility и payout остаются до релиза.
+
 26.09: [native launch proof](NATIVE_LAUNCH_PROOF.md) завершён на новом fork:
 обычный creator → TOKEN/USDG mode1 → FeeRouter → BUY100USDG → 0.699999USDG в reserves.
 Bootstrap использует проверенный будущий converter address, PAIR owner не impersonated.
 bindSource проверяет регистрацию/quote/NFT custody до необратимой записи.
-Адресно45/45 + saved evidence2/2; full не запускался. Следующий шаг — source read
-failure isolation. UI PAIR/V2 eligibility, automatic payout и production остаются открыты.
+Адресно45/45 + saved evidence2/2; full не запускался. Последовавшая source read
+failure isolation описана выше. UI PAIR/V2 eligibility, automatic payout и production открыты.
 
 26.09: ответ GPT на пакет после573e012 получен в98e6302; его следующий launch/bind
 пакет выполнен, детали выше. [Обращение](GPT_REVIEW_REQUEST.md) сохранено для контекста.
