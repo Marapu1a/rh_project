@@ -1,5 +1,137 @@
 # Маршруты покупки: граница поддержки промо
 
+## Актуальный фокус — 25.09.2026
+
+**Обновление реализации:** узкий `rh-pair-auto-usdg-v1` подключён к decoder,
+typed policy и полному scanner/replay. 1–2 legs, USDG funding, payer=recipient,
+однократный gross debit. Новый fork прошёл registration/admission/ledger,
+адресные проверки 55/55. Точные границы и evidence — [DIRECT_BUY_REPLAY](DIRECT_BUY_REPLAY.md).
+Разделы ниже сохраняют этапы исследования; следующий шаг «написать adapter» уже закрыт.
+Публичного допуска нет; генерации V2/Infinity не становятся поддержанными.
+
+### AUTO controlled fork — положительный результат 25.09
+
+Следующий шаг после recon выполнен. [Полный artifact](../research/pair-auto/fork-buy-2026-09-25.json),
+upstream block **0x44f6adc**, local chain31337/Cancun. Использован настоящий
+V1 ElonCoin `0xc71d692ff5323d818b425a9536301c5147ed3a6b` с двумя зарегистрированными
+рынками. Runtime агрегатора совпал с source evidence, dependenciesConsistent=true;
+pool keys сверены с launchpad.getLaunchPool и вычисленными pool ids.
+
+| Сценарий | Фактический расход USDG | Получено TOKEN raw | Итоговых AggregatedBuy |
+| --- | --- | --- | --- |
+| Одна ветвь через quote первого рынка | 1000000 (1 USDG) | 78002591445803638534358 | 1 |
+| Две ветви через quote двух рынков | 2000000 (2 USDG) | 155681336424405771013792 | 1 |
+
+Получатель равен payer; сумма TOKEN delivery совпала с event и balance delta.
+USDG списан одним transfer payer→aggregator; затем распределён по V3 конверсиям,
+каждая quote-валюта оплачивает свой V4 BUY. Балансы агрегатора восстановлены.
+Static calls с невозможным aggregateMinOut и повтором pool отклонены;
+балансы пользователя после simulation не изменились. Текущий decoder отвергает
+каждую ветвь как NOT_DIRECT_ROUTER_CALL. Промо/entries/RNG не исполнялись.
+
+Команда: `node scripts/permit-buy-fork.cjs NEW_OUTPUT.json --auto`, с
+RH_RPC_URL=https://robinhood-mainnet-rpc.blockreq.com/v1/rpc/public.
+Fork exit0, read-only proxy 292 requests / 5 retries / 0 errors.
+`node --test test/pair-auto-evidence.test.cjs` — 1/1 (~0.15 s): независимый
+разбор сохранённых calldata/event/transfers/pool ids и отказ текущего decoder.
+Syntax/diff проверены, full suite не запускался. Общий permit harness получил
+только отдельный opt-in --auto; обычные режимы не заменены.
+
+Ограничения: artificial USDG balance только local wallet, native gas Hardhat;
+upstream не получает write RPC. Пул/ликвидность/код не изменялись. Это успешное
+исполнение pinned контракта, не доказательство использования текущим UI,
+популярности AUTO, совместимости V2/Infinity или production finality.
+Пять ветвей, другой funding asset и recipient!=payer пока не проверялись.
+
+**Далее:** узкий versioned AUTO adapter для USDG funding и payer=recipient.
+Потребуется purchase-level идентичность (aggregator event), проверка всех legs
+и запрет повторного зачёта их Swap. Входной объём — предлагаемый gross USDG debit
+всей покупки, включая внутренние conversion fees; это не USDG delta последнего
+V4 пула (там stock quote). До реализации закрепить эту семантику отдельно,
+сохранить старые policy snapshots и не активировать маршрут задним числом.
+
+### Результат первого AUTO recon, 25.09
+
+- [Read-only RPC evidence](../research/pair-auto-buy-observation-2026-09-25.json):
+  chain4663, anchor 0x44f59f6, 15 последовательных окон по 2000 блоков,
+  фильтр AggregatedBuy на документированном агрегаторе. **0 событий**, anchor
+  повторно совпал. Это короткое окно, не отсутствие использования AUTO вообще.
+- [Source/ABI/bindings](../research/pair-auto/source-evidence.json) и
+  [исходник](../research/pair-auto/PairV5MultiPoolAggregator.sol): Sourcify exact
+  runtime/creation match; hash runtime совпал с RPC
+  `0xcca69ea4c59b0c2c0ffc86505c8ffa913057ba837d39dd9faabd5d9feebebe6d`.
+  Независимую перекомпиляцию не проводили. Семь immutable getters прочитаны на
+  том же anchor; dependenciesConsistent=true. Это V1, не Launch V2/Infinity.
+- AUTO вызывает UniversalRouter: Swap.sender в manager не обязан быть AUTO.
+  Поэтому первоначальный поиск по sender агрегатора не годится для подсчёта
+  его использования; итоговая выборка фильтрует event адрес самого агрегатора.
+- buyExactInput принимает fundingToken (не только USDG), recipient и 1–5 legs.
+  totalIn=sum(legs.amountIn), снимает totalIn с msg.sender; TOKEN направляется
+  получателю. AggregatedBuy содержит payer/project/recipient/funding/amountIn/out.
+  _restoreBalances требует равенства входных и конечных балансов агрегатора,
+  не выдаёт refund. V3 conversion minimum в buy равен нулю, конечный TOKEN
+  защищён per-leg и aggregate minima. Нельзя подменять это описанием «min USDG».
+- Текущий decoder отвергает AUTO по NOT_DIRECT_ROUTER_CALL для наблюдаемого
+  подходящего pool; если покупка идёт через другой pool, он вообще не создаёт
+  кандидата для нашего manifest. Простое разрешение адреса не решает задачу.
+- Повторён `node --test test/direct-buy.test.cjs`: **25/25**, ~1.3 s.
+  Это replay сохранённых public/fork receipts и негативных сценариев, не новый
+  пользовательский manual swap на сайте. Runtime не изменён.
+
+RPC не принимает единый диапазон 30000 блоков; запрос разбит на 15 окон без
+потери покрытия. Blockscout API вернул HTTP403. Ошибочные/предварительные
+ответы оставлены в .local/logs, не выданы за положительные receipts.
+Повторяемый сбор: `node scripts/research-pair-auto.cjs NEW_OUTPUT.json`.
+Скрипт read-only, ограничен 30000 блоками/3 tx, сохраняет ошибки, не перезаписывает
+существующий файл. Частичная выборка после ошибки не доказывает отсутствие событий.
+
+**Следующий ограниченный шаг:** controlled fork buyExactInput на существующем
+V1 reference с USDG и payer=recipient, сначала одна ветвь, затем split при наличии
+подходящего token/pools. Проверить calldata/event/transfers/pool provenance вместе.
+Предлагаемый учёт — один purchase на вызов, сумма реально списанного USDG один раз,
+включая стоимость внутренних конверсий, без повторного зачёта промежуточных hops.
+Это предложение для нового adapter, ещё не активное правило nominal USDG.
+Funding не в USDG, wrappers и payer!=recipient остаются вне первого расширения.
+Новый decoder без положительного receipt в этом пакете не добавлен.
+
+Пользователь подтвердил выпуск на PAIR. Ниже — актуальный порядок исследования;
+ранние разделы описывают историю шагов, а не список оставшихся задач.
+Проверен scripts/direct-buy.cjs: реализованы rh-ur-10-060b0e-v1,
+rh-ur-10-060c0f-v1 и rh-ur-0a10-060b0e-v1. Они требуют прямого вызова router,
+однозначных settlement/delivery и payer=recipient; replay всё ещё проверяет
+регистрацию на момент BUY. Поддержка кода не означает публичную активацию.
+
+| Канал/семейство | Подтверждение | Наш статус и следующий шаг |
+| --- | --- | --- |
+| PAIR manual / Universal Router | PAIR docs описывают Permit2 и selected-market V4 swap | Три узкие USDG формы поддержаны; сверить текущую транзакцию UI с этими формами |
+| PAIR AUTO | Документирован balanced aggregator: USDG, конверсия quote, до пяти V4 legs | Не поддержан decoder; первый приоритет для calldata/receipt/recipient/refund исследования |
+| PAIR custom quote | Документирован отдельный signed USDG bridge, не AUTO | Отдельный кандидат только при выборе такого launch release; не переносить правила AUTO |
+| Uniswap UI / сторонний Universal Router caller | Совпадение интерфейса не требуется для уже допустимой формы | Проверять исполнение, не бренд; multihop/exact-out/wrappers автоматически не допущены |
+| Robinhood Wallet, 0x/LI.FI | Справка Robinhood подтверждает swap в сети через агрегаторы | Конкретный PAIR TOKEN/маршрут пока не доказан; нужен executable quote и receipt |
+| 1inch Classic / Fusion | Справка 1inch подтверждает сеть и режимы | Нужен конкретный PAIR TOKEN; Fusion требует атрибуции владельца ордера, не tx.from |
+| GMGN / прочие терминалы и боты | PAIR docs упоминают прямую торговлю RWA-пулом в GMGN | Это документационное указание, не наш проверенный BUY; искать конкретный receipt |
+
+Перепроверенные первичные источники 25.09:
+- https://pair.fund/docs
+- https://robinhood.com/us/en/support/articles/send-receive-and-swap-crypto/
+- https://help.1inch.com/en/articles/15781744-how-to-use-1inch-on-robinhood-chain
+
+Ближайший ограниченный пакет: на существующих PAIR reference-токенах получить
+evidence manual и AUTO, закрепив release/pool/code hashes/block. Для каждой покупки
+показать фактический payer, конечного получателя, quote расход/возврат и TOKEN output.
+Отделять найденный публичный receipt от controlled fork с искусственным капиталом.
+Не выдавать пример старого V1 за поддержку Launch V2/Infinity: AUTO в документации
+описан для V1; Infinity использует Pancake Infinity CL, а не наш V4 decoder.
+По AUTO отдельно определить USDG-объём, относящийся к покупке, и защиту от двойного
+учёта ветвей. До этого не реализовывать общий aggregator decoder.
+
+Победитель/размер приза не зависят от интерфейса покупки: расширение касается входа
+в entries, не RNG или призовой математики. Регистрация и автоматизация выплат —
+отдельные незакрытые продуктовые/реализационные границы, этим исследованием не сняты.
+
+Этот шаг — сверка кода и документационных источников; новых RPC/fork/публичных
+транзакций не выполняли, частоты маршрутов не измеряли. Runtime не менялся.
+
 24.09.2026. Read-only исследование; не утверждение новых правил или production support.
 Текущий decoder по-прежнему принимает только две direct USDG формы из
 [DIRECT_BUY_REPLAY](DIRECT_BUY_REPLAY.md). Новые правила ниже — предложение.

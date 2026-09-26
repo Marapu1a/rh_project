@@ -22,7 +22,7 @@
     "test:short:commitment": "node --test test/short-draw-commitment.test.cjs",
     "test:attempts": "node --test --test-concurrency=1 test/attempt-lifecycle.test.cjs test/attempt-lifecycle-events.test.cjs",
     "report:attempts": "node scripts/replay-attempts.cjs --example --output research/attempt-lifecycle-report.json",
-    "test:direct-buy": "node --test test/direct-buy.test.cjs",
+    "test:direct-buy": "node --test test/direct-buy.test.cjs test/pair-auto-buy.test.cjs test/pair-auto-evidence.test.cjs",
     "report:direct-buy": "node scripts/replay-direct-buy.cjs --evidence research/direct-buy/evidence.json --output research/direct-buy/ledger.json",
     "test:fork:direct-buy": "node scripts/direct-buy-evidence.cjs",
     "test:registration": "node --test test/participant-registry.test.cjs",

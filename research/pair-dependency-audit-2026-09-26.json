@@ -1,0 +1,149 @@
+{
+  "observedAt": "2026-09-26T06:53:21.883Z",
+  "block": 72884069,
+  "blockHash": "0x93ce27e1a3658708b649817e1896d6a90c5bfa46a40831bfdc74685a8a68b888",
+  "contracts": {
+    "locker": {
+      "address": "0xefcf476e8870fb3eb8680f039414fdcce6c2a117",
+      "runtimeCodeHash": "0x6cd85bafb67baf6abd2b724f453ec311cd476fc1768a7ec1398ef61121d5e9aa",
+      "matchesHistoricalSource": true
+    },
+    "factory": {
+      "address": "0x788ad4a211ceb310da07e8ef972fc1ef419c6cb7",
+      "runtimeCodeHash": "0x5db3d84a6b56181e4cdc38e5f89d8944a171454ad9cf373caa95edc692249ea5",
+      "matchesHistoricalSource": true
+    },
+    "handler": {
+      "address": "0x8db10025017a30ab83a2a1a25e8871560357864f",
+      "runtimeCodeHash": "0xfd36c8482df15b7efd8a8ff5c06434bbb89f944351f4493904242fff3084e548",
+      "matchesHistoricalSource": true
+    },
+    "registry": {
+      "address": "0x34b34d3f409c562ff2d16f211f516e30695b3809",
+      "runtimeCodeHash": "0xbe1efd266a976371dabb823021d61152ce06c41ef69ec00262ba76d0ab920d7b",
+      "matchesHistoricalSource": true
+    },
+    "coordinator": {
+      "address": "0xddc69cbfb38f3f24d23b980c9e156c62a431687b",
+      "runtimeCodeHash": "0x386f2116152f6cd920f197a08ac38bf6dc6395960f03b992c18c6db4c29c7772",
+      "matchesHistoricalSource": true
+    },
+    "hook": {
+      "address": "0x438b86c71840c3b4df3f839aed6bb889e2d780c0",
+      "runtimeCodeHash": "0x61be10dbf714fa832ac3179b3f24f2c60f244f6ea79b06655dd866b93e67837a",
+      "matchesHistoricalSource": true
+    },
+    "launchImplementation": {
+      "address": "0x8000b64b62837a1511e302c62354e1bc39b5641a",
+      "runtimeCodeHash": "0x12ba8b9e917f08c014e3823e4cad6bab4ee183df3c9ed9116e9edff7de13457f",
+      "matchesHistoricalSource": true
+    }
+  },
+  "api": {
+    "v5-v2/native-fee/consumer-live": {
+      "status": 200,
+      "body": {
+        "schema": "pair-v5-task336-consumer-live/v1",
+        "addresses": {
+          "launchpad": "0x8660a7f019c7943b0b0a91b8e39aff3b6db6ae62",
+          "modeRegistry": "0x34b34d3f409c562ff2d16f211f516e30695b3809",
+          "coordinator": "0xddc69cbfb38f3f24d23b980c9e156c62a431687b",
+          "tokenFactory": "0xa1ff181f6cd1f84a36385df37e8080566d25235f",
+          "hook": "0x438b86c71840c3b4df3f839aed6bb889e2d780c0",
+          "buybackRouter": "0x3b2475f965f2c79a8b6392eeb0e754eb5d116b73",
+          "feeSharingVaultFactory": "0x788ad4a211ceb310da07e8ef972fc1ef419c6cb7",
+          "buybackBurnVaultFactory": "0x36c0205820f656dbc28aa67fd7dd1e53ee042cff",
+          "poolEngine": "0x86877c5394a3d4a74ffe9e599804e23b4c758a7e",
+          "buybackExecutor": "0xc5aa79190e60e61b823d020d8f520ee4a0de4d23",
+          "aggregator": "0xa2e7bc2515f3be223bba80175fd78a17cc4a652a",
+          "feeSharingMode": "0x8db10025017a30ab83a2a1a25e8871560357864f",
+          "buybackBurnMode": "0xce8e281175fd0de12af765ecccde6d0ef0bfa633"
+        },
+        "nativeFeeLaunchV2Version": 2,
+        "modeVersion": 5,
+        "feeSharingModeVersion": 5,
+        "buybackBurnModeVersion": 6,
+        "buybackExecutionPolicyVersion": 3,
+        "developerBuyRouteCapabilityVersion": 4,
+        "atomicFeeTransition": true,
+        "poolFee": 10000,
+        "tickSpacing": 200,
+        "manifestSha256": "119b86474077e36c6acedef6b6e813374c5b7ede61694b460d7c66ed0ff60b5e",
+        "supportedOnchainModes": [
+          1,
+          2,
+          3
+        ],
+        "registryAttestation": {
+          "blockNumber": "72884077",
+          "blockHash": "0xcd85463e892a994defaf9a625da51c3468176034ac0494d4f2f9d49bad48c82f",
+          "currentlyLiveRegistryTuple": true,
+          "developerBuyRouteCapabilityVersion": "4",
+          "holderDistributionV3": true,
+          "completeV3Graph": true
+        },
+        "holderDistribution": {
+          "enabled": true,
+          "version": 2,
+          "vaultFactory": "0x9ae0ccc79e41b411e2e057dddd6f2fd41f63ee2e",
+          "handler": "0xca553517c8dbb47d08b3f3b355bd834b0c6d0dfe",
+          "buybackExecutorV3": "0xc5aa79190e60e61b823d020d8f520ee4a0de4d23"
+        }
+      }
+    },
+    "launches/native-fee-v2-readiness": {
+      "status": 200,
+      "body": {
+        "state": "ready",
+        "ready": true,
+        "configured": true,
+        "registryEnabled": true,
+        "bindingsValid": true,
+        "capability": "native_fee_v2"
+      }
+    }
+  },
+  "reads": {
+    "registry": {
+      "currentCoordinator": "0xDDc69CBFb38f3f24D23b980c9e156C62A431687b",
+      "currentHandler": [
+        "0x8dB10025017a30ab83a2A1a25e8871560357864f",
+        "5",
+        true
+      ],
+      "owner": "0x18Fe9694a335C8b42D228147eDdAC524748300eA",
+      "launchEnabled": true
+    },
+    "launchpad": {
+      "launchFeeWei": "500000000000000",
+      "activeLaunchV2ModeRegistry": "0x34b34D3f409C562Ff2d16f211f516e30695b3809"
+    }
+  },
+  "anchorStable": true,
+  "proxyImplementationSlot": "0x0000000000000000000000008000b64b62837a1511e302c62354e1bc39b5641a",
+  "referenceVault": {
+    "address": "0xDCD7B60c8FeF290936533da7c21B5Be97839e580",
+    "hash": "0x4a2a9450932c1af0bbc455eefa7cd8545b86d5b9d92fd1025a95bc7210540859",
+    "epoch": "1",
+    "controller": "0x34b34D3f409C562Ff2d16f211f516e30695b3809",
+    "token": "0x2B9495821247E9b3790E9e18f8498bEE6f5A5555",
+    "mode": "1",
+    "ctoEligible": true,
+    "atomicTransition": true,
+    "registeredVault": "0xDCD7B60c8FeF290936533da7c21B5Be97839e580"
+  },
+  "tokenFactory": {
+    "address": "0xa1ff181f6cd1f84a36385df37e8080566d25235f",
+    "hash": "0xcff495eaab07d0cbe0cd82cdf77e46407b4519321ff4a1087c12e513f0a80dfc",
+    "verifiedHash": "0xcff495eaab07d0cbe0cd82cdf77e46407b4519321ff4a1087c12e513f0a80dfc",
+    "runtimeMatch": "exact_match",
+    "implementation": "0x12892a7c96E948105fC99A6C0512613a5d3Cc277"
+  },
+  "tokenImplementation": {
+    "address": "0x12892a7c96E948105fC99A6C0512613a5d3Cc277",
+    "sourceUrl": "https://sourcify.dev/server/v2/contract/4663/0x12892a7c96E948105fC99A6C0512613a5d3Cc277?fields=all",
+    "runtimeMatch": "exact_match",
+    "hash": "0x97dc1b8eab2259b7653032390c83fa8a61a1c10cceaefd32c97d5a946cf8884b",
+    "verifiedHash": "0x97dc1b8eab2259b7653032390c83fa8a61a1c10cceaefd32c97d5a946cf8884b"
+  }
+}

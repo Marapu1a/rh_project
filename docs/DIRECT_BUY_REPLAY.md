@@ -1,5 +1,66 @@
 # Direct BUY → билеты: decoder и replay v1
 
+## PAIR AUTO USDG adapter, 25.09.2026
+
+`rh-pair-auto-usdg-v1` — отдельный typed id, прямой buyExactInput pinned V1
+aggregator, 1–2 уникальные ветви, funding USDG, payer=recipient. Код:
+[pair-auto-buy.cjs](../scripts/pair-auto-buy.cjs). ABI/runtime/address/hook привязаны
+к проверенному source и fork, не к маркетинговому названию PAIR.
+
+Calldata и AggregatedBuy сверяются с фактическим USDG payment, V4 swaps и delivery
+каждой ветви. Лишние/пропущенные transfers, повтор pool/event, неподдержанные формы
+не засчитываются. Receipt/branch provenance по-прежнему проверяет общий replay.
+При наличии AUTO route и его активации агрегатор обрабатывается целиком; его Swap
+не попадают повторно в direct decoder. Candidate id использует итоговый event;
+проверка регистрации — момент начального payment, не поздний итоговый event.
+
+Gross volume = один полный USDG debit, включая внутренние conversion fees.
+TOKEN output не пересчитывается в USDG. Для 1/2 legs результат один purchase;
+entry threshold/carry и оба вида attempts остаются прежними.
+
+Scheduled manifest direct-buy-v2 может содержать только AUTO: тогда poolKey/poolId
+отсутствуют, поскольку прямого TOKEN/USDG пула может не быть. Остальные bindings
+и runtime hashes обязательны для RPC scan. Если присутствует любой прежний direct
+adapter, валидный TOKEN/USDG poolKey/id по-прежнему обязателен. Добавление AUTO в
+совместимую V1 direct-конфигурацию идёт через существующий typed future announcement;
+остальные поля manifest не меняются. AUTO-only genesis не допускает последующую
+подстановку direct-пула через обычный append-only route update.
+
+Source admission знает новый id; scan проверяет Permit2 и aggregator runtime на
+cutoff и aggregator runtime на блоках AUTO calls. Отсутствие исторического code
+не заменяется latest. Старые cutoffs не получают новую зависимость. Это проверка
+RPC evidence, не независимое доказательство finality/исторических intra-block upgrades.
+
+Не поддержаны: wrappers/solver, payer!=recipient, funding не в USDG, 3–5 legs,
+V2/Infinity. Регистрация до покупки пока обязательна. Публичная активация и интерфейс
+уведомлений не выполнены. Авторизация genesis/объявлений берётся из deployment trust,
+а не из произвольного JSON или самого adapter id.
+
+### Проверки AUTO, 25.09
+
+Финальный адресный запуск:
+`node --test test/pair-auto-buy.test.cjs test/pair-auto-evidence.test.cjs test/direct-buy.test.cjs test/attempt-lifecycle.test.cjs test/monthly-replay.test.cjs`
+— **55/55**, ~1.85 s. Raw fork receipts, synthetic 50×2 USDG → ровно 1 entry,
+carry/dedup/provenance, регистрация после payment, malformed calldata/transfers,
+wrong funding/recipient/pool, typed extension/cutoff и исторические lifecycle-сценарии.
+AUTO tests добавлены в test:direct-buy и full/replay profiles. Проверка launcher
+catalog/infrastructure прошла отдельно (5/5); ожидаемый failing child — её fixture,
+не failure продукта. Полный product suite не запускался.
+
+Новый live local fork: upstream block **0x44f8f53**, chain31337,
+`node scripts/permit-buy-fork.cjs NEW_OUTPUT.json --auto` с Blockreq RPC.
+[Evidence](../research/pair-auto/fork-admission-2026-09-25.json): реальные V1 swaps,
+локальные ParticipantRegistry/BuyPolicySource, genesis admission, whole-block scan,
+проверка runtime и replay. 8 блоков, 2 eligible purchases, carry **3000000**, entries 0;
+порог 100 USDG не изменён. Read proxy 312 requests / 5 retries / 0 errors, exit0.
+Capital — искусственный USDG local wallet; публичных writes нет. Scheduler/draw
+в этом fork не исполнялись. Future typed extension проверен отдельным synthetic
+policy test, а не объявлением в публичной сети.
+
+Первый интеграционный run дошёл до ledger, но harness сравнил string и bigint;
+исправлен assert, финальный новый run выше прошёл. Первый файл остался локальным
+failure log и не выдан за успешное evidence.
+
 ## Permit2 BUY adapter, 24.09.2026
 
 Текущий каталог дополнен **rh-ur-0a10-060b0e-v1**. Только execute(bytes,bytes[],uint256),

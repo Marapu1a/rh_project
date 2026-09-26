@@ -1,0 +1,721 @@
+{
+  "schema": "pair-auto-source-evidence-v1",
+  "sourceUrl": "https://sourcify.dev/server/v2/contract/4663/0x9d7741776098aFA315e4D576ede4F2c67a21d8Ce?fields=all",
+  "observedAt": "2026-09-25T14:47:23.617Z",
+  "address": "0x9d7741776098aFA315e4D576ede4F2c67a21d8Ce",
+  "chainId": "4663",
+  "match": "exact_match",
+  "runtimeMatch": "exact_match",
+  "creationMatch": "exact_match",
+  "verifiedAt": "2026-08-29T09:12:18Z",
+  "deployment": {
+    "transactionHash": "0xbce42dd2f3451e0b3cc97d59c024e6f57ec0caf43679f3f53d85df4ee0861ad5",
+    "blockNumber": "48820555",
+    "transactionIndex": "4",
+    "deployer": "0x18Fe9694a335C8b42D228147eDdAC524748300eA"
+  },
+  "compilation": {
+    "language": "Solidity",
+    "compiler": "solc",
+    "compilerVersion": "0.8.26+commit.8a97fa7a",
+    "compilerSettings": {
+      "viaIR": true,
+      "libraries": {},
+      "optimizer": {
+        "runs": 500,
+        "enabled": true
+      },
+      "evmVersion": "paris"
+    },
+    "name": "PairV5MultiPoolAggregator",
+    "fullyQualifiedName": "contracts/v5/PairV5MultiPoolAggregator.sol:PairV5MultiPoolAggregator"
+  },
+  "runtimeHash": "0xcca69ea4c59b0c2c0ffc86505c8ffa913057ba837d39dd9faabd5d9feebebe6d",
+  "rpcRuntimeHash": "0xcca69ea4c59b0c2c0ffc86505c8ffa913057ba837d39dd9faabd5d9feebebe6d",
+  "abi": [
+    {
+      "type": "constructor",
+      "inputs": [
+        {
+          "name": "launchpad_",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "poolManager_",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "universalRouter_",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "permit2_",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "swapRouter02_",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "weth_",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "usdg_",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "BalanceNotRestored",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "token",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "opening",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "closing",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "name": "DuplicatePool",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "index",
+          "type": "uint8",
+          "internalType": "uint8"
+        }
+      ]
+    },
+    {
+      "name": "ExpiredOrUnboundedDeadline",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "InvalidAddress",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "InvalidAmount",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "InvalidPoolKey",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "index",
+          "type": "uint8",
+          "internalType": "uint8"
+        }
+      ]
+    },
+    {
+      "name": "ReentrancyGuardReentrantCall",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "SafeERC20FailedOperation",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "token",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "name": "Slippage",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "minimum",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "actual",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "name": "UnsupportedRoute",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "token",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "name": "AggregatedBuy",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "payer",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "projectToken",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "recipient",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "fundingToken",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        },
+        {
+          "name": "amountIn",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountOut",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "AggregatedSell",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "payer",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "projectToken",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "recipient",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "outputToken",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        },
+        {
+          "name": "amountIn",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountOut",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "MAX_DEADLINE_WINDOW",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "MAX_LEGS",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "buyExactInput",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "projectToken",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "fundingToken",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "recipient",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "legs",
+          "type": "tuple[]",
+          "components": [
+            {
+              "name": "poolIndex",
+              "type": "uint8",
+              "internalType": "uint8"
+            },
+            {
+              "name": "poolKey",
+              "type": "tuple",
+              "components": [
+                {
+                  "name": "currency0",
+                  "type": "address",
+                  "internalType": "Currency"
+                },
+                {
+                  "name": "currency1",
+                  "type": "address",
+                  "internalType": "Currency"
+                },
+                {
+                  "name": "fee",
+                  "type": "uint24",
+                  "internalType": "uint24"
+                },
+                {
+                  "name": "tickSpacing",
+                  "type": "int24",
+                  "internalType": "int24"
+                },
+                {
+                  "name": "hooks",
+                  "type": "address",
+                  "internalType": "contract IHooks"
+                }
+              ],
+              "internalType": "struct PoolKey"
+            },
+            {
+              "name": "amountIn",
+              "type": "uint128",
+              "internalType": "uint128"
+            },
+            {
+              "name": "minAmountOut",
+              "type": "uint128",
+              "internalType": "uint128"
+            }
+          ],
+          "internalType": "struct PairV5MultiPoolAggregator.Leg[]"
+        },
+        {
+          "name": "aggregateMinOut",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountOut",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "dependenciesConsistent",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "launchpad",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "permit2",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "poolManager",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "sellExactInput",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "projectToken",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "outputToken",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "recipient",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "legs",
+          "type": "tuple[]",
+          "components": [
+            {
+              "name": "poolIndex",
+              "type": "uint8",
+              "internalType": "uint8"
+            },
+            {
+              "name": "poolKey",
+              "type": "tuple",
+              "components": [
+                {
+                  "name": "currency0",
+                  "type": "address",
+                  "internalType": "Currency"
+                },
+                {
+                  "name": "currency1",
+                  "type": "address",
+                  "internalType": "Currency"
+                },
+                {
+                  "name": "fee",
+                  "type": "uint24",
+                  "internalType": "uint24"
+                },
+                {
+                  "name": "tickSpacing",
+                  "type": "int24",
+                  "internalType": "int24"
+                },
+                {
+                  "name": "hooks",
+                  "type": "address",
+                  "internalType": "contract IHooks"
+                }
+              ],
+              "internalType": "struct PoolKey"
+            },
+            {
+              "name": "amountIn",
+              "type": "uint128",
+              "internalType": "uint128"
+            },
+            {
+              "name": "minAmountOut",
+              "type": "uint128",
+              "internalType": "uint128"
+            }
+          ],
+          "internalType": "struct PairV5MultiPoolAggregator.Leg[]"
+        },
+        {
+          "name": "aggregateMinOut",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountOut",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "swapRouter02",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "universalRouter",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "usdg",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "weth",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    }
+  ],
+  "sources": [
+    {
+      "path": "contracts/v5/PairV4RoutePolicy.sol",
+      "content": "// SPDX-License-Identifier: MIT\npragma solidity 0.8.26;\n\n/// @notice Canonical Robinhood Chain funding topology for PAIR launches.\n/// @dev Routes are deliberately closed: WETH bridges through USDG at 0.01% and\n/// every listed RWA has exactly one governance-reviewed USDG pool fee.\nlibrary PairV4RoutePolicy {\n    address internal constant SWAP_ROUTER_02 = 0xCaf681a66D020601342297493863E78C959E5cb2;\n    address internal constant UNIVERSAL_ROUTER = 0x8876789976dEcBfCbBbe364623C63652db8C0904;\n    address internal constant PERMIT2 = 0x000000000022D473030F116dDEE9F6B43aC78BA3;\n    address internal constant WETH = 0x0Bd7D308f8E1639FAb988df18A8011f41EAcAD73;\n    address internal constant USDG = 0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168;\n    uint24 internal constant WETH_USDG_FEE = 100;\n\n    function usdgFee(address token) internal pure returns (uint24) {\n        if (token == address(bytes20(hex\"af3d76f1834a1d425780943c99ea8a608f8a93f9\"))) return 500; // AAPL\n        if (token == address(bytes20(hex\"86923f96303d656e4aa86d9d42d1e57ad2023fdc\"))) return 3_000; // AMD\n        if (token == address(bytes20(hex\"12f190a9f9d7d37a250758b26824b97ce941bf54\"))) return 3_000; // AMZN\n        if (token == address(bytes20(hex\"df0992e440dd0be65bd8439b609d6d4366bf1cb5\"))) return 3_000; // CRCL\n        if (token == address(bytes20(hex\"2e0847e8910a9732eb3fb1bb4b70a580adad4fe3\"))) return 500; // GOOGL\n        if (token == address(bytes20(hex\"c72b96e0e48ecd4dc75e1e45396e26300bc39681\"))) return 3_000; // INTC\n        if (token == address(bytes20(hex\"c0d6457c16cc70d6790dd43521c899c87ce02f35\"))) return 3_000; // META\n        if (token == address(bytes20(hex\"e93237c50d904957cf27e7b1133b510c669c2e74\"))) return 3_000; // MSFT\n        if (token == address(bytes20(hex\"ff080c8ce2e5feadaca0da81314ae59d232d4afd\"))) return 3_000; // MU\n        if (token == address(bytes20(hex\"d0601ce157db5bdc3162bbac2a2c8af5320d9eec\"))) return 500; // NVDA\n        if (token == address(bytes20(hex\"894e1ec2d74ffe5aef8dc8a9e84686accb964f2a\"))) return 3_000; // PLTR\n        if (token == address(bytes20(hex\"d5f3879160bc7c32ebb4dc785f8a4f505888de68\"))) return 3_000; // QQQ\n        if (token == address(bytes20(hex\"92fd66527192e3e61d4ddd13322aa222de86f9b5\"))) return 3_000; // SGOV\n        if (token == address(bytes20(hex\"411efb0e7f985935daec3d4c3ebaea0d0ad7d89f\"))) return 3_000; // SLV\n        if (token == address(bytes20(hex\"b90a19ff0af67f7779aff50a882a9cff42446400\"))) return 10_000; // SNDK\n        if (token == address(bytes20(hex\"4a0e65a3eccec6dbe60ae065f2e7bb85fae35eea\"))) return 500; // SPCX\n        if (token == address(bytes20(hex\"117cc2133c37b721f49de2a7a74833232b3b4c0c\"))) return 500; // SPY\n        if (token == address(bytes20(hex\"322f0929c4625ed5bad873c95208d54e1c003b2d\"))) return 3_000; // TSLA\n        if (token == address(bytes20(hex\"d917b029c761d264c6a312bbbcda868658ef86a6\"))) return 3_000; // USAR\n        return 0;\n    }\n\n    function approved(address token) internal pure returns (bool) {\n        return token == USDG || token == WETH || usdgFee(token) != 0;\n    }\n}",
+      "keccak256": "0xddc44a973b5ae8ec7e0a99b7df9fca5ba8e8c3ceadda53a580803aa43767a3bd"
+    },
+    {
+      "path": "contracts/v5/PairV5MultiPoolAggregator.sol",
+      "content": "// SPDX-License-Identifier: MIT\npragma solidity 0.8.26;\n\nimport {IERC20} from \"@openzeppelin/contracts/token/ERC20/IERC20.sol\";\nimport {SafeERC20} from \"@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol\";\nimport {ReentrancyGuard} from \"@openzeppelin/contracts/utils/ReentrancyGuard.sol\";\nimport {PoolKey} from \"@uniswap/v4-core/src/types/PoolKey.sol\";\nimport {PoolId, PoolIdLibrary} from \"@uniswap/v4-core/src/types/PoolId.sol\";\nimport {Currency} from \"@uniswap/v4-core/src/types/Currency.sol\";\nimport {IHooks} from \"@uniswap/v4-core/src/interfaces/IHooks.sol\";\nimport {Actions} from \"@uniswap/v4-periphery/src/libraries/Actions.sol\";\nimport {IPermit2Allowance, IUniversalRouterV4, IPairV5LaunchPoolSource} from \"./interfaces/IPairV4.sol\";\nimport {PairV4RoutePolicy as Policy} from \"./PairV4RoutePolicy.sol\";\n\ninterface ISwapRouter02Aggregator {\n    struct ExactInputParams { bytes path; address recipient; uint256 amountIn; uint256 amountOutMinimum; }\n    function exactInput(ExactInputParams calldata params) external returns (uint256 amountOut);\n}\n\n/// @notice Permissionless exact-input router for already-created canonical PAIR V5 launch pools.\n/// @dev This deliberately does not wrap `launchTokenMulti`: a wrapper changes the launchpad's\n/// `msg.sender` creator attribution and therefore cannot preserve launch-time protections.\ncontract PairV5MultiPoolAggregator is ReentrancyGuard {\n    using SafeERC20 for IERC20;\n    using PoolIdLibrary for PoolKey;\n\n    uint256 public constant MAX_LEGS = 5;\n    uint256 public constant MAX_DEADLINE_WINDOW = 1 days;\n    bytes1 private constant V4_SWAP_COMMAND = 0x10;\n\n    struct RobinhoodExactInputSingleParams {\n        PoolKey poolKey;\n        bool zeroForOne;\n        uint128 amountIn;\n        uint128 amountOutMinimum;\n        uint256 minHopPriceX36;\n        bytes hookData;\n    }\n    /// @dev `poolKey` is supplied for auditability, but is never trusted.\n    struct Leg {\n        uint8 poolIndex;\n        PoolKey poolKey;\n        uint128 amountIn;\n        uint128 minAmountOut;\n    }\n    struct BalanceSet {\n        address[] tokens;\n        uint256[] opening;\n        uint256 count;\n    }\n\n    address public immutable launchpad;\n    address public immutable poolManager;\n    address public immutable universalRouter;\n    address public immutable permit2;\n    address public immutable swapRouter02;\n    address public immutable weth;\n    address public immutable usdg;\n\n    error InvalidAddress();\n    error InvalidAmount();\n    error ExpiredOrUnboundedDeadline();\n    error DuplicatePool(uint8 index);\n    error InvalidPoolKey(uint8 index);\n    error UnsupportedRoute(address token);\n    error Slippage(uint256 minimum, uint256 actual);\n    error BalanceNotRestored(address token, uint256 opening, uint256 closing);\n\n    event AggregatedBuy(address indexed payer, address indexed projectToken, address indexed recipient,\n        address fundingToken, uint256 amountIn, uint256 amountOut);\n    event AggregatedSell(address indexed payer, address indexed projectToken, address indexed recipient,\n        address outputToken, uint256 amountIn, uint256 amountOut);\n\n    constructor(address launchpad_, address poolManager_, address universalRouter_, address permit2_,\n        address swapRouter02_, address weth_, address usdg_) {\n        if (launchpad_ == address(0) || poolManager_ == address(0) || universalRouter_ == address(0)\n            || permit2_ == address(0) || swapRouter02_ == address(0) || weth_ == address(0)\n            || usdg_ == address(0) || weth_ == usdg_) revert InvalidAddress();\n        IPairV5LaunchPoolSource source = IPairV5LaunchPoolSource(launchpad_);\n        if (source.poolManager() != poolManager_ || source.universalRouter() != universalRouter_\n            || source.permit2() != permit2_ || source.pairHook() == address(0)) revert InvalidAddress();\n        launchpad = launchpad_;\n        poolManager = poolManager_;\n        universalRouter = universalRouter_;\n        permit2 = permit2_;\n        swapRouter02 = swapRouter02_;\n        weth = weth_;\n        usdg = usdg_;\n    }\n\n    /// @notice Lets deployment tooling verify every immutable dependency without state-changing calls.\n    function dependenciesConsistent() external view returns (bool) {\n        IPairV5LaunchPoolSource source = IPairV5LaunchPoolSource(launchpad);\n        return source.poolManager() == poolManager && source.universalRouter() == universalRouter\n            && source.permit2() == permit2 && source.pairHook() != address(0);\n    }\n\n    function buyExactInput(address projectToken, address fundingToken, address recipient, Leg[] calldata legs,\n        uint256 aggregateMinOut, uint256 deadline) external nonReentrant returns (uint256 amountOut) {\n        _deadline(deadline);\n        if (recipient == address(0)) revert InvalidAddress();\n        if (recipient == address(this)) revert InvalidAddress();\n        if (!_approved(fundingToken)) revert UnsupportedRoute(fundingToken);\n        uint256 totalIn = _validateLegs(projectToken, legs);\n        BalanceSet memory balances = _openBalances(fundingToken, projectToken, legs, address(0));\n        IERC20(fundingToken).safeTransferFrom(msg.sender, address(this), totalIn);\n        for (uint256 i; i < legs.length; ++i) {\n            IPairV5LaunchPoolSource.LaunchPool memory pool = _pool(projectToken, legs[i]);\n            uint256 quoteIn = fundingToken == pool.quoteToken ? legs[i].amountIn\n                : _v3(fundingToken, pool.quoteToken, legs[i].amountIn, 0, address(this));\n            uint256 out = _v4(projectToken, pool.quoteToken, pool.quoteToken, projectToken, quoteIn,\n                recipient, legs[i].minAmountOut, deadline);\n            amountOut += out;\n        }\n        if (amountOut < aggregateMinOut) revert Slippage(aggregateMinOut, amountOut);\n        _restoreBalances(balances);\n        emit AggregatedBuy(msg.sender, projectToken, recipient, fundingToken, totalIn, amountOut);\n    }\n\n    function sellExactInput(address projectToken, address outputToken, address recipient, Leg[] calldata legs,\n        uint256 aggregateMinOut, uint256 deadline) external nonReentrant returns (uint256 amountOut) {\n        _deadline(deadline);\n        if (recipient == address(0)) revert InvalidAddress();\n        if (recipient == address(this)) revert InvalidAddress();\n        if (!_approved(outputToken)) revert UnsupportedRoute(outputToken);\n        uint256 totalIn = _validateLegs(projectToken, legs);\n        BalanceSet memory balances = _openBalances(projectToken, projectToken, legs, outputToken);\n        IERC20(projectToken).safeTransferFrom(msg.sender, address(this), totalIn);\n        for (uint256 i; i < legs.length; ++i) {\n            IPairV5LaunchPoolSource.LaunchPool memory pool = _pool(projectToken, legs[i]);\n            // A V4 leg's minimum applies to its quote output.  Conversion legs use\n            // zero router minimum and are protected by the aggregate final minimum.\n            address v4Recipient = pool.quoteToken == outputToken ? recipient : address(this);\n            uint256 quoteOut = _v4(projectToken, pool.quoteToken, projectToken, pool.quoteToken,\n                legs[i].amountIn, v4Recipient, pool.quoteToken == outputToken ? legs[i].minAmountOut : 0, deadline);\n            uint256 out = pool.quoteToken == outputToken ? quoteOut\n                : _v3(pool.quoteToken, outputToken, quoteOut, legs[i].minAmountOut, recipient);\n            amountOut += out;\n        }\n        if (amountOut < aggregateMinOut) revert Slippage(aggregateMinOut, amountOut);\n        _restoreBalances(balances);\n        emit AggregatedSell(msg.sender, projectToken, recipient, outputToken, totalIn, amountOut);\n    }\n\n    function _validateLegs(address project, Leg[] calldata legs) private view returns (uint256 total) {\n        if (project == address(0) || legs.length == 0 || legs.length > MAX_LEGS) revert InvalidAmount();\n        for (uint256 i; i < legs.length; ++i) {\n            if (legs[i].amountIn == 0) revert InvalidAmount();\n            for (uint256 j; j < i; ++j) if (legs[i].poolIndex == legs[j].poolIndex) revert DuplicatePool(legs[i].poolIndex);\n            IPairV5LaunchPoolSource.LaunchPool memory pool = _pool(project, legs[i]);\n            if (!_approved(pool.quoteToken)) revert UnsupportedRoute(pool.quoteToken);\n            total += legs[i].amountIn;\n        }\n    }\n\n    function _pool(address project, Leg calldata leg) private view returns (IPairV5LaunchPoolSource.LaunchPool memory pool) {\n        IPairV5LaunchPoolSource source = IPairV5LaunchPoolSource(launchpad);\n        if (leg.poolIndex >= source.getLaunchPoolCount(project)) revert InvalidPoolKey(leg.poolIndex);\n        pool = source.getLaunchPool(project, leg.poolIndex);\n        PoolKey memory expected = _key(project, pool.quoteToken);\n        if (Currency.unwrap(leg.poolKey.currency0) != Currency.unwrap(expected.currency0)\n            || Currency.unwrap(leg.poolKey.currency1) != Currency.unwrap(expected.currency1)\n            || leg.poolKey.fee != expected.fee || leg.poolKey.tickSpacing != expected.tickSpacing\n            || address(leg.poolKey.hooks) != address(expected.hooks)\n            || PoolId.unwrap(PoolIdLibrary.toId(expected)) != pool.poolId) revert InvalidPoolKey(leg.poolIndex);\n    }\n\n    function _key(address project, address quote) private view returns (PoolKey memory) {\n        bool projectIs0 = project < quote;\n        return PoolKey(Currency.wrap(projectIs0 ? project : quote), Currency.wrap(projectIs0 ? quote : project),\n            10_000, 200, IHooks(IPairV5LaunchPoolSource(launchpad).pairHook()));\n    }\n\n    function _v4(address project, address quote, address tokenIn, address tokenOut, uint256 input,\n        address recipient, uint256 minimum, uint256 deadline) private returns (uint256 output) {\n        if (input > type(uint128).max || minimum > type(uint128).max) revert InvalidAmount();\n        PoolKey memory key = _key(project, quote);\n        uint256 beforeBalance = IERC20(tokenOut).balanceOf(recipient);\n        _approveV4(tokenIn, input, deadline);\n        RobinhoodExactInputSingleParams memory swap = RobinhoodExactInputSingleParams(\n            key, Currency.unwrap(key.currency0) == tokenIn, uint128(input), 0, 0, bytes(\"\")\n        );\n        bytes memory actions = abi.encodePacked(uint8(Actions.SWAP_EXACT_IN_SINGLE), uint8(Actions.SETTLE), uint8(Actions.TAKE));\n        bytes[] memory params = new bytes[](3);\n        params[0] = abi.encode(swap);\n        params[1] = abi.encode(Currency.wrap(tokenIn), input, true);\n        // Robinhood's proven exact-input settlement requires zero minima in\n        // both router-level fields. Slippage is enforced atomically below from\n        // the recipient's observed balance delta, exactly like the developer\n        // buy adapter.\n        params[2] = abi.encode(Currency.wrap(tokenOut), recipient, 0);\n        bytes[] memory inputs = new bytes[](1);\n        inputs[0] = abi.encode(actions, params);\n        IUniversalRouterV4(universalRouter).execute(abi.encodePacked(V4_SWAP_COMMAND), inputs, deadline);\n        _clearV4(tokenIn);\n        output = IERC20(tokenOut).balanceOf(recipient) - beforeBalance;\n        if (output < minimum) revert Slippage(minimum, output);\n    }\n\n    function _v3(address input, address output, uint256 amount, uint256 minimum, address recipient)\n        private returns (uint256 result) {\n        IERC20(input).forceApprove(swapRouter02, amount);\n        result = ISwapRouter02Aggregator(swapRouter02).exactInput(\n            ISwapRouter02Aggregator.ExactInputParams(_path(input, output), recipient, amount, minimum)\n        );\n        IERC20(input).forceApprove(swapRouter02, 0);\n        if (result < minimum || result == 0) revert Slippage(minimum, result);\n    }\n\n    function _path(address input, address output) private view returns (bytes memory) {\n        if (input == output) revert InvalidAmount();\n        if (input == weth) return output == usdg ? abi.encodePacked(input, Policy.WETH_USDG_FEE, output)\n            : abi.encodePacked(input, Policy.WETH_USDG_FEE, usdg, Policy.usdgFee(output), output);\n        if (output == weth) return input == usdg ? abi.encodePacked(input, Policy.WETH_USDG_FEE, output)\n            : abi.encodePacked(input, Policy.usdgFee(input), usdg, Policy.WETH_USDG_FEE, output);\n        if (input == usdg) return abi.encodePacked(input, Policy.usdgFee(output), output);\n        if (output == usdg) return abi.encodePacked(input, Policy.usdgFee(input), output);\n        return abi.encodePacked(input, Policy.usdgFee(input), usdg, Policy.usdgFee(output), output);\n    }\n\n    function _approveV4(address token, uint256 amount, uint256 deadline) private {\n        if (amount > type(uint160).max || deadline > type(uint48).max) revert InvalidAmount();\n        IERC20(token).forceApprove(permit2, amount);\n        IPermit2Allowance(permit2).approve(token, universalRouter, uint160(amount), uint48(deadline));\n    }\n    function _clearV4(address token) private {\n        IPermit2Allowance(permit2).approve(token, universalRouter, 0, 0);\n        IERC20(token).forceApprove(permit2, 0);\n    }\n    function _approved(address token) private view returns (bool) { return token == weth || token == usdg || Policy.usdgFee(token) != 0; }\n    function _deadline(uint256 deadline) private view {\n        if (deadline < block.timestamp || deadline > block.timestamp + MAX_DEADLINE_WINDOW) revert ExpiredOrUnboundedDeadline();\n    }\n    function _openBalances(address primary, address project, Leg[] calldata legs, address output)\n        private view returns (BalanceSet memory balances) {\n        balances.tokens = new address[](MAX_LEGS + 3);\n        balances.opening = new uint256[](MAX_LEGS + 3);\n        _addBalance(balances, primary);\n        _addBalance(balances, project);\n        if (output != address(0)) _addBalance(balances, output);\n        for (uint256 i; i < legs.length; ++i) {\n            _addBalance(balances, _pool(project, legs[i]).quoteToken);\n        }\n    }\n    function _addBalance(BalanceSet memory balances, address token) private view {\n        for (uint256 i; i < balances.count; ++i) if (balances.tokens[i] == token) return;\n        balances.tokens[balances.count] = token;\n        balances.opening[balances.count] = IERC20(token).balanceOf(address(this));\n        ++balances.count;\n    }\n    function _restoreBalances(BalanceSet memory balances) private view {\n        for (uint256 i; i < balances.count; ++i) {\n            uint256 closing = IERC20(balances.tokens[i]).balanceOf(address(this));\n            if (closing != balances.opening[i]) {\n                revert BalanceNotRestored(balances.tokens[i], balances.opening[i], closing);\n            }\n        }\n    }\n}",
+      "keccak256": "0xacbcf2584a46cd10d442f2dade489976b238d611964c4ddb070b9f67bf6784e3"
+    },
+    {
+      "path": "contracts/v5/interfaces/IPairV4.sol",
+      "content": "// SPDX-License-Identifier: MIT\npragma solidity 0.8.26;\n\nimport {PoolKey} from \"@uniswap/v4-core/src/types/PoolKey.sol\";\n\ninterface IStockTokenRegistryV5 {\n    struct StockConfig {\n        bool enabled;\n        uint8 decimals;\n        bytes32 symbol;\n        address priceFeed;\n        uint256 graduationTargetUsdE8;\n        bool ethRouteEnabled;\n    }\n    function getConfig(address token) external view returns (StockConfig memory);\n    function isEnabled(address token) external view returns (bool);\n}\n\ninterface IAggregatorV3V5 {\n    function decimals() external view returns (uint8);\n    function latestRoundData()\n        external\n        view\n        returns (uint80, int256, uint256, uint256, uint80);\n}\n\ninterface IPermit2Allowance {\n    function approve(address token, address spender, uint160 amount, uint48 expiration) external;\n}\n\ninterface IUniversalRouterV4 {\n    function execute(bytes calldata commands, bytes[] calldata inputs, uint256 deadline) external payable;\n}\n\ninterface IPositionManagerV4 {\n    function modifyLiquidities(bytes calldata unlockData, uint256 deadline) external payable;\n    function nextTokenId() external view returns (uint256);\n    function getPositionLiquidity(uint256 tokenId) external view returns (uint128);\n    function getPoolAndPositionInfo(uint256 tokenId) external view returns (PoolKey memory, uint256);\n    function ownerOf(uint256 tokenId) external view returns (address);\n}\n\ninterface IPairV4Hook {\n    function authorizePool(PoolKey calldata key, address projectToken, address quoteToken) external;\n}\n\ninterface IPairV4Locker {\n    function registerPosition(\n        uint256 tokenId,\n        address projectToken,\n        address quoteToken,\n        bytes32 poolId,\n        address creator\n    ) external;\n}\n\n/// @notice Locker used only by launches created after the fee-conversion upgrade.\n/// @dev Kept separate from IPairV4Locker so existing permanent lockers retain\n/// their immutable registration ABI and behaviour.\ninterface IPairV4ConvertedFeeLocker is IPairV4Locker {\n    function launchpad() external view returns (address);\n    function positionManager() external view returns (address);\n    function permit2() external view returns (address);\n    function universalRouter() external view returns (address);\n    function protocolTreasury() external view returns (address);\n    function registerPositionWithAllocation(\n        uint256 tokenId,\n        address projectToken,\n        address quoteToken,\n        bytes32 poolId,\n        address creator,\n        uint16 allocationBps\n    ) external;\n    function finalizeProjectRegistration(address projectToken) external;\n}\n\n/// @notice Closed-policy V3 funding conversion and V4 project-swap coordinator.\ninterface IPairV4DeveloperBuyAdapter {\n    function launchpad() external view returns (address);\n    function poolManager() external view returns (address);\n    function universalRouter() external view returns (address);\n    function permit2() external view returns (address);\n    function swapRouter02() external view returns (address);\n    function isConfigured(address,address,address,address) external view returns (bool);\n    function executeWeighted(\n        address projectToken,\n        address payer,\n        address recipient,\n        address fundingToken,\n        uint8 mode,\n        uint256 amount,\n        uint256 limit,\n        uint256 maxProjectOut,\n        uint256 deadline,\n        uint256[5] calldata quoteCaps\n    ) external payable returns (uint256 amountIn, uint256 amountOut);\n}\n\n/// @notice Read-only subset used by the permissionless V5 secondary-market aggregator.\ninterface IPairV5LaunchPoolSource {\n    struct LaunchPool {\n        address quoteToken; uint16 weightBps; bytes32 poolId; uint256 positionId;\n        uint256 initialProjectTokenAmount; int24 tickLower; int24 tickUpper;\n        uint256 quoteUsdAtLaunchE8; address quotePriceFeed; uint8 quoteDecimals;\n    }\n    function poolManager() external view returns (address);\n    function universalRouter() external view returns (address);\n    function permit2() external view returns (address);\n    function pairHook() external view returns (address);\n    function getLaunchPoolCount(address projectToken) external view returns (uint256);\n    function getLaunchPool(address projectToken, uint256 index) external view returns (LaunchPool memory);\n}",
+      "keccak256": "0xd850e872e7a2d2d4395803de2e794da5d0e640981ef619b6e852e6add82c0722"
+    }
+  ],
+  "block": "0x44f59f6",
+  "reads": [
+    {
+      "method": "launchpad",
+      "params": [
+        {
+          "to": "0x9d7741776098aFA315e4D576ede4F2c67a21d8Ce",
+          "data": "0x02669b52"
+        },
+        "0x44f59f6"
+      ],
+      "response": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": "0x0000000000000000000000008660a7f019c7943b0b0a91b8e39aff3b6db6ae62"
+      }
+    },
+    {
+      "method": "poolManager",
+      "params": [
+        {
+          "to": "0x9d7741776098aFA315e4D576ede4F2c67a21d8Ce",
+          "data": "0xdc4c90d3"
+        },
+        "0x44f59f6"
+      ],
+      "response": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": "0x0000000000000000000000008366a39cc670b4001a1121b8f6a443a643e40951"
+      }
+    },
+    {
+      "method": "universalRouter",
+      "params": [
+        {
+          "to": "0x9d7741776098aFA315e4D576ede4F2c67a21d8Ce",
+          "data": "0x35a9e4df"
+        },
+        "0x44f59f6"
+      ],
+      "response": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": "0x0000000000000000000000008876789976decbfcbbbe364623c63652db8c0904"
+      }
+    },
+    {
+      "method": "permit2",
+      "params": [
+        {
+          "to": "0x9d7741776098aFA315e4D576ede4F2c67a21d8Ce",
+          "data": "0x12261ee7"
+        },
+        "0x44f59f6"
+      ],
+      "response": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": "0x000000000000000000000000000000000022d473030f116ddee9f6b43ac78ba3"
+      }
+    },
+    {
+      "method": "swapRouter02",
+      "params": [
+        {
+          "to": "0x9d7741776098aFA315e4D576ede4F2c67a21d8Ce",
+          "data": "0x7eaf1116"
+        },
+        "0x44f59f6"
+      ],
+      "response": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": "0x000000000000000000000000caf681a66d020601342297493863e78c959e5cb2"
+      }
+    },
+    {
+      "method": "weth",
+      "params": [
+        {
+          "to": "0x9d7741776098aFA315e4D576ede4F2c67a21d8Ce",
+          "data": "0x3fc8cef3"
+        },
+        "0x44f59f6"
+      ],
+      "response": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": "0x0000000000000000000000000bd7d308f8e1639fab988df18a8011f41eacad73"
+      }
+    },
+    {
+      "method": "usdg",
+      "params": [
+        {
+          "to": "0x9d7741776098aFA315e4D576ede4F2c67a21d8Ce",
+          "data": "0xf5b91b7b"
+        },
+        "0x44f59f6"
+      ],
+      "response": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": "0x0000000000000000000000005fc5360d0400a0fd4f2af552add042d716f1d168"
+      }
+    },
+    {
+      "method": "dependenciesConsistent",
+      "params": [
+        {
+          "to": "0x9d7741776098aFA315e4D576ede4F2c67a21d8Ce",
+          "data": "0xc682bd1f"
+        },
+        "0x44f59f6"
+      ],
+      "response": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": "0x0000000000000000000000000000000000000000000000000000000000000001"
+      }
+    }
+  ]
+}

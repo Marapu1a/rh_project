@@ -8,7 +8,7 @@
 | FeeRouter | TOKEN/USDG accounting, recipient credits, фиксированный PAIR source, атомарный rollover | Успешная rollover-транзакция — граница кампании; source epoch drift блокирует переход. [Отчёт](FEE_ROUTER_ROLLOVER_REPORT.md) |
 | PromoVault / DualControllerPromoVault | Free Short/Current/Next, funding, reserve/claimable, win/no-win, старые долги, immutable capabilities | Dual — USDG-only. Нет owner withdrawal и замены controllers. [Бухгалтерия](PROMO_VAULT_DESIGN.md), [архитектура](DUAL_CONTROLLER_ARCHITECTURE.md) |
 | ParticipantRegistry | Публичный opt-in без backdating | Не доказывает уникальность человека. [Модуль](PARTICIPANT_REGISTRY.md) |
-| Direct BUY | Узкий decoder, полный scan/replay с provenance, carry и nominal 100 USDG за entry | Не универсальный swap decoder и не daemon. [Границы](DIRECT_BUY_REPLAY.md) |
+| BUY replay | Direct USDG + отдельный PAIR V1 AUTO (1–2 legs), полный scan/replay, provenance, carry и nominal 100 USDG за entry | AUTO требует USDG funding и payer=recipient; public activation отсутствует. Не универсальный decoder/daemon. [Границы](DIRECT_BUY_REPLAY.md) |
 | Attempts / builders | OPEN/FROZEN/CONSUMED, независимые Short/Monthly epochs, v4, public verification | Snapshot truth не доказывается on-chain. [Lifecycle](ATTEMPT_LIFECYCLE.md), [trust](INDEXER_TRUST_MODEL.md) |
 | Short settlement | Dataset chunks, reserve при seal, один seed, bounded processing, canonical result, atomic finish/consume | Abstract core. [Dataset](SHORT_DATASET_PREPARATION.md), [epochs](SHORT_RULES_EPOCHS.md), [settlement](SHORT_SETTLEMENT.md) |
 | Monthly settlement | Chunks, один seed, выбор кандидата, Next/Current переходы, независимые epochs | Abstract core. [Модель](MONTHLY_RULES_EPOCHS.md) |

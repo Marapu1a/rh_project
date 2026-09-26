@@ -1,5 +1,6 @@
 // Pure, versioned decoder/replay. No DB, RPC, signing, floating point or winner selection.
 const {AbiCoder,Interface,keccak256,toUtf8Bytes,isAddress}=require('ethers');
+const AUTO=require('./pair-auto-buy.cjs');
 const coder=AbiCoder.defaultAbiCoder();
 const SWAP_ABI=new Interface(['event Swap(bytes32 indexed id,address indexed sender,int128 amount0,int128 amount1,uint160 sqrtPriceX96,uint128 liquidity,int24 tick,uint24 fee)']);
 const TRANSFER_ABI=new Interface(['event Transfer(address indexed from,address indexed to,uint256 value)']);
@@ -15,7 +16,7 @@ function canonical(value){
   return JSON.stringify(value);
 }
 function hash(value){return keccak256(toUtf8Bytes(canonical(value)));}
-const ROUTES=Object.freeze({'rh-ur-10-060b0e-v1':'0x10:0x060b0e','rh-ur-10-060c0f-v1':'0x10:0x060c0f','rh-ur-0a10-060b0e-v1':'0x0a10:0x060b0e'});
+const ROUTES=Object.freeze({'rh-ur-10-060b0e-v1':'0x10:0x060b0e','rh-ur-10-060c0f-v1':'0x10:0x060c0f','rh-ur-0a10-060b0e-v1':'0x0a10:0x060b0e',[AUTO.ID]:'auto'});
 const PERMIT_ROUTE='rh-ur-0a10-060b0e-v1';
 const PERMIT_TYPE='((address,uint160,uint48,uint48),address,uint256)';
 const PERMIT2=Object.freeze({address:'0x000000000022d473030f116ddee9f6b43ac78ba3',codeHash:'0x5208783f52488f7d3493e5e38311ab707c1d75457fe472a19b0b4d57d66a7fca'});
@@ -28,6 +29,7 @@ function routePolicy(m){
     const seen=new Set();
     for(const r of m.routes){
       ensure(Object.hasOwn(ROUTES,r.id)&&!seen.has(r.id),'Unknown/duplicate route');
+      if(r.id===AUTO.ID)ensure(AUTO.validProfile(m)&&m.codeHashes?.router===ROUTER_HASH,'Unsupported AUTO profile');
       if(r.id===PERMIT_ROUTE)ensure(m.codeHashes?.router===ROUTER_HASH,'Unsupported Permit2 router runtime');
       ensure(typeof r.fromBlock==='number'&&Number.isSafeInteger(r.fromBlock)&&r.fromBlock>=0,'Invalid activation block');
       seen.add(r.id);
@@ -41,14 +43,17 @@ function routePolicy(m){
 // Historical cutoffs before activation must not acquire the new dependency.
 function routeDependencies(input,height){
   const m=buyPolicyHistory(input).at(number(height));
-  return routePolicy(m).some(r=>r.id===PERMIT_ROUTE&&r.fromBlock<=number(height))?[PERMIT2]:[];
+  const active=routePolicy(m).filter(r=>r.fromBlock<=number(height));
+  return [...(active.some(r=>r.id===PERMIT_ROUTE||r.id===AUTO.ID)?[PERMIT2]:[]),...(active.some(r=>r.id===AUTO.ID)?[{address:AUTO.ADDRESS,codeHash:AUTO.CODE_HASH}]:[])];
 }
 function validateManifest(m){
   routePolicy(m);
   ensure(m.quoteDecimals===6&&m.entryThresholdRaw==='100000000','Expected 100 nominal USDG (6 decimals)');
   for(const field of ['router','manager','token','quote','registry','hook'])ensure(isAddress(m[field]),'Invalid '+field);
   ensure(low(m.token)!==low(m.quote),'Identical assets');
-  ensure(m.poolKey.length===5,'Invalid pool key');
+  const autoOnly=routePolicy(m).every(r=>r.id===AUTO.ID);
+  if(autoOnly&&m.poolKey===undefined&&m.poolId===undefined){number(m.chainId);number(m.anchor.number);return;}
+  ensure(Array.isArray(m.poolKey)&&m.poolKey.length===5,'Invalid pool key');
   const key=m.poolKey;
   ensure(BigInt(key[0])<BigInt(key[1]),'Unsorted currencies');
   ensure(key.slice(0,2).map(low).sort().join() === [m.token,m.quote].map(low).sort().join(),'Wrong pool assets');
@@ -103,6 +108,10 @@ function swapLogs(m,receipt){
     .map(log=>({log,swap:SWAP_ABI.parseLog(log).args}));
 }
 function decodeTransaction(m,tx,receipt){
+  const auto=m.routes?.find(r=>r.id===AUTO.ID);
+  if(auto&&number(tx.blockNumber)>=auto.fromBlock&&tx.to&&low(tx.to)===AUTO.ADDRESS)
+    return AUTO.decode(m,tx,receipt,{SWAP_ABI,TRANSFER_ABI});
+  if(m.poolId===undefined)return [];
   const all=swapLogs(m,receipt);
   return all.filter(x=>low(x.swap.id)===low(m.poolId)).map(({log,swap})=>{
     const base={candidateId:[m.chainId,low(log.blockHash),low(log.transactionHash),number(log.logIndex)].join(':'),

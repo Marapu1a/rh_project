@@ -1,5 +1,6 @@
 const fs=require('node:fs');
 const {keccak256}=require('ethers');
+const AUTO=require('./pair-auto-buy.cjs');
 const {replay,canonical,hash,validateManifest,buyPolicyHistory,routeDependencies}=require('./direct-buy.cjs');
 
 // Independent reader: fetch whole blocks and every receipt, not an operator BUY list.
@@ -37,7 +38,13 @@ async function scan(input,rpcUrl,toBlock,lifecycle=null){
   for(let n=BigInt(manifest.anchor.number)+1n;n<=BigInt(toBlock);n++){
     const block=await rpc('eth_getBlockByNumber',[tag(n),true]);
     const transactions=[];
-    for(const tx of block.transactions)transactions.push({tx,receipt:await rpc('eth_getTransactionReceipt',[tx.hash])});
+    for(const tx of block.transactions){
+      if(tx.to?.toLowerCase()===AUTO.ADDRESS&&routeDependencies(input,n).some(d=>d.address===AUTO.ADDRESS)){
+        const code=await rpc('eth_getCode',[AUTO.ADDRESS,tag(n)]);
+        if(code==='0x'||keccak256(code)!==AUTO.CODE_HASH)throw Error('Unexpected historical AUTO runtime');
+      }
+      transactions.push({tx,receipt:await rpc('eth_getTransactionReceipt',[tx.hash])});
+    }
     blocks.push({number:block.number,hash:block.hash,parentHash:block.parentHash,timestamp:block.timestamp,transactions});
   }
   if((await rpc('eth_getBlockByNumber',[tag(toBlock),false])).hash!==head.hash)throw Error('Chain changed during scan; retry canonical range');
