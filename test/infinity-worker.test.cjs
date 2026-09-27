@@ -73,6 +73,22 @@ test('Infinity worker transient source read and failed recipient do not suppress
  const r=await runInfinityWorker({...f.options,collector:wrapped});assert.equal(r.status,'degraded');assert.deepEqual(r.failures.map(x=>x.reason),['sourceReadUnavailable','payRejected']);
  assert.equal(await f.quote.balanceOf(await f.owner.getAddress()),10n);assert.equal(await f.c.credit(f.promo.target),10n);
 });
+test('Infinity worker stops on deficit arising at estimate of the last recipient pay',async()=>{
+ const f=await fixture([0,0,10000]);await f.fund(20);await send(f.c.pull());
+ await send(f.quote.blockRecipient('0x0000000000000000000000000000000000000001'));
+ const real=f.c.connect(f.keeper),reader=f.c.connect(f.provider);let estimates=0;
+ const pay=async(...args)=>real.pay(...args);
+ pay.fragment=real.pay.fragment;pay.populateTransaction=real.pay.populateTransaction;
+ pay.estimateGas=async(...args)=>{estimates++;await send(f.quote.burn(f.c.target,1));return real.pay.estimateGas(...args);};
+ const wrapped=new Proxy(reader,{get(t,k){if(k==='connect')return ()=>({pull:real.pull,pay});return Reflect.get(t,k);}});
+ const nonce=await f.provider.getTransactionCount(await f.keeper.getAddress());
+ const r=await runInfinityWorker({...f.options,collector:wrapped});
+ assert.equal(estimates,1);assert.equal(r.status,'error');assert.match(r.error.message,/Collector balance deficit/);
+ assert.deepEqual(r.steps,[]);assert.deepEqual(r.failures,[]);assert(!fs.existsSync(f.options.statePath));
+ assert.equal(await f.provider.getTransactionCount(await f.keeper.getAddress()),nonce);
+ assert.equal(await f.c.credit(await f.other.getAddress()),20n);assert.equal(await f.c.accounted(),20n);
+ assert.equal(await f.quote.balanceOf(f.c.target),19n);
+});
 test('Infinity worker CLI rejects public RPC and duplicate arguments before signing',()=>{
  const {spawnSync}=require('node:child_process');
  for(const args of [['--job','unused','--state','unused','--rpc','https://pair.fund'],['--job','a','--job','b']]){

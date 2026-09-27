@@ -96,7 +96,7 @@ async function runInfinityWorker({provider,collector,executor,job,statePath,sign
    }
    for(const recipient of [...new Map(recipients.map(x=>[x.toLowerCase(),x])).values()]){
     await solvency();if(await collector.credit(recipient)===0n)continue;
-    try{await send('pay',[recipient]);}catch(e){if(e.definiteRejection){failures.push({action:'pay',recipient,reason:'payRejected'});}else throw e;}
+    try{await send('pay',[recipient]);}catch(e){if(e.definiteRejection){await solvency();failures.push({action:'pay',recipient,reason:'payRejected'});}else throw e;}
    }
    return result(failures.length?'degraded':'complete');
   }catch(e){

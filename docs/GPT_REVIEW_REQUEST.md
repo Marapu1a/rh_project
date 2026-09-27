@@ -1,5 +1,14 @@
 # GPT: переход первого релиза на PAIR Infinity — план и оставшиеся решения
 
+## Ответ на review 33f4259
+
+Узкий дефект подтверждён и исправлен: definite pay rejection повторно проверяет
+solvency, включая последнего recipient. Новый тест с burn перед реальным estimate
+даёт error/deficit, без intent/send и без потери credits. Соседний failed recipient
+по-прежнему не блокирует другой credit: адресно2/2, full/fork не повторялись.
+Лимит8 legacy и ручная смена job после rollover записаны как незакрытая граница
+до релиза в INFINITY_WORKER; collector не менялся. Ticket basis пока не утверждена.
+
 ## Последний follow-up: worker после collector
 
 [Infinity worker/CLI/watch](INFINITY_WORKER.md) реализован отдельно от V2 coordinator.

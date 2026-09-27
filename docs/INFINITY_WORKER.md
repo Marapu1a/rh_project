@@ -22,7 +22,9 @@ sendLocalTransaction/withTransactionBoundary и runWatch.
 Static pull исполняет тот же contract source check, включая обе policy/counters.
 Source drift, definite pull rejection или временная source read error дают degraded
 pass: нового учёта нет, старые credits всё ещё выплачиваются. Ошибка одного pay с
-доказанным revert не мешает остальным. Deficit блокирует весь проход. Unknown send
+доказанным revert не мешает остальным только после повторной проверки solvency.
+Дефицит, возникший между precheck и estimate последнего pay, возвращает error,
+а не payRejected/degraded. Deficit блокирует весь проход. Unknown send
 всегда останавливает последующие действия. Callback/onStep error не считается
 безопасным основанием повторно отправить транзакцию.
 
@@ -31,6 +33,13 @@ Worker не делает rollover и не изменяет bps/recipients. По�
 при существующем state identity отвергается: сначала завершить pending на старой
 конфигурации, затем явно создать новый state для нового job. Не удалять pending state
 ради обхода блокировки. Автоматическая миграция job/history в этом пакете не добавлена.
+
+Лимит восьми legacy witnesses не ограничивает сохранность on-chain credits, но
+не гарантирует автоматическую выплату всем историческим получателям. Прямой pay
+остаётся доступен. До релиза нужны ограниченный обход долгов с durable cursor
+и безопасное обновление job после rollover либо явно проверяемое ограничение
+набора получателей. Ни один из вариантов пока не реализован; watch не является
+непрерывной production автоматизацией через произвольное число campaigns.
 
 ## Gas и надёжность
 
@@ -104,3 +113,12 @@ Fork381upstream requests/6retries/0errors. 100% Promo — fixture, не producti
 Следующий продуктовый пакет — Infinity BUY decoder и новый genesis без registration,
 после отдельного решения о базе100USDG/entry. Worker не создаёт билеты и не доказывает
 готовность RNG/draw/payout.
+
+### Исправление после review 27.09
+
+Повторная solvency после definite pay rejection: адресно **2/2**, включая новый
+реальный burn между precheck и estimate последнего recipient и соседний сценарий
+source timeout/failed recipient с успешной выплатой другому адресу.
+Команда: `node -e "require('./scripts/test-launcher.cjs').runTests({profile:'infinity-worker-review',pattern:'last recipient|transient source read',selection:{compile:true,files:['test/infinity-worker.test.cjs']}}).then(r=>process.exitCode=r.exitCode)"`.
+24.54s с одной компиляцией; `.local/logs/test-run-Ev7smF/result.json`.
+Контракты не менялись; full suite и новый fork для этой правки не запускались.
