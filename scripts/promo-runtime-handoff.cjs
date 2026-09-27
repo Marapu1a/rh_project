@@ -11,6 +11,8 @@ function physical(file){
 }
 async function handoffRuntime(previous,next,{afterRetire=async()=>{}}={}){
  const old=await prepareRuntime(previous),fresh=await prepareRuntime(next);
+ check(!previous.deploymentProfile||next.deploymentProfile,'Handoff cannot remove deployment profile');
+ if(next.deploymentProfile){const admission=await require('./deployment-admission.cjs').inspectDeployment(next.provider,next.deploymentProfile,next);check(admission.status==='matched','Successor deployment admission failed: '+admission.reasons.join(','));}
  check(!old.dual||fresh.dual,'Handoff cannot disable Monthly automation');
  check(previous.provider===next.provider&&same(old.sender,fresh.sender),'Handoff must preserve provider and signer');
  check(previous.rpcUrl===next.rpcUrl,'Handoff must preserve RPC');
