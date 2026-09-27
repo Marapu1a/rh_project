@@ -73,6 +73,8 @@ async function stepMonthly({provider,source,job,publisher,executor,gasPrice,sign
   if(m.phase===2n){
     if(!executor)return wait('executor');
     if(!await source.executionReady({gasPrice:price}))return wait('executionReadiness');
+    const rng=await require('./drand-preflight.cjs').drandPreflight(provider,source);
+    if(rng&&rng.status!=='observedHealthy')return wait('rng:'+rng.reasons.join(','));
     try{await source.connect(executor).sealMonth.staticCall(r.drawId,{gasPrice:price});}
     catch(error){
       if(error.data===ethers.id('NextStartNotReady()').slice(0,10))return wait('nextStartFunding');

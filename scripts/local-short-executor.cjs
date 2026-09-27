@@ -82,6 +82,8 @@ async function stepShort({provider,source,job,publisher,executor,gasPrice,signal
   if(p.status===2n){
     if(!executor)return wait('executor');
     if(!await source.executionReady({gasPrice:price}))return wait('executionReadiness');
+    const rng=await require('./drand-preflight.cjs').drandPreflight(provider,source);
+    if(rng&&rng.status!=='observedHealthy')return wait('rng:'+rng.reasons.join(','));
     // Simulate the actual reserve, including recognition of direct USDG funding.
     try{await source.connect(executor).seal.staticCall(job.proposalId,{gasPrice:price});}
     catch(error){

@@ -1,56 +1,49 @@
-# GPT: Infinity BUY → автоматические билеты → dataset
+# GPT: Drand adapter и операционная граница свежести
 
-27.09.2026. Просим независимое review законченного пакета. Ваш ответ — вспомогательный
-материал; продуктовые решения определяет владелец. Ответ оставляйте в GPT_REVIEW_RESPONSE.md.
+27.09.2026. Владелец прямо принял: для MVP worker проверяет свежесть/состояние сети,
+при сомнениях откладывает новый draw; это НЕ on-chain гарантия finality. Один
+round/result без reroll. Конкретные lead/thresholds и публичный deployment не утверждены.
 
-## Что принято владельцем
+## Пакет для review
 
-Первый релиз PAIR Infinity, creator fee3%. Для нового deployment участие без регистрации.
-100 nominal USDG фактических расходов покупателя (fees включены, refunds вычтены)
-дают entry; carry сохраняется. SELL не создаёт и не отменяет entries. Неоднозначные
-маршруты не засчитываем. Старую V2 историю и snapshots не переопределяем.
-Внутренние доли creator revenue всё ещё не утверждены.
+[DRAND_ADAPTER](DRAND_ADAPTER.md) — API, assumptions, source pins, проверки.
+`contracts/DrandRandomAdapter.sol` реализует прежний asynchronous transport:
+immutable два consumer, request(context) атомарен с seal, pinned evmnet BLS,
+раздельные permissionless prove/deliver, повтор успешной доставки no-op,
+callback revert сохраняет proof. Нет owner, отмены/замены round, prize custody,
+withdraw или платы провайдеру. Gas prove/deliver всё равно оплачивается executor.
 
-## Что реализовано
+Worker preflight проверяет chain timestamps/latest/finalized, BLS свежего beacon,
+наблюдаемый запас; проблемы → wait перед freeze. Уже frozen draws не получают
+новый target. Проверка не препятствует прямому permissionless seal в обход worker;
+это явно записанная граница, а не криптографическая гарантия свежести.
 
-- Новый `scripts/infinity-buy.cjs`: отдельная schema/adapter version, pinned runtime
-  adapter/manager/hook, один TOKEN/USDG pool, direct executeExactInput.
-- Проверяем payer=recipient=tx.from, canonical calldata/pool/direction/limits,
-  receipt Swap и settlement transfers. USDG максимум не становится объёмом:
-  refunds из settlement/adapter вычитаются. TOKEN delivery совпадает с pool output.
-- В `direct-buy` automatic только для новой schema. Прежняя registration semantics
-  сохранена. Поле grossQuoteRaw по совместимости содержит net debit только в новой
-  policy, рядом явные netQuoteDebitRaw/refundQuoteRaw/poolQuoteRaw/quoteBasis.
-- BuyPolicySource закрепляет новую genesis; штатный admission и полный block scan.
-  Historical runtime проверяется для Infinity каждого блока. Неизвестное расширение
-  требует обновлённого decoder после activation, не silent acceptance.
-- Старый registry остаётся immutable deployment-domain binding контроллеров, но
-  register() не нужен и регистрационные события не влияют на новые entries.
-  Контракты и призовая математика не менялись; никаких новых контрактных заглушек.
+## Evidence и ограничения
 
-## Доказательства
+Adapter+timing6/6; preflight дополнен и прошёл1/1; integration Short/Monthly→real
+historical signature→settlement→claim1/1; no-win1/1; соседний scheduler1/1.
+Integration сначала падал на неверных тестовых настройках100% и времени до schedule;
+исправлены только fixtures. Новые сценарии запускались адресно с reuse compiled
+artifact. Единого full baseline нет, новый fork не запускали.
 
-[Модуль](INFINITY_BUY.md), [fork evidence](../research/infinity-source-audit/entries-fork-2026-09-27.json).
-Новый local31337 fork реальных PAIR contracts: две покупки с maximum110USDG,
-refund6.70 каждая → 2entries+6.60carry без register → admission → RPC scan →
-scheduler saveJob/begin/publish. Независимый buildFromHistory совпадает с artifact,
-повторная доставка блоков не удваивает entries. Прошли43/43 pure BUY/lifecycle tests
-и отдельно2/2 saved evidence. Full suite не запускали.
+Runtime adapter10957bytes, local prove214696gas/deliver86794gas на consumer fixture;
+это не полный gas budget draws. BLS vendor скопирован byte-identical с MIT license
+из прежней проверенной research версии; источник/commit/SHA сохранены.
 
-Fork draw vault отдельно пополнен100USDG из искусственно funded buyer; это не
-заявление, что две покупки финансируют100USDG призов. RNG — существующий fixture,
-вероятности/weights fixture; случайность, seal/settlement/payout здесь не проверены.
-Runtime hashes не доказывают отсутствие изменений implementation за proxy.
-Production finality/admission, incremental service и единый coordinator впереди.
+В controller integration synthetic participants, MockToken, historical time, test
+вероятности; не Infinity scan и не live drand round. Контроллеры остаются31337.
+Production randomness core есть, но доставка пока тестом/permissionless API:
+постоянного relayer ещё нет. Следующий пакет — existing journal/gas/known-hash
+recovery + exact-round fetch/prove/deliver worker, затем единый Infinity→RNG→payout.
 
 ## Вопросы
 
-1. Не допускает ли net debit attribution лишнего объёма через refunds/transfers,
-   смешение плательщика и получателя или неоднозначные receipts в этом узком маршруте?
-2. Нет ли протекания automatic semantics в старую V2 историю/commitments?
-3. Достаточно ли сохраняется boundary genesis → admission → full scan → dataset?
-4. Следующий пакет видим как выбор/подключение production RNG и затем сквозной
-   цикл до выплаты. Есть ли конкретный blocker, который нужно закрыть раньше?
+1. Есть ли конкретная возможность заменить request/round/context/seed либо повторить payout?
+2. Корректны ли proof-cache и callback-revert/reentrancy границы?
+3. Не выдаём ли операционную readiness за on-chain защиту или уже production готовность?
+4. Какие именно проверки нужны следующему delivery worker, чтобы не плодить второй
+   journal и не блокировать старые proven requests из-за проблем новых freeze?
 
-Не расширяем охват до всех router forms и не обещаем всем владельцам TOKEN билеты.
-Просьба отделить подтверждённые дефекты от будущих эксплуатационных ограничений.
+OpenVRF рассмотрен, но не импортирован: upstream9fb960c использует2–4s fast mode,
+не решающий наше finality допущение, плюс дополнительные owner/authorization.
+Не предлагаем новый общий RNG framework или fallback seed.

@@ -1,0 +1,60 @@
+{
+  "schema": "rng-timing-observation-v1",
+  "observedAt": "2026-09-27T10:56:02.677Z",
+  "rpcUrl": "https://robinhood-mainnet-rpc.blockreq.com/v1/rpc/public",
+  "chainId": {
+    "startedAt": "2026-09-27T10:56:01.509Z",
+    "finishedAt": "2026-09-27T10:56:02.013Z",
+    "value": "0x1237"
+  },
+  "latest": {
+    "startedAt": "2026-09-27T10:56:01.536Z",
+    "finishedAt": "2026-09-27T10:56:02.033Z",
+    "value": {
+      "number": "0x4675ee4",
+      "hash": "0x6b43658c3873db8b46ade092fea2c521c79c6f934aae983dc3bbf21593400894",
+      "timestamp": "0x6ab8f642"
+    }
+  },
+  "safe": {
+    "startedAt": "2026-09-27T10:56:01.537Z",
+    "error": "public endpoint cannot serve this request. Register at blockreq.com for full access."
+  },
+  "finalized": {
+    "startedAt": "2026-09-27T10:56:01.537Z",
+    "finishedAt": "2026-09-27T10:56:02.048Z",
+    "value": {
+      "number": "0x4673291",
+      "hash": "0x1a55ef4c8c034ea43cab515e38f08c11dfa23a0acc62ccd8e5c9ffbcc01fec7c",
+      "timestamp": "0x6ab8f1c8"
+    }
+  },
+  "drand": {
+    "chainHash": "04f1e9062b8a81f848fded9c12306733282b2727ecced50032187751166ec8c3",
+    "info": {
+      "startedAt": "2026-09-27T10:56:01.538Z",
+      "finishedAt": "2026-09-27T10:56:02.677Z",
+      "value": {
+        "public_key": "07e1d1d335df83fa98462005690372c643340060d205306a9aa8106b6bd0b3820557ec32c2ad488e4d4f6008f89a346f18492092ccc0d594610de2732c8b808f0095685ae3a85ba243747b1b2f426049010f6b73a0cf1d389351d5aaaa1047f6297d3a4f9749b33eb2d904c9d9ebf17224150ddd7abd7567a9bec6c74480ee0b",
+        "period": 3,
+        "genesis_time": 1727521075,
+        "hash": "04f1e9062b8a81f848fded9c12306733282b2727ecced50032187751166ec8c3",
+        "groupHash": "cd7ad2f0e0cce5d8c288f2dd016ffe7bc8dc88dbb229b3da2b6ad736490dfed6",
+        "schemeID": "bls-bn254-unchained-on-g1",
+        "metadata": {
+          "beaconID": "evmnet"
+        }
+      }
+    },
+    "beacon": {
+      "startedAt": "2026-09-27T10:56:01.550Z",
+      "finishedAt": "2026-09-27T10:56:02.664Z",
+      "value": {
+        "round": 20995163,
+        "randomness": "9dd6830e8471fa2ca3d63fb10c2b87c398fa782216958eb7a9590b9ccc4a8918",
+        "signature": "04cb1cd199678180b2bf23c68b79d082f98314657a0931534000782d07d6632b053749aa11abc8662393812b11477c55fc227052582c51e4a8062f8a028ff5b5"
+      }
+    }
+  },
+  "limitation": "One RPC/HTTP snapshot, unverified beacon and non-atomic heads; not freshness enforcement, consensus proof, latency SLA or permission to freeze."
+}

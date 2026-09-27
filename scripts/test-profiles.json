@@ -50,7 +50,9 @@
       "test/review-runner.test.cjs",
       "test/test-launcher.test.cjs",
       "test/local-rpc-watch.test.cjs",
-      "test/pair-source-health.test.cjs"
+      "test/pair-source-health.test.cjs",
+      "test/drand-adapter.test.cjs",
+      "test/drand-timing-readiness.test.cjs"
     ]
   },
   "accounting": {
@@ -67,7 +69,9 @@
       "test/local-usdg-funding.test.cjs",
       "test/local-prize-converter.test.cjs",
       "test/short-conversion-trigger.test.cjs",
-      "test/local-prize-flow.test.cjs"
+      "test/local-prize-flow.test.cjs",
+      "test/drand-adapter.test.cjs",
+      "test/drand-timing-readiness.test.cjs"
     ]
   },
   "short": {
@@ -171,6 +175,13 @@
     "files": [
       "test/local-rpc-watch.test.cjs",
       "test/pair-source-health.test.cjs"
+    ]
+  },
+  "drand": {
+    "compile": true,
+    "files": [
+      "test/drand-adapter.test.cjs",
+      "test/drand-timing-readiness.test.cjs"
     ]
   }
 }

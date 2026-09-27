@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-/// Local asynchronous transport, NOT the final drand adapter API.
+/// Asynchronous transport retained for local controllers and DrandRandomAdapter.
+/// ready() is structural readiness, never a proof of network freshness/finality.
 /// request must return a unique nonzero key and must not deliver synchronously.
 /// The controller permanently binds the returned key to one draw/context.
 interface ILocalRandom {

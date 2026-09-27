@@ -196,3 +196,5 @@ existing durable journal/locks, legacy witnesses, source lane isolation, gas/nat
 Fork worker автоматически funded GENERAL; mainnet/coordinator/shared budget ещё отдельно.
 
 27.09: `scripts/infinity-buy.cjs` — новый exact-input decoder/net debit; `direct-buy.cjs` — explicit automatic genesis. `replay-direct-buy.cjs` проверяет historical Infinity runtime; `buy-policy-format.cjs` знает genesis adapter id. `infinity-buy-integration.cjs` + fork `--entries`: actual refunded BUY → admission → scheduler begin/publish. Тесты `infinity-buy*.test.cjs`; [границы](INFINITY_BUY.md). Контракты не менялись.
+
+27.09: `DrandRandomAdapter.sol` + pinned `contracts/vendor/drand`: real BLS request/prove/deliver без owner. `drand-preflight.cjs`/`drand-timing-readiness.cjs` подключены к Short/Monthly workers перед freeze; ready не доказывает finality. `rng-timing-observe.cjs` read-only. `drand-adapter.test.cjs` проверяет оба local controllers, claim и no-win с historical proof. [Детали и раздельные результаты](DRAND_ADAPTER.md). Автоматический delivery executor ещё не добавлен.

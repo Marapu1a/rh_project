@@ -7,7 +7,7 @@ const rpc=(method,params=[])=>hre.network.provider.send(method,params);
 const sent=async tx=>(await tx).wait();
 async function advance(seconds=6*3600+1){await rpc('evm_increaseTime',[seconds]);await rpc('evm_mine');}
 
-async function fixture(compiled,{quoteName='MockToken',rules=normalRules,weights=[7,5,3]}={}){
+async function fixture(compiled,{quoteName='MockToken',rules=normalRules,weights=[7,5,3],drandTiming=null}={}){
   await rpc('hardhat_reset');
   const anchor=await rpc('eth_getBlockByNumber',['latest',false]);
   const provider=new ethers.BrowserProvider(hre.network.provider,undefined,{cacheTimeout:-1});
@@ -17,7 +17,8 @@ async function fixture(compiled,{quoteName='MockToken',rules=normalRules,weights
     await c.waitForDeployment();return c;
   }
   const token=await deploy('MockToken'),quote=await deploy(quoteName),registry=await deploy('ParticipantRegistry');
-  const random=await deploy('LocalRandomFixture');
+  const nonce=await provider.getTransactionCount(owner);
+  const random=drandTiming?await deploy('DrandRandomAdapter',[ethers.getCreateAddress({from:owner,nonce:nonce+1}),ethers.getCreateAddress({from:owner,nonce:nonce+2}),drandTiming]):await deploy('LocalRandomFixture');
   const predicted=ethers.getCreateAddress({from:owner,nonce:await provider.getTransactionCount(owner)+2});
   const setup={vault:predicted,registry:registry.target,instance:ethers.id('local short'),governor:owner,
     publisher:owner,provider:random.target,notice:3600,cutoffDelayBlocks:1,maxGasPrice:10n**12n,nativeFloor:10};

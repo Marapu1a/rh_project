@@ -5,7 +5,7 @@ function compile({sourceOverrides = {}, writeArtifacts = true} = {}) {
   if(Object.keys(sourceOverrides).length===0){const artifact=readArtifact();if(artifact){audit('reuse');return artifact;}}
   const solc=require('solc');
   const sources = {};
-  for (const dir of ['contracts', 'test/contracts']) {
+  for (const dir of ['contracts', 'contracts/vendor/drand', 'test/contracts']) {
     if (!fs.existsSync(dir)) continue;
     for (const name of fs.readdirSync(dir)) {
       if (name.endsWith('.sol')) sources[`${dir}/${name}`] = {content: fs.readFileSync(`${dir}/${name}`, 'utf8')};

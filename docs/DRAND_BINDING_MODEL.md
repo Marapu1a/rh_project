@@ -1,5 +1,7 @@
 # Drand timing/binding: локальная модель и контрпримеры
 
+**Статус 27.09:** владелец принял явные operational assumptions. [Adapter и worker preflight](DRAND_ADAPTER.md) реализованы; контрпримеры ниже остаются ограничениями модели, не опровергнуты.
+
 18.09.2026. **Исследование на JavaScript, не Solidity integration.** Контроллеры,
 казна, production policy и drand verifier не менялись. Beacon verifier в модели —
 детерминированная заглушка: один допустимый seed на round, включая zero. Это не BLS.
