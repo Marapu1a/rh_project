@@ -1,5 +1,7 @@
 # План разработки
 
+27.09: [Infinity→Short→USDG fork](INFINITY_PAYOUT_PROOF.md) complete. Комиссии11.934252USDG → тот же vault →2entries → live drand → выплата2.333331USDG; остаток9.600921, Monthly attempts сохранены. Исправлен поиск публикаций с блока0: теперь cutoff+1. Regression2/2, соседний Short/Monthly1/1, saved evidence4/4; не full. Явный test-only constructor clock override и lead60s, не production timing/bytecode proof. Далее общий coordinator/budget и Monthly e2e.
+
 27.09: [Drand delivery worker](DRAND_DELIVERY_WORKER.md) реализован: автоматическое обнаружение Short/Monthly requests, exact-round proof, отдельный retry callback, journal/reconciliation и gas wait. Missing PROFILE разрешён только pinned LocalRandomFixture на31337. Адресно worker9/9, CLI2/2, соседний preflight1/1; не full/fork. Следующий пакет — единый Infinity funding/BUY→drand→settlement→USDG claim прогон. Worker пока local-only; timing параметры и production admission остаются открытыми.
 
 27.09: [Drand adapter + pre-freeze check](DRAND_ADAPTER.md) реализованы. Владелец принял операционное доверие к свежести/finality, без контрактной гарантии. Реальная BLS подпись, immutable round/context, permissionless prove/deliver, retry без reroll. Локально оба контроллера прошли settlement/claim и отдельный no-win; адресные проверки, не full/fork. Следующий пакет — автоматический journaled prove/deliver worker, затем общий Infinity→RNG→payout прогон. Timing значения пока тестовые кандидаты.

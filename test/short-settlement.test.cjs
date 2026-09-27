@@ -72,6 +72,7 @@ test('partial admission across chunks ignores unused candidates and awards a ran
 
 test('public calldata recovery resumes after interruption; ordered authenticated chunks only',async()=>{
   const f=await fixture(),r=await f.request(),{pid,chunks}=await f.prepare(r);
+  const source=f.source;f.source=new Proxy(source,{get(target,key){if(key==='queryFilter')return (filter,from,to)=>{assert(from>r.cutoffBlockNumber,'RPC refuses pre-cutoff log history');return target.queryFilter(filter,from,to);};return Reflect.get(target,key);}});
   assert.equal((await model.recover(f.provider,f.source,r.drawId)).nextAction,'waitSeed');
   await rejected(()=>f.source.connect(f.other).supplySeed(r.drawId,ethers.ZeroHash));
   await rejected(()=>f.source.processShort(r.drawId,0,chunks[0]));

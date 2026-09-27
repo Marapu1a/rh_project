@@ -54,7 +54,8 @@
       "test/drand-adapter.test.cjs",
       "test/drand-timing-readiness.test.cjs",
       "test/drand-delivery-worker.test.cjs",
-      "test/drand-delivery-cli.test.cjs"
+      "test/drand-delivery-cli.test.cjs",
+      "test/infinity-payout-evidence.test.cjs"
     ]
   },
   "accounting": {
@@ -115,7 +116,8 @@
       "test/attempt-lifecycle-events.test.cjs",
       "test/attempt-lifecycle-dual.test.cjs",
       "test/monthly-replay.test.cjs",
-      "test/nitro-blocks.test.cjs"
+      "test/nitro-blocks.test.cjs",
+      "test/infinity-payout-evidence.test.cjs"
     ]
   },
   "coordinator": {

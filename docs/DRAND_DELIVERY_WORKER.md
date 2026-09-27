@@ -70,3 +70,5 @@ Infinity funding/BUY → freeze → этот worker → settlement → USDG clai
 Нужно затем объединить исполнение и бюджет, закрыть production keys/admission,
 утвердить timing параметры. Часы/RPC finality остаются операционным доверием,
 глубокий reorg и невыпуск round не исправляются reroll. См. [adapter](DRAND_ADAPTER.md).
+
+27.09: совместный [Infinity→Short→USDG прогон](INFINITY_PAYOUT_PROOF.md) выполнен. Реальные fork fees финансируют этот же vault; live drand worker и claim проверены. Ускорение часов конструктора/тестовые odds и lead описаны отдельно; Monthly draw и непрерывный coordinator не заявлены.

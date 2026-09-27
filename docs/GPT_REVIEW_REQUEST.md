@@ -1,39 +1,49 @@
-# Review: drand delivery worker
+# Review: Infinity → Short → USDG fork
 
-27.09.2026. Пакет после review `3d3be32`, база реализации `352305b`.
+27.09.2026. После `03eb41e` выполнили общий денежный путь, а не отдельные fixtures.
+[Результаты и ограничения](INFINITY_PAYOUT_PROOF.md).
 
-Автоматическая доставка frozen Short/Monthly requests: обнаружение pending draw,
-проверка bindings/context/runtime pins, exact-round HTTP, BLS eth_call перед газом,
-раздельные prove/deliver. Уже proven seed доставляется без HTTP и pre-freeze gate.
-Нет reroll/reset. Solidity и призовая математика не менялись.
+Один новый Infinity TOKEN/USDG, creator fee3%, один collector и один draw vault.
+Реальные fork BUY/SELL fees11.934252USDG поступили в резервы; внешнего prize top-up нет.
+Две покупки после genesis дали2entries+6.60carry без регистрации. Scheduler выполнил
+saveJob/begin/publish/seal. После freeze дождались реальной подписи закреплённого
+round20996227; обычный drand worker сделал prove/deliver. Scheduler process/finish,
+затем harness claim:2.333331USDG победителю,9.600921 осталось в vault. Current/Next
+не изменились, Short attempts погашены, Monthly2open. Повторный claim отклонён,
+funding/delivery rerun0tx. Final replay из сохранённых полных блоков совпадает.
 
-Использованы existing journal/lock/receipt/watch. Known hash сверяется до новых
-отправок; unknown hash блокирует проход. Beacon outage и определённый callback revert
-изолированы по запросу. Gas/native shortage → waiting, prize USDG не используется.
-Missing PROFILE теперь допускается только для pinned LocalRandomFixture на31337.
-Unknown runtime/public chain отклоняются.
+## Найденный дефект
 
-[Модель, запуск, результаты](DRAND_DELIVERY_WORKER.md).
-Код: `scripts/drand-delivery-worker.cjs`, `scripts/run-drand-delivery.cjs`,
-`scripts/drand-preflight.cjs`. Worker9/9, CLI2/2, соседний pre-freeze1/1;
-раздельные адресные результаты, не full suite. Нет нового fork/live прогона.
-Реальные local controllers/historical BLS proof; callback isolation нового worker
-использует injected estimate revert. Реальный callback revert покрыт прежним adapter test.
+Publication verification Short/Monthly и Short recovery запрашивали events с блока0.
+Fork уходил за логами всей сети в upstream, который отказал. Исправлено на cutoff+1:
+публикации по контракту возможны только после cutoff. Root/calldata/order/count checks
+сохранены. Две регрессии запрещают старую историю; обе прошли на обычном bytecode.
+Соседний local-buy-cycle1/1 прошёл оба контроллера, win/no-win, replay и claims.
+Saved evidence4/4 (2новых+2старых). Full suite не запускался.
 
-Пользователь принял операционное доверие к часам/RPC finality, без контрактной гарантии.
-Timing числа пока тестовые кандидаты. Worker только31337/loopback, отдельный signer/state.
-Shared nonce/budget и публичный deployment ещё не готовы. Невыпуск round не разрешает reroll.
+## Не скрываем допущения
 
-Просьба проверить:
+Исторические headers доступны, но полноценный fork state за8часов — нет на проверенных
+public RPC. Поэтому быстрый harness компилирует in-memory override только двух
+начальных constructor timestamps ShortRulesEpochs (−21601s). Solidity-файлы не менялись,
+но Short runtime теста отличается от standard runtime; это НЕ доказательство ожидания
+6часов на production bytecode. Независимый replay не ослабляли.
 
-1. Потери/повторы на границах intent → hash → receipt → restart.
-2. Достаточность pending draw discovery: может ли штатный переход текущих контроллеров
-   оставить недоставленный request за пределами поиска?
-3. Разделение callback/beacon failure и неизвестной транзакции.
-4. Bypass fixture fallback или ошибочный gas wait.
+Buyer USDG storage-funded, sandbox ETH, 100% fees→Promo, почти гарантированные test odds,
+бюджет5USDG. Timing=[60,30,5,20,15] test-only, не согласованная production policy.
+Pre-freeze freshness не обходилась: clockLag5s первоначально корректно дал wait,
+после расширения test bounds новый fork прошёл с живыми часами и HTTP.
+Нет mock подписи, reroll или подбора seed. Доставка ждала будущую подпись около минуты.
+Все sends только31337. Claim сделан harness, общий continuous payout coordinator пока нет.
 
-Следующий bounded пакет: единый Infinity funding/BUY → dataset/freeze → drand worker →
-settlement → USDG claim. Реальные комиссии должны финансировать резервы того же прогона;
-synthetic top-up/historical timing обозначать явно, если нужны локальному сценарию.
-Не добавлять fallback RNG, администратора, reset или перераспределение frozen/claimable.
-Укажите существенные препятствия этому шагу и конкретные исправления.
+## Вопросы
+
+1. Нет ли ошибки в cutoff+1 для допустимого begin/publish transport текущих контрактов?
+2. Достаточно ли evidence для утверждения именно денежной цепочки с указанными
+   ограничениями? Где нужны дополнительные assertions, а не новый большой subsystem?
+3. Следующий bounded пакет: объединить последовательное выполнение существующих
+   funding/scheduler/drand workers под общим nonce/budget admission либо сначала
+   аналогичный Monthly e2e. Что действительно блокирует безопасную интеграцию?
+
+Не переутверждать economics/timing и не добавлять proxy/admin/reset. Сначала реальные
+дефекты и необходимый следующий шаг, без попытки закрыть все редкие случаи сразу.

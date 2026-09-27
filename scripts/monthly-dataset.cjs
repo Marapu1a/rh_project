@@ -44,7 +44,7 @@ async function verifyPublication(provider,source,artifact){
   check(outcome.rulesHash(artifact.rules)===policy.hash&&snapshot.rulesHash===policy.hash,'Monthly rules mismatch');
   check(snapshot.participants.every(p=>BigInt(p.count)===BigInt(p.lastAttempt)-BigInt(p.firstAttempt)+1n)
     &&snapshot.participants.reduce((s,p)=>s+BigInt(p.count),0n)===BigInt(r.attempts),'Monthly attempts mismatch');
-  const events=await source.queryFilter(source.filters.MonthChunk(r.drawId)),participants=[],publications=[];
+  const events=await source.queryFilter(source.filters.MonthChunk(r.drawId),Number(r.cutoff)+1),participants=[],publications=[];
   for(const event of events){
     check(event.args.index===BigInt(publications.length),'Monthly publication index mismatch');
     const tx=await provider.getTransaction(event.transactionHash);check(tx&&tx.to?.toLowerCase()===source.target.toLowerCase(),'Monthly publication unavailable');

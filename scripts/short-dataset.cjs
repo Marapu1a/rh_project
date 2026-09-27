@@ -92,7 +92,7 @@ async function verifyPublication(provider,source,id,artifact){
   check(prizes.length===expectedPrizes.length&&prizes.every((v,i)=>v===expectedPrizes[i]),'Basket mismatch');
   const basketHash=ethers.keccak256(coder.encode(['uint256[]'],[prizes]));
   check(p.basketHash===basketHash,'Basket hash mismatch');
-  const events=await source.queryFilter(source.filters.DatasetChunk(id)),participants=[],publications=[];
+  const events=await source.queryFilter(source.filters.DatasetChunk(id),Number(r.cutoffBlockNumber)+1),participants=[],publications=[];
   for(const event of events){
     check(event.args.index===BigInt(publications.length),'Publication index mismatch');
     const tx=await provider.getTransaction(event.transactionHash);

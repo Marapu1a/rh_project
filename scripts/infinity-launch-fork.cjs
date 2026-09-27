@@ -6,7 +6,7 @@ const coder=ethers.AbiCoder.defaultAbiCoder(),rpc=(m,p=[])=>hre.network.provider
 const proxyAddress='0xB0D389250c61c69EcCD5d986fC8482CBfA5418C4';
 const quoteAddress=require('../research/pair-usdg-active-reference-2026-09-23.json').decoderConfig.quote;
 async function main(){
- const out=process.argv[2],workerMode=process.argv[3]==='--worker',entriesMode=process.argv[3]==='--entries',collectorMode=process.argv[3]==='--collector'||workerMode||entriesMode;assert(out&&!fs.existsSync(out)&&(process.argv.length===3||(process.argv.length===4&&collectorMode)),'New output path [--collector|--worker|--entries] required');
+ const out=process.argv[2],workerMode=process.argv[3]==='--worker',payoutMode=process.argv[3]==='--payout',entriesMode=process.argv[3]==='--entries'||payoutMode,collectorMode=process.argv[3]==='--collector'||workerMode||entriesMode;assert(out&&!fs.existsSync(out)&&(process.argv.length===3||(process.argv.length===4&&collectorMode)),'New output path [--collector|--worker|--entries|--payout] required');
  const e={schema:'infinity-launch-fork-v1',observedAt:new Date().toISOString(),feeBps:300,transactions:[],
   assumptions:['31337 local fork; no PAIR impersonation/code changes','Buyer USDG storage funded artificially; sandbox ETH',
    'Local opening ticks and minOut=1, not a deployment price/slippage policy','No developer buy; no vanity suffix requirement at contract level',
@@ -15,10 +15,13 @@ async function main(){
  let proxy;const stage=s=>{e.stage=s;console.log(s)};
  try{
   stage('fork');proxy=await startReadProxy(process.env.RH_RPC_URL||'https://robinhood-mainnet-rpc.blockreq.com/v1/rpc/public');
-  const remote=new ethers.JsonRpcProvider(proxy.url);assert.equal((await remote.getNetwork()).chainId,4663n);const head=await remote.getBlock('latest');remote.destroy();
+  const remote=new ethers.JsonRpcProvider(proxy.url);assert.equal((await remote.getNetwork()).chainId,4663n);let head=await remote.getBlock('latest');
+  if(payoutMode)e.assumptions.push('Test-only constructor backdates Short initial timestamps; drand lead60s is not production finality protection');
+  remote.destroy();
   await rpc('hardhat_reset',[{forking:{jsonRpcUrl:proxy.url,blockNumber:head.number}}]);assert.equal(await rpc('eth_chainId'),'0x7a69');
   e.anchor=await rpc('eth_getBlockByNumber',['latest',false]);assert.equal(e.anchor.hash,head.hash);await rpc('evm_mine');
   const provider=new ethers.BrowserProvider(hre.network.provider,undefined,{cacheTimeout:-1}),creator=await provider.getSigner(2),buyer=await provider.getSigner(3);
+  provider.on('debug',event=>{if(event.action==='receiveEip1193Error'){e.rpcErrors??=[];e.rpcErrors.push({message:event.error?.message,code:event.error?.code,data:event.error?.data});console.log('local RPC error: '+event.error?.message);}});
   const creatorAddress=await creator.getAddress(),wallet=await buyer.getAddress();e.roles={creator:creatorAddress,buyer:wallet};
   async function sent(label,promise){const tx=await promise,r=await tx.wait();assert.equal(r.status,1);e.transactions.push({label,tx:await rpc('eth_getTransactionByHash',[tx.hash]),receipt:await rpc('eth_getTransactionReceipt',[tx.hash])});return r;}
   stage('pins');e.pins={};for(const n of ['hook','engine','adapter','launch']){const j=get(n),hash=ethers.keccak256(await provider.getCode(j.address));assert.equal(hash,j.onchainBytecodeHash,n);e.pins[n]={address:j.address,hash};}
@@ -36,8 +39,8 @@ async function main(){
   const [tokenAddress,lock]=await factory.predictStandard(identity,salt,0);assert.equal(await provider.getCode(tokenAddress),'0x');
   const project0=BigInt(tokenAddress)<BigInt(quoteAddress),lower=project0?-400000:380000,upper=project0?-380000:400000;
   const opening=await receiver.sqrtAt(project0?lower:upper),graduation=await receiver.sqrtAt(project0?-390000:390000);
-  let product,promo;
-  if(collectorMode){product=require('./compile.cjs').compile();const c=product.InfinityCollector;receiver=await new ethers.ContractFactory(c.abi,c.evm.bytecode.object,creator).deploy(creatorAddress,tokenAddress,quoteAddress,hook.target,factoryAddress);await sent('deploy production collector',Promise.resolve(receiver.deploymentTransaction()));e.assumptions.push('Collector policy 100% Promo is a fixture, not approved production allocation');}
+  let product,promo,drawDeployment;
+  if(collectorMode){product=payoutMode?require('./infinity-payout-integration.cjs').compileFixture():require('./compile.cjs').compile();const c=product.InfinityCollector;receiver=await new ethers.ContractFactory(c.abi,c.evm.bytecode.object,creator).deploy(creatorAddress,tokenAddress,quoteAddress,hook.target,factoryAddress);await sent('deploy production collector',Promise.resolve(receiver.deploymentTransaction()));e.assumptions.push('Collector policy 100% Promo is a fixture, not approved production allocation');}
   const now=(await provider.getBlock('latest')).timestamp,deadline=now+1800;
   const params=[coder.encode(['string','string','string','bytes32'],identity.slice(1)),[[quoteAddress,10000]],
    [coder.encode(['uint8','uint160','int24','int24','uint256','bytes32','uint160','bool'],[6,opening,lower,upper,now,ethers.id('local hypothetical opening'),graduation,project0])],
@@ -49,7 +52,7 @@ async function main(){
   await sent('launch Infinity 3pct USDG',launch.launchInfinity(encoded,{value:fee,gasLimit:16000000}));
   const policy=await hook.activePolicy(tokenAddress);assert.equal(policy.feeBps,300n);assert.equal(policy.mode,1n);
   const vault=new ethers.Contract(policy.destination,get('creator').abi,provider);assert.equal(await vault.projectToken(),tokenAddress);assert.equal(await vault.hook(),hook.target);const cp=await vault.currentPolicy();assert.equal(cp.recipient,receiver.target);assert.equal(cp.feeBps,300n);
-  if(collectorMode){const a=product.PromoVault;promo=await new ethers.ContractFactory(a.abi,a.evm.bytecode.object,creator).deploy(tokenAddress,quoteAddress,hook.target,100_000000n);await sent('deploy PromoVault inert draw authority',Promise.resolve(promo.deploymentTransaction()));await sent('bind collector',receiver.bindSource(vault.target,[now+100,[promo.target,ethers.ZeroAddress,ethers.ZeroAddress],[10000,0,0]]));}else await sent('bind receiver',receiver.bind(vault.target));e.source={vault:vault.target,policy:policy.toObject(),creatorPolicy:cp.toArray()};
+  if(collectorMode){if(payoutMode){drawDeployment=await require('./infinity-payout-integration.cjs').deploy({compiled:product,provider,user:buyer,token:tokenAddress,quote:quoteAddress});promo=drawDeployment.vault;}else{const a=product.PromoVault;promo=await new ethers.ContractFactory(a.abi,a.evm.bytecode.object,creator).deploy(tokenAddress,quoteAddress,hook.target,100_000000n);await sent('deploy PromoVault inert draw authority',Promise.resolve(promo.deploymentTransaction()));}await sent('bind collector',receiver.bindSource(vault.target,[now+100,[promo.target,ethers.ZeroAddress,ethers.ZeroAddress],[10000,0,0]]));}else await sent('bind receiver',receiver.bind(vault.target));e.source={vault:vault.target,policy:policy.toObject(),creatorPolicy:cp.toArray()};
   const manager=await hook.poolManager(),parameters=ethers.zeroPadValue(ethers.toBeHex((200n<<16n)|await hook.getHooksRegistrationBitmap()),32);
   const key=[...(project0?[tokenAddress,quoteAddress]:[quoteAddress,tokenAddress]),hook.target,manager,10000,parameters];e.poolKey=key;e.poolId=await hook.poolId(key);
   stage('fund-buyer');const erc=['function balanceOf(address) view returns(uint256)','function approve(address,uint256) returns(bool)','function decimals() view returns(uint8)','function transfer(address,uint256) returns(bool)'];
@@ -73,7 +76,7 @@ async function main(){
   stage('second-claim');await sent('permissionless pull SELL fees',receiver.connect(buyer).pull());assert.equal(await quote.balanceOf(receiver.target),b.mode+s.mode);assert.equal(await quote.balanceOf(vault.target),0n);assert.equal(await vault.claimable(receiver.target,quoteAddress),0n);assert.equal(await token.balanceOf(wallet),0n);
   for(const asset of [quote,token])assert.equal(await asset.balanceOf(adapter.target),0n);
   e.result={buy:b,sell:s,tokenReceived:received,quoteSpent:gross,quoteReturned:quoteDelta-s.mode-s.protocol,receiverUSDG:await quote.balanceOf(receiver.target),emptyClaimRejected:!collectorMode,emptyPullNoop:collectorMode};
-  if(collectorMode){
+  if(collectorMode&&!payoutMode){
    stage('collector-roll-fund');
    const oldCredit=await receiver.credit(promo.target);assert.equal(oldCredit,b.mode+s.mode);
    await sent('direct USDG before rollover',quote.transfer(receiver.target,7));
@@ -104,8 +107,9 @@ async function main(){
    e.worker={job,run,again,state:JSON.parse(fs.readFileSync(statePath,'utf8')),promoIncrease:'3000000',reserves:[await promo.freeShort(),await promo.freeCurrent(),await promo.freeNext()]};
   }
   if(entriesMode){
-   stage('entries-integration');e.assumptions.push('Automatic BUY integration uses separate locally funded draw vault, fixture RNG/rules; no payout proof');
-   await require('./infinity-buy-integration.cjs').run({e,provider,user:buyer,quote,rpc,buy:async label=>{
+   stage('entries-integration');if(!payoutMode)e.assumptions.push('Automatic BUY integration uses separate locally funded draw vault, fixture RNG/rules; no payout proof');
+   else e.assumptions[e.assumptions.indexOf('Production collector under test; PromoVault has inert draw authority; no admission/entries/RNG proof')]='One DualControllerPromoVault funded only by measured Infinity fees; real drand; Short payout replay';
+   await require('./infinity-buy-integration.cjs').run({e,provider,user:buyer,quote,rpc,payout:payoutMode?{...drawDeployment,collector:receiver,source:vault,}:null,buy:async label=>{
     await sent('approve '+label,quote.approve(adapter.target,110_000000n));
     const time=(await provider.getBlock('latest')).timestamp;
     return sent(label,adapter.executeExactInput(key,!project0,base,110_000000n,1,wallet,wallet,time+1800,'0x',{gasLimit:4000000}));

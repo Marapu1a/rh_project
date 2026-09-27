@@ -77,3 +77,5 @@ Upstream443reads,4retries,0errors. Сохранённый evidence провер�
 единый coordinator денежного/draw контуров, газ и recovery, утверждённые внутренние
 bps. Fixture budget100USDG не означает доход от двух BUY; fixture probabilities
 не переутверждают экономические параметры релиза.
+
+27.09: совместный [Infinity→Short→USDG прогон](INFINITY_PAYOUT_PROOF.md) выполнен. Реальные fork fees финансируют этот же vault; live drand worker и claim проверены. Ускорение часов конструктора/тестовые odds и lead описаны отдельно; Monthly draw и непрерывный coordinator не заявлены.

@@ -35,6 +35,7 @@ async function fixture(n=70){
 }
 test('complete data is recoverable from calldata; seal atomically freezes funded basket',async()=>{
   const f=await fixture();await f.begin();await f.publish();
+  const source=f.source;f.source=new Proxy(source,{get(target,key){if(key==='queryFilter')return (filter,from,...rest)=>{assert(from>f.request.cutoffBlockNumber,'RPC refuses pre-cutoff log history');return target.queryFilter(filter,from,...rest);};return Reflect.get(target,key);}});
   assert.equal(await f.vault.reserved(f.quote.target),0n);
   assert.equal((await f.source.datasetProposal(f.proposal)).status,2n);
   const ready=await model.verifyPublication(f.provider,f.source,f.proposal,f.artifact);
@@ -45,7 +46,7 @@ test('complete data is recoverable from calldata; seal atomically freezes funded
   assert.equal(sealed.context,ready.context);assert.equal(sealed.status,'SEALED');
   assert.equal(await f.vault.freeShort(),99n);assert.equal(await f.vault.reserved(f.quote.target),101n);
   assert.deepEqual(Array.from(await f.source.datasetBasket(f.proposal)),[42n,30n,18n]);
-  assert.equal((await f.source.queryFilter(f.source.filters.AttemptsFrozen())).length,1);
+  assert.equal((await source.queryFilter(source.filters.AttemptsFrozen())).length,1);
   await rejected(()=>f.source.seal(f.proposal));await rejected(()=>f.source.supersede(f.proposal));
   await rejected(()=>f.source.publish(f.proposal,f.ps));await assert.rejects(()=>f.begin(id('later')));
 });
