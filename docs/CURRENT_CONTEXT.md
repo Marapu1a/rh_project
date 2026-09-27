@@ -1,5 +1,7 @@
 # Текущий контекст
 
+27.09: [Infinity BUY → automatic entries](INFINITY_BUY.md) реализован отдельной genesis policy: net USDG debit с fees минус refunds, без регистрации; V2 не изменён. Новый fork:2BUY→2entries+6.60carry→admitted scan→scheduler begin/publish; повторный replay стабилен. Адресно43/43 + saved evidence2/2, без full. Ближайший шаг — production RNG и сквозное исполнение до выплаты; integration budget/RNG пока локальные fixtures.
+
 27.09 review worker: исправлена диагностика deficit при последнем pay; адресно2/2. [Ограничение автоматизации](INFINITY_WORKER.md): максимум8 legacy witnesses, новый job/state после rollover; до релиза закрыть обход старых долгов и обновление job. Следующий продуктовый шаг — Infinity decoder/automatic genesis после выбора базы билетов.
 
 27.09: [Infinity worker/CLI/watch](INFINITY_WORKER.md) реализован с existing state lock/journal/receipt boundary. Pull→pay→GENERAL, source drift не блокирует старые credits, unknown sends не повторяются, gas/native shortages→wait. Worker7/7 + additions2/2, shared17pass, saved1/1; final reconciliation2/2 повторно. Новый fork+3USDG в reserves, rerun0tx. Только local31337/loopback: mainnet admission/keys/shared budget ещё отдельно. Далее Infinity decoder/automatic genesis; база билетов требует решения.

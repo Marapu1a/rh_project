@@ -13,6 +13,8 @@
       "test/short-prize-basket.test.cjs",
       "test/participant-registry.test.cjs",
       "test/direct-buy.test.cjs",
+      "test/infinity-buy.test.cjs",
+      "test/infinity-buy-evidence.test.cjs",
       "test/pair-auto-buy.test.cjs",
       "test/pair-auto-evidence.test.cjs",
       "test/attempt-lifecycle.test.cjs",
@@ -97,6 +99,8 @@
     "files": [
       "test/participant-registry.test.cjs",
       "test/direct-buy.test.cjs",
+      "test/infinity-buy.test.cjs",
+      "test/infinity-buy-evidence.test.cjs",
       "test/pair-auto-buy.test.cjs",
       "test/pair-auto-evidence.test.cjs",
       "test/attempt-lifecycle.test.cjs",

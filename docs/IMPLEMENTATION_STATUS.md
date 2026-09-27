@@ -194,3 +194,5 @@ policy fingerprint/counters, campaign accounting, atomic rollover и fixed Promo
 27.09: [Infinity worker](INFINITY_WORKER.md): bounded pass + CLI/watch, pinned local job,
 existing durable journal/locks, legacy witnesses, source lane isolation, gas/native waits.
 Fork worker автоматически funded GENERAL; mainnet/coordinator/shared budget ещё отдельно.
+
+27.09: `scripts/infinity-buy.cjs` — новый exact-input decoder/net debit; `direct-buy.cjs` — explicit automatic genesis. `replay-direct-buy.cjs` проверяет historical Infinity runtime; `buy-policy-format.cjs` знает genesis adapter id. `infinity-buy-integration.cjs` + fork `--entries`: actual refunded BUY → admission → scheduler begin/publish. Тесты `infinity-buy*.test.cjs`; [границы](INFINITY_BUY.md). Контракты не менялись.

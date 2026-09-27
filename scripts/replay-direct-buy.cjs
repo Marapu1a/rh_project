@@ -22,7 +22,7 @@ async function scan(input,rpcUrl,toBlock,lifecycle=null){
     const code=await rpc('eth_getCode',[dependency.address,tag(toBlock)]);
     if(code==='0x'||keccak256(code)!==dependency.codeHash)throw Error('Unexpected BUY adapter dependency runtime');
   }
-  for(const field of ['router','manager','hook','token','quote','registry']){
+  for(const field of ['router','manager','hook','token','quote','registry',...(manifest.schema==='direct-buy-infinity-v1'?['settlement']:[])]){
     const code=await rpc('eth_getCode',[manifest[field],tag(toBlock)]);
     if(code==='0x'||keccak256(code)!==manifest.codeHashes[field])throw Error('Unexpected '+field+' runtime; review deployment binding');
   }
@@ -38,6 +38,10 @@ async function scan(input,rpcUrl,toBlock,lifecycle=null){
   for(let n=BigInt(manifest.anchor.number)+1n;n<=BigInt(toBlock);n++){
     const block=await rpc('eth_getBlockByNumber',[tag(n),true]);
     const transactions=[];
+    if(manifest.schema==='direct-buy-infinity-v1')for(const field of ['router','manager','hook','token','quote','settlement']){
+      const code=await rpc('eth_getCode',[manifest[field],tag(n)]);
+      if(code==='0x'||keccak256(code)!==manifest.codeHashes[field])throw Error('Unexpected historical Infinity '+field+' runtime');
+    }
     for(const tx of block.transactions){
       if(tx.to?.toLowerCase()===AUTO.ADDRESS&&routeDependencies(input,n).some(d=>d.address===AUTO.ADDRESS)){
         const code=await rpc('eth_getCode',[AUTO.ADDRESS,tag(n)]);
