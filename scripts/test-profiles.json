@@ -2,6 +2,7 @@
   "full": {
     "compile": true,
     "files": [
+      "test/rng-timing-survey.test.cjs",
       "test/fee-router.test.cjs",
       "test/infinity-collector.test.cjs",
       "test/infinity-worker.test.cjs",

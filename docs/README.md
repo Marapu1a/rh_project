@@ -79,3 +79,5 @@
 - [Источники цены TOKEN/USDG и ограничение PAIR TWAP](PRICE_SOURCE_RESEARCH.md).
 
 - [V4 market execution](V4_MARKET_EXECUTION.md) — настоящий маршрут, simulation quote, CLI/coordinator и fork.
+
+- [Публичная сеть: timing и cutoff](PUBLIC_NETWORK_TIMING.md) — измерения и текущий блокер begin/finality.
