@@ -27,7 +27,8 @@ async function fetchBeacon(round,{signal}={}){
  if(!response.ok)throw Error('Beacon HTTP '+response.status);
  return response.json();
 }
-async function runDrandDelivery({provider,adapter,executor,job,statePath,signal,receiptTimeoutMs=30000},{getBeacon=fetchBeacon,onStep=()=>{}}={}){
+async function runDrandDelivery({provider,adapter,executor,job,statePath,signal,receiptTimeoutMs=30000,reconcileOnly=false,transactionGuard,kinds=['short','monthly']},{getBeacon=fetchBeacon,onStep=()=>{}}={}){
+ check(Array.isArray(kinds)&&kinds.length>0&&new Set(kinds).size===kinds.length&&kinds.every(k=>['short','monthly'].includes(k)),'Invalid delivery kinds');
  job=JSON.parse(JSON.stringify(validateJob(job)));receiptOptions(receiptTimeoutMs);
  check(executor?.provider===provider,'Signer/provider mismatch');check(adapter.runner===provider||adapter.runner?.provider===provider,'Adapter/provider mismatch');
  check(same(adapter.target,job.adapter),'Adapter mismatch');check((await provider.getNetwork()).chainId===31337n,'Local chain31337 only');
@@ -48,6 +49,7 @@ async function runDrandDelivery({provider,adapter,executor,job,statePath,signal,
     if(!b||!same(b.hash,r.blockHash)||!same(r.hash,state.pending.transactionHash)||![0,1].includes(r.status)||!tx||!same(tx.hash,state.pending.transactionHash)||tx.nonce!==state.pending.nonce||!same(tx.from,sender)||!same(tx.to,state.pending.target)||!same(tx.data,state.pending.data))return blocked('unconfirmedReceipt');
     state.lastResolved={...state.pending,status:r.status,blockHash:r.blockHash};delete state.pending;save(state);
    }
+   if(reconcileOnly)return result('complete');
    const head=await provider.getBlock('latest'),at={blockTag:head.number};
    for(const k of ['adapter','short','monthly'])check(same(ethers.keccak256(await provider.getCode(job[k],head.number)),job[k+'CodeHash']),'Runtime mismatch '+k);
    check(await adapter.PROFILE(at)===PROFILE&&same(await adapter.CHAIN_HASH(at),CHAIN_HASH),'Unsupported drand profile');
@@ -55,6 +57,7 @@ async function runDrandDelivery({provider,adapter,executor,job,statePath,signal,
    const lanes=[];
    // At most one frozen request per controller. Completed draws cannot leave undelivered RNG behind.
    for(const [kind,getter]of [['short','pendingDatasetDraw'],['monthly','pendingMonth']]){
+    if(!kinds.includes(kind))continue;
     const c=new ethers.Contract(job[kind],consumerAbi,provider);check(same(await c.randomProvider(at),job.adapter),'Reverse provider binding mismatch');
     const draw=await c[getter](at);if(draw===ethers.ZeroHash)continue;
     const id=await c.drawRequest(draw,at);check(id>0n,'Frozen draw has no RNG request');
@@ -70,8 +73,8 @@ async function runDrandDelivery({provider,adapter,executor,job,statePath,signal,
     if(await provider.getTransactionCount(sender,'pending')>await provider.getTransactionCount(sender,'latest'))wait('pendingSigner');
     if(!same((await provider.getBlock(head.number))?.hash,head.hash))wait('chainChanged');
    }
-   const boundary={preflight:budget,before:async(request,action)=>{
-    await budget(request,action);check(!state.pending,'Unresolved intent');
+   const boundary={preflight:async(request,action)=>{await budget(request,action);await transactionGuard?.(request,action,false);},before:async(request,action)=>{
+    await budget(request,action);await transactionGuard?.(request,action,true);check(!state.pending,'Unresolved intent');
     state.pending={worker:'drand',action,target:request.to,data:request.data,from:sender,stage:'broadcast'};save(state);
    },sent:async tx=>{state.pending={...state.pending,transactionHash:tx.hash,nonce:tx.nonce,stage:'confirm'};save(state);},confirmed:async r=>{
     check(same(r.hash,state.pending?.transactionHash),'Receipt mismatch');const block=await provider.getBlock(r.blockNumber);check(same(block?.hash,r.blockHash),'Receipt not canonical');

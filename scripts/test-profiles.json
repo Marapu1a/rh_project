@@ -55,7 +55,10 @@
       "test/drand-timing-readiness.test.cjs",
       "test/drand-delivery-worker.test.cjs",
       "test/drand-delivery-cli.test.cjs",
-      "test/infinity-payout-evidence.test.cjs"
+      "test/infinity-payout-evidence.test.cjs",
+      "test/short-automation.test.cjs",
+      "test/short-automation-cli.test.cjs",
+      "test/short-automation-evidence.test.cjs"
     ]
   },
   "accounting": {
@@ -76,7 +79,10 @@
       "test/drand-adapter.test.cjs",
       "test/drand-timing-readiness.test.cjs",
       "test/drand-delivery-worker.test.cjs",
-      "test/drand-delivery-cli.test.cjs"
+      "test/drand-delivery-cli.test.cjs",
+      "test/short-automation.test.cjs",
+      "test/short-automation-cli.test.cjs",
+      "test/short-automation-evidence.test.cjs"
     ]
   },
   "short": {
@@ -190,6 +196,14 @@
       "test/drand-timing-readiness.test.cjs",
       "test/drand-delivery-worker.test.cjs",
       "test/drand-delivery-cli.test.cjs"
+    ]
+  },
+  "short-automation": {
+    "compile": true,
+    "files": [
+      "test/short-automation.test.cjs",
+      "test/short-automation-cli.test.cjs",
+      "test/short-automation-evidence.test.cjs"
     ]
   }
 }

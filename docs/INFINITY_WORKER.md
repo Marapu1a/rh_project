@@ -122,3 +122,5 @@ source timeout/failed recipient с успешной выплатой друго�
 Команда: `node -e "require('./scripts/test-launcher.cjs').runTests({profile:'infinity-worker-review',pattern:'last recipient|transient source read',selection:{compile:true,files:['test/infinity-worker.test.cjs']}}).then(r=>process.exitCode=r.exitCode)"`.
 24.54s с одной компиляцией; `.local/logs/test-run-Ev7smF/result.json`.
 Контракты не менялись; full suite и новый fork для этой правки не запускались.
+
+27.09: [общий Short executor](SHORT_AUTOMATION.md) реализован отдельным local профилем: единый signer, reconciliation до любых sends, автоматическая очередь claim. Новый fork использует continuous watch без ручного claim/RNG. Старые ограничения mainnet/timing не сняты.

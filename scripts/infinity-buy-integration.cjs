@@ -39,6 +39,7 @@ async function run({e,provider,user,quote,rpc,buy,payout=null}){
   assert.equal(hash(replay(resolved.manifest,[...raw.blocks,...raw.blocks])),hash(ledger));
   for(const tx of [first,second]){const d=ledger.decisions.find(d=>d.transactionHash===tx.hash);assert.equal(d.netQuoteDebitRaw,'103300000');assert.equal(d.refundQuoteRaw,'6700000');}
   evidence.policyStatus=resolved.policyStatus;evidence.buyLedger=ledger;
+  if(payout?.automation){await require('./short-automation-integration.cjs').run({e,provider,user,quote,payout,rpc,config,rpcUrl:url});return;}
   if(payout){await require('./infinity-payout-integration.cjs').fund({e,provider,user,quote,payout,rpc});}else await rpc('evm_increaseTime',[6*3600+1]);await rpc('evm_mine');
   const options={provider,short,monthly,config,rpcUrl:url,statePath,publisher:user,executor:user};
   const tick=async()=>{const r=await runScheduler(options,{maxTicks:1});evidence.runs.push(r);return r;};

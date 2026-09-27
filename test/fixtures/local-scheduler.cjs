@@ -3,8 +3,8 @@ const {fixture,rpc,sent}=require('./local-controllers.cjs');
 const {SWAP_TYPE}=require('../../scripts/direct-buy.cjs');
 const {scan}=require('../../scripts/replay-direct-buy.cjs');
 const {replayAttempts}=require('../../scripts/attempt-lifecycle.cjs');
-async function setup(t,compiled){
-  const f=await fixture(compiled,{quoteName:'LocalUSDGFixture'});
+async function setup(t,compiled,controllerOptions={}){
+  const f=await fixture(compiled,{quoteName:'LocalUSDGFixture',...controllerOptions});
   const market=await f.deploy('LocalBuyFixture',[f.token.target,f.quote.target]),coder=ethers.AbiCoder.defaultAbiCoder();
   const key=[...[f.token.target,f.quote.target].sort((a,b)=>BigInt(a)<BigInt(b)?-1:1),10000,200,market.target];
   const manifest={schema:'direct-buy-v1',routerProfile:'local-fixture',routeVersion:'rh-ur-10-060b0e-v1',chainId:'31337',quoteDecimals:6,entryThresholdRaw:'100000000',

@@ -72,3 +72,5 @@ Infinity funding/BUY → freeze → этот worker → settlement → USDG clai
 глубокий reorg и невыпуск round не исправляются reroll. См. [adapter](DRAND_ADAPTER.md).
 
 27.09: совместный [Infinity→Short→USDG прогон](INFINITY_PAYOUT_PROOF.md) выполнен. Реальные fork fees финансируют этот же vault; live drand worker и claim проверены. Ускорение часов конструктора/тестовые odds и lead описаны отдельно; Monthly draw и непрерывный coordinator не заявлены.
+
+27.09: [общий Short executor](SHORT_AUTOMATION.md) реализован отдельным local профилем: единый signer, reconciliation до любых sends, автоматическая очередь claim. Новый fork использует continuous watch без ручного claim/RNG. Старые ограничения mainnet/timing не сняты.

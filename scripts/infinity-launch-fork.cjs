@@ -6,7 +6,7 @@ const coder=ethers.AbiCoder.defaultAbiCoder(),rpc=(m,p=[])=>hre.network.provider
 const proxyAddress='0xB0D389250c61c69EcCD5d986fC8482CBfA5418C4';
 const quoteAddress=require('../research/pair-usdg-active-reference-2026-09-23.json').decoderConfig.quote;
 async function main(){
- const out=process.argv[2],workerMode=process.argv[3]==='--worker',payoutMode=process.argv[3]==='--payout',entriesMode=process.argv[3]==='--entries'||payoutMode,collectorMode=process.argv[3]==='--collector'||workerMode||entriesMode;assert(out&&!fs.existsSync(out)&&(process.argv.length===3||(process.argv.length===4&&collectorMode)),'New output path [--collector|--worker|--entries|--payout] required');
+ const out=process.argv[2],workerMode=process.argv[3]==='--worker',automationMode=process.argv[3]==='--automation',payoutMode=process.argv[3]==='--payout'||automationMode,entriesMode=process.argv[3]==='--entries'||payoutMode,collectorMode=process.argv[3]==='--collector'||workerMode||entriesMode;assert(out&&!fs.existsSync(out)&&(process.argv.length===3||(process.argv.length===4&&collectorMode)),'New output path [--collector|--worker|--entries|--payout|--automation] required');
  const e={schema:'infinity-launch-fork-v1',observedAt:new Date().toISOString(),feeBps:300,transactions:[],
   assumptions:['31337 local fork; no PAIR impersonation/code changes','Buyer USDG storage funded artificially; sandbox ETH',
    'Local opening ticks and minOut=1, not a deployment price/slippage policy','No developer buy; no vanity suffix requirement at contract level',
@@ -109,7 +109,7 @@ async function main(){
   if(entriesMode){
    stage('entries-integration');if(!payoutMode)e.assumptions.push('Automatic BUY integration uses separate locally funded draw vault, fixture RNG/rules; no payout proof');
    else e.assumptions[e.assumptions.indexOf('Production collector under test; PromoVault has inert draw authority; no admission/entries/RNG proof')]='One DualControllerPromoVault funded only by measured Infinity fees; real drand; Short payout replay';
-   await require('./infinity-buy-integration.cjs').run({e,provider,user:buyer,quote,rpc,payout:payoutMode?{...drawDeployment,collector:receiver,source:vault,}:null,buy:async label=>{
+   await require('./infinity-buy-integration.cjs').run({e,provider,user:buyer,quote,rpc,payout:payoutMode?{...drawDeployment,collector:receiver,source:vault,automation:automationMode}:null,buy:async label=>{
     await sent('approve '+label,quote.approve(adapter.target,110_000000n));
     const time=(await provider.getBlock('latest')).timestamp;
     return sent(label,adapter.executeExactInput(key,!project0,base,110_000000n,1,wallet,wallet,time+1800,'0x',{gasLimit:4000000}));

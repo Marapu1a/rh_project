@@ -84,3 +84,5 @@ compiled artifact, без constructor override. Логи в `.local/logs/infinit
 Следующий пакет: объединение существующих отдельных workers в последовательное
 исполнение с общим nonce/budget admission; затем отдельный Monthly e2e. Согласование
 production timing, распределений и deployment admission остаётся обязательным.
+
+27.09: [общий Short executor](SHORT_AUTOMATION.md) реализован отдельным local профилем: единый signer, reconciliation до любых sends, автоматическая очередь claim. Новый fork использует continuous watch без ручного claim/RNG. Старые ограничения mainnet/timing не сняты.

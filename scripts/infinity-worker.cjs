@@ -25,7 +25,7 @@ function validateJob(j){
  for(const a of ['pull','pay'])check(BigInt(j.gasUnits?.[a])>0n,'Missing gas estimate floor');
  return j;
 }
-async function runInfinityWorker({provider,collector,executor,job,statePath,signal,receiptTimeoutMs=30000},{onStep=()=>{}}={}){
+async function runInfinityWorker({provider,collector,executor,job,statePath,signal,receiptTimeoutMs=30000,reconcileOnly=false,transactionGuard},{onStep=()=>{}}={}){
  job=JSON.parse(JSON.stringify(validateJob(job)));receiptOptions(receiptTimeoutMs);
  check(executor?.provider===provider,'Signer/provider mismatch');
  check(collector.runner===provider||collector.runner?.provider===provider,'Contract/provider mismatch');
@@ -48,6 +48,7 @@ async function runInfinityWorker({provider,collector,executor,job,statePath,sign
     if(!b||b.hash!==r.blockHash||r.hash!==state.pending.transactionHash||![0,1].includes(r.status)||!tx||tx.hash!==state.pending.transactionHash||tx.nonce!==state.pending.nonce||!same(tx.from,sender)||!same(tx.to,state.pending.target)||!same(tx.data,state.pending.data))return blocked('unconfirmedReceipt');
     state.lastResolved={...state.pending,status:r.status,blockHash:r.blockHash};delete state.pending;save(state);
    }
+   if(reconcileOnly)return result('complete');
    const head=await provider.getBlock('latest'),at={blockTag:head.number};
    check(ethers.keccak256(await provider.getCode(job.collector,head.number))===job.collectorCodeHash.toLowerCase(),'Collector runtime mismatch');
    for(const [getter,key]of [['projectToken','token'],['quoteToken','quote'],['promoVault','promo'],['source','source']])check(same(await collector[getter](at),job[key]),'Collector '+getter+' mismatch');
@@ -69,8 +70,8 @@ async function runInfinityWorker({provider,collector,executor,job,statePath,sign
     if((await provider.getBlock(head.number))?.hash!==head.hash)wait('chainChanged');
     if(await collector.campaignId()!==BigInt(job.campaignId))wait('campaignChanged');
    }
-   const boundary={preflight:budget,before:async(request,action)=>{
-    await budget(request,action);check(!state.pending,'Unresolved intent');
+   const boundary={preflight:async(request,action)=>{await budget(request,action);await transactionGuard?.(request,action,false);},before:async(request,action)=>{
+    await budget(request,action);await transactionGuard?.(request,action,true);check(!state.pending,'Unresolved intent');
     state.pending={worker:'infinity',action,target:request.to,data:request.data,from:sender,stage:'broadcast'};save(state);
    },sent:async tx=>{state.pending={...state.pending,transactionHash:tx.hash,nonce:tx.nonce,stage:'confirm'};save(state);},confirmed:async r=>{
     check(r.hash===state.pending?.transactionHash,'Receipt mismatch');const block=await provider.getBlock(r.blockNumber);check(block?.hash===r.blockHash,'Receipt not canonical');

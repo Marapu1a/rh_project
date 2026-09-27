@@ -1,49 +1,62 @@
-# Review: Infinity → Short → USDG fork
+# Review: автоматический Short до USDG в кошельке
 
-27.09.2026. После `03eb41e` выполнили общий денежный путь, а не отдельные fixtures.
-[Результаты и ограничения](INFINITY_PAYOUT_PROOF.md).
+27.09.2026. Пакет после `5e1f348`; мнение review — вспомогательные данные, не новая policy.
+[Описание API, порядка и границ](SHORT_AUTOMATION.md).
 
-Один новый Infinity TOKEN/USDG, creator fee3%, один collector и один draw vault.
-Реальные fork BUY/SELL fees11.934252USDG поступили в резервы; внешнего prize top-up нет.
-Две покупки после genesis дали2entries+6.60carry без регистрации. Scheduler выполнил
-saveJob/begin/publish/seal. После freeze дождались реальной подписи закреплённого
-round20996227; обычный drand worker сделал prove/deliver. Scheduler process/finish,
-затем harness claim:2.333331USDG победителю,9.600921 осталось в vault. Current/Next
-не изменились, Short attempts погашены, Monthly2open. Повторный claim отклонён,
-funding/delivery rerun0tx. Final replay из сохранённых полных блоков совпадает.
+## Реализация
 
-## Найденный дефект
+Новый local-only `short-automation.cjs`/CLI соединяет существующие workers с одним
+exclusive signer=Short publisher. Старый V2 coordinator и Solidity не менялись.
+Перед любыми sends reconciles собственный pending и оба child journals. Funding/drand
+сохранили свои journals и получили reconcileOnly/transactionGuard; scheduler получил
+kinds и allowNewJobs. Defaults прежних workers сохраняют их поведение.
 
-Publication verification Short/Monthly и Short recovery запрашивали events с блока0.
-Fork уходил за логами всей сети в upstream, который отказал. Исправлено на cutoff+1:
-публикации по контракту возможны только после cutoff. Root/calldata/order/count checks
-сохранены. Две регрессии запрещают старую историю; обе прошли на обычном bytecode.
-Соседний local-buy-cycle1/1 прошёл оба контроллера, win/no-win, replay и claims.
-Saved evidence4/4 (2новых+2старых). Full suite не запускался.
+Очередь выплат читается из canonical Short AttemptsConsumed с bounded cursor от genesis.
+Terminal/resultHash/winners проверяются, reward0 пропускается. Claim фиксированному
+winner проходит existing transaction boundary, intent/hash/receipt и gas limits.
+Unknown hash блокирует весь signer, known hash сверяется до продолжения. Отказ одного
+claim оставляет долг и не мешает другим; повторные попытки вращаются между проходами.
+No-win и самостоятельный claim не создают лишнюю отправку. Старые долги не зависят от
+того, остался ли draw последним scheduler job.
 
-## Не скрываем допущения
+Порядок: old claims → Short drand → started settlement → claims → funding → new Short.
+Source drift не блокирует старые призы. Общий gas guard действует внутри child sends,
+а перед seal проверяется модель денег на prove/deliver/chunks/finish/максимальные prizes
+и известные unpaid claims. Frozen/claimable USDG не участвуют в бюджете газа.
 
-Исторические headers доступны, но полноценный fork state за8часов — нет на проверенных
-public RPC. Поэтому быстрый harness компилирует in-memory override только двух
-начальных constructor timestamps ShortRulesEpochs (−21601s). Solidity-файлы не менялись,
-но Short runtime теста отличается от standard runtime; это НЕ доказательство ожидания
-6часов на production bytecode. Независимый replay не ослабляли.
+## Новый continuous fork
 
-Buyer USDG storage-funded, sandbox ETH, 100% fees→Promo, почти гарантированные test odds,
-бюджет5USDG. Timing=[60,30,5,20,15] test-only, не согласованная production policy.
-Pre-freeze freshness не обходилась: clockLag5s первоначально корректно дал wait,
-после расширения test bounds новый fork прошёл с живыми часами и HTTP.
-Нет mock подписи, reroll или подбора seed. Доставка ждала будущую подпись около минуты.
-Все sends только31337. Claim сделан harness, общий continuous payout coordinator пока нет.
+`infinity-launch-fork.cjs --automation`:9проходов одного programmatic runWatch.
+Все действия — pull/pay/begin/publish/seal/prove/deliver/processShort/finishShort/claim —
+выполнил coordinator. Harness не вызывал RNG delivery или claim.
+11.934252USDG fees =0.999999выплата+10.934253остаток. Queue/pending пусты, rerun0tx.
+2Short consumed,2Monthly open; live drand round20996799. Evidence сохранён в research,
+offline тест проверяет lifecycle replay, реальные ModeFeeAccrued и Transfer выплаты.
 
-## Вопросы
+Ограничения прежние: local31337, Short constructor clock override в памяти только
+для fork, lead60s/test odds/budget5USDG/100%Promo, storage-funded buyer, local miner.
+Не production bytecode/timing/finality proof. Standalone CLI аргументы проверены,
+сам fork вызывает тот же runWatch программно, не subprocess CLI. Monthly не запускается.
 
-1. Нет ли ошибки в cutoff+1 для допустимого begin/publish transport текущих контрактов?
-2. Достаточно ли evidence для утверждения именно денежной цепочки с указанными
-   ограничениями? Где нужны дополнительные assertions, а не новый большой subsystem?
-3. Следующий bounded пакет: объединить последовательное выполнение существующих
-   funding/scheduler/drand workers под общим nonce/budget admission либо сначала
-   аналогичный Monthly e2e. Что действительно блокирует безопасную интеграцию?
+## Проверки
 
-Не переутверждать economics/timing и не добавлять proxy/admin/reset. Сначала реальные
-дефекты и необходимый следующий шаг, без попытки закрыть все редкие случаи сразу.
+Новые5/5 +2/2 +1/1 отдельными запусками: payout, claim timeout/unknown, no-win,
+native wait и самостоятельный claim, недостаток полного pre-seal бюджета,
+failed claim retry, scheduler timeout reconciliation. Обычные unit fixtures без
+constructor override. Соседние funding/drand6/6, default Short/Monthly scheduler1/1.
+CLI/profile2/2, saved evidence2/2. Full suite не запускался.
+
+## Что прошу проверить
+
+1. Нет ли обхода global stop через child journal/guard или повторной отправки после
+   restart на любой из трёх границ journal?
+2. Не теряется ли старый reward при cursor advance, частичном обходе, неудачном claim
+   или самостоятельном получении? Подтверждённый reorg останавливает, не autorewinds.
+3. Корректны ли full Short gas forecast перед seal и per-operation wait для продолжения?
+4. Есть ли существенный blocker перед отдельным Monthly e2e? Не расширять пакет
+   до mainnet keys/admission/refill, пока не ясно, что действительно нужно исправить.
+
+Exclusive signer — операционное требование: нельзя запускать другой coordinator или
+standalone worker с тем же кошельком/другим state. Local lock не network-wide wallet lock.
+ETH auto-refill, безопасное обновление campaign jobs, production параметры и mainnet
+admission ещё отдельно. Новых admin/reset/reroll/rescue/proxy нет.

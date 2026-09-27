@@ -142,6 +142,7 @@ async function tickKind(kind,o,state,save){
     return result;
   }
   if(active!==zero||pending!==zero)return wait('missingJob');
+  if(o.allowNewJobs===false)return wait('newJobsDeferred');
   const resolved=await resolveBuyPolicy(config,(m,p)=>provider.send(m,p));
   const buyManifest=resolved.manifest;
   const last=await source[isShort?'lastShortTerminalAt':'lastMonthAt'](at);
@@ -171,6 +172,7 @@ async function tickKind(kind,o,state,save){
 }
 async function runScheduler(options,{maxTicks=32,onTick=()=>{}}={}){
   receiptOptions(options.receiptTimeoutMs??30000);
+  check(!options.kinds||(Array.isArray(options.kinds)&&options.kinds.length>0&&new Set(options.kinds).size===options.kinds.length&&options.kinds.every(k=>['SHORT','MONTHLY'].includes(k))),'Invalid scheduler kinds');
   check(Number.isInteger(maxTicks)&&maxTicks>0&&maxTicks<=1000,'Invalid tick limit');
   const domain=validateConfig(options.config,options.rpcUrl);
   check((await options.provider.getNetwork()).chainId===31337n,'Local chain 31337 only');
@@ -180,10 +182,11 @@ async function runScheduler(options,{maxTicks=32,onTick=()=>{}}={}){
     let results;
     for(let i=0;i<maxTicks;i++){
       results={};
-      let kinds=['SHORT','MONTHLY'];
+      let kinds=options.kinds??['SHORT','MONTHLY'];
       if(options.prioritizeStarted){
         const ranks=[];
         for(const [kind,source] of [['SHORT',options.short],['MONTHLY',options.monthly]]){
+          if(!kinds.includes(kind))continue;
           const s=kind==='SHORT',pending=await source[s?'pendingDatasetDraw':'pendingMonth']();
           const active=await source[s?'activeProposal':'activeMonth']();
           ranks.push({kind,rank:pending!==zero?2:active!==zero?1:0});

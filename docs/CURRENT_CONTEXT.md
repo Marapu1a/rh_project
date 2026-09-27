@@ -1,5 +1,7 @@
 # Текущий контекст
 
+27.09: [Автоматический Short](SHORT_AUTOMATION.md) реализован: единый signer/порядок, общий gas guard, durable очередь старых rewards и permissionless claim. Новый Infinity fork: watch сам прошёл funding→drand→settlement→claim;11.934252USDG =0.999999выплата+10.934253остаток, rerun0tx. Адресные проверки; не full/mainnet. Constructor clock/test timing остаются fixture. Далее Monthly e2e и production admission/timing/ops funding.
+
 27.09: [Infinity→Short→USDG fork](INFINITY_PAYOUT_PROOF.md) complete. Комиссии11.934252USDG → тот же vault →2entries → live drand → выплата2.333331USDG; остаток9.600921, Monthly attempts сохранены. Исправлен поиск публикаций с блока0: теперь cutoff+1. Regression2/2, соседний Short/Monthly1/1, saved evidence4/4; не full. Явный test-only constructor clock override и lead60s, не production timing/bytecode proof. Далее общий coordinator/budget и Monthly e2e.
 
 27.09: [Drand delivery worker](DRAND_DELIVERY_WORKER.md) реализован: автоматическое обнаружение Short/Monthly requests, exact-round proof, отдельный retry callback, journal/reconciliation и gas wait. Missing PROFILE разрешён только pinned LocalRandomFixture на31337. Адресно worker9/9, CLI2/2, соседний preflight1/1; не full/fork. Следующий пакет — единый Infinity funding/BUY→drand→settlement→USDG claim прогон. Worker пока local-only; timing параметры и production admission остаются открытыми.
