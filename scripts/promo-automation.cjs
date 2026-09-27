@@ -20,7 +20,7 @@ function validateOps(o){
  for(const a of [...ACTIONS,...(o.schema==='local-promo-automation-v1'?MONTHLY_ACTIONS:[])])check(typeof o.gasUnits?.[a]==='string'&&/^[1-9][0-9]*$/.test(o.gasUnits[a]),'Missing gas bound '+a);
  return o;
 }
-async function runPromoAutomation({provider,executor,collector,adapter,vault,short,monthly,fundingJob,deliveryJob,schedulerConfig,rpcUrl,statePath,ops,signal,receiptTimeoutMs=30000},{getBeacon,onStep=()=>{}}={}){
+async function prepareRuntime({provider,executor,collector,adapter,vault,short,monthly,fundingJob,deliveryJob,schedulerConfig,rpcUrl,statePath,ops,receiptTimeoutMs=30000}){
  ops=JSON.parse(JSON.stringify(validateOps(ops)));funding.validateJob(fundingJob);rng.validateJob(deliveryJob);receiptOptions(receiptTimeoutMs);
  const dual=ops.schema==='local-promo-automation-v1';
  const domain=validateConfig(schedulerConfig,rpcUrl),sender=await executor.getAddress();
@@ -37,7 +37,13 @@ async function runPromoAutomation({provider,executor,collector,adapter,vault,sho
  check(await adapter.PROFILE()===require('./drand-preflight.cjs').PROFILE,'Unsupported RNG');
  const files={main:path.resolve(statePath),funding:path.resolve(statePath)+'.funding',rng:path.resolve(statePath)+'.rng',scheduler:path.resolve(statePath)+'.scheduler'};
  const identity=normalize({schema:ops.schema,sender,fundingJob,deliveryJob,schedulerConfig,rpcUrl,ops,files});
+ return {ops,dual,domain,sender,files,identity};
+}
+async function runPromoAutomation({provider,executor,collector,adapter,vault,short,monthly,fundingJob,deliveryJob,schedulerConfig,rpcUrl,statePath,ops,signal,drain=false,receiptTimeoutMs=30000},{getBeacon,onStep=()=>{}}={}){
+ const prepared=await prepareRuntime({provider,executor,collector,adapter,vault,short,monthly,fundingJob,deliveryJob,schedulerConfig,rpcUrl,statePath,ops,receiptTimeoutMs});
+ const {dual,domain,sender,files,identity}=prepared;ops=prepared.ops;
  return withState(files.main,identity,async(state,save)=>{
+  if(state.handoff)return {status:'blocked',reason:'runtimeRetired',successor:state.handoff.target};
   const results={},steps=[];let sentCount=0,claimsTried=0,discoveryReady=false,lane='startup';const attempted=new Set();
   const result=(status,reason,extra={})=>({status,...(reason?{reason}:{}),results,steps,queued:state.payouts?.length||0,...extra});
   const blocked=reason=>result('blocked',reason,{requiresReconciliation:true,pending:state.pending});
@@ -154,7 +160,7 @@ async function runPromoAutomation({provider,executor,collector,adapter,vault,sho
    lane='funding';results.funding=await funding.runInfinityWorker({...fOptions,transactionGuard:guard},{onStep});
    if(results.funding.status==='blocked'||results.funding.status==='stopped')return {...results.funding,haltedLane:lane,results,steps};
    // A definite source error does not erase old debts or disable a funded draw.
-   if(caughtUp){lane='draw';results.draw=await withTransactionBoundary(boundary,()=>runScheduler(sOptions,{maxTicks:16}));if(state.pending)return blocked(state.pending.transactionHash?'pendingReceipt':'unknownTransaction');if(childHalt(results.draw))return result(results.draw.status,'draw',{retryableRpcRead:results.draw.retryableRpcRead===true});}
+   if(caughtUp){lane='draw';results.draw=await withTransactionBoundary(boundary,()=>runScheduler({...sOptions,allowNewJobs:!drain},{maxTicks:16}));if(state.pending)return blocked(state.pending.transactionHash?'pendingReceipt':'unknownTransaction');if(childHalt(results.draw))return result(results.draw.status,'draw',{retryableRpcRead:results.draw.retryableRpcRead===true});}
    else results.draw={status:'waiting',reason:'payoutDiscovery'};
    return result(results.funding.status==='error'||results.funding.status==='degraded'||results.claimFailures?.length?'degraded':'waiting');
   }catch(e){
@@ -165,4 +171,4 @@ async function runPromoAutomation({provider,executor,collector,adapter,vault,sho
   }
  });
 }
-module.exports={runShortAutomation:runPromoAutomation,runPromoAutomation,validateOps,ACTIONS,MONTHLY_ACTIONS};
+module.exports={runShortAutomation:runPromoAutomation,runPromoAutomation,validateOps,ACTIONS,MONTHLY_ACTIONS,prepareRuntime,normalize};

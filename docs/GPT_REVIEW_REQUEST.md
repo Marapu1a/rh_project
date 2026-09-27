@@ -1,56 +1,54 @@
-# Обращение к GPT — общая автоматика Short/Monthly
+# Обращение к GPT — runtime/campaign handoff и lock trace
 
-27.09.2026. Продолжение вашего review автоматического Short. Пользователь одобрил один
-общий исполнитель для обоих видов розыгрышей, общую очередь и совместный gas forecast.
+28.09.2026. Прочитали review3343fe3. Подозрение на lock проверили без изменения cleanup,
+без auto-unlock и без ослабления unknown-send stop. Пользователь разрешил следующий пакет.
 
-## Что изменено
+## Что проверено по lock
 
-Основной код теперь `scripts/promo-automation.cjs`, CLI `run-promo-automation.cjs`.
-Старые Short entrypoints — совместимые wrappers; старый профиль остаётся Short-only.
-Новый `local-promo-automation-v1` обслуживает оба scheduler kind и drand consumer,
-проверяет publisher обоих контроллеров, использует общий signer и те же четыре журнала.
-Контракты, призовая математика, drand adapter и сами single-job executors не менялись.
+Три сценария unknown Monthly/pending Short/unpaid Short прошли с LOCAL_STATE_LOCK_TRACE=1.
+49 захватов,49 освобождений,0conflicts/cleanup errors; после каждого release exists=false.
+После изменений повтор unknown Monthly и теста чужого lock:29/29 owned releases, один
+преднамеренный conflict от fixture. Ваш спорадический сбой НЕ воспроизведён и не объявлен
+исправленным. Логи сохранены в .local/logs; команды и краткие результаты в модуле.
+Предыдущее наблюдение о synced storage — гипотеза для нового случая, не доказанный диагноз.
+При новом падении сохраните свой trace; сравните runtime на несинхронизируемом FS.
 
-Для Monthly added beginMonth/publishMonth/sealMonth/processMonth/finishMonth gas bounds.
-Общий closeEmpty проверяется по адресу конкретного контроллера. Monthly terminal event
-обнаруживается отдельным canonical курсором, phase/resultHash проверяются перед claim.
-В общей payout queue хранится kind; старые Short записи без kind читаются как Short.
-Claim по-прежнему fixed-winner, permissionless, без распоряжения призовой казной.
+## Реализация
 
-Главное дополнение forecast: перед новым freeze считаем его полный остаток операций,
-остаток уже pending Short/Monthly и известные unpaid claims. Seed-waiting draw резервирует
-prove+deliver conservatively даже после proof; Processing — оставшиеся chunks/finish/claims.
-Это не гарантия будущего газа и не refill. Обычные операции имеют прежний per-action guard.
+`scripts/promo-runtime-handoff.cjs`: handoffRuntime(previous,next), без транзакций.
+CLI `run-promo-automation.cjs` получил --drain и однократный --handoff-to/--next-state.
+`prepareRuntime` вынесена из общей автоматики и используется до lock для обеих конфигураций.
 
-Порядок: reconcile всех journals → old claims → RNG обоих → started jobs → новые claims →
-funding → новые jobs. Known receipt восстанавливается, unknown останавливает весь signer.
-Отказ отдельного claim сохраняет долг, но не запрещает Monthly закончить и выплатить свой приз.
+Граница узкая: тот же signer/RPC/deployment/BUY policy. Допускаются новый ops profile и
+уже существующая on-chain funding campaign. Monthly нельзя отключить у общего runtime.
+Контрактный rollover остаётся отдельной разрешённой owner операцией, не скрытым действием CLI.
 
-## Проверки и границы
+Drain продолжает существующие jobs и выплаты, не создаёт новые jobs. Перед переходом
+останавливается единственный процесс. Handoff держит старый main и три child locks,
+затем locks назначения. Проверяет identity/checksums/no pending/no active draws, старые
+jobs и canonical receipts/cursors, новую policy/source/anchors. Не теряет старые creator
+credits: нужный адрес остаётся recipient либо подтверждённым legacy witness (лимит8).
 
-Актуальные команды/результаты: [PROMO_AUTOMATION](PROMO_AUTOMATION.md).
-Новые тесты — `test/promo-automation.test.cjs`; старые Short используют общий fixture и
-ту же реализацию. Monthly winner проходит автоматический begin/publish/seal до выплаты;
-другие cases проверяют no-win, receipt timeout, unknown send, общий gas reserve и старый
-неоплаченный Short при Monthly settlement. На цепи проверяется настоящая сохранённая
-BLS подпись. Только тестовая operational preflight/clock подстраивается под её round;
-это не новый live Infinity fork, не финальность публичной сети и не утверждение test odds.
-Полный suite не требовался: адресно общий контур и старые Short регрессии.
+Сначала сохраняется handoff marker старого main: обычный worker после него runtimeRetired.
+Затем создаётся новый main с predecessor/token. Прерывание между записями допускает повтор
+ТОЙ ЖЕ операции, не выбор другого successor. Старые файлы остаются. Новый runtime заново
+сканирует on-chain rewards; очередь не копируется. Пересечения файлов/.tmp/.lock запрещены.
+Это не атомарный rename четырёх файлов: это последовательный recoverable commit с остановкой
+старого writer до активации нового. Stale locks после kill требуют диагностики владельца;
+нет обещания автоматического восстановления после потери диска/журналов.
 
-Миграцию активных jobs не маскируем под простой переключатель. Новый ops schema меняет
-identity и не принимается старым state. Документирован переход после завершения старых
-jobs и сверки всех journals, с архивом четырёх файлов и новым STATE. Новый state не может
-сам установить отсутствие unknown send в старом. Автоматический campaign/job handoff —
-отдельный релизный блокер; отдельный второй signer/coordinator сейчас не добавлялся.
+## Результаты и вопросы
 
-## Вопросы
+8 разных handoff cases +4CLI passed отдельными запусками. В том числе незавершённые/unknown
+журналы, чужой lock, прерывание после retirement, replay старого prize после реального local
+rollCampaign и выплата legacy creator credit. Проверили drain и запрет downgrade Monthly.
+Команды/логи: [PROMO_AUTOMATION](PROMO_AUTOMATION.md). Не full/live fork; contracts не менялись.
 
-1. Есть ли реальный пропуск обязательств в совместном forecast при втором freeze?
-2. Правильно ли изолированы два payout cursor и сохранение старого долга при Monthly?
-3. Есть ли подтверждённый путь повторной отправки/выплаты после Monthly timeout/unknown?
-4. Следующий ограниченный пакет предлагаю посвятить безопасному runtime/campaign handoff
-   и recovery, затем production admission/timing/keys/refill. Есть ли более срочный блокер
-   в текущем коде? Просьба отделять подтверждённые дефекты от пожеланий к будущему релизу.
+1. Есть ли конкретная дыра между retirement и activation при повторе операции?
+2. Достаточны ли проверки старых journals/jobs и successor lineage в принятой one-writer модели?
+3. Не теряется ли долг или возможность его выплатить при новой funding campaign?
+4. Если блокеров нет, какой один production-boundary пакет разумнее следующим: admission/timing
+   или эксплуатационный ETH refill? Не предлагайте одновременно переписывать весь контур.
 
-Не требуется перепроектировать продукт, RNG или prize math. Нужен независимый взгляд на
-единый execution boundary. Ответ обновляйте в GPT_REVIEW_RESPONSE.md.
+Просьба отдельно обозначать реальные воспроизводимые ошибки и гипотезы. Новый ответ —
+в GPT_REVIEW_RESPONSE.md. Сам GPT response не меняли.

@@ -19,12 +19,48 @@ publisher обоих контроллеров; никаких новых кон�
 Его identity и state paths не меняются. Новый профиль намеренно имеет другую identity:
 нельзя просто переключить schema внутри существующего runtime с pending.
 
-Для перехода остановить старый процесс, сверить все его журналы и завершить неизвестные
-отправки; сохранить четыре старых state-файла. Новый профиль запускается с новым STATE,
-когда старые scheduler jobs завершены (включая незамороженные публикации). Он заново
-обнаруживает terminal rewards из цепи; уже оплаченные пропускает. Автоматической миграции
-незавершённых jobs в этом пакете нет. Новый state сам по себе не подтверждает отсутствие
-pending в старом: эту границу необходимо проверить до запуска.
+Для перехода использовать проверяемый handoff ниже. Подмена schema в старом state
+или копирование одного журнала вместо четырёх не являются миграцией.
+
+## Runtime/campaign handoff (28.09)
+
+`scripts/promo-runtime-handoff.cjs`, API `handoffRuntime(previousOptions, nextOptions)`.
+Одна сеть31337, тот же RPC/signer/collector/vault/controllers/adapter и тот же BUY/lifecycle
+policy. Можно сменить ops profile и funding campaign, уже существующую on-chain.
+Отключить Monthly в ранее общем runtime нельзя. Контрактный rollover команда не отправляет.
+
+1. Перезапустить прежний worker с `--drain --watch`. Он завершает существующие jobs,
+   сверяет pending и выплачивает rewards, но не создаёт новые jobs. Не запускать второй
+   процесс с тем же signer. Незамороженные уже опубликованные jobs тоже должны завершиться.
+2. Остановить drain-worker. Подготовить следующий CONFIG и новый STATE. Для новой кампании
+   сначала должен состояться разрешённый контрактом rollover, затем CONFIG описывает его
+   фактическую policy и нужные legacy witnesses.
+3. Выполнить однократную команду:
+
+   `node scripts/run-promo-automation.cjs --config OLD.json --state OLD_STATE --rpc http://127.0.0.1:8545 --executor 0 --handoff-to NEW.json --next-state NEW_STATE`
+
+4. После complete запустить обычный `--watch` с NEW.json/NEW_STATE. Сохранить прежние
+   файлы: это доказательство истории и блокировка повторного запуска старой конфигурации.
+
+Handoff не отправляет транзакций. Он удерживает основной и три дочерних lock старого
+runtime, затем locks назначения. Проверяет checksums/config identity, отсутствие pending
+во всех журналах и nonce signer, отсутствие active/frozen draws, состояния старых jobs,
+canonical receipts/cursors, новую on-chain campaign policy/source/anchors. Нельзя потерять
+неоплаченный creator credit прежнего recipient: он должен остаться в новой policy либо
+иметь корректный legacy witness. Предел8 witnesses прежнего worker остаётся ограничением.
+
+Сначала записывается durable handoff-marker старого runtime. После него обычный worker
+возвращает runtimeRetired и ничего не отправляет. Затем создаётся новый основной journal
+с predecessor/token. Новый worker заново сканирует terminal rewards обоих контроллеров,
+поэтому долги не зависят от переноса локальной очереди. Старые журналы не удаляются.
+
+При исключении между этими записями повторяется та же команда: старый runtime остаётся
+выключенным, допускается только тот же successor. Нельзя использовать существующее чужое
+назначение или пересекающиеся имена файлов, включая .lock/.tmp. Повтор завершённой операции
+проверяет lineage; активная работа/новые pending могут потребовать сначала остановить worker.
+После жёсткого завершения процесса оставшийся lock требует явной диагностики владельца;
+это не автоматическое снятие stale lock и не распределённый wallet lock. Потеря/ручное
+удаление старых журналов не позволяет доказать отсутствие неизвестных отправок.
 
 ## Порядок прохода
 
@@ -90,5 +126,30 @@ BLS остаётся настоящей. Это не свежий Infinity fork 
 Это адресный профиль, не full. Новый live fork не запускался.
 
 Production timing, ключи,
-эксплуатация, внутренние доли creator fees и безопасная смена campaign jobs остаются
+эксплуатация и внутренние доли creator fees остаются
 следующими задачами. Не включать публичную сеть снятием одного chainId guard.
+
+## Проверки handoff и lock (28.09.2026)
+
+Сбой GPT локально не воспроизведён. Историческое наблюдение о синхронизируемом filesystem
+не доказывает причину нового инцидента. Код withState/unlink не меняли; исключений для
+stale lock и автоматического удаления нет.
+
+- С `LOCAL_STATE_LOCK_TRACE=1` и SHA256-проверенным compiled.json из предыдущего пакета:
+  `node --test --test-reporter=tap --test-name-pattern="unknown Monthly|pending Short|unpaid Short" test/promo-automation.test.cjs`
+  —3/3,82.29s.49 acquire/acquired/release/released,0conflicts,0cleanup errors, после каждого
+  release файл отсутствовал. `.local/logs/promo-lock-trace.log`, `promo-lock-summary.json`.
+- Handoff: `node --test --test-reporter=tap test/promo-runtime-handoff.test.cjs` — первые4/4,
+  41.24s; затем фильтр `rediscovers|drain suppresses` —2/2,33.24s; `creator credit` —1/1,
+  12.55s; `disabling Monthly` —1/1,10.51s. Итого8 разных сценариев, в отдельных запусках.
+  Логи `.local/logs/promo-handoff-{tests,extra,credit,admission}.log`.
+- После усиления проверки пересекающихся .tmp/.lock имён: фильтр `overlapping paths|unknown Monthly`
+  по handoff и automation tests —2/2,38.58s, trace `promo-handoff-final-trace.log`.
+  29 owned acquisitions/releases; один ожидаемый conflict от намеренно созданного чужого
+  lock в тесте,0release errors. Не считать этот injected conflict воспроизведением сбоя GPT.
+- `node --test test/short-automation-cli.test.cjs` —4/4,1.08s, включая параметры handoff.
+
+Contracts не менялись. Полный suite, live fork и публичная сеть не запускались.
+Для повторения всего затронутого контура: `npm run test:group -- --profile promo-automation`.
+В среде GPT при повторном сбое нужен original trace с PID/runId/path и сравнением
+несинхронизируемого runtime каталога; без него нельзя утверждать конкретную причину.

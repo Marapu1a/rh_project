@@ -59,7 +59,8 @@
       "test/short-automation.test.cjs",
       "test/short-automation-cli.test.cjs",
       "test/short-automation-evidence.test.cjs",
-      "test/promo-automation.test.cjs"
+      "test/promo-automation.test.cjs",
+      "test/promo-runtime-handoff.test.cjs"
     ]
   },
   "accounting": {
@@ -84,7 +85,8 @@
       "test/short-automation.test.cjs",
       "test/short-automation-cli.test.cjs",
       "test/short-automation-evidence.test.cjs",
-      "test/promo-automation.test.cjs"
+      "test/promo-automation.test.cjs",
+      "test/promo-runtime-handoff.test.cjs"
     ]
   },
   "short": {
@@ -213,7 +215,8 @@
     "files": [
       "test/promo-automation.test.cjs",
       "test/short-automation.test.cjs",
-      "test/short-automation-cli.test.cjs"
+      "test/short-automation-cli.test.cjs",
+      "test/promo-runtime-handoff.test.cjs"
     ]
   }
 }

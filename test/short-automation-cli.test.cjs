@@ -16,3 +16,9 @@ test('Dual automation requires Monthly gas bounds and keeps both CLI entrypoints
  assert.throws(()=>validateOps(o),/Missing gas bound/);for(const a of MONTHLY_ACTIONS)o.gasUnits[a]='3000000';assert.equal(validateOps(o),o);
  const r=spawnSync(process.execPath,['scripts/run-promo-automation.cjs','--config','absent','--state','absent','--rpc','https://example.com'],{encoding:'utf8',windowsHide:true});assert.equal(r.status,1);assert.match(r.stderr,/Loopback/);
 });
+
+test('handoff CLI rejects incomplete or watched transition before reading config',()=>{
+ for(const extra of [['--handoff-to','new.json'],['--handoff-to','new.json','--next-state','next','--watch'],['--handoff-to','new.json','--next-state','next','--drain']]){
+  const r=spawnSync(process.execPath,['scripts/run-promo-automation.cjs','--config','absent','--state','old','--rpc','http://127.0.0.1:8545',...extra],{encoding:'utf8',windowsHide:true});assert.equal(r.status,1);assert.match(r.stderr,/Handoff needs/);
+ }
+});

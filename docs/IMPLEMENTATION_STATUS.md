@@ -5,7 +5,7 @@
 
 | Компонент | Что есть | Ограничение / подробности |
 |---|---|---|
-| Общая автоматика Short/Monthly | Один signer, общий journal/claims, оба drand consumer и совместный forecast frozen draws | Local31337/loopback; без автоматической миграции активных jobs. [Модуль](PROMO_AUTOMATION.md) |
+| Общая автоматика Short/Monthly | Один signer, общий journal/claims, оба drand consumer и совместный forecast frozen draws | Local31337/loopback; drain + проверяемый handoff после завершения jobs, без смены deployment/BUY policy. [Модуль](PROMO_AUTOMATION.md) |
 | FeeRouter | TOKEN/USDG accounting, credits, одноразовый source с проверкой registered position/quote/NFT custody, атомарный rollover | Rollover — граница кампании; source epoch drift блокирует переход. [Отчёт](FEE_ROUTER_ROLLOVER_REPORT.md), [новый native launch proof](NATIVE_LAUNCH_PROOF.md) |
 | PromoVault / DualControllerPromoVault | Free Short/Current/Next, funding, reserve/claimable, win/no-win, старые долги, immutable capabilities | Dual — USDG-only. Нет owner withdrawal и замены controllers. [Бухгалтерия](PROMO_VAULT_DESIGN.md), [архитектура](DUAL_CONTROLLER_ARCHITECTURE.md) |
 | ParticipantRegistry | Публичный opt-in без backdating | Не доказывает уникальность человека. [Модуль](PARTICIPANT_REGISTRY.md) |
