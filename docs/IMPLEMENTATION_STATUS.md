@@ -190,3 +190,7 @@ BUY/SELL, permissionless pull в local receiver; scripts/infinity-launch-fork.cj
 27.09: [InfinityCollector](INFINITY_COLLECTOR.md) — USDG-only standalone source bind,
 policy fingerprint/counters, campaign accounting, atomic rollover и fixed Promo pay+sync.
 Новый fork reaches GENERAL; отдельный production worker ещё не подключён. V2 не менялся.
+
+27.09: [Infinity worker](INFINITY_WORKER.md): bounded pass + CLI/watch, pinned local job,
+existing durable journal/locks, legacy witnesses, source lane isolation, gas/native waits.
+Fork worker автоматически funded GENERAL; mainnet/coordinator/shared budget ещё отдельно.

@@ -1,5 +1,7 @@
 # Текущий контекст
 
+27.09: [Infinity worker/CLI/watch](INFINITY_WORKER.md) реализован с existing state lock/journal/receipt boundary. Pull→pay→GENERAL, source drift не блокирует старые credits, unknown sends не повторяются, gas/native shortages→wait. Worker7/7 + additions2/2, shared17pass, saved1/1; final reconciliation2/2 повторно. Новый fork+3USDG в reserves, rerun0tx. Только local31337/loopback: mainnet admission/keys/shared budget ещё отдельно. Далее Infinity decoder/automatic genesis; база билетов требует решения.
+
 27.09: [InfinityCollector + GENERAL funding](INFINITY_COLLECTOR.md) реализованы отдельно от V2. Atomic rollover, source fingerprint до/после claim, old credits доступны при drift; fixed Promo pay+sync. Новый fork complete:5.934270USDG в reserves (fees+18raw direct). Адресно52pass, fixture failure исправлен1/1, добавления2/2; не единый55/55 и не full. Далее review и узкий worker с existing reconciliation; Infinity entries/genesis отдельно, gross basis пока не утверждена.
 
 27.09: пользователь выбрал Infinity3% для первого релиза. [План и вопросы GPT](GPT_REVIEW_REQUEST.md) обновлены с учётом review beeef4e. Ближайший пакет — USDG collector/campaign boundary и fixed funding; API/bind/policy drift обсуждаем до кода. Далее Infinity decoder+automatic eligibility, workers и сквозной proof. V2 не развиваем параллельно, старый код сохраняем.

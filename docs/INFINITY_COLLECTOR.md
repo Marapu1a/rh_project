@@ -1,5 +1,8 @@
 # Infinity collector: USDG → campaigns → GENERAL
 
+Продолжение27.09: [локальный worker и CLI/watch](INFINITY_WORKER.md) уже подключены;
+пределы mainnet/coordinator admission указаны отдельно.
+
 27.09.2026. Реализован отдельный [InfinityCollector](../contracts/InfinityCollector.sol).
 V2 FeeRouter и его worker не изменены. Это код нового источника, не объявление готовности
 всего продукта к mainnet; внутренние production bps/recipients ещё не утверждены.

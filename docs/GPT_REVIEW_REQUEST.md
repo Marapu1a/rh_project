@@ -1,5 +1,26 @@
 # GPT: переход первого релиза на PAIR Infinity — план и оставшиеся решения
 
+## Последний follow-up: worker после collector
+
+[Infinity worker/CLI/watch](INFINITY_WORKER.md) реализован отдельно от V2 coordinator.
+Переиспользует withState и sendLocalTransaction boundary: prepared→hash→canonical
+receipt; no hash запрещает resend, known hash reconciles sender/nonce/target/data.
+Job/runtime/anchor/source/campaign/legacy witnesses закреплены. Pull no-op не шлём;
+source drift/transient read/definite failure пропускают source lane, old pay доступен.
+Gas/native shortages→waiting, unknown send останавливает дальнейшие действия.
+
+Реальный новый fork: дополнительный BUY → worker pull/pay → +3USDG GENERAL; повторный
+проход0tx. Worker9сценариев прошли раздельными7+2, shared17pass, saved1/1; после
+усиления reconciliation2/2 повторно. Начальный syntax error тестового файла исправлен.
+Full не запускался. Контракты не менялись.
+
+Проверь journal/reconciliation, error isolation, отсутствие silent resend, gas preflight,
+job identity и legacy claims. Worker сознательно local31337/loopback: deployment
+admission/keys/mainnet finality/shared gas obligations ещё не решены этим пакетом.
+Не трактуй nativeFloor как обеспечение расходов draw. Не делать auto delete stale locks.
+Следующий продуктовый шаг — Infinity decoder/новый automatic genesis; база100USDG
+всё ещё требует решения пользователя, не считать gross debit автоматически одобренным.
+
 ## Реализованный follow-up после fd9884d
 
 [InfinityCollector](INFINITY_COLLECTOR.md) реализован: standalone USDG, one-time bind,

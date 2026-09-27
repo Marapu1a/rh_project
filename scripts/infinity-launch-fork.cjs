@@ -6,7 +6,7 @@ const coder=ethers.AbiCoder.defaultAbiCoder(),rpc=(m,p=[])=>hre.network.provider
 const proxyAddress='0xB0D389250c61c69EcCD5d986fC8482CBfA5418C4';
 const quoteAddress=require('../research/pair-usdg-active-reference-2026-09-23.json').decoderConfig.quote;
 async function main(){
- const out=process.argv[2],collectorMode=process.argv[3]==='--collector';assert(out&&!fs.existsSync(out)&&(process.argv.length===3||(process.argv.length===4&&collectorMode)),'New output path [--collector] required');
+ const out=process.argv[2],workerMode=process.argv[3]==='--worker',collectorMode=process.argv[3]==='--collector'||workerMode;assert(out&&!fs.existsSync(out)&&(process.argv.length===3||(process.argv.length===4&&collectorMode)),'New output path [--collector|--worker] required');
  const e={schema:'infinity-launch-fork-v1',observedAt:new Date().toISOString(),feeBps:300,transactions:[],
   assumptions:['31337 local fork; no PAIR impersonation/code changes','Buyer USDG storage funded artificially; sandbox ETH',
    'Local opening ticks and minOut=1, not a deployment price/slippage policy','No developer buy; no vanity suffix requirement at contract level',
@@ -86,6 +86,22 @@ async function main(){
    const reserves=[await promo.freeShort(),await promo.freeCurrent(),await promo.freeNext()];assert.equal(reserves.reduce((x,y)=>x+y,0n),oldCredit+18n);
    assert.equal(await receiver.accounted(),0n);assert.equal(await quote.balanceOf(receiver.target),0n);
    e.collector={address:receiver.target,promo:promo.target,oldRevenue:await receiver.received(1),newRevenue:await receiver.received(2),reserves,unpaidPreserved:true,staleRejected:true,fixtureBps:[10000,0,0]};
+  }
+  if(workerMode){
+   stage('worker-live-fees');await sent('approve new worker BUY',quote.approve(adapter.target,gross));
+   await sent('BUY for worker',adapter.executeExactInput(key,!project0,base,gross,1,wallet,wallet,deadline,'0x',{gasLimit:4000000}));
+   const anchor=await provider.getBlock('latest'),cp=await receiver.policy(2);
+   const job={schema:'local-infinity-worker-v1',chainId:31337,collector:receiver.target,token:tokenAddress,quote:quoteAddress,promo:promo.target,source:vault.target,
+    collectorCodeHash:ethers.keccak256(await provider.getCode(receiver.target)),sourceFingerprint:await receiver.sourceFingerprint(),anchor:{number:anchor.number,hash:anchor.hash},campaignId:'2',
+    recipients:Array.from(cp.recipients),bps:Array.from(cp.bps,Number),legacy:[],maxGasPrice:'1000000000000',nativeFloor:'1000000000000',gasUnits:{pull:'600000',pay:'600000'},pollSeconds:60};
+   fs.mkdirSync('.local/logs',{recursive:true});const stateDir=fs.mkdtempSync('.local/logs/infinity-fork-worker-'),statePath=stateDir+'/state.json';
+   const options={provider,collector:receiver.connect(provider),executor:buyer,job,statePath};
+   const beforeReserves=await quote.balanceOf(promo.target);
+   const run=await require('./infinity-worker.cjs').runInfinityWorker(options,{onStep:async step=>{e.transactions.push({label:'worker '+step.action,tx:await rpc('eth_getTransactionByHash',[step.transactionHash]),receipt:await rpc('eth_getTransactionReceipt',[step.transactionHash])});}});
+   assert.equal(run.status,'complete');assert.deepEqual(run.steps.map(s=>s.action),['pull','pay']);
+   assert.equal(await quote.balanceOf(promo.target)-beforeReserves,3000000n);
+   const nonce=await provider.getTransactionCount(wallet),again=await require('./infinity-worker.cjs').runInfinityWorker(options);assert.equal(again.status,'complete');assert.equal(again.steps.length,0);assert.equal(await provider.getTransactionCount(wallet),nonce);
+   e.worker={job,run,again,state:JSON.parse(fs.readFileSync(statePath,'utf8')),promoIncrease:'3000000',reserves:[await promo.freeShort(),await promo.freeCurrent(),await promo.freeNext()]};
   }
   e.success=true;stage('complete');
  }catch(error){e.error=error.stack||String(error);e.errorData=error.data||null;process.exitCode=1;}
