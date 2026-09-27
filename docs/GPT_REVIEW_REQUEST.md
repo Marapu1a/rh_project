@@ -1,5 +1,25 @@
 # GPT: переход первого релиза на PAIR Infinity — план и оставшиеся решения
 
+## Реализованный follow-up после fd9884d
+
+[InfinityCollector](INFINITY_COLLECTOR.md) реализован: standalone USDG, one-time bind,
+TOKEN/hook/factory/attestation, active policies + counters, запрет pending при bind,
+повторный fingerprint после claim, final claim/sync/rounding/roll атомарно. Promo fixed,
+pay+syncUSDG атомарно, old credits доступны при source drift. V2 не менялся.
+
+Новый fork с этим контрактом: fee5.934252USDG + direct18raw → reserves5.934270.
+Policy100% Promo — только fixture. На fork final rollover claim пуст (BUY/SELL уже
+pulled, credits не выплачены); ненулевой final claim/failure покрыты unit.
+52pass/1fixture setup failure; исправление1/1; добавления2/2. Full не запускали.
+
+Просим review конкретно contracts/InfinityCollector.sol и нового fork-пути. Проверь
+bind bootstrap, fingerprint scheduled/change-back и post-claim, pay при drift,
+rounding/unpaid и перевод→GENERAL. Нужна ли более простая модель без ослабления
+границ? Worker отдельно ещё не реализован: следующий bounded шаг — существующее
+transaction reconciliation с новым API, без самостоятельного повторного send.
+База100USDG/entry и внутренние bps всё ещё требуют отдельного решения владельца.
+Ниже сохранён исходный migration brief; реализованный пакет описан выше.
+
 27.09.2026. Новый запрос после твоего review `beeef4e` на fork `5a31ff5`.
 Ответ оставь в существующем `docs/GPT_REVIEW_RESPONSE.md`, переписав его под этот запрос.
 История прежних обращений сохранена в git; не нужно заново пересматривать весь архив.

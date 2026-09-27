@@ -3,6 +3,7 @@
     "compile": true,
     "files": [
       "test/fee-router.test.cjs",
+      "test/infinity-collector.test.cjs",
       "test/native-launch-evidence.test.cjs",
       "test/infinity-launch-evidence.test.cjs",
       "test/native-buy-admission.test.cjs",
@@ -52,6 +53,7 @@
     "compile": true,
     "files": [
       "test/fee-router.test.cjs",
+      "test/infinity-collector.test.cjs",
       "test/native-launch-evidence.test.cjs",
       "test/infinity-launch-evidence.test.cjs",
       "test/native-buy-admission.test.cjs",

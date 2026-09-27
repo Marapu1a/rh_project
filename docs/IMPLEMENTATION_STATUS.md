@@ -186,3 +186,7 @@ eth_call. CLI/coordinator используют общий путь; [fork и п�
 27.09: [Infinity3% fork proof](INFINITY_INTEGRATION_RESEARCH.md): новый TOKEN/USDG,
 BUY/SELL, permissionless pull в local receiver; scripts/infinity-launch-fork.cjs.
 Текущий FeeRouter не совместим с Creator Vault ABI; production collector ещё не реализован.
+
+27.09: [InfinityCollector](INFINITY_COLLECTOR.md) — USDG-only standalone source bind,
+policy fingerprint/counters, campaign accounting, atomic rollover и fixed Promo pay+sync.
+Новый fork reaches GENERAL; отдельный production worker ещё не подключён. V2 не менялся.

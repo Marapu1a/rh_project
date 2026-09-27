@@ -1,5 +1,7 @@
 # План разработки
 
+27.09: [InfinityCollector + GENERAL funding](INFINITY_COLLECTOR.md) реализованы отдельно от V2. Atomic rollover, source fingerprint до/после claim, old credits доступны при drift; fixed Promo pay+sync. Новый fork complete:5.934270USDG в reserves (fees+18raw direct). Адресно52pass, fixture failure исправлен1/1, добавления2/2; не единый55/55 и не full. Далее review и узкий worker с existing reconciliation; Infinity entries/genesis отдельно, gross basis пока не утверждена.
+
 27.09: пользователь выбрал Infinity3% для первого релиза. [План и вопросы GPT](GPT_REVIEW_REQUEST.md) обновлены с учётом review beeef4e. Ближайший пакет — USDG collector/campaign boundary и fixed funding; API/bind/policy drift обсуждаем до кода. Далее Infinity decoder+automatic eligibility, workers и сквозной proof. V2 не развиваем параллельно, старый код сохраняем.
 
 27.09: выбраны3% Infinity creator fee. [Новый USDG fork](INFINITY_INTEGRATION_RESEARCH.md) complete: launch→BUY→contract claim→SELL→contract claim; receiver получил5.934252USDG. Offline4/4, full не запускался. Это локальный fixture, не production collector. Далее ограниченная модель collector/campaign boundary и подключение к funding; decoder/admission отдельно.
