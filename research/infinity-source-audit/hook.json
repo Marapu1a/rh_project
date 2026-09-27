@@ -1,0 +1,1004 @@
+{
+  "address": "0x647895e9ba75a4747d8a7Ed1dd56Ee8b7B9e3067",
+  "runtimeMatch": "exact_match",
+  "verifiedAt": "2026-09-23T05:02:04Z",
+  "url": "https://sourcify.dev/server/v2/contract/4663/0x647895e9ba75a4747d8a7Ed1dd56Ee8b7B9e3067?fields=all",
+  "abi": [
+    {
+      "type": "constructor",
+      "inputs": [
+        {
+          "name": "manager_",
+          "type": "address",
+          "internalType": "contract IPancakeV1CLPoolManager"
+        },
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "owner_",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "protocolVault_",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "AlreadyRegistered",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "GraduationReadFailed",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "HolderTransition",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "InvalidPolicy",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "InvalidPool",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "OnlyPoolManager",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "OnlyRegistrar",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "OwnableInvalidOwner",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "owner",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "name": "OwnableUnauthorizedAccount",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "account",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "name": "UnattestedVault",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "UnknownPool",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "ModeFeeAccrued",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "project",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "asset",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "destination",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "OwnershipTransferred",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "previousOwner",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "newOwner",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "PolicyScheduled",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "project",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "epoch",
+          "type": "uint64",
+          "indexed": true,
+          "internalType": "uint64"
+        },
+        {
+          "name": "mode",
+          "type": "uint8",
+          "indexed": false,
+          "internalType": "enum PancakeV1InfinityHook.FeeMode"
+        },
+        {
+          "name": "feeBps",
+          "type": "uint16",
+          "indexed": false,
+          "internalType": "uint16"
+        },
+        {
+          "name": "destination",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        },
+        {
+          "name": "effectiveAt",
+          "type": "uint64",
+          "indexed": false,
+          "internalType": "uint64"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "PoolRegistered",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "poolId",
+          "type": "bytes32",
+          "indexed": true,
+          "internalType": "bytes32"
+        },
+        {
+          "name": "project",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "quote",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "graduationSqrtPriceX96",
+          "type": "uint160",
+          "indexed": false,
+          "internalType": "uint160"
+        },
+        {
+          "name": "graduateWhenAbove",
+          "type": "bool",
+          "indexed": false,
+          "internalType": "bool"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "ProtocolFeeAccrued",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "quote",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "destination",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "TokenGraduated",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "project",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "poolId",
+          "type": "bytes32",
+          "indexed": true,
+          "internalType": "bytes32"
+        },
+        {
+          "name": "sqrtPriceX96",
+          "type": "uint160",
+          "indexed": false,
+          "internalType": "uint160"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "BPS",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint16",
+          "internalType": "uint16"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "BURN",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "HOOK_BITMAP",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint16",
+          "internalType": "uint16"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "MAX_MODE_FEE_BPS",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint16",
+          "internalType": "uint16"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "PROTOCOL_FEE_BPS",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint16",
+          "internalType": "uint16"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "activePolicy",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "project",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "result",
+          "type": "tuple",
+          "components": [
+            {
+              "name": "mode",
+              "type": "uint8",
+              "internalType": "enum PancakeV1InfinityHook.FeeMode"
+            },
+            {
+              "name": "feeBps",
+              "type": "uint16",
+              "internalType": "uint16"
+            },
+            {
+              "name": "destination",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "effectiveAt",
+              "type": "uint64",
+              "internalType": "uint64"
+            }
+          ],
+          "internalType": "struct PancakeV1InfinityHook.Policy"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "afterSwap",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "sender",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "key",
+          "type": "tuple",
+          "components": [
+            {
+              "name": "currency0",
+              "type": "address",
+              "internalType": "PancakeV1Currency"
+            },
+            {
+              "name": "currency1",
+              "type": "address",
+              "internalType": "PancakeV1Currency"
+            },
+            {
+              "name": "hooks",
+              "type": "address",
+              "internalType": "contract IPancakeV1Hooks"
+            },
+            {
+              "name": "poolManager",
+              "type": "address",
+              "internalType": "contract IPancakeV1CLPoolManager"
+            },
+            {
+              "name": "fee",
+              "type": "uint24",
+              "internalType": "uint24"
+            },
+            {
+              "name": "parameters",
+              "type": "bytes32",
+              "internalType": "bytes32"
+            }
+          ],
+          "internalType": "struct PancakeV1PoolKey"
+        },
+        {
+          "name": "params",
+          "type": "tuple",
+          "components": [
+            {
+              "name": "zeroForOne",
+              "type": "bool",
+              "internalType": "bool"
+            },
+            {
+              "name": "amountSpecified",
+              "type": "int256",
+              "internalType": "int256"
+            },
+            {
+              "name": "sqrtPriceLimitX96",
+              "type": "uint160",
+              "internalType": "uint160"
+            }
+          ],
+          "internalType": "struct IPancakeV1CLPoolManager.SwapParams"
+        },
+        {
+          "name": "delta",
+          "type": "int256",
+          "internalType": "PancakeV1BalanceDelta"
+        },
+        {
+          "name": "",
+          "type": "bytes",
+          "internalType": "bytes"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bytes4",
+          "internalType": "bytes4"
+        },
+        {
+          "name": "",
+          "type": "int128",
+          "internalType": "int128"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "attestor",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "beforeSwap",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "key",
+          "type": "tuple",
+          "components": [
+            {
+              "name": "currency0",
+              "type": "address",
+              "internalType": "PancakeV1Currency"
+            },
+            {
+              "name": "currency1",
+              "type": "address",
+              "internalType": "PancakeV1Currency"
+            },
+            {
+              "name": "hooks",
+              "type": "address",
+              "internalType": "contract IPancakeV1Hooks"
+            },
+            {
+              "name": "poolManager",
+              "type": "address",
+              "internalType": "contract IPancakeV1CLPoolManager"
+            },
+            {
+              "name": "fee",
+              "type": "uint24",
+              "internalType": "uint24"
+            },
+            {
+              "name": "parameters",
+              "type": "bytes32",
+              "internalType": "bytes32"
+            }
+          ],
+          "internalType": "struct PancakeV1PoolKey"
+        },
+        {
+          "name": "params",
+          "type": "tuple",
+          "components": [
+            {
+              "name": "zeroForOne",
+              "type": "bool",
+              "internalType": "bool"
+            },
+            {
+              "name": "amountSpecified",
+              "type": "int256",
+              "internalType": "int256"
+            },
+            {
+              "name": "sqrtPriceLimitX96",
+              "type": "uint160",
+              "internalType": "uint160"
+            }
+          ],
+          "internalType": "struct IPancakeV1CLPoolManager.SwapParams"
+        },
+        {
+          "name": "",
+          "type": "bytes",
+          "internalType": "bytes"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bytes4",
+          "internalType": "bytes4"
+        },
+        {
+          "name": "",
+          "type": "int256",
+          "internalType": "PancakeV1BeforeSwapDelta"
+        },
+        {
+          "name": "",
+          "type": "uint24",
+          "internalType": "uint24"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "finalizeRelease",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "engine_",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "factory_",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "frozen",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "getHooksRegistrationBitmap",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint16",
+          "internalType": "uint16"
+        }
+      ],
+      "stateMutability": "pure"
+    },
+    {
+      "name": "owner",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "policies",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "",
+          "type": "uint64",
+          "internalType": "uint64"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "mode",
+          "type": "uint8",
+          "internalType": "enum PancakeV1InfinityHook.FeeMode"
+        },
+        {
+          "name": "feeBps",
+          "type": "uint16",
+          "internalType": "uint16"
+        },
+        {
+          "name": "destination",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "effectiveAt",
+          "type": "uint64",
+          "internalType": "uint64"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "poolId",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "key",
+          "type": "tuple",
+          "components": [
+            {
+              "name": "currency0",
+              "type": "address",
+              "internalType": "PancakeV1Currency"
+            },
+            {
+              "name": "currency1",
+              "type": "address",
+              "internalType": "PancakeV1Currency"
+            },
+            {
+              "name": "hooks",
+              "type": "address",
+              "internalType": "contract IPancakeV1Hooks"
+            },
+            {
+              "name": "poolManager",
+              "type": "address",
+              "internalType": "contract IPancakeV1CLPoolManager"
+            },
+            {
+              "name": "fee",
+              "type": "uint24",
+              "internalType": "uint24"
+            },
+            {
+              "name": "parameters",
+              "type": "bytes32",
+              "internalType": "bytes32"
+            }
+          ],
+          "internalType": "struct PancakeV1PoolKey"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "stateMutability": "pure"
+    },
+    {
+      "name": "poolManager",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "contract IPancakeV1CLPoolManager"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "pools",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "project",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "quote",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "graduationSqrtPriceX96",
+          "type": "uint160",
+          "internalType": "uint160"
+        },
+        {
+          "name": "graduateWhenAbove",
+          "type": "bool",
+          "internalType": "bool"
+        },
+        {
+          "name": "registered",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "protocolVault",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "quoteInputFee",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "project",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "registerPool",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "key",
+          "type": "tuple",
+          "components": [
+            {
+              "name": "currency0",
+              "type": "address",
+              "internalType": "PancakeV1Currency"
+            },
+            {
+              "name": "currency1",
+              "type": "address",
+              "internalType": "PancakeV1Currency"
+            },
+            {
+              "name": "hooks",
+              "type": "address",
+              "internalType": "contract IPancakeV1Hooks"
+            },
+            {
+              "name": "poolManager",
+              "type": "address",
+              "internalType": "contract IPancakeV1CLPoolManager"
+            },
+            {
+              "name": "fee",
+              "type": "uint24",
+              "internalType": "uint24"
+            },
+            {
+              "name": "parameters",
+              "type": "bytes32",
+              "internalType": "bytes32"
+            }
+          ],
+          "internalType": "struct PancakeV1PoolKey"
+        },
+        {
+          "name": "project",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "quote",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "graduationSqrtPriceX96",
+          "type": "uint160",
+          "internalType": "uint160"
+        },
+        {
+          "name": "graduateWhenAbove",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "registrar",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "renounceOwnership",
+      "type": "function",
+      "inputs": [],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "schedulePolicy",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "project",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "mode",
+          "type": "uint8",
+          "internalType": "enum PancakeV1InfinityHook.FeeMode"
+        },
+        {
+          "name": "feeBps",
+          "type": "uint16",
+          "internalType": "uint16"
+        },
+        {
+          "name": "destination",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "effectiveAt",
+          "type": "uint64",
+          "internalType": "uint64"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "epoch",
+          "type": "uint64",
+          "internalType": "uint64"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "settleUnspecifiedFee",
+      "type": "function",
+      "inputs": [],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "tokenStates",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "currentEpoch",
+          "type": "uint64",
+          "internalType": "uint64"
+        },
+        {
+          "name": "graduated",
+          "type": "bool",
+          "internalType": "bool"
+        },
+        {
+          "name": "holderMode",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "transferOwnership",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "newOwner",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    }
+  ],
+  "sources": {
+    "contracts/pancake-v1/PancakeV1InfinityHook.sol": {
+      "content": "// SPDX-License-Identifier: MIT\npragma solidity 0.8.26;\n\nimport {Ownable} from \"@openzeppelin/contracts/access/Ownable.sol\";\nimport {\n    PancakeV1Currency,\n    PancakeV1BeforeSwapDelta,\n    PancakeV1BalanceDelta,\n    PancakeV1PoolKey,\n    IPancakeV1Hooks,\n    IPancakeV1CLPoolManager,\n    IPancakeV1Vault,\n    IPancakeV1FeeReceiver,\n    PancakeV1BalanceDeltaLib,\n    PancakeV1BeforeSwapDeltaLib\n} from \"./PancakeV1InfinityHookTypes.sol\";\n\ninterface IPancakeV1FeeSettler {\n    function settleHookFee(address asset, address destination, uint256 amount) external;\n}\n\ninterface IPancakeV1InfinityReleaseEngine {\n    function hook() external view returns (address);\n    function factory() external view returns (address);\n}\n\ninterface IPancakeV1InfinityReleaseFactory {\n    function hook() external view returns (address);\n    function engine() external view returns (address);\n}\n\n/// @notice Infinity CL hook core for the new PANCAKE_V1 release only.\n/// @dev This hook is deliberately immutable. Infinity validates the callback\n/// bitmap from the PoolKey parameters and the hook address is part of PoolId;\n/// proxying it would make address/permission mistakes a pool-identity risk.\ncontract PancakeV1InfinityHook is Ownable, IPancakeV1Hooks {\n    using PancakeV1BalanceDeltaLib for PancakeV1BalanceDelta;\n\n    uint16 public constant BPS = 10_000;\n    uint16 public constant PROTOCOL_FEE_BPS = 30;\n    uint16 public constant MAX_MODE_FEE_BPS = 1_000;\n    uint16 public constant HOOK_BITMAP = (1 << 6) | (1 << 7) | (1 << 10) | (1 << 11);\n    address public constant BURN = 0x000000000000000000000000000000000000dEaD;\n\n    enum FeeMode { NONE, CREATOR_QUOTE, BURN_PROJECT, FEE_SHARING_QUOTE, HOLDER_QUOTE }\n    struct PoolConfig {\n        address project;\n        address quote;\n        uint160 graduationSqrtPriceX96;\n        bool graduateWhenAbove;\n        bool registered;\n    }\n    struct Policy {\n        FeeMode mode;\n        uint16 feeBps;\n        address destination;\n        uint64 effectiveAt;\n    }\n    struct PendingFee {\n        address project;\n        address quote;\n        address modeAsset;\n        address modeDestination;\n        uint256 protocolFee;\n        uint256 modeFee;\n    }\n    struct TokenState {\n        uint64 currentEpoch;\n        bool graduated;\n        bool holderMode;\n    }\n\n    IPancakeV1CLPoolManager public immutable poolManager;\n    address public registrar;\n    address public immutable protocolVault;\n    address public attestor;\n    bool public frozen;\n    mapping(bytes32 => PoolConfig) public pools;\n    mapping(address => TokenState) public tokenStates;\n    mapping(address => mapping(uint64 => Policy)) public policies;\n    mapping(address => PendingFee) private _pendingFees;\n\n    error OnlyPoolManager();\n    error OnlyRegistrar();\n    error UnknownPool();\n    error InvalidPool();\n    error InvalidPolicy();\n    error HolderTransition();\n    error AlreadyRegistered();\n    error GraduationReadFailed();\n    error UnattestedVault();\n\n    event PoolRegistered(bytes32 indexed poolId, address indexed project, address indexed quote,\n        uint160 graduationSqrtPriceX96, bool graduateWhenAbove);\n    event PolicyScheduled(address indexed project, uint64 indexed epoch, FeeMode mode,\n        uint16 feeBps, address destination, uint64 effectiveAt);\n    event TokenGraduated(address indexed project, bytes32 indexed poolId, uint160 sqrtPriceX96);\n    event ProtocolFeeAccrued(address indexed quote, address indexed destination, uint256 amount);\n    event ModeFeeAccrued(address indexed project, address indexed asset, address indexed destination, uint256 amount);\n\n    constructor(IPancakeV1CLPoolManager manager_, address /*registrar_*/, address owner_, address protocolVault_)\n        Ownable(owner_) {\n        if (address(manager_) == address(0) || protocolVault_ == address(0)\n            || protocolVault_.code.length == 0) {\n            revert InvalidPool();\n        }\n        address vault_ = manager_.vault();\n        if (vault_ == address(0) || vault_.code.length == 0) revert InvalidPool();\n        _validateReceiver(protocolVault_);\n        poolManager = manager_;\n        // Retain the old constructor shape for artifact compatibility, but\n        // never trust a constructor-supplied registrar.  The protected admin\n        // binds it exactly once after the reciprocal release graph exists.\n        protocolVault = protocolVault_;\n    }\n\n    function getHooksRegistrationBitmap() external pure returns (uint16) {\n        return HOOK_BITMAP;\n    }\n\n    function finalizeRelease(address engine_, address factory_) external onlyOwner {\n        if (frozen || engine_.code.length == 0 || factory_.code.length == 0) revert InvalidPolicy();\n        if (IPancakeV1InfinityReleaseEngine(engine_).hook() != address(this)\n            || IPancakeV1InfinityReleaseEngine(engine_).factory() != factory_\n            || IPancakeV1InfinityReleaseFactory(factory_).hook() != address(this)\n            || IPancakeV1InfinityReleaseFactory(factory_).engine() != engine_) {\n            revert InvalidPolicy();\n        }\n        registrar = engine_;\n        attestor = factory_;\n        frozen = true;\n    }\n\n    /// @notice Exact fee debited in quote units when an exact-input quote swap\n    /// is executed. Keeping the two floor operations here lets the developer\n    /// buy prove the complete quote debit without accepting an arbitrary\n    /// slippage allowance for hook fees.\n    function quoteInputFee(address project, uint256 amount) external view returns (uint256) {\n        Policy memory policy = activePolicy(project);\n        uint256 fee = amount * PROTOCOL_FEE_BPS / BPS;\n        if (policy.mode != FeeMode.BURN_PROJECT && policy.mode != FeeMode.NONE) {\n            fee += amount * policy.feeBps / BPS;\n        }\n        return fee;\n    }\n\n    function poolId(PancakeV1PoolKey calldata key) public pure returns (bytes32) {\n        return keccak256(abi.encode(key));\n    }\n\n    function registerPool(\n        PancakeV1PoolKey calldata key,\n        address project,\n        address quote,\n        uint160 graduationSqrtPriceX96,\n        bool graduateWhenAbove\n    ) external {\n        if (!frozen || msg.sender != registrar) revert OnlyRegistrar();\n        if (address(key.hooks) != address(this) || address(key.poolManager) != address(poolManager)\n            || project == address(0) || quote == address(0) || project == quote\n            || graduationSqrtPriceX96 == 0) revert InvalidPool();\n        address c0 = PancakeV1Currency.unwrap(key.currency0);\n        address c1 = PancakeV1Currency.unwrap(key.currency1);\n        if (!((c0 == project && c1 == quote) || (c0 == quote && c1 == project))) revert InvalidPool();\n        bytes32 id = poolId(key);\n        if (pools[id].registered) revert AlreadyRegistered();\n        pools[id] = PoolConfig(project, quote, graduationSqrtPriceX96, graduateWhenAbove, true);\n        emit PoolRegistered(id, project, quote, graduationSqrtPriceX96, graduateWhenAbove);\n    }\n\n    /// @notice Append a policy epoch. effectiveAt is intentionally admin\n    /// selected and may be block.timestamp (there is no forced timelock).\n    function schedulePolicy(address project, FeeMode mode, uint16 feeBps, address destination,\n        uint64 effectiveAt) external returns (uint64 epoch) {\n        if (msg.sender != owner() && (!frozen || msg.sender != registrar)) revert OnlyRegistrar();\n        // Zero is the explicit immediate-activation sentinel. This avoids a\n        // race between reading the latest block and mining the admin tx while\n        // retaining strict rejection of stale non-zero timestamps.\n        if (effectiveAt == 0) effectiveAt = uint64(block.timestamp);\n        if (project == address(0) || effectiveAt < block.timestamp) revert InvalidPolicy();\n        if (mode == FeeMode.NONE) {\n            if (feeBps != 0 || destination != address(0)) revert InvalidPolicy();\n        } else {\n            if (feeBps == 0 || feeBps > MAX_MODE_FEE_BPS || feeBps % 100 != 0) revert InvalidPolicy();\n            if (mode == FeeMode.BURN_PROJECT && destination != BURN) revert InvalidPolicy();\n            if (mode != FeeMode.BURN_PROJECT && destination == address(0)) revert InvalidPolicy();\n            if (!frozen || mode != FeeMode.BURN_PROJECT) {\n                (bool ok, bytes memory data) = attestor.staticcall(abi.encodeWithSignature(\n                    \"verifyVault(address,uint8,address)\", project, uint8(mode), destination));\n                if (!ok || data.length < 32 || !abi.decode(data, (bool))) revert UnattestedVault();\n            }\n            if (mode != FeeMode.BURN_PROJECT) _validateReceiver(destination);\n        }\n        TokenState storage state = tokenStates[project];\n        bool holder = mode == FeeMode.HOLDER_QUOTE;\n        if (state.currentEpoch != 0 && holder != state.holderMode) revert HolderTransition();\n        epoch = state.currentEpoch + 1;\n        policies[project][epoch] = Policy(mode, feeBps, destination, effectiveAt);\n        state.currentEpoch = epoch;\n        state.holderMode = holder;\n        emit PolicyScheduled(project, epoch, mode, feeBps, destination, effectiveAt);\n    }\n\n    function activePolicy(address project) public view returns (Policy memory result) {\n        TokenState memory state = tokenStates[project];\n        if (state.currentEpoch == 0) return result;\n        result = policies[project][state.currentEpoch];\n        uint64 epoch = state.currentEpoch;\n        while (result.effectiveAt > block.timestamp && epoch > 1) {\n            result = policies[project][--epoch];\n        }\n        if (result.effectiveAt > block.timestamp) result = Policy(FeeMode.NONE, 0, address(0), 0);\n    }\n\n    function beforeSwap(address, PancakeV1PoolKey calldata key,\n        IPancakeV1CLPoolManager.SwapParams calldata params, bytes calldata)\n        external view returns (bytes4, PancakeV1BeforeSwapDelta, uint24) {\n        if (msg.sender != address(poolManager)) revert OnlyPoolManager();\n        _pool(key);\n        key;\n        params;\n        // Fees are settled from the authenticated adapter's gross input/output\n        // credits. Infinity's specified custom delta creates a matching hook\n        // debt, so it cannot safely collect an additive fee.\n        return (this.beforeSwap.selector, PancakeV1BeforeSwapDeltaLib.toDelta(0, 0), 0);\n    }\n\n    function afterSwap(address sender, PancakeV1PoolKey calldata key,\n        IPancakeV1CLPoolManager.SwapParams calldata params, PancakeV1BalanceDelta delta, bytes calldata)\n        external returns (bytes4, int128) {\n        if (msg.sender != address(poolManager)) revert OnlyPoolManager();\n        PoolConfig memory p = _pool(key);\n        bytes32 id = poolId(key);\n        _syncGraduation(id, p);\n        (uint256 protocolSpecified, uint256 modeSpecified) = _feeQuote(key, p, params);\n        (uint256 protocolFee, uint256 modeFee, uint256 unspecifiedFee) =\n            _feeQuoteAfter(key, p, params, delta);\n        if (protocolSpecified != 0 || modeSpecified != 0) {\n            _settleFees(sender, p, protocolSpecified, modeSpecified);\n        }\n        if (unspecifiedFee != 0) {\n            PendingFee storage pending = _pendingFees[sender];\n            if (pending.protocolFee != 0 || pending.modeFee != 0) revert InvalidPolicy();\n            Policy memory policy = activePolicy(p.project);\n            pending.project = p.project;\n            pending.quote = p.quote;\n            pending.modeAsset = policy.mode == FeeMode.BURN_PROJECT ? p.project : p.quote;\n            pending.modeDestination = policy.destination;\n            pending.protocolFee = protocolFee;\n            pending.modeFee = modeFee;\n        }\n        // Unspecified output credit is posted to the adapter only after this\n        // callback returns. settleUnspecifiedFee() consumes the pending fee\n        // from that adapter credit without creating any hook delta.\n        return (this.afterSwap.selector, 0);\n    }\n\n    function settleUnspecifiedFee() external {\n        if (msg.sender.code.length == 0) revert InvalidPolicy();\n        PendingFee memory pending = _pendingFees[msg.sender];\n        if (pending.protocolFee == 0 && pending.modeFee == 0) return;\n        delete _pendingFees[msg.sender];\n        if (pending.protocolFee != 0) {\n            IPancakeV1FeeSettler(msg.sender).settleHookFee(\n                pending.quote, protocolVault, pending.protocolFee\n            );\n            IPancakeV1FeeReceiver(protocolVault).recordFee(\n                pending.quote, pending.protocolFee\n            );\n            emit ProtocolFeeAccrued(pending.quote, protocolVault, pending.protocolFee);\n        }\n        if (pending.modeFee != 0) {\n            IPancakeV1FeeSettler(msg.sender).settleHookFee(\n                pending.modeAsset, pending.modeDestination, pending.modeFee\n            );\n            if (pending.modeDestination != BURN) {\n                IPancakeV1FeeReceiver(pending.modeDestination).recordFee(\n                    pending.modeAsset, pending.modeFee\n                );\n            }\n            emit ModeFeeAccrued(\n                pending.project, pending.modeAsset, pending.modeDestination, pending.modeFee\n            );\n        }\n    }\n\n    function _pool(PancakeV1PoolKey calldata key) private view returns (PoolConfig memory p) {\n        p = pools[poolId(key)];\n        if (!p.registered) revert UnknownPool();\n    }\n\n    function _syncGraduation(bytes32 id, PoolConfig memory p) private {\n        TokenState storage state = tokenStates[p.project];\n        if (state.graduated) return;\n        (bool ok, bytes memory data) = address(poolManager).staticcall(\n            abi.encodeCall(IPancakeV1CLPoolManager.getSlot0, (id)));\n        if (!ok || data.length < 32) revert GraduationReadFailed();\n        (uint160 current,,,) = abi.decode(data, (uint160, int24, uint24, uint24));\n        bool reached = p.graduateWhenAbove\n            ? current >= p.graduationSqrtPriceX96\n            : current <= p.graduationSqrtPriceX96;\n        if (reached) {\n            state.graduated = true;\n            emit TokenGraduated(p.project, id, current);\n        }\n    }\n\n    function _feeQuote(PancakeV1PoolKey calldata key, PoolConfig memory p,\n        IPancakeV1CLPoolManager.SwapParams calldata params)\n        private view returns (uint256 protocol, uint256 mode) {\n        bool exactInput = params.amountSpecified < 0;\n        bool quoteInput = params.zeroForOne\n            ? PancakeV1Currency.unwrap(key.currency0) == p.quote\n            : PancakeV1Currency.unwrap(key.currency1) == p.quote;\n        bool specifiedIsQuote = quoteInput == exactInput;\n        uint256 amount = uint256(exactInput ? -params.amountSpecified : params.amountSpecified);\n        Policy memory policy = activePolicy(p.project);\n        protocol = specifiedIsQuote ? amount * PROTOCOL_FEE_BPS / BPS : 0;\n        bool modeIsQuote = policy.mode != FeeMode.BURN_PROJECT;\n        mode = _modeFee(policy, modeIsQuote == specifiedIsQuote, amount);\n    }\n\n    function _feeQuoteAfter(PancakeV1PoolKey calldata key, PoolConfig memory p,\n        IPancakeV1CLPoolManager.SwapParams calldata params, PancakeV1BalanceDelta delta)\n        private view returns (uint256 protocol, uint256 mode, uint256 unspecifiedFee) {\n        bool exactInput = params.amountSpecified < 0;\n        bool quoteInput = params.zeroForOne\n            ? PancakeV1Currency.unwrap(key.currency0) == p.quote\n            : PancakeV1Currency.unwrap(key.currency1) == p.quote;\n        bool specifiedIsQuote = quoteInput == exactInput;\n        int128 amount0 = delta.amount0();\n        int128 amount1 = delta.amount1();\n        bool quote0 = p.quote == PancakeV1Currency.unwrap(key.currency0);\n        int128 q = quote0 ? amount0 : amount1;\n        int128 t = quote0 ? amount1 : amount0;\n        uint256 quoteAmount = uint256(q < 0 ? -int256(q) : int256(q));\n        uint256 projectAmount = uint256(t < 0 ? -int256(t) : int256(t));\n        Policy memory policy = activePolicy(p.project);\n        protocol = specifiedIsQuote ? 0\n            : quoteAmount * PROTOCOL_FEE_BPS / BPS;\n        bool modeIsQuote = policy.mode != FeeMode.BURN_PROJECT;\n        if (policy.mode == FeeMode.NONE) {\n            mode = 0;\n        } else if (modeIsQuote) {\n            mode = specifiedIsQuote ? 0 : quoteAmount * policy.feeBps / BPS;\n        } else {\n            mode = specifiedIsQuote ? projectAmount * policy.feeBps / BPS : 0;\n        }\n        unspecifiedFee = protocol + mode;\n    }\n\n    function _modeFee(Policy memory policy, bool feeAssetIsSpecified, uint256 amount)\n        private pure returns (uint256) {\n        if (policy.mode == FeeMode.NONE) return 0;\n        if (!feeAssetIsSpecified) return 0;\n        return amount * policy.feeBps / BPS;\n    }\n\n    function _settleFees(\n        address sender,\n        PoolConfig memory p,\n        uint256 protocolFee,\n        uint256 modeFee\n    ) private {\n        if (sender.code.length == 0) revert InvalidPolicy();\n        if (protocolFee != 0) {\n            IPancakeV1FeeSettler(sender).settleHookFee(\n                p.quote, protocolVault, protocolFee\n            );\n            IPancakeV1FeeReceiver(protocolVault).recordFee(p.quote, protocolFee);\n            emit ProtocolFeeAccrued(p.quote, protocolVault, protocolFee);\n        }\n        if (modeFee != 0) {\n            Policy memory policy = activePolicy(p.project);\n            address asset = policy.mode == FeeMode.BURN_PROJECT ? p.project : p.quote;\n            IPancakeV1FeeSettler(sender).settleHookFee(\n                asset, policy.destination, modeFee\n            );\n            if (policy.destination != BURN) {\n                IPancakeV1FeeReceiver(policy.destination).recordFee(asset, modeFee);\n            }\n            emit ModeFeeAccrued(p.project, asset, policy.destination, modeFee);\n        }\n    }\n\n    function _toInt128(uint256 value) private pure returns (int128) {\n        require(value <= uint256(uint128(type(int128).max)), \"FEE_OVERFLOW\");\n        return int128(uint128(value));\n    }\n\n    function _validateReceiver(address receiver) private view {\n        if (receiver.code.length == 0) revert InvalidPolicy();\n        // Keep the compatibility check typed, rather than treating arbitrary\n        // destinations as fee sinks. The call itself is made after take().\n        IPancakeV1FeeReceiver(receiver);\n    }\n}"
+    },
+    "contracts/pancake-v1/PancakeV1InfinityHookTypes.sol": {
+      "content": "// SPDX-License-Identifier: MIT\npragma solidity 0.8.26;\n\n/// @notice Narrow ABI-compatible Pancake Infinity CL types.  These are\n/// intentionally vendored because the application does not pin the upstream\n/// Infinity package as a Solidity dependency.\ntype PancakeV1Currency is address;\ntype PancakeV1BeforeSwapDelta is int256;\ntype PancakeV1BalanceDelta is int256;\n\ninterface IPancakeV1Hooks {\n    function getHooksRegistrationBitmap() external view returns (uint16);\n}\n\ninterface IPancakeV1CLPoolManager {\n    struct SwapParams {\n        bool zeroForOne;\n        int256 amountSpecified;\n        uint160 sqrtPriceLimitX96;\n    }\n\n    function vault() external view returns (address);\n    function getSlot0(bytes32 poolId)\n        external view returns (uint160 sqrtPriceX96, int24 tick, uint24 protocolFee, uint24 lpFee);\n    function swap(\n        PancakeV1PoolKey calldata key,\n        SwapParams calldata params,\n        bytes calldata hookData\n    ) external returns (PancakeV1BalanceDelta delta);\n}\n\ninterface IPancakeV1Vault {\n    function manager() external view returns (address);\n    function lock(bytes calldata data) external returns (bytes memory);\n    function currencyDelta(address settler, PancakeV1Currency currency) external view returns (int256);\n    function getUnsettledDeltasCount() external view returns (uint256);\n    function sync(PancakeV1Currency currency) external;\n    function settleFor(address recipient) external payable returns (uint256);\n    function take(PancakeV1Currency currency, address to, uint256 amount) external;\n}\n\ninterface IPancakeV1LockCallback {\n    function lockAcquired(bytes calldata data) external returns (bytes memory);\n}\n\ninterface IPancakeV1FeeReceiver {\n    function recordFee(address asset, uint256 amount) external;\n}\n\nstruct PancakeV1PoolKey {\n    PancakeV1Currency currency0;\n    PancakeV1Currency currency1;\n    IPancakeV1Hooks hooks;\n    IPancakeV1CLPoolManager poolManager;\n    uint24 fee;\n    bytes32 parameters;\n}\n\nlibrary PancakeV1BalanceDeltaLib {\n    function amount0(PancakeV1BalanceDelta delta) internal pure returns (int128 value) {\n        assembly (\"memory-safe\") { value := sar(128, delta) }\n    }\n\n    function amount1(PancakeV1BalanceDelta delta) internal pure returns (int128 value) {\n        assembly (\"memory-safe\") { value := signextend(15, delta) }\n    }\n}\n\nlibrary PancakeV1BeforeSwapDeltaLib {\n    function toDelta(int128 specified, int128 unspecified)\n        internal pure returns (PancakeV1BeforeSwapDelta value) {\n        assembly (\"memory-safe\") {\n            value := or(shl(128, specified), and(sub(shl(128, 1), 1), unspecified))\n        }\n    }\n}"
+    }
+  },
+  "onchainBytecodeHash": "0x15c23c4d612dc48ff4df298936cfc97f762af43334e23988691cdfe88250e300"
+}

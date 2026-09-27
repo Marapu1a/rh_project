@@ -1,0 +1,365 @@
+{
+  "address": "0x6ACe84C6D8D286E55933774bCe9c97aB7A107df5",
+  "runtimeMatch": "exact_match",
+  "verifiedAt": "2026-09-23T05:02:48Z",
+  "url": "https://sourcify.dev/server/v2/contract/4663/0x6ACe84C6D8D286E55933774bCe9c97aB7A107df5?fields=all",
+  "abi": [
+    {
+      "type": "constructor",
+      "inputs": [
+        {
+          "name": "manager_",
+          "type": "address",
+          "internalType": "contract IPancakeV1CLPoolManager"
+        },
+        {
+          "name": "hook_",
+          "type": "address",
+          "internalType": "contract IPancakeV1Hooks"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "DeadlineExpired",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "InvalidRoute",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "OnlyHook",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "OnlyVault",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "Reentered",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "Residual",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "token",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "name": "SafeERC20FailedOperation",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "token",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "name": "Slippage",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "Unsettled",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "MAX_HOOK_FEE_BPS",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint24",
+          "internalType": "uint24"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "executeExactInput",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "key",
+          "type": "tuple",
+          "components": [
+            {
+              "name": "currency0",
+              "type": "address",
+              "internalType": "PancakeV1Currency"
+            },
+            {
+              "name": "currency1",
+              "type": "address",
+              "internalType": "PancakeV1Currency"
+            },
+            {
+              "name": "hooks",
+              "type": "address",
+              "internalType": "contract IPancakeV1Hooks"
+            },
+            {
+              "name": "poolManager",
+              "type": "address",
+              "internalType": "contract IPancakeV1CLPoolManager"
+            },
+            {
+              "name": "fee",
+              "type": "uint24",
+              "internalType": "uint24"
+            },
+            {
+              "name": "parameters",
+              "type": "bytes32",
+              "internalType": "bytes32"
+            }
+          ],
+          "internalType": "struct PancakeV1PoolKey"
+        },
+        {
+          "name": "zeroForOne",
+          "type": "bool",
+          "internalType": "bool"
+        },
+        {
+          "name": "amountIn",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "inputMaximum",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountOutMinimum",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "payer",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "recipient",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "hookData",
+          "type": "bytes",
+          "internalType": "bytes"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountOut",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "executeExactOutput",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "key",
+          "type": "tuple",
+          "components": [
+            {
+              "name": "currency0",
+              "type": "address",
+              "internalType": "PancakeV1Currency"
+            },
+            {
+              "name": "currency1",
+              "type": "address",
+              "internalType": "PancakeV1Currency"
+            },
+            {
+              "name": "hooks",
+              "type": "address",
+              "internalType": "contract IPancakeV1Hooks"
+            },
+            {
+              "name": "poolManager",
+              "type": "address",
+              "internalType": "contract IPancakeV1CLPoolManager"
+            },
+            {
+              "name": "fee",
+              "type": "uint24",
+              "internalType": "uint24"
+            },
+            {
+              "name": "parameters",
+              "type": "bytes32",
+              "internalType": "bytes32"
+            }
+          ],
+          "internalType": "struct PancakeV1PoolKey"
+        },
+        {
+          "name": "zeroForOne",
+          "type": "bool",
+          "internalType": "bool"
+        },
+        {
+          "name": "amountOut",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountInMaximum",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "payer",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "recipient",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "hookData",
+          "type": "bytes",
+          "internalType": "bytes"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountIn",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "hook",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "contract IPancakeV1Hooks"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "lockAcquired",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "raw",
+          "type": "bytes",
+          "internalType": "bytes"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bytes",
+          "internalType": "bytes"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "poolManager",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "contract IPancakeV1CLPoolManager"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "settleHookFee",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "asset",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "destination",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "vault",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "contract IPancakeV1Vault"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "receive",
+      "stateMutability": "payable"
+    }
+  ],
+  "sources": {
+    "contracts/pancake-v1/PancakeV1InfinityHookTypes.sol": {
+      "content": "// SPDX-License-Identifier: MIT\npragma solidity 0.8.26;\n\n/// @notice Narrow ABI-compatible Pancake Infinity CL types.  These are\n/// intentionally vendored because the application does not pin the upstream\n/// Infinity package as a Solidity dependency.\ntype PancakeV1Currency is address;\ntype PancakeV1BeforeSwapDelta is int256;\ntype PancakeV1BalanceDelta is int256;\n\ninterface IPancakeV1Hooks {\n    function getHooksRegistrationBitmap() external view returns (uint16);\n}\n\ninterface IPancakeV1CLPoolManager {\n    struct SwapParams {\n        bool zeroForOne;\n        int256 amountSpecified;\n        uint160 sqrtPriceLimitX96;\n    }\n\n    function vault() external view returns (address);\n    function getSlot0(bytes32 poolId)\n        external view returns (uint160 sqrtPriceX96, int24 tick, uint24 protocolFee, uint24 lpFee);\n    function swap(\n        PancakeV1PoolKey calldata key,\n        SwapParams calldata params,\n        bytes calldata hookData\n    ) external returns (PancakeV1BalanceDelta delta);\n}\n\ninterface IPancakeV1Vault {\n    function manager() external view returns (address);\n    function lock(bytes calldata data) external returns (bytes memory);\n    function currencyDelta(address settler, PancakeV1Currency currency) external view returns (int256);\n    function getUnsettledDeltasCount() external view returns (uint256);\n    function sync(PancakeV1Currency currency) external;\n    function settleFor(address recipient) external payable returns (uint256);\n    function take(PancakeV1Currency currency, address to, uint256 amount) external;\n}\n\ninterface IPancakeV1LockCallback {\n    function lockAcquired(bytes calldata data) external returns (bytes memory);\n}\n\ninterface IPancakeV1FeeReceiver {\n    function recordFee(address asset, uint256 amount) external;\n}\n\nstruct PancakeV1PoolKey {\n    PancakeV1Currency currency0;\n    PancakeV1Currency currency1;\n    IPancakeV1Hooks hooks;\n    IPancakeV1CLPoolManager poolManager;\n    uint24 fee;\n    bytes32 parameters;\n}\n\nlibrary PancakeV1BalanceDeltaLib {\n    function amount0(PancakeV1BalanceDelta delta) internal pure returns (int128 value) {\n        assembly (\"memory-safe\") { value := sar(128, delta) }\n    }\n\n    function amount1(PancakeV1BalanceDelta delta) internal pure returns (int128 value) {\n        assembly (\"memory-safe\") { value := signextend(15, delta) }\n    }\n}\n\nlibrary PancakeV1BeforeSwapDeltaLib {\n    function toDelta(int128 specified, int128 unspecified)\n        internal pure returns (PancakeV1BeforeSwapDelta value) {\n        assembly (\"memory-safe\") {\n            value := or(shl(128, specified), and(sub(shl(128, 1), 1), unspecified))\n        }\n    }\n}"
+    },
+    "contracts/pancake-v1/PancakeV1InfinitySwapAdapter.sol": {
+      "content": "// SPDX-License-Identifier: MIT\npragma solidity 0.8.26;\n\nimport {IERC20} from \"@openzeppelin/contracts/token/ERC20/IERC20.sol\";\nimport {SafeERC20} from \"@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol\";\nimport {\n    PancakeV1Currency,\n    PancakeV1PoolKey,\n    IPancakeV1CLPoolManager,\n    IPancakeV1Hooks,\n    IPancakeV1Vault,\n    IPancakeV1LockCallback\n} from \"./PancakeV1InfinityHookTypes.sol\";\n\ninterface IPancakeV1PostSwapFeeHook {\n    function settleUnspecifiedFee() external;\n}\n\n/// @notice Direct Pancake Infinity CL settlement adapter.\n/// @dev The public Universal Router does not safely settle a positive\n/// beforeSwap specified delta on the deployed Infinity Vault. This adapter\n/// performs the canonical Vault.lock -> CLPoolManager.swap flow and clears\n/// both the caller and hook deltas before the lock returns.\ncontract PancakeV1InfinitySwapAdapter is IPancakeV1LockCallback {\n    using SafeERC20 for IERC20;\n\n    uint24 public constant MAX_HOOK_FEE_BPS = 30;\n    uint160 private constant MIN_SQRT_PRICE = 4295128740;\n    uint160 private constant MAX_SQRT_PRICE =\n        1461446703485210103287273052203988822378723970341;\n    uint256 private _entered;\n\n    IPancakeV1CLPoolManager public immutable poolManager;\n    IPancakeV1Vault public immutable vault;\n    IPancakeV1Hooks public immutable hook;\n\n    error InvalidRoute();\n    error OnlyVault();\n    error OnlyHook();\n    error Reentered();\n    error DeadlineExpired();\n    error Slippage();\n    error Residual(address token);\n    error Unsettled();\n\n    struct SwapRequest {\n        PancakeV1PoolKey key;\n        IPancakeV1CLPoolManager.SwapParams params;\n        bytes hookData;\n        address payer;\n        address recipient;\n        uint256 maxInput;\n        uint256 deadline;\n    }\n\n    constructor(IPancakeV1CLPoolManager manager_, IPancakeV1Hooks hook_) {\n        address vault_ = manager_.vault();\n        if (address(manager_) == address(0) || vault_ == address(0)\n            || address(manager_).code.length == 0 || vault_.code.length == 0\n            || address(hook_) == address(0) || address(hook_).code.length == 0) {\n            revert InvalidRoute();\n        }\n        poolManager = manager_;\n        vault = IPancakeV1Vault(vault_);\n        hook = hook_;\n    }\n\n    function executeExactInput(\n        PancakeV1PoolKey calldata key,\n        bool zeroForOne,\n        uint256 amountIn,\n        uint256 inputMaximum,\n        uint256 amountOutMinimum,\n        address payer,\n        address recipient,\n        uint256 deadline,\n        bytes calldata hookData\n    ) external returns (uint256 amountOut) {\n        if (amountIn == 0 || inputMaximum < amountIn) revert InvalidRoute();\n        amountOut = _execute(key, zeroForOne, -int256(amountIn), amountOutMinimum,\n            inputMaximum, payer, recipient, deadline, hookData);\n    }\n\n    function executeExactOutput(\n        PancakeV1PoolKey calldata key,\n        bool zeroForOne,\n        uint256 amountOut,\n        uint256 amountInMaximum,\n        address payer,\n        address recipient,\n        uint256 deadline,\n        bytes calldata hookData\n    ) external returns (uint256 amountIn) {\n        if (amountOut == 0) revert InvalidRoute();\n        amountIn = _execute(key, zeroForOne, int256(amountOut), amountInMaximum,\n            amountInMaximum, payer, recipient, deadline, hookData);\n    }\n\n    function lockAcquired(bytes calldata raw) external returns (bytes memory) {\n        if (msg.sender != address(vault)) revert OnlyVault();\n        SwapRequest memory request = abi.decode(raw, (SwapRequest));\n        PancakeV1Currency input = request.params.zeroForOne\n            ? request.key.currency0 : request.key.currency1;\n        PancakeV1Currency output = request.params.zeroForOne\n            ? request.key.currency1 : request.key.currency0;\n        // Fund gross input before the swap. The pool consumes the net specified\n        // amount and the hook settles fees from the adapter's remaining input\n        // or output credit without creating hook-owned deltas.\n        vault.sync(input);\n        IERC20(PancakeV1Currency.unwrap(input)).safeTransfer(address(vault), request.maxInput);\n        if (vault.settleFor(address(this)) != request.maxInput) revert Unsettled();\n        poolManager.swap(request.key, request.params, request.hookData);\n        IPancakeV1PostSwapFeeHook(address(hook)).settleUnspecifiedFee();\n        _settle(address(this), input, request.recipient);\n        _settle(address(this), output, request.recipient);\n        if (vault.getUnsettledDeltasCount() != 0) revert Unsettled();\n        return \"\";\n    }\n\n    function settleHookFee(address asset, address destination, uint256 amount) external {\n        if (msg.sender != address(hook)) revert OnlyHook();\n        if (_entered != 1 || asset == address(0) || destination == address(0) || amount == 0) {\n            revert InvalidRoute();\n        }\n        PancakeV1Currency currency = PancakeV1Currency.wrap(asset);\n        int256 credit = vault.currencyDelta(address(this), currency);\n        if (credit < 0 || uint256(credit) < amount) revert Unsettled();\n        vault.take(currency, destination, amount);\n    }\n\n    function _execute(\n        PancakeV1PoolKey calldata key,\n        bool zeroForOne,\n        int256 amountSpecified,\n        uint256 amountLimit,\n        uint256 maxInput,\n        address payer,\n        address recipient,\n        uint256 deadline,\n        bytes calldata hookData\n    ) private returns (uint256 result) {\n        if (_entered != 0) revert Reentered();\n        if (block.timestamp > deadline || payer == address(0) || recipient == address(0)\n            || address(key.poolManager) != address(poolManager)\n            || address(key.hooks) != address(hook)\n            || PancakeV1Currency.unwrap(key.currency0) >= PancakeV1Currency.unwrap(key.currency1)\n            || key.fee > 30_000) revert InvalidRoute();\n        _entered = 1;\n        PancakeV1Currency input = zeroForOne ? key.currency0 : key.currency1;\n        address inputToken = PancakeV1Currency.unwrap(input);\n        uint256 beforeBalance = IERC20(inputToken).balanceOf(address(this));\n        if (beforeBalance != 0) revert Residual(inputToken);\n        IERC20(inputToken).safeTransferFrom(payer, address(this), maxInput);\n        if (IERC20(inputToken).balanceOf(address(this)) != maxInput) revert InvalidRoute();\n        address outputToken = PancakeV1Currency.unwrap(zeroForOne ? key.currency1 : key.currency0);\n        uint256 beforeOut = IERC20(outputToken).balanceOf(recipient);\n        SwapRequest memory request = SwapRequest(\n            key,\n            IPancakeV1CLPoolManager.SwapParams(\n                zeroForOne, amountSpecified, zeroForOne ? MIN_SQRT_PRICE : MAX_SQRT_PRICE\n            ),\n            hookData, payer, recipient, maxInput, deadline\n        );\n        vault.lock(abi.encode(request));\n        uint256 afterBalance = IERC20(inputToken).balanceOf(address(this));\n        if (afterBalance > 0) {\n            IERC20(inputToken).safeTransfer(payer, afterBalance);\n        }\n        if (IERC20(inputToken).balanceOf(address(this)) != 0) revert Residual(inputToken);\n        if (amountSpecified < 0) {\n            uint256 afterOut = IERC20(outputToken).balanceOf(recipient);\n            if (afterOut < beforeOut || afterOut - beforeOut < amountLimit) revert Slippage();\n            result = afterOut - beforeOut;\n        } else {\n            uint256 afterOut = IERC20(outputToken).balanceOf(recipient);\n            if (afterOut < beforeOut || afterOut - beforeOut < uint256(amountSpecified)) revert Slippage();\n            result = maxInput - afterBalance;\n            if (result > amountLimit) revert Slippage();\n        }\n        _entered = 0;\n    }\n\n    function _settle(address settler, PancakeV1Currency currency, address recipient) private {\n        int256 delta = vault.currencyDelta(settler, currency);\n        address token = PancakeV1Currency.unwrap(currency);\n        if (delta < 0) {\n            uint256 amount = uint256(-delta);\n            vault.sync(currency);\n            IERC20(token).safeTransfer(address(vault), amount);\n            vault.settleFor(settler);\n        } else if (delta > 0) {\n            vault.take(currency, settler == address(this) ? recipient : settler, uint256(delta));\n        }\n    }\n\n    receive() external payable {\n        revert InvalidRoute();\n    }\n}"
+    }
+  },
+  "onchainBytecodeHash": "0x1fd55366e9d3b3e0d9b1a182e3ea37b9a262193fdb7554857665f008cc143281"
+}

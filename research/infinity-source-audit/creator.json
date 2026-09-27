@@ -1,0 +1,440 @@
+{
+  "address": "0xfd1150C49eEe28f9f8f007F8819a0A793aAFC31D",
+  "runtimeMatch": "exact_match",
+  "verifiedAt": "2026-09-23T05:03:11Z",
+  "url": "https://sourcify.dev/server/v2/contract/4663/0xfd1150C49eEe28f9f8f007F8819a0A793aAFC31D?fields=all",
+  "abi": [
+    {
+      "type": "constructor",
+      "inputs": [
+        {
+          "name": "project_",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "hook_",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "admin_",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "recipient_",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "feeBps_",
+          "type": "uint16",
+          "internalType": "uint16"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "InsufficientRecordedBalance",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "InvalidConfiguration",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "NoClaim",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "OnlyAdmin",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "OnlyHook",
+      "type": "error",
+      "inputs": []
+    },
+    {
+      "name": "SafeERC20FailedOperation",
+      "type": "error",
+      "inputs": [
+        {
+          "name": "token",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "name": "FeeClaimed",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "recipient",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "asset",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "FeeRecorded",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "epoch",
+          "type": "uint64",
+          "indexed": true,
+          "internalType": "uint64"
+        },
+        {
+          "name": "asset",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "recipient",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "PolicyAppended",
+      "type": "event",
+      "inputs": [
+        {
+          "name": "epoch",
+          "type": "uint64",
+          "indexed": true,
+          "internalType": "uint64"
+        },
+        {
+          "name": "activatesAt",
+          "type": "uint64",
+          "indexed": false,
+          "internalType": "uint64"
+        },
+        {
+          "name": "recipient",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "feeBps",
+          "type": "uint16",
+          "indexed": false,
+          "internalType": "uint16"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "name": "BPS",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint16",
+          "internalType": "uint16"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "MAX_EPOCHS",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint8",
+          "internalType": "uint8"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "MAX_FEE_BPS",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint16",
+          "internalType": "uint16"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "accrued",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "admin",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "appendPolicy",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "recipient_",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "feeBps_",
+          "type": "uint16",
+          "internalType": "uint16"
+        },
+        {
+          "name": "activatesAt",
+          "type": "uint64",
+          "internalType": "uint64"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "claim",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "assets",
+          "type": "address[]",
+          "internalType": "address[]"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "total",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "name": "claimable",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "claimed",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "currentPolicy",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "epoch",
+          "type": "uint64",
+          "internalType": "uint64"
+        },
+        {
+          "name": "recipient",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "feeBps",
+          "type": "uint16",
+          "internalType": "uint16"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "epochCount",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "hook",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "policy",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "epoch",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "tuple",
+          "components": [
+            {
+              "name": "activatesAt",
+              "type": "uint64",
+              "internalType": "uint64"
+            },
+            {
+              "name": "recipient",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "feeBps",
+              "type": "uint16",
+              "internalType": "uint16"
+            }
+          ],
+          "internalType": "struct PancakeV1CreatorFeeVault.Policy"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "projectToken",
+      "type": "function",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "name": "recordFee",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "asset",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    }
+  ],
+  "sources": {
+    "contracts/pancake-v1/PancakeV1CreatorFeeVault.sol": {
+      "content": "// SPDX-License-Identifier: MIT\npragma solidity 0.8.26;\n\npragma abicoder v2;\n\nimport {IERC20} from \"@openzeppelin/contracts/token/ERC20/IERC20.sol\";\nimport {SafeERC20} from \"@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol\";\n\n/// @notice Quote-token creator fee vault with append-only, admin-authorized\n/// recipient epochs. An epoch change only affects fees recorded afterwards.\ncontract PancakeV1CreatorFeeVault {\n    using SafeERC20 for IERC20;\n\n    uint16 public constant BPS = 10_000;\n    uint16 public constant MAX_FEE_BPS = BPS;\n    uint8 public constant MAX_EPOCHS = 64;\n    address public immutable projectToken;\n    address public immutable hook;\n    address public immutable admin;\n\n    struct Policy {\n        uint64 activatesAt;\n        address recipient;\n        uint16 feeBps;\n    }\n    Policy[] private _policies;\n    mapping(address => uint256) public accrued;\n    mapping(address => uint256) public claimed;\n    mapping(address => mapping(address => uint256)) public claimable;\n\n    error OnlyHook();\n    error OnlyAdmin();\n    error InvalidConfiguration();\n    error NoClaim();\n    error InsufficientRecordedBalance();\n\n    event PolicyAppended(uint64 indexed epoch, uint64 activatesAt, address indexed recipient, uint16 feeBps);\n    event FeeRecorded(uint64 indexed epoch, address indexed asset, uint256 amount, address indexed recipient);\n    event FeeClaimed(address indexed recipient, address indexed asset, uint256 amount);\n\n    modifier onlyAdmin() {\n        if (msg.sender != admin) revert OnlyAdmin();\n        _;\n    }\n\n    constructor(address project_, address hook_, address admin_, address recipient_, uint16 feeBps_) {\n        if (project_ == address(0) || hook_ == address(0) || admin_ == address(0)\n            || recipient_ == address(0) || feeBps_ > MAX_FEE_BPS) revert InvalidConfiguration();\n        projectToken = project_;\n        hook = hook_;\n        admin = admin_;\n        _policies.push(Policy(0, recipient_, feeBps_));\n        emit PolicyAppended(1, 0, recipient_, feeBps_);\n    }\n\n    function epochCount() external view returns (uint256) { return _policies.length; }\n    function policy(uint256 epoch) external view returns (Policy memory) {\n        return _policies[epoch - 1];\n    }\n\n    function currentPolicy() public view returns (uint64 epoch, address recipient, uint16 feeBps) {\n        epoch = uint64(_policies.length);\n        while (epoch > 1 && _policies[epoch - 1].activatesAt > block.timestamp) --epoch;\n        Policy memory p = _policies[epoch - 1];\n        return (epoch, p.recipient, p.feeBps);\n    }\n\n    function appendPolicy(address recipient_, uint16 feeBps_, uint64 activatesAt)\n        external onlyAdmin {\n        if (recipient_ == address(0) || feeBps_ > MAX_FEE_BPS || _policies.length >= MAX_EPOCHS) {\n            revert InvalidConfiguration();\n        }\n        if (activatesAt < _policies[_policies.length - 1].activatesAt) {\n            revert InvalidConfiguration();\n        }\n        _policies.push(Policy(activatesAt, recipient_, feeBps_));\n        emit PolicyAppended(uint64(_policies.length), activatesAt, recipient_, feeBps_);\n    }\n\n    function recordFee(address asset, uint256 amount) external {\n        if (msg.sender != hook) revert OnlyHook();\n        if (asset == address(0) || amount == 0) revert InvalidConfiguration();\n        uint256 outstanding = accrued[asset] - claimed[asset];\n        if (IERC20(asset).balanceOf(address(this)) < outstanding + amount) {\n            revert InsufficientRecordedBalance();\n        }\n        (uint64 e, address recipient,) = currentPolicy();\n        accrued[asset] += amount;\n        claimable[recipient][asset] += amount;\n        emit FeeRecorded(e, asset, amount, recipient);\n    }\n\n    function claim(address[] calldata assets) external returns (uint256 total) {\n        if (assets.length == 0 || assets.length > 20) revert InvalidConfiguration();\n        for (uint256 i; i < assets.length; ++i) {\n            address asset = assets[i];\n            if (asset == address(0)) revert InvalidConfiguration();\n            for (uint256 j; j < i; ++j) if (assets[j] == asset) revert InvalidConfiguration();\n            uint256 amount = claimable[msg.sender][asset];\n            if (amount != 0) {\n                claimable[msg.sender][asset] = 0;\n                claimed[asset] += amount;\n                IERC20(asset).safeTransfer(msg.sender, amount);\n                emit FeeClaimed(msg.sender, asset, amount);\n                total += amount;\n            }\n        }\n        if (total == 0) revert NoClaim();\n    }\n}"
+    }
+  },
+  "onchainBytecodeHash": "0x0c8ca50aea297ee7daa94c74e0a32a1ce378ff0b8d54e75aa227288d392aeefb"
+}
