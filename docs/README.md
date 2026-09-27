@@ -13,7 +13,7 @@
 
 | Задача | Документы |
 |---|---|
-| Локальный сквозной путь | [Автоматический Short](SHORT_AUTOMATION.md), [Infinity→USDG proof](INFINITY_PAYOUT_PROOF.md), [Monthly и общий контур](LOCAL_MONTHLY_EXECUTOR.md), [исполнитель Short](LOCAL_SHORT_EXECUTOR.md), [BUY cycle](LOCAL_BUY_CYCLE.md), [контроллеры](LOCAL_CONTROLLER_SKELETON.md) |
+| Локальный сквозной путь | [Общая автоматика Short/Monthly](PROMO_AUTOMATION.md), [автоматический Short](SHORT_AUTOMATION.md), [Infinity→USDG proof](INFINITY_PAYOUT_PROOF.md), [Monthly и общий контур](LOCAL_MONTHLY_EXECUTOR.md), [исполнитель Short](LOCAL_SHORT_EXECUTOR.md), [BUY cycle](LOCAL_BUY_CYCLE.md), [контроллеры](LOCAL_CONTROLLER_SKELETON.md) |
 | Экономический профиль (кандидат) | [Infinity fork3%](INFINITY_INTEGRATION_RESEARCH.md), [Infinity 1–5%](INFINITY_FEE_SCENARIOS.md), [Таблица и первый расчёт](MVP_ECONOMIC_PROFILE.md), [календарная проверка](MVP_CALENDAR_CHECK.md) |
 | Казна и кампании | [Infinity collector](INFINITY_COLLECTOR.md), [worker](INFINITY_WORKER.md), [Vault](PROMO_VAULT_DESIGN.md), [FeeRouter](FEE_ROUTER_ROLLOVER_REPORT.md), [dual architecture](DUAL_CONTROLLER_ARCHITECTURE.md) |
 | BUY policy admission | [Контракт, публикация и применение правил](BUY_POLICY_ADMISSION.md) |

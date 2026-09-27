@@ -1,5 +1,7 @@
 # Автоматический Short: funding → RNG → выплата
 
+Продолжение: [единый исполнитель Short/Monthly](PROMO_AUTOMATION.md). Старый профиль ниже сохраняет Short-only поведение.
+
 27.09.2026. `short-automation.cjs` + `run-short-automation.cjs` — один последовательный
 исполнитель Short с постоянным watch. Только local31337/loopback; не mainnet daemon.
 Контракты, продуктовая математика, permission model и старый V2 coordinator не менялись.

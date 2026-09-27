@@ -1,5 +1,7 @@
 # Текущий контекст
 
+27.09: [Общая автоматика Short/Monthly](PROMO_AUTOMATION.md) реализована: один signer и journal boundary, два payout cursor, общая очередь fixed-winner claims. Перед freeze учитываются новый draw, оба уже pending draw и старые выплаты. Контракты/призовая математика не менялись. Monthly локально проходит автоматическую подготовку → drand → settlement → USDG; Short-only совместимость сохранена. 17 адресных сценариев прошли отдельными запусками; не full/live fork. Тестовые допущения и команды — в модуле. Далее безопасный runtime/campaign handoff, затем production admission/timing/keys/ETH refill; публичный запуск ещё закрыт.
+
 27.09: [Автоматический Short](SHORT_AUTOMATION.md) реализован: единый signer/порядок, общий gas guard, durable очередь старых rewards и permissionless claim. Новый Infinity fork: watch сам прошёл funding→drand→settlement→claim;11.934252USDG =0.999999выплата+10.934253остаток, rerun0tx. Адресные проверки; не full/mainnet. Constructor clock/test timing остаются fixture. Далее Monthly e2e и production admission/timing/ops funding.
 
 27.09: [Infinity→Short→USDG fork](INFINITY_PAYOUT_PROOF.md) complete. Комиссии11.934252USDG → тот же vault →2entries → live drand → выплата2.333331USDG; остаток9.600921, Monthly attempts сохранены. Исправлен поиск публикаций с блока0: теперь cutoff+1. Regression2/2, соседний Short/Monthly1/1, saved evidence4/4; не full. Явный test-only constructor clock override и lead60s, не production timing/bytecode proof. Далее общий coordinator/budget и Monthly e2e.
