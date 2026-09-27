@@ -1,5 +1,7 @@
 # Текущий контекст
 
+27.09: по запросу пользователя сравнили Infinity policy fees1–5%: [расчёты](INFINITY_FEE_SCENARIOS.md). Документация описывает дополнительные0.3% protocol и отдельный pool fee. Внутренние10/90 — кандидат; ставка и переход на Infinity не выбраны. До продолжения integration уточнить реальный hook/vault/fee base; automatic eligibility остаётся следующим продуктовым пакетом.
+
 26.09: native BUY → admitted policy → full-block scan → replay проверен на новом
 fork PAIR. До регистрации BUY100 не даёт билет; после регистрации BUY100 даёт1,
 carry0; повторное чтение не удваивает результат. Комиссии обеих покупок дали

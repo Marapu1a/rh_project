@@ -1,5 +1,7 @@
 # План разработки
 
+27.09: по запросу пользователя сравнили Infinity policy fees1–5%: [расчёты](INFINITY_FEE_SCENARIOS.md). Документация описывает дополнительные0.3% protocol и отдельный pool fee. Внутренние10/90 — кандидат; ставка и переход на Infinity не выбраны. До продолжения integration уточнить реальный hook/vault/fee base; automatic eligibility остаётся следующим продуктовым пакетом.
+
 26.09: native BUY/admission/replay завершён: существующий direct decoder подходит
 новому mode1 TOKEN/USDG pool, реальные fork receipts воспроизводят ticket ledger.
 Следующий bounded шаг — спроектировать и реализовать версию automatic eligibility:
