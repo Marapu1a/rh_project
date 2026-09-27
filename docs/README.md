@@ -22,7 +22,7 @@
 | Monthly | [Epochs и settlement](MONTHLY_RULES_EPOCHS.md) |
 | Воспроизводимое review | [Канонический runner](REVIEW_TESTING.md) |
 | Диагностика refill / manifest | [Inspector и deployment manifest](LOCAL_NATIVE_REFILL_INSPECTOR.md) |
-| RNG / сеть | [Drand adapter и операционная граница](DRAND_ADAPTER.md), [Drand verifier](DRAND_FEASIBILITY.md), [нерешённый binding](DRAND_BINDING_MODEL.md), [L2 blocks](ROBINHOOD_BLOCK_SEMANTICS.md) |
+| RNG / сеть | [Delivery worker](DRAND_DELIVERY_WORKER.md), [Drand adapter и операционная граница](DRAND_ADAPTER.md), [Drand verifier](DRAND_FEASIBILITY.md), [нерешённый binding](DRAND_BINDING_MODEL.md), [L2 blocks](ROBINHOOD_BLOCK_SEMANTICS.md) |
 | Ранние компоненты Short | [Commitment](SHORT_DRAW_COMMITMENT.md), [outcome](SHORT_OUTCOME_VERIFICATION.md) — сохранённые API/тесты, не основной полный pipeline |
 
 ## История

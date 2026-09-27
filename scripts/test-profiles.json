@@ -52,7 +52,9 @@
       "test/local-rpc-watch.test.cjs",
       "test/pair-source-health.test.cjs",
       "test/drand-adapter.test.cjs",
-      "test/drand-timing-readiness.test.cjs"
+      "test/drand-timing-readiness.test.cjs",
+      "test/drand-delivery-worker.test.cjs",
+      "test/drand-delivery-cli.test.cjs"
     ]
   },
   "accounting": {
@@ -71,7 +73,9 @@
       "test/short-conversion-trigger.test.cjs",
       "test/local-prize-flow.test.cjs",
       "test/drand-adapter.test.cjs",
-      "test/drand-timing-readiness.test.cjs"
+      "test/drand-timing-readiness.test.cjs",
+      "test/drand-delivery-worker.test.cjs",
+      "test/drand-delivery-cli.test.cjs"
     ]
   },
   "short": {
@@ -181,7 +185,9 @@
     "compile": true,
     "files": [
       "test/drand-adapter.test.cjs",
-      "test/drand-timing-readiness.test.cjs"
+      "test/drand-timing-readiness.test.cjs",
+      "test/drand-delivery-worker.test.cjs",
+      "test/drand-delivery-cli.test.cjs"
     ]
   }
 }

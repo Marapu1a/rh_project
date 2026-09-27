@@ -49,8 +49,9 @@ HTTP endpoint сейчас влияет на доступность новых f
 Сеть может ухудшиться после проверки/пока tx ожидает inclusion. Прямой вызов
 permissionless seal обходит worker. Нельзя рекламировать это как on-chain enforcement.
 Бюджет доставки и наличие работающего исполнителя не следуют из ready()=true.
-Legacy LocalRandomFixture остаётся для прежних tests; отсутствие PROFILE допускает
-старый local путь, не является production admission неизвестного RNG.
+Legacy LocalRandomFixture остаётся для прежних tests: отсутствие PROFILE разрешено
+только на chain31337 при точном pinned runtime hash fixture. Неизвестный runtime
+и публичная сеть отклоняются. Изменение fixture требует явного обновления pin.
 
 ## Почему не просто готовый OpenVRF
 
@@ -96,9 +97,8 @@ Evmnet параметры: [drand documentation](https://docs.drand.love/develop
 
 ## Следующий пакет
 
-Автоматический prove/deliver worker: exact-round HTTP fetch + local verify до gas,
-existing journal/unknown-send reconciliation, own gas budget, retry того же request.
-Затем совместить Infinity funding/BUY и этот RNG в одном сквозном прогоне.
+[Автоматический prove/deliver worker](DRAND_DELIVERY_WORKER.md) реализован локально.
+Следующий шаг — совместить Infinity funding/BUY и этот RNG в одном сквозном прогоне.
 Production timestamps/finality settings, keys, source admission и readiness полного
 бюджета исполнения остаются launch blockers. Кворум drand может не выпустить round;
 никто не получает права выбрать другой результат из-за ожидания.
