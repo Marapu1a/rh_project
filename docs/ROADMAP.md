@@ -1,5 +1,7 @@
 # План разработки
 
+27.09: выбраны3% Infinity creator fee. [Новый USDG fork](INFINITY_INTEGRATION_RESEARCH.md) complete: launch→BUY→contract claim→SELL→contract claim; receiver получил5.934252USDG. Offline4/4, full не запускался. Это локальный fixture, не production collector. Далее ограниченная модель collector/campaign boundary и подключение к funding; decoder/admission отдельно.
+
 27.09: [Infinity source/receipt research](INFINITY_INTEGRATION_RESEARCH.md): BUY/SELL fee formulas подтверждены, дополнительный pool fee в примере1.1098%. Creator recipient может быть контрактом, но текущий FeeRouter ABI несовместим. Следующий research proof — новый USDG launch + contract claim на fork; переход сети/venue и ставка ещё не выбраны.
 
 27.09: по запросу пользователя сравнили Infinity policy fees1–5%: [расчёты](INFINITY_FEE_SCENARIOS.md). Документация описывает дополнительные0.3% protocol и отдельный pool fee. Внутренние10/90 — кандидат; ставка и переход на Infinity не выбраны. До продолжения integration уточнить реальный hook/vault/fee base; automatic eligibility остаётся следующим продуктовым пакетом.

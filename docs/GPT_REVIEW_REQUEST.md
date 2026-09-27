@@ -1,5 +1,19 @@
 # GPT: PAIR launch, BUY coverage и устойчивость денежного контура
 
+## Новый follow-up: Infinity3% и contract claim
+
+Пользователь выбрал creator policy fee3%, не утверждая внутренние10/90. Новый
+[Infinity TOKEN/USDG fork](INFINITY_INTEGRATION_RESEARCH.md) прошёл запуск без dev buy,
+BUY103.30gross→claim3USDG→SELL94.580748net→claim2.934252USDG. Полный receiver5.934252.
+Pool fee1.1098% отдельно от hook3%+0.3%. Исходники, pins и receipts сохранены.
+Local receiver chain31337, не production collector; FeeRouter не менялся. Offline4/4.
+
+Просим оценить следующий bounded шаг: фиксированный Infinity collector с campaign
+rollover final claim и source-policy проверками, без arbitrary calls/вывода prize assets.
+Как минимально переиспользовать наше accounting, не ослабив старый V2 путь? Отдельно
+проверь gross/net fee interpretation. В этом fork нет tickets/RNG/prize funding;
+не считай эти участки доказанными и не расширяй задачу до универсального decoder.
+
 ## Последний follow-up: native BUY admission/replay
 
 Закрыли следующий шаг без нового decoder/изменений контрактов. Новый PAIR native

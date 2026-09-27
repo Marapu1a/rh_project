@@ -182,3 +182,7 @@ getSwapQuote — injected trusted boundary, реального provider/CLI wiri
 25.09: LocalV4PrizeAdapter, v4-market-quote.cjs и auto wiring в prize-flow через
 job.marketQuote (в descriptor). Converter convert возвращает actual amountOut для
 eth_call. CLI/coordinator используют общий путь; [fork и пределы](V4_MARKET_EXECUTION.md).
+
+27.09: [Infinity3% fork proof](INFINITY_INTEGRATION_RESEARCH.md): новый TOKEN/USDG,
+BUY/SELL, permissionless pull в local receiver; scripts/infinity-launch-fork.cjs.
+Текущий FeeRouter не совместим с Creator Vault ABI; production collector ещё не реализован.

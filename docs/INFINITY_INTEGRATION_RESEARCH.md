@@ -1,6 +1,69 @@
 # Infinity: исходники и реальные комиссии
 
-27.09.2026. Read-only исследование; выбор запуска не сделан, production код не менялся.
+## Новый TOKEN/USDG fork с3%, 27.09.2026
+
+Пользователь выбрал creator policy fee300bps; [PRODUCT_SPEC](PRODUCT_SPEC.md).
+Новый proof выполнен через публичный Infinity launchpad обычным creator:
+launch → зарегистрированный single TOKEN/USDG pool → BUY → contract claim → SELL →
+contract claim. Zero developer buy разрешён этим entrypoint. Launch fee0.0005ETH,
+gas отдельно. Proxy implementation и runtime hook/engine/adapter проверены перед запуском;
+engine.validateLaunchpad подтвердил graph. Это привязка конкретного fork, не всех releases.
+
+Исходный блок `0x4659bc4`, локальная сеть31337. Не было impersonation, изменения PAIR
+code/permissions или подмены policy. Искусственно пополнен только USDG покупателя,
+локальные signers имеют sandbox ETH. Стартовые ticks±400000/±380000 — явно тестовая
+цена/ликвидность, minOut1; protection выключена явно в launch params, vanity не добывался.
+Это не рекомендация этих параметров для deployment или UI-equivalence proof.
+
+| Шаг | USDG |
+|---|---:|
+| BUY: actual pool input | 100.000000 |
+| BUY: комиссия проекта3% | 3.000000 |
+| BUY: комиссия PAIR0.3% | 0.300000 |
+| BUY: полные затраты кошелька без газа | 103.300000 |
+| SELL: quote output до hook fees | 97.808425 |
+| SELL: комиссия проекта3% | 2.934252 |
+| SELL: комиссия PAIR0.3% | 0.293425 |
+| SELL: фактически получено покупателем | 94.580748 |
+| Получено нашим receiver за две сделки | 5.934252 |
+
+Полностью проданы купленные22894601.471716987657194988 TOKEN. В обеих Swap fee11098pips,
+т.е.1.1098% pool fee, уже отражённой в amounts, а не ещё одна доплата к103.30.
+Из этой единственной round-trip нельзя выводить ожидаемую прибыль/убыток трейдера:
+цена/impact зависят от сценария; gas не учтён.
+
+Receiver — [локальный fixture](../research/infinity-source-audit/LocalInfinityReceiver.sol),
+разрешён только chain31337. Owner однократно привязывает vault; любой caller вызывает
+фиксированный claim для USDG, полученные деньги остаются в receiver. Вывода нет.
+Не production collector и не новый способ пополнения PromoVault. Проверены совпадение
+recipient/fee, balance delta, очистка claimable, NoClaim при повторном пустом claim,
+нулевые остатки USDG/TOKEN в swap adapter и USDG в fee vault после выплат.
+Вызовы pull совершал buyer, не owner: внешнюю автоматизацию можно подключить без
+права распоряжаться полученными средствами. Текущий FeeRouter не менялся.
+
+Команды:
+
+```powershell
+node scripts/infinity-launch-fork.cjs NEW_OUTPUT.json
+node --test test/infinity-launch-evidence.test.cjs test/native-launch-evidence.test.cjs
+```
+
+Fork complete:333upstream requests/4retries/0errors. Offline4/4,159ms; full не запускался.
+Лог `.local/logs/infinity/fork-evidence-tests.log`.
+[Evidence](../research/infinity-source-audit/fork-success-2026-09-27.json) включает raw
+tx/receipts, params, anchors и суммы. Проверки включены в full/accounting профили.
+Первая попытка закончилась до launch из-за отсутствующей локальной TickMath dependency;
+добавлены точные исходники TickMath/BitMath/CustomRevert из Sourcify engine package,
+вторая попытка успешна. Product compilation/dependencies не менялись.
+
+Следующий ограниченный шаг: production модель Infinity collector и кампаний, затем
+подключение USDG к существующему funding path. До реализации определить invariant
+финального claim при rollover и реакцию на внешнюю policy drift. Decoder/admission,
+automatic participation и payout по-прежнему не проверены этим fork.
+
+## Первичное исследование до выбора3%
+
+27.09.2026. На момент исследования выбор запуска не был сделан; production код не менялся.
 Дополняет [сценарии1–5%](INFINITY_FEE_SCENARIOS.md).
 
 ## Доказательства

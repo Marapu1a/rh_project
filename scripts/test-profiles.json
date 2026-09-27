@@ -4,6 +4,7 @@
     "files": [
       "test/fee-router.test.cjs",
       "test/native-launch-evidence.test.cjs",
+      "test/infinity-launch-evidence.test.cjs",
       "test/native-buy-admission.test.cjs",
       "test/promo-vault.test.cjs",
       "test/short-prize-basket.test.cjs",
@@ -52,6 +53,7 @@
     "files": [
       "test/fee-router.test.cjs",
       "test/native-launch-evidence.test.cjs",
+      "test/infinity-launch-evidence.test.cjs",
       "test/native-buy-admission.test.cjs",
       "test/promo-vault.test.cjs",
       "test/local-usdg-funding.test.cjs",
