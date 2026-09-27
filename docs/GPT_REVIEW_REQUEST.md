@@ -1,275 +1,122 @@
-# GPT: PAIR launch, BUY coverage и устойчивость денежного контура
+# GPT: переход первого релиза на PAIR Infinity — план и оставшиеся решения
 
-## Новый follow-up: Infinity3% и contract claim
+27.09.2026. Новый запрос после твоего review `beeef4e` на fork `5a31ff5`.
+Ответ оставь в существующем `docs/GPT_REVIEW_RESPONSE.md`, переписав его под этот запрос.
+История прежних обращений сохранена в git; не нужно заново пересматривать весь архив.
 
-Пользователь выбрал creator policy fee3%, не утверждая внутренние10/90. Новый
-[Infinity TOKEN/USDG fork](INFINITY_INTEGRATION_RESEARCH.md) прошёл запуск без dev buy,
-BUY103.30gross→claim3USDG→SELL94.580748net→claim2.934252USDG. Полный receiver5.934252.
-Pool fee1.1098% отдельно от hook3%+0.3%. Исходники, pins и receipts сохранены.
-Local receiver chain31337, не production collector; FeeRouter не менялся. Offline4/4.
+## Что теперь решил пользователь
 
-Просим оценить следующий bounded шаг: фиксированный Infinity collector с campaign
-rollover final claim и source-policy проверками, без arbitrary calls/вывода prize assets.
-Как минимально переиспользовать наше accounting, не ослабив старый V2 путь? Отдельно
-проверь gross/net fee interpretation. В этом fork нет tickets/RNG/prize funding;
-не считай эти участки доказанными и не расширяй задачу до универсального decoder.
+- **Основная площадка первого релиза — PAIR Infinity**, это уже не просто кандидат.
+- Creator policy fee **3% (300bps)**. Protocol/pool/router fees отдельно; не обещаем,
+  что полная стоимость сделки равна3% или что повышение ставки гарантирует оборот.
+- Денежные призы — USDG. Для первого интеграционного пути — один TOKEN/USDG pool.
+- V2 сохраняем как прежнюю проверенную интеграцию, без параллельной разработки двух
+  релизов. Призовое ядро должно оставаться пригодным для других площадок/сетей.
+- Внутренние10/90 project/prizes **не утверждены**. Газ/ops только из проектной доли
+  или отдельного funding; frozen/claimable и призовая казна для этого недоступны.
+- Прозрачность условий и автоматизация обязательны. Без ежедневного оператора,
+  arbitrary calls, proxy, новых emergency admin, вывода призов, reroll/reset.
 
-## Последний follow-up: native BUY admission/replay
+## Проверенная база и её границы
 
-Закрыли следующий шаг без нового decoder/изменений контрактов. Новый PAIR native
-launch на fork → локальная genesis policy с новым TOKEN/PoolKey/runtime hashes →
-две реальные покупки100USDG (до/после регистрации) → full-block scanner/replay.
-Первая0билетов, вторая1; carry0, duplicate replay стабилен, исторический cutoff
-не получает backdated registration. Fees обеих покупок дали1.399999USDG резервам.
-[Подробности и evidence](DIRECT_BUY_REPLAY.md). Адресно29/29; full не запускался.
+[Исследование и новый fork](INFINITY_INTEGRATION_RESEARCH.md),
+[harness](../scripts/infinity-launch-fork.cjs),
+[raw evidence](../research/infinity-source-audit/fork-success-2026-09-27.json),
+[локальный receiver](../research/infinity-source-audit/LocalInfinityReceiver.sol).
 
-Посмотри связь genesis/token/pool с receipts и границу локального proof. Мы не
-объявляем PAIR UI/AUTO V2 поддержанными по этому результату. Следующий пакет:
-версионированная automatic eligibility без registration, затем payout worker.
-Есть ли более простой переход без переписывания прошлых snapshot/carry? Особое
-внимание: нельзя просто снять registration gate у старых исторических покупок.
+Обычный creator → новый Infinity TOKEN/USDG с300bps → BUY → permissionless contract
+claim → SELL → claim. Покупка:100USDG pool input,103.30gross. Продажа всех купленных
+TOKEN:94.580748net. Receiver получил5.934252USDG. В обеих Swap pool fee11098pips,
+уже отражённая в amounts; PAIR hook0.3% отдельно. Это один сценарий, не обещание
+постоянной стоимости round-trip. Offline4/4; новый fork действительно запускался.
 
-## Текущий follow-up: pinned PAIR source health
+SandboxETH, искусственное USDG funding покупателя, гипотетические opening ticks,
+minOut1 и выключенная launch protection — допущения proof. Нет production collector,
+PromoVault funding, Infinity tickets, RNG/draw/payout или доказательства UI coverage.
 
-[PAIR_SOURCE_HEALTH](PAIR_SOURCE_HEALTH.md): явный approved manifest/hash, read-only
-CLI/watch, сеть/anchor/runtime/implementation/epoch/recipient/LP bindings. Source drift
-отдельно от изменений future launch; unknown reads/reorg не дают чистого match.
-Не читает latest PAIR API как настройки, не шлёт tx, не меняет journal и не gate draw.
-Manifest candidate экспортируется новым native fork harness только как candidate.
-Проверено17unit/CLI +1saved evidence +3anchor negatives; CLI watch отдельно расширен
-и проверен (пересекается с17). Новый полный native fork: match/0issues/36observations.
+Твои замечания приняты как полезные ограничения, не как автоматически утверждённая
+конфигурация. Согласны: не подменять source ABI старого FeeRouter; не смешивать fee
+base и gross debit; не считать две внешние policy одной; не превращать10/90 в default.
 
-Для следующего review: проверь независимость expected hash от проверяемого baseline,
-согласованность блока, proxy/clone coverage, отсутствие ложного source failure при
-future release rotation и отсутствие обещания collection/prize readiness из match.
-RPC доверенный, поддержана явная одноуровневая delegation, а не произвольные proxies.
-Следующий bounded шаг — native BUY→admission/replay; используй текущий decoder,
-если он подходит по доказанному calldata/receipt, не создавай новый adapter по названию UI.
+## План миграции
 
-## Текущий follow-up после 9e2e237: source-read isolation
+1. **Отдельный узкий USDG-only Infinity collector.** Переиспользовать проверенные
+   принципы accounting, не переписывая V2 FeeRouter/worker. Immutable source/asset,
+   permissionless pull/pay, credits и детерминированный rounding. Сначала модель/API.
+2. **Полученные USDG → существующее funding резервов.** Фиксированный recipient
+   призовой доли и GENERAL sync; ops/project отдельно. TOKEN conversion на этом пути
+   не нужен. Внутренние bps до production утверждает пользователь; fork — явный fixture.
+3. **Infinity decoder + automatic eligibility.** Новый genesis/profile без обязательной
+   регистрации для будущего запуска, старые snapshots/ledger не переписываем. Отдельно
+   выбрать и объявить базу100USDG/entry. Не обещать поддержку неизвестных маршрутов.
+4. **Deployment profile/health/worker.** Pin актуальной граф-схемы; reconciliation,
+   gas waits, retry и диагностика. Проблемы PAIR не должны блокировать уже обеспеченные
+   призы и выплаты старых credits. Permissionless функции всё равно требуют worker.
+5. **Сквозной fork/локальный release proof.** Trade → fees → reserves → entries →
+   draw → payout. Различать реальные зависимости и оставшиеся RNG/finality допущения.
 
-Реализована узкая изоляция в [LOCAL_PRIZE_FLOW](LOCAL_PRIZE_FLOW.md): только
-epoch/claimable eth_call с existing retryableRead классификацией. Первый transient
-failure завершает source lane текущего pass, local inventory продолжает работу;
-failures/onStep сохраняют sourceReadUnavailable, результат prize — degraded.
-Send/receipt и observer callbacks вне read catch, coordinator/pending journal не менялись.
-CALL_EXCEPTION/BAD_DATA, local balance errors, deficit и policy mismatch остаются stop.
-Новая epoch не принимается автоматически, rebind не добавлен.
+## Ближайший пакет: предлагаемый API, пока НЕ решение
 
-При review проверь границу catch, late claimable failure после подтверждённого collect/
-первого harvest, сохранение unknown-send stops и оба порядка coordinator. Результаты
-адресных проверок и команды — в документе модуля. Следующим предлагаем pinned
-deployment/health manifest; не смешиваем его с recovery существующих frozen obligations.
-Ниже — предыдущие follow-up и контекст исследования.
+- `bindSource(vault, expectedPolicy...)` один раз, с канонической проверкой graph,
+  TOKEN/USDG, hook, creator recipient и300bps. Либо constructor binding, если решим
+  циклическую зависимость адресов при launch. Источник дальше не меняется.
+- `pull()` permissionless: до учёта новых денег проверка source policy, положительный
+  claimable → `claim([USDG])`, сверка return/balance delta/нулевого остатка claimable,
+  sync поступлений к текущей campaign. Пустой claim не вызываем.
+- `sync()` распознаёт прямой USDG; `pay(recipient)` выплачивает только старые credits.
+- `rollCampaign(expectedCampaignId,nextConfig)` onlyOwner/nonReentrant: validate
+  source → final claim → sync всех direct USDG → close rounding старой → смена policy.
+  Ошибка на любом шаге откатывает всё. `endsAt` — условие времени, успешный rollover —
+  accounting boundary. Unpaid credits сохраняются и не требуют немедленной выплаты.
+- Внешний drift не даёт молча открыть новую кампанию/принять источник. Учтённые pay
+  доступны. Для unaccounted денег не придумываем автоматическую атрибуцию/recovery.
 
-## Follow-up после ответа 98e6302 — 26.09
+## Конкретные вопросы к тебе
 
-Предложенный launch/bind пакет выполнен: [NATIVE_LAUNCH_PROOF](NATIVE_LAUNCH_PROOF.md).
-Новый native mode1 TOKEN/USDG через обычный creator, nonce bootstrap converter,
-bind с registered position/quote/NFT custody, BUY100USDG → collect/claim →
-0.699999USDG в GENERAL reserves. Без PAIR impersonation. Адресно45/45 + evidence2/2.
-Прямой Universal Router native BUY, не UI/AUTO proof; eligibility/draw/payout отдельно.
-Первый harness funding probe упал после launch, исправленный новый run прошёл;
-raw успешные receipts и ограничения в отчёте. Полный suite не запускался.
+1. **Bind и граф запуска.** Кто именно будет recipient — collector или отдельный
+   adapter? `claim` платит msg.sender: лишняя прослойка добавляет custody и деньги
+   между контрактами на rollover. Мы склоняемся к самому collector. Предложи самый
+   простой bootstrap: predeployment + one-time bind или deterministic addresses.
+   Какую проверку каноничности сделать on-chain, какую — deployment admission по
+   receipt/code hashes? Не предлагай заставлять Solidity перепроверять весь launch log.
 
-При следующем review проверь минимальность bind guard, nonce bootstrap без временного
-recipient и отсутствие завышенных claims по evidence. Предложи узкий source-read
-isolation пакет без обхода unknown-send/deficit/policy stops. CTO recovery и
-production transition не реализованы. Ниже сохранён контекст предыдущего запроса.
+2. **Две policy и aggregate claimable.** Какой точный минимальный fingerprint хранить
+   для hook и Creator Vault? Достаточно active epoch+mode/fee/destination и
+   vault epoch+recipient/fee, или нужно учитывать уже scheduled future epochs?
+   Какие getter/code/graph проверки необходимы при bind, pull, rollover? Как заметить
+   смену-и-возврат политики, не перечитывая всю историю на каждый вызов? Отдели
+   реально доступные внешнему admin действия от лишь существующих методов vault.
 
-26.09.2026. Новый пакет после твоих ответов `b661057` и `573e012`.
-Просим независимое ревью выводов и следующего шага. Ответ перезапиши в
-GPT_REVIEW_RESPONSE.md, начиная с даты и проверенного commit. Код не меняй.
-Предыдущие письма доступны в git; не нужно перечитывать весь архив.
+3. **Drift и доступность денег.** Принимаем stop нового accounting/rollover и доступный
+   pay старых credits. Нужно ли в первом пакете вообще recovery для старого claimable,
+   или достаточно честного diagnosed stop без автоматической потери/перепривязки?
+   Как поступить с permissionless sync прямого USDG при drift: тоже stop или можно
+   безопасно сохранить старую campaign attribution? Дай конкретный invariant.
 
-## 1. Откуда пришли и что сейчас решаем
+4. **Граница ответственности collector.** USDG-only проще, но старый FeeRouter учитывал
+   прямые TOKEN и USDG при rollover. Предлагаем не переносить TOKEN accounting молча:
+   этот источник отдаёт USDG, TOKEN transfers не создают prize revenue автоматически.
+   Нужно ли что-то ещё для честного MVP, без универсального rescue и конвертера?
+   Нужен ли общий accounting base сейчас или небольшой самостоятельный контракт
+   безопаснее? Предпочтение — не менять V2 и не создавать framework ради двух классов.
 
-Прошлое обращение касалось реальной V4 конверсии TOKEN→USDG. Она уже была проверена
-на fork в `87f94ba`; после этого ты поднял более важный продуктовый вопрос:
-внешняя покупка → автоматические билеты → USDG победителю без обязательного визита
-на сайт. Мы исследовали реальный путь покупки и источник комиссий PAIR.
+5. **Билеты — продуктовое решение на следующий пакет.** Сравни pool input100 (текущая
+   семантика direct BUY) и фактический gross spend100 с hook fees (новая семантика).
+   Что проще доказать и понятно объяснить, учитывая refunds, payer/recipient и маршруты?
+   Рекомендуй вариант, но не считай его одобренным пользователем. Отдельно: при новом
+   genesis можно обойтись без миграции старой production истории — её ещё нет.
 
-Пользователь подтвердил PAIR как площадку запуска. PONS/самостоятельный launch
-сейчас заново не сравниваем. Нужно поддерживать доказуемые популярные покупки,
-а не все возможные способы получения TOKEN. Неясность трактуем как отсутствие
-подтверждённой eligibility. Transfer/баланс/холд не заменяют подтверждение покупки.
-Призы остаются USDG. Конверсия простая порционная, без trading bot и нового oracle
-framework. Призовые средства нельзя выводить на эксплуатацию или спасать reset/reroll.
+6. **Объём следующего законченного пакета.** Стоит ли сразу включить фиксированную
+   призовую выплату в PromoVault→GENERAL вместе с collector, чтобы не оставить новую
+   заглушку? Предлагаем временные bps только в test fixture, без runtime default.
+   Перечисли минимум unit/fork проверок: final claim failure/atomicity, direct transfers,
+   unpaid credits через два rollover, stale calls, rounding, reentrancy, hook/vault drift,
+   zero pull и реально полученный GENERAL funding. Не назначай full suite автоматически.
 
-Важный статус прошлого письма: регистрация до BUY **всё ещё обязательна в коде**.
-Автоматическая eligibility без register и автоматический payout-worker пока не
-реализованы. Не выдаём исследование маршрутов за закрытие этих двух задач.
-Permissionless claim сам транзакцию не отправляет. Предложение из твоего ответа
-не является уже действующей спецификацией или разрешением пересчитать старые snapshots.
-Просим сохранить эти задачи в плане, не потерять их за аудитом PAIR.
+## Какой ответ нужен
 
-## 2. Краткая карта чтения
-
-Сначала прочитай:
-- [PAIR_DEPENDENCY_BOUNDARY](PAIR_DEPENDENCY_BOUNDARY.md): цепочка денег, mutable
-  зависимости, source failures и предложенный порядок укрепления.
-- [PAIR_LAUNCH_COMPATIBILITY](PAIR_LAUNCH_COMPATIBILITY.md): почему проверенные BUY
-  и fee source пока не составляют единый профиль запуска.
-- Начало [DIRECT_BUY_REPLAY](DIRECT_BUY_REPLAY.md): новый AUTO adapter и проверки.
-- [ROUTE_RESEARCH_2026-09-24](ROUTE_RESEARCH_2026-09-24.md): фактические маршруты,
-  public observations, границы UI evidence.
-
-Для спорного места открывай конкретный код/evidence. PRODUCT_SPEC — правила,
-CURRENT_CONTEXT/ROADMAP — статус; старые части модульных документов — история.
-Не нужно повторять весь security audit проекта.
-
-## 3. Что добавлено после последнего ответа
-
-Реализован отдельный `rh-pair-auto-usdg-v1`:
-- `scripts/pair-auto-buy.cjs`: pinned V1 aggregator, прямой buyExactInput, USDG funding,
-  payer=recipient, 1–2 уникальные ветви; ABI/calldata, AggregatedBuy, Transfers и V4 Swaps
-  должны согласовываться. Wrappers, другой funding/recipient, 3–5 legs не поддержаны.
-- Объём — один gross USDG debit всей покупки, включая внутренние conversion fees.
-  Нельзя суммировать обороты промежуточных swaps и выдавать несколько purchases.
-  Цена TOKEN не используется для перевода output обратно в USDG.
-- Подключён в direct-buy, typed buy-policy-format и RPC replay/scan. AUTO receipt
-  не считается второй раз прямым decoder. Регистрация проверяется на момент первого
-  USDG payment, а не позднего итогового event. Candidate id использует итоговый event.
-- AUTO-only genesis не требует несуществующего direct TOKEN/USDG pool. Если есть
-  direct adapter, реальный poolKey/id обязателен. Обычное append-only расширение
-  не позволяет подменять остальные bindings или превратить AUTO-only в direct pool.
-- Scanner проверяет aggregator runtime на cutoff и блоках его вызовов; отсутствие
-  исторического code не заменяется latest. Это не независимая проверка finality
-  и не защита от всех intra-block изменений proxy implementations.
-
-Публичной активации нет. Эти изменения не расширяют поддержку на native V2/Infinity.
-AUTO — полезный проверенный профиль, но не причина выбрать неподходящий launch.
-
-Проверки, уже выполненные 25.09, не повторялись только ради публикации:
-`node --test test/pair-auto-buy.test.cjs test/pair-auto-evidence.test.cjs test/direct-buy.test.cjs test/attempt-lifecycle.test.cjs test/monthly-replay.test.cjs`
-— 55/55, около 1.85 s. Отдельно launcher infrastructure 5/5, не суммировать с
-продуктовым результатом. Full suite не запускался.
-
-Fork: `node scripts/permit-buy-fork.cjs NEW_OUTPUT.json --auto`, upstream block
-0x44f8f53, local chain31337. Реальные V1 swaps → локальная registration → typed
-source admission → whole-block scan/replay. 8 блоков, две покупки 1+2 USDG,
-carry3000000, entries0 (порог100USDG). Искусственный только стартовый USDG кошелька;
-router/pools не подменялись. 312 read requests, 5 retries, 0 RPC errors.
-Evidence: [fork admission](../research/pair-auto/fork-admission-2026-09-25.json).
-Draw/scheduler этим fork не проверены. Future extension проверен синтетически,
-а не публичной activation transaction. Первый harness run имел string/bigint assert
-error; исправленный новый run прошёл, неудача не скрывается.
-
-## 4. Главный результат сверки: поколения пока не состыкованы
-
-V1 AUTO работает с V1 hook/stock pools; проверенный FeeRouter source использует
-native Launch V2 vault/epoch API. V1 locker не является тем же источником.
-Нельзя рекламировать нашу текущую сборку как готовый launch→BUY→revenue deployment.
-
-Кандидат первого согласованного профиля: native V2, один TOKEN/USDG pool, mode1,
-FeeRouter единственный recipient=10000 bps. Это рекомендация для fork, не утверждённый
-deployment. 10000 здесь означает всю recipient allocation, не все комиссии пула.
-
-Fresh audit 26.09: RPC chain4663/block72884069, стабильный anchor. Registry.currentCoordinator
-совпал с native API; currentHandler(1)=version5/enabled. Runtime старых audited
-registry/handler/factory/coordinator/hook совпал. Проверен implementation slot
-launchpad proxy. Старый launchV2Coordinator getter не выбирает native path:
-launchV2Token обращается к selected registry.currentCoordinator.
-API прочитан отдельно на более позднем блоке, не называем его атомарным RPC snapshot.
-Evidence: [dependency snapshot](../research/pair-dependency-audit-2026-09-26.json).
-
-Текущий UI bundle содержит V1 aggregator config. Это наличие config, **не доказательство
-маршрута конкретной кнопки с кошельком**. Native readiness API ready=true;
-standard-route API ранее вернул503, что не означает недоступности всей native ветки.
-Новый launch и browser wallet flow ещё не исполнялись.
-
-## 5. Точная денежная цепочка и внешняя власть
-
-Для проверенного mode1 VaultV2:
-1. Native launch modeConfiguration = encoded recipients/shares; пустая config
-   отдаёт allocation creator. Нужен явный FeeRouter recipient.
-2. Launch fee сейчас0.0005ETH плюс gas и developer buy; fee изменяемая. Pool engine
-   создаёт одностороннюю TOKEN liquidity, NFT держит vault. Не обещаем итоговую стоимость
-   запуска до полного preflight quote eligibility/feeds/economics/protection.
-3. V4 pool fee10000 =1%, не второй hook tax сверху. Доход зависит от комиссии,
-   действительно заработанной нашей позицией, не любого оборота TOKEN во всех пулах.
-4. collect: floor(assetAmount*7000/10000) получателям, остаток protocolTreasury.
-   Mode1 accrues claimable TOKEN/quote. Buyback/burn относится к другим mode.
-5. FeeRouter claim → наша campaign allocation → converter → USDG reserves.
-   External USDG funding и уже профинансированные призы не требуют поступления PAIR fees.
-
-Неизменяемый vault не означает неизменяемых recipients. Действующий registry имеет
-owner-only communityTakeover: mode1 eligible, замена recipients без consent creator
-и без timelock в этой функции. Atomic transition сначала collects старую epoch,
-затем открывает новую; old claimable сохраняются. Fresh reference reads подтвердили
-ctoEligible=true, atomicTransition=true. Для mode1 не нашли opt-out через config.
-Это описание capability, не обвинение PAIR в намерении ей злоупотреблять.
-
-Проверенная factory создаёт прямой VaultV2; upgradeVaultImplementation всегда revert.
-TOKEN factory использует clone с фиксированным implementation, source/runtime сверены.
-Не смешивать upgrade launchpad для будущих запусков с заменой существующего vault/TOKEN.
-Нет нашего способа забрать LP из vault или восстановить отозванную future allocation.
-Даже если интерфейс/доход PAIR сломается, наше ядро Promo не должно автоматически умирать.
-Но экономическую независимость от источника дохода кодом изобразить нельзя.
-
-## 6. Что уже переживаем, а что нет
-
-FeeRouter.bindSource одноразовый; TOKEN/USDG immutable. Принадлежность position
-проверяется оператором по launch receipt, сам bind не доказывает её полностью.
-rollCampaign требует прежней sourceEpoch и успешного collect/claim: CTO смена epoch
-блокирует rollover даже при том же recipient. Это сохраняет принятую accounting boundary,
-но не является recovery. Старые harvest/credits/pay не удаляются.
-
-local-prize-flow раздаёт уже полученные средства до collect, пропускает collect при
-смене epoch, пытается забрать старые claimable; definite transaction rejection изолирует.
-Но source.epoch/claimable read error обрывает остаток prize pass, включая conversion.
-Без ops coordinator выполняет prize до draw, и error остановит pass. С ops draw идёт
-раньше, но это ещё не полная изоляция. Unknown broadcast/shared signer pending нельзя
-просто проигнорировать ради живости: receipt reconciliation остаётся обязательной.
-
-Ранее source fork использовал чужой reference vault; локальная impersonation PAIR
-controller дала FeeRouter allocation. Это доказало collect/claim ABI и наш rollover,
-**не право обычного creator создать такую связку**. Следующий launch fork должен
-использовать настоящий публичный launch entrypoint без impersonation PAIR owner.
-Адрес TOKEN можно предсказать, развернуть FeeRouter заранее, затем указать его recipient;
-vanity salt5555 и все actual launch prerequisites надо пройти реально на fork.
-
-## 7. Предложенный порядок
-
-1. Новый native mode1 TOKEN/USDG launch на fork → FeeRouter → BUY→collect→claim;
-   подтвердить единую конфигурацию, не развивать все поколения PAIR одновременно.
-2. Изолировать source failures от уже профинансированных draw/conversion/claims,
-   сохранив shared signer/unknown-send safety. Добавить targeted regression tests.
-3. Pinned deployment manifest/автоматический health check: наш vault, pool/position,
-   epoch/recipients, runtime/implementation, RPC. Latest PAIR API не hot config.
-4. Отдельно решить recovery epoch/source, не ослабив atomic campaign accounting.
-5. Вернуться к автоматической eligibility и payout из прошлого письма как явным
-   релизным задачам. Не терять их и не называть текущий opt-in код новым поколением.
-
-## 8. Вопросы, где нужна твоя независимая оценка
-
-1. **Профиль запуска:** подтверждают ли actual source/API нашу связку mode1 TOKEN/USDG
-   + FeeRouter? Какие конкретные prerequisites способны сорвать proposed launch fork?
-   Не достаточно слов «API ready». Есть ли более простой путь в текущем PAIR release,
-   который действительно сохраняет наш доход и упрощает BUY attribution?
-2. **CTO:** правильно ли прочитана полномочная цепочка? Есть ли реальный opt-out/другая
-   подходящая fee-sharing ветка без recipient replacement, которую мы пропустили?
-   Если нет, достаточно ли pin/monitor + честной зависимости, не строя новый launchpad?
-3. **Recovery:** безусловный переход на новую epoch ломает наш accounting смысл.
-   Что минимальнее: явно проверяемое принятие epoch при том же recipient или новый
-   source/router для будущего дохода с сохранением старых долгов? Проверь реальные
-   downstream authorizations. Не предлагай escape hatch, который обходит обязательный
-   final collect, или arbitrary source swap под видом технического исправления.
-4. **Изоляция:** где провести границу recoverable source read failure и ошибок,
-   требующих остановки всего pass? Как не замаскировать asset deficit/неизвестную tx?
-   Дай небольшой набор обычных сценариев, не универсальный retry framework.
-5. **BUY coverage/economics:** нет ли в AUTO decoder double-count/provenance лазейки,
-   особенно gross funding с conversion fees, payment-time registration и 2 legs?
-   Насколько полезно продолжать V1 после выбора V2 кандидата? Мы предлагаем остановиться
-   на проверенном V1 объёме, а следующую поддержку делать по реальному native launch.
-6. **Продуктовый хвост:** в каком месте плана вернуть automatic eligibility/payout,
-   чтобы не зарелизить несовместимые обещания? Это отдельное поколение правил, не
-   ретроактивное изменение snapshots. Нужна очередность, не немедленный rewrite всего.
-7. Не оставили ли мы более серьёзный обычный отказ, чем перечисленные? Для каждого
-   замечания дай файл/функцию, конкретный trigger, влияние и минимальное исправление.
-   Раздели доказанный defect, внешнюю trust assumption и требующее решения пожелание.
-
-Нужен короткий вердикт, затем приоритеты и один законченный следующий пакет.
-Не соглашайся автоматически с нашими выводами. Редкие крайности не должны породить
-новые proxy, emergency admin или перераспределение frozen/claimable. Адресные тесты
-предпочтительнее full suite; окруженческую ошибку отмечай отдельно от дефекта кода.
+Краткий вердикт по плану → выбранная модель/API → таблица нерешённых решений с твоим
+вариантом → обязательные изменения ближайшего пакета и критерии готовности.
+Ссылки на конкретный код при обнаружении ошибки; отдельно факты из исходников,
+проверенные receipts и гипотезы. Если критического препятствия нет, не расширяй шаг
+до универсального collector/decoder или идеальной обработки всех будущих аварий.
