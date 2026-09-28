@@ -91,8 +91,9 @@ ArbSys, USDG, внешний creator source и venue state — fixtures. При�
 
 [Разбор lock](REHEARSAL_LOCK_INVESTIGATION.md): исходный Windows и три усиленных
 прогона (Windows/Linux9p/Linuxext4) complete. GPT сообщает EEXIST в своей среде;
-причина не подтверждена, нужен его полный failed report + trace. Это не объявлено
-исправлением lock-механизма.
+причина не подтверждена. По решению пользователя повторный GPT-прогон отменён:
+он выполняет [review без тестов](REVIEW_TESTING.md), проверки выполняет Codex.
+Это не объявлено исправлением lock-механизма и не блокирует следующий пакет.
 
 Теперь complete дополнительно требует двух уникальных `(drawId,winner)` sends,
 успешных receipts и RewardPaid с точными суммами terminal результатов, нулевых
