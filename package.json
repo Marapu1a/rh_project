@@ -69,7 +69,8 @@
     "test:local:coordinator": "node --test test/local-coordinator.test.cjs",
     "test:local:budget": "node --test --test-concurrency=1 test/local-execution-budget.test.cjs test/local-coordinator.test.cjs",
     "test:review": "node scripts/review-runner.cjs",
-    "test:group": "node scripts/test-launcher.cjs"
+    "test:group": "node scripts/test-launcher.cjs",
+    "rehearsal:release": "node scripts/release-rehearsal.cjs"
   },
   "devDependencies": {
     "@openzeppelin/contracts": "5.6.1",

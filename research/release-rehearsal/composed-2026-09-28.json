@@ -1,0 +1,1482 @@
+{
+  "schema": "release-rehearsal-report-v1",
+  "status": "complete",
+  "publicLaunchReady": false,
+  "publicSends": false,
+  "startedAt": "2026-09-28T14:13:47.056Z",
+  "stages": [
+    {
+      "name": "saved-infinity-buy-replay",
+      "evidence": "research/infinity-source-audit/automation-fork-2026-09-27.json",
+      "sha256": "7d922a66e9031d48c2f57b6e078edc39ce1ea67e4d9ea9a8b732c1ca11426942",
+      "cutoff": 73930318,
+      "ledgerHash": "0xe96265e478128797c8b53fb38ce04da3cf18b3286869ac300638b325d4cbe566",
+      "wallets": [
+        {
+          "wallet": "0x90f79bf6eb2c4f870365e785982e1f101e93b906",
+          "carryRaw": "6600000",
+          "entriesMinted": "2",
+          "shortAttemptsMinted": "2",
+          "monthlyAttemptsMinted": "2"
+        }
+      ],
+      "participants": [
+        {
+          "wallet": "0x90f79bf6eb2c4f870365e785982e1f101e93b906",
+          "firstAttempt": "1",
+          "lastAttempt": "2",
+          "count": "2"
+        }
+      ],
+      "continuity": "explicit participant import; separate chains"
+    },
+    {
+      "name": "saved-operations-market-proof",
+      "evidence": "research/ops-funding/credit-fork-2026-09-28.json",
+      "sha256": "5b5847630b0727c1425f4956f70d91971e0de00096cb0c6092b745f237b04fe9",
+      "anchor": {
+        "number": 74826930,
+        "hash": "0x2627480e705bacd7a1b2f3a0bc3a740b9853f89a599c7a868636fe75374d5e7c"
+      },
+      "executedNow": false
+    },
+    {
+      "name": "creator-funding",
+      "run": {
+        "status": "waiting",
+        "results": {
+          "admission": {
+            "mode": "normal",
+            "obligations": {
+              "status": "matched",
+              "reasons": [],
+              "publicLaunchReady": false,
+              "observedAtBlock": {
+                "number": 17,
+                "hash": "0x9ef865bc9cd51a9757318091c65f58ca4acc5a2645a8be78e32abab1edc7907f"
+              }
+            },
+            "full": {
+              "status": "matched",
+              "scope": "public-launch",
+              "profileHash": "0x5af72ec924eb0d1bc198efaebf8ad7296c2850c38998b0b5733fdcc800b722d5",
+              "checks": [
+                {
+                  "check": "chainId",
+                  "ok": true
+                },
+                {
+                  "check": "publicChainRequired",
+                  "ok": true
+                },
+                {
+                  "check": "publicCheckpointMode",
+                  "ok": true
+                },
+                {
+                  "check": "runtime:collector",
+                  "ok": true
+                },
+                {
+                  "check": "runtime:source",
+                  "ok": true
+                },
+                {
+                  "check": "runtime:token",
+                  "ok": true
+                },
+                {
+                  "check": "runtime:quote",
+                  "ok": true
+                },
+                {
+                  "check": "runtime:registry",
+                  "ok": true
+                },
+                {
+                  "check": "runtime:vault",
+                  "ok": true
+                },
+                {
+                  "check": "runtime:short",
+                  "ok": true
+                },
+                {
+                  "check": "runtime:monthly",
+                  "ok": true
+                },
+                {
+                  "check": "runtime:adapter",
+                  "ok": true
+                },
+                {
+                  "check": "binding:vault.shortController",
+                  "ok": true
+                },
+                {
+                  "check": "binding:vault.monthlyController",
+                  "ok": true
+                },
+                {
+                  "check": "binding:short.datasetVault",
+                  "ok": true
+                },
+                {
+                  "check": "binding:monthly.monthlyVault",
+                  "ok": true
+                },
+                {
+                  "check": "binding:vault.quoteToken",
+                  "ok": true
+                },
+                {
+                  "check": "binding:vault.projectToken",
+                  "ok": true
+                },
+                {
+                  "check": "binding:collector.promoVault",
+                  "ok": true
+                },
+                {
+                  "check": "binding:collector.projectToken",
+                  "ok": true
+                },
+                {
+                  "check": "binding:collector.quoteToken",
+                  "ok": true
+                },
+                {
+                  "check": "binding:collector.source",
+                  "ok": true
+                },
+                {
+                  "check": "binding:source.projectToken",
+                  "ok": true
+                },
+                {
+                  "check": "binding:short.datasetRegistry",
+                  "ok": true
+                },
+                {
+                  "check": "binding:monthly.monthlyRegistry",
+                  "ok": true
+                },
+                {
+                  "check": "binding:short.randomProvider",
+                  "ok": true
+                },
+                {
+                  "check": "binding:monthly.randomProvider",
+                  "ok": true
+                },
+                {
+                  "check": "binding:adapter.shortConsumer",
+                  "ok": true
+                },
+                {
+                  "check": "binding:adapter.monthlyConsumer",
+                  "ok": true
+                },
+                {
+                  "check": "binding:short.publisher",
+                  "ok": true
+                },
+                {
+                  "check": "binding:monthly.publisher",
+                  "ok": true
+                },
+                {
+                  "check": "binding:short.CONTROLLER_PROFILE",
+                  "ok": true
+                },
+                {
+                  "check": "binding:monthly.CONTROLLER_PROFILE",
+                  "ok": true
+                },
+                {
+                  "check": "binding:short.datasetInstance",
+                  "ok": true
+                },
+                {
+                  "check": "binding:monthly.monthlyInstance",
+                  "ok": true
+                },
+                {
+                  "check": "binding:quote.decimals",
+                  "ok": true
+                },
+                {
+                  "check": "binding:adapter.PROFILE",
+                  "ok": true
+                },
+                {
+                  "check": "binding:adapter.CHAIN_HASH",
+                  "ok": true
+                },
+                {
+                  "check": "binding:adapter.leadSeconds",
+                  "ok": true
+                },
+                {
+                  "check": "binding:adapter.maxClockLag",
+                  "ok": true
+                },
+                {
+                  "check": "binding:adapter.maxClockAhead",
+                  "ok": true
+                },
+                {
+                  "check": "binding:adapter.maxFinalizedLag",
+                  "ok": true
+                },
+                {
+                  "check": "binding:adapter.maxBeaconLag",
+                  "ok": true
+                },
+                {
+                  "check": "binding:short.SHORT_INTERVAL",
+                  "ok": true
+                },
+                {
+                  "check": "binding:monthly.monthlyInterval",
+                  "ok": true
+                },
+                {
+                  "check": "binding:short.cutoffDelayBlocks",
+                  "ok": true
+                },
+                {
+                  "check": "binding:monthly.cutoffDelayBlocks",
+                  "ok": true
+                },
+                {
+                  "check": "binding:collector.sourceFingerprint",
+                  "ok": true
+                },
+                {
+                  "check": "binding:collector.campaignId",
+                  "ok": true
+                },
+                {
+                  "check": "approvedCreatorAllocation",
+                  "ok": true
+                },
+                {
+                  "check": "campaignPolicy",
+                  "ok": true
+                },
+                {
+                  "check": "deploymentAnchor",
+                  "ok": true
+                },
+                {
+                  "check": "deploymentAnchor",
+                  "ok": true
+                },
+                {
+                  "check": "deploymentAnchor",
+                  "ok": true
+                },
+                {
+                  "check": "stableObservation",
+                  "ok": true
+                }
+              ],
+              "reasons": [],
+              "publicLaunchReady": false,
+              "authorizationToFreeze": false,
+              "observedAtBlock": {
+                "number": 17,
+                "hash": "0x9ef865bc9cd51a9757318091c65f58ca4acc5a2645a8be78e32abab1edc7907f",
+                "timestamp": 1752076770
+              },
+              "releaseBlockers": [
+                "publicExecutionNotImplemented"
+              ],
+              "executionScope": "local-robinhood-rehearsal"
+            }
+          },
+          "rng": {
+            "status": "complete",
+            "steps": [],
+            "failures": [],
+            "requests": []
+          },
+          "settlement": {
+            "status": "waiting",
+            "results": {
+              "SHORT": {
+                "status": "waiting",
+                "reason": "newJobsDeferred"
+              },
+              "MONTHLY": {
+                "status": "waiting",
+                "reason": "newJobsDeferred"
+              }
+            }
+          },
+          "funding": {
+            "status": "complete",
+            "steps": [
+              {
+                "action": "pull",
+                "args": [],
+                "transactionHash": "0x572f164e9341c4f8f2b84666b8ca392f95040d453f695fd2740e84f6d6861b2b"
+              },
+              {
+                "action": "pay",
+                "args": [
+                  "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707"
+                ],
+                "transactionHash": "0xc4092104a79b3fb9c3994bfa8c2d40191fb89f96cf36fc9f89c9845f1b5d3e9f"
+              },
+              {
+                "action": "pay",
+                "args": [
+                  "0x90F79bf6EB2c4f870365E785982E1f101E93b906"
+                ],
+                "transactionHash": "0x7150f9864cdd208f7b84a7f8160a7c879263d6e00752d7de01d81892433f7721"
+              },
+              {
+                "action": "pay",
+                "args": [
+                  "0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65"
+                ],
+                "transactionHash": "0xeb4a868a86058cc3ef4f4af44c0fc0d52ef1d8d3622cde62d1447ce73ac933d4"
+              }
+            ],
+            "failures": []
+          },
+          "draw": {
+            "status": "waiting",
+            "results": {
+              "SHORT": {
+                "status": "waiting",
+                "reason": "schedule"
+              },
+              "MONTHLY": {
+                "status": "waiting",
+                "reason": "schedule"
+              }
+            }
+          }
+        },
+        "steps": [],
+        "queued": 0,
+        "executionScope": "local-robinhood-rehearsal",
+        "publicLaunchReady": false
+      },
+      "pins": {
+        "collector": [
+          "0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6",
+          "0xc63d5f03f99f6642f401c810f6ae673c4739a4275ce0ffe89d4b6ab75795e595"
+        ],
+        "source": [
+          "0x8A791620dd6260079BF849Dc5567aDC3F2FdC318",
+          "0x4ffd5022187c044bee6c356d06593c80ba0f24c3b95af30e5f3fdbec0909874a"
+        ],
+        "token": [
+          "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+          "0x61497ffed53c3f544318e98c9cbd5b81020d83e1063e1b62d8528f74b97d0c1a"
+        ],
+        "quote": [
+          "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+          "0x3669b733629dda345daa47bca6bc087c96baf0f15b9ec946439ebb99c0d235b4"
+        ],
+        "registry": [
+          "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
+          "0xf9416c95d49ff972b9b3ddc93d74a7cc96890efbd413960689c9470866300bc6"
+        ],
+        "vault": [
+          "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707",
+          "0xf3af8ddaeb3e6c19ff7cd178fdb7a5c3ae7b25a117620104ee62862bc0f8ebe0"
+        ],
+        "short": [
+          "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+          "0x2b068267abc609154afac2d83d27ee84e51f07bca233be24fc8536852142cd3e"
+        ],
+        "monthly": [
+          "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9",
+          "0xe002c6e7ee4f83e1e389a543be10a8a87d8d15c69a1efe111ddae961c7d03754"
+        ],
+        "adapter": [
+          "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
+          "0x6b1af85705abaca435924ad7c7a7b67c72f11fc8cf71f07ddd3ea142a4a0d624"
+        ]
+      },
+      "policy": {
+        "schema": "robinhood-infinity-worker-v1",
+        "chainId": 4663,
+        "collector": "0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6",
+        "token": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+        "quote": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+        "promo": "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707",
+        "source": "0x8A791620dd6260079BF849Dc5567aDC3F2FdC318",
+        "collectorCodeHash": "0xc63d5f03f99f6642f401c810f6ae673c4739a4275ce0ffe89d4b6ab75795e595",
+        "sourceFingerprint": "0x8b573d56ca0ec1e42121d1d5c54f271160e875cd708fa496b4a070357524456c",
+        "anchor": {
+          "number": 12,
+          "hash": "0x85ca5258a3a9c2547b538a4c0c6d1147c7db09debefc3bfb1e6cbd54ecf951be"
+        },
+        "campaignId": "1",
+        "recipients": [
+          "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707",
+          "0x90F79bf6EB2c4f870365E785982E1f101E93b906",
+          "0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65"
+        ],
+        "bps": [
+          9000,
+          500,
+          500
+        ],
+        "legacy": [],
+        "maxGasPrice": "1000000000000",
+        "nativeFloor": "1000",
+        "gasUnits": {
+          "pull": "600000",
+          "pay": "600000"
+        },
+        "pollSeconds": 60
+      },
+      "prizeBalance": "1805400000",
+      "opsCredit": "0",
+      "projectCredit": "0",
+      "opsPaid": "100300000",
+      "projectPaid": "100300000"
+    },
+    {
+      "name": "known-claim-interruption",
+      "run": {
+        "status": "blocked",
+        "reason": "pendingReceipt",
+        "results": {
+          "admission": {
+            "mode": "obligations-only",
+            "obligations": {
+              "status": "matched",
+              "reasons": [],
+              "publicLaunchReady": false,
+              "observedAtBlock": {
+                "number": 30,
+                "hash": "0x5014839e2c6ec674652124cc782b321ecb9fa5b12aae5a4d107854c2ba8e31cc"
+              }
+            },
+            "full": {
+              "status": "blocked",
+              "scope": "public-launch",
+              "profileHash": "0x5af72ec924eb0d1bc198efaebf8ad7296c2850c38998b0b5733fdcc800b722d5",
+              "checks": [
+                {
+                  "check": "chainId",
+                  "ok": true
+                },
+                {
+                  "check": "publicChainRequired",
+                  "ok": true
+                },
+                {
+                  "check": "publicCheckpointMode",
+                  "ok": true
+                },
+                {
+                  "check": "runtime:collector",
+                  "ok": true
+                },
+                {
+                  "check": "runtime:source",
+                  "ok": false
+                },
+                {
+                  "check": "runtime:token",
+                  "ok": true
+                },
+                {
+                  "check": "runtime:quote",
+                  "ok": true
+                },
+                {
+                  "check": "runtime:registry",
+                  "ok": true
+                },
+                {
+                  "check": "runtime:vault",
+                  "ok": true
+                },
+                {
+                  "check": "runtime:short",
+                  "ok": true
+                },
+                {
+                  "check": "runtime:monthly",
+                  "ok": true
+                },
+                {
+                  "check": "runtime:adapter",
+                  "ok": true
+                }
+              ],
+              "reasons": [
+                "runtime:source"
+              ],
+              "publicLaunchReady": false,
+              "authorizationToFreeze": false,
+              "releaseBlockers": [
+                "publicExecutionNotImplemented",
+                "runtime:source"
+              ],
+              "executionScope": "local-robinhood-rehearsal"
+            }
+          },
+          "rng": {
+            "status": "complete",
+            "steps": [
+              {
+                "action": "prove",
+                "requestId": "1",
+                "transactionHash": "0xe7b53deedc63bdcd3b52b03fb665ea5432ec6ea67d9669a9e96f340a55bba7cf"
+              },
+              {
+                "action": "deliver",
+                "requestId": "1",
+                "transactionHash": "0x7968bbd80314de91a4e020df305ac5a97d179c5e7492feacdc8449df1199ec62"
+              },
+              {
+                "action": "prove",
+                "requestId": "2",
+                "transactionHash": "0xa8c67e389c8ee8ce2f1ea233aa94f0c662a953ac5e5b7f9a565ab49bc33f810a"
+              },
+              {
+                "action": "deliver",
+                "requestId": "2",
+                "transactionHash": "0x0a085bb2e523d6856b12e964463e556b5397e10b2fa3a08651655fb0bad96937"
+              }
+            ],
+            "failures": [],
+            "requests": [
+              {
+                "kind": "short",
+                "requestId": "1",
+                "round": "9337227",
+                "status": "delivered"
+              },
+              {
+                "kind": "monthly",
+                "requestId": "2",
+                "round": "9337227",
+                "status": "delivered"
+              }
+            ]
+          },
+          "settlement": {
+            "status": "waiting",
+            "results": {
+              "SHORT": {
+                "status": "terminal",
+                "drawId": "0x1a9df611ffdcc18842d2861379596037e68aa522acba041a4430a431106894ad",
+                "resultHash": "0x6393f46528d02d8c9a4ffe7be5d49ff9a461f99d2ec69f9c557f9b6d285d7163"
+              },
+              "MONTHLY": {
+                "status": "terminal",
+                "drawId": "0xb111b184f94532cabd40db0c8e0bea0ccc051a93a91de695f7623b39b54a5d60",
+                "winner": "0x90f79bf6eb2c4f870365e785982e1f101e93b906",
+                "resultHash": "0x2c079c064662e1e237f39374c2dd3c8758f746c5b499956600f6c00e51b521df",
+                "admittedCount": "1"
+              }
+            }
+          }
+        },
+        "steps": [
+          {
+            "lane": "settlement",
+            "action": "processShort",
+            "target": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+            "data": "0x877fca371a9df611ffdcc18842d2861379596037e68aa522acba041a4430a431106894ad00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000060000000000000000000000000000000000000000000000000000000000000000100000000000000000000000090f79bf6eb2c4f870365e785982e1f101e93b90600000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000002",
+            "from": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+            "stage": "confirm",
+            "transactionHash": "0xb8c4a0828a000b1727c020c3858d5370ca3ff677c59ab276e325cdd0f8cd7f11",
+            "nonce": 33,
+            "status": 1,
+            "blockHash": "0xf83a25f1253e141462d695dac591a5d7f2696d8b3e41b3fc72b4b187b359c222"
+          },
+          {
+            "lane": "settlement",
+            "action": "processMonth",
+            "target": "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9",
+            "data": "0xed288d85b111b184f94532cabd40db0c8e0bea0ccc051a93a91de695f7623b39b54a5d6000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000060000000000000000000000000000000000000000000000000000000000000000100000000000000000000000090f79bf6eb2c4f870365e785982e1f101e93b90600000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000002",
+            "from": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+            "stage": "confirm",
+            "transactionHash": "0xb685c86477031756ee8cf6fbae199d303be49ba602586b475e7c1eafe63a363d",
+            "nonce": 34,
+            "status": 1,
+            "blockHash": "0xc183d6e85f8ea72c6c798721e9cc0cf3ca2a044f4265e5b769866636587c247a"
+          },
+          {
+            "lane": "settlement",
+            "action": "finishShort",
+            "target": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+            "data": "0xc6d33dad1a9df611ffdcc18842d2861379596037e68aa522acba041a4430a431106894ad",
+            "from": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+            "stage": "confirm",
+            "transactionHash": "0xf73452fd0e1e6adc185b07d79ac7d7473770dd641cc485d3084c97eed890885c",
+            "nonce": 35,
+            "status": 1,
+            "blockHash": "0xebc16bcc0565a82201ac9be2f010eae6a293a5ca9a815d6dd58b6e231e1b506b"
+          },
+          {
+            "lane": "settlement",
+            "action": "finishMonth",
+            "target": "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9",
+            "data": "0x9736467bb111b184f94532cabd40db0c8e0bea0ccc051a93a91de695f7623b39b54a5d60",
+            "from": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+            "stage": "confirm",
+            "transactionHash": "0x469ceb02165e11f934b91364750bd8a7d02223c70b8e81ee6a5c84492176acd0",
+            "nonce": 36,
+            "status": 1,
+            "blockHash": "0x635abdebc9ed7696d2d41683249a0e71237820b3fa8f5b9a5dec51529e803146"
+          }
+        ],
+        "queued": 2,
+        "requiresReconciliation": true,
+        "pending": {
+          "lane": "claims",
+          "action": "claim",
+          "target": "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707",
+          "data": "0x96c144f01a9df611ffdcc18842d2861379596037e68aa522acba041a4430a431106894ad00000000000000000000000090f79bf6eb2c4f870365e785982e1f101e93b906",
+          "from": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+          "stage": "confirm",
+          "transactionHash": "0x56b7257d68bc1cb061fc9feb2db88a71645d3144b3e57529dbbe50f7596b0e5b",
+          "nonce": 37
+        },
+        "retryableRpcRead": false,
+        "executionScope": "local-robinhood-rehearsal",
+        "publicLaunchReady": false
+      },
+      "pending": {
+        "lane": "claims",
+        "action": "claim",
+        "target": "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707",
+        "data": "0x96c144f01a9df611ffdcc18842d2861379596037e68aa522acba041a4430a431106894ad00000000000000000000000090f79bf6eb2c4f870365e785982e1f101e93b906",
+        "from": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+        "stage": "confirm",
+        "transactionHash": "0x56b7257d68bc1cb061fc9feb2db88a71645d3144b3e57529dbbe50f7596b0e5b",
+        "nonce": 37
+      },
+      "receipt": {
+        "_type": "TransactionReceipt",
+        "blockHash": "0x5f80df71e7a662eba9a5ec64d407254cf7ff2297f2f72d0b9fcff301cbe7f76a",
+        "blockNumber": 39,
+        "contractAddress": null,
+        "cumulativeGasUsed": "88130",
+        "from": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+        "gasPrice": "6129095",
+        "blobGasUsed": null,
+        "blobGasPrice": null,
+        "gasUsed": "88130",
+        "hash": "0x56b7257d68bc1cb061fc9feb2db88a71645d3144b3e57529dbbe50f7596b0e5b",
+        "index": 0,
+        "logs": [
+          {
+            "_type": "log",
+            "address": "0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168",
+            "blockHash": "0x5f80df71e7a662eba9a5ec64d407254cf7ff2297f2f72d0b9fcff301cbe7f76a",
+            "blockNumber": 39,
+            "data": "0x0000000000000000000000000000000000000000000000000000000001fca052",
+            "index": 0,
+            "topics": [
+              "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+              "0x0000000000000000000000005fc8d32690cc91d4c39d9d3abcbd16989f875707",
+              "0x00000000000000000000000090f79bf6eb2c4f870365e785982e1f101e93b906"
+            ],
+            "transactionHash": "0x56b7257d68bc1cb061fc9feb2db88a71645d3144b3e57529dbbe50f7596b0e5b",
+            "transactionIndex": 0
+          },
+          {
+            "_type": "log",
+            "address": "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707",
+            "blockHash": "0x5f80df71e7a662eba9a5ec64d407254cf7ff2297f2f72d0b9fcff301cbe7f76a",
+            "blockNumber": 39,
+            "data": "0x0000000000000000000000000000000000000000000000000000000001fca052",
+            "index": 1,
+            "topics": [
+              "0x4f192306374ccb628ef1652803d15f68a00fe0f23253640f6d095bfd30c81d7d",
+              "0x1a9df611ffdcc18842d2861379596037e68aa522acba041a4430a431106894ad",
+              "0x0000000000000000000000005fc5360d0400a0fd4f2af552add042d716f1d168",
+              "0x00000000000000000000000090f79bf6eb2c4f870365e785982e1f101e93b906"
+            ],
+            "transactionHash": "0x56b7257d68bc1cb061fc9feb2db88a71645d3144b3e57529dbbe50f7596b0e5b",
+            "transactionIndex": 0
+          }
+        ],
+        "logsBloom": "0x00000080000000000000000000080000000000001000000000000000000000000000000000000000000000000000000040000000000000000000000000000000000000000000000000000008000000000004000240000000000000000000000000000000004000000400000001000000000000000000000000000010000000000000000000000000000000000000000000000000000000000400000000000000900000000800000000000000000000000000000000001000000000000000000000000002000000000000000010000000400000000000001000020001000000000000000000000000000010000000000000000000000000000000000000000000",
+        "status": 1,
+        "to": "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707"
+      }
+    },
+    {
+      "name": "resume-settle-and-pay",
+      "run": {
+        "status": "waiting",
+        "reason": "obligationsOnly",
+        "results": {
+          "admission": {
+            "mode": "obligations-only",
+            "obligations": {
+              "status": "matched",
+              "reasons": [],
+              "publicLaunchReady": false,
+              "observedAtBlock": {
+                "number": 39,
+                "hash": "0x5f80df71e7a662eba9a5ec64d407254cf7ff2297f2f72d0b9fcff301cbe7f76a"
+              }
+            },
+            "full": {
+              "status": "blocked",
+              "scope": "public-launch",
+              "profileHash": "0x5af72ec924eb0d1bc198efaebf8ad7296c2850c38998b0b5733fdcc800b722d5",
+              "checks": [
+                {
+                  "check": "chainId",
+                  "ok": true
+                },
+                {
+                  "check": "publicChainRequired",
+                  "ok": true
+                },
+                {
+                  "check": "publicCheckpointMode",
+                  "ok": true
+                },
+                {
+                  "check": "runtime:collector",
+                  "ok": true
+                },
+                {
+                  "check": "runtime:source",
+                  "ok": false
+                },
+                {
+                  "check": "runtime:token",
+                  "ok": true
+                },
+                {
+                  "check": "runtime:quote",
+                  "ok": true
+                },
+                {
+                  "check": "runtime:registry",
+                  "ok": true
+                },
+                {
+                  "check": "runtime:vault",
+                  "ok": true
+                },
+                {
+                  "check": "runtime:short",
+                  "ok": true
+                },
+                {
+                  "check": "runtime:monthly",
+                  "ok": true
+                },
+                {
+                  "check": "runtime:adapter",
+                  "ok": true
+                }
+              ],
+              "reasons": [
+                "runtime:source"
+              ],
+              "publicLaunchReady": false,
+              "authorizationToFreeze": false,
+              "releaseBlockers": [
+                "publicExecutionNotImplemented",
+                "runtime:source"
+              ],
+              "executionScope": "local-robinhood-rehearsal"
+            }
+          },
+          "rng": {
+            "status": "complete",
+            "steps": [],
+            "failures": [],
+            "requests": []
+          },
+          "settlement": {
+            "status": "waiting",
+            "results": {
+              "SHORT": {
+                "status": "waiting",
+                "reason": "obligationsOnly"
+              },
+              "MONTHLY": {
+                "status": "waiting",
+                "reason": "obligationsOnly"
+              }
+            }
+          },
+          "funding": {
+            "status": "waiting",
+            "reason": "obligationsOnly"
+          },
+          "draw": {
+            "status": "waiting",
+            "reason": "obligationsOnly"
+          }
+        },
+        "steps": [
+          {
+            "lane": "claims",
+            "action": "claim",
+            "target": "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707",
+            "data": "0x96c144f0b111b184f94532cabd40db0c8e0bea0ccc051a93a91de695f7623b39b54a5d6000000000000000000000000090f79bf6eb2c4f870365e785982e1f101e93b906",
+            "from": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+            "stage": "confirm",
+            "transactionHash": "0xabbf1570c2e81ee2e0d5dd8c8a49dcd4ce872a7c6a6d3daf98172f5a10ec26fb",
+            "nonce": 38,
+            "status": 1,
+            "blockHash": "0x20377fd93d7d2ae0f6f0f4e595a76076026ae83e1c42d2166d9f7d52b204b252"
+          }
+        ],
+        "queued": 0,
+        "executionScope": "local-robinhood-rehearsal",
+        "publicLaunchReady": false
+      },
+      "balancesBefore": {
+        "0x90f79bf6eb2c4f870365e785982e1f101e93b906": "100300000"
+      },
+      "balancesAfter": {
+        "0x90f79bf6eb2c4f870365e785982e1f101e93b906": "936333330"
+      },
+      "paid": "836033330",
+      "vaultRemaining": "969366670",
+      "conservation": true
+    },
+    {
+      "name": "repeat-no-double-payment",
+      "run": {
+        "status": "waiting",
+        "reason": "obligationsOnly",
+        "results": {
+          "admission": {
+            "mode": "obligations-only",
+            "obligations": {
+              "status": "matched",
+              "reasons": [],
+              "publicLaunchReady": false,
+              "observedAtBlock": {
+                "number": 40,
+                "hash": "0x20377fd93d7d2ae0f6f0f4e595a76076026ae83e1c42d2166d9f7d52b204b252"
+              }
+            },
+            "full": {
+              "status": "blocked",
+              "scope": "public-launch",
+              "profileHash": "0x5af72ec924eb0d1bc198efaebf8ad7296c2850c38998b0b5733fdcc800b722d5",
+              "checks": [
+                {
+                  "check": "chainId",
+                  "ok": true
+                },
+                {
+                  "check": "publicChainRequired",
+                  "ok": true
+                },
+                {
+                  "check": "publicCheckpointMode",
+                  "ok": true
+                },
+                {
+                  "check": "runtime:collector",
+                  "ok": true
+                },
+                {
+                  "check": "runtime:source",
+                  "ok": false
+                },
+                {
+                  "check": "runtime:token",
+                  "ok": true
+                },
+                {
+                  "check": "runtime:quote",
+                  "ok": true
+                },
+                {
+                  "check": "runtime:registry",
+                  "ok": true
+                },
+                {
+                  "check": "runtime:vault",
+                  "ok": true
+                },
+                {
+                  "check": "runtime:short",
+                  "ok": true
+                },
+                {
+                  "check": "runtime:monthly",
+                  "ok": true
+                },
+                {
+                  "check": "runtime:adapter",
+                  "ok": true
+                }
+              ],
+              "reasons": [
+                "runtime:source"
+              ],
+              "publicLaunchReady": false,
+              "authorizationToFreeze": false,
+              "releaseBlockers": [
+                "publicExecutionNotImplemented",
+                "runtime:source"
+              ],
+              "executionScope": "local-robinhood-rehearsal"
+            }
+          },
+          "rng": {
+            "status": "complete",
+            "steps": [],
+            "failures": [],
+            "requests": []
+          },
+          "settlement": {
+            "status": "waiting",
+            "results": {
+              "SHORT": {
+                "status": "waiting",
+                "reason": "obligationsOnly"
+              },
+              "MONTHLY": {
+                "status": "waiting",
+                "reason": "obligationsOnly"
+              }
+            }
+          },
+          "funding": {
+            "status": "waiting",
+            "reason": "obligationsOnly"
+          },
+          "draw": {
+            "status": "waiting",
+            "reason": "obligationsOnly"
+          }
+        },
+        "steps": [],
+        "queued": 0,
+        "executionScope": "local-robinhood-rehearsal",
+        "publicLaunchReady": false
+      },
+      "nonceUnchanged": true
+    }
+  ],
+  "assumptions": [
+    "BUY receipts are replayed from saved real Infinity fork evidence, not new live swaps.",
+    "Participants are explicitly imported into a fresh local chain; automatic same-chain BUY-to-dataset publication is NOT proven here.",
+    "Public controller bytecode is compiled without source overrides; ArbSys/USDG/source and venue state are local fixtures.",
+    "Historical drand signature, virtual chain time, manual dataset preparation and freeze; settlement and claims use the common runtime.",
+    "Recovery restarts the worker with journals on the same local node, not OS-kill or node restart.",
+    "Operations market fork is referenced with a hash, not re-executed or merged into this local chain."
+  ],
+  "profile": {
+    "schema": "release-rehearsal-v1",
+    "scope": "composed-local-evidence-not-public-e2e",
+    "publicExecutionEnabled": false,
+    "buyEvidence": "research/infinity-source-audit/automation-fork-2026-09-27.json",
+    "opsEvidence": "research/ops-funding/credit-fork-2026-09-28.json",
+    "parameters": [
+      {
+        "name": "creatorFeeBps",
+        "value": 300,
+        "status": "accepted",
+        "source": "config/robinhood-launch-plan.json"
+      },
+      {
+        "name": "creatorAllocationBps",
+        "value": [
+          9000,
+          500,
+          500
+        ],
+        "status": "accepted",
+        "source": "docs/PRODUCT_SPEC.md"
+      },
+      {
+        "name": "entryThresholdRaw",
+        "value": "100000000",
+        "status": "accepted",
+        "source": "config/robinhood-launch-plan.json"
+      },
+      {
+        "name": "intervalsSeconds",
+        "value": [
+          21600,
+          2592000
+        ],
+        "status": "accepted",
+        "source": "config/robinhood-launch-plan.json"
+      },
+      {
+        "name": "nextStartTargetRaw",
+        "value": "100000000",
+        "status": "accepted",
+        "source": "config/robinhood-launch-plan.json"
+      },
+      {
+        "name": "shortBudgetRaw",
+        "value": "100000000",
+        "status": "fixture",
+        "source": "test/fixtures/robinhood-runtime.cjs"
+      },
+      {
+        "name": "shortWeights",
+        "value": [
+          7,
+          5,
+          3
+        ],
+        "status": "fixture",
+        "source": "test/fixtures/public-controllers.cjs"
+      },
+      {
+        "name": "odds",
+        "value": "nearCertainRules",
+        "status": "fixture",
+        "source": "test/fixtures/short-outcome.cjs"
+      },
+      {
+        "name": "drandTimingSeconds",
+        "value": [
+          1800,
+          30,
+          5,
+          1200,
+          15
+        ],
+        "status": "fixture-not-approved",
+        "source": "test/fixtures/public-controllers.cjs"
+      },
+      {
+        "name": "rolesAndPins",
+        "value": "fresh local deployments",
+        "status": "fixture",
+        "source": "test/fixtures/robinhood-runtime.cjs"
+      },
+      {
+        "name": "gasCapsAndSeed",
+        "value": "fixture balances and bounds; not Nitro estimate",
+        "status": "fixture",
+        "source": "test/fixtures/robinhood-runtime.cjs"
+      },
+      {
+        "name": "publicLaunchParameters",
+        "value": null,
+        "status": "owner-and-deployment-required",
+        "source": "config/robinhood-launch-plan.json"
+      }
+    ]
+  },
+  "launchPlan": {
+    "schema": "robinhood-launch-plan-v1",
+    "missing": [
+      "contracts.token",
+      "contracts.registry",
+      "contracts.vault",
+      "contracts.short",
+      "contracts.monthly",
+      "contracts.adapter",
+      "contracts.collector",
+      "contracts.pairSource",
+      "contracts.buyPolicySource",
+      "contracts.pool",
+      "roles.governor",
+      "roles.publisherExecutor",
+      "roles.operations",
+      "roles.project",
+      "unresolved.timingApproval",
+      "unresolved.shortRules",
+      "unresolved.monthlyRules",
+      "unresolved.shortWeights",
+      "unresolved.minimumUnitRaw",
+      "unresolved.maxShortBudgetRaw",
+      "unresolved.rulesNoticeSeconds",
+      "unresolved.maxGasPrice",
+      "unresolved.controllerNativeFloor",
+      "unresolved.archiveRpc",
+      "unresolved.durableRuntime",
+      "unresolved.nativeRefill"
+    ],
+    "publicLaunchReady": false,
+    "executable": false,
+    "reason": "Resolve settings, export complete pinned deployment profile and qualify public executor before release"
+  },
+  "inputs": {
+    "config/release-rehearsal.json": "bbb640a3fa221b3c2117628e5b320228b91bf406501641ca373cd159ff2ca527",
+    "config/robinhood-launch-plan.json": "774082f3e9179f72330e652cf9d17d6803ae0dc7a92c960e613482ffa4d9a2be",
+    "research/infinity-source-audit/automation-fork-2026-09-27.json": "7d922a66e9031d48c2f57b6e078edc39ce1ea67e4d9ea9a8b732c1ca11426942",
+    "research/ops-funding/credit-fork-2026-09-28.json": "5b5847630b0727c1425f4956f70d91971e0de00096cb0c6092b745f237b04fe9",
+    "scripts/release-rehearsal.cjs": "16d7ec8b90abf8b3a7b96e241beb736ef1427ad34793d93cb0f09eceed3a649f",
+    "scripts/promo-automation.cjs": "70ba6aa6a50a32f84a0ea3405642f6d75d41a2a2e053452e9ed7af65acf72d35",
+    "scripts/ops-market-executor.cjs": "62dc02f093ebd8a8305b34544e6d8fd4cc63b2ec3751fee7fa0f7cf1ef508539",
+    "test/fixtures/robinhood-obligations.cjs": "9c77e757fc7d5399b56bdb96835db02fbd54eacb02016ca895c16e85e4c47120"
+  },
+  "compiledHash": "0xef62441f0197586c1699c9e4ed64aac086f8e98ab5b94eb07861b59bdbc830d8",
+  "draws": {
+    "short": "0x1a9df611ffdcc18842d2861379596037e68aa522acba041a4430a431106894ad",
+    "monthly": "0xb111b184f94532cabd40db0c8e0bea0ccc051a93a91de695f7623b39b54a5d60",
+    "shortArtifactHash": "0x172e160785fb528679b2c3129822775520e36e29ff89ca48b0a64b083ed5fc03",
+    "monthlyArtifactHash": "0x0ef6d411cf4912e04d4d5aec3db9c6943b5ea8c0d9e6e4a4ae8ce30a2666f534"
+  },
+  "journals": {
+    "runtime.json": {
+      "schema": "local-scheduler-state-v1",
+      "configHash": "0xec10f4bdc672bdc3f8b7e19481a86375b62ea1d9c714db5557d02447bcc4cdfc",
+      "jobs": {
+        "SHORT": [],
+        "MONTHLY": []
+      },
+      "lastObligationAdmission": {
+        "status": "matched",
+        "reasons": [],
+        "publicLaunchReady": false,
+        "observedAtBlock": {
+          "number": 40,
+          "hash": "0x20377fd93d7d2ae0f6f0f4e595a76076026ae83e1c42d2166d9f7d52b204b252"
+        }
+      },
+      "lastDeploymentAdmission": {
+        "status": "blocked",
+        "scope": "public-launch",
+        "profileHash": "0x5af72ec924eb0d1bc198efaebf8ad7296c2850c38998b0b5733fdcc800b722d5",
+        "checks": [
+          {
+            "check": "chainId",
+            "ok": true
+          },
+          {
+            "check": "publicChainRequired",
+            "ok": true
+          },
+          {
+            "check": "publicCheckpointMode",
+            "ok": true
+          },
+          {
+            "check": "runtime:collector",
+            "ok": true
+          },
+          {
+            "check": "runtime:source",
+            "ok": false
+          },
+          {
+            "check": "runtime:token",
+            "ok": true
+          },
+          {
+            "check": "runtime:quote",
+            "ok": true
+          },
+          {
+            "check": "runtime:registry",
+            "ok": true
+          },
+          {
+            "check": "runtime:vault",
+            "ok": true
+          },
+          {
+            "check": "runtime:short",
+            "ok": true
+          },
+          {
+            "check": "runtime:monthly",
+            "ok": true
+          },
+          {
+            "check": "runtime:adapter",
+            "ok": true
+          }
+        ],
+        "reasons": [
+          "runtime:source"
+        ],
+        "publicLaunchReady": false,
+        "authorizationToFreeze": false,
+        "releaseBlockers": [
+          "publicExecutionNotImplemented",
+          "runtime:source"
+        ],
+        "executionScope": "local-robinhood-rehearsal"
+      },
+      "payouts": [],
+      "payoutCursor": {
+        "number": 40,
+        "hash": "0x20377fd93d7d2ae0f6f0f4e595a76076026ae83e1c42d2166d9f7d52b204b252"
+      },
+      "monthlyPayoutCursor": {
+        "number": 40,
+        "hash": "0x20377fd93d7d2ae0f6f0f4e595a76076026ae83e1c42d2166d9f7d52b204b252"
+      },
+      "lastBudget": {
+        "action": "claim",
+        "required": "117573600000001000",
+        "balance": "9999967873746510358072",
+        "reserveGasPrice": "1000000000000"
+      },
+      "lastResolved": {
+        "lane": "claims",
+        "action": "claim",
+        "target": "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707",
+        "data": "0x96c144f0b111b184f94532cabd40db0c8e0bea0ccc051a93a91de695f7623b39b54a5d6000000000000000000000000090f79bf6eb2c4f870365e785982e1f101e93b906",
+        "from": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+        "stage": "confirm",
+        "transactionHash": "0xabbf1570c2e81ee2e0d5dd8c8a49dcd4ce872a7c6a6d3daf98172f5a10ec26fb",
+        "nonce": 38,
+        "status": 1,
+        "blockHash": "0x20377fd93d7d2ae0f6f0f4e595a76076026ae83e1c42d2166d9f7d52b204b252"
+      },
+      "claimCursor": 1,
+      "checksum": "0xbb10179523356162fe47bc52f209e57ca4833d3332f5d734da288884b94bf661"
+    },
+    "runtime.json.funding": {
+      "schema": "local-scheduler-state-v1",
+      "configHash": "0xd9be7acf783911000cfcf8d1e80d9c4baf84963197dcfccfbfd3fd9163e9576c",
+      "jobs": {
+        "SHORT": [],
+        "MONTHLY": []
+      },
+      "lastResolved": {
+        "worker": "infinity",
+        "action": "pay",
+        "target": "0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6",
+        "data": "0x0c11dedd00000000000000000000000015d34aaf54267db7d7c367839aaf71a00a2c6a65",
+        "from": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+        "stage": "confirm",
+        "transactionHash": "0xeb4a868a86058cc3ef4f4af44c0fc0d52ef1d8d3622cde62d1447ce73ac933d4",
+        "nonce": 20,
+        "status": 1,
+        "blockHash": "0xc550fcd797501978474cd3bee4065a84f53b280513dbcbdea879a62ddb07216b"
+      },
+      "checksum": "0x4a63167bb79b385cda560372adb85f80983f05669de65de2e3d7964017c5fda4"
+    },
+    "runtime.json.rng": {
+      "schema": "local-scheduler-state-v1",
+      "configHash": "0x8361000725a6352fecacdc2a1ea96b37a8aa30b38fc445c8172584cd4547c7ac",
+      "jobs": {
+        "SHORT": [],
+        "MONTHLY": []
+      },
+      "lastResolved": {
+        "worker": "drand",
+        "action": "deliver",
+        "target": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
+        "data": "0x3bd5d1730000000000000000000000000000000000000000000000000000000000000002",
+        "from": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+        "stage": "confirm",
+        "transactionHash": "0x0a085bb2e523d6856b12e964463e556b5397e10b2fa3a08651655fb0bad96937",
+        "nonce": 32,
+        "status": 1,
+        "blockHash": "0xd43dde9ba5f5e371fa87c66c9c21d34982a0ddf2f75285d060ada8d6e3930f7a"
+      },
+      "checksum": "0x71f7cdbaf82d2ce18146125a71095d1afb68d347fc536d038efd380188b43c7e"
+    },
+    "runtime.json.scheduler": {
+      "schema": "local-scheduler-state-v1",
+      "configHash": "0x347ae57910af588d84c1a6098da623981f6d8ecc4356417463eea87ab6edbeba",
+      "jobs": {
+        "SHORT": [
+          {
+            "job": {
+              "schema": "local-short-job-v1",
+              "proposalId": "0x3eac2fb624f9ffaf6d8c24c53b7e45c60a1cae2cc77e4b0344a18954678cbaae",
+              "chunkSize": 1,
+              "artifact": {
+                "schema": "short-dataset-artifact-v1",
+                "snapshot": {
+                  "schema": "attempt-snapshot-v4",
+                  "domain": {
+                    "schema": "attempt-lifecycle-v4",
+                    "chainId": "4663",
+                    "instanceId": "0xbf760924207990eb4dd80fb01e6d5e594b588389345a2d4c98ff528f773c7022",
+                    "registry": "0xe7f1725e7734ce288f8367e1bb143e90bb3f0512",
+                    "source": "0xcf7ed3acca5a467e9e704c703e8d87f634fb0fc9",
+                    "sourceCodeHash": "0x2b068267abc609154afac2d83d27ee84e51f07bca233be24fc8536852142cd3e",
+                    "buyManifestHash": "0x33bd48f5198117e00e76e79ab3c73288f4781f4b6771b178c84a7ff11f10bae1",
+                    "shortRulesGenesisHash": "0x499e1a9c111026cad809d878f4c989c35b0dc1ce4bb7836b94017a4799c7660f",
+                    "drawIdScheme": "kind-bit-v1",
+                    "monthlySource": "0xdc64a140aa3e981100a9beca4e685f962f0cf6c9",
+                    "monthlySourceCodeHash": "0xe002c6e7ee4f83e1e389a543be10a8a87d8d15c69a1efe111ddae961c7d03754",
+                    "monthlyInstanceId": "0xe145ce37266f67c42230ebc32731a167a3ee2bbb44d0b94badc2680f81472d1b",
+                    "vault": "0x5fc8d32690cc91d4c39d9d3abcbd16989f875707",
+                    "vaultCodeHash": "0xf3af8ddaeb3e6c19ff7cd178fdb7a5c3ae7b25a117620104ee62862bc0f8ebe0",
+                    "vaultQuote": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+                    "vaultProjectToken": "0x5fbdb2315678afecb367f032d93f642f64180aa3",
+                    "monthlyPolicyHash": "0xc507a79761cb177f271b65da9d81bd3f705491ea8a7d5fe8f005c34af3d9fbed",
+                    "monthlyRulesGenesisHash": "0x23b0e48b4dac674efd5704b93e46ed221ed8b641fa7ca5f1dc84bbc4f9318706"
+                  },
+                  "drawId": "0x1a9df611ffdcc18842d2861379596037e68aa522acba041a4430a431106894ad",
+                  "kind": "SHORT",
+                  "cutoff": {
+                    "blockNumber": 22,
+                    "blockHash": "0x2761e9bc33924c5b936a007ce00f6ccbd57cfb1d4f01c542ffeee3a9bb50569d"
+                  },
+                  "rulesHash": "0xcc035420f3abf016ff3f86c827104d042d6c26ae929c8789403d68a1eb5a1b67",
+                  "participants": [
+                    {
+                      "wallet": "0x90f79bf6eb2c4f870365e785982e1f101e93b906",
+                      "firstAttempt": "1",
+                      "lastAttempt": "2",
+                      "count": "2"
+                    }
+                  ],
+                  "rulesEpoch": "1"
+                },
+                "rules": {
+                  "version": 1,
+                  "pNumerator": 4294967294,
+                  "pDenominator": 4294967295,
+                  "hNumerator": 1,
+                  "hDenominator": 4294967295
+                },
+                "weights": [
+                  "7",
+                  "5",
+                  "3"
+                ],
+                "minimumUnit": "1",
+                "request": {
+                  "drawId": "0x1a9df611ffdcc18842d2861379596037e68aa522acba041a4430a431106894ad",
+                  "campaignId": "1",
+                  "rulesEpoch": "1",
+                  "cutoffBlockNumber": 22,
+                  "cutoffBlockHash": "0x2761e9bc33924c5b936a007ce00f6ccbd57cfb1d4f01c542ffeee3a9bb50569d",
+                  "snapshotHash": "0x78ece0e429eb41d15197194a56def268c5aa2b9d4c554c689a763b7e70d2da39",
+                  "expectedRoot": "0x9801bce943a194dcbaab0bef78bc4244268f91a9940fdc6e0d9aebecde01ab1d",
+                  "expectedCount": 1,
+                  "expectedAttempts": "2",
+                  "budget": "100000000"
+                }
+              },
+              "commitment": "0x6c1adec6e824933216c7b04db435c0b38ff7090feba183e057924037858a674b"
+            },
+            "started": true,
+            "terminalChecked": {
+              "number": 38,
+              "hash": "0x635abdebc9ed7696d2d41683249a0e71237820b3fa8f5b9a5dec51529e803146"
+            }
+          }
+        ],
+        "MONTHLY": [
+          {
+            "job": {
+              "schema": "local-monthly-job-v1",
+              "chunkSize": 1,
+              "artifact": {
+                "schema": "monthly-dataset-artifact-v1",
+                "snapshot": {
+                  "schema": "attempt-snapshot-v4",
+                  "domain": {
+                    "schema": "attempt-lifecycle-v4",
+                    "chainId": "4663",
+                    "instanceId": "0xbf760924207990eb4dd80fb01e6d5e594b588389345a2d4c98ff528f773c7022",
+                    "registry": "0xe7f1725e7734ce288f8367e1bb143e90bb3f0512",
+                    "source": "0xcf7ed3acca5a467e9e704c703e8d87f634fb0fc9",
+                    "sourceCodeHash": "0x2b068267abc609154afac2d83d27ee84e51f07bca233be24fc8536852142cd3e",
+                    "buyManifestHash": "0x33bd48f5198117e00e76e79ab3c73288f4781f4b6771b178c84a7ff11f10bae1",
+                    "shortRulesGenesisHash": "0x499e1a9c111026cad809d878f4c989c35b0dc1ce4bb7836b94017a4799c7660f",
+                    "drawIdScheme": "kind-bit-v1",
+                    "monthlySource": "0xdc64a140aa3e981100a9beca4e685f962f0cf6c9",
+                    "monthlySourceCodeHash": "0xe002c6e7ee4f83e1e389a543be10a8a87d8d15c69a1efe111ddae961c7d03754",
+                    "monthlyInstanceId": "0xe145ce37266f67c42230ebc32731a167a3ee2bbb44d0b94badc2680f81472d1b",
+                    "vault": "0x5fc8d32690cc91d4c39d9d3abcbd16989f875707",
+                    "vaultCodeHash": "0xf3af8ddaeb3e6c19ff7cd178fdb7a5c3ae7b25a117620104ee62862bc0f8ebe0",
+                    "vaultQuote": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+                    "vaultProjectToken": "0x5fbdb2315678afecb367f032d93f642f64180aa3",
+                    "monthlyPolicyHash": "0xc507a79761cb177f271b65da9d81bd3f705491ea8a7d5fe8f005c34af3d9fbed",
+                    "monthlyRulesGenesisHash": "0x23b0e48b4dac674efd5704b93e46ed221ed8b641fa7ca5f1dc84bbc4f9318706"
+                  },
+                  "drawId": "0xb111b184f94532cabd40db0c8e0bea0ccc051a93a91de695f7623b39b54a5d60",
+                  "kind": "MONTHLY",
+                  "cutoff": {
+                    "blockNumber": 22,
+                    "blockHash": "0x2761e9bc33924c5b936a007ce00f6ccbd57cfb1d4f01c542ffeee3a9bb50569d"
+                  },
+                  "rulesHash": "0x4b08050dfc0684f3fa047dc03b8ad8b7528addedf1188f13c458200f39688264",
+                  "participants": [
+                    {
+                      "wallet": "0x90f79bf6eb2c4f870365e785982e1f101e93b906",
+                      "firstAttempt": "1",
+                      "lastAttempt": "2",
+                      "count": "2"
+                    }
+                  ],
+                  "rulesEpoch": "1"
+                },
+                "rules": {
+                  "version": 1,
+                  "pNumerator": 4294967294,
+                  "pDenominator": 4294967295,
+                  "hNumerator": 1,
+                  "hDenominator": 4294967295
+                },
+                "request": {
+                  "drawId": "0xb111b184f94532cabd40db0c8e0bea0ccc051a93a91de695f7623b39b54a5d60",
+                  "campaign": "1",
+                  "rulesEpoch": "1",
+                  "cutoff": 22,
+                  "cutoffHash": "0x2761e9bc33924c5b936a007ce00f6ccbd57cfb1d4f01c542ffeee3a9bb50569d",
+                  "snapshotHash": "0xdfc64e8034709cba8e31d41346d91810ab84c915c8306757e7fbc056e709bf6d",
+                  "root": "0x148fe9e1b1c3a39d2c68702def365cb1cd750a3acb035a8ddd91a43bcdde8574",
+                  "count": 1,
+                  "attempts": "2"
+                }
+              },
+              "commitment": "0x8fd3acb7ef599d3d5e4553199d464527301ed42c8f4a62f2bc3fe643ade6f6b4"
+            },
+            "started": true,
+            "terminalChecked": {
+              "number": 38,
+              "hash": "0x635abdebc9ed7696d2d41683249a0e71237820b3fa8f5b9a5dec51529e803146"
+            }
+          }
+        ]
+      },
+      "checksum": "0x469d9674c721625cccd2872e35eb36f6d54de38eca6227114423c3bc4b0abbc7"
+    }
+  },
+  "finalBlock": {
+    "_type": "Block",
+    "baseFeePerGas": "5365209",
+    "difficulty": "0",
+    "extraData": "0x",
+    "gasLimit": "60000000",
+    "gasUsed": "83330",
+    "blobGasUsed": "0",
+    "excessBlobGas": "0",
+    "hash": "0x20377fd93d7d2ae0f6f0f4e595a76076026ae83e1c42d2166d9f7d52b204b252",
+    "miner": "0xC014BA5EC014ba5ec014Ba5EC014ba5Ec014bA5E",
+    "prevRandao": "0xe4fa9442dc18b55fa6cc91810a5b9ee799980eb1c279963bda8803c6d06f92de",
+    "nonce": "0x0000000000000000",
+    "number": 40,
+    "parentHash": "0x5f80df71e7a662eba9a5ec64d407254cf7ff2297f2f72d0b9fcff301cbe7f76a",
+    "timestamp": 1755532797,
+    "parentBeaconBlockRoot": "0xda3972bfc7e8c9902d098a5fcc1a39352278ef905dd70cbfc256c69962eca1d5",
+    "stateRoot": "0x6a393677cae69b7f29c6464752648fdb3dd5a6c794169924ac0a194a5c29b28f",
+    "receiptsRoot": "0x95f3268ec1100939e7d70b108c2a0d4950450e36bdb9298911caf47a04dd1f88",
+    "transactionsRoot": "0x0c5a6bdd3f9d0601dd8d1a48c5c39b7112efc2d3dd8c68c7ef542c9a08382204",
+    "transactions": [
+      "0xabbf1570c2e81ee2e0d5dd8c8a49dcd4ce872a7c6a6d3daf98172f5a10ec26fb"
+    ]
+  },
+  "releaseBlockers": [
+    "Same-chain admitted live BUY -> automatic datasets -> both draws with production timing",
+    "Qualified archive RPC and fallback",
+    "Real deployment roles, addresses, verified source/immutable pins and approved limits",
+    "Public executor activation after rehearsal; currently closed",
+    "Persistent indexer and user website/claims/conditions",
+    "Service custody, durable storage, monitoring and recovery runbook",
+    "Reproducible CI/source verification and external audit"
+  ],
+  "finishedAt": "2026-09-28T14:15:13.138Z"
+}

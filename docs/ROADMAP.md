@@ -46,7 +46,8 @@ public sends закрыты. [Recovery admission](RECOVERY_ADMISSION.md) отд�
    USDG→ETH [первый fork proof](OPS_MARKET_PROOF.md) прошёл. [Read-only quote/estimate](OPS_MARKET_QUOTE.md) с pinned CLQuoter и точным router call
    реализованы и проверены на новом fork. [Journaled collect/approve/swap](OPS_MARKET_EXECUTOR.md) реализован; credit→market→refill
    прошёл fork, coordinator/продвижение старых обязательств проверены отдельно. Funding пакет закрыт.
-   Следующий шаг — общая релизная репетиция; release pins/caps остаются открытыми.
+   Составная [релизная репетиция](RELEASE_REHEARSAL.md) пройдена с явными fixture-границами.
+   Следующий пакет — release profile/параметры и RPC; same-chain automatic proof ещё открыт.
    Дорогой gas/нехватка ETH → resumable wait/top-up; вечная самоокупаемость не gate.
    Призовые frozen/claimable не расходуются. Public sends закрыты.
 3. **Постоянный сервис.** Ключи и один владелец signer, supervisor, устойчивый несинхронизируемый

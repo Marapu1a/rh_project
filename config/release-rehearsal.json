@@ -1,0 +1,21 @@
+{
+  "schema": "release-rehearsal-v1",
+  "scope": "composed-local-evidence-not-public-e2e",
+  "publicExecutionEnabled": false,
+  "buyEvidence": "research/infinity-source-audit/automation-fork-2026-09-27.json",
+  "opsEvidence": "research/ops-funding/credit-fork-2026-09-28.json",
+  "parameters": [
+    {"name":"creatorFeeBps","value":300,"status":"accepted","source":"config/robinhood-launch-plan.json"},
+    {"name":"creatorAllocationBps","value":[9000,500,500],"status":"accepted","source":"docs/PRODUCT_SPEC.md"},
+    {"name":"entryThresholdRaw","value":"100000000","status":"accepted","source":"config/robinhood-launch-plan.json"},
+    {"name":"intervalsSeconds","value":[21600,2592000],"status":"accepted","source":"config/robinhood-launch-plan.json"},
+    {"name":"nextStartTargetRaw","value":"100000000","status":"accepted","source":"config/robinhood-launch-plan.json"},
+    {"name":"shortBudgetRaw","value":"100000000","status":"fixture","source":"test/fixtures/robinhood-runtime.cjs"},
+    {"name":"shortWeights","value":[7,5,3],"status":"fixture","source":"test/fixtures/public-controllers.cjs"},
+    {"name":"odds","value":"nearCertainRules","status":"fixture","source":"test/fixtures/short-outcome.cjs"},
+    {"name":"drandTimingSeconds","value":[1800,30,5,1200,15],"status":"fixture-not-approved","source":"test/fixtures/public-controllers.cjs"},
+    {"name":"rolesAndPins","value":"fresh local deployments","status":"fixture","source":"test/fixtures/robinhood-runtime.cjs"},
+    {"name":"gasCapsAndSeed","value":"fixture balances and bounds; not Nitro estimate","status":"fixture","source":"test/fixtures/robinhood-runtime.cjs"},
+    {"name":"publicLaunchParameters","value":null,"status":"owner-and-deployment-required","source":"config/robinhood-launch-plan.json"}
+  ]
+}

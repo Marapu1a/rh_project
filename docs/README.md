@@ -13,6 +13,7 @@
 
 | Задача | Документы |
 |---|---|
+| Репетиция запуска | [Команда, профиль, доказательства и оставшиеся границы](RELEASE_REHEARSAL.md) |
 | Локальный сквозной путь | [Общая автоматика Short/Monthly](PROMO_AUTOMATION.md), [автоматический Short](SHORT_AUTOMATION.md), [Infinity→USDG proof](INFINITY_PAYOUT_PROOF.md), [Monthly и общий контур](LOCAL_MONTHLY_EXECUTOR.md), [исполнитель Short](LOCAL_SHORT_EXECUTOR.md), [BUY cycle](LOCAL_BUY_CYCLE.md), [контроллеры](LOCAL_CONTROLLER_SKELETON.md) |
 | Creator allocation / USDG→ETH (design) | [Доли, custody, маршрут и открытые проверки](OPS_REVENUE_FUNDING_DESIGN.md), [USDG→ETH fork proof](OPS_MARKET_PROOF.md), [read-only quote](OPS_MARKET_QUOTE.md), [durable sender](OPS_MARKET_EXECUTOR.md) |
 | Экономический профиль (кандидат) | [Infinity fork3%](INFINITY_INTEGRATION_RESEARCH.md), [Infinity 1–5%](INFINITY_FEE_SCENARIOS.md), [Таблица и первый расчёт](MVP_ECONOMIC_PROFILE.md), [календарная проверка](MVP_CALENDAR_CHECK.md) |

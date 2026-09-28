@@ -1,42 +1,46 @@
-# Текущий запрос GPT: закрытие operations funding перед релизной репетицией
+# Review: составная релизная репетиция
 
-28.09.2026. Review 46fdd34 принят в части зависимости старых obligations от рынка.
-Пользователь просит завершать продукт, не расширять газовый механизм бесконечно.
-90/5/5 сохраняется; дорогой gas/нехватка ETH — ожидание, не гарантия самоокупаемости.
+28.09.2026. После review 0f9c18f пользователь одобрил один воспроизводимый сценарий,
+явные тестовые границы и конечный список релизных блокеров. Газ больше не расширяем.
 
-## Законченный пакет
+## Результат
 
-- Старое obligation сначала получает ETH на одно действие, без quote/swap. Refill
-  сохраняет swap.nativeFloor, требует сумму на цель и transfer fee с учётом caps.
-  Для старого действия неполный перевод не отправляется. Для новых работ прежний
-  накопительный refill сохранён; разрешение freeze остаётся за полным forecast.
-- Новые freeze сохраняют полный forecast. Pending сначала reconcile; поверх него
-  не отправляется ни refill, ни collect. Призовая математика и custody не менялись.
-- collectOps в существующем ops sender вызывает только pay(slot1), если USDG wallet
-  не хватает на batch, но вместе с существующим credit его достаточно. Никакого pull.
-  Collector/quote runtime pins, quote binding, recipient проверяются. Source не нужен.
-- Общие nonce/journal/cooldown/native fee cap. Receipt сверяет Transfer и balance
-  на блоке receipt. Чужой permissionless pay может опередить наш: нулевой повторный
-  pay допустим, следующий pass прочитает баланс. Swap spending не начисляется на credit.
-- Интеграция выявила undefined в новом pending: JSON убирал поле, checksum переставал
-  сходиться после reload. Исправлено условными полями. Быстрые sender tests теперь
-  проверяют сохранность checksum при JSON roundtrip для каждой стадии.
+`npm run rehearsal:release -- NEW_OUTPUT.json`
+[Описание](RELEASE_REHEARSAL.md), [профиль](../config/release-rehearsal.json),
+[полный отчёт](../research/release-rehearsal/composed-2026-09-28.json).
 
-[Модуль и проверки](OPS_MARKET_EXECUTOR.md),
-[fork evidence](../research/ops-funding/credit-fork-2026-09-28.json).
-Реальный collector с fixture source и искусственным USDG распределил 200 USDG 90/5/5.
-10 USDG operations → реальный рынок → ETH → пустому executor 0.001 ETH.
-Seed 0.002 ETH. Четыре receipt-loss/disk-reload recovery без повторных sends.
-Не OS SIGKILL, не полный watch→draw fork. Coordinator/старые draw проверены отдельно.
-Public sends не было, локальные fees не выдаются за стоимость Nitro.
+Прогон complete за86s. Сохранённые реальные Infinity BUY receipts → существующий
+replay → 2 билета → ЯВНЫЙ перенос участников в fresh local4663. Далее public bytecode
+без source overrides, реальный общий runtime, fixture creator revenue2006USDG,
+распределение90/5/5, Short/Monthly, BLS, settlement, claims. Source ломается после
+freeze; runtime продолжает obligations-only. У первого claim теряем receipt response,
+следующий вызов worker перечитывает checksummed journal. Повторный pay отсутствует.
 
-## Граница завершения
+1805.40 USDG призового баланса =836.033330 выплат +969.366670 остатка.
+Frozen/claimable пусты, дальнейший запуск nonce/балансы не меняет. Ops/project
+получили по100.30USDG; это не реальные доходы проекта, а fixture.
 
-Funding в этом объёме закрываем. Если revenue ещё во внешнем source и нет collector
-credit, пустому executor нужен ETH top-up для обычного pull. Не добавляем ещё одну
-автоматику ради этой ситуации. Production seed/caps и custody выбираются при запуске.
-Следующий пакет — общая релизная репетиция с конечным списком deployment/RPC blockers.
+## Чего не заявляем
 
-Просьба отмечать прежде всего потерю денег, повторную отправку, неверный результат
-или реальную блокировку основного пути. Улучшения диагностики/редких случаев —
-отдельным необязательным списком. Вечный достаток ETH и доступность рынка не gate.
+Это не public deployment и не одна сквозная on-chain история. BUY evidence прошлый;
+datasets/freeze делает helper из импортированных участников. Самопубликация datasets
+по BUY на том же deployment здесь не доказана. Clock исторический, ArbSys/USDG/source
+и venue state fixtures. Drand подпись настоящая историческая. Рестарт worker в одном
+процессе, не SIGKILL/потеря узла. Market proof только ссылка+хеш прежнего отдельного fork.
+
+Public launch plan не меняли, null не заменяли тестовыми адресами. Профиль выделяет
+принятые, тестовые и нерешённые параметры. Отчёт сохраняет inputs hashes, compiled
+hash, pins, pending/receipt, balances и journals. Ошибка оставляет failed и exit1.
+Контракты и runtime не менялись; расширен только test helper для импорта участников
+и отключения прямого тестового funding, добавлены runner/config/docs.
+
+## Что полезно проверить
+
+1. Не выдаёт ли отчёт составную проверку за same-chain proof? Не скрыта ли важная граница?
+2. Нет ли ложного complete в accounting/recovery проверках?
+3. Следующий пакет предлагаем направить на конкретные release параметры/профиль и
+   RPC qualification, затем устранение same-chain automatic proof разрыва.
+   Какие входы действительно надо выбрать владельцу, а какие получаются deployment?
+
+Пожалуйста, реальные release blockers отдельно от необязательных улучшений.
+Не возвращаемся к вечной окупаемости газа и не добавляем новые механизмы funding.

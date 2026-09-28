@@ -1,5 +1,7 @@
 # Карта реализации
 
+28.09: [Составная релизная репетиция](RELEASE_REHEARSAL.md) добавлена: одна команда, матрица accepted/fixture/unresolved, replay сохранённого Infinity BUY → явный импорт 2 билетов → fresh Robinhood runtime, funding 90/5/5, оба draw/BLS/claims, source outage и known-claim restart. Прогон complete за86s: 1805.40 USDG призам =836.033330 выплат +969.366670 остатка; повтор без send. Это НЕ единая live/fork история: BUY saved, datasets/freeze helper, исторический drand; market evidence отдельно. Далее release profile/параметры и RPC, same-chain automatic proof остаётся gate; public sends закрыты.
+
 28.09: [Operations funding](OPS_MARKET_EXECUTOR.md) завершён в согласованном объёме: journaled pay(slot1) получает существующий credit, fee caps/nonce/recovery общие со swap. Старые обязательства получают ETH на одно действие независимо от рынка, сохраняя swap.nativeFloor; новые freeze сохраняют полный forecast. 27 адресных продуктовых сценариев прошли отдельными запусками, не full. Fork credit→swap→refill прошёл; coordinator проверен отдельно. Далее общая релизная репетиция и реальные deployment/RPC параметры, без расширения funding. Public sends закрыты.
 
 28.09: [Ops swap executor](OPS_MARKET_EXECUTOR.md) подключён опционально к PROJECT_NATIVE; общий main journal, отдельный source receipt dispatch, nonce/caps и handoff history. Fork helper→refill пройден; автоматический credit collection и полный watch market e2e ещё впереди.
