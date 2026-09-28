@@ -5,13 +5,16 @@ const {replay,canonical,hash,validateManifest,buyPolicyHistory,routeDependencies
 
 // Independent reader: fetch whole blocks and every receipt, not an operator BUY list.
 async function scan(input,rpcUrl,toBlock,lifecycle=null){
-  const manifest=buyPolicyHistory(input).genesis;
   let sequence=0;
   async function rpc(method,params=[]){
     const response=await fetch(rpcUrl,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:++sequence,method,params}),signal:AbortSignal.timeout(20000)});
     if(!response.ok)throw Object.assign(Error('RPC HTTP '+response.status),{code:'RPC_HTTP_ERROR',statusCode:response.status});
     const data=await response.json();if(data.error||data.result==null)throw Error('RPC cannot supply '+method);return data.result;
   }
+  return scanWithRpc(input,rpc,toBlock,lifecycle);
+}
+async function scanWithRpc(input,rpc,toBlock,lifecycle=null){
+  const manifest=buyPolicyHistory(input).genesis;
   if(BigInt(await rpc('eth_chainId'))!==BigInt(manifest.chainId))throw Error('Wrong RPC chain');
   const tag=n=>'0x'+BigInt(n).toString(16);
   const anchor=await rpc('eth_getBlockByNumber',[tag(manifest.anchor.number),false]);
@@ -79,5 +82,5 @@ async function main(){
   if(options['--output'])fs.writeFileSync(options['--output'],canonical(result)+'\n');
   console.log(JSON.stringify({policyStatus,candidates:ledger.decisions.length,wallets:ledger.wallets,ledgerHash:result.ledgerHash,finality:ledger.finality},null,2));
 }
-module.exports={scan};
+module.exports={scan,scanWithRpc};
 if(require.main===module)main().catch(e=>{console.error(e.message);process.exitCode=1;});

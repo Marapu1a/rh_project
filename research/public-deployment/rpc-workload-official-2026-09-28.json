@@ -1,0 +1,95 @@
+{
+  "schema": "public-rpc-qualification-v1",
+  "observedAt": "2026-09-28T07:30:12.257Z",
+  "publicLaunchReady": false,
+  "repeatable": false,
+  "samples": [
+    {
+      "number": "0x4726f93",
+      "blockHash": "0x2bd465b52bbb40f658236cb71614e1289c6e5b26cf86c245c0da2454f573268e",
+      "transactions": 6,
+      "logs": 18,
+      "evidenceHash": "0xadd9a2e43ed7a02292ebc1b53523be3a4712e742b821fc348708933825a575a6",
+      "ok": true
+    },
+    {
+      "number": "0x4724883",
+      "blockHash": "0xb5bc6a4c84871887df9ba35895e4dde0c57e2d02f199c022165f48af81507b18",
+      "transactions": 18,
+      "logs": 41,
+      "evidenceHash": "0xa72f34f37a31b08af33a9c4c12b56870ead12237f71ccdbc56c650fe0c702fd7",
+      "ok": true
+    },
+    {
+      "number": "0x4654093",
+      "blockHash": "0x42739e96aa6d384732f5cb9167f5029ff97eef686d26dbd815f9c093993b6896",
+      "transactions": 3,
+      "logs": 2,
+      "evidenceHash": "0x4987f806f50d6dc3b956cd43c0ed36f1e83d7bb9e7002ffb2e46130dcb01c0da",
+      "ok": true
+    }
+  ],
+  "replay": {
+    "status": "not-run",
+    "reason": "No admitted project deployment or suitable reference manifest supplied"
+  },
+  "history": {
+    "schema": "public-rpc-capabilities-v1",
+    "observedAt": "2026-09-28T07:30:12.259Z",
+    "quote": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+    "observations": [
+      {
+        "number": "0x4726f93",
+        "depthBlocks": 0,
+        "hash": "0x2bd465b52bbb40f658236cb71614e1289c6e5b26cf86c245c0da2454f573268e",
+        "ok": false,
+        "error": "RPC error code -32000"
+      },
+      {
+        "number": "0x4724883",
+        "depthBlocks": 10000,
+        "hash": "0xb5bc6a4c84871887df9ba35895e4dde0c57e2d02f199c022165f48af81507b18",
+        "ok": false,
+        "error": "RPC error code -32000"
+      },
+      {
+        "number": "0x4654093",
+        "depthBlocks": 864000,
+        "hash": "0x42739e96aa6d384732f5cb9167f5029ff97eef686d26dbd815f9c093993b6896",
+        "ok": false,
+        "error": "RPC error code -32000"
+      }
+    ],
+    "historicalReadsAvailable": false,
+    "publicLaunchReady": false,
+    "chainId": "4663",
+    "latest": {
+      "number": "0x47299d6",
+      "hash": "0x916c78ada48c88f9a3c9cdee9af0b7981fc997cf1ea06360438cac2a15950474",
+      "timestamp": "0x6aba1785"
+    },
+    "finalized": {
+      "number": "0x4726f93",
+      "hash": "0x2bd465b52bbb40f658236cb71614e1289c6e5b26cf86c245c0da2454f573268e",
+      "timestamp": "0x6aba133f"
+    },
+    "finalizedLagBlocks": "10819",
+    "limitation": "Sampled USDG code/call/storage availability, not a full archive SLA or a read of our not-yet-deployed checkpoint storage. No signing/deployment/finality proof."
+  },
+  "sampledDataAvailable": false,
+  "limits": "Bounded samples, not archive SLA, proof of honest RPC, production policy admission, full project history, or live checkpoint storage. Repeating CLI verifies fresh reads after process restart; it does not qualify worker crash recovery. Empty/no-eligible replay is not BUY coverage.",
+  "stats": {
+    "requests": 46,
+    "failures": 3,
+    "responseBytes": 171363,
+    "elapsedMs": 8620,
+    "methods": {
+      "eth_chainId": 1,
+      "eth_getBlockByNumber": 12,
+      "eth_getCode": 3,
+      "eth_getTransactionReceipt": 27,
+      "eth_getLogs": 3
+    }
+  },
+  "endpointOrigin": "https://rpc.mainnet.chain.robinhood.com"
+}

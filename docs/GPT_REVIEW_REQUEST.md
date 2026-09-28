@@ -1,63 +1,39 @@
-# Review: публичные controllers, launch plan и RPC/fork границы
+# Текущее обращение к GPT — RPC qualification
 
-28.09.2026. Начни с CURRENT_CONTEXT, ROADMAP и PUBLIC_CONTROLLERS. Код изменён, но публичных
-транзакций не было. Пользователь одобрил ограниченный пакет public wrappers/config/RPC/доступный fork.
+28.09.2026. Продолжаем после публичных Robinhood controllers. В этот пакет не входят
+публичные отправки, контракты/экономика, автоматический failover или production indexer.
 
-## Архитектура
+Прочитай `docs/PUBLIC_RPC_QUALIFICATION.md`, затем изменённые scripts/tests.
+Разделены три утверждения: доступны ли данные, воспроизводится ли bounded replay,
+можно ли запускать проект. Последнее всегда false.
 
-Прежние Local controllers выделены в abstract ShortControllerBase/MonthlyControllerBase.
-Local wrappers сохраняют31337 guard/ABI/поведение; public Robinhood wrappers допускают4663,
-проверяют drand PROFILE/CHAIN_HASH/fee0/consumer bindings, требуют cached cutoff для begin/empty.
-Monthly interval строго30days; Short6hours. Public Short minimumUnit передаётся явно в constructor,
-local сохраняет1 raw. Реальные prize settings этим не утверждали. Base общие, чтобы не копировать
-и не расходить исполнение выплат между local/public. Никаких proxy, emergency admin или reset.
+Что изменено:
+- существующий `scan(url)` делегирует `scanWithRpc`, чтобы проверять ровно настоящий
+  путь historical runtime pins/full blocks/all receipts → replay без второго decoder;
+- bounded read-only RPC probe с allowlist, request budget, timeout, redacted errors,
+  stats; receipts сверяются с блоком и eth_getLogs, canonical header перечитывается;
+- новый процесс повторяет фиксированные block fingerprints и при manifest ledgerHash;
+- ограниченный discovery прямых Infinity adapter calls; никаких фиктивных public pins.
 
-Constructor drand binding НЕ доказывает правильность bytecode. Его runtime pins проверяет
-read-only deployment admission; public branch дополнительно проверяет generation profiles и
-FINALIZED_CHECKPOINT. Даже полное совпадение оставляет publicExecutionNotImplemented:
-существующий worker ещё local-only. Не называй совпавший профиль разрешением запуска.
+40 продуктовых адресных сценариев и1 catalog прошли отдельными запусками. Контрактные
+full suites не запускали: contracts не изменились. Все8 новых проверок проходили
+после последнего изменения transport;29 соседних проверок прошли на изменённом scan.
 
-Runtime public Short22738 / Monthly17943 bytes; local22540 /17745. Build evidence с обычным
-solc0.8.37/optimizer200/Cancun, без viaIR/source overrides. Конструкторные immutable требуют
-реальных deployment runtime pins; template hashes не подставляются вместо них.
+Живые результаты: Official отдаёт blocks/receipts/logs и повторяет3 fingerprints,
+но не historical state; Blockreq отдаёт2 recent samples, отказывает старому. Полная
+квалификация обоих отрицательна. При discovery Blockreq также дал range error/429;
+Official закончил bounded поиск100 из106tx, direct adapter call не найден.
+Живой eligible USDG BUY replay остаётся открытым. Положительный путь проверен fixture,
+реальные runtime bytes сохранены; нет подмены fork адресов в public deployment.
 
-## Параметры
+Посмотри самостоятельно:
+1. Не даёт ли отчёт ложный green при частично доступной истории/пустом replay?
+2. Достаточны ли bounded transport/provenance проверки для диагностического инструмента,
+   без превращения его в новый indexer? `repeatable` — blocks/receipts, не state SLA.
+3. Сохранён ли прежний scan(url) и его policy/runtime checks после выделения транспорта?
+4. Следующий практичный шаг: выбрать archive endpoint, затем public runtime с единым
+   durable signer journal. Есть ли необходимый независимый кодовый шаг, который стоит
+   закрыть пока не выбран provider, без очередной заглушки и открытия public sends?
 
-config/robinhood-launch-plan.json явно incomplete-not-executable. Известны4663/Infinity300bps,
-USDG6/entry100/Next100/6h/30days. Адрес нашего токена/пула/contracts/roles пока null.
-Timing1800 остаётся кандидатом. Creator allocation, odds/weights/minUnit/budget, notice,
-gas caps, archiveRPC, runtime/refill перечислены unresolved. scripts/public-launch-plan.cjs
-только печатает missing, не умеет отправлять и не может выдать executable=true.
-
-## Реальная сеть и fork
-
-public-rpc-check читает historical code/call/storage на явных block heights без fallback.
-Official endpoint не дал historical state даже для sampled finalized. Blockreq отдал finalized
-и finalized−10000, но rejected finalized−864000 с лимитом32768blocks. Нужен archive provider.
-Проверялся существующий USDG, не storage будущих наших contracts. Это не SLA.
-
-public-controller-fork: read-only upstream proxy → in-process4663 Hardhat → deploy точных
-public bytecodes/drand/vault → read actual USDG → checkpoint обоих → age>256. Partial complete.
-ArbSys явно заменён локальным shim, потому что EDR не Nitro. Project token синтетический.
-Constructor clocks и Solidity sources не переписывались, timestamp override не делался.
-Интервалы ещё не истекли, reserve0. Не выдаём это за full Short+Monthly+live drand/finality.
-
-## Проверки
-
-18 продуктовых адресных сценариев отдельными запусками +1 catalog check.
-PUBLIC_CONTROLLERS содержит команды и границы. Local public-controller fixture использует
-историческую genesis/test time и реальную сохранённую BLS подпись, synthetic participants.
-Пройден settlement/claim обоих draw, empty, cached-cutoff requirement, constructor refusals,
-public inspector, старые local permissions/reentrancy/unpaid claims и cutoff history.
-Не full suite. Есть профиль public-controllers; он шире фактически выполненных команд.
-
-## Что проверить
-
-1. Не потерялись ли role/reentrancy/request/claim guards при выделении base? Посмотри diff,
-   не только зелёные тесты. Public wrappers не просто local без одной строки guard.
-2. Нет ли дыр в constructor binding/predicted consumer addresses и explicit minimumUnit?
-3. Не завышаем ли доказательства native Nitro/finality и scope fork? Особенно ArbSys shim.
-4. Верно ли отделены incomplete plan, deployment pins и право публичного executor на отправку?
-5. Следующий пакет — public runtime/admission + archive/операционная конфигурация. Предложи
-   ограниченный следующий шаг с сохранением shared unknown-send reconciliation, без массового
-   удаления31337/loopback guards и без объявления timing1800 утверждённым.
+Не трактуй этот ответ как одобрение параметров/релиза. Соблюдай адресный объём тестов;
+при проблемах окружения отдельно укажи причину, не смешивай её с продуктовым failure.

@@ -206,3 +206,11 @@ Fork worker автоматически funded GENERAL; mainnet/coordinator/share
 27.09: `infinity-launch-fork.cjs --payout` + `infinity-payout-integration.cjs` связывают fees/entries/drand/Short/claim в одном vault. Только test harness, ускоренный constructor clock и test timing, не новый production coordinator. `short-dataset.cjs`, `monthly-dataset.cjs`, `short-settlement.cjs` ограничивают публикации cutoff+1. [Прогон и ограничения](INFINITY_PAYOUT_PROOF.md).
 
 27.09: `short-automation.cjs`/`run-short-automation.cjs` — local continuous Short funding/RNG/settlement/claim, durable event-discovered payouts и pre-seal native forecast. Старый V2 coordinator не заменён. Infinity/drand получили reconcile-only и общий guard; scheduler — выбор kinds/запрет новых jobs. [Проверки/границы](SHORT_AUTOMATION.md).
+
+## RPC qualification 28.09
+
+`scripts/public-rpc-qualification.cjs`: bounded read-only state/block/receipt/log probe,
+fresh-process comparison и optional `scanWithRpc`/replay.
+`scripts/public-infinity-reference-search.cjs`: bounded reference discovery.
+`test/public-rpc-qualification.test.cjs`, profile `public-rpc` без compile.
+[Результаты и ограничения](PUBLIC_RPC_QUALIFICATION.md); public execution не открыт.

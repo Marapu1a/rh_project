@@ -1,0 +1,21 @@
+{
+  "observedAt": "2026-09-28T07:31:45.759Z",
+  "fromBlock": "74598531",
+  "toBlock": "74608531",
+  "swapLogs": 107,
+  "uniqueTransactions": 106,
+  "inspectedTransactions": 100,
+  "candidates": [],
+  "stats": {
+    "requests": 112,
+    "failures": 0,
+    "responseBytes": 3168298,
+    "elapsedMs": 20885,
+    "methods": {
+      "eth_getBlockByNumber": 1,
+      "eth_getLogs": 11,
+      "eth_getTransactionReceipt": 100
+    }
+  },
+  "limitation": "Bounded discovery only, not exhaustive market search or BUY admission"
+}

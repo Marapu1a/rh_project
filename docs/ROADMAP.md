@@ -26,7 +26,9 @@ BLS подписью. Это разные уровни доказательст�
 ждёт finalized блока и самой записи, затем строит dataset; empty draining тоже поддержан.
 Больше не требуется полный scan в256blocks. Это ядро и локальный исполнитель, не public launch.
 [Public wrappers](PUBLIC_CONTROLLERS.md) теперь подготовлены, частичный fork пройден.
-Далее публичный runtime/admission и archive RPC; Timing1800s пока кандидат.
+[RPC qualification](PUBLIC_RPC_QUALIFICATION.md) готов: оба публичных endpoints не прошли
+полную историческую доступность; живой reference BUY ещё не квалифицирован.
+Далее пригодный archive provider и публичный runtime/admission; Timing1800s пока кандидат.
 
 ## Оставшиеся релизные блокеры — в порядке работы
 
