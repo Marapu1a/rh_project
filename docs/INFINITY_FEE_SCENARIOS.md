@@ -25,7 +25,7 @@ pool fee и интерфейс получения комиссий.
 
 ## Явные допущения
 
-Берём прежний [кандидат экономического профиля](MVP_ECONOMIC_PROFILE.md): 10% creator
+Берём прежний [кандидат экономического профиля](archive/snapshots/MVP_ECONOMIC_PROFILE_BEFORE_INFINITY_CONSOLIDATION_2026-09-28.md): 10% creator
 revenue эксплуатации/проекту, 90% призам. Это ещё не утверждённые внутренние доли.
 Призовая часть делится GENERAL: половина Short; до1/6 в Next до target100USDG;
 остаток Current. После заполнения Next всё его дальнейшее распределение идёт Current.

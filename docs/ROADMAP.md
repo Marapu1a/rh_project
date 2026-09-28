@@ -48,7 +48,10 @@ public sends закрыты. [Recovery admission](RECOVERY_ADMISSION.md) отд�
    прошёл fork, coordinator/продвижение старых обязательств проверены отдельно. Funding пакет закрыт.
    Составная [релизная репетиция](RELEASE_REHEARSAL.md) пройдена с явными fixture-границами.
    Отчёт release profile подготовлен: обязательные поля и конфликты решений видны.
-   Следующий пакет: выбрать численные Short/Monthly и эксплуатационные параметры;
+   [Численный кандидат Short/Monthly](MVP_ECONOMIC_PROFILE.md) рассчитан; параметры не приняты.
+   Далее согласовать D/cap, корзину, q и minimum Current, затем реализовать выбранную
+   бюджетную политику вместо фиксированного shortBudget и нужную readiness-границу.
+   Эксплуатационные параметры выбираются отдельно;
    для RPC нужен другой archive endpoint (official повторно не прошёл history).
    Same-chain automatic proof ещё открыт.
    GPT делает [review без запуска тестов](REVIEW_TESTING.md); повторная диагностика

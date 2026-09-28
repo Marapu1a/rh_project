@@ -3,7 +3,7 @@
 23.09.2026. Проверены 13 сценариев × 20 seeds × 2 порядка Short/Monthly = 520 прогонов,
 каждый 120 дней. Скрипт: `python scripts/mvp-calendar-model.py` (stdout JSON).
 Evidence: `.local/logs/mvp-calendar-model.json`. Все встроенные проверки прошли.
-Параметры — [кандидат](MVP_ECONOMIC_PROFILE.md), не production configuration.
+Параметры — [кандидат](archive/snapshots/MVP_ECONOMIC_PROFILE_BEFORE_INFINITY_CONSOLIDATION_2026-09-28.md), не production configuration.
 
 ## Модель и пределы
 

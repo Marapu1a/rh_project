@@ -259,3 +259,10 @@ profile `robinhood-recovery`. [Границы и проверки](RECOVERY_ADMI
 классификация источника решения, сверка принятых значений и честный статус
 provided-not-verified. Не admission и не deployment tool. Два новых сценария в
 `test/public-launch-checks.test.cjs`; [детали](PUBLIC_CONTROLLERS.md).
+
+## Численный кандидат Infinity28.09
+
+`scripts/infinity-product-model.py` — отдельный offline расчёт, использует существующий
+`mvp-calendar-model.py`/`short_model.py`, переопределяет старую ставку, cumulative90/5/5,
+Short cap и minimum Current.160 прогонов/38400шагов; не production budget executor.
+[Параметры и выявленные пробелы](MVP_ECONOMIC_PROFILE.md). Контракты/config не менялись.

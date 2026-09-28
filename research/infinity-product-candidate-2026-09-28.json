@@ -1,0 +1,723 @@
+{
+  "schema": "infinity-product-candidate-v1",
+  "approved": false,
+  "days": 60,
+  "seeds": 20,
+  "assumptions": {
+    "creatorRateBps": 300,
+    "eligibleShareOfVolume": "1/4",
+    "shortCapRaw": "1000000000",
+    "monthlyMinRaw": "100000000"
+  },
+  "scenarios": [
+    {
+      "name": "quiet",
+      "volume": 500,
+      "wallets": 5
+    },
+    {
+      "name": "regular",
+      "volume": 5000,
+      "wallets": 20
+    },
+    {
+      "name": "busy",
+      "volume": 50000,
+      "wallets": 100
+    },
+    {
+      "name": "burst",
+      "volume": 5000,
+      "wallets": 20,
+      "burst": true
+    },
+    {
+      "name": "sponsor_general",
+      "volume": 500,
+      "wallets": 5,
+      "sponsor": "GENERAL"
+    },
+    {
+      "name": "sponsor_short",
+      "volume": 500,
+      "wallets": 5,
+      "sponsor": "SHORT"
+    },
+    {
+      "name": "no_eligible",
+      "volume": 5000,
+      "wallets": 20,
+      "eligible": false
+    },
+    {
+      "name": "stop_day10",
+      "volume": 5000,
+      "wallets": 20,
+      "stop": 10
+    }
+  ],
+  "limits": [
+    "synthetic fee base, not forecast of realized PAIR revenue",
+    "fixed cohorts/uniform BUY",
+    "6h grid; immediate settlement and funding; no gas/finality/outages",
+    "Python RNG is not drand; claimable is not an executed payment",
+    "not a farming profitability proof"
+  ],
+  "summary": {
+    "quiet": {
+      "short_draws": {
+        "min": 12,
+        "max": 13,
+        "mean": 12.9
+      },
+      "first_short_day": {
+        "min": 15.0,
+        "max": 15.0,
+        "mean": 15.0
+      },
+      "short_winners": {
+        "min": 9,
+        "max": 18,
+        "mean": 12.95
+      },
+      "short_no_win": {
+        "min": 2,
+        "max": 7,
+        "mean": 4.05
+      },
+      "short_claimable": {
+        "min": 119.871106,
+        "max": 289.04053,
+        "mean": 218.1781668
+      },
+      "monthly_draws": {
+        "min": 1,
+        "max": 1,
+        "mean": 1.0
+      },
+      "monthly_wins": {
+        "min": 0,
+        "max": 1,
+        "mean": 0.5
+      },
+      "monthly_claimable": {
+        "min": 0.0,
+        "max": 200.375,
+        "mean": 100.1875
+      },
+      "free_short": {
+        "min": 115.95947,
+        "max": 285.128894,
+        "mean": 186.8218332
+      },
+      "current": {
+        "min": 169.75,
+        "max": 305.0,
+        "mean": 237.375
+      },
+      "next": {
+        "min": 34.875,
+        "max": 100.0,
+        "mean": 67.4375
+      },
+      "ops": {
+        "min": 45.0,
+        "max": 45.0,
+        "mean": 45.0
+      },
+      "team": {
+        "min": 45.0,
+        "max": 45.0,
+        "mean": 45.0
+      },
+      "prize_range": [
+        5.011875,
+        88.727793
+      ],
+      "first_short_seed0": {
+        "kind": "short",
+        "hour": 360,
+        "paid": 0,
+        "budget": 101250000,
+        "consumed": 15,
+        "wallets": 5,
+        "winners": 0,
+        "awards": []
+      }
+    },
+    "regular": {
+      "short_draws": {
+        "min": 37,
+        "max": 37,
+        "mean": 37.0
+      },
+      "first_short_day": {
+        "min": 1.75,
+        "max": 1.75,
+        "mean": 1.75
+      },
+      "short_winners": {
+        "min": 104,
+        "max": 177,
+        "mean": 145.95
+      },
+      "short_no_win": {
+        "min": 0,
+        "max": 2,
+        "mean": 0.5
+      },
+      "short_claimable": {
+        "min": 3684.605351,
+        "max": 3962.130528,
+        "mean": 3838.5274802
+      },
+      "monthly_draws": {
+        "min": 2,
+        "max": 2,
+        "mean": 2.0
+      },
+      "monthly_wins": {
+        "min": 0,
+        "max": 2,
+        "mean": 1.65
+      },
+      "monthly_claimable": {
+        "min": 0.0,
+        "max": 3950.0,
+        "mean": 3752.5
+      },
+      "free_short": {
+        "min": 87.869472,
+        "max": 365.394649,
+        "mean": 211.47251980000001
+      },
+      "current": {
+        "min": 100.0,
+        "max": 3950.0,
+        "mean": 292.5
+      },
+      "next": {
+        "min": 0.0,
+        "max": 100.0,
+        "mean": 5.0
+      },
+      "ops": {
+        "min": 450.0,
+        "max": 450.0,
+        "mean": 450.0
+      },
+      "team": {
+        "min": 450.0,
+        "max": 450.0,
+        "mean": 450.0
+      },
+      "prize_range": [
+        5.498783,
+        214.0656
+      ],
+      "first_short_seed0": {
+        "kind": "short",
+        "hour": 42,
+        "paid": 29531250,
+        "budget": 118125000,
+        "consumed": 20,
+        "wallets": 20,
+        "winners": 2,
+        "awards": [
+          23625000,
+          5906250
+        ]
+      }
+    },
+    "busy": {
+      "short_draws": {
+        "min": 75,
+        "max": 75,
+        "mean": 75.0
+      },
+      "first_short_day": {
+        "min": 1.0,
+        "max": 1.0,
+        "mean": 1.0
+      },
+      "short_winners": {
+        "min": 749,
+        "max": 750,
+        "mean": 749.85
+      },
+      "short_no_win": {
+        "min": 0,
+        "max": 0,
+        "mean": 0.0
+      },
+      "short_claimable": {
+        "min": 40500.0,
+        "max": 40500.0,
+        "mean": 40500.0
+      },
+      "monthly_draws": {
+        "min": 2,
+        "max": 2,
+        "mean": 2.0
+      },
+      "monthly_wins": {
+        "min": 2,
+        "max": 2,
+        "mean": 2.0
+      },
+      "monthly_claimable": {
+        "min": 40400.0,
+        "max": 40400.0,
+        "mean": 40400.0
+      },
+      "free_short": {
+        "min": 0.0,
+        "max": 0.0,
+        "mean": 0.0
+      },
+      "current": {
+        "min": 100.0,
+        "max": 100.0,
+        "mean": 100.0
+      },
+      "next": {
+        "min": 0.0,
+        "max": 0.0,
+        "mean": 0.0
+      },
+      "ops": {
+        "min": 4500.0,
+        "max": 4500.0,
+        "mean": 4500.0
+      },
+      "team": {
+        "min": 4500.0,
+        "max": 4500.0,
+        "mean": 4500.0
+      },
+      "prize_range": [
+        25.3125,
+        245.109375
+      ],
+      "first_short_seed0": {
+        "kind": "short",
+        "hour": 24,
+        "paid": 675000000,
+        "budget": 675000000,
+        "consumed": 100,
+        "wallets": 100,
+        "winners": 10,
+        "awards": [
+          33750000,
+          33750000,
+          33750000,
+          33750000,
+          236250000,
+          135000000,
+          67500000,
+          33750000,
+          33750000,
+          33750000
+        ]
+      }
+    },
+    "burst": {
+      "short_draws": {
+        "min": 41,
+        "max": 41,
+        "mean": 41.0
+      },
+      "first_short_day": {
+        "min": 1.75,
+        "max": 1.75,
+        "mean": 1.75
+      },
+      "short_winners": {
+        "min": 154,
+        "max": 208,
+        "mean": 175.3
+      },
+      "short_no_win": {
+        "min": 0,
+        "max": 3,
+        "mean": 0.5
+      },
+      "short_claimable": {
+        "min": 7016.684492,
+        "max": 7334.194596,
+        "mean": 7196.69301065
+      },
+      "monthly_draws": {
+        "min": 2,
+        "max": 2,
+        "mean": 2.0
+      },
+      "monthly_wins": {
+        "min": 1,
+        "max": 2,
+        "mean": 1.7
+      },
+      "monthly_claimable": {
+        "min": 5232.5,
+        "max": 7257.5,
+        "mean": 7156.25
+      },
+      "free_short": {
+        "min": 23.305404,
+        "max": 340.815508,
+        "mean": 160.80698935
+      },
+      "current": {
+        "min": 100.0,
+        "max": 2025.0,
+        "mean": 196.25
+      },
+      "next": {
+        "min": 0.0,
+        "max": 100.0,
+        "mean": 5.0
+      },
+      "ops": {
+        "min": 817.5,
+        "max": 817.5,
+        "mean": 817.5
+      },
+      "team": {
+        "min": 817.5,
+        "max": 817.5,
+        "mean": 817.5
+      },
+      "prize_range": [
+        5.191993,
+        350.0
+      ],
+      "first_short_seed0": {
+        "kind": "short",
+        "hour": 42,
+        "paid": 29531250,
+        "budget": 118125000,
+        "consumed": 20,
+        "wallets": 20,
+        "winners": 2,
+        "awards": [
+          23625000,
+          5906250
+        ]
+      }
+    },
+    "sponsor_general": {
+      "short_draws": {
+        "min": 15,
+        "max": 15,
+        "mean": 15.0
+      },
+      "first_short_day": {
+        "min": 4.0,
+        "max": 4.0,
+        "mean": 4.0
+      },
+      "short_winners": {
+        "min": 9,
+        "max": 18,
+        "mean": 14.2
+      },
+      "short_no_win": {
+        "min": 3,
+        "max": 9,
+        "mean": 5.0
+      },
+      "short_claimable": {
+        "min": 409.680547,
+        "max": 737.144114,
+        "mean": 567.7104593500001
+      },
+      "monthly_draws": {
+        "min": 1,
+        "max": 2,
+        "mean": 1.6
+      },
+      "monthly_wins": {
+        "min": 0,
+        "max": 1,
+        "mean": 0.65
+      },
+      "monthly_claimable": {
+        "min": 0.0,
+        "max": 805.0,
+        "mean": 442.25
+      },
+      "free_short": {
+        "min": 167.855886,
+        "max": 495.319453,
+        "mean": 337.28954065
+      },
+      "current": {
+        "min": 100.0,
+        "max": 805.0,
+        "mean": 400.75
+      },
+      "next": {
+        "min": 0.0,
+        "max": 100.0,
+        "mean": 62.0
+      },
+      "ops": {
+        "min": 45.0,
+        "max": 45.0,
+        "mean": 45.0
+      },
+      "team": {
+        "min": 45.0,
+        "max": 45.0,
+        "mean": 45.0
+      },
+      "prize_range": [
+        7.698477,
+        220.583678
+      ],
+      "first_short_seed0": {
+        "kind": "short",
+        "hour": 96,
+        "paid": 0,
+        "budget": 527000000,
+        "consumed": 5,
+        "wallets": 5,
+        "winners": 0,
+        "awards": []
+      }
+    },
+    "sponsor_short": {
+      "short_draws": {
+        "min": 15,
+        "max": 15,
+        "mean": 15.0
+      },
+      "first_short_day": {
+        "min": 4.0,
+        "max": 4.0,
+        "mean": 4.0
+      },
+      "short_winners": {
+        "min": 9,
+        "max": 22,
+        "mean": 14.9
+      },
+      "short_no_win": {
+        "min": 1,
+        "max": 7,
+        "mean": 4.5
+      },
+      "short_claimable": {
+        "min": 614.261256,
+        "max": 1216.423532,
+        "mean": 1027.14232075
+      },
+      "monthly_draws": {
+        "min": 1,
+        "max": 1,
+        "mean": 1.0
+      },
+      "monthly_wins": {
+        "min": 0,
+        "max": 1,
+        "mean": 0.35
+      },
+      "monthly_claimable": {
+        "min": 0.0,
+        "max": 200.375,
+        "mean": 70.13125
+      },
+      "free_short": {
+        "min": 188.576468,
+        "max": 790.738744,
+        "mean": 377.85767925
+      },
+      "current": {
+        "min": 169.75,
+        "max": 305.0,
+        "mean": 257.6625
+      },
+      "next": {
+        "min": 34.875,
+        "max": 100.0,
+        "mean": 77.20625
+      },
+      "ops": {
+        "min": 45.0,
+        "max": 45.0,
+        "mean": 45.0
+      },
+      "team": {
+        "min": 45.0,
+        "max": 45.0,
+        "mean": 45.0
+      },
+      "prize_range": [
+        9.253727,
+        350.0
+      ],
+      "first_short_seed0": {
+        "kind": "short",
+        "hour": 96,
+        "paid": 0,
+        "budget": 1000000000,
+        "consumed": 5,
+        "wallets": 5,
+        "winners": 0,
+        "awards": []
+      }
+    },
+    "no_eligible": {
+      "short_draws": {
+        "min": 0,
+        "max": 0,
+        "mean": 0.0
+      },
+      "first_short_day": null,
+      "short_winners": {
+        "min": 0,
+        "max": 0,
+        "mean": 0.0
+      },
+      "short_no_win": {
+        "min": 0,
+        "max": 0,
+        "mean": 0.0
+      },
+      "short_claimable": {
+        "min": 0.0,
+        "max": 0.0,
+        "mean": 0.0
+      },
+      "monthly_draws": {
+        "min": 0,
+        "max": 0,
+        "mean": 0.0
+      },
+      "monthly_wins": {
+        "min": 0,
+        "max": 0,
+        "mean": 0.0
+      },
+      "monthly_claimable": {
+        "min": 0.0,
+        "max": 0.0,
+        "mean": 0.0
+      },
+      "free_short": {
+        "min": 4050.0,
+        "max": 4050.0,
+        "mean": 4050.0
+      },
+      "current": {
+        "min": 3950.0,
+        "max": 3950.0,
+        "mean": 3950.0
+      },
+      "next": {
+        "min": 100.0,
+        "max": 100.0,
+        "mean": 100.0
+      },
+      "ops": {
+        "min": 450.0,
+        "max": 450.0,
+        "mean": 450.0
+      },
+      "team": {
+        "min": 450.0,
+        "max": 450.0,
+        "mean": 450.0
+      },
+      "prize_range": [
+        0,
+        0
+      ],
+      "first_short_seed0": null
+    },
+    "stop_day10": {
+      "short_draws": {
+        "min": 6,
+        "max": 6,
+        "mean": 6.0
+      },
+      "first_short_day": {
+        "min": 1.75,
+        "max": 1.75,
+        "mean": 1.75
+      },
+      "short_winners": {
+        "min": 10,
+        "max": 30,
+        "mean": 22.2
+      },
+      "short_no_win": {
+        "min": 0,
+        "max": 1,
+        "mean": 0.05
+      },
+      "short_claimable": {
+        "min": 211.051649,
+        "max": 629.869917,
+        "mean": 490.2187114
+      },
+      "monthly_draws": {
+        "min": 1,
+        "max": 1,
+        "mean": 1.0
+      },
+      "monthly_wins": {
+        "min": 0,
+        "max": 1,
+        "mean": 0.8
+      },
+      "monthly_claimable": {
+        "min": 0.0,
+        "max": 575.0,
+        "mean": 460.0
+      },
+      "free_short": {
+        "min": 45.130083,
+        "max": 463.948351,
+        "mean": 184.78128859999998
+      },
+      "current": {
+        "min": 100.0,
+        "max": 575.0,
+        "mean": 195.0
+      },
+      "next": {
+        "min": 0.0,
+        "max": 100.0,
+        "mean": 20.0
+      },
+      "ops": {
+        "min": 75.0,
+        "max": 75.0,
+        "mean": 75.0
+      },
+      "team": {
+        "min": 75.0,
+        "max": 75.0,
+        "mean": 75.0
+      },
+      "prize_range": [
+        5.90625,
+        153.685049
+      ],
+      "first_short_seed0": {
+        "kind": "short",
+        "hour": 42,
+        "paid": 29531250,
+        "budget": 118125000,
+        "consumed": 20,
+        "wallets": 20,
+        "winners": 2,
+        "awards": [
+          23625000,
+          5906250
+        ]
+      }
+    }
+  }
+}
