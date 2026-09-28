@@ -1,71 +1,49 @@
-# Текущий запрос GPT: понятные gas waits и события восстановления
+# Текущий запрос GPT: monitoring fix + creator allocation / ETH funding design
 
-28.09.2026. Продолжение review `9792087`. Пользователь уточнил приоритет:
-не угадывать будущую цену газа и не держать вечный точный баланс; дорогой gas —
-ждать, ETH не хватает — bounded refill или ждать пополнения, затем продолжить
-с сохранённого состояния. Призовую казну и правила результата не трогаем.
+28.09.2026. Продолжение review3f4d80f. Пользователь одобрил исправление и подготовку
+следующего ограниченного пакета; доли и swap ещё не утверждены.
 
-## Реализация
+## Что изменено
 
-1. В prepareRuntime добавлена validateBudgetCompatibility: ops.nativeFloor покрывает
-   оба child floors; ops.gasUnits для pull/pay/prove/deliver покрывают child bounds.
-   Второе расхождение нашли сами: до estimate child использует свой bound.
-   Это проверка согласованности, не новый прогнозный движок. Равные maxGasPrice
-   не требуются, отправка проходит обе проверки цены. Ошибка профиля до исполнения,
-   без изменения identity/автоматического reset истории.
-2. Прежняя модель осталась: перед новым freeze — приблизительный консервативный
-   запас; frozen/claims исполняются по текущему действию и могут идти частями.
-   Refill не стал обязательным поддержанием постоянного целевого баланса.
-3. refillBudget сохранился в API, но теперь возвращает constraint sourceBalance /
-   periodCap / attemptCap, чтобы отличать пустой source от лимита.
-4. Оба CLI подключили наблюдатель к runWatch. STATE.status — отдельный файл только
-   телеметрии с существующим atomic save/checksum/lock helper. Main и child денежные
-   journals не изменены. operational.state/reasons/resumeWhen/event идут в JSON.
-   Причины сортируются, неизменные состояния не генерируют новых событий даже после
-   restart. Последние32 события сохраняются до выдачи stdout; id/sequence для дедупликации.
-5. Ошибка записи статуса даёт statusObservationError и не меняет execution result,
-   retry policy или unknown send. Успех одной lane не должен маскировать другую
-   RPC/source проблему. Stopped не считается recovered; обычный seed/расписание
-   не считаются аварией. Clear — отсутствие распознанной эксплуатационной проблемы
-   в данном проходе, не production readiness и не гарантия будущего газа.
-6. Получение rehearsal signer в Robinhood CLI перенесено внутрь watch-pass:
-   startup RPC discovery outage теперь также повторяется штатным watch. Inspect
-   остаётся VoidSigner, без ключей/публичных транзакций.
+`promo-operational-status.cjs` теперь обходит failures/claimFailures/requests:
+sourceReadUnavailable и beaconUnavailable оставляют waiting; rejected actions —
+attention. Успех другой lane не даёт ложный recovered. roundNotDue нормален.
+При смене одной проблемы на другую — changed; восстановление только после ухода
+распознанных проблем. Никаких новых retries, RNG rounds или денежных действий.
 
-## Чего не делали
+Адресно18/18: `node --test test/promo-operational-status.test.cjs test/local-rpc-watch.test.cjs`.
+Переходы gas→source/beacon/claim error→recovered, повторы, совместные причины;
+полный suite/fork/live не запускались. Lock окружение повторно не расследовали.
 
-Нет Telegram/email/webhook: канал не выбран и внешние сообщения не отправляем.
-Это законченный локальный протокол событий, не обещание exactly-once доставки:
-при падении после save до stdout событие есть в status history; старше32 событий
-вытесняются. Обычные heartbeat JSON строки не подавляются — потребитель уведомлений
-должен смотреть event. Новый runtime после handoff имеет собственную историю
-наблюдений; денежный accounting переносится прежним handoff независимо от неё.
+## Следующий шаг — пока design
 
-Не менялись контракты, prize math, allocation, converter, public gate, unknown-send
-правила или lock recovery. Повторную диагностику lock окружения не выполняли.
-Ошибки парсинга/несовместимого профиля — явный startup failure, не бесконечный retry.
+Читайте [OPS_REVENUE_FUNDING_DESIGN](OPS_REVENUE_FUNDING_DESIGN.md).
+Имеющихся slots collector хватает: PromoVault / operations EOA / project EOA.
+Предлагаем90/5/5, сравнили альтернативы и условную окупаемость. Это не параметры
+production;3% Infinity creator fee уже выбраны, внутренние доли ещё нет.
+Спонсоры пополняют PromoVault без fee, prize math не меняется.
 
-## Проверки
+Важный стык: существующий bootstrap refill запрещает source=любойrecipient.
+Предлагаем явный project-funded mode для pinned slot1, не удаление защиты целиком.
+Ops signer для swap/refill требует общего nonce/journal/recovery. EOA ключ имеет
+контроль над ops средствами; не называем offchain caps контрактной гарантией.
+Если нет seed ETH даже на swap, нужна внешняя подпитка: USDG сам газ не оплатит.
 
-28 различных адресных сценариев +1catalog отдельными запусками:
-19 быстрых budget/status/watch,6 CLI,3 интеграции4663. Подробные команды и пределы:
-[PROMO_OPERATIONAL_WAITS.md](PROMO_OPERATIONAL_WAITS.md).
+Нашли официальный кандидат Pancake Infinity UniversalRouter для Robinhood;
+upstream умеет unwrap, но USDG/WETH pool, liquidity, deployed bindings и calldata
+ещё НЕ квалифицированы. Не внедряли произвольный aggregator или непроверенный swap.
+При дорогом gas/нехватке средств ждём, старые обязательства сохраняются.
 
-Новая интеграция: неправильный floor отклонён, затем согласованный повышенный floor;
-нулевой executor + дорогой gas → без переводов; повторный запуск → без нового event;
-gas снизился → refill → finish обоих draws → claims → recovered. Отдельно повторены
-пустой source/top-up и period cap. Проверен настоящий новый OS process для dedup,
-реальный HTTP RPC outage, disk failure мониторинга и запрет retry unknown send.
-4663 — Hardhat/ArbSys/historical BLS fixture с заранее frozen datasets, не live BUY.
-Full suite/fork/live sends не запускались.
+## Вопросы для review
 
-## Что проверить
+1. Остался ли конкретный false-recovered путь в существующих child reports?
+2. Достаточны ли3slots и явный slot1 source mode без новых контрактов? Какие
+   реальные конфликтующие пути остаются при rollover/handoff/source drift?
+3. Есть ли возражения к90/5/5 как кандидату, без обещания гарантированной окупаемости?
+4. Какой подтверждаемый USDG→native ETH рынок доступен на4663? Нужны primary
+   sources/адреса/receipt, не предположение из возможностей upstream router.
+5. Хватает ли предложенного qualification fork до journaled swap executor?
 
-- Закрывают ли floor + pre-estimate gas bounds оба случая вечного nativeFunding?
-- Нет ли ложного recovered, когда дочерняя lane продолжает ждать gas/ETH/RPC?
-- Может ли сбой наблюдателя или новый startup путь изменить денежное retry поведение?
-- Достаточно ли этого простого event-протокола до выбора внешнего канала?
-
-После этого хотим двигаться к creator allocation и эксплуатационной доле USDG→ETH,
-параллельно закрывая реальные RPC/deployment prerequisites. Не предлагай новый общий
-framework мониторинга или усложнение прогнозов без конкретного дефекта.
+Не расширять scope до прогнозирования gas, торгового бота или новой призовой модели.
+Ближайший порядок: выбрать доли → явный project-funded режим → доказать рынок →
+ограниченный swap executor. Public execution отдельно остаётся закрытым.

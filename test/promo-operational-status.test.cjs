@@ -2,6 +2,29 @@ const {test}=require('node:test'),assert=require('node:assert/strict'),fs=requir
 const {classify,observePromoStatus}=require('../scripts/promo-operational-status.cjs');
 const {runWatch}=require('../scripts/local-rpc-watch.cjs');
 function fixture(t){const dir=fs.mkdtempSync(path.join(os.tmpdir(),'promo-status-')),file=path.join(dir,'runtime.json');t.after(()=>{for(const name of fs.readdirSync(dir))fs.unlinkSync(path.join(dir,name));fs.rmdirSync(dir);});return file;}
+for(const [label,report,reason,expectedState]of [
+ ['source read',{status:'degraded',results:{funding:{status:'degraded',failures:[{action:'pull',reason:'sourceReadUnavailable'}]}}},'sourceReadUnavailable','waiting'],
+ ['beacon',{status:'waiting',results:{rng:{status:'waiting',requests:[{status:'waiting',reason:'beaconUnavailable'}]}}},'beaconUnavailable','waiting'],
+ ['claim',{status:'degraded',results:{claimFailures:[{drawId:'draw',winner:'wallet',reason:'claimRejected'}]}},'operationFailed','attention']
+])test(label+' failure after gas wait cannot emit recovered; repeats are suppressed until actual recovery',async t=>{
+ const file=fixture(t);await observePromoStatus(file,{status:'waiting',reason:'gasPrice'});
+ const r=await observePromoStatus(file,report);assert.equal(r.operational.event.type,'changed');assert.equal(r.operational.state,expectedState);assert.deepEqual(r.operational.reasons,[reason]);
+ assert(!(await observePromoStatus(file,report)).operational.event);
+ assert.equal((await observePromoStatus(file,{status:'complete'})).operational.event.type,'recovered');
+ assert(!(await observePromoStatus(file,{status:'complete'})).operational.event);
+});
+test('planned drand round wait stays normal; rejected funding/RNG failures require attention',()=>{
+ assert.deepEqual(classify({status:'waiting',results:{rng:{status:'waiting',requests:[{status:'waiting',reason:'roundNotDue'}]}}}),{state:'clear',reasons:[]});
+ for(const reason of ['sourceDrift','pullRejected','payRejected','invalidBeacon','invalidProof','proveRejected','callbackRejected']){
+  const r=classify({status:'waiting',results:{lane:{status:'degraded',failures:[{reason}]},other:{status:'complete'}}});assert.equal(r.state,'attention',reason);assert.deepEqual(r.reasons,['operationFailed']);
+ }
+ assert.equal(classify({status:'waiting',results:{rng:{requests:[{status:'rejected',reason:'invalidBeacon'}]}}}).state,'attention');
+});
+test('simultaneous source and beacon outages survive partial recovery without a recovered event',async t=>{
+ const file=fixture(t),report={status:'waiting',results:{funding:{failures:[{reason:'sourceReadUnavailable'}]},rng:{requests:[{status:'waiting',reason:'beaconUnavailable'}]}}};
+ const r=await observePromoStatus(file,report);assert.deepEqual(r.operational.reasons,['beaconUnavailable','sourceReadUnavailable']);
+ report.results.funding={status:'complete'};const next=await observePromoStatus(file,report);assert.equal(next.operational.event.type,'changed');assert.deepEqual(next.operational.reasons,['beaconUnavailable']);
+});
 test('operational reasons distinguish empty source, caps, cooldown and normal draw waits',()=>{
  for(const [constraint,reason]of [['sourceBalance','sourceNeedsETH'],['periodCap','refillPeriodLimit'],['attemptCap','refillAttemptLimit']]){
   const r=classify({status:'waiting',reason:'nativeFunding',results:{refill:{status:'waiting',reason:'refillBudget',constraint}}});assert.deepEqual(r.reasons,[reason]);

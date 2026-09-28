@@ -1,5 +1,7 @@
 # Карта реализации
 
+28.09: observer обходит child failures/claimFailures/requests; source/beacon waits и rejected actions больше не дают ложный recovered. [Allocation/ETH design](OPS_REVENUE_FUNDING_DESIGN.md) — только проект; collector/refill/swap реализация не менялась.
+
 28.09: [Ожидания и статус](PROMO_OPERATIONAL_WAITS.md): budget compatibility при prepareRuntime,
 CLI status journal и события без дублей; status storage не управляет отправками.
 

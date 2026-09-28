@@ -9,6 +9,8 @@ const hints={
  refillAttemptLimit:'Review the configured per-transfer cap; it cannot cover transfer gas.',
  refillCooldown:'Wait for the configured cooldown to expire.',
  rpcUnavailable:'Retry reads with bounded backoff; reconcile any known send first.',
+ sourceReadUnavailable:'Wait for revenue source reads to recover; funded obligations may continue.',
+ beaconUnavailable:'Wait for the required drand beacon to become available; do not select another round.',
  receiptPending:'Reconcile the same transaction hash; do not resend.',
  signerPending:'Wait for the existing signer transaction to resolve; do not replace it automatically.',
  chainObservationChanged:'Re-read the chain before deciding on another action.',
@@ -22,8 +24,12 @@ const hints={
 function classify(report){
  if(report.status==='stopped')return null;
  const reasons=new Set();let attention=false;
- function visit(r){
+ function visit(r,failure=false){
   if(!r||typeof r!=='object')return;
+  if(Array.isArray(r)){for(const entry of r)visit(entry,failure);return;}
+  const unavailable=['sourceReadUnavailable','beaconUnavailable'].includes(r.reason);
+  if(unavailable)reasons.add(r.reason);
+  if((failure||r.status==='rejected')&&!unavailable){attention=true;reasons.add('operationFailed');}
   if(r.retryableRpcRead===true)reasons.add('rpcUnavailable');
   const names={gasPrice:'expensiveGas',nativeFunding:'executorNeedsETH',refillCooldown:'refillCooldown',refillHalt:'refillHalt',rpcUnavailable:'rpcUnavailable',unknownHash:'reconciliationRequired',unknownTransaction:'reconciliationRequired',unconfirmedReceipt:'reconciliationRequired',pendingReceipt:'receiptPending',refillAccountCode:'configurationRequired',refillGasBound:'configurationRequired',actionGasBound:'configurationRequired',blockGasBound:'configurationRequired',obligationAdmission:'configurationRequired',deploymentAdmission:'configurationRequired',publicExecutionDisabled:'configurationRequired'};
   if(names[r.reason])reasons.add(names[r.reason]);
@@ -36,7 +42,8 @@ function classify(report){
    attention=true;if(!names[r.reason])reasons.add('operationFailed');
   }
   if(r.requiresOperatorAction)attention=true;
-  for(const child of Object.values(r.results||{}))visit(child);
+  for(const [key,child]of Object.entries(r.results||{}))visit(child,key==='claimFailures');
+  visit(r.failures,true);visit(r.claimFailures,true);visit(r.requests);
   if(r.reason==='executionBudget')visit(r.budget);
  }
  visit(report);

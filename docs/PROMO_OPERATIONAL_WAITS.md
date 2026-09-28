@@ -96,3 +96,16 @@ gas приводит к refill, finish обоих draw, claims и одному r
 неизвестный send и отказ записи мониторинга. Контракты и призовая математика не менялись.
 Интеграция4663 — прежняя Hardhat/ArbSys/BLS fixture с заранее frozen datasets,
 не live BUY→freeze и не оценка реальных комиссий. Full/fork/live не запускались.
+
+## Review fix28.09: child failures не означают восстановление
+
+Observer обходит массивы failures, claimFailures и requests, включая results.claimFailures.
+sourceReadUnavailable и beaconUnavailable сохраняют waiting; definite rejected actions
+дают attention/operationFailed. Обычный roundNotDue не авария. Успешная соседняя lane
+не скрывает эти проблемы; уход лишь одной причины даёт changed, не recovered.
+Это классификация телеметрии, без изменения повторов транзакций или RNG round.
+
+Проверка28.09: `node --test test/promo-operational-status.test.cjs test/local-rpc-watch.test.cjs`
+—18/18, адресно. Проверены gas→source/beacon/claim failure, стабильные повторы,
+последующее восстановление и несколько одновременных причин. Прежние28 сценариев
+выше относятся предыдущему пакету; полный набор/fork/live здесь не запускались.
