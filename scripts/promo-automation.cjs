@@ -21,8 +21,15 @@ function validateOps(o){
  for(const a of [...ACTIONS,...(o.schema===network.schema('local-promo-automation-v1')?MONTHLY_ACTIONS:[])])check(typeof o.gasUnits?.[a]==='string'&&/^[1-9][0-9]*$/.test(o.gasUnits[a]),'Missing gas bound '+a);
  return o;
 }
+function validateBudgetCompatibility(ops,fundingJob,deliveryJob){
+ for(const [name,job,actions]of [['fundingJob',fundingJob,['pull','pay']],['deliveryJob',deliveryJob,['prove','deliver']]]){
+  check(BigInt(ops.nativeFloor)>=BigInt(job.nativeFloor),'ops.nativeFloor must cover '+name+'.nativeFloor');
+  for(const action of actions)check(BigInt(ops.gasUnits[action])>=BigInt(job.gasUnits[action]),'ops.gasUnits.'+action+' must cover '+name+'.gasUnits.'+action);
+ }
+}
 async function prepareRuntime({provider,executor,collector,adapter,vault,short,monthly,fundingJob,deliveryJob,schedulerConfig,rpcUrl,statePath,ops,deploymentProfile,nativeRefill,receiptTimeoutMs=30000,deferContractChecks=false}){
  ops=JSON.parse(JSON.stringify(validateOps(ops)));funding.validateJob(fundingJob);rng.validateJob(deliveryJob);receiptOptions(receiptTimeoutMs);
+ validateBudgetCompatibility(ops,fundingJob,deliveryJob);
  if(schedulerConfig.cutoffMode==='FINALIZED_CHECKPOINT')check(typeof ops.gasUnits?.checkpointCutoff==='string'&&/^[1-9][0-9]*$/.test(ops.gasUnits.checkpointCutoff),'Missing gas bound checkpointCutoff');
  if(deploymentProfile)require('./deployment-admission.cjs').validateDeploymentProfile(deploymentProfile,{fundingJob,deliveryJob,schedulerConfig});
  const dual=ops.schema===network.schema('local-promo-automation-v1');
@@ -237,4 +244,4 @@ async function runPromoAutomation({provider,executor,collector,adapter,vault,sho
   }
  });
 }
-module.exports={runShortAutomation:runPromoAutomation,runPromoAutomation,validateOps,ACTIONS,MONTHLY_ACTIONS,prepareRuntime,normalize};
+module.exports={runShortAutomation:runPromoAutomation,runPromoAutomation,validateOps,validateBudgetCompatibility,ACTIONS,MONTHLY_ACTIONS,prepareRuntime,normalize};

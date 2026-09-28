@@ -21,6 +21,7 @@
 | Short | [Dataset](SHORT_DATASET_PREPARATION.md), [epochs](SHORT_RULES_EPOCHS.md), [settlement](SHORT_SETTLEMENT.md), [basket](SHORT_PRIZE_BASKET.md), [model](SHORT_MODEL.md) |
 | Monthly | [Epochs и settlement](MONTHLY_RULES_EPOCHS.md) |
 | Воспроизводимое review | [Канонический runner](REVIEW_TESTING.md) |
+| Ожидания gas / события | [Эксплуатационный статус](PROMO_OPERATIONAL_WAITS.md) |
 | Диагностика refill / manifest | [Inspector и deployment manifest](LOCAL_NATIVE_REFILL_INSPECTOR.md) |
 | Старые обязательства / source drift | [Recovery admission](RECOVERY_ADMISSION.md) |
 | Robinhood runtime / rehearsal | [Отдельный4663 исполнитель](ROBINHOOD_RUNTIME.md) |

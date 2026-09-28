@@ -1,0 +1,5 @@
+const {test}=require('node:test'),assert=require('node:assert/strict');
+const {validateBudgetCompatibility}=require('../scripts/promo-automation.cjs');
+function fixture(){return {ops:{nativeFloor:'1000',gasUnits:{pull:'100',pay:'100',prove:'100',deliver:'100'}},funding:{nativeFloor:'1000',gasUnits:{pull:'100',pay:'100'}},rng:{nativeFloor:'1000',gasUnits:{prove:'100',deliver:'100'}}};}
+for(const lane of ['funding','rng'])test('rejects uncovered '+lane+' native floor before execution',()=>{const f=fixture();f[lane].nativeFloor='1001';assert.throws(()=>validateBudgetCompatibility(f.ops,f.funding,f.rng),/nativeFloor must cover/);f.ops.nativeFloor='1001';validateBudgetCompatibility(f.ops,f.funding,f.rng);});
+for(const [lane,action]of [['funding','pull'],['funding','pay'],['rng','prove'],['rng','deliver']])test('rejects uncovered pre-estimate bound '+action,()=>{const f=fixture();f[lane].gasUnits[action]='101';assert.throws(()=>validateBudgetCompatibility(f.ops,f.funding,f.rng),new RegExp('gasUnits.'+action+' must cover'));f.ops.gasUnits[action]='101';validateBudgetCompatibility(f.ops,f.funding,f.rng);});

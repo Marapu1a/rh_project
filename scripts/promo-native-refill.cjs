@@ -47,7 +47,10 @@ async function execute({provider,signer,config,sender,ops,required,state,save,si
  if(h.lastAttemptAt!=null&&now-BigInt(h.lastAttemptAt)<BigInt(config.cooldownSeconds))return {status:'waiting',reason:'refillCooldown'};
  const gas=transactionCost(ops,config.transferGas),min=(...v)=>v.reduce((a,b)=>a<b?a:b);
  const available=min(BigInt(config.maxPerRefill),BigInt(config.maxPerPeriod)-(BigInt(h.windowStart)===window?BigInt(h.spent):0n),sourceBalance-BigInt(config.minimumBalance));
- if(available<=gas)return {status:'waiting',reason:'refillBudget'};
+ if(available<=gas){
+  const constraint=sourceBalance-BigInt(config.minimumBalance)===available?'sourceBalance':BigInt(config.maxPerPeriod)-(BigInt(h.windowStart)===window?BigInt(h.spent):0n)===available?'periodCap':'attemptCap';
+  return {status:'waiting',reason:'refillBudget',constraint};
+ }
  const value=min(required-balance,available-gas),nonce=await provider.getTransactionCount(config.source,'latest');
  if(nonce!==await provider.getTransactionCount(config.source,'pending')||h.lastNonce!=null&&nonce<=h.lastNonce)return {status:'waiting',reason:'pendingRefillSigner'};
  const request={chainId:Number(network.current().chainId),from:config.source,to:sender,value,data:'0x',nonce,type:2,gasLimit:BigInt(config.transferGas),maxFeePerGas:price,maxPriorityFeePerGas:0n};

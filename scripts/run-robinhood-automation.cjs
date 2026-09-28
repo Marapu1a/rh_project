@@ -17,11 +17,15 @@ async function main(){
  process.once('SIGINT',interrupt);process.once('SIGTERM',interrupt);
  try{
   // No secret is loaded and no public signer is constructed in inspect mode.
-  const executor=mode==='inspect'?new ethers.VoidSigner(config.deploymentProfile.executor,provider):await provider.getSigner(config.deploymentProfile.executor);
+  let executor=mode==='inspect'?new ethers.VoidSigner(config.deploymentProfile.executor,provider):undefined;
   const contract=(name,artifact)=>new ethers.Contract(config.deploymentProfile.pins[name][0],artifacts[artifact].abi,provider);
-  const refillSigner=config.nativeRefill&&mode==='rehearsal'?await provider.getSigner(config.nativeRefill.source):undefined;
+  let refillSigner;
   const options={...config,provider,executor,refillSigner,collector:contract('collector','InfinityCollector'),adapter:contract('adapter','DrandRandomAdapter'),vault:contract('vault','DualControllerPromoVault'),short:contract('short','RobinhoodShortController'),monthly:contract('monthly','RobinhoodMonthlyController'),rpcUrl:o['--rpc'],statePath:o['--state'],mode:'robinhood-'+mode,drain:!!o['--drain'],signal:stop.signal};
-  process.exitCode=await runWatch({pass:()=>runRobinhoodAutomation(options),watch:!!o['--watch'],pollMs:config.ops.pollSeconds*1000,signal:stop.signal,emit:r=>console.log(JSON.stringify(r))});
+  const pass=async()=>{
+   if(mode==='rehearsal'){executor??=await provider.getSigner(config.deploymentProfile.executor);if(config.nativeRefill)refillSigner??=await provider.getSigner(config.nativeRefill.source);}
+   return runRobinhoodAutomation({...options,executor,refillSigner});
+  };
+  process.exitCode=await runWatch({pass,observe:r=>require('./promo-operational-status.cjs').observePromoStatus(o['--state'],r),watch:!!o['--watch'],pollMs:config.ops.pollSeconds*1000,signal:stop.signal,emit:r=>console.log(JSON.stringify(r))});
  }finally{process.removeListener('SIGINT',interrupt);process.removeListener('SIGTERM',interrupt);provider.destroy();}
 }
 if(require.main===module)main().catch(e=>{console.error(JSON.stringify({status:'error',reason:'Robinhood runtime configuration or transport failure',code:e.code}));process.exitCode=1;});

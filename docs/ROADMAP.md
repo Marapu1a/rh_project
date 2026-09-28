@@ -46,7 +46,8 @@ public sends закрыты. [Recovery admission](RECOVERY_ADMISSION.md) отд�
    к общему Infinity/drand executor с durable recovery в local/rehearsal; USDG→ETH ещё нет. Газ оплачивать
    из эксплуатационной доли, не frozen/claimable призов. Test100%Promo не релизная экономика.
 3. **Постоянный сервис.** Ключи и один владелец signer, supervisor, устойчивый несинхронизируемый
-   runtime volume, резервные RPC, мониторинг и recovery/runbook. Неизвестная отправка и stale
+   runtime volume, резервные RPC, recovery/runbook и внешний канал уведомлений.
+   [Статусы ожидания и события](PROMO_OPERATIONAL_WAITS.md) уже подключены к CLI; delivery пока нет. Неизвестная отправка и stale
    lock требуют сверки; их нельзя удалять ради продолжения. Handoff не переносит deployment
    или BUY policy и не исправляет потерю журналов.
 4. **Indexer и пользовательский слой.** Постоянное накопление/reorg/restart вместо повторного

@@ -99,3 +99,22 @@ test('refill for a Ready monthly job first covers frozen Short and cannot spend 
   assert.equal(BigInt(read(f).lastRefill.value),7n*cost+BigInt(f.options.ops.nativeFloor));
  }finally{preflight.drandPreflight=original;}
 });
+
+test('coherent higher child floors: expensive gas waits across restart then refill and both draws resume',async t=>{
+ const f=await fixture(t),floor=ethers.parseEther('1').toString();
+ f.options.deliveryJob.nativeFloor=floor;f.options.fundingJob.nativeFloor=floor;
+ await assert.rejects(run(f.options),/ops.nativeFloor must cover/);assert(!fs.existsSync(f.options.statePath));
+ f.options.ops.nativeFloor=floor;
+ const profile=f.options.deploymentProfile;f.options.deploymentProfile=require('../scripts/deployment-admission.cjs').createDeploymentProfile(f.options,{scope:profile.scope,executor:f.owner,timing:profile.timing,sourceCodeHash:profile.pins.source[1]});
+ const original=f.provider.getFeeData.bind(f.provider),high=BigInt(f.options.ops.maxGasPrice)*2n;
+ f.provider.getFeeData=async()=>({gasPrice:high,maxFeePerGas:high,maxPriorityFeePerGas:0n});
+ const {runWatch}=require('../scripts/local-rpc-watch.cjs'),{observePromoStatus}=require('../scripts/promo-operational-status.cjs'),events=[];
+ const pass=()=>run(f.options,{getBeacon:beacon}),observe=r=>observePromoStatus(f.options.statePath,r),emit=r=>events.push(r);
+ const nonce=await f.provider.getTransactionCount(f.options.nativeRefill.source);
+ await runWatch({pass,observe,emit,pollMs:1});assert.equal(events.at(-1).operational.event.current.reasons[0],'expensiveGas');
+ await runWatch({pass,observe,emit,pollMs:1});assert(!events.at(-1).operational.event);assert.equal(await f.provider.getTransactionCount(f.options.nativeRefill.source),nonce);assert(!read(f).pending);
+ f.provider.getFeeData=original;
+ await runWatch({pass,observe,emit,pollMs:1});const resumed=events.at(-1);assert.equal(resumed.operational.event.type,'recovered',JSON.stringify(resumed));
+ for(const action of ['finishShort','finishMonth','claim'])assert(resumed.steps.some(s=>s.action===action),JSON.stringify(resumed));
+ assert(await f.provider.getBalance(f.owner)>=BigInt(floor));assert.equal(await f.vault.claimable(f.quote.target),0n);
+});

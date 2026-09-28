@@ -1,5 +1,8 @@
 # Карта реализации
 
+28.09: [Ожидания и статус](PROMO_OPERATIONAL_WAITS.md): budget compatibility при prepareRuntime,
+CLI status journal и события без дублей; status storage не управляет отправками.
+
 28.09: [Bootstrap ETH refill общей автоматики](PROMO_NATIVE_REFILL.md): отдельный EOA →
 executor, приоритет frozen/claims, единый pending и receipt accounting, лимиты и cooldown.
 Local31337/rehearsal4663; public sends и автоматическая конверсия доли проекта не включены.

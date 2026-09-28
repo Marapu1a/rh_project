@@ -1,5 +1,8 @@
 # ETH refill общей автоматики
 
+28.09: [Согласованные бюджеты и события ожидания](PROMO_OPERATIONAL_WAITS.md) добавлены
+следующим пакетом. Общий floor/bounds покрывают child; refillBudget имеет constraint.
+
 28.09.2026. Реализация: `scripts/promo-native-refill.cjs` и
 `scripts/promo-automation.cjs`. Работает в local31337 и локальной репетиции4663.
 Public signer и public sends по-прежнему закрыты.

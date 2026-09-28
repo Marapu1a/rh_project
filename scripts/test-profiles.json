@@ -73,7 +73,9 @@
       "test/promo-runtime-handoff.test.cjs",
       "test/deployment-admission.test.cjs",
       "test/promo-native-refill.test.cjs",
-      "test/promo-refill-accounting.test.cjs"
+      "test/promo-refill-accounting.test.cjs",
+      "test/promo-operational-status.test.cjs",
+      "test/promo-budget-compatibility.test.cjs"
     ]
   },
   "accounting": {
@@ -304,6 +306,17 @@
       "test/robinhood-runtime-cli.test.cjs",
       "test/short-automation-cli.test.cjs",
       "test/promo-refill-accounting.test.cjs"
+    ]
+  },
+  "promo-operational-waits": {
+    "compile": true,
+    "files": [
+      "test/promo-operational-status.test.cjs",
+      "test/promo-budget-compatibility.test.cjs",
+      "test/local-rpc-watch.test.cjs",
+      "test/promo-native-refill.test.cjs",
+      "test/robinhood-runtime-cli.test.cjs",
+      "test/short-automation-cli.test.cjs"
     ]
   }
 }

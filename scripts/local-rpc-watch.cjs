@@ -16,7 +16,7 @@ function sleep(ms,signal){return new Promise(resolve=>{
   const timer=setTimeout(done,ms);signal?.addEventListener('abort',done,{once:true});if(signal?.aborted)done();
 });}
 // Each retry is a new bounded pass through the existing journal/lock/reconciliation.
-async function runWatch({pass,watch=false,pollMs,signal,emit=()=>{},wait=sleep}){
+async function runWatch({pass,watch=false,pollMs,signal,emit=()=>{},wait=sleep,observe}){
   if(!Number.isFinite(pollMs)||pollMs<=0)throw Error('Invalid watch poll interval');
   let failures=0;
   while(!signal?.aborted){
@@ -27,6 +27,9 @@ async function runWatch({pass,watch=false,pollMs,signal,emit=()=>{},wait=sleep})
       result={status:'error',retryableRpcRead:true,error:{code:error.code,message:error.message}};
     }
     if(signal?.aborted){emit({status:'stopped'});return 0;}
+    // Optional status persistence is independent of execution/retry decisions.
+    let observation={};
+    if(observe)try{observation=await observe(result);}catch{observation={statusObservationError:'Operational status could not be persisted; execution journal is unchanged.'};}
     const rpc=watch&&result.retryableRpcRead===true&&!result.requiresOperatorAction&&
       (!result.pending||!!result.pending.transactionHash);
     const receipt=watch&&result.status==='blocked'&&result.reason==='pendingReceipt'&&!!result.pending?.transactionHash&&!result.requiresOperatorAction;
@@ -34,10 +37,10 @@ async function runWatch({pass,watch=false,pollMs,signal,emit=()=>{},wait=sleep})
       const delay=rpc?Math.min(30000,1000*2**Math.min(failures++,5)):pollMs;
       if(!rpc)failures=0;
       emit({status:'waiting',reason:rpc?'rpcUnavailable':'pendingReceipt',retryInMs:delay,
-        consecutiveFailures:failures,transactionHash:result.pending?.transactionHash,error:result.error});
+        consecutiveFailures:failures,transactionHash:result.pending?.transactionHash,error:result.error,...observation});
       await wait(delay,signal);continue;
     }
-    failures=0;emit(result);
+    failures=0;emit({...result,...observation});
     if(['blocked','error'].includes(result.status))return 1;
     if(!watch||result.status==='stopped')return 0;
     await wait(pollMs,signal);
