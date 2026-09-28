@@ -48,7 +48,7 @@ async function prepareRuntime({provider,executor,collector,adapter,vault,short,m
  for(const [k,c]of [['adapter',adapter],['short',short],['monthly',monthly]])check(same(ethers.keccak256(await provider.getCode(c.target)),deliveryJob[k+'CodeHash']),'Runtime mismatch '+k);
  check(await adapter.PROFILE()===require('./drand-preflight.cjs').PROFILE,'Unsupported RNG');
  }
- refill.validate(nativeRefill,sender,[collector.target,adapter.target,vault.target,short.target,monthly.target,fundingJob.source,fundingJob.token,fundingJob.quote,domain.registry,...fundingJob.recipients].filter(Boolean));
+ refill.validate(nativeRefill,sender,[collector.target,adapter.target,vault.target,short.target,monthly.target,fundingJob.source,fundingJob.token,fundingJob.quote,domain.registry].filter(Boolean),fundingJob.recipients);
  const files={main:path.resolve(statePath),funding:path.resolve(statePath)+'.funding',rng:path.resolve(statePath)+'.rng',scheduler:path.resolve(statePath)+'.scheduler'};
  const identity=normalize({schema:ops.schema,sender,fundingJob,deliveryJob,schedulerConfig,rpcUrl:network.rpcIdentity(rpcUrl),ops,files,...(nativeRefill?{nativeRefill}:{}),...(deploymentProfile?{deploymentProfile}: {})});
  return {ops,dual,domain,sender,files,identity};

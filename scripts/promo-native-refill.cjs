@@ -1,11 +1,16 @@
-// Bounded bootstrap ETH funding under the automation's existing main lock/journal.
+// Bounded bootstrap or explicitly pinned operations ETH funding under the automation's existing main lock/journal.
 const {ethers}=require('ethers'),network=require('./runtime-network.cjs');
 const {transactionCost}=require('./local-execution-budget.cjs');
 const {waitLocalReceipt}=require('./local-receipt.cjs');
 const check=(v,m)=>{if(!v)throw Error(m);},same=(a,b)=>String(a).toLowerCase()===String(b).toLowerCase();
-function validate(config,sender,protectedAddresses){
+function validate(config,sender,protectedAddresses,recipients=[]){
  if(config==null)return;
- check(config.kind==='BOOTSTRAP_NATIVE'&&ethers.isAddress(config.source)&&config.source!==ethers.ZeroAddress,'Explicit bootstrap ETH source required');
+ check(['BOOTSTRAP_NATIVE','PROJECT_NATIVE'].includes(config.kind)&&ethers.isAddress(config.source)&&config.source!==ethers.ZeroAddress,'Explicit bootstrap or project ETH source required');
+ if(config.kind==='PROJECT_NATIVE'){
+  check(recipients.length===3&&recipients.every(ethers.isAddress)&&new Set(recipients.map(a=>a.toLowerCase())).size===3&&recipients.every(a=>a!==ethers.ZeroAddress),'Project refill requires three distinct nonzero recipients');
+  check(same(config.source,recipients[1]),'Project refill source must match pinned operations slot1');
+  protectedAddresses=[...protectedAddresses,recipients[0],recipients[2]];
+ }else protectedAddresses=[...protectedAddresses,...recipients];
  check(![sender,...protectedAddresses].some(a=>same(a,config.source)),'Refill source must be separate from execution and custody');
  for(const k of ['minimumBalance','transferGas','maxPerRefill','maxPerPeriod','periodSeconds','cooldownSeconds'])check(typeof config[k]==='string'&&/^(0|[1-9][0-9]*)$/.test(config[k]),'Invalid refill '+k);
  check(BigInt(config.transferGas)>=21000n&&BigInt(config.maxPerRefill)>0n&&BigInt(config.maxPerPeriod)>0n&&BigInt(config.periodSeconds)>0n,'Invalid refill bounds');

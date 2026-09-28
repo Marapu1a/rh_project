@@ -1,0 +1,74 @@
+{
+  "schema": "ops-market-fork-v1",
+  "observedAt": "2026-09-28T11:51:37.413Z",
+  "pins": {
+    "router": "0x57fc55F719DF19B4b90A03F9D78E1177D002E504",
+    "routerHash": "0xf49d04ba34710a0a6bddbf1fbb3580e6b708084205a60e47ccf215af2168405a",
+    "manager": "0xee04c68742e6bf434be8039580d2e89bbe55bc6f",
+    "quote": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+    "weth": "0x0bd7d308f8e1639fab988df18a8011f41eacad73",
+    "permit2": "0x31c2F6fcFf4F8759b3Bd5Bf0e1084A055615c768",
+    "poolId": "0xdde13ccbbcd10c5fc3351c284eabc77114d2a88078eb1cfd20062124e939d4cf"
+  },
+  "transactions": [
+    {
+      "label": "USDG approval bounded",
+      "hash": "0xc9a15192b4a223f5684e20e478c6b01701aff9302d7781e58076f534580e9154",
+      "gasUsed": "57976",
+      "gasPrice": "1015373751",
+      "fee": "58867308587976"
+    },
+    {
+      "label": "Permit2 bounded allowance",
+      "hash": "0x44af251ca430face04d6caae817a28b40314b8b2326faa1fdc83c39c8f0559f9",
+      "gasUsed": "47665",
+      "gasPrice": "1013455746",
+      "fee": "48306368133090"
+    },
+    {
+      "label": "USDG to native ETH atomic",
+      "hash": "0xfff33ba7b652f87d9b91c47730e4314b1e43a0bbc5a6256dad7ef10f5659dad4",
+      "gasUsed": "198876",
+      "gasPrice": "1011776451",
+      "fee": "201218053469076"
+    }
+  ],
+  "assumptions": [
+    "Local31337 only; sandbox native and artificial USDG balance",
+    "Trial swap under snapshot quotes output; not a production quote service",
+    "No deployment source recompilation or production swap executor qualification"
+  ],
+  "stage": "swap-unwrap",
+  "anchor": {
+    "number": 74775375,
+    "hash": "0x40ae72859c6a0307d2d1ac9fb9161c9d09a205c160d8dca3fe1614b7e993b6ef"
+  },
+  "codeHashes": {
+    "router": "0xf49d04ba34710a0a6bddbf1fbb3580e6b708084205a60e47ccf215af2168405a",
+    "manager": "0xc7a718bdecefbe9d1a1708097bc856f9c13d87701f050cedbafcafe01fd42064",
+    "quote": "0x864cc9ad53b338b82da1f7cab85ab0b3d5c8861acb422b6fec63cf36234f36a6",
+    "weth": "0x5706be52f64875fee65a2cec0d80e47a23d8793cbe85d214b48445e2d05f5353",
+    "permit2": "0xb484a796df5e76f7210becfef1660f35acfaac6c9b5e365bef3425f6621c6a5d"
+  },
+  "poolKey": [
+    "0x0Bd7D308f8E1639FAb988df18A8011f41EAcAD73",
+    "0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168",
+    "0x0000000000000000000000000000000000000000",
+    "0xeE04c68742e6Bf434bE8039580D2e89BBE55bc6f",
+    "90",
+    "0x0000000000000000000000000000000000000000000000000000000000010000"
+  ],
+  "liquidity": "4670093564560825",
+  "fundingSlot": "0xa3c1274aadd82e4d12c8004c33fb244ca686dad4fcc8957fc5668588c11d9502",
+  "quotedNative": "3754920360290634",
+  "minOut": "3736145758489180",
+  "estimatedGas": "226066",
+  "actualUsdDebit": "10000000",
+  "actualNativeOut": "3754920360290634",
+  "status": "complete",
+  "proxy": {
+    "requests": 189,
+    "retries": 3,
+    "errors": 0
+  }
+}

@@ -12,7 +12,7 @@ Public signer и public sends по-прежнему закрыты.
 Отдельный заранее пополненный ETH-кошелёк переводит native только на адрес общего
 executor. Нет вызовов контрактов, выбора произвольного получателя, USDG swap или
 вывода из PromoVault. Это bootstrap эксплуатации, не автоматическая окупаемость
-из creator fees. Распределение creator fees и USDG→ETH остаются отдельным шагом.
+из creator fees. Распределение90/5/5 принято; USDG→ETH остаётся отдельным шагом.
 
 Опциональный `nativeRefill` в automation config:
 
@@ -117,3 +117,32 @@ Rehearsal4663 использует Hardhat, ArbSys fixture, историческ
 reserveGasPrice; исправлены тестовые caps и ожидание исходного nonce. Это не изменение
 продуктовых комиссий. Full suite, новый fork и live sends не запускались.
 Локальные логи: `.local/logs/promo-refill-*.log` (не публикуются).
+
+## PROJECT_NATIVE: operations slot1
+
+28.09.2026: дополнительный явный kind PROJECT_NATIVE. source обязан совпадать
+с fundingJob.recipients[1]; все3recipients разные и ненулевые. Источник не может
+совпадать с executor, vault, collector, adapter, controllers, registry или assets/source.
+BOOTSTRAP_NATIVE не получает исключений и по-прежнему запрещает всех recipients.
+Оба режима используют один execute/reconcile: caps с gas, cooldown, EOA проверки,
+main intent/hash/receipt и запрет повторения unknown send. Уже имеющийся ETH source
+может быть внешним пополнением; наличие USDG ещё не означает наличие ETH для refill.
+
+При campaign rollover source сохраняется; handoff переносит history и требует ту же
+nativeRefill policy. Смена адреса/режима не является допустимым способом сбросить caps.
+Реальные параметры9000/500/500bps приняты и записаны в launch plan, но реальные
+EOA ещё не выбраны. Contracts и призовая математика не менялись.
+
+## Проверки пакета PROJECT_NATIVE28.09
+
+- `node --test test/promo-refill-accounting.test.cjs` —5/5, custody/slot1 guards и receipt accounting.
+- `node --test --test-concurrency=1 test/promo-native-refill.test.cjs test/promo-runtime-handoff.test.cjs`
+  —23pass/3fail: новые3fixtures забывали обновить deployment profile после rollover.
+- После исправления только fixture: `node --test --test-name-pattern="project slot1" test/promo-native-refill.test.cjs`
+  —3/3. Production guard не ослабляли; пройденные23 не повторяли.
+- `node --test test/public-launch-checks.test.cjs` —4/4, incomplete launch gate сохранён.
+
+Итого35 разных адресных сценариев подтверждены отдельными запусками, не единый full.
+Новые tests проверяют90/5/5 credits, успешный rollover со стабильным source,
+handoff history и отклонение смены source, нехватку ETH/top-up и unknown/known send.
+Публичная сеть не отправлялась. [Отдельный USDG→ETH fork proof](OPS_MARKET_PROOF.md).

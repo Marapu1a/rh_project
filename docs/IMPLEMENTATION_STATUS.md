@@ -1,5 +1,7 @@
 # Карта реализации
 
+28.09: [PROJECT_NATIVE](PROMO_NATIVE_REFILL.md) — pinned slot1 через общий refill journal; отдельного swap executor пока нет. Приняты9000/500/500bps; [USDG→ETH fork proof](OPS_MARKET_PROOF.md) прошёл, production quote/recovery остаются.
+
 28.09: observer обходит child failures/claimFailures/requests; source/beacon waits и rejected actions больше не дают ложный recovered. [Allocation/ETH design](OPS_REVENUE_FUNDING_DESIGN.md) — только проект; collector/refill/swap реализация не менялась.
 
 28.09: [Ожидания и статус](PROMO_OPERATIONAL_WAITS.md): budget compatibility при prepareRuntime,

@@ -33,14 +33,21 @@
   },
   "roles": {
     "governor": null,
-    "publisherExecutor": null
+    "publisherExecutor": null,
+    "operations": null,
+    "project": null
   },
   "product": {
     "creatorFeeBps": 300,
     "entryThresholdRaw": "100000000",
     "nextStartTargetRaw": "100000000",
     "shortInterval": 21600,
-    "monthlyInterval": 2592000
+    "monthlyInterval": 2592000,
+    "creatorAllocationBps": {
+      "promo": 9000,
+      "operations": 500,
+      "project": 500
+    }
   },
   "timingCandidate": {
     "leadSeconds": "1800",
@@ -52,7 +59,6 @@
   },
   "unresolved": {
     "timingApproval": null,
-    "creatorAllocation": null,
     "shortRules": null,
     "monthlyRules": null,
     "shortWeights": null,

@@ -41,13 +41,12 @@ public sends закрыты. [Recovery admission](RECOVERY_ADMISSION.md) отд�
    chain/block model, future-round timing/finality policy, рабочие адреса/пулы и единый
    профиль. Local31337 guard нельзя просто удалить. Production timing нужно обосновать
    наблюдениями и явно принять; preflight не становится контрактной финальностью.
-2. **Эксплуатационный бюджет.** Утвердить внутренние доли creator fees; подключить
-   долю проекта к ETH refill. [Design](OPS_REVENUE_FUNDING_DESIGN.md) подготовлен:3slots,
-   кандидат90/5/5; следующий пакет — явный project-funded source (стабильный slot1 через
-   кампании) и квалификация USDG→ETH рынка. Доказательство вечной самоокупаемости
-   не является gate; дорогой gas/нехватка ETH дают resumable wait/top-up. [Bootstrap refill](PROMO_NATIVE_REFILL.md) уже подключён
-   к общему Infinity/drand executor с durable recovery в local/rehearsal; USDG→ETH ещё нет. Газ оплачивать
-   из эксплуатационной доли, не frozen/claimable призов. Test100%Promo не релизная экономика.
+2. **Эксплуатационный бюджет.**90/5/5 принято (призы/ops/команда), записано в launch plan.
+   [PROJECT_NATIVE](PROMO_NATIVE_REFILL.md) подключает стабильный slot1 к bounded ETH refill;
+   USDG→ETH [первый fork proof](OPS_MARKET_PROOF.md) прошёл. Далее production read-only
+   quote/estimate, pins и journaled swap/approve recovery в общем ops signer контуре.
+   Дорогой gas/нехватка ETH → resumable wait/top-up; вечная самоокупаемость не gate.
+   Призовые frozen/claimable не расходуются. Public sends закрыты.
 3. **Постоянный сервис.** Ключи и один владелец signer, supervisor, устойчивый несинхронизируемый
    runtime volume, резервные RPC, recovery/runbook и внешний канал уведомлений.
    [Статусы ожидания и события](PROMO_OPERATIONAL_WAITS.md) уже подключены к CLI; delivery пока нет. Неизвестная отправка и stale

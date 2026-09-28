@@ -85,3 +85,23 @@ test('handoff rejects disabling Monthly and a noncanonical RNG anchor before ret
  await assert.rejects(handoffRuntime(f.options,{...next,deliveryJob:{...next.deliveryJob,anchor:{...next.deliveryJob.anchor,hash:ethers.ZeroHash}}}),/RNG anchor mismatch/);assert(!f.read().handoff);
  assert.equal((await handoffRuntime(f.options,next)).status,'complete');
 });
+
+test('project source survives campaign rollover with 90/5/5 credits and history; source migration rejected',async t=>{
+ const f=await fixture(t),source=await (await f.provider.getSigner(3)).getAddress(),team=await (await f.provider.getSigner(4)).getAddress();
+ const recipients=[f.vault.target,source,team],bps=[9000,500,500];
+ await rpc('evm_increaseTime',[101]);await rpc('evm_mine');
+ await sent(f.collector.rollCampaign(1,[(await f.provider.getBlock('latest')).timestamp+100,recipients,bps]));
+ f.options.fundingJob={...f.options.fundingJob,campaignId:'2',recipients,bps};
+ f.options.nativeRefill={kind:'PROJECT_NATIVE',source,minimumBalance:'1000',transferGas:'30000',maxPerRefill:'1000000',maxPerPeriod:'2000000',periodSeconds:'86400',cooldownSeconds:'60'};
+ await runPromoAutomation({...f.options,drain:true});
+ await sent(f.quote.mint(f.collector.target,1000));await sent(f.collector.pull());assert.equal(await f.collector.credit(source),50n);assert.equal(await f.collector.credit(team),50n);
+ const runtime=await prepareRuntime(f.options),history={windowStart:'0',spent:'1234',lastAttemptAt:'123',lastNonce:9};
+ await withState(runtime.files.main,runtime.identity,async(s,save)=>{s.refillHistory=history;save(s);});
+ await rpc('evm_increaseTime',[101]);await rpc('evm_mine');
+ await sent(f.collector.rollCampaign(2,[(await f.provider.getBlock('latest')).timestamp+1000,recipients,bps]));
+ const next={...f.options,statePath:f.directory+'/project-next.json',fundingJob:{...f.options.fundingJob,campaignId:'3'}};
+ await assert.rejects(handoffRuntime(f.options,{...next,nativeRefill:{...next.nativeRefill,source:team}}),/slot1/);
+ await assert.rejects(handoffRuntime(f.options,{...next,fundingJob:{...next.fundingJob,recipients:[recipients[0],team,source]},nativeRefill:{...next.nativeRefill,source:team}}),/preserve refill/);
+ await handoffRuntime(f.options,next);assert.deepEqual(JSON.parse(fs.readFileSync(next.statePath)).refillHistory,history);
+ const before=await f.quote.balanceOf(source);await runPromoAutomation({...next,drain:true});assert.equal(await f.quote.balanceOf(source)-before,50n);
+});

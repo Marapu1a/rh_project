@@ -23,3 +23,16 @@ test('wrong nonce or noncanonical refill receipt never clears intent',async()=>{
 test('actual refill cost above envelope remains accounted and stops further refills',async()=>{
  const f=fixture();f.state.pending.maxDebit='42000';await reconcile(f);assert.equal(f.state.refillHistory.spent,'42110');assert(f.state.refillHalt);assert(!f.state.pending);
 });
+
+test('project refill permits only explicit slot1 and never exempts custody collisions',()=>{
+ const {validate}=require('../scripts/promo-native-refill.cjs'),a=n=>'0x'+n.repeat(40);
+ const recipients=[a('1'),a('2'),a('3')],sender=a('4'),custody=a('5');
+ const config={kind:'PROJECT_NATIVE',source:recipients[1],minimumBalance:'1',transferGas:'30000',maxPerRefill:'1000000',maxPerPeriod:'2000000',periodSeconds:'86400',cooldownSeconds:'0'};
+ validate(config,sender,[custody],recipients);
+ assert.throws(()=>validate({...config,kind:'BOOTSTRAP_NATIVE'},sender,[custody],recipients),/separate/);
+ for(const source of [sender,custody,recipients[0],recipients[2],a('6')])assert.throws(()=>validate({...config,source},sender,[custody],recipients),/slot1|separate/);
+ assert.throws(()=>validate(config,sender,[recipients[1]],recipients),/separate/);
+ assert.throws(()=>validate(config,sender,[],[recipients[0],recipients[1],recipients[1]]),/distinct/);
+ assert.throws(()=>validate(config,sender,[],[recipients[0],recipients[1],ethers.ZeroAddress]),/nonzero/);
+ assert.throws(()=>validate(config,sender,[]),/recipients/);
+});

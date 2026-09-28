@@ -1,69 +1,68 @@
-# Текущий запрос GPT: monitoring fix + creator allocation / ETH funding design
+# Текущий запрос GPT: PROJECT_NATIVE и первый USDG→ETH fork
 
-28.09.2026. Продолжение review3f4d80f. Пользователь одобрил исправление и подготовку
-следующего ограниченного пакета; доли и swap ещё не утверждены.
+28.09.2026. Продолжение cd3ecad; пользователь одобрил пакет и **явно принял90/5/5**:
+90% creator revenue призам,5% operations,5% свободная доля команды. PRODUCT_SPEC и
+planning launch plan обновлены; адреса/газовые caps не подставлялись из fixtures.
 
-## Обязательный контекст для следующих review
+## Сохраняйте эти решения в контексте
 
-После ответа cd3ecad пользователь повторно уточнил: НЕ требуется доказательная
-гарантия покрытия газа доходами. Дорогой gas → ждём; недостаточно ETH → ограниченно
-пополняем либо ждём внешнего пополнения; затем продолжаем с сохранённого состояния.
-Проверяем стоимость и баланс конкретной операции, сохраняем caps и unknown-send
-reconciliation. Не строим прогнозный движок и не ставим разработку в зависимость
-от доказанной самоокупаемости. Призовую казну не трогаем. Доли90/5/5 пока кандидат;
-их выбор не обязан ждать измерений всех будущих расходов.
+Не требуется доказать вечную окупаемость газа. Проверяем стоимость конкретной
+отправки и caps; дорогой gas → ждать, мало ETH → bounded refill или ожидание внешнего
+пополнения, затем продолжать сохранённую работу. Unknown send сначала сверяем.
+Prize frozen/claimable не трогаем. Средняя доходность не гарантирует наличие ETH,
+и мы этого не обещаем. Не возвращайте выбор долей в обязательное исследование:
+90/5/5 принято; будущие изменения — отдельное явное решение.
 
-Из review принято: стабильный slot1/source между кампаниями, поскольку существующий
-handoff запрещает менять nativeRefill policy; отдельная миграция source пока вне scope.
-Официальный WETH/USDG0.01% рынок найден, но его liquidity/pins/исполнение ещё предстоит
-проверить. Подтверждение источника: https://blog.pancakeswap.finance/articles/rh-lp-fees .
+## Что реализовано
 
-Следующий предлагаемый пакет: project-funded native refill из pinned slot1 с прежними
-caps/recovery и тестами rollover/handoff/запретов; отдельно proof реального USDG→ETH
-маршрута на fork. Swap executor после proof. Не требуй замены этого шага новым
-экономическим исследованием без конкретного дефекта безопасности/исполнения.
+`promo-native-refill.cjs` принимает PROJECT_NATIVE только с source=проверяемый
+fundingJob.recipients[1]. Все3recipients разные/ненулевые. Custody/registry/assets,
+executor, slot0/slot2 не получают исключений. BOOTSTRAP_NATIVE сохраняет запрет всех
+recipients. `promo-automation.cjs` отдельно передаёт custody и recipients, не удаляет
+source из общего защитного списка без проверки его роли.
 
-## Что изменено
+Execute/reconcile общий и не изменён: EOA-only native transfer, единственный main
+pending, gas/caps/cooldown, receipt accounting и unknown-send запрет повтора.
+Стабильный slot1 через кампании: handoff уже требует неизменный nativeRefill policy,
+переносит spent/cooldown/halt; миграция source не добавлена. EOA operations имеет
+контроль над его деньгами; caps worker не называем onchain custody гарантией.
+Новый swap executor пока отсутствует, отдельного конкурирующего ops signer нет.
 
-`promo-operational-status.cjs` теперь обходит failures/claimFailures/requests:
-sourceReadUnavailable и beaconUnavailable оставляют waiting; rejected actions —
-attention. Успех другой lane не даёт ложный recovered. roundNotDue нормален.
-При смене одной проблемы на другую — changed; восстановление только после ухода
-распознанных проблем. Никаких новых retries, RNG rounds или денежных действий.
+## Проверки
 
-Адресно18/18: `node --test test/promo-operational-status.test.cjs test/local-rpc-watch.test.cjs`.
-Переходы gas→source/beacon/claim error→recovered, повторы, совместные причины;
-полный suite/fork/live не запускались. Lock окружение повторно не расследовали.
+35 разных адресных сценариев подтверждены отдельными запусками:5 accounting/guards,
+26 refill+handoff,4 public-launch guards. В первом запуске26 было23pass/3fail:
+новые fixtures сменили кампанию, но забыли пересоздать deployment profile. Исправили
+fixtures через штатный createDeploymentProfile; только эти3 перепроверены3/3.
+Admission не ослабляли. Команды/границы: [PROMO_NATIVE_REFILL](PROMO_NATIVE_REFILL.md).
+Full suite и public sends не запускались; повторной охоты за lock environment не было.
 
-## Следующий шаг — пока design
+## Fork: реальный рынок работает
 
-Читайте [OPS_REVENUE_FUNDING_DESIGN](OPS_REVENUE_FUNDING_DESIGN.md).
-Имеющихся slots collector хватает: PromoVault / operations EOA / project EOA.
-Предлагаем90/5/5, сравнили альтернативы и условную окупаемость. Это не параметры
-production;3% Infinity creator fee уже выбраны, внутренние доли ещё нет.
-Спонсоры пополняют PromoVault без fee, prize math не меняется.
+[OPS_MARKET_PROOF](OPS_MARKET_PROOF.md), [evidence](../research/ops-funding/market-fork-2026-09-28.json),
+[script](../scripts/ops-market-fork.cjs). Только in-process31337, upstream read-only.
+Block74775375; pool key/id/assets/liquidity прочитаны, router hash проверен.
+10USDG →0.003754920360290634native ETH, atomic INFI_SWAP+UNWRAP_WETH; USDG debit
+точный, minOut с0.5% trial slippage пройден; двойной minOut отклонён.
 
-Важный стык: существующий bootstrap refill запрещает source=любойrecipient.
-Предлагаем явный project-funded mode для pinned slot1, не удаление защиты целиком.
-Ops signer для swap/refill требует общего nonce/journal/recovery. EOA ключ имеет
-контроль над ops средствами; не называем offchain caps контрактной гарантией.
-Если нет seed ETH даже на swap, нужна внешняя подпитка: USDG сам газ не оплатит.
+Практический нюанс: Pancake Permit2 на4663 —0x31c2F6fcFf4F8759b3Bd5Bf0e1084A055615c768,
+не Uniswap0x0000…BA3. Неправильный адрес дал AllowanceExpired(0), официальный правильный
+адрес подтвердился исполнением. Pool fee field90pips читаем из chain, не по тексту UI.
 
-Нашли официальный кандидат Pancake Infinity UniversalRouter для Robinhood;
-upstream умеет unwrap, но USDG/WETH pool, liquidity, deployed bindings и calldata
-ещё НЕ квалифицированы. Не внедряли произвольный aggregator или непроверенный swap.
-При дорогом gas/нехватке средств ждём, старые обязательства сохраняются.
+Sandbox USDG искусственный, ETH Hardhat; gas цены/суммы не являются оценкой Nitro.
+Trial swap для quote использует snapshot/revert: это только proof, НЕ production
+quote API. Source/immutable audit неполон (Sourcify rate/timeouts); нет утверждения,
+что поведенческий proof заменяет source verification. Thin liquidity/recovery swap
+ещё не протестированы. Все эти границы отмечены в документе.
 
-## Вопросы для review
+## Что проверить и что дальше
 
-1. Остался ли конкретный false-recovered путь в существующих child reports?
-2. Достаточны ли3slots и явный slot1 source mode без новых контрактов? Какие
-   реальные конфликтующие пути остаются при rollover/handoff/source drift?
-3. Есть ли возражения к90/5/5 как кандидату, без обещания гарантированной окупаемости?
-4. Какой подтверждаемый USDG→native ETH рынок доступен на4663? Нужны primary
-   sources/адреса/receipt, не предположение из возможностей upstream router.
-5. Хватает ли предложенного qualification fork до journaled swap executor?
+1. Корректно ли выделен slot1 без обхода custody protection и сброса истории?
+2. Нет ли пропущенной коллизии при campaign/handoff и старых credits?
+3. Подтверждает ли evidence заявленный swap+unwrap, без завышения выводов о стоимости?
+4. Следующий пакет: production read-only quote/estimate и затем bounded journaled
+   approve/swap под тем же ops signer/nonce, после receipt — existing native refill.
+   Предложите конкретный минимальный quote path для этого pool/router, если видите
+   лучший вариант; не новый общий trading/oracle framework.
 
-Не расширять scope до прогнозирования gas, торгового бота или новой призовой модели.
-Ближайший порядок: явный project-funded режим + доказать рынок →
-ограниченный swap executor. Public execution отдельно остаётся закрытым.
+Public execution пока закрыт; никакой чужой капитал для тестов не используется.

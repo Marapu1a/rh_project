@@ -4,9 +4,18 @@ const {prepare,beacon,target}=require('./fixtures/robinhood-obligations.cjs');hr
 const compiled=require('../scripts/compile.cjs').compile({writeArtifacts:false});
 const {setup,rpc}=require('./fixtures/robinhood-runtime.cjs'),{runRobinhoodAutomation:run}=require('../scripts/robinhood-automation.cjs');
 const read=f=>JSON.parse(fs.readFileSync(f.options.statePath));
-async function fixture(t,{freeze=true}={}){
- const f=await setup(t,compiled);if(freeze)await prepare(f);
- f.options.nativeRefill={kind:'BOOTSTRAP_NATIVE',source:await f.other.getAddress(),minimumBalance:'1000000',transferGas:'30000',maxPerRefill:ethers.parseEther('100').toString(),maxPerPeriod:ethers.parseEther('200').toString(),periodSeconds:'86400',cooldownSeconds:'0'};
+async function fixture(t,{freeze=true,project=false}={}){
+ const f=await setup(t,compiled);
+ if(project){
+  const recipients=[f.vault.target,await f.other.getAddress(),await (await f.provider.getSigner(3)).getAddress()],bps=[9000,500,500];
+  await rpc('evm_increaseTime',[101]);await rpc('evm_mine');
+  await (await f.collector.rollCampaign(1,[(await f.provider.getBlock('latest')).timestamp+100,recipients,bps])).wait();
+  f.options.fundingJob={...f.options.fundingJob,campaignId:'2',recipients,bps};
+  f.options.schedulerConfig={...f.options.schedulerConfig,campaignId:'2'};
+  const old=f.options.deploymentProfile;f.options.deploymentProfile=require('../scripts/deployment-admission.cjs').createDeploymentProfile(f.options,{scope:old.scope,executor:old.executor,timing:old.timing,sourceCodeHash:old.pins.source[1]});
+ }
+ if(freeze)await prepare(f);
+ f.options.nativeRefill={kind:project?'PROJECT_NATIVE':'BOOTSTRAP_NATIVE',source:await f.other.getAddress(),minimumBalance:'1000000',transferGas:'30000',maxPerRefill:ethers.parseEther('100').toString(),maxPerPeriod:ethers.parseEther('200').toString(),periodSeconds:'86400',cooldownSeconds:'0'};
  f.options.refillSigner=f.other;f.options.drain=true;
  await rpc('hardhat_setBalance',[f.owner,'0x0']);return f;
 }
@@ -117,4 +126,21 @@ test('coherent higher child floors: expensive gas waits across restart then refi
  await runWatch({pass,observe,emit,pollMs:1});const resumed=events.at(-1);assert.equal(resumed.operational.event.type,'recovered',JSON.stringify(resumed));
  for(const action of ['finishShort','finishMonth','claim'])assert(resumed.steps.some(s=>s.action===action),JSON.stringify(resumed));
  assert(await f.provider.getBalance(f.owner)>=BigInt(floor));assert.equal(await f.vault.claimable(f.quote.target),0n);
+});
+
+for(const known of [true,false])test('project slot1 '+(known?'known':'unknown')+' send preserves recovery without duplicate refill',async t=>{
+ const f=await fixture(t,{project:true}),real=f.other;
+ const signer=new Proxy(real,{get(t,k){if(k==='sendTransaction')return async request=>{const tx=await real.sendTransaction(request);if(!known)throw Object.assign(Error('lost response'),{code:'ECONNRESET'});return {hash:tx.hash,wait:async()=>{throw Object.assign(Error('timeout'),{code:'TIMEOUT'});}};};return Reflect.get(t,k);}});
+ await run({...f.options,refillSigner:signer},{getBeacon:beacon});assert(read(f).pending);
+ const nonce=await f.provider.getTransactionCount(real.address),next=await run(f.options,{getBeacon:beacon});
+ assert.equal(await f.provider.getTransactionCount(real.address),nonce);
+ if(known){assert(!read(f).pending);assert(next.steps.some(s=>s.action==='finishMonth'),JSON.stringify(next));}else assert.equal(next.reason,'unknownHash');
+});
+test('project slot1 empty source waits then top-up completes frozen obligations without spending USDG',async t=>{
+ const f=await fixture(t,{project:true}),source=f.options.nativeRefill.source;
+ await rpc('hardhat_setBalance',[source,'0x0']);const usdBefore=await f.quote.balanceOf(source);
+ assert.equal((await run(f.options,{getBeacon:beacon})).results.refill.reason,'refillBudget');
+ await rpc('hardhat_setBalance',[source,ethers.toQuantity(ethers.parseEther('100'))]);
+ const r=await run(f.options,{getBeacon:beacon});assert.equal(r.results.refill.status,'confirmed',JSON.stringify(r));
+ assert(r.steps.some(s=>s.action==='finishMonth'));assert.equal(await f.quote.balanceOf(source),usdBefore);
 });

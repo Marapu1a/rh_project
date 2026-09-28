@@ -1,7 +1,7 @@
 # Creator revenue → эксплуатация → ETH: проект решения
 
-28.09.2026. **Design, не реализация и не утверждённые параметры.** Выбранная
-creator fee Infinity — 3%; внутреннее распределение ещё нужно принять.
+28.09.2026. **90/5/5 принято пользователем; маршрут конверсии ещё квалифицируется.** Выбранная
+creator fee Infinity — 3%; внутреннее распределение9000/500/500bps принято28.09.2026.
 Действующие правила призов остаются в [PRODUCT_SPEC](PRODUCT_SPEC.md).
 
 ## Минимальная схема
@@ -34,15 +34,15 @@ units остаются до rollover, при финализации остато
 перераспределения остатков пока нет. Команда может добровольно пополнить PromoVault
 из своей свободной доли обычным funding-вызовом.
 
-## Варианты долей — требуют решения
+## Принятые доли и рассмотренные альтернативы
 
 | Вариант | Призы | Эксплуатация | Свободная доля | Комментарий |
 |---|---:|---:|---:|---|
-| Предлагаемый старт | 90% | 5% | 5% | Сохраняет прежний кандидат90% призам |
+| Принятый старт | 90% | 5% | 5% | Сохраняет прежний кандидат90% призам |
 | Больший запас газа | 90% | 7% | 3% | Запас за счёт команды |
 | При дорогой эксплуатации | 85% | 10% | 5% | Уже уменьшает призовой бюджет |
 
-Это не production config. Тестовые100%Promo также не релизная экономика.
+90/5/5 внесены в planning launch profile; реальные адреса и gas caps ещё не выбраны. Тестовые100%Promo также не релизная экономика.
 Для90/5/5 и условного R=3%V получаем:
 
 | V в сутки, условная база creator fee | R USDG | Призы | Operations | Команда |
@@ -76,7 +76,7 @@ refill и обслуживание draws/claims. Сервер/RPC подписк
 на тот же operations EOA → существующая логика ограниченного refill executor.
 Предпочтителен независимый от нашего TOKEN рынок USDG/WETH: его можно проверить
 до выпуска токена. PancakeSwap официально перечисляет [WETH/USDG0.01%](https://blog.pancakeswap.finance/articles/rh-lp-fees)
-на Robinhood; текущая ликвидность и исполнимый маршрут нами ещё не проверены.
+на Robinhood; [первый локальный fork proof](OPS_MARKET_PROOF.md) подтвердил swap+unwrap10USDG→ETH; production quote/recovery ещё не готовы.
 
 Worker конвертирует ограниченную exact-input порцию при потребности в ETH, а не
 пытается поймать выгодный курс. После receipt читает фактический ETH и только затем
@@ -90,15 +90,13 @@ all-in стоимость операции не более2% batch. Это НЕ 
 исполнение, но не доказывают справедливость курса и не исключают MEV. Сравнение
 маленькой и полной котировки может показать price impact, но не заменяет oracle.
 
-## Что мешает подключить это прямо сейчас
+## Разделение bootstrap и project-funded refill
 
-`promo-native-refill.cjs` поддерживает BOOTSTRAP_NATIVE и запрещает source совпадать
-с любым funding recipient; `promo-automation.cjs` передаёт туда все slots.
-Просто назначить slot1 текущим refill source нельзя.
+Первоначальный BOOTSTRAP_NATIVE запрещает source совпадать с любым funding recipient.
+BOOTSTRAP_NATIVE по-прежнему не разрешает slot1; новый явный PROJECT_NATIVE допускает только pinned slot1, сохраняя custody exclusions.
 
-Предлагаем отдельный явный режим project-funded source, равный pinned slot1:
-сохранить запреты для PromoVault, custody, slot2 и executor, не выключать защиту
-списком целиком. Operations swap и refill должны иметь общий владелец nonce,
+Реализован PROJECT_NATIVE, равный pinned slot1: сохранены запреты для PromoVault,
+custody, slot2 и executor; защиты не отключаются списком целиком. Operations swap и refill должны иметь общий владелец nonce,
 lock и durable intent/hash/receipt recovery; unknown send запрещает повтор.
 Текущий handoff требует идентичную nativeRefill policy и переносит refillHistory.
 Поэтому slot1/source сохраняем между кампаниями, включая rollover с новыми bps.
@@ -117,12 +115,12 @@ Operations должен сохранять seed ETH для approve/swap. Есл�
 При source drift текущий obligations-only блокирует всю funding lane: contract pay
 доступен, но worker не обещает автоматически получать новые ops USDG в этом режиме.
 
-## Кандидат маршрута и доказательства
+## Маршрут и доказательства
 
 Официальный [список PancakeSwap router deployments](https://github.com/pancakeswap/pancake-developer/blob/master/docs/pages/contracts/universal-router/addresses.md)
 указывает Robinhood Infinity UniversalRouter
 `0x57fc55F719DF19B4b90A03F9D78E1177D002E504`.
-Это документированный кандидат, НЕ проверенный нами bytecode или готовый рынок.
+Теперь его runtime hash и исполнение проверены на [локальном fork](OPS_MARKET_PROOF.md); полный source/immutable audit и production integration ещё не закрыты.
 Он отличается от исследованного PAIR buy adapter
 `0x6ace84c6d8d286e55933774bce9c97ab7a107df5`.
 
@@ -147,8 +145,8 @@ Operations должен сохранять seed ETH для approve/swap. Есл�
    проверка дорогого gas, нулевой ликвидности, reboot/unknown receipt и нехватки ETH.
 5. Отдельно qualifier публичного RPC, реальные ключи/профиль и public activation.
 
-Ближайший реализуемый пакет после выбора долей: явный slot1 project-funded режим
-и адресные recovery tests, параллельно read-only/fork qualification рынка. Swap
+PROJECT_NATIVE реализован, адресные recovery tests прошли;
+[Fork qualification](OPS_MARKET_PROOF.md) документируется отдельно. Swap
 включать лишь после успешного доказательства маршрута; без него остаётся bootstrap.
 
 ## Решение пользователя: критерий готовности и следующий пакет
@@ -159,10 +157,10 @@ Operations должен сохранять seed ETH для approve/swap. Есл�
 сверяем. Призы не расходуются на эксплуатацию, финансовых гарантий не обещаем.
 Проверка estimate/balance/caps конкретной отправки остаётся обязательной; расчёт
 экономики помогает выбрать параметры, но не блокирует разработку до доказательства
-окупаемости.90/5/5 всё ещё кандидат, а не молчаливо утверждённые доли.
+окупаемости.90/5/5 явно утверждены пользователем28.09.2026.
 
-Следующий пакет предлагаем ограничить явным project-funded refill из стабильного
-slot1 (ETH уже на source) и отдельным read-only/fork proof USDG→ETH рынка.
+Текущий пакет: явный project-funded refill из стабильного
+slot1 (ETH уже на source) и отдельный read-only/fork proof USDG→ETH рынка.
 Проверки режима: разрешённый slot1, запреты custody/slot2/executor и подмены source,
 rollover с прежним source, handoff с сохранением spent/cooldown, shortage→top-up→resume,
 unknown send без повтора. BOOTSTRAP_NATIVE сохраняет прежние ограничения.
