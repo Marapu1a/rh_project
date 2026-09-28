@@ -47,7 +47,10 @@ public sends закрыты. [Recovery admission](RECOVERY_ADMISSION.md) отд�
    реализованы и проверены на новом fork. [Journaled collect/approve/swap](OPS_MARKET_EXECUTOR.md) реализован; credit→market→refill
    прошёл fork, coordinator/продвижение старых обязательств проверены отдельно. Funding пакет закрыт.
    Составная [релизная репетиция](RELEASE_REHEARSAL.md) пройдена с явными fixture-границами.
-   Следующий пакет: release profile/параметры и RPC; same-chain automatic proof ещё открыт.
+   Отчёт release profile подготовлен: обязательные поля и конфликты решений видны.
+   Следующий пакет: выбрать численные Short/Monthly и эксплуатационные параметры;
+   для RPC нужен другой archive endpoint (official повторно не прошёл history).
+   Same-chain automatic proof ещё открыт.
    GPT делает [review без запуска тестов](REVIEW_TESTING.md); повторная диагностика
    его окружения не является условием продолжения.
    Дорогой gas/нехватка ETH → resumable wait/top-up; вечная самоокупаемость не gate.

@@ -1,9 +1,42 @@
-// Intentionally not a deployment script. No signer, RPC, transaction or approval.
-const fs=require('node:fs');
-function inspectPlan(p){
- if(p?.schema!=='robinhood-launch-plan-v1'||p.status!=='incomplete-not-executable'||p.network?.chainId!==4663||p.controllers?.cutoffMode!=='FINALIZED_CHECKPOINT'||p.publicExecutionEnabled!==false)throw Error('Explicit incomplete Robinhood plan required');
- const missing=[];for(const section of ['contracts','roles','unresolved'])for(const [name,value] of Object.entries(p[section]||{}))if(value===null)missing.push(section+'.'+name);
- return {schema:p.schema,missing,publicLaunchReady:false,executable:false,reason:'Resolve settings, export complete pinned deployment profile and qualify public executor before release'};
+// Planning inspection only. No signer, RPC, transaction or authorization.
+const fs = require('node:fs');
+const REQUIRED = {
+ contracts: ['token', 'registry', 'vault', 'short', 'monthly', 'adapter', 'collector', 'pairSource', 'buyPolicySource', 'pool', 'quote'],
+ roles: ['governor', 'publisherExecutor', 'operations', 'project'],
+ unresolved: ['timingApproval', 'shortRules', 'monthlyRules', 'shortWeights', 'minimumUnitRaw', 'maxShortBudgetRaw', 'rulesNoticeSeconds', 'maxGasPrice', 'controllerNativeFloor', 'archiveRpc', 'durableRuntime', 'nativeRefill'],
+};
+const ACCEPTED = {
+ 'product.creatorFeeBps': 300,
+ 'product.entryThresholdRaw': '100000000',
+ 'product.nextStartTargetRaw': '100000000',
+ 'product.shortInterval': 21600,
+ 'product.monthlyInterval': 2592000,
+ 'product.creatorAllocationBps.promo': 9000,
+ 'product.creatorAllocationBps.operations': 500,
+ 'product.creatorAllocationBps.project': 500,
+};
+const get = (p, path) => path.split('.').reduce((v, key) => v?.[key], p);
+const absent = value => value == null || value === '';
+function inspectPlan(p) {
+ if (p?.schema !== 'robinhood-launch-plan-v1' || p.status !== 'incomplete-not-executable' || p.network?.chainId !== 4663 || p.controllers?.cutoffMode !== 'FINALIZED_CHECKPOINT' || p.publicExecutionEnabled !== false) throw Error('Explicit incomplete Robinhood plan required');
+ const settings = Object.entries(REQUIRED).flatMap(([section, names]) => names.map(name => {
+  const path = section + '.' + name;
+  const category = section === 'contracts' ? 'deployment-derived' : section === 'roles' ? 'owner-choice' : ['archiveRpc', 'durableRuntime', 'nativeRefill'].includes(name) ? 'operational-qualification' : 'owner-choice';
+  return {path, category, status: absent(get(p, path)) ? 'missing' : 'provided-not-verified'};
+ }));
+ const accepted = Object.entries(ACCEPTED).map(([path, expected]) => ({path, expected, matches: get(p, path) === expected}));
+ return {
+  schema: p.schema,
+  missing: settings.filter(row => row.status === 'missing').map(row => row.path),
+  accepted, conflicts: accepted.filter(row => !row.matches).map(row => row.path), settings,
+  timing: {status: 'candidate-not-qualified', candidate: p.timingCandidate ?? null, approvalPresent: !absent(p.unresolved?.timingApproval)},
+  requiredEvidence: ['pinned-deployment-admission', 'rpc-history-and-repeatable-buy-replay', 'production-timing-observations-and-approval', 'durable-service-and-key-custody', 'same-chain-automatic-cycle'],
+  publicLaunchReady: false, executable: false,
+  reason: 'Provided values are not verified. Complete the pinned deployment profile and independent qualification; this report never authorizes execution',
+ };
 }
-if(require.main===module){try{console.log(JSON.stringify(inspectPlan(JSON.parse(fs.readFileSync(process.argv[2]||'config/robinhood-launch-plan.json','utf8'))),null,2));}catch(e){console.error(e.message);process.exitCode=1;}}
-module.exports={inspectPlan};
+if (require.main === module) {
+ try { console.log(JSON.stringify(inspectPlan(JSON.parse(fs.readFileSync(process.argv[2] || 'config/robinhood-launch-plan.json', 'utf8'))), null, 2)); }
+ catch (e) { console.error(e.message); process.exitCode = 1; }
+}
+module.exports = {inspectPlan};

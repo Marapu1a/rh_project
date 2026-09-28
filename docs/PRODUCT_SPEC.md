@@ -326,7 +326,7 @@ terminal/проверяемого empty старой. Старые attempts по
 
 ## 11. Открытые продуктовые параметры
 
-До deployment остаётся выбрать creator shares, формулу Short budget D, K/weights/m,
+Creator shares90/5/5 уже приняты28.09. До deployment остаётся выбрать формулу Short budget D, K/weights/m,
 численные параметры допуска Short/Monthly, минимальную готовность и execution budgets.
 Пример из исследования не является утверждённым значением. Старые таблицы кандидатов
 сохранены в [снимке спецификации](archive/snapshots/PRODUCT_SPEC_2026-09-19.md).

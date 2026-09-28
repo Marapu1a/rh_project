@@ -108,3 +108,19 @@ HTTP request-id заново выполнены все8. Profile `public-rpc` н
 Проверяются отказ RPC/timeout/request budget, mismatch provenance/logs/runtime,
 недоступный finalized/state, стабильность повторного чтения и реальный scan/replay
 с idempotency. Нет публичных транзакций, нового fork или изменения контрактов.
+
+## Обновление для release profile, 28.09 15:38 UTC
+
+[Новый read-only отчёт](../research/public-deployment/rpc-release-profile-2026-09-28.json):
+official endpoint, depths0/10000/864000, budget150requests, фактически136requests.
+Три полных блока и117receipts доступны, logs совпали; eth_getCode USDG на всех
+трёх высотах отказал с -32000. До call/storage в этих samples проверка не дошла.
+`sampledDataAvailable=false`, BUY replay не запускался без reference manifest.
+Суммарное время отдельных запросов28.774s, это не wall-clock и не оценка тарифа.
+
+Команда: `node scripts/public-rpc-qualification.cjs .local/logs/release-profile-rpc-config.json .local/logs/release-profile-rpc-refresh.json`;
+config: `{"depths":[0,10000,864000],"maxRequests":150}`. RPC/default endpoint — official;
+нет signer, sends, retries или платной подписки. Отрицательный результат не требует
+повторять тот же прогон: следующий инфраструктурный шаг — доступ к другому archive
+endpoint и проверка тем же инструментом. Provider ещё не выбран. Один успешный будущий
+sample сам по себе не квалифицирует всю историю, тариф или SLA.

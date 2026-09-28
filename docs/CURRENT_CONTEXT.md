@@ -1,5 +1,7 @@
 # Текущий контекст
 
+28.09 release profile: [отчёт запуска](PUBLIC_CONTROLLERS.md) разделяет принятые решения/выбор владельца/deployment/эксплуатационную проверку, ловит удалённые обязательные поля и конфликты экономики. Заполненность НЕ означает qualification. 13 адресных tests passed, не full. [Свежая RPC-проба](PUBLIC_RPC_QUALIFICATION.md): official отдаёт блоки/117receipts, но historical code отказал на3высотах; archive RPC всё ещё нужен. Далее выбрать численные Short/Monthly правила и эксплуатационные параметры, получить archive endpoint; same-chain proof/public gate остаются открыты/закрыт соответственно.
+
 28.09 решение пользователя: [GPT выполняет review без запуска тестов](REVIEW_TESTING.md), проверки выполняет Codex. Повторный GPT lock-прогон отменён и не блокирует следующий пакет: release profile/параметры и RPC. Причина сообщённого EEXIST остаётся неизвестной; новых продуктовых проверок в этом docs-only шаге нет.
 
 28.09 review 50704b7: [разбор funding lock](REHEARSAL_LOCK_INVESTIGATION.md). Сообщённый GPT EEXIST не воспроизведён: Windows baseline + Windows/Linux9p/Linuxext4 с усиленным runner complete, в каждом23/23 lock acquire/release без конфликтов; lock unit9/9. Причина GPT failure НЕ установлена, нужны полный failed JSON и trace. Runner теперь проверяет обе суммы/receipts/уникальность claims и сохраняет failure snapshot; найден и исправлен отдельный ENOENT отсутствующей.local при внешнем output. Lock/runtime/контракты не менялись. Просьба сравнить failing trace отменена последующим решением пользователя выше.

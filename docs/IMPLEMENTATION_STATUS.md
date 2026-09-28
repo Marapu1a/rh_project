@@ -252,3 +252,10 @@ fresh-process comparison и optional `scanWithRpc`/replay.
 и simulated source health; `local-promo-scheduler.cjs` — frozen commitments без повторного
 BUY policy admission, строгий фильтр unfrozen jobs. `test/robinhood-recovery.test.cjs`,
 profile `robinhood-recovery`. [Границы и проверки](RECOVERY_ADMISSION.md).
+
+## Release profile report28.09
+
+`scripts/public-launch-plan.cjs`: фиксированный список обязательных полей,
+классификация источника решения, сверка принятых значений и честный статус
+provided-not-verified. Не admission и не deployment tool. Два новых сценария в
+`test/public-launch-checks.test.cjs`; [детали](PUBLIC_CONTROLLERS.md).

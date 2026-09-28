@@ -52,7 +52,7 @@ executable/publicLaunchReady=false. Не заполнять его адреса�
 Уже зафиксированы chain4663, Infinity creator fee300bps, USDG6 decimals, entry100USDG,
 Next target100USDG, интервалы6h/30days, FINALIZED_CHECKPOINT. USDG address/runtime hash
 перечитан на реальной сети. Token/pool/source/наши contracts/roles пока null.
-Timing1800/30/5/1200/15 — только кандидат. Internal creator allocation, параметры корзины,
+Timing1800/30/5/1200/15 — только кандидат. Creator allocation90/5/5 принято. Параметры корзины,
 notice, gas caps, archiveRPC, durable runtime и refill явно перечислены как unresolved.
 
 Deployment admission для public scope дополнительно проверяет chain4663,
@@ -125,3 +125,29 @@ override не вызывался; mining после checkpoint стандарт�
 не удалять массовой заменой. Перед включением отправок нужны реальные deployment/roles,
 archive RPC, принятые timing/экономические параметры и эксплуатационный native budget.
 Полный Short + Monthly + empty/recovery на реальной интеграции остаётся релизным условием.
+
+## Отчёт профиля запуска 28.09
+
+`node scripts/public-launch-plan.cjs` теперь сверяет принятые продуктовые значения
+и перечисляет обязательные поля даже при их удалении из JSON. `conflicts` показывает
+расхождение с принятыми значениями; `missing` — незаполненные обязательные поля.
+Заполненное поле имеет статус `provided-not-verified`: этот инструмент не валидирует
+адреса, типы всех настроек, bytecode или подлинность approval и не заменяет admission.
+Даже полностью заполненный план всегда имеет executable/publicLaunchReady=false.
+
+| Категория | Уже известно / следующий источник |
+|---|---|
+| Принятые решения | Infinity3%, 90/5/5, entry100USDG, Next100USDG, Short6h / Monthly30days; сверяются с планом |
+| Deployment-derived | TOKEN, pool, source, наши contracts и runtime pins получают из настоящего deployment, не из fork; quote pin нужно перепроверить |
+| Owner-choice | Адреса ролей, Short/Monthly rules, weights/minimumUnit/maxBudget, notice, gas caps/native floor; timing принимается после наблюдений |
+| Operational-qualification | Archive RPC, durable runtime и refill policy: нужны конфигурация и проверка, не просто непустая строка |
+| Независимое evidence | Полный pinned admission, history/repeated BUY replay, timing, сервис/ключи и единый автоматический цикл |
+
+Timing остаётся `candidate-not-qualified` даже при наличии записи approval: отчёт
+не устанавливает её подлинность и не подменяет измерения. Отдельные параметры нельзя
+молча взять из fixtures. Monthly30days — текущий контрактный интервал, не календарная дата.
+
+Проверки на рабочем дереве поверх2616d17/830bf84: фильтр
+`node --test --test-name-pattern="launch plan|launch report|filled planning|archive probe|missing historical" test/public-launch-checks.test.cjs`
+—5/5; `node --test test/public-rpc-qualification.test.cjs` —8/8. Это13 адресных
+сценариев, не full baseline; Solidity и правила выплат не менялись.

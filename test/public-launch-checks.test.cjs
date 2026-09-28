@@ -21,6 +21,25 @@ test('launch plan names unresolved settings and cannot authorize deployment',()=
  const p=require('../config/robinhood-launch-plan.json'),r=inspectPlan(p);assert(r.missing.includes('contracts.token'));assert(r.missing.includes('unresolved.timingApproval'));assert.equal(r.executable,false);assert.equal(r.publicLaunchReady,false);
  assert.throws(()=>inspectPlan({...p,publicExecutionEnabled:true}));
 });
+test('launch report retains deleted requirements and flags changes to accepted economics',()=>{
+ const p=structuredClone(require('../config/robinhood-launch-plan.json'));
+ delete p.contracts.token; delete p.roles; delete p.unresolved.archiveRpc;
+ p.product.creatorAllocationBps={promo:8000,operations:1000,project:1000};
+ const r=inspectPlan(p);
+ for(const name of ['contracts.token','roles.operations','unresolved.archiveRpc']) assert(r.missing.includes(name));
+ assert.deepEqual(r.conflicts,['product.creatorAllocationBps.promo','product.creatorAllocationBps.operations','product.creatorAllocationBps.project']);
+ assert.equal(r.settings.find(x=>x.path==='contracts.token').category,'deployment-derived');
+ assert.equal(r.settings.find(x=>x.path==='unresolved.archiveRpc').category,'operational-qualification');
+});
+test('filled planning fields and timing approval never qualify release',()=>{
+ const p=structuredClone(require('../config/robinhood-launch-plan.json'));
+ for(const section of ['contracts','roles','unresolved']) for(const key of Object.keys(p[section])) p[section][key]='unverified';
+ const r=inspectPlan(p);
+ assert.deepEqual(r.missing,[]); assert.deepEqual(r.conflicts,[]);
+ assert(r.settings.every(x=>x.status==='provided-not-verified'));
+ assert.equal(r.timing.approvalPresent,true); assert.equal(r.timing.status,'candidate-not-qualified');
+ assert.equal(r.publicLaunchReady,false); assert.equal(r.executable,false);
+});
 test('public wrappers refuse the local chain while local controllers remain available',async()=>{
  const compiled=require('../scripts/compile.cjs').compile({writeArtifacts:false});const f=await require('./fixtures/local-controllers.cjs').fixture(compiled);
  const base={vault:f.vault.target,registry:f.registry.target,instance:ethers.id('wrong chain'),governor:await f.admin.getAddress(),publisher:await f.admin.getAddress(),provider:f.random.target,notice:3600,cutoffDelayBlocks:1,maxGasPrice:1000000000,nativeFloor:0};

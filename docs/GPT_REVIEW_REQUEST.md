@@ -43,3 +43,20 @@ Codex перед public admission. Same-chain automatic proof остаётся �
 Газовую модель и вечную самоокупаемость не открываем заново: дорогой gas или нехватка
 ETH означают resumable wait/top-up; frozen/claimable не расходуются на эксплуатацию.
 Не предлагай новый слой или заглушку без конкретной необходимости для релиза.
+
+## Новый пакет: отчёт release profile и свежий RPC sample
+
+Обновлены `scripts/public-launch-plan.cjs` и `test/public-launch-checks.test.cjs`.
+Раньше удаление обязательного поля убирало его из missing; теперь перечень фиксирован.
+Есть категории settings, accepted/conflicts и постоянные false execution flags.
+Заполненные поля не проверяются на корректность этим planning tool: это задача
+полного admission/qualification. Approval-строка не превращает timing в доказанный.
+
+13 адресных сценариев прошли:5 launch/history и8 RPC qualification. Контракты не менялись.
+Новый report `research/public-deployment/rpc-release-profile-2026-09-28.json`:
+official136requests,3 полных блока/117receipts доступны, historical code -32000 на всех
+трёх высотах. Это конкретный незакрытый archive доступ, а не повод снова писать probe.
+
+Проверь статически, не смешали ли мы принятые параметры с кандидатами, не выдали ли
+заполненность за admission; предложи компактный следующий пакет выбора численных
+Short/Monthly параметров. Тесты не запускай. Газовую модель не открываем заново.
