@@ -19,7 +19,10 @@ function validateConfig(c,rpcUrl){
   validateManifest(c.manifest);network.checkChain(c.manifest.chainId);check(c.lifecycle.schema==='attempt-lifecycle-v4','Lifecycle v4 required');
   if(network.isRobinhood())check(c.cutoffMode==='FINALIZED_CHECKPOINT','Public checkpoint mode required');
   if(c.buyPolicy)check(c.buyPolicy.genesisHash===hash(c.manifest)&&String(c.buyPolicy.chainId)===String(c.manifest.chainId)&&c.buyPolicy.instanceId===c.lifecycle.instanceId,'BUY policy binding mismatch');
-  check(BigInt(c.campaignId)>0n&&BigInt(c.shortBudget)>0n,'Invalid campaign/budget');
+  check(BigInt(c.campaignId)>0n,'Invalid campaign');
+  check(c.shortBudgetMode===undefined||['FIXED','FREE_SHORT'].includes(c.shortBudgetMode),'Invalid Short budget mode');
+  if(c.shortBudgetMode==='FREE_SHORT')check(c.shortBudget===undefined,'FREE_SHORT cannot contain a fixed budget');
+  else check(BigInt(c.shortBudget)>0n,'Invalid campaign/budget');
   check(Number.isInteger(c.chunkSize)&&c.chunkSize>0&&c.chunkSize<=64,'Invalid chunk size');
   network.checkRpc(rpcUrl);
   return domainFor(c.manifest,c.lifecycle);
@@ -33,14 +36,20 @@ async function pendingSigner(provider,signers){
 }
 const ruleObject=r=>Object.fromEntries(['version','pNumerator','pDenominator','hNumerator','hDenominator'].map(k=>[k,Number(r[k])]));
 // Derive requests from pinned config and chain policy, never mutable job fields.
-function datasetInput(kind,config,manifest,policy,epoch,cutoff,configHash){
+function datasetInput(kind,config,manifest,policy,epoch,cutoff,configHash,shortBudget=config.shortBudget){
   const isShort=kind==='SHORT';
   const identity=hash({config:configHash,kind,cutoff:cutoff.hash,epoch:String(epoch)});
   const drawId=drawIdFor(kind,identity);
   return {identity,drawId,input:{manifest,lifecycle:config.lifecycle,rules:ruleObject(policy.outcome),
     ...(isShort?{weights:Array.from(policy.weights,String),minimumUnit:String(policy.minimumUnit)}:{}),
-    request:isShort?{drawId,campaignId:config.campaignId,rulesEpoch:String(epoch),cutoffBlockNumber:cutoff.number,cutoffBlockHash:cutoff.hash,budget:config.shortBudget}:
+    request:isShort?{drawId,campaignId:config.campaignId,rulesEpoch:String(epoch),cutoffBlockNumber:cutoff.number,cutoffBlockHash:cutoff.hash,budget:shortBudget}:
       {drawId,campaign:config.campaignId,rulesEpoch:String(epoch),cutoff:cutoff.number,cutoffHash:cutoff.hash}}};
+}
+async function shortBudgetAt(config,source,provider,blockTag){
+  if(config.shortBudgetMode!=='FREE_SHORT')return config.shortBudget;
+  check(await source.maxBudget({blockTag})===ethers.MaxUint256,'FREE_SHORT requires uncapped controller');
+  const vault=new ethers.Contract(await source.datasetVault({blockTag}),['function freeShort() view returns(uint256)'],provider);
+  return String(await vault.freeShort({blockTag}));
 }
 async function tickKind(kind,o,state,save){
   const {provider,config,publisher,executor,signal}=o,isShort=kind==='SHORT',source=isShort?o.short:o.monthly;
@@ -136,7 +145,8 @@ async function tickKind(kind,o,state,save){
       const epoch=BigInt(epochs.drainingEpoch||epochs.currentEpoch);
       const policy=await source[isShort?'shortEpochPolicy':'monthlyEpochPolicy'](epoch,{blockTag:cutoff.blockNumber});
       const rebuiltInput=datasetInput(kind,config,historical.manifest,policy,epoch,
-        {number:cutoff.blockNumber,hash:cutoff.blockHash},state.configHash);
+        {number:cutoff.blockNumber,hash:cutoff.blockHash},state.configHash,
+        isShort?await shortBudgetAt(config,source,provider,cutoff.blockNumber):undefined);
       const rebuilt=(isShort?sd:md).buildFromHistory({...rebuiltInput.input,blocks});
       check(hash(rebuilt)===hash(a),'Stored job differs from independent replay');
       if(isShort)check(selected.job.proposalId===ethers.id('scheduler proposal '+rebuiltInput.identity),'Stored proposal identity differs from replay');
@@ -192,8 +202,10 @@ async function tickKind(kind,o,state,save){
   if(BigInt(epochs.drainingEpoch||epochs.currentEpoch)!==epoch)return wait('finalizedPolicyBoundary');
   const open=ledger.wallets.some(w=>w[kind].byEpoch.some(e=>BigInt(e.epoch)===epoch&&BigInt(e.open)>0n));
   if(!open&&!draining){if(state.cutoffs?.[kind]){delete state.cutoffs[kind];save(state);}return wait('empty');}
-  const {identity,drawId,input}=datasetInput(kind,config,buyManifest,policy,epoch,cutoffHead,state.configHash);
-  if(isShort&&open)check(BigInt(config.shortBudget)<=await source.maxBudget(at),'Configured Short budget exceeds controller limit');
+  const budget=isShort?await shortBudgetAt(config,source,provider,cutoffHead.number):undefined;
+  if(isShort&&open&&config.shortBudgetMode==='FREE_SHORT'&&BigInt(budget)/Array.from(policy.weights).reduce((a,b)=>a+b,0n)<policy.minimumUnit)return wait('prizeFunding');
+  const {identity,drawId,input}=datasetInput(kind,config,buyManifest,policy,epoch,cutoffHead,state.configHash,budget);
+  if(isShort&&open)check(BigInt(budget)<=await source.maxBudget(at),'Configured Short budget exceeds controller limit');
   const artifact=(isShort?sd:md).buildFromHistory({...input,blocks});
   const entry=artifact.schema.includes('empty-epoch')?{empty:artifact,input}:
     {job:isShort?sw.makeJob(artifact,ethers.id('scheduler proposal '+identity),config.chunkSize):mw.makeMonthlyJob(artifact,config.chunkSize)};

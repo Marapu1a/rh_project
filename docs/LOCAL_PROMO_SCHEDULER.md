@@ -203,3 +203,40 @@ begin отвергается chain commitment проверкой. Соседни
 повторные циклы, closeEmpty, cutoff expiry/reorg, policy activation/finality lag,
 завершение frozen после неизвестного adapter и unknown-send остановки.
 Syntax, локальные ссылки и git diff --check прошли.
+
+## FREE_SHORT — решение без верхнего потолка28.09
+
+Новый профиль scheduler: `shortBudgetMode: "FREE_SHORT"`, без `shortBudget`.
+Исторические конфиги без mode (или FIXED) сохраняют прежний фиксированный бюджет.
+FREE_SHORT требует `source.maxBudget() == uint256.max`: скрытый ceiling не обрезает D,
+а блокирует несовместимый профиль. Это полный uint256 диапазон, не экономический лимит.
+
+D берётся из `vault.freeShort()` на закреплённом cutoff block. Если не хватает на
+корзину текущей epoch, worker ждёт prizeFunding без публикации задания. Полученный
+бюджет входит в artifact/commitment и сохраняется до отправки. При restart до begin
+бюджет восстанавливается чтением того же исторического блока, а не свежего баланса.
+Недоступная история/reorg не превращается в новый произвольный бюджет. Поступления
+после cutoff остаются для следующего draw; frozen/claimable не входят в freeShort.
+Прямые ещё не синхронизированные transfers станут free только после обычного sync.
+
+Проверки28.09: два новых FREE_SHORT сценария (полный резерв выше прежнего fixture
+ceiling, reload с поздним funding; несовместимый ceiling без отправок). Соседние
+fixed-budget сценарии проверяются отдельно; Solidity не менялся.
+
+Результат:10 различных адресных сценариев passed (3FREE_SHORT,4legacy scheduler,
+3planning), не полный набор. Команды:
+
+```text
+node --test --test-name-pattern="FREE_SHORT" test/local-scheduler.test.cjs
+node --test --test-name-pattern="FREE_SHORT persists" test/local-scheduler.test.cjs
+node --test --test-name-pattern="FREE_SHORT waits" test/local-scheduler.test.cjs
+node --test --test-name-pattern="scheduler persists|unsubmitted expiry|corrupt/config|empty draining" test/local-scheduler.test.cjs
+node --test --test-name-pattern="launch plan|launch report|filled planning" test/public-launch-checks.test.cjs
+```
+
+Первый прогон содержал2 новых сценария; после усиления первого до16000raw повторён
+только он, затем отдельно добавленный funding wait. Соседние4 прошли за93s.
+Первый прогон компилировал обычный Solidity; следующие использовали тот же artifact
+с SHA256-проверкой. Логи `.local/logs/free-short-{tests,large,wait,neighbors}.log`.
+Результаты относятся к рабочему дереву поверх69b1c8e. Контракты, RNG и выплаты Monthly
+не менялись, fork/live не запускались.

@@ -47,7 +47,10 @@
       "promo": 9000,
       "operations": 500,
       "project": 500
-    }
+    },
+    "shortBudgetMode": "FREE_SHORT",
+    "monthlyPayoutNumerator": 3,
+    "monthlyPayoutDenominator": 4
   },
   "timingCandidate": {
     "leadSeconds": "1800",
@@ -63,13 +66,14 @@
     "monthlyRules": null,
     "shortWeights": null,
     "minimumUnitRaw": null,
-    "maxShortBudgetRaw": null,
+    "maxShortBudgetRaw": "115792089237316195423570985008687907853269984665640564039457584007913129639935",
     "rulesNoticeSeconds": null,
     "maxGasPrice": null,
     "controllerNativeFloor": null,
     "archiveRpc": null,
     "durableRuntime": null,
-    "nativeRefill": null
+    "nativeRefill": null,
+    "monthlyWinnerWeight": null
   },
   "publicExecutionEnabled": false,
   "evidence": [

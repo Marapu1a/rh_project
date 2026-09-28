@@ -266,3 +266,10 @@ provided-not-verified. Не admission и не deployment tool. Два новых
 `mvp-calendar-model.py`/`short_model.py`, переопределяет старую ставку, cumulative90/5/5,
 Short cap и minimum Current.160 прогонов/38400шагов; не production budget executor.
 [Параметры и выявленные пробелы](MVP_ECONOMIC_PROFILE.md). Контракты/config не менялись.
+
+## FREE_SHORT28.09
+
+`local-promo-scheduler.cjs` поддерживает opt-in FREE_SHORT без fixed shortBudget:
+исторический freeShort, проверка совместимости maxBudget, readiness и replay бюджета.
+Тесты в `local-scheduler.test.cjs`; [граница](LOCAL_PROMO_SCHEDULER.md).
+Monthly75/25 внесён только в planning/product, не в контракт: выбор веса ещё открыт.

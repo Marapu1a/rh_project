@@ -33,7 +33,7 @@ test('launch report retains deleted requirements and flags changes to accepted e
 });
 test('filled planning fields and timing approval never qualify release',()=>{
  const p=structuredClone(require('../config/robinhood-launch-plan.json'));
- for(const section of ['contracts','roles','unresolved']) for(const key of Object.keys(p[section])) p[section][key]='unverified';
+ for(const section of ['contracts','roles','unresolved']) for(const key of Object.keys(p[section])) if(p[section][key]===null) p[section][key]='unverified';
  const r=inspectPlan(p);
  assert.deepEqual(r.missing,[]); assert.deepEqual(r.conflicts,[]);
  assert(r.settings.every(x=>x.status==='provided-not-verified'));

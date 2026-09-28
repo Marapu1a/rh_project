@@ -3,9 +3,13 @@ const fs = require('node:fs');
 const REQUIRED = {
  contracts: ['token', 'registry', 'vault', 'short', 'monthly', 'adapter', 'collector', 'pairSource', 'buyPolicySource', 'pool', 'quote'],
  roles: ['governor', 'publisherExecutor', 'operations', 'project'],
- unresolved: ['timingApproval', 'shortRules', 'monthlyRules', 'shortWeights', 'minimumUnitRaw', 'maxShortBudgetRaw', 'rulesNoticeSeconds', 'maxGasPrice', 'controllerNativeFloor', 'archiveRpc', 'durableRuntime', 'nativeRefill'],
+ unresolved: ['timingApproval', 'shortRules', 'monthlyRules', 'shortWeights', 'minimumUnitRaw', 'maxShortBudgetRaw', 'rulesNoticeSeconds', 'maxGasPrice', 'controllerNativeFloor', 'archiveRpc', 'durableRuntime', 'nativeRefill', 'monthlyWinnerWeight'],
 };
 const ACCEPTED = {
+ 'product.shortBudgetMode': 'FREE_SHORT',
+ 'product.monthlyPayoutNumerator': 3,
+ 'product.monthlyPayoutDenominator': 4,
+ 'unresolved.maxShortBudgetRaw': ((1n << 256n)-1n).toString(),
  'product.creatorFeeBps': 300,
  'product.entryThresholdRaw': '100000000',
  'product.nextStartTargetRaw': '100000000',

@@ -49,8 +49,9 @@ public sends закрыты. [Recovery admission](RECOVERY_ADMISSION.md) отд�
    Составная [релизная репетиция](RELEASE_REHEARSAL.md) пройдена с явными fixture-границами.
    Отчёт release profile подготовлен: обязательные поля и конфликты решений видны.
    [Численный кандидат Short/Monthly](MVP_ECONOMIC_PROFILE.md) рассчитан; параметры не приняты.
-   Далее согласовать D/cap, корзину, q и minimum Current, затем реализовать выбранную
-   бюджетную политику вместо фиксированного shortBudget и нужную readiness-границу.
+   D без потолка принят: FREE_SHORT на cutoff реализован; профиль требует uint256.max.
+   Monthly75/25 принят; перед реализацией нужен выбор влияния entries на победителя
+   без второго допуска. Корзина/q Short и minimum Current остаются кандидатами.
    Эксплуатационные параметры выбираются отдельно;
    для RPC нужен другой archive endpoint (official повторно не прошёл history).
    Same-chain automatic proof ещё открыт.

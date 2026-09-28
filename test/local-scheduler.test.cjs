@@ -271,3 +271,43 @@ test('independent pre-begin replay rejects self-consistent forged participants, 
  assert.equal(await f.provider.getTransactionCount(await f.admin.getAddress()),begunNonce);
  for(const kind of ['SHORT','MONTHLY'])assert.equal(begun.results[kind].status,'error');
 });
+
+
+test('FREE_SHORT persists full cutoff reserve across restart and excludes later funding',async t=>{
+ const f=await setup(t,compiled,{maxBudget:ethers.MaxUint256});
+ f.config.shortBudgetMode='FREE_SHORT';delete f.config.shortBudget;
+ await sent(f.quote.approve(f.vault.target,ethers.MaxUint256));
+ await sent(f.vault.fundUSDG(15000,1));
+ await registeredBuy(f);await advance(6*3600+1);
+ await runScheduler({...f.options,kinds:['SHORT']},{maxTicks:1});
+ const original=f.readState().jobs.SHORT[0].job;
+ assert.equal(original.artifact.request.budget,'16000');
+ await sent(f.quote.approve(f.vault.target,ethers.MaxUint256));
+ await sent(f.vault.fundUSDG(10000,1));
+ const resumed=await runScheduler({...f.options,kinds:['SHORT']});
+ assert.equal(resumed.results.SHORT.reason,'seed',JSON.stringify(resumed));
+ assert.equal(f.readState().jobs.SHORT[0].job.commitment,original.commitment);
+ assert.equal(await f.vault.freeShort(),10000n);
+ assert.equal((await f.vault.draws(original.artifact.request.drawId)).budget,16000n);
+});
+test('FREE_SHORT rejects a hidden controller cap instead of clipping the prize budget',async t=>{
+ const f=await setup(t,compiled);f.config.shortBudgetMode='FREE_SHORT';delete f.config.shortBudget;
+ await registeredBuy(f);await advance(6*3600+1);
+ const nonce=await f.provider.getTransactionCount(await f.admin.getAddress());
+ const r=await runScheduler({...f.options,kinds:['SHORT']});
+ assert.equal(r.status,'error');assert.match(r.results.SHORT.message,/uncapped controller/);
+ assert.equal(await f.provider.getTransactionCount(await f.admin.getAddress()),nonce);
+});
+
+test('FREE_SHORT waits for a funded basket without consuming attempts or publishing',async t=>{
+ const f=await setup(t,compiled,{maxBudget:ethers.MaxUint256,weights:[2000]});
+ f.config.shortBudgetMode='FREE_SHORT';delete f.config.shortBudget;
+ await registeredBuy(f);await advance(6*3600+1);
+ const nonce=await f.provider.getTransactionCount(await f.admin.getAddress());
+ const r=await runScheduler({...f.options,kinds:['SHORT']});
+ assert.equal(r.results.SHORT.reason,'prizeFunding');
+ assert.equal(await f.provider.getTransactionCount(await f.admin.getAddress()),nonce);
+ assert.equal(await f.vault.freeShort(),1000n);
+ assert.equal(await f.short.activeProposal(),ethers.ZeroHash);
+ const ledger=await f.ledger();assert.equal(ledger.draws.length,0);
+});
