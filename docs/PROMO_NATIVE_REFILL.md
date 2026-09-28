@@ -148,3 +148,7 @@ handoff history и отклонение смены source, нехватку ETH/
 Публичная сеть не отправлялась. [Отдельный USDG→ETH fork proof](OPS_MARKET_PROOF.md).
 
 28.09: PROJECT_NATIVE поддерживает опциональный [nativeRefill.swap](OPS_MARKET_EXECUTOR.md), с общим main lock, отдельным pending dispatch и неизменяемой через handoff policy. Bootstrap не включает swap.
+
+При включённом swap refill сохраняет swap.nativeFloor (не только minimumBalance).
+Старое обязательство сначала получает бюджет одного действия без чтения рынка;
+если caps/баланса не хватает на эту цель плюс перевод, seed не расходуется.

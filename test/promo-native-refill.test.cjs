@@ -164,3 +164,31 @@ test('main recovery dispatch reconciles operations sender rather than executor a
  await require('../scripts/local-scheduler-state.cjs').withState(ready.files.main,ready.identity,async(state,save)=>{state.pending=pending;save(state);});
  const nonce=await f.provider.getTransactionCount(source),r=await run(f.options);assert.equal(r.results.opsSwap.status,'confirmed',JSON.stringify(r));assert(!read(f).pending);assert(!read(f).opsSwapHalt);assert.equal(await f.provider.getTransactionCount(source),nonce);
 });
+
+test('old obligation advances without market while preserving operations seed',async t=>{
+ const f=await fixture(t,{project:true}),engine=require('../scripts/ops-market-executor.cjs'),original=engine.execute;
+ const cost=require('../scripts/local-execution-budget.cjs').transactionCost,seed=1000000000000000n;
+ f.options.nativeRefill.swap={amountRaw:'10000000',maxUsdPerPeriod:'10000000',periodSeconds:'86400',cooldownSeconds:'0',allowanceSeconds:'600',maxNativeFeesPerPeriod:'10000000000000000',slippageBps:50,maxImpactBps:100,maxAgeSeconds:30,deadlineSeconds:120,maxGasPrice:'1000000000',maxGasUnits:'30000',nativeFloor:String(seed),extraFeeWei:'0',localFork:false};
+ const one=cost(f.options.ops,'3000000')+BigInt(f.options.ops.nativeFloor),transfer=cost(f.options.ops,f.options.nativeRefill.transferGas);
+ await rpc('hardhat_setBalance',[f.options.nativeRefill.source,ethers.toQuantity(seed+one+transfer)]);
+ engine.execute=async()=>{throw Error('market must not gate funded old action');};
+ try{const r=await run(f.options,{getBeacon:beacon});assert(r.steps.some(s=>s.action==='transferNative'),JSON.stringify(r));assert(r.results.rng.steps.some(s=>s.action==='prove'),JSON.stringify(r));assert(await f.provider.getBalance(f.options.nativeRefill.source)>=seed);assert.equal(BigInt(read(f).lastRefill.value),one);}finally{engine.execute=original;}
+});
+
+test('coordinator collects existing slot1 credit with empty executor and resumes known receipt without duplicate pay',async t=>{
+ const f=await fixture(t,{project:true}),engine=require('../scripts/ops-market-executor.cjs'),original=engine.execute;
+ await rpc('hardhat_setBalance',[f.owner,ethers.toQuantity(ethers.parseEther('10'))]);
+ await (await f.quote.mint(f.collector.target,200000000n)).wait();await (await f.collector.sync()).wait();
+ const source=f.options.nativeRefill.source,credit=await f.collector.credit(source);assert(credit>0n);assert.equal(await f.quote.balanceOf(source),0n);
+ await rpc('hardhat_setBalance',[f.owner,'0x0']);await rpc('hardhat_setBalance',[source,ethers.toQuantity(1000000000000000n)]);
+ f.options.nativeRefill.swap={amountRaw:'10000000',maxUsdPerPeriod:'10000000',periodSeconds:'86400',cooldownSeconds:'0',allowanceSeconds:'600',maxNativeFeesPerPeriod:'10000000000000000',slippageBps:50,maxImpactBps:100,maxAgeSeconds:30,deadlineSeconds:120,maxGasPrice:'3000000000',maxGasUnits:'300000',nativeFloor:'1000000',extraFeeWei:'0',localFork:false};
+ const real=f.other,broken=new Proxy(real,{get(o,k){if(k==='sendTransaction')return async req=>{const tx=await real.sendTransaction(req);return {hash:tx.hash,wait:async()=>{throw Object.assign(Error('receipt lost'),{code:'TIMEOUT'});}};};return Reflect.get(o,k);}});
+ // Historical drand fixture clock; only the sender freshness clock follows that chain.
+ engine.execute=async args=>{const now=Date.now,head=await f.provider.getBlock('latest');Date.now=()=>head.timestamp*1000;try{return await original(args);}finally{Date.now=now;}};
+ try{
+  const first=await run({...f.options,refillSigner:broken},{getBeacon:beacon});assert.equal(read(f).pending?.action,'collectOps',JSON.stringify(first));assert.equal(await f.collector.credit(source),0n);assert.equal(await f.quote.balanceOf(source),credit);
+  const nonce=await f.provider.getTransactionCount(source);
+  engine.execute=async()=>({status:'waiting',reason:'priceImpact'});
+  const r=await run(f.options,{getBeacon:beacon});assert(!read(f).pending);assert.equal(read(f).lastOpsSwap.action,'collectOps');assert.equal(read(f).lastOpsSwap.usdReceived,String(credit));assert.equal(await f.provider.getTransactionCount(source),nonce);assert(!read(f).opsSwapHalt,JSON.stringify(r));
+ }finally{engine.execute=original;}
+});

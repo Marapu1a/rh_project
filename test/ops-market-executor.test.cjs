@@ -17,7 +17,7 @@ function fixture(t,action='swap'){
   if(f.unknown)throw Error('lost broadcast response');
   return {hash:f.tx.hash,wait:async()=>{if(f.timeout)throw Object.assign(Error('lost receipt'),{code:'TIMEOUT'});return f.receipt;}};
  }};
- f.args={provider,signer,source,config,ops:{maxGasPrice:'100'},state:f.state,save:s=>{if(++f.saves===f.failSave)throw Error('disk failure');f.disk=structuredClone(s);}};
+ f.args={provider,signer,source,config,ops:{maxGasPrice:'100'},state:f.state,save:s=>{if(++f.saves===f.failSave)throw Error('disk failure');const {hash}=require('../scripts/direct-buy.cjs');assert.equal(hash(s),hash(JSON.parse(JSON.stringify(s))),'journal checksum must survive JSON serialization');f.disk=structuredClone(s);}};
  return f;
 }
 for(const action of ['approveUSDG','approvePermit2','swap'])for(const unknown of [false,true])test(action+' restart '+(unknown?'unknown':'known')+' never duplicates send',async t=>{
@@ -51,4 +51,22 @@ test('WETH ERC20 burn is measured once and receipt fee budget limits later stage
 test('gas spending cap and seed shortage wait before creating intent',async t=>{
  const f=fixture(t);f.args.config.maxNativeFeesPerPeriod='1';assert.equal((await engine.execute(f.args)).reason,'opsSwapFeeLimit');assert.equal(f.sends,0);assert(!f.state.pending);
  f.args.config.maxNativeFeesPerPeriod='100000000';f.args.provider.getBalance=async()=>0n;assert.equal((await engine.execute(f.args)).reason,'sourceNeedsETH');assert.equal(f.sends,0);
+});
+
+for(const unknown of [false,true])test('collector credit '+(unknown?'unknown':'known')+' recovery keeps one send and charges gas only',async t=>{
+ const f=fixture(t,'collectOps'),address='0x'+'cd'.repeat(20),quote=market.profile.pins.quote[0],code='0x6000';
+ const abi=new ethers.Interface(['function credit(address) view returns(uint256)','function quoteToken() view returns(address)','function pay(address)','function balanceOf(address) view returns(uint256)']);
+ f.args.collection={collector:[address,ethers.keccak256(code)],quote:[quote,ethers.keccak256(code)],recipient:f.args.source};
+ f.args.provider.getCode=async()=>code;
+ f.args.provider.call=async req=>{const x=abi.parseTransaction(req);return abi.encodeFunctionResult(x.name,[x.name==='quoteToken'?quote:x.name==='credit'?(f.sends?0n:10000000n):(f.sends?10000000n:0n)]);};
+ const send=f.args.signer.sendTransaction;f.args.signer.sendTransaction=async req=>{assert.equal(req.to,address);assert.equal(abi.parseTransaction(req).args[0],ethers.getAddress(f.args.source));const tx=await send(req);const e=new ethers.Interface(['event Transfer(address indexed from,address indexed to,uint256 value)']);f.receipt.logs=[{address:quote,...e.encodeEventLog('Transfer',[address,f.args.source,10000000n])}];return tx;};
+ f.unknown=unknown;f.timeout=!unknown;
+ await assert.rejects(engine.execute(f.args),/lost|Receipt timeout/);assert.equal(f.sends,1);assert.equal(f.state.pending.action,'collectOps');
+ const result=await engine.reconcile(f.args);
+ if(unknown)assert.equal(result.reason,'unknownHash');else{assert.equal(result.status,'confirmed');assert.equal(f.state.lastOpsSwap.usdReceived,'10000000');assert.equal(f.state.opsSwapHistory.spent,'0');assert.equal(f.state.opsSwapHistory.fees,'250000');assert(!f.state.opsSwapHalt);}
+ assert.equal(f.sends,1);
+});
+test('collector pin mismatch rejects before intent or send',async t=>{
+ const f=fixture(t);f.args.collection={collector:['0x'+'cd'.repeat(20),ethers.id('wrong')],quote:market.profile.pins.quote,recipient:f.args.source};f.args.provider.getCode=async()=> '0x6000';
+ await assert.rejects(engine.execute(f.args),/pin mismatch/);assert.equal(f.sends,0);assert(!f.state.pending);
 });

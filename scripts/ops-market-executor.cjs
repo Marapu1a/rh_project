@@ -3,6 +3,8 @@ const {ethers}=require('ethers'),network=require('./runtime-network.cjs'),market
 const {waitLocalReceipt}=require('./local-receipt.cjs');
 const check=(v,m)=>{if(!v)throw Error(m);},same=(a,b)=>String(a).toLowerCase()===String(b).toLowerCase();
 const erc=new ethers.Interface(['function approve(address,uint256) returns(bool)','function allowance(address,address) view returns(uint256)','event Transfer(address indexed from,address indexed to,uint256 value)']);
+const creditABI=['function credit(address) view returns(uint256)','function quoteToken() view returns(address)','function pay(address)'];
+const tokenABI=['function balanceOf(address) view returns(uint256)'];
 const permit=new ethers.Interface(['function approve(address,address,uint160,uint48)']);
 const weth=new ethers.Interface(['event Withdrawal(address indexed src,uint256 wad)']);
 function validate(c){
@@ -24,7 +26,12 @@ async function reconcile({provider,state,save}){
  check(same(tx.from,p.from)&&same(tx.to,p.to)&&same(tx.data,p.data)&&String(tx.value)==='0'&&tx.nonce===p.nonce&&String(tx.chainId)===p.chainId&&same(tx.hash,p.transactionHash),'Ops transaction differs from intent');
  const fee=r.gasUsed*r.gasPrice,next=structuredClone(state),old=state.opsSwapHistory||{spent:'0',fees:'0',windowStart:'0',lastAttemptAt:null};
  const window=BigInt(b.timestamp)/BigInt(p.periodSeconds)*BigInt(p.periodSeconds);check(window>=BigInt(old.windowStart)&&b.number>=p.anchor.number&&b.timestamp>=p.anchor.timestamp,'Invalid ops history');
- let output=0n,debit=0n,burn=0n;
+ let output=0n,debit=0n,burn=0n,received=0n;
+ if(p.action==='collectOps'&&r.status===1){
+  for(const log of r.logs)if(same(log.address,p.quote)){try{const x=erc.parseLog(log);if(x?.name==='Transfer'&&same(x.args.from,p.to)&&same(x.args.to,p.from))received+=x.args.value;}catch{}}
+  const balance=await new ethers.Contract(p.quote,tokenABI,provider).balanceOf(p.from,{blockTag:r.blockNumber});
+  if(balance<BigInt(p.balanceBefore)+received)next.opsSwapHalt='Collector receipt balance mismatch';
+ }
  if(p.action==='swap'&&r.status===1){
   for(const log of r.logs){
    if(same(log.address,p.quote)){try{const x=erc.parseLog(log);if(x?.name==='Transfer'&&same(x.args.from,p.from))debit+=x.args.value;}catch{}}
@@ -39,18 +46,29 @@ async function reconcile({provider,state,save}){
  if(tx.type!==2||String(tx.gasLimit)!==p.gasLimit||String(tx.maxFeePerGas)!==p.maxFeePerGas||tx.maxPriorityFeePerGas!==0n||fee>BigInt(p.maxFee)||spent>BigInt(p.maxUsdPerPeriod)||BigInt(next.opsSwapHistory.periodFees)>BigInt(p.maxNativeFeesPerPeriod))next.opsSwapHalt='Ops fee or spending envelope mismatch';
  // Definite revert is not an excuse to burn seed ETH in an automatic retry loop.
  if(r.status===0)next.opsSwapHalt='Ops transaction reverted; inspect before further swaps';
- next.lastOpsSwap={...p,status:r.status,blockHash:r.blockHash,blockNumber:r.blockNumber,fee:String(fee),usdDebit:String(debit),nativeOutput:String(output)};
- delete next.pending;commit(state,save,next);return {status:r.status===1?'confirmed':'reverted',action:p.action,transactionHash:r.hash,nativeOutput:String(output)};
+ next.lastOpsSwap={...p,status:r.status,blockHash:r.blockHash,blockNumber:r.blockNumber,fee:String(fee),usdDebit:String(debit),nativeOutput:String(output),usdReceived:String(received)};
+ delete next.pending;commit(state,save,next);return {status:r.status===1?'confirmed':'reverted',action:p.action,transactionHash:r.hash,nativeOutput:String(output),usdReceived:String(received)};
 }
-async function execute({provider,signer,config,source,ops,state,save,signal,receiptTimeoutMs}){
+async function execute({provider,signer,config,source,ops,state,save,signal,receiptTimeoutMs,collection}){
  validate(config);check(!state.pending,'Resolve existing intent before ops');if(state.opsSwapHalt)return {status:'waiting',reason:'opsSwapHalt'};
  check(signer?.provider===provider&&same(await signer.getAddress(),source),'Ops signer/provider mismatch');network.checkChain((await provider.getNetwork()).chainId);await network.beforeSend();
  const c={...config,maxGasPrice:String(BigInt(config.maxGasPrice)<BigInt(ops.maxGasPrice)?BigInt(config.maxGasPrice):BigInt(ops.maxGasPrice))};
  const head=await provider.getBlock('latest'),h=state.opsSwapHistory,window=BigInt(head.timestamp)/BigInt(c.periodSeconds)*BigInt(c.periodSeconds);
  if(h){check(window>=BigInt(h.windowStart)&&head.timestamp>=Number(h.lastAttemptAt),'Ops clock moved backwards');if(BigInt(head.timestamp)-BigInt(h.lastAttemptAt)<BigInt(c.cooldownSeconds))return {status:'waiting',reason:'opsSwapCooldown'};}
  if((h&&BigInt(h.windowStart)===window?BigInt(h.spent):0n)+BigInt(c.amountRaw)>BigInt(c.maxUsdPerPeriod))return {status:'waiting',reason:'opsSwapPeriodLimit'};
- const q=await market.prepareSwap(provider,{...c,source});if(!['prepared'].includes(q.status)&&q.reason!=='allowanceRequired')return q;
- let action='swap',request=q.transaction;
+ let q;
+ // Collect only existing credits from the pinned deployment; never pull external revenue.
+ if(collection){
+  check(same(collection.recipient,source),'Collector recipient must be operations slot1');
+  const at={blockTag:head.number};
+  for(const pin of [collection.collector,collection.quote])check(pin&&ethers.keccak256(await provider.getCode(pin[0],head.number))===pin[1],'Collector funding pin mismatch');
+  const token=new ethers.Contract(collection.quote[0],tokenABI,provider),collector=new ethers.Contract(collection.collector[0],creditABI,provider);
+  check(same(await collector.quoteToken(at),collection.quote[0]),'Collector quote mismatch');
+  const balance=await token.balanceOf(source,at),credit=await collector.credit(source,at);
+  if(balance<BigInt(c.amountRaw)&&balance+credit>=BigInt(c.amountRaw))q={status:'prepared',collection:true,balanceBefore:String(balance),observation:{blockNumber:head.number,blockHash:head.hash,timestamp:head.timestamp},deadline:head.timestamp+c.deadlineSeconds,transaction:{from:source,to:collection.collector[0],value:'0x0',data:collector.interface.encodeFunctionData('pay',[source])}};
+ }
+ q??=await market.prepareSwap(provider,{...c,source});if(!['prepared'].includes(q.status)&&q.reason!=='allowanceRequired')return q;
+ let action=q.collection?'collectOps':'swap',request=q.transaction;
  if(q.reason==='allowanceRequired'){
   const amount=BigInt(c.amountRaw),p=market.profile.pins;
   const allowance=new ethers.Contract(p.quote[0],erc,provider);const current=await allowance.allowance(source,p.permit2[0],{blockTag:q.observation.blockNumber});
@@ -67,7 +85,7 @@ async function execute({provider,signer,config,source,ops,state,save,signal,rece
  const latest=await provider.getBlock('latest');
  if(!same((await provider.getBlock(q.observation.blockNumber))?.hash,q.observation.blockHash)||latest.timestamp>=q.deadline||Math.floor(Date.now()/1000)>=q.deadline||Math.floor(Date.now()/1000)-q.observation.timestamp>c.maxAgeSeconds||await provider.getTransactionCount(source,'pending')!==nonce)return {status:'waiting',reason:'staleQuote'};
  if(signal?.aborted)return {status:'stopped'};await network.beforeSend();
- const next=structuredClone(state);next.pending={worker:'opsMarket',action,chainId:String(txRequest.chainId),from:source,to:txRequest.to,data:txRequest.data,nonce,gasLimit:String(txRequest.gasLimit),maxFeePerGas:String(price),maxFee:String(maxFee),maxNativeFeesPerPeriod:c.maxNativeFeesPerPeriod,anchor:{number:latest.number,hash:latest.hash,timestamp:latest.timestamp},periodSeconds:c.periodSeconds,maxUsdPerPeriod:c.maxUsdPerPeriod,amountRaw:c.amountRaw,minOut:q.minOut,quote:market.profile.pins.quote[0],weth:market.profile.pins.weth[0]};
+ const next=structuredClone(state);next.pending={worker:'opsMarket',action,chainId:String(txRequest.chainId),from:source,to:txRequest.to,data:txRequest.data,nonce,gasLimit:String(txRequest.gasLimit),maxFeePerGas:String(price),maxFee:String(maxFee),maxNativeFeesPerPeriod:c.maxNativeFeesPerPeriod,anchor:{number:latest.number,hash:latest.hash,timestamp:latest.timestamp},periodSeconds:c.periodSeconds,maxUsdPerPeriod:c.maxUsdPerPeriod,amountRaw:c.amountRaw,...(q.collection?{balanceBefore:q.balanceBefore}:{minOut:q.minOut}),quote:q.collection?collection.quote[0]:market.profile.pins.quote[0],weth:market.profile.pins.weth[0]};
  commit(state,save,next);const tx=await signer.sendTransaction(txRequest),sent=structuredClone(state);sent.pending.transactionHash=tx.hash;commit(state,save,sent);
  try{await waitLocalReceipt(tx,{signal,receiptTimeoutMs});}catch(e){if(e.code==='TRANSACTION_REPLACED'||e.receipt?.hash!==tx.hash||e.receipt?.status!==0)throw e;}
  return reconcile({provider,state,save});

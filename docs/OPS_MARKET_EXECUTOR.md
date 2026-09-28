@@ -6,25 +6,31 @@
 
 ## Порядок и границы
 
-В main lock coordinator сначала сверяет pending. Ops intent отдельного типа
-opsMarket проверяется по source signer, а не executor. При нехватке ETH executor
-и недостатке source для refill пробуем bounded конвертацию ДО частичного перевода
-ETH, чтобы не потратить seed на перевод раньше approval/swap.
+В main lock сначала сверяется pending. Ops intent проверяется по source signer,
+а не executor. При нехватке ETH сначала пробуем обеспечить одно старое обязательство
+(с комиссией перевода и сохранением swap.nativeFloor). Этот путь не читает рынок.
+Новые freeze по-прежнему требуют полный forecast. Если на выбранную цель не хватает,
+переходим к сбору credits/конверсии. Для старого обязательства неполное пополнение
+не отправляется; для новых работ сохраняется накопительный refill в пределах caps,
+но freeze не разрешается до покрытия полного forecast. Остаток seed сохраняется всегда.
 
-Один pass отправляет максимум одну ops стадию: USDG approve → Permit2 approve →
-свежий prepareSwap → swap+unwrap. Следующий pass заново читает allowances и balances.
-После подтверждённого swap native refill использует фактический баланс source;
-зачисления не вычисляются из обещанной котировки. У каждого send durable intent
-до broadcast, hash после него. Unknown hash никогда автоматически не повторяется.
-Known hash сверяется с tx/from/to/data/nonce/chain и canonical receipt/anchor.
-Save failure не очищает intent; несовпадение envelope или definite revert останавливает
-новые swaps для разбора, чтобы не жечь seed в цикле. Это opsSwapHalt, не reset призов.
+Один pass выполняет максимум одну ops стадию: collectOps → approve USDG → approve
+Permit2 → swap+unwrap. collectOps нужен только если USDG кошелька меньше batch,
+но кошелёк плюс credit уже покрывают batch. Мелкие credits не собираем по одному.
+Только pay(pinned slot1), без pull или произвольных calls. Проверяются runtime hashes
+collector/quote и quoteToken на одном блоке; внешний revenue source не нужен.
 
-При отсутствии USDG/достижении cap/halt/недостатке seed можно использовать уже
-имеющийся ETH через прежний bounded refill. Cooldown и проблемы рынка оставляют
-ожидание с сохранением seed. Уже обеспеченные executor действия не зависят от swap.
-Нужен ETH на approve/swap; нулевой ETH у всех сторон требует внешнего пополнения.
-Collector credits сами в кошелёк не переходят: их получение ops signer пока НЕ реализовано.
+Intent до send, hash после; unknown send блокирует повтор. Receipt сверяет
+from/to/data/nonce/chain/anchor. Для collectOps записывается usdReceived из Transfer,
+баланс на блоке receipt проверяется против исходного плюс полученного. Чужой
+permissionless pay перед нашей отправкой допустим: наш pay может дать ноль,
+следующий pass прочитает фактический баланс. Save failure сохраняет pending.
+Revert/несовпадение envelope останавливает ops, не сбрасывает призы.
+
+Сбор credits использует те же cooldown и native fee caps. USDG spending расходуется
+только swap. Refill независимо читает настоящий ETH balance. При swap.nativeFloor
+выше minimumBalance сохраняется более высокий остаток, включая fallback.
+Нулевой seed у всех исполнителей требует внешнего пополнения.
 
 ## Явные параметры nativeRefill.swap
 
@@ -90,9 +96,36 @@ known receipt восстановлен без второго nonce/send. Фак�
 прогнаны последовательными вызовами helper, а coordinator wiring проверен отдельно.
 Local31337, read-only upstream; никакого публичного broadcast или тарифа Nitro.
 
-## Далее
+## Завершение участка funding — 28.09
 
-Получение уже накопленного credit(slot1) за seed ETH operations под тем же журналом,
-когда executor пуст и USDG пока только в collector. Сначала ограниченный pay(slot1),
-не произвольный pull/call. Затем общий watch e2e с настоящим маршрутом и старым draw.
-Public activation, production caps, source/immutable audit и RPC qualification отдельно.
+collectOps и продвижение старых обязательств без рынка реализованы.
+[Новый fork](../research/ops-funding/credit-fork-2026-09-28.json): настоящий collector
+с тестовым внешним source и искусственными 200 USDG распределил 90/5/5. Operations
+получил 10 USDG; с seed 0.002 ETH прошёл collect→approve→Permit2→swap→refill.
+Executor получил 0.001 ETH. После каждой из четырёх ops стадий потерян ответ receipt,
+журнал перечитан, повторной отправки нет. Рынок настоящий; публичных sends нет.
+Это не OS kill и не полный watch→draw fork. Coordinator/старые draw проверены отдельно.
+
+Ближайшая работа — общая релизная репетиция и deployment/RPC параметры. Funding
+не расширяем без конкретного блокера. Если доход ещё во внешнем source и не стал
+credit collector, пустому executor нужен внешний ETH top-up для обычного pull;
+новый ops pull намеренно не добавлен. Seed/caps выбираются при подготовке запуска.
+
+## Адресные проверки завершённого пакета
+
+28.09.2026: 27 разных продуктовых сценариев отдельными запусками, не full suite.
+- `node --test test/ops-market-executor.test.cjs test/promo-refill-accounting.test.cjs` — 20/20.
+- `node --test --test-name-pattern="project swap gets seed|old obligation advances|coordinator collects" test/promo-native-refill.test.cjs` — 3/3.
+- В предыдущем адресном запуске того же файла `empty executor refills` и
+  `main recovery dispatch` — 2/2. Уже пройденные соседи без изменений не повторялись.
+- `node scripts/ops-market-fork.cjs .local/logs/ops-credit-fork.json --credit` — complete.
+
+Промежуточные failures: assertion искал RNG step не в том уровне отчёта; fixture
+лимит 1 gwei был ниже RPC maxFeePerGas; затем реальная ошибка undefined/checksum,
+исправленная в sender. Recovery после исправления прошёл через настоящий withState.
+Тест coordinator использует историческую drand fixture: только clock sender
+привязан к её block timestamp; после recovery следующий market stage заменён wait.
+Это не доказательство полного production watch с живым drand и рынком одновременно.
+
+Соседи `--test-name-pattern="partial refill obeys|Ready monthly job"` — 2/2:
+периодный cap с gas и запрет нового freeze за счёт старого обязательства.

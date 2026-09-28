@@ -136,17 +136,23 @@ async function runPromoAutomation({provider,executor,collector,adapter,vault,sho
      if(!discoveryReady)wait('payoutDiscovery');
      const balance=BigInt(state.lastBudget.balance),need=committed>balance?committed:required;
      refillAttempted=true;
+     // Old obligations can advance one action at a time without a working market.
+     if(nativeRefill.swap&&require('./obligation-admission.cjs').OBLIGATION_ACTIONS.has(action)){
+      results.refill=await refill.execute({provider,signer:refillSigner,config:nativeRefill,sender,ops,required,requireFull:true,state,save,signal,receiptTimeoutMs});
+      if(results.refill.status==='confirmed'){sentCount++;const step={action:'transferNative',...results.refill};steps.push(step);await onStep(step);return guard(request,action,commit);}
+      if(state.pending||signal?.aborted)wait('pendingRefill');
+     }
      if(nativeRefill.swap){
-      const sourceBalance=await provider.getBalance(nativeRefill.source),sourceNeed=need-balance+BigInt(nativeRefill.minimumBalance)+transactionCost(ops,nativeRefill.transferGas);
+      const sourceBalance=await provider.getBalance(nativeRefill.source),sourceNeed=need-balance+BigInt(nativeRefill.swap.nativeFloor)+transactionCost(ops,nativeRefill.transferGas);
       if(sourceBalance<sourceNeed){
-       results.opsSwap=await require('./ops-market-executor.cjs').execute({provider,signer:refillSigner,config:nativeRefill.swap,source:nativeRefill.source,ops,state,save,signal,receiptTimeoutMs});
+       results.opsSwap=await require('./ops-market-executor.cjs').execute({provider,signer:refillSigner,config:nativeRefill.swap,source:nativeRefill.source,ops,state,save,signal,receiptTimeoutMs,collection:{collector:[fundingJob.collector,fundingJob.collectorCodeHash],quote:deploymentProfile?.pins.quote??[fundingJob.quote,schedulerConfig.manifest.codeHashes.quote],recipient:fundingJob.recipients[1]}});
        if(results.opsSwap.status==='confirmed'){sentCount++;const step={action:results.opsSwap.action,...results.opsSwap};steps.push(step);await onStep(step);wait('opsFunding');}
        // A stopped/unresolved swap cannot fall through to a second source transaction.
        if(state.pending||signal?.aborted)wait('pendingRefill');
        if(!['insufficientUSDG','opsSwapHalt','opsSwapPeriodLimit','opsSwapFeeLimit','sourceNeedsETH'].includes(results.opsSwap.reason))wait('opsFunding');
       }
      }
-     results.refill=await refill.execute({provider,signer:refillSigner,config:nativeRefill,sender,ops,required:need,state,save,signal,receiptTimeoutMs});
+     results.refill=await refill.execute({provider,signer:refillSigner,config:nativeRefill,sender,ops,required:need,requireFull:!!nativeRefill.swap&&require('./obligation-admission.cjs').OBLIGATION_ACTIONS.has(action),state,save,signal,receiptTimeoutMs});
      if(results.refill.status==='confirmed'){sentCount++;const step={action:'transferNative',...results.refill};steps.push(step);await onStep(step);return guard(request,action,commit);}
      if(signal?.aborted)throw Object.assign(Error('Stopped'),{code:'LOCAL_EXECUTION_STOPPED'});
      if(state.pending)wait('pendingRefill');

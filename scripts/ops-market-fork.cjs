@@ -23,15 +23,32 @@ async function main(){
   for(const slot of [...new Set(trace.structLogs.filter(l=>l.op==='SLOAD').map(l=>'0x'+l.stack.at(-1)))]){const snap=await rpc('evm_snapshot');await rpc('hardhat_setStorageAt',[pins.quote,slot,ethers.zeroPadValue(ethers.toBeHex(100_000000n),32)]);try{if(await quote.balanceOf(wallet)===100_000000n){e.fundingSlot=slot;break;}}catch{}await rpc('evm_revert',[snap]);}assert(e.fundingSlot);
   const sent=async(label,promise)=>{const tx=await promise,r=await tx.wait();assert.equal(r.status,1);e.transactions.push({label,hash:tx.hash,gasUsed:r.gasUsed,gasPrice:r.gasPrice,fee:r.gasUsed*r.gasPrice});return r;};
   const amount=10_000000n,deadline=(await provider.getBlock('latest')).timestamp+600;
-  if(process.argv[3]==='--executor'){
+  if(['--executor','--credit'].includes(process.argv[3])){
    const balance=async()=>BigInt(await rpc('eth_getBalance',[wallet,'latest']));
    const engine=require('./ops-market-executor.cjs'),refill=require('./promo-native-refill.cjs'),stateFile=out+'.state';let state={};
    const save=s=>fs.writeFileSync(stateFile,JSON.stringify(s));
+   let collection;
+   if(process.argv[3]==='--credit'){
+    stage('collector-fixture');const compiled=require('./compile.cjs').compile({writeArtifacts:false});
+    const deploy=async(name,args=[])=>{const a=compiled[name],c=await new ethers.ContractFactory(a.abi,a.evm.bytecode.object,signer).deploy(...args);await c.waitForDeployment();return c;};
+    const token=await deploy('MockToken'),hook=await deploy('InfinityHookFixture'),factory=await deploy('InfinityFactoryFixture');
+    const collector=await deploy('InfinityCollector',[wallet,token.target,pins.quote,hook.target,factory.target]);
+    const vault=await deploy('InfinityVaultFixture',[token.target,hook.target,factory.target,collector.target]);
+    const promo=await deploy('PromoVault',[token.target,pins.quote,hook.target,100]);
+    await (await hook.configure(vault.target,300)).wait();
+    await (await collector.bindSource(vault.target,[(await provider.getBlock('latest')).timestamp+86400,[promo.target,wallet,await (await provider.getSigner(2)).getAddress()],[9000,500,500]])).wait();
+    // Artificial fixture revenue, real collector allocation. 200 USDG gives slot1 10 USDG.
+    await rpc('hardhat_setStorageAt',[pins.quote,e.fundingSlot,ethers.zeroPadValue(ethers.toBeHex(200_000000n),32)]);
+    await (await new ethers.Contract(pins.quote,['function transfer(address,uint256) returns(bool)'],signer).transfer(collector.target,200_000000n)).wait();
+    await (await collector.sync()).wait();assert.equal(await quote.balanceOf(wallet),0n);assert.equal(await collector.credit(wallet),amount);
+    collection={collector:[collector.target,ethers.keccak256(await provider.getCode(collector.target))],quote:[pins.quote,e.codeHashes.quote],recipient:wallet};
+    e.collection={...collection,creditBefore:String(await collector.credit(wallet)),fixtureSource:true};
+   }
    const target=await (await provider.getSigner(1)).getAddress();await rpc('hardhat_setBalance',[target,'0x0']);await rpc('hardhat_setBalance',[wallet,ethers.toQuantity(2000000000000000n)]);const seed=await balance();e.seedETH=String(seed);
    const config={amountRaw:String(amount),maxUsdPerPeriod:String(amount),periodSeconds:'86400',cooldownSeconds:'0',allowanceSeconds:'600',maxNativeFeesPerPeriod:'10000000000000000',slippageBps:50,maxImpactBps:100,maxAgeSeconds:300,deadlineSeconds:120,maxGasPrice:'2000000000',maxGasUnits:'500000',nativeFloor:'1000',extraFeeWei:'0',localFork:true},ops={maxGasPrice:'2000000000',reserveGasPrice:'2000000000',safetyBps:10000,extraFeePerTx:'0'};
-   for(const action of ['approveUSDG','approvePermit2','swap']){
+   for(const action of [...(collection?['collectOps']:[]),'approveUSDG','approvePermit2','swap']){
     stage('sender-'+action);const broken=new Proxy(signer,{get(o,k){if(k==='sendTransaction')return async req=>{const tx=await signer.sendTransaction(req);return {hash:tx.hash,wait:async()=>{throw Object.assign(Error('simulated process interruption'),{code:'TIMEOUT'});}};};return Reflect.get(o,k);}});
-    await assert.rejects(engine.execute({provider,signer:broken,config,source:wallet,ops,state,save}),/simulated process interruption|Receipt timeout/);
+    await assert.rejects(engine.execute({provider,signer:broken,config,source:wallet,ops,state,save,collection}),/simulated process interruption|Receipt timeout/);
     state=JSON.parse(fs.readFileSync(stateFile));assert.equal(state.pending.action,action);assert(state.pending.transactionHash);
     e.receiptLogs??=[];e.receiptLogs.push((await provider.getTransactionReceipt(state.pending.transactionHash)).logs);
     const nonce=await provider.getTransactionCount(wallet),r=await engine.reconcile({provider,state,save});assert.equal(r.status,'confirmed');assert.equal(await provider.getTransactionCount(wallet),nonce);assert(!state.pending);assert(!state.opsSwapHalt);e.transactions.push({...state.lastOpsSwap});

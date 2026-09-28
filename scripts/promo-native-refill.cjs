@@ -35,7 +35,7 @@ async function reconcile({provider,state,save}){
  if(mismatch||debit>BigInt(p.maxDebit)||spent>BigInt(p.maxPerPeriod))next.refillHalt='Refill fee envelope or spend cap exceeded';
  delete next.pending;commit(state,save,next);return {status:r.status===1?'confirmed':'reverted',transactionHash:r.hash};
 }
-async function execute({provider,signer,config,sender,ops,required,state,save,signal,receiptTimeoutMs}){
+async function execute({provider,signer,config,sender,ops,required,state,save,signal,receiptTimeoutMs,requireFull=false}){
  check(!state.pending,'Resolve existing intent before refill');
  if(state.refillHalt)return {status:'waiting',reason:'refillHalt'};
  check(signer?.provider===provider&&same(await signer.getAddress(),config.source),'Refill signer/provider mismatch');
@@ -52,9 +52,10 @@ async function execute({provider,signer,config,sender,ops,required,state,save,si
  check(BigInt(h.windowStart)<=window&&(h.lastAttemptAt==null||BigInt(h.lastAttemptAt)<=now),'Refill clock moved backwards');
  if(h.lastAttemptAt!=null&&now-BigInt(h.lastAttemptAt)<BigInt(config.cooldownSeconds))return {status:'waiting',reason:'refillCooldown'};
  const gas=transactionCost(ops,config.transferGas),min=(...v)=>v.reduce((a,b)=>a<b?a:b);
- const available=min(BigInt(config.maxPerRefill),BigInt(config.maxPerPeriod)-(BigInt(h.windowStart)===window?BigInt(h.spent):0n),sourceBalance-BigInt(config.minimumBalance));
- if(available<=gas){
-  const constraint=sourceBalance-BigInt(config.minimumBalance)===available?'sourceBalance':BigInt(config.maxPerPeriod)-(BigInt(h.windowStart)===window?BigInt(h.spent):0n)===available?'periodCap':'attemptCap';
+ const floor=BigInt(config.swap?.nativeFloor??config.minimumBalance);
+ const available=min(BigInt(config.maxPerRefill),BigInt(config.maxPerPeriod)-(BigInt(h.windowStart)===window?BigInt(h.spent):0n),sourceBalance-floor);
+ if(available<=gas||(requireFull&&available-gas<required-balance)){
+  const constraint=sourceBalance-floor===available?'sourceBalance':BigInt(config.maxPerPeriod)-(BigInt(h.windowStart)===window?BigInt(h.spent):0n)===available?'periodCap':'attemptCap';
   return {status:'waiting',reason:'refillBudget',constraint};
  }
  const value=min(required-balance,available-gas),nonce=await provider.getTransactionCount(config.source,'latest');

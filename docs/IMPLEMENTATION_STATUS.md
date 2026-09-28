@@ -1,5 +1,7 @@
 # Карта реализации
 
+28.09: [Operations funding](OPS_MARKET_EXECUTOR.md) завершён в согласованном объёме: journaled pay(slot1) получает существующий credit, fee caps/nonce/recovery общие со swap. Старые обязательства получают ETH на одно действие независимо от рынка, сохраняя swap.nativeFloor; новые freeze сохраняют полный forecast. 27 адресных продуктовых сценариев прошли отдельными запусками, не full. Fork credit→swap→refill прошёл; coordinator проверен отдельно. Далее общая релизная репетиция и реальные deployment/RPC параметры, без расширения funding. Public sends закрыты.
+
 28.09: [Ops swap executor](OPS_MARKET_EXECUTOR.md) подключён опционально к PROJECT_NATIVE; общий main journal, отдельный source receipt dispatch, nonce/caps и handoff history. Fork helper→refill пройден; автоматический credit collection и полный watch market e2e ещё впереди.
 
 28.09: [Read-only market quote](OPS_MARKET_QUOTE.md) — pinned CLQuoter, exact router eth_call/estimate, wait reasons, новый fork. [Public admission](DEPLOYMENT_ADMISSION.md) отдельно требует9000/500/500 для новых операций; obligations-only сохранён. Swap sender ещё отсутствует.
