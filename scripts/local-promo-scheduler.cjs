@@ -13,7 +13,8 @@ const check=(ok,msg)=>{if(!ok)throw Error(msg);},zero=ethers.ZeroHash;
 const {resolveBuyPolicy}=require('./buy-policy-runtime.cjs');
 const wait=reason=>({status:'waiting',reason});
 function validateConfig(c,rpcUrl){
-  check(c.schema==='local-promo-scheduler-v1'&&c.cutoffMode==='LOCAL_HEAD','Explicit local scheduler config required');
+  check(c.schema==='local-promo-scheduler-v1'&&['LOCAL_HEAD','FINALIZED_CHECKPOINT'].includes(c.cutoffMode),'Explicit local scheduler config required');
+  if(c.cutoffMode==='FINALIZED_CHECKPOINT')check(c.buyPolicy,'Finalized checkpoint requires admitted BUY policy');
   validateManifest(c.manifest);check(String(c.manifest.chainId)==='31337'&&c.lifecycle.schema==='attempt-lifecycle-v4','Local v4 only');
   if(c.buyPolicy)check(c.buyPolicy.genesisHash===hash(c.manifest)&&String(c.buyPolicy.chainId)===String(c.manifest.chainId)&&c.buyPolicy.instanceId===c.lifecycle.instanceId,'BUY policy binding mismatch');
   check(BigInt(c.campaignId)>0n&&BigInt(c.shortBudget)>0n,'Invalid campaign/budget');
@@ -84,7 +85,7 @@ async function tickKind(kind,o,state,save){
     const a=selected.empty||selected.job.artifact;
     const cutoff=selected.empty?a.cutoff:a.snapshot.cutoff;
     const anchor=await provider.getBlock(Number(cutoff.blockNumber));
-    if(!anchor||anchor.hash!==cutoff.blockHash||head.number+1-Number(cutoff.blockNumber)>256){
+    if(!anchor||anchor.hash!==cutoff.blockHash||(head.number+1-Number(cutoff.blockNumber)>256&&await source.cutoffHashes(cutoff.blockNumber)!==cutoff.blockHash)){
       // Expiration matters only before begin. An anchored on-chain proposal may finish later.
       const begun=selected.empty?false:(isShort?
         (await source.datasetProposal(selected.job.proposalId,at)).status!==0n:
@@ -144,7 +145,7 @@ async function tickKind(kind,o,state,save){
   if(active!==zero||pending!==zero)return wait('missingJob');
   if(o.allowNewJobs===false)return wait('newJobsDeferred');
   const resolved=await resolveBuyPolicy(config,(m,p)=>provider.send(m,p));
-  const buyManifest=resolved.manifest;
+  let buyManifest=resolved.manifest;
   const last=await source[isShort?'lastShortTerminalAt':'lastMonthAt'](at);
   const interval=await source[isShort?'SHORT_INTERVAL':'monthlyInterval'](at);
   if(BigInt(head.timestamp)<last+interval)return wait('schedule');
@@ -154,20 +155,40 @@ async function tickKind(kind,o,state,save){
   const policy=await source[isShort?'shortEpochPolicy':'monthlyEpochPolicy'](epoch,at);
   const currentPolicy=await source[isShort?'shortEpochPolicy':'monthlyEpochPolicy'](current,at);
   if(BigInt(head.number)<currentPolicy.firstBlock)return wait('epochBoundary');
-  const cutoffHead=resolved.admission?await provider.getBlock(resolved.admission.checkpoint.number):head;
+  let cutoffHead=resolved.admission?await provider.getBlock(resolved.admission.checkpoint.number):head;
+  if(config.cutoffMode==='FINALIZED_CHECKPOINT'){
+    if(!state.cutoffs?.[kind]){
+      // Do not pay for periodic checkpoints when no finalized attempts need a draw.
+      const preliminary=replayAttempts(buyManifest,config.lifecycle,
+        (await scan(buyManifest,o.rpcUrl,cutoffHead.number,config.lifecycle)).blocks);
+      check(preliminary.head.hash===cutoffHead.hash,'Chain changed during readiness scan');
+      const pe=isShort?preliminary.shortRules:preliminary.monthlyRules;
+      if(BigInt(pe.drainingEpoch||pe.currentEpoch)!==epoch)return wait('finalizedPolicyBoundary');
+      if(!draining&&!preliminary.wallets.some(w=>w[kind].byEpoch.some(e=>BigInt(e.epoch)===epoch&&BigInt(e.open)>0n)))return wait('empty');
+    }
+    const result=await require('./cutoff-checkpoint.cjs').prepareCutoff({provider,source,publisher,kind,state,save,
+      finalized:cutoffHead,signal,receiptTimeoutMs:o.receiptTimeoutMs});
+    if(result.status!=='ready')return result;
+    cutoffHead=result.block;
+    if(BigInt(cutoffHead.number)<currentPolicy.firstBlock){
+      state.lastCutoffDiscard={kind,...state.cutoffs[kind],reason:'rules boundary advanced before proposal'};
+      delete state.cutoffs[kind];save(state);return {status:'progress',action:'discardCutoff'};
+    }
+    buyManifest=(await resolveBuyPolicy(config,(m,p)=>provider.send(m,p),cutoffHead.number)).manifest;
+  }
   const blocks=(await scan(buyManifest,o.rpcUrl,cutoffHead.number,config.lifecycle)).blocks;
   const ledger=replayAttempts(buyManifest,config.lifecycle,blocks);
   check(ledger.head.hash===cutoffHead.hash,'Chain changed during scheduler scan');
   const epochs=isShort?ledger.shortRules:ledger.monthlyRules;
   if(BigInt(epochs.drainingEpoch||epochs.currentEpoch)!==epoch)return wait('finalizedPolicyBoundary');
   const open=ledger.wallets.some(w=>w[kind].byEpoch.some(e=>BigInt(e.epoch)===epoch&&BigInt(e.open)>0n));
-  if(!open&&!draining)return wait('empty');
+  if(!open&&!draining){if(state.cutoffs?.[kind]){delete state.cutoffs[kind];save(state);}return wait('empty');}
   const {identity,drawId,input}=datasetInput(kind,config,buyManifest,policy,epoch,cutoffHead,state.configHash);
   if(isShort&&open)check(BigInt(config.shortBudget)<=await source.maxBudget(at),'Configured Short budget exceeds controller limit');
   const artifact=(isShort?sd:md).buildFromHistory({...input,blocks});
   const entry=artifact.schema.includes('empty-epoch')?{empty:artifact,input}:
     {job:isShort?sw.makeJob(artifact,ethers.id('scheduler proposal '+identity),config.chunkSize):mw.makeMonthlyJob(artifact,config.chunkSize)};
-  state.jobs[kind].push(entry);save(state); // Durable artifact precedes all broadcasts.
+  state.jobs[kind].push(entry);if(state.cutoffs)delete state.cutoffs[kind];save(state); // Durable artifact precedes all broadcasts.
   return {status:'progress',action:'saveJob',...(entry.job?{drawId}:{epoch:String(epoch)})};
 }
 async function runScheduler(options,{maxTicks=32,onTick=()=>{}}={}){

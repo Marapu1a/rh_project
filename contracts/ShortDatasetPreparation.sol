@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
+import {CutoffHistory} from "./CutoffHistory.sol";
 import {ChainBlocks} from "./ChainBlocks.sol";
 
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
@@ -10,7 +11,7 @@ import {ShortPrizeBasket} from "./ShortPrizeBasket.sol";
 /// @notice Internal component, NOT a production controller. The integrating controller
 /// must enforce publisher authorization, cutoff eligibility/finality, schedule, rules
 /// epoch and budget policy. Structural readiness is not proof of eligible BUY history.
-abstract contract ShortDatasetPreparation is ReentrancyGuard {
+abstract contract ShortDatasetPreparation is ReentrancyGuard, CutoffHistory {
     enum Status { None, Publishing, Ready, Superseded, Sealed }
     uint256 public constant MAX_DATASET_CHUNK = 64;
     bytes32 public constant EMPTY_DATASET_ROOT = keccak256("SHORT_DATASET_V1");
@@ -73,8 +74,7 @@ abstract contract ShortDatasetPreparation is ReentrancyGuard {
             && !sealedDraws[r.drawId] && r.campaignId > 0 && r.rulesEpoch > 0, "identity");
         require(r.snapshotHash != bytes32(0) && r.expectedRoot != bytes32(0)
             && r.expectedCount > 0 && r.expectedAttempts >= r.expectedCount && r.budget > 0, "request");
-        require(r.cutoffBlockNumber < ChainBlocks.number() && ChainBlocks.number() - r.cutoffBlockNumber <= 256
-            && r.cutoffBlockHash != bytes32(0) && ChainBlocks.recentHash(r.cutoffBlockNumber) == r.cutoffBlockHash, "cutoff");
+        require(validCutoff(r.cutoffBlockNumber, r.cutoffBlockHash), "cutoff");
         require(address(datasetVault).code.length > 0 && datasetVault.drawController() == address(this), "vault");
         datasetVault.validateDrawId(r.drawId, 0);
         require(weights.length <= 64, "places");

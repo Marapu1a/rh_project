@@ -68,7 +68,7 @@ async function stepShort({provider,source,job,publisher,executor,gasPrice,signal
     if(p.status===0n){
       if(await source.activeProposal()!==ethers.ZeroHash||await source.pendingDatasetDraw()!==ethers.ZeroHash)return wait('otherDraw');
       const head=await provider.getBlock('latest');
-      check(head.number+1-Number(r.cutoffBlockNumber)<=256,'Cutoff expired before begin; rebuild unfrozen job');
+      check(head.number+1-Number(r.cutoffBlockNumber)<=256||await source.cutoffHashes(r.cutoffBlockNumber)===r.cutoffBlockHash,'Cutoff expired before begin; rebuild unfrozen job');
       if(BigInt(head.timestamp)<await source.lastShortTerminalAt()+await source.SHORT_INTERVAL())return wait('schedule');
       if(BigInt(head.number+1)<BigInt(r.cutoffBlockNumber)+await source.cutoffDelayBlocks())return wait('cutoffDelay');
       return send(publisher,'begin',[job.proposalId,r]);

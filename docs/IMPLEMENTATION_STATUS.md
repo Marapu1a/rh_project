@@ -12,6 +12,7 @@
 | ParticipantRegistry | Публичный opt-in без backdating | Не доказывает уникальность человека. [Модуль](PARTICIPANT_REGISTRY.md) |
 | BUY replay | Direct USDG (включая новый native mode1 fork с admission/registration) + отдельный PAIR V1 AUTO (1–2 legs), полный scan/replay, provenance, carry и nominal 100 USDG за entry | AUTO требует USDG funding и payer=recipient; public activation отсутствует. Не универсальный decoder/daemon. [Границы](DIRECT_BUY_REPLAY.md) |
 | Attempts / builders | OPEN/FROZEN/CONSUMED, независимые Short/Monthly epochs, v4, public verification | Snapshot truth не доказывается on-chain. [Lifecycle](ATTEMPT_LIFECYCLE.md), [trust](INDEXER_TRUST_MODEL.md) |
+| CutoffHistory | Permissionless authentic hash cache, aged begin/empty; FINALIZED_CHECKPOINT worker | Не finality oracle. [Модель и проверки](CUTOFF_HISTORY.md) |
 | Short settlement | Dataset chunks, reserve при seal, один seed, bounded processing, canonical result, atomic finish/consume | Abstract core. [Dataset](SHORT_DATASET_PREPARATION.md), [epochs](SHORT_RULES_EPOCHS.md), [settlement](SHORT_SETTLEMENT.md) |
 | Monthly settlement | Chunks, один seed, выбор кандидата, Next/Current переходы, независимые epochs | Abstract core. [Модель](MONTHLY_RULES_EPOCHS.md) |
 | Local controllers | Исполняемые Short/Monthly с общим vault, ролями, async RNG transport | Только chainId 31337, mock provider. [Скелет](LOCAL_CONTROLLER_SKELETON.md) |

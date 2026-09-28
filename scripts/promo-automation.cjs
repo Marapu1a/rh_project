@@ -22,6 +22,7 @@ function validateOps(o){
 }
 async function prepareRuntime({provider,executor,collector,adapter,vault,short,monthly,fundingJob,deliveryJob,schedulerConfig,rpcUrl,statePath,ops,deploymentProfile,receiptTimeoutMs=30000}){
  ops=JSON.parse(JSON.stringify(validateOps(ops)));funding.validateJob(fundingJob);rng.validateJob(deliveryJob);receiptOptions(receiptTimeoutMs);
+ if(schedulerConfig.cutoffMode==='FINALIZED_CHECKPOINT')check(typeof ops.gasUnits?.checkpointCutoff==='string'&&/^[1-9][0-9]*$/.test(ops.gasUnits.checkpointCutoff),'Missing gas bound checkpointCutoff');
  if(deploymentProfile)require('./deployment-admission.cjs').validateDeploymentProfile(deploymentProfile,{fundingJob,deliveryJob,schedulerConfig});
  const dual=ops.schema==='local-promo-automation-v1';
  const domain=validateConfig(schedulerConfig,rpcUrl),sender=await executor.getAddress();
@@ -62,8 +63,8 @@ async function runPromoAutomation({provider,executor,collector,adapter,vault,sho
   }
   async function guard(request,action,commit=false){
    if(signal?.aborted)throw Object.assign(Error('Stopped'),{code:'LOCAL_EXECUTION_STOPPED'});
-   check([...ACTIONS,...(dual?MONTHLY_ACTIONS:[])].includes(action),'Unbudgeted operation');
-   const target=['pull','pay'].includes(action)?collector:['prove','deliver'].includes(action)?adapter:action==='claim'?vault:(MONTHLY_ACTIONS.includes(action)||(dual&&action==='closeEmpty'&&same(request.to,monthly.target)))?monthly:short;
+   check([...ACTIONS,...(dual?MONTHLY_ACTIONS:[]),...(schedulerConfig.cutoffMode==='FINALIZED_CHECKPOINT'?['checkpointCutoff']:[])].includes(action),'Unbudgeted operation');
+   const target=['pull','pay'].includes(action)?collector:['prove','deliver'].includes(action)?adapter:action==='claim'?vault:(MONTHLY_ACTIONS.includes(action)||(dual&&['closeEmpty','checkpointCutoff'].includes(action)&&same(request.to,monthly.target)))?monthly:short;
    check(same(request.to,target.target)&&target.interface.parseTransaction({data:request.data}).name===action,'Unexpected transaction target/action');
    check(!request.from||same(request.from,sender),'Unexpected transaction sender');
    if(sentCount>=ops.maxTransactions)wait('transactionLimit');
@@ -73,7 +74,7 @@ async function runPromoAutomation({provider,executor,collector,adapter,vault,sho
    if(units>bound||bound>head.gasLimit)wait('actionGasBound');
    if(await provider.getTransactionCount(sender,'pending')>await provider.getTransactionCount(sender,'latest'))wait('pendingSigner');
    let required=transactionCost(ops,units)+BigInt(ops.nativeFloor);
-   if(deploymentProfile&&['begin','beginMonth','seal','sealMonth'].includes(action)){
+   if(deploymentProfile&&['checkpointCutoff','begin','beginMonth','seal','sealMonth'].includes(action)){
     const admission=await require('./deployment-admission.cjs').inspectDeployment(provider,deploymentProfile,{fundingJob,deliveryJob,schedulerConfig});
     state.lastDeploymentAdmission=admission;save(state);if(admission.status!=='matched')wait('deploymentAdmission');
    }

@@ -13,7 +13,8 @@ setter, owner или произвольных внешних адресов:
 - другие сети: обычные EVM block.number/blockhash;
 - на Robinhood ошибка/отсутствие ArbSys приводит к revert, fallback к L1 отсутствует;
 - окно прежнее: только завершённые блоки возрастом **1..256 включительно**.
-  Вне окна helper возвращает zero, а caller отвергает cutoff. Неизвестный hash/zero
+  Вне окна helper возвращает zero. Основные draw controllers принимают ранее сохранённый
+  [CutoffHistory](CUTOFF_HISTORY.md); без записи caller отвергает старый cutoff. Неизвестный hash/zero
   не становится допустимым. Внутри окна ошибка ArbSys не подавляется.
 
 Заменены все прямые block.number/blockhash в основных contracts:
@@ -21,7 +22,7 @@ setter, owner или произвольных внешних адресов:
 | Компонент | Исправленные границы |
 |---|---|
 | ShortDrawCommitment | cutoff identity, записанный freezeBlock |
-| ShortDatasetPreparation | canonical recent cutoff при begin |
+| ShortDatasetPreparation | recent или ранее checkpointed cutoff при begin |
 | ShortRulesEpochs | genesis firstBlock, activation B+1, empty cutoff, terminal block |
 | MonthlySettlement | genesis, activation B+1, begin/empty cutoff, terminal block |
 
@@ -50,13 +51,14 @@ mainnet/testnet RPC **2/2 passed**, dual size/deployment gate passed.
   terminal L2 heights, откат terminal при reorg и повтор другим caller;
 - exact genesis heights, activation B+1, old-first, empty без изменения clock,
   начало новой epoch;
-- контрактные begin принимают age 1/256, отвергают 0/future/257;
+- контрактные begin принимают age 1/256, отвергают 0/future/257 без checkpoint;
 - старый ShortDrawCommitment записывает правильный L2 freezeBlock.
 
 Уже принятый cutoff не проверяется на свежесть заново при seal: подготовка и ранее
 могла занять более 256 блоков. Это поведение сохранено и проверено в Nitro regression.
 Свежесть при begin считается в L2-блоках, не в Ethereum-блоках: это другое окно
-по реальному времени. Builder должен выбирать свежий cutoff перед begin.
+по реальному времени. Без cache builder должен выбирать свежий cutoff перед begin. В FINALIZED_CHECKPOINT
+режиме сначала сохраняется hash, затем после finality строится dataset без ограничения256.
 Сохранены reserve/credits/rounding и существующие permission/reentrancy guards.
 
 `npm run check:nitro:rpc` — read-only выполнение **того же helper** через state

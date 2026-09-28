@@ -3,6 +3,9 @@
     "compile": true,
     "files": [
       "test/rng-timing-survey.test.cjs",
+      "test/cutoff-history.test.cjs",
+      "test/cutoff-scheduler.test.cjs",
+      "test/cutoff-automation.test.cjs",
       "test/fee-router.test.cjs",
       "test/infinity-collector.test.cjs",
       "test/infinity-worker.test.cjs",
@@ -228,5 +231,9 @@
     "files": [
       "test/deployment-admission.test.cjs"
     ]
+  },
+  "cutoff-history": {
+    "compile": true,
+    "files": ["test/rng-timing-survey.test.cjs", "test/cutoff-history.test.cjs", "test/cutoff-scheduler.test.cjs", "test/cutoff-automation.test.cjs", "test/nitro-blocks.test.cjs"]
   }
 }

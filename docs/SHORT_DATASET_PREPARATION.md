@@ -22,7 +22,7 @@ None → Publishing → Ready → Sealed
           └───────────┴──→ Superseded
 ```
 
-- `_beginDataset(proposalId, request, rules, weights, minimumUnit)` фиксирует предложение и проверяет recent cutoff, правила допуска, положительную обеспеченную корзину и связь controller/vault. Денег не резервирует.
+- `_beginDataset(proposalId, request, rules, weights, minimumUnit)` фиксирует предложение и проверяет recent или ранее записанный [cutoff](CUTOFF_HISTORY.md), правила допуска, положительную обеспеченную корзину и связь controller/vault. Денег не резервирует.
 - `_publishDataset(proposalId, participants)` принимает 1..64 записей. Это предел одной транзакции, **не лимит участников**. Контракт проверяет строгий порядок адресов между всеми порциями, диапазоны uint128, ненулевой адрес и запрет vault как получателя. Сам считает root, участников и attempts.
 - Последняя порция переводит в Ready только при точном совпадении ожидаемых root/count/totalAttempts. Ошибка откатывает всю эту порцию.
 - `_supersedeDataset(proposalId)` закрывает только незамороженную подготовку. История, root и хеши порций сохраняются; ID повторно использовать нельзя. Следующая подготовка имеет новый proposalId; прежний drawId до seal можно повторить.

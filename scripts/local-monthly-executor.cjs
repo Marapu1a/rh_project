@@ -59,7 +59,7 @@ async function stepMonthly({provider,source,job,publisher,executor,gasPrice,sign
     if(m.phase===0n){
       if(await source.activeMonth()!==ethers.ZeroHash||await source.pendingMonth()!==ethers.ZeroHash)return wait('otherDraw');
       const head=await provider.getBlock('latest');
-      check(head.number+1-Number(r.cutoff)<=256,'Monthly cutoff expired before begin; rebuild unfrozen job');
+      check(head.number+1-Number(r.cutoff)<=256||await source.cutoffHashes(r.cutoff)===r.cutoffHash,'Monthly cutoff expired before begin; rebuild unfrozen job');
       if(BigInt(head.timestamp)<await source.lastMonthAt()+await source.monthlyInterval())return wait('schedule');
       if(BigInt(head.number+1)<BigInt(r.cutoff)+await source.cutoffDelayBlocks())return wait('cutoffDelay');
       return send(publisher,'beginMonth',[r]);

@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
+import {CutoffHistory} from "./CutoffHistory.sol";
 import {ChainBlocks} from "./ChainBlocks.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {PromoVault} from "./PromoVault.sol";
@@ -10,7 +11,7 @@ interface IMonthlyControllerBinding { function monthlyController() external view
 /// Internal monthly component. The integrating controller must authenticate the
 /// publisher and one seed, and enforce finality/execution readiness before seal.
 /// Interval/notice are immutable; admission policies are forward-only epochs.
-abstract contract MonthlySettlement is ReentrancyGuard {
+abstract contract MonthlySettlement is ReentrancyGuard, CutoffHistory {
     enum Phase { None, Publishing, Ready, WaitingSeed, Processing, Terminal, Superseded }
     struct Input {
         bytes32 drawId; bytes32 snapshotHash; bytes32 root; uint64 campaign; uint64 rulesEpoch;
@@ -82,8 +83,7 @@ abstract contract MonthlySettlement is ReentrancyGuard {
     /// Authorized publisher assertion only; independent replay must prove old OPEN is empty.
     function _closeEmptyMonthlyEpoch(uint256 cutoff,bytes32 cutoffHash,bytes32 snapshotHash) internal nonReentrant {
         require(drainingMonthlyEpoch!=0 && activeMonth==bytes32(0) && pendingMonth==bytes32(0),"month phase");
-        require(cutoff>=policies[currentMonthlyEpoch].firstBlock && cutoff<ChainBlocks.number() && ChainBlocks.number()-cutoff<=256
-            && cutoffHash!=bytes32(0) && ChainBlocks.recentHash(cutoff)==cutoffHash && snapshotHash!=bytes32(0),"month cutoff");
+        require(cutoff>=policies[currentMonthlyEpoch].firstBlock && validCutoff(cutoff,cutoffHash) && snapshotHash!=bytes32(0),"month cutoff");
         emit MonthlyEpochEmpty(drainingMonthlyEpoch,cutoff,cutoffHash,snapshotHash);drainingMonthlyEpoch=0;
         // An administrative empty closure is not a draw: preserve lastMonthAt/Block.
     }
@@ -97,8 +97,7 @@ abstract contract MonthlySettlement is ReentrancyGuard {
         monthlyVault.validateDrawId(input.drawId,1);
         require(input.drawId!=bytes32(0) && months[input.drawId].phase==Phase.None && input.snapshotHash!=bytes32(0)
             && input.root!=bytes32(0) && input.campaign>0 && input.count>0 && input.attempts>=input.count,"month input");
-        require(input.cutoff>=lastMonthBlock && input.cutoff<ChainBlocks.number() && ChainBlocks.number()-input.cutoff<=256
-            && input.cutoffHash!=bytes32(0) && ChainBlocks.recentHash(input.cutoff)==input.cutoffHash,"month cutoff");
+        require(input.cutoff>=lastMonthBlock && validCutoff(input.cutoff,input.cutoffHash),"month cutoff");
         Month storage m=months[input.drawId];m.input=input;m.phase=Phase.Publishing;
         m.root=EMPTY_MONTHLY_ROOT;activeMonth=input.drawId;emit MonthProposed(input);
     }

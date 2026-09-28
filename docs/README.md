@@ -23,6 +23,7 @@
 | Воспроизводимое review | [Канонический runner](REVIEW_TESTING.md) |
 | Диагностика refill / manifest | [Inspector и deployment manifest](LOCAL_NATIVE_REFILL_INSPECTOR.md) |
 | Допуск deployment / timing | [Профиль и проверки](DEPLOYMENT_ADMISSION.md) |
+| Cutoff / финальность | [История подлинных cutoff и worker](CUTOFF_HISTORY.md) |
 | RNG / сеть | [Delivery worker](DRAND_DELIVERY_WORKER.md), [Drand adapter и операционная граница](DRAND_ADAPTER.md), [Drand verifier](DRAND_FEASIBILITY.md), [нерешённый binding](DRAND_BINDING_MODEL.md), [L2 blocks](ROBINHOOD_BLOCK_SEMANTICS.md) |
 | Ранние компоненты Short | [Commitment](SHORT_DRAW_COMMITMENT.md), [outcome](SHORT_OUTCOME_VERIFICATION.md) — сохранённые API/тесты, не основной полный pipeline |
 

@@ -155,3 +155,9 @@ Contracts не менялись. Полный suite, live fork и публичн
 Для повторения всего затронутого контура: `npm run test:group -- --profile promo-automation`.
 В среде GPT при повторном сбое нужен original trace с PID/runId/path и сравнением
 несинхронизируемого runtime каталога; без него нельзя утверждать конкретную причину.
+
+## 28.09: запись cutoff до финальности
+
+[FINALIZED_CHECKPOINT](CUTOFF_HISTORY.md) требует admitted BUY policy и явный
+`ops.gasUnits.checkpointCutoff`. Общий executor журналирует и проверяет газ для записи
+в оба controller; unknown send блокирует все lanes. Новых публичных прав не добавлено.

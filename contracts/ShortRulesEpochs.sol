@@ -78,8 +78,7 @@ abstract contract ShortRulesEpochs is ShortDatasetPreparation {
     /// A false empty assertion is detected by replay, not proven impossible on-chain.
     function _closeEmptyShortEpoch(uint256 cutoff, bytes32 cutoffHash, bytes32 snapshotHash) internal nonReentrant {
         require(drainingShortEpoch != 0 && activeProposal == bytes32(0) && pendingDatasetDraw == bytes32(0), "phase");
-        require(cutoff >= policies[currentShortEpoch].firstBlock && cutoff < ChainBlocks.number()
-            && ChainBlocks.number() - cutoff <= 256 && ChainBlocks.recentHash(cutoff) == cutoffHash && cutoffHash != bytes32(0)
+        require(cutoff >= policies[currentShortEpoch].firstBlock && validCutoff(cutoff, cutoffHash)
             && snapshotHash != bytes32(0), "cutoff");
         emit ShortEpochEmpty(drainingShortEpoch, cutoff, cutoffHash, snapshotHash); drainingShortEpoch = 0;
     }
