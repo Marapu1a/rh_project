@@ -1,0 +1,67 @@
+{
+  "schema": "public-controller-fork-v1",
+  "observedAt": "2026-09-28T06:36:28.668Z",
+  "status": "partial-complete",
+  "publicLaunchReady": false,
+  "assumptions": [
+    "Local in-process fork, no public sends; read-only upstream proxy",
+    "EDR ArbSys shim maps block.number/blockhash to local RPC heights; not a native Nitro execution proof",
+    "No source overrides, no constructor clock backdating, no timestamp override",
+    "Synthetic token and no project liquidity/BUY integration; actual existing USDG is read only",
+    "Cannot finish new monthly schedule or future drand proof in this bounded fork run"
+  ],
+  "stage": "partial proof complete",
+  "anchor": {
+    "number": 74587395,
+    "hash": "0xa52c0a549415507099857bb76e54087dc64c305fb5c3191d775220d56285671a",
+    "timestamp": 1790577390
+  },
+  "contracts": {
+    "short": {
+      "address": "0x9a9edEA6C804F40d81B1Dc4ae551AFfbad2ec5Bb",
+      "codeHash": "0x7ef5c188210399d5a88492448d0e86d73328225f248835588fa1b57cd0c4e3ff",
+      "runtimeBytes": 22738
+    },
+    "monthly": {
+      "address": "0xa54C848fF17DE43816e63cE639540E4a0cb244ba",
+      "codeHash": "0x60b5bf1a637ea71ab83f032c7448b2543f2be6681bd85dba0200cfbb8590528e",
+      "runtimeBytes": 17943
+    },
+    "adapter": {
+      "address": "0x107878621f99d7918cb1A86602CaB715E8B2d386",
+      "codeHash": "0x23def032e6a012881c5491151e5aa975e04238149a5404cdacf18a073c8c4125",
+      "runtimeBytes": 10957
+    },
+    "vault": {
+      "address": "0x9B47985963fC82D8DEa6D824d1FbbFf3be5ca647",
+      "codeHash": "0x545c17d7bbe36701d7952e18ba79312247d9c0c536d29f74ec2d34ef6a57b1c0",
+      "runtimeBytes": 8496
+    }
+  },
+  "quote": {
+    "address": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+    "decimals": 6,
+    "codeHash": "0x864cc9ad53b338b82da1f7cab85ab0b3d5c8861acb422b6fec63cf36234f36a6"
+  },
+  "cutoff": {
+    "number": "74587401",
+    "hash": "0xb614b2d83cb6c6f9e67cb093c8e520b5f9ed7ee0ed50d9f87bff98fd6198b9fb"
+  },
+  "transactions": [
+    {
+      "hash": "0x5bb9e92cce283c88d6cd47b934569e6c468fad6bfc15a56c72b242d1c05ceef6",
+      "gasUsed": "49254"
+    },
+    {
+      "hash": "0xbe179b094cf891f37a7496ca349dbcd93015afadbf6aa7f6d153c0f5f44c201c",
+      "gasUsed": "49244"
+    }
+  ],
+  "scheduleStillWaiting": true,
+  "frozenUSDG": "0",
+  "proxyStats": {
+    "requests": 164,
+    "retries": 2,
+    "errors": 0
+  }
+}

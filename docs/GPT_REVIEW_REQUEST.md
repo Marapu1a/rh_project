@@ -1,55 +1,63 @@
-# Review: закрытие cutoff/finality через историю подлинных hashes
+# Review: публичные controllers, launch plan и RPC/fork границы
 
-28.09.2026. Прочти CURRENT_CONTEXT, ROADMAP, CUTOFF_HISTORY и изменённый код.
-Предыдущие замечания приняты, но provisional begin сознательно не реализован:
-его Ready/permissionless seal и empty closure усложняли решение без необходимости.
+28.09.2026. Начни с CURRENT_CONTEXT, ROADMAP и PUBLIC_CONTROLLERS. Код изменён, но публичных
+транзакций не было. Пользователь одобрил ограниченный пакет public wrappers/config/RPC/доступный fork.
 
-## Что сделали и почему
+## Архитектура
 
-CutoffHistory наследуется обоими settlement cores. Permissionless checkpointCutoff(number)
-сохраняет hash, прочитанный через ChainBlocks/ArbSys в окне256. Caller не передаёт hash.
-Mapping immutable, повтор идемпотентен, нет active slot/резервов/owner/внешнего oracle.
-Begin и closeEmpty принимают recent либо cached authentic hash; прочие ограничения сохранены.
-Это hash history, НЕ финальность и НЕ разрешение на freeze.
+Прежние Local controllers выделены в abstract ShortControllerBase/MonthlyControllerBase.
+Local wrappers сохраняют31337 guard/ABI/поведение; public Robinhood wrappers допускают4663,
+проверяют drand PROFILE/CHAIN_HASH/fee0/consumer bindings, требуют cached cutoff для begin/empty.
+Monthly interval строго30days; Short6hours. Public Short minimumUnit передаётся явно в constructor,
+local сохраняет1 raw. Реальные prize settings этим не утверждали. Base общие, чтобы не копировать
+и не расходить исполнение выплат между local/public. Никаких proxy, emergency admin или reset.
 
-FINALIZED_CHECKPOINT в scheduler требует admitted BUY policy. Сначала finalized replay
-проверяет наличие работы, чтобы не жечь газ на пустом проекте. Потом durable candidate
-head−1 → checkpoint tx → ожидание finalized cutoff И checkpoint storage → replay под
-точный cutoff → save job → прежний независимый pre-begin replay → begin/publish/seal.
-Задержка cutoffDelayBlocks относится к begin и не мешает быстрой записи свежего hash.
+Constructor drand binding НЕ доказывает правильность bytecode. Его runtime pins проверяет
+read-only deployment admission; public branch дополнительно проверяет generation profiles и
+FINALIZED_CHECKPOINT. Даже полное совпадение оставляет publicExecutionNotImplemented:
+существующий worker ещё local-only. Не называй совпавший профиль разрешением запуска.
 
-Так full scan больше не обязан укладываться в256blocks; не нужно держать последний chunk
-или создавать provisional proposals, которые придётся исправлять через supersede.
-Пустые draining epochs используют тот же cached hash. Reorg/expiry до job дают явный
-record discard; начатый/frozen job не перезапускается. Epoch boundary drift до job проверяется.
-Cache mapping не выбирает worker cutoff: чужие записи не меняют сохранённый кандидат.
+Runtime public Short22738 / Monthly17943 bytes; local22540 /17745. Build evidence с обычным
+solc0.8.37/optimizer200/Cancun, без viaIR/source overrides. Конструкторные immutable требуют
+реальных deployment runtime pins; template hashes не подставляются вместо них.
 
-Shared executor поддерживает checkpointCutoff на двух targets с явным gas bound,
-существующими admission/native checks и intent/hash/receipt journal. Unknown send
-блокирует signer даже при видимой on-chain записи. Local-only guards оставлены.
+## Параметры
 
-## Проверки и границы
+config/robinhood-launch-plan.json явно incomplete-not-executable. Известны4663/Infinity300bps,
+USDG6/entry100/Next100/6h/30days. Адрес нашего токена/пула/contracts/roles пока null.
+Timing1800 остаётся кандидатом. Creator allocation, odds/weights/minUnit/budget, notice,
+gas caps, archiveRPC, runtime/refill перечислены unresolved. scripts/public-launch-plan.cjs
+только печатает missing, не умеет отправлять и не может выдать executable=true.
 
-24 продуктовых сценария отдельными адресными запусками +1 catalog check прошли.
-Команды и тестовые допущения в CUTOFF_HISTORY. Новые тесты включены в full и профиль
-cutoff-history. Обычная сборка одна, SHA-проверенное reuse. Не full, не live/fork.
-Два тестовых assert были исправлены: reorg fixture сначала оставлял cutoff живым;
-empty path вообще не создаёт journal — это правильное отсутствие записи.
-LocalShort22540 bytes, LocalMonthly17745 bytes, лимит24576. Public wrappers ещё не готовы.
+## Реальная сеть и fork
 
-Финальность остаётся операционным доверием к publisher/worker/RPC. Permissionless seal
-после Ready не стал защищён от обхода worker timing/gas preflight. Новый путь не создаёт
-Ready до finalized admission при честном worker. Не обещаем защиты от глубокого reorg.
-Новый bytecode означает новый deployment/pins; proxy и миграций старых призов нет.
+public-rpc-check читает historical code/call/storage на явных block heights без fallback.
+Official endpoint не дал historical state даже для sampled finalized. Blockreq отдал finalized
+и finalized−10000, но rejected finalized−864000 с лимитом32768blocks. Нужен archive provider.
+Проверялся существующий USDG, не storage будущих наших contracts. Это не SLA.
 
-## Что проверить независимо
+public-controller-fork: read-only upstream proxy → in-process4663 Hardhat → deploy точных
+public bytecodes/drand/vault → read actual USDG → checkpoint обоих → age>256. Partial complete.
+ArbSys явно заменён локальным shim, потому что EDR не Nitro. Project token синтетический.
+Constructor clocks и Solidity sources не переписывались, timestamp override не делался.
+Интервалы ещё не истекли, reserve0. Не выдаём это за full Short+Monthly+live drand/finality.
 
-1. Есть ли способ записать чужой/неподлинный hash или использовать cache в обход
-   epoch/last-terminal/schedule правил? Проверь Nitro и обычную EVM ветви.
-2. Не пропущен ли путь закрытия empty/draining или зависания candidate после restart/reorg?
-3. Не обходит ли checkpoint shared unknown-send/gas boundary, особенно Monthly target?
-4. Достаточно ли явно сохранено доверие к publisher, без ложного обещания on-chain finality?
-5. Следующий пакет — public controller/profile/timing. Какие конкретные препятствия остались
-   после устранения гонки на256blocks? Не предлагай просто удалить local guard.
+## Проверки
 
-Не утверждай production timing1800s по короткой выборке. Призовую математику не меняли.
+18 продуктовых адресных сценариев отдельными запусками +1 catalog check.
+PUBLIC_CONTROLLERS содержит команды и границы. Local public-controller fixture использует
+историческую genesis/test time и реальную сохранённую BLS подпись, synthetic participants.
+Пройден settlement/claim обоих draw, empty, cached-cutoff requirement, constructor refusals,
+public inspector, старые local permissions/reentrancy/unpaid claims и cutoff history.
+Не full suite. Есть профиль public-controllers; он шире фактически выполненных команд.
+
+## Что проверить
+
+1. Не потерялись ли role/reentrancy/request/claim guards при выделении base? Посмотри diff,
+   не только зелёные тесты. Public wrappers не просто local без одной строки guard.
+2. Нет ли дыр в constructor binding/predicted consumer addresses и explicit minimumUnit?
+3. Не завышаем ли доказательства native Nitro/finality и scope fork? Особенно ArbSys shim.
+4. Верно ли отделены incomplete plan, deployment pins и право публичного executor на отправку?
+5. Следующий пакет — public runtime/admission + archive/операционная конфигурация. Предложи
+   ограниченный следующий шаг с сохранением shared unknown-send reconciliation, без массового
+   удаления31337/loopback guards и без объявления timing1800 утверждённым.

@@ -92,3 +92,9 @@ Cancun, без viaIR: Short **22 237**, Monthly **17 453**, vault **8 496 bytes*
 Затем автоматизировать исполнение/восстановление. Finality, честность publisher,
 drand binding и TOKEN → USDG остаются явными незакрытыми задачами, а не скрытыми
 гарантиями этих обёрток. Локальный скелет не отменяет найденные timing counterexamples.
+
+## 28.09: общий execution core
+
+Local wrappers наследуют ShortControllerBase/MonthlyControllerBase, сохраняют31337 guard
+и прежний ABI/поведение. [Публичные wrappers](PUBLIC_CONTROLLERS.md) отдельные; их chain/drand/
+checkpoint ограничения не включаются удалением local guard.

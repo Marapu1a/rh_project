@@ -16,7 +16,7 @@ function render(directory){
     modelNativeAt1Gwei:String(gas*1000000000n),modelNativeAt2Gwei:String(gas*2000000000n),controllerRngFee:String(sum(prepare,'shortNativeSpent')+sum(prepare,'monthlyNativeSpent'))};});
   return {...c,variants};
  });
- const files=['contracts/ShortSettlement.sol','contracts/MonthlySettlement.sol','contracts/ShortOutcome.sol','contracts/ShortDatasetPreparation.sol','contracts/LocalShortController.sol','contracts/LocalMonthlyController.sol','contracts/DualControllerPromoVault.sol','contracts/PromoVault.sol','test/contracts/LocalRandomFixture.sol','test/fixtures/local-controllers.cjs','hardhat.config.cjs'];
+ const files=['contracts/ShortSettlement.sol','contracts/MonthlySettlement.sol','contracts/ShortOutcome.sol','contracts/ShortDatasetPreparation.sol','contracts/LocalShortController.sol','contracts/LocalMonthlyController.sol','contracts/ShortControllerBase.sol','contracts/MonthlyControllerBase.sol','contracts/DualControllerPromoVault.sol','contracts/PromoVault.sol','test/contracts/LocalRandomFixture.sol','test/fixtures/local-controllers.cjs','hardhat.config.cjs'];
  const report={schema:'local-execution-calibration-evidence-v1',environment:{chainId:31337,hardfork:'cancun',solc:require('solc').version(),optimizerRuns:200},
   scope:'Synthetic participants; two sampled seeds, chunk64, N100/1000/10000. Not a proof of worst-case gas or production throughput. Excludes BUY/indexer, deployments, claims, keeper overhead and real RNG/extra L2 fee. Gas price rows are assumptions, not live prices.',
   sourceHashes:Object.fromEntries(files.map(p=>[p,ethers.keccak256(ethers.toUtf8Bytes(fs.readFileSync(p,'utf8').replace(/\r\n/g,'\n')))])),actions,cases};

@@ -15,6 +15,7 @@
 | CutoffHistory | Permissionless authentic hash cache, aged begin/empty; FINALIZED_CHECKPOINT worker | Не finality oracle. [Модель и проверки](CUTOFF_HISTORY.md) |
 | Short settlement | Dataset chunks, reserve при seal, один seed, bounded processing, canonical result, atomic finish/consume | Abstract core. [Dataset](SHORT_DATASET_PREPARATION.md), [epochs](SHORT_RULES_EPOCHS.md), [settlement](SHORT_SETTLEMENT.md) |
 | Monthly settlement | Chunks, один seed, выбор кандидата, Next/Current переходы, независимые epochs | Abstract core. [Модель](MONTHLY_RULES_EPOCHS.md) |
+| Robinhood controllers | Общее execution base, chain4663/drand/checkpoint wrappers; explicit genesis minimumUnit; bytecode22738/17943bytes | Public worker disabled; локальные BLS tests и partial fork, archive/timing/параметры не закрыты. [Модуль](PUBLIC_CONTROLLERS.md) |
 | Local controllers | Исполняемые Short/Monthly с общим vault, ролями, async RNG transport | Только chainId 31337, mock provider. [Скелет](LOCAL_CONTROLLER_SKELETON.md) |
 | BUY → Short integration | Два цикла из локальных транзакций, публичный verifier, recovery/reorg, claim | Упрощённый venue; не PAIR fork. [Сценарий](LOCAL_BUY_CYCLE.md) |
 | Local Short executor | Single-job step/run, publisher/executor, readiness, restart, loopback CLI | Нет нового seed/cutoff, durable mempool journal или production daemon. [Исполнитель](LOCAL_SHORT_EXECUTOR.md) |

@@ -25,12 +25,13 @@ BLS подписью. Это разные уровни доказательст�
 [Ранний checkpoint](CUTOFF_HISTORY.md) сохраняет подлинный hash без proposal. Автоматика
 ждёт finalized блока и самой записи, затем строит dataset; empty draining тоже поддержан.
 Больше не требуется полный scan в256blocks. Это ядро и локальный исполнитель, не public launch.
-Ближайший шаг — публичные wrappers/profile с этой границей и обоснованный timing;
-проверить интеграцию на fork без подмены clock. Timing1800s пока кандидат.
+[Public wrappers](PUBLIC_CONTROLLERS.md) теперь подготовлены, частичный fork пройден.
+Далее публичный runtime/admission и archive RPC; Timing1800s пока кандидат.
 
 ## Оставшиеся релизные блокеры — в порядке работы
 
-1. **Публичное поколение deployment и реальные параметры.** Проверенные сборки контрактов,
+1. **Публичное исполнение и реальные параметры.** Wrappers и incomplete launch plan готовы;
+   shared worker пока local-only. Нужны network-aware public admission и реальные pins. Проверенные сборки контрактов,
    chain/block model, future-round timing/finality policy, рабочие адреса/пулы и единый
    профиль. Local31337 guard нельзя просто удалить. Production timing нужно обосновать
    наблюдениями и явно принять; preflight не становится контрактной финальностью.

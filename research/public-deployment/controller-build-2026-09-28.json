@@ -1,0 +1,60 @@
+{
+  "schema": "public-controller-build-v1",
+  "solc": "0.8.37+commit.f401782d.Emscripten.clang",
+  "optimizer": {
+    "enabled": true,
+    "runs": 200
+  },
+  "evmVersion": "cancun",
+  "artifactSha256": "6d7d829b231bc110cd3eb32d538acd228501d94458d1f3c80c5e82f05e3678da",
+  "sourceOverrides": false,
+  "selectedSourceHashes": {
+    "ShortControllerBase": "0x3787caee57f717fe72bbdd266ef29084cee3d92607147c1dbc82dc1dd14e0dcc",
+    "MonthlyControllerBase": "0xcd767c16c09ca86f6c6460505ba34133895f0f00e07a1dcef26e2af17893e938",
+    "LocalShortController": "0xa49f3430458d962d169ed78dcba98075da9d8fb09dffeddef355f0ddfe217026",
+    "LocalMonthlyController": "0xd0cfeffc41ba5e006fee32fa1ce6c14ae382f7214e8ee6e4d9f0c30e1cf8e214",
+    "RobinhoodShortController": "0x31d8433afcdef7812011b759d55a4732ba26c17ef010ed1dd20aa53c8c154d52",
+    "RobinhoodMonthlyController": "0x2d8169d192ff1e1700c73fdc6cebff38193bcc4267f5f52660d03b711f4763ac",
+    "RobinhoodControllerChecks": "0x70917109571dd4407571c44eb714ff5313abd9181617f6ccd19ce0de9b948ead",
+    "CutoffHistory": "0x06a4cb5a47d297220a5cdfc168d87f984a4611b0e5be040d7325241810105214",
+    "ChainBlocks": "0x54456503817158aa5fb9795dff24b63071a1b6d064bfe85141878d69cd38072e",
+    "DrandRandomAdapter": "0xe0ef6bfab39b466994028e20e332c7feb051b98b8043f6b843688819705051b6",
+    "ShortSettlement": "0x91dd6a535c7af2811113c1d98bc416e2aef1fd29e0fc0764f91c762a6fd73f5f",
+    "MonthlySettlement": "0x2b9db7e9217d3dddcc8020c47f91a2d1d4fb40d12d21cc922d41e75945015064",
+    "ShortDatasetPreparation": "0x5fe319624715c40550f23a8feba53cde4e2b10d907ec7f22284b497635f8d7b3",
+    "ShortRulesEpochs": "0xcfafd725c3c210d2d7963e10ce5b28718d698efcbadc9b304bda56483de941d6"
+  },
+  "contracts": {
+    "LocalShortController": {
+      "runtimeBytes": 22540,
+      "initcodeBytes": 26451,
+      "runtimeTemplateHash": "0x3f01605c9c8b0a083d46364f2812d762fcbb1039c62930d58b84d2adbd479f4c"
+    },
+    "LocalMonthlyController": {
+      "runtimeBytes": 17745,
+      "initcodeBytes": 20358,
+      "runtimeTemplateHash": "0xcf8da475a3a5ad08305369634c133fb029dd1175bedc9d02736d0b762b41d847"
+    },
+    "RobinhoodShortController": {
+      "runtimeBytes": 22738,
+      "initcodeBytes": 27683,
+      "runtimeTemplateHash": "0x326b879a09af38c2aef1f2bc6d072188ebcd425e526ac54ec9091f7c4800c3a7"
+    },
+    "RobinhoodMonthlyController": {
+      "runtimeBytes": 17943,
+      "initcodeBytes": 21650,
+      "runtimeTemplateHash": "0xf329461e9d128b933d5026252afeced76fce92d2363265ea1e74008f81bb050d"
+    },
+    "DrandRandomAdapter": {
+      "runtimeBytes": 10957,
+      "initcodeBytes": 11719,
+      "runtimeTemplateHash": "0x3b166226d44d9864c8e79c745dbb9840580a8ac46a19e3187978e71457bd76ae"
+    },
+    "DualControllerPromoVault": {
+      "runtimeBytes": 8496,
+      "initcodeBytes": 9409,
+      "runtimeTemplateHash": "0xdabed5a80081a6e7a71d7fc1e7b5f269549e4e161c1c2d48756cd9b47b500f8c"
+    }
+  },
+  "limitation": "Runtime templates contain unresolved immutable values; actual deployment runtime pins must be read and independently verified after deployment. Not release approval."
+}

@@ -1,0 +1,49 @@
+{
+  "schema": "public-rpc-capabilities-v1",
+  "observedAt": "2026-09-28T06:30:20.386Z",
+  "quote": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+  "observations": [
+    {
+      "number": "0x471e99d",
+      "depthBlocks": 0,
+      "hash": "0x26afa7e436ca24912cdd3f6c1482c3db0d785fa3c325ee1ce1e8d5e9c89ac7bc",
+      "codeHash": "0x864cc9ad53b338b82da1f7cab85ab0b3d5c8861acb422b6fec63cf36234f36a6",
+      "decimals": "6",
+      "totalSupply": "681111706875372",
+      "storageSlot0": "0x0000000000000000000000000000000000000000000000000000000000000001",
+      "ok": true
+    },
+    {
+      "number": "0x471c28d",
+      "depthBlocks": 10000,
+      "hash": "0x17ea5b11de941de41a7eec50a5cfc16d57f01aa89f3518d9abe2941e21effe04",
+      "codeHash": "0x864cc9ad53b338b82da1f7cab85ab0b3d5c8861acb422b6fec63cf36234f36a6",
+      "decimals": "6",
+      "totalSupply": "680861724403877",
+      "storageSlot0": "0x0000000000000000000000000000000000000000000000000000000000000001",
+      "ok": true
+    },
+    {
+      "number": "0x464ba9d",
+      "depthBlocks": 864000,
+      "ok": false,
+      "error": "public endpoint only serves recent blocks (last 32768). Register at blockreq.com for historical / archive access."
+    }
+  ],
+  "historicalReadsAvailable": false,
+  "publicLaunchReady": false,
+  "chainId": "4663",
+  "latest": {
+    "number": "0x4720ec5",
+    "hash": "0xfb1b271eb365575a8f5b1e6494ab199b8867eeadff6427c3f449c280302c0042",
+    "timestamp": "0x6aba097e"
+  },
+  "finalized": {
+    "number": "0x471e99d",
+    "hash": "0x26afa7e436ca24912cdd3f6c1482c3db0d785fa3c325ee1ce1e8d5e9c89ac7bc",
+    "timestamp": "0x6aba05c0"
+  },
+  "finalizedLagBlocks": "9512",
+  "limitation": "Sampled USDG code/call/storage availability, not a full archive SLA or a read of our not-yet-deployed checkpoint storage. No signing/deployment/finality proof.",
+  "endpointOrigin": "https://robinhood-mainnet-rpc.blockreq.com"
+}

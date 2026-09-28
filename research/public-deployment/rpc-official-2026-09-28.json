@@ -1,0 +1,44 @@
+{
+  "schema": "public-rpc-capabilities-v1",
+  "observedAt": "2026-09-28T06:30:08.505Z",
+  "quote": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+  "observations": [
+    {
+      "number": "0x471e99d",
+      "depthBlocks": 0,
+      "hash": "0x26afa7e436ca24912cdd3f6c1482c3db0d785fa3c325ee1ce1e8d5e9c89ac7bc",
+      "ok": false,
+      "error": "historical state 42bf205fcf397e674abb086c2bf9e75b0a501376d91d9099c1463bd6b112840e is not available"
+    },
+    {
+      "number": "0x471c28d",
+      "depthBlocks": 10000,
+      "hash": "0x17ea5b11de941de41a7eec50a5cfc16d57f01aa89f3518d9abe2941e21effe04",
+      "ok": false,
+      "error": "historical state cd7ef169835c081790d04562f4a9e4267b63f79d2f39d956a317d7fc9be6e241 is not available"
+    },
+    {
+      "number": "0x464ba9d",
+      "depthBlocks": 864000,
+      "hash": "0xdabe3f737b31493228555df72ecc6bcd91dbdcc5e03fc3e05137f23f330338c3",
+      "ok": false,
+      "error": "historical state ab869146524e59c77313261e66367258aec58ce67340b2a7535d1bf4462af467 is not available"
+    }
+  ],
+  "historicalReadsAvailable": false,
+  "publicLaunchReady": false,
+  "chainId": "4663",
+  "latest": {
+    "number": "0x4720e4b",
+    "hash": "0xd8bce4998bfc71c7f46ef9495ea37ad765e6e05e4f90b3a7e3e6dbd0b601aefa",
+    "timestamp": "0x6aba0971"
+  },
+  "finalized": {
+    "number": "0x471e99d",
+    "hash": "0x26afa7e436ca24912cdd3f6c1482c3db0d785fa3c325ee1ce1e8d5e9c89ac7bc",
+    "timestamp": "0x6aba05c0"
+  },
+  "finalizedLagBlocks": "9390",
+  "limitation": "Sampled USDG code/call/storage availability, not a full archive SLA or a read of our not-yet-deployed checkpoint storage. No signing/deployment/finality proof.",
+  "endpointOrigin": "https://rpc.mainnet.chain.robinhood.com"
+}

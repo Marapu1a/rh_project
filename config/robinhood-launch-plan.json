@@ -1,0 +1,74 @@
+{
+  "schema": "robinhood-launch-plan-v1",
+  "status": "incomplete-not-executable",
+  "network": {
+    "chainId": 4663,
+    "blockModel": "Nitro-ArbSys",
+    "nativeCurrency": "ETH"
+  },
+  "controllers": {
+    "short": "RobinhoodShortController",
+    "monthly": "RobinhoodMonthlyController",
+    "adapter": "DrandRandomAdapter",
+    "vault": "DualControllerPromoVault",
+    "cutoffMode": "FINALIZED_CHECKPOINT"
+  },
+  "contracts": {
+    "token": null,
+    "registry": null,
+    "vault": null,
+    "short": null,
+    "monthly": null,
+    "adapter": null,
+    "collector": null,
+    "pairSource": null,
+    "buyPolicySource": null,
+    "pool": null,
+    "quote": {
+      "address": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+      "codeHash": "0x864cc9ad53b338b82da1f7cab85ab0b3d5c8861acb422b6fec63cf36234f36a6",
+      "decimals": 6,
+      "observedAtBlock": "0x471e99d"
+    }
+  },
+  "roles": {
+    "governor": null,
+    "publisherExecutor": null
+  },
+  "product": {
+    "creatorFeeBps": 300,
+    "entryThresholdRaw": "100000000",
+    "nextStartTargetRaw": "100000000",
+    "shortInterval": 21600,
+    "monthlyInterval": 2592000
+  },
+  "timingCandidate": {
+    "leadSeconds": "1800",
+    "maxClockLag": "30",
+    "maxClockAhead": "5",
+    "maxFinalizedLag": "1200",
+    "maxBeaconLag": "15",
+    "cutoffDelayBlocks": "1"
+  },
+  "unresolved": {
+    "timingApproval": null,
+    "creatorAllocation": null,
+    "shortRules": null,
+    "monthlyRules": null,
+    "shortWeights": null,
+    "minimumUnitRaw": null,
+    "maxShortBudgetRaw": null,
+    "rulesNoticeSeconds": null,
+    "maxGasPrice": null,
+    "controllerNativeFloor": null,
+    "archiveRpc": null,
+    "durableRuntime": null,
+    "nativeRefill": null
+  },
+  "publicExecutionEnabled": false,
+  "evidence": [
+    "../research/public-deployment/rpc-official-2026-09-28.json",
+    "../research/public-deployment/rpc-blockreq-2026-09-28.json"
+  ],
+  "limitation": "A planning record, not executable deployment settings. Nulls must not be replaced with test fixtures. Current public executor remains disabled."
+}

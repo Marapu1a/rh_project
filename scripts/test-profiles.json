@@ -3,6 +3,8 @@
     "compile": true,
     "files": [
       "test/rng-timing-survey.test.cjs",
+      "test/public-controllers.test.cjs",
+      "test/public-launch-checks.test.cjs",
       "test/cutoff-history.test.cjs",
       "test/cutoff-scheduler.test.cjs",
       "test/cutoff-automation.test.cjs",
@@ -235,5 +237,9 @@
   "cutoff-history": {
     "compile": true,
     "files": ["test/rng-timing-survey.test.cjs", "test/cutoff-history.test.cjs", "test/cutoff-scheduler.test.cjs", "test/cutoff-automation.test.cjs", "test/nitro-blocks.test.cjs"]
+  },
+  "public-controllers": {
+    "compile": true,
+    "files": ["test/public-controllers.test.cjs", "test/public-launch-checks.test.cjs", "test/local-controllers.test.cjs", "test/cutoff-history.test.cjs", "test/deployment-admission.test.cjs"]
   }
 }

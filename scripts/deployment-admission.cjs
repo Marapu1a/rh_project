@@ -41,7 +41,11 @@ async function inspectDeployment(provider,profile,config){
  try{
   test(String((await provider.getNetwork()).chainId)===profile.chainId,'chainId');
   if(profile.scope==='local-rehearsal')test(profile.chainId==='31337','localChainRequired');
-  if(reasons.includes('chainId'))return result();
+  if(profile.scope==='public-launch'){
+   test(profile.chainId==='4663','publicChainRequired');
+   test(config.schedulerConfig.cutoffMode==='FINALIZED_CHECKPOINT','publicCheckpointMode');
+  }
+  if(reasons.some(r=>['chainId','publicChainRequired','publicCheckpointMode'].includes(r)))return result();
   const head=await provider.getBlock('latest');check(head,'Missing head');const at={blockTag:head.number};
   for(const [name,[address,digest]] of Object.entries(profile.pins)){
    const code=await provider.getCode(address,head.number);test(code!=='0x'&&same(ethers.keccak256(code),digest),'runtime:'+name);
@@ -52,6 +56,7 @@ async function inspectDeployment(provider,profile,config){
   const binding=async(name,method,expected,type='address')=>test(same(await read(name,method,type),expected),'binding:'+name+'.'+method);
   for(const [name,method,target] of [['vault','shortController','short'],['vault','monthlyController','monthly'],['short','datasetVault','vault'],['monthly','monthlyVault','vault'],['vault','quoteToken','quote'],['vault','projectToken','token'],['collector','promoVault','vault'],['collector','projectToken','token'],['collector','quoteToken','quote'],['collector','source','source'],['source','projectToken','token'],['short','datasetRegistry','registry'],['monthly','monthlyRegistry','registry'],['short','randomProvider','adapter'],['monthly','randomProvider','adapter'],['adapter','shortConsumer','short'],['adapter','monthlyConsumer','monthly']])await binding(name,method,address(target));
   for(const name of ['short','monthly'])await binding(name,'publisher',profile.executor);
+  if(profile.scope==='public-launch')for(const name of ['short','monthly'])await binding(name,'CONTROLLER_PROFILE',ethers.id('promo-robinhood-'+name+'-drand-v1'),'bytes32');
   await binding('short','datasetInstance',config.schedulerConfig.lifecycle.instanceId,'bytes32');
   await binding('monthly','monthlyInstance',config.schedulerConfig.lifecycle.monthlyInstanceId,'bytes32');
   await binding('quote','decimals',String(profile.quoteDecimals),'uint8');

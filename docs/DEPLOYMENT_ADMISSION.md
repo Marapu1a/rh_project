@@ -102,3 +102,10 @@ exit1 — невалидный input/ошибка CLI. Проверка публ
 Он входит также в accounting/promo-automation/full. Полный suite и новый live fork не
 запускались. В тестах перед freeze подменяется только operational preflight для historical
 clock; это не доказательство production finality или выбранных lead/lag значений.
+
+## 28.09: публичное поколение
+
+[Robinhood wrappers](PUBLIC_CONTROLLERS.md) добавлены. Read-only public inspection
+требует chain4663, FINALIZED_CHECKPOINT и оба CONTROLLER_PROFILE поверх runtime pins.
+`publicExecutionNotImplemented` сохранён: совпадение bindings не разрешает public worker.
+Incomplete launch plan не заменяет полный deployment profile с адресами и approved settings.
