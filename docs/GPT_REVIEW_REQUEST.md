@@ -1,60 +1,79 @@
-# Текущее обращение к GPT — recovery admission и автоматическое завершение frozen draw
+# Текущий запрос GPT: bootstrap ETH refill общей автоматики
 
-28.09.2026. Закрыли найденную startup boundary целым пакетом, не простым снятием gate.
-Сначала прочитай `docs/RECOVERY_ADMISSION.md`, затем изменённые scripts/tests.
+28.09.2026. Продолжение review `9ec1465`; пользователь одобрил ограниченный пакет
+ETH refill в Infinity/drand runtime. Повторную диагностику lock-файлов сейчас не
+проводим: не считать прежнее наблюдение доказательством продуктового бага и не
+добавлять auto-unlock. Проверяй содержательную логику самостоятельно.
 
-## Решение
+## Что сделали и почему
 
-- Robinhood rehearsal сначала выполняет структурную prepareRuntime с отложенными
-  contract checks и под прежними locks сверяет main/funding/RNG journals. Scheduler
-  sends покрыты main marker. Неизвестный hash блокирует всё; known receipt проверяется
-  по исходным данным и canonical block. Никакого нового формата журнала/reset.
-- Отдельный obligation admission проверяет критические token/quote/registry/vault/
-  controllers/adapter pins, обратные bindings, instances, generation/RNG profile,
-  anchors/stable observation. Current publisher и revenue/BUY source не требуются.
-- Full admission управляет только новыми операциями. Добавлена simulated collector.sync
-  health check: stored sourceFingerprint не обнаруживает актуальный policy drift сам.
-- При failed full admission или Robinhood drain: только prove/deliver, frozen
-  process/finish, terminal claims. Даже сохранённые Ready jobs не freeze; funding
-  pull/pay, publish/begin/checkpoint/closeEmpty запрещены на финальном action guard.
-- Frozen jobs проходят старые checksum/publication/root/context/result checks без
-  повторного чтения внешнего BUY policy. Переписанный artifact не проходит on-chain
-  сверку. Исчезнувшая started-заявка не скрывается frozen-only фильтром.
-- Новый pass автоматически возвращается к normal при восстановлении исходного профиля.
-  Новые pins/policy не принимаются автоматически; старые creator credits остаются в
-  collector до нормального режима. Прежний local31337 drain/handoff не переопределён.
+Worker раньше только ждал внешнего пополнения executor. Теперь опциональный
+`nativeRefill` задаёт отдельный заранее пополненный EOA source, остаток,
+maxPerRefill/maxPerPeriod (включая резерв gas), период и cooldown. Получатель только
+executor. Оба EOA проверяются без кода, prize/source/recipient адреса исключены.
+Один новый перевод за pass; расходы по receipt и nonce сохраняются в main journal.
+Public broadcasts остаются disabled; CLI поддерживает только local/rehearsal.
 
-## Проверено
+Старый `local-native-refill` не переносили механически: его planner связан с другим
+набором операций, старым coordinator state и LOCAL_EIP1559. Добавили узкий
+`promo-native-refill.cjs`, переиспользующий transactionCost, bounded receipt wait и
+существующий main lock. Нового state-файла, универсального treasury и on-chain
+администратора нет. Старый coordinator не изменён.
 
-33 разных продуктовых адресных сценария +1catalog прошли отдельными запусками.
-11 новых recovery,22 соседних (203.3s). Не full suite; команды и corrections в модуле.
-Solidity не менялся, проверяемая compilation artifact повторно использована.
+Общий guard перед нехваткой native считает оставшуюся стоимость обоих frozen draws
+и найденных claims. Пополняет прежде всего этот дефицит, новые действия сохраняют
+этот резерв. Частичный refill разрешён; уже обеспеченные обязательства продолжаются
+при пустом source/cooldown. Discovery должна догнать head перед новым refill.
+Глобальный guard в funding/RNG теперь вызывается перед child budget, иначе child
+останавливался по балансу раньше, чем появлялась возможность пополнения.
 
-Новый сквозной кейс4663: synthetic prepared/frozen Short+Monthly → сломаны source и
-BuyPolicySource → worker автоматически prove/deliver/process/finish/claim обоих →
-повторный pass0tx → восстановлен source/policy → normal/funding. Раньше process/finish
-в public fixture делались вручную; теперь этот recovery путь полностью выполняет worker.
+В main pending появился тип promoNativeRefill. Он сверяется до deployment admission;
+после дочерних workers main pending дополнительно проверяется, чтобы ошибка refill,
+перехваченная child, не позволила следующему lane отправлять транзакции.
+Known hash → исходная tx/receipt/anchor; unknown → остановка, без повторной отправки.
+Save receipt выполняется до изменения in-memory state, поэтому disk failure не
+теряет pending. Revert учитывает только gas. Receipt пересёк окно → расход в новом
+окне; mismatch envelope/cap учитывается и закрывает новые refill.
 
-Дополнительно: source policy drift без bytecode change; drift в estimate до send;
-Ready jobs при recovery/drain; publisher rotation; known/unknown funding send;
-RNG receipt при broken adapter и последующее продолжение без двойного prove;
-wrong critical bytecode, изменённый frozen artifact, disappeared started job.
+Local handoff сохраняет history, cooldown, halt и проверяет последний receipt/source
+pending nonce. Включённую политику удалить/заменить нельзя; первоначальное включение
+разрешено. Это не реализация public handoff или миграции refill policy.
 
-Initial participants/dataset/begin/publish/seal подготовлены fixture. USDG/source
-синтетические, clock исторический, ArbSys shim. Normal Ready-resume test подменяет
-operational preflight. Не называем это real BUY→freeze/mainnet/Nitro finality proof.
-Public inspect/no-send gate сохранён, live/fork/pубличных tx не было.
+## Где смотреть
 
-## Вопросы для независимого review
+- [Модель, конфигурация и пределы](PROMO_NATIVE_REFILL.md).
+- scripts/promo-native-refill.cjs, promo-automation.cjs.
+- scripts/drand-delivery-worker.cjs, infinity-worker.cjs: порядок guard/budget.
+- scripts/promo-runtime-handoff.cjs и оба automation CLI.
+- test/promo-native-refill.test.cjs, promo-refill-accounting.test.cjs,
+  дополнительный сценарий promo-runtime-handoff.test.cjs.
 
-1. Нет ли пути к новому обязательству через recovery/Ready job/drain или окна после estimate?
-2. Достаточна ли on-chain сверка frozen artifacts при отказе от повторного BUY-policy read?
-3. Правильно ли reconciliation отделён от contract checks, не теряет ли неизвестный send?
-4. Остались ли обязательные ошибки в этой границе? Не расширяй до универсального
-   аварийного спасателя: damaged critical contracts/missing jobs/unknown hash остаются halt.
-5. Если здесь всё нормально, следующий результат должен быть релизным: archive RPC и
-   реальные deployment/BUY pins либо эксплуатационный fee/refill профиль. Что сейчас
-   действительно блокирует продвижение, без очередной серии вспомогательных аудитов?
+## Что не закрыто
 
-Дополнительные reads перед действиями осознанны, но provider throughput/cost ещё требуют
-реального измерения. Review не утверждает production timing, экономику или release.
+Это ETH bootstrap, НЕ USDG→ETH и НЕ утверждение creator allocation. Test100%Promo
+не принятая экономика. Два signer требуют эксклюзивного владения одним worker;
+лимит off-chain, ключ сам по себе не ограничен on-chain. Нельзя начинать новый
+пустой журнал ради сброса истории. Runtime volume несинхронизируемый.
+
+4663 proof — локальная Hardhat репетиция с ArbSys fixture, исторической BLS подписью
+и вручную подготовленными frozen datasets. Затем worker автоматически делает
+refill→drand→process/finish→claim. Нет live BUY→freeze, Nitro fee qualification,
+public ключей или broadcasts. Gas/caps fixture завышены, не стоимость production.
+Qualified archive RPC, реальные deployment/BUY pins и production timing остаются
+релизными блокерами, не причина объявить весь продукт готовым.
+
+## Вопросы
+
+1. Есть ли путь продолжить sends после неизвестного refill или сбоя записи receipt?
+2. Верно ли разделены приоритет старых обязательств и резерв перед новым действием,
+   включая частичный refill, source outage и child worker budget?
+3. Не обнуляется ли spent/cooldown/nonce через restart/handoff? Нет ли ошибки окна
+   при mined/reverted receipt после границы периода?
+4. Хватает ли выбранной bootstrap границы для этого шага? Следующий практический
+   результат — принять creator allocation и подключить эксплуатационную долю к ETH
+   либо закрывать public provider/deployment qualification; не нужен новый общий
+   рефакторинг ради рефакторинга.
+
+Прошли56 различных адресных сценариев +1 catalog отдельными запусками; после
+усиления save повторены3 recovery cases. Команды и границы в PROMO_NATIVE_REFILL.md. Не называй их
+full suite. При своём запуске отличай тестовое/файловое окружение от ошибки логики.

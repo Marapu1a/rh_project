@@ -19,7 +19,8 @@ async function main(){
   // No secret is loaded and no public signer is constructed in inspect mode.
   const executor=mode==='inspect'?new ethers.VoidSigner(config.deploymentProfile.executor,provider):await provider.getSigner(config.deploymentProfile.executor);
   const contract=(name,artifact)=>new ethers.Contract(config.deploymentProfile.pins[name][0],artifacts[artifact].abi,provider);
-  const options={...config,provider,executor,collector:contract('collector','InfinityCollector'),adapter:contract('adapter','DrandRandomAdapter'),vault:contract('vault','DualControllerPromoVault'),short:contract('short','RobinhoodShortController'),monthly:contract('monthly','RobinhoodMonthlyController'),rpcUrl:o['--rpc'],statePath:o['--state'],mode:'robinhood-'+mode,drain:!!o['--drain'],signal:stop.signal};
+  const refillSigner=config.nativeRefill&&mode==='rehearsal'?await provider.getSigner(config.nativeRefill.source):undefined;
+  const options={...config,provider,executor,refillSigner,collector:contract('collector','InfinityCollector'),adapter:contract('adapter','DrandRandomAdapter'),vault:contract('vault','DualControllerPromoVault'),short:contract('short','RobinhoodShortController'),monthly:contract('monthly','RobinhoodMonthlyController'),rpcUrl:o['--rpc'],statePath:o['--state'],mode:'robinhood-'+mode,drain:!!o['--drain'],signal:stop.signal};
   process.exitCode=await runWatch({pass:()=>runRobinhoodAutomation(options),watch:!!o['--watch'],pollMs:config.ops.pollSeconds*1000,signal:stop.signal,emit:r=>console.log(JSON.stringify(r))});
  }finally{process.removeListener('SIGINT',interrupt);process.removeListener('SIGTERM',interrupt);provider.destroy();}
 }

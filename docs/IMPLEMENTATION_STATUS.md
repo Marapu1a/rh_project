@@ -1,5 +1,9 @@
 # Карта реализации
 
+28.09: [Bootstrap ETH refill общей автоматики](PROMO_NATIVE_REFILL.md): отдельный EOA →
+executor, приоритет frozen/claims, единый pending и receipt accounting, лимиты и cooldown.
+Local31337/rehearsal4663; public sends и автоматическая конверсия доли проекта не включены.
+
 19.09.2026. Только состояние компонентов; ближайшая задача и результаты проверок
 ведутся в [CURRENT_CONTEXT](CURRENT_CONTEXT.md), порядок работ — [ROADMAP](ROADMAP.md).
 

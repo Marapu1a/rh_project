@@ -1,5 +1,9 @@
 # Robinhood runtime: общий исполнитель и локальная репетиция
 
+28.09: [Bootstrap ETH refill](PROMO_NATIVE_REFILL.md) добавляет отдельный source signer
+для пополнения общего executor, с main journal/caps и приоритетом frozen/claims.
+Public sends по-прежнему закрыты; creator allocation и USDG→ETH отдельно.
+
 28.09.2026. Подготовлен отдельный вход для chain4663 поверх существующей автоматики.
 Контракты, распределение резервов и правила розыгрышей не менялись.
 **Отправки в публичную сеть остаются закрыты.** Нет `--execute`, approve-флага или

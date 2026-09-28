@@ -71,8 +71,8 @@ async function runInfinityWorker({provider,collector,executor,job,statePath,sign
     if((await provider.getBlock(head.number))?.hash!==head.hash)wait('chainChanged');
     if(await collector.campaignId()!==BigInt(job.campaignId))wait('campaignChanged');
    }
-   const boundary={preflight:async(request,action)=>{await budget(request,action);await transactionGuard?.(request,action,false);},before:async(request,action)=>{
-    await budget(request,action);await transactionGuard?.(request,action,true);check(!state.pending,'Unresolved intent');
+   const boundary={preflight:async(request,action)=>{await transactionGuard?.(request,action,false);await budget(request,action);},before:async(request,action)=>{
+    await transactionGuard?.(request,action,true);await budget(request,action);check(!state.pending,'Unresolved intent');
     state.pending={worker:'infinity',action,target:request.to,data:request.data,from:sender,stage:'broadcast'};save(state);
    },sent:async tx=>{state.pending={...state.pending,transactionHash:tx.hash,nonce:tx.nonce,stage:'confirm'};save(state);},confirmed:async r=>{
     check(r.hash===state.pending?.transactionHash,'Receipt mismatch');const block=await provider.getBlock(r.blockNumber);check(block?.hash===r.blockHash,'Receipt not canonical');

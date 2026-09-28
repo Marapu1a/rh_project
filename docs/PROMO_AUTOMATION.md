@@ -1,5 +1,9 @@
 # Общая автоматизация Short и Monthly
 
+28.09: [Bootstrap ETH refill](PROMO_NATIVE_REFILL.md) добавляет отдельный source signer
+для пополнения общего executor, с main journal/caps и приоритетом frozen/claims.
+Public sends по-прежнему закрыты; creator allocation и USDG→ETH отдельно.
+
 28.09: [Deployment profile](DEPLOYMENT_ADMISSION.md) может быть закреплён в runtime identity; проверяется до новых jobs/begin/freeze, без блокировки старых выплат.
 
 27.09.2026. Один процесс и один signer обслуживают оба контроллера. Это расширение

@@ -74,8 +74,8 @@ async function runDrandDelivery({provider,adapter,executor,job,statePath,signal,
     if(await provider.getTransactionCount(sender,'pending')>await provider.getTransactionCount(sender,'latest'))wait('pendingSigner');
     if(!same((await provider.getBlock(head.number))?.hash,head.hash))wait('chainChanged');
    }
-   const boundary={preflight:async(request,action)=>{await budget(request,action);await transactionGuard?.(request,action,false);},before:async(request,action)=>{
-    await budget(request,action);await transactionGuard?.(request,action,true);check(!state.pending,'Unresolved intent');
+   const boundary={preflight:async(request,action)=>{await transactionGuard?.(request,action,false);await budget(request,action);},before:async(request,action)=>{
+    await transactionGuard?.(request,action,true);await budget(request,action);check(!state.pending,'Unresolved intent');
     state.pending={worker:'drand',action,target:request.to,data:request.data,from:sender,stage:'broadcast'};save(state);
    },sent:async tx=>{state.pending={...state.pending,transactionHash:tx.hash,nonce:tx.nonce,stage:'confirm'};save(state);},confirmed:async r=>{
     check(same(r.hash,state.pending?.transactionHash),'Receipt mismatch');const block=await provider.getBlock(r.blockNumber);check(same(block?.hash,r.blockHash),'Receipt not canonical');

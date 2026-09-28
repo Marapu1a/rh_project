@@ -4,6 +4,19 @@ const {runPromoAutomation,prepareRuntime}=require('../scripts/promo-automation.c
 const {handoffRuntime}=require('../scripts/promo-runtime-handoff.cjs');
 const {withState}=require('../scripts/local-scheduler-state.cjs');
 async function setup(t){const f=await fixture(t);await runPromoAutomation(f.options);return {...f,next:{...f.options,statePath:f.directory+'/next.json',ops:{...f.options.ops,maxClaims:32}}};}
+
+test('handoff preserves refill spend, cooldown and halt; cannot remove or change policy',async t=>{
+ const f=await fixture(t),source=await (await f.provider.getSigner(3)).getAddress();
+ f.options.nativeRefill={kind:'BOOTSTRAP_NATIVE',source,minimumBalance:'1000',transferGas:'30000',maxPerRefill:'1000000',maxPerPeriod:'2000000',periodSeconds:'86400',cooldownSeconds:'60'};
+ await runPromoAutomation(f.options);
+ const runtime=await prepareRuntime(f.options),history={windowStart:'0',spent:'1234',lastAttemptAt:'123',lastNonce:9};
+ await withState(runtime.files.main,runtime.identity,async(s,save)=>{s.refillHistory=history;s.refillHalt='operator review';save(s);});
+ const next={...f.options,statePath:f.directory+'/refill-next.json'};
+ await assert.rejects(handoffRuntime(f.options,{...next,nativeRefill:undefined}),/preserve refill/);
+ await assert.rejects(handoffRuntime(f.options,{...next,nativeRefill:{...next.nativeRefill,maxPerPeriod:'3000000'}}),/preserve refill/);
+ assert.equal((await handoffRuntime(f.options,next)).status,'complete');
+ const moved=JSON.parse(fs.readFileSync(next.statePath));assert.deepEqual(moved.refillHistory,history);assert.equal(moved.refillHalt,'operator review');
+});
 test('runtime handoff retires old owner, starts fresh discovery and is repeatable',async t=>{
  const f=await setup(t),nonce=await f.provider.getTransactionCount(await f.admin.getAddress());
  assert.equal((await handoffRuntime(f.options,f.next)).status,'complete');assert.equal((await handoffRuntime(f.options,f.next)).alreadyCompleted,true);

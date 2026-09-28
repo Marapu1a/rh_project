@@ -19,7 +19,7 @@ async function main(){
  try{
   const contract=(address,name)=>new ethers.Contract(address,artifacts[name].abi,provider);let executor;
   const bind=(cfg,statePath)=>{const d=cfg.schedulerConfig.lifecycle;return {...cfg,provider,executor,collector:contract(cfg.fundingJob.collector,'InfinityCollector'),adapter:contract(cfg.deliveryJob.adapter,'DrandRandomAdapter'),vault:contract(d.vault,'DualControllerPromoVault'),short:contract(d.source,'LocalShortController'),monthly:contract(d.monthlySource,'LocalMonthlyController'),rpcUrl:o.rpc,statePath,signal:stop.signal};};
-  const pass=async()=>{executor??=await provider.getSigner(Number(index));return runPromoAutomation({...bind(config,o.state),drain:!!o.drain});};
+  const pass=async()=>{executor??=await provider.getSigner(Number(index));return runPromoAutomation({...bind(config,o.state),refillSigner:config.nativeRefill?await provider.getSigner(config.nativeRefill.source):undefined,drain:!!o.drain});};
   if(o['handoff-to']){executor=await provider.getSigner(Number(index));const next=JSON.parse(fs.readFileSync(o['handoff-to'],'utf8'));console.log(JSON.stringify(await require('./promo-runtime-handoff.cjs').handoffRuntime(bind(config,o.state),bind(next,o['next-state']))));return;}
   process.exitCode=await runWatch({pass,watch:!!o.watch,pollMs:config.ops.pollSeconds*1000,signal:stop.signal,emit:r=>console.log(JSON.stringify(r))});
  }finally{process.removeListener('SIGINT',interrupt);process.removeListener('SIGTERM',interrupt);provider.destroy();}

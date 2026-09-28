@@ -11,6 +11,7 @@ function physical(file){
 }
 async function handoffRuntime(previous,next,{afterRetire=async()=>{}}={}){
  const old=await prepareRuntime(previous),fresh=await prepareRuntime(next);
+ check(!previous.nativeRefill||hash(previous.nativeRefill)===hash(next.nativeRefill??null),'Handoff must preserve refill policy');
  check(!previous.deploymentProfile||next.deploymentProfile,'Handoff cannot remove deployment profile');
  if(next.deploymentProfile){const admission=await require('./deployment-admission.cjs').inspectDeployment(next.provider,next.deploymentProfile,next);check(admission.status==='matched','Successor deployment admission failed: '+admission.reasons.join(','));}
  check(!old.dual||fresh.dual,'Handoff cannot disable Monthly automation');
@@ -51,6 +52,8 @@ async function handoffRuntime(previous,next,{afterRetire=async()=>{}}={}){
    if(r?.transactionHash){const receipt=await p.getTransactionReceipt(r.transactionHash);check(receipt&&same(receipt.blockHash,r.blockHash)&&same((await p.getBlock(receipt.blockNumber))?.hash,receipt.blockHash),'Resolved journal receipt reorg');}
   }
   for(const cursor of [root.payoutCursor,root.monthlyPayoutCursor,...(root.payouts||[]).map(x=>({number:x.blockNumber,hash:x.blockHash}))])if(cursor)check(same((await p.getBlock(cursor.number))?.hash,cursor.hash),'Payout history reorg');
+  if(root.lastRefill){const r=root.lastRefill;check(same((await p.getBlock(r.blockNumber))?.hash,r.blockHash),'Refill receipt reorg');}
+  if(previous.nativeRefill)check(await p.getTransactionCount(previous.nativeRefill.source,'pending')===await p.getTransactionCount(previous.nativeRefill.source,'latest'),'Refill source has pending transactions');
   const job=next.fundingJob,c=next.collector;
   check(await c.campaignId(tag)===BigInt(job.campaignId),'Next campaign not on chain');
   check(same(ethers.keccak256(await p.getCode(c.target,at.number)),job.collectorCodeHash)&&same(await c.sourceFingerprint(tag),job.sourceFingerprint)&&same(await c.source(tag),job.source),'Next source mismatch');
@@ -75,6 +78,7 @@ async function handoffRuntime(previous,next,{afterRetire=async()=>{}}={}){
    // Durable tombstone first: old worker must stop even if the next save crashes.
    root.handoff={token,target:fresh.files.main,configHash:hash(fresh.identity),blockNumber:at.number,blockHash:at.hash};writers['old:main'](root);
    await afterRetire();
+   for(const key of ['refillHistory','lastRefill','refillHalt'])if(root[key]!==undefined)target[key]=structuredClone(root[key]);
    target.predecessor={token,source:old.files.main};writers['new:main'](target);
    // Child files remain uncreated until their first normal pass. Canonical payout replay starts from genesis.
    return {status:'complete',alreadyCompleted:false,target:fresh.files.main};

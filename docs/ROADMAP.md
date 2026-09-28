@@ -41,8 +41,9 @@ public sends закрыты. [Recovery admission](RECOVERY_ADMISSION.md) отд�
    chain/block model, future-round timing/finality policy, рабочие адреса/пулы и единый
    профиль. Local31337 guard нельзя просто удалить. Production timing нужно обосновать
    наблюдениями и явно принять; preflight не становится контрактной финальностью.
-2. **Эксплуатационный бюджет.** Утвердить внутренние доли creator fees; подключить имеющиеся
-   refill-наработки к общему Infinity/drand executor, включая durable recovery. Газ оплачивать
+2. **Эксплуатационный бюджет.** Утвердить внутренние доли creator fees; подключить
+   долю проекта к ETH refill. [Bootstrap refill](PROMO_NATIVE_REFILL.md) уже подключён
+   к общему Infinity/drand executor с durable recovery в local/rehearsal; USDG→ETH ещё нет. Газ оплачивать
    из эксплуатационной доли, не frozen/claimable призов. Test100%Promo не релизная экономика.
 3. **Постоянный сервис.** Ключи и один владелец signer, supervisor, устойчивый несинхронизируемый
    runtime volume, резервные RPC, мониторинг и recovery/runbook. Неизвестная отправка и stale
