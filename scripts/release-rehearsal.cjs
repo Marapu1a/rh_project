@@ -20,6 +20,8 @@ async function main(){
   'Recovery restarts the worker with journals on the same local node, not OS-kill or node restart.',
   'Operations market fork is referenced with a hash, not re-executed or merged into this local chain.'
  ]};
+ let runtimeDirectory;
+ report.environment={node:process.version,platform:process.platform,arch:process.arch,pid:process.pid,lockTrace:process.env.LOCAL_STATE_LOCK_TRACE==='1'};
  const cleanups=[];const stage=(name,data)=>{report.stages.push({name,...data});console.log(name);};
  try{
   const profile=read('config/release-rehearsal.json'),launch=read('config/robinhood-launch-plan.json');
@@ -39,7 +41,9 @@ async function main(){
   stage('saved-operations-market-proof',{evidence:profile.opsEvidence,sha256:report.inputs[profile.opsEvidence],anchor:ops.anchor,executedNow:false});
   const compiled=require('./compile.cjs').compile({writeArtifacts:false});
   report.compiledHash=hash(compiled);
-  const f=await setup({after:fn=>cleanups.push(fn)},compiled);
+  fs.mkdirSync(path.resolve('.local'),{recursive:true});
+  const f=await setup({after:fn=>cleanups.push(fn)},compiled);runtimeDirectory=f.directory;
+  report.environment.runtimeDirectory=f.directory;report.environment.filesystemType=String(fs.statfsSync(f.directory).type);
   // Seed fixture revenue, then use actual collector allocation and worker delivery.
   await sent(f.quote.mint(f.source.target,2000_000000n));await sent(f.source.fund(f.quote.target,2000_000000n));
   let r=await run(f.options);assert.equal(r.results.funding.status,'complete',JSON.stringify(r));
@@ -55,18 +59,42 @@ async function main(){
   // External revenue failure after freeze must not block RNG, settlement or claims.
   await rpc('hardhat_setCode',[f.source.target,'0x60006000fd']);
   const reader=f.vault.connect(f.provider),real=f.vault.connect(f.admin);let interrupted=false;
-  const claim=async(...args)=>{const tx=await real.claim(...args);if(!interrupted){interrupted=true;return {hash:tx.hash,nonce:tx.nonce,wait:async()=>{throw Object.assign(Error('rehearsal lost receipt response'),{code:'TIMEOUT'});}};}return tx;};
+  const attempts=report.claimAttempts=[];
+  const claim=async(...args)=>{
+   const [drawId,winner]=args,key=drawId.toLowerCase()+':'+winner.toLowerCase();
+   const attempt={drawId,winner,key};attempts.push(attempt);
+   assert.equal(attempts.filter(a=>a.key===key).length,1,'Repeated claim send attempt');
+   let expected;
+   if(drawId===ids.sId){const outcome=await f.short.shortResult(drawId);expected=outcome.amounts.reduce((n,v,i)=>n+(outcome.winners[i].toLowerCase()===winner.toLowerCase()?v:0n),0n);}
+   else{assert.equal(drawId,ids.mId);const month=await f.monthly.month(drawId);assert.equal(month.phase,5n);assert.equal(month.winner.toLowerCase(),winner.toLowerCase());expected=month.budget;}
+   assert(expected>0n);assert.equal(await f.vault.reward(drawId,winner),expected);
+   attempt.expected=String(expected);
+   const tx=await real.claim(...args);attempt.transactionHash=tx.hash;attempt.nonce=tx.nonce;
+   if(!interrupted){interrupted=true;return {hash:tx.hash,nonce:tx.nonce,wait:async()=>{throw Object.assign(Error('rehearsal lost receipt response'),{code:'TIMEOUT'});}};}
+   return tx;
+  };
   for(const k of ['estimateGas','populateTransaction','fragment','staticCall'])claim[k]=real.claim[k];
   const faulty=new Proxy(reader,{get(o,k){return k==='connect'?()=>new Proxy(real,{get(c,n){return n==='claim'?claim:Reflect.get(c,n);}}):Reflect.get(o,k);}});
   r=await run({...f.options,vault:faulty},{getBeacon:beacon});
   const pending=read(f.options.statePath).pending;assert(interrupted&&pending?.transactionHash,JSON.stringify(r));
   assert.equal(r.results.admission.mode,'obligations-only');
-  stage('known-claim-interruption',{run:r,pending,receipt:await f.provider.getTransactionReceipt(pending.transactionHash)});
+  const lostReceipt=await f.provider.getTransactionReceipt(pending.transactionHash);
+  stage('known-claim-interruption',{run:r,pending,receipt:lostReceipt});assert.equal(lostReceipt.status,1,'Interrupted claim must already have succeeded');
   // New invocation reloads the real checksummed journals; no clearing/reset.
-  r=await run(f.options,{getBeacon:beacon});assert(!read(f.options.statePath).pending,JSON.stringify(r));
+  r=await run({...f.options,vault:faulty},{getBeacon:beacon});
+  stage('resume-observation',{run:r});assert(!['error','blocked','degraded'].includes(r.status),JSON.stringify(r));
+  assert(!read(f.options.statePath).pending,JSON.stringify(r));
   assert.equal(await f.vault.reserved(f.quote.target),0n);assert.equal(await f.vault.claimable(f.quote.target),0n);
   assert.equal(await f.short.pendingDatasetDraw(),ethers.ZeroHash);assert.equal(await f.monthly.pendingMonth(),ethers.ZeroHash);
   const final=await balances(),paid=participants.reduce((n,p)=>n+BigInt(final[p.wallet])-BigInt(initial[p.wallet]),0n),remaining=await f.quote.balanceOf(f.vault.target);
+  assert.equal(attempts.length,2);assert.deepEqual(new Set(attempts.map(a=>a.drawId)),new Set([ids.sId,ids.mId]));
+  for(const a of attempts){
+   const receipt=await f.provider.getTransactionReceipt(a.transactionHash);assert.equal(receipt.status,1);
+   const logs=receipt.logs.filter(l=>l.address.toLowerCase()===f.vault.target.toLowerCase()).map(l=>f.vault.interface.parseLog(l)).filter(l=>l?.name==='RewardPaid');
+   assert.equal(logs.length,1);assert.equal(logs[0].args.drawId,a.drawId);assert.equal(logs[0].args.winner.toLowerCase(),a.winner.toLowerCase());assert.equal(logs[0].args.amount,BigInt(a.expected));
+   assert.equal(await f.vault.reward(a.drawId,a.winner),0n);
+  }
+  for(const p of participants)assert.equal(BigInt(final[p.wallet])-BigInt(initial[p.wallet]),attempts.filter(a=>a.winner.toLowerCase()===p.wallet.toLowerCase()).reduce((n,a)=>n+BigInt(a.expected),0n));
   assert(paid>0n);assert.equal(remaining+paid,before);assert.equal(await f.collector.credit(opsWallet),opsCredit);assert.equal(await f.collector.credit(projectWallet),projectCredit);
   stage('resume-settle-and-pay',{run:r,balancesBefore:initial,balancesAfter:final,paid:String(paid),vaultRemaining:String(remaining),conservation:true});
   const nonce=await f.provider.getTransactionCount(f.owner),again=await run(f.options,{getBeacon:beacon});
@@ -75,7 +103,9 @@ async function main(){
   report.journals=Object.fromEntries(fs.readdirSync(f.directory).filter(n=>n.endsWith('.json')||n.startsWith('runtime.json.')).map(n=>[n,read(path.join(f.directory,n))]));
   report.finalBlock=await f.provider.getBlock('latest');report.status='complete';
   report.releaseBlockers=['Same-chain admitted live BUY -> automatic datasets -> both draws with production timing','Qualified archive RPC and fallback','Real deployment roles, addresses, verified source/immutable pins and approved limits','Public executor activation after rehearsal; currently closed','Persistent indexer and user website/claims/conditions','Service custody, durable storage, monitoring and recovery runbook','Reproducible CI/source verification and external audit'];
- }catch(e){report.status='failed';report.error=e.stack;process.exitCode=1;console.error(e.message);}
+ }catch(e){report.status='failed';report.error=e.stack;
+  if(runtimeDirectory){try{report.failureFiles=Object.fromEntries(fs.readdirSync(runtimeDirectory).map(name=>{const file=path.join(runtimeDirectory,name),st=fs.statSync(file);return [name,{size:st.size,mtimeMs:st.mtimeMs,ino:String(st.ino),content:fs.readFileSync(file,'utf8')}];}));}catch(snapshotError){report.snapshotError=snapshotError.message;}}
+  process.exitCode=1;console.error(e.message);}
  finally{for(const fn of cleanups.reverse())try{await fn();}catch(e){report.status='failed';report.cleanupError=e.message;process.exitCode=1;}report.finishedAt=new Date().toISOString();fs.writeFileSync(fd,JSON.stringify(report,(_,v)=>typeof v==='bigint'?String(v):v,2)+'\n');fs.closeSync(fd);console.log(output);}
 }
 main().catch(e=>{console.error(e);process.exitCode=1;});

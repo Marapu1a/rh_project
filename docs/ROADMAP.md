@@ -47,7 +47,9 @@ public sends закрыты. [Recovery admission](RECOVERY_ADMISSION.md) отд�
    реализованы и проверены на новом fork. [Journaled collect/approve/swap](OPS_MARKET_EXECUTOR.md) реализован; credit→market→refill
    прошёл fork, coordinator/продвижение старых обязательств проверены отдельно. Funding пакет закрыт.
    Составная [релизная репетиция](RELEASE_REHEARSAL.md) пройдена с явными fixture-границами.
-   Следующий пакет — release profile/параметры и RPC; same-chain automatic proof ещё открыт.
+   Перед следующим пакетом сравнить [failing trace GPT](REHEARSAL_LOCK_INVESTIGATION.md):
+   локальные Windows/Linux проверки complete, причина его EEXIST пока неизвестна.
+   Затем release profile/параметры и RPC; same-chain automatic proof ещё открыт.
    Дорогой gas/нехватка ETH → resumable wait/top-up; вечная самоокупаемость не gate.
    Призовые frozen/claimable не расходуются. Public sends закрыты.
 3. **Постоянный сервис.** Ключи и один владелец signer, supervisor, устойчивый несинхронизируемый

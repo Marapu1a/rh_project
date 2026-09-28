@@ -86,3 +86,16 @@ ArbSys, USDG, внешний creator source и venue state — fixtures. При�
 Соседний regression общего helper: `node --test --test-name-pattern="source and BUY policy outage" test/robinhood-recovery.test.cjs` — 1/1. Default synthetic participants и
 обычный funding helper сохранены; полный suite не запускался. В сохранённом отчёте
 прерванный claim имеет nonce37, следующий —38 и другой draw/calldata.
+
+## Проверка повторяемости после review
+
+[Разбор lock](REHEARSAL_LOCK_INVESTIGATION.md): исходный Windows и три усиленных
+прогона (Windows/Linux9p/Linuxext4) complete. GPT сообщает EEXIST в своей среде;
+причина не подтверждена, нужен его полный failed report + trace. Это не объявлено
+исправлением lock-механизма.
+
+Теперь complete дополнительно требует двух уникальных `(drawId,winner)` sends,
+успешных receipts и RewardPaid с точными суммами terminal результатов, нулевых
+оставшихся rewards и совпадения прироста кошелька с суммой обеих наград. При ошибке
+в отчёт попадают ответ resume worker и snapshot файлов до test cleanup; туда же
+записывается Node/OS/runtime filesystem. Обычный запуск не обходит существующий lock.

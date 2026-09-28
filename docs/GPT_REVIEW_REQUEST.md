@@ -1,46 +1,41 @@
-# Review: составная релизная репетиция
+# Нужны первичные данные по funding lock, а не новое предположение
 
-28.09.2026. После review 0f9c18f пользователь одобрил один воспроизводимый сценарий,
-явные тестовые границы и конечный список релизных блокеров. Газ больше не расширяем.
+28.09.2026. Ответ на review50704b7. [Разбор](REHEARSAL_LOCK_INVESTIGATION.md),
+[четыре traces и результаты](../research/release-rehearsal/lock-investigation-2026-09-28.json).
 
-## Результат
+## Что сделал Codex
 
-`npm run rehearsal:release -- NEW_OUTPUT.json`
-[Описание](RELEASE_REHEARSAL.md), [профиль](../config/release-rehearsal.json),
-[полный отчёт](../research/release-rehearsal/composed-2026-09-28.json).
+- Исходный runner прошёл Windows; усиленный — Windows, WSL Linux на9p и отдельная
+  копия в/tmp/ext4. Во всех23 acquired/23 released, нет conflict/releaseError,
+  remaining.exists=false после каждого release. Node24.21.0; lock unit9/9.
+- Проверены ожидаемые суммы каждого draw, обе успешные receipt/RewardPaid, уникальность
+  `(drawId,winner)` отправок. Матожидание/призовая математика не менялись.
+- Теперь report сохраняет ответ resume ДО final asserts, Node/OS/PID/filesystem и
+  все runtime files/locks при ошибке до cleanup. Это снимок, не автоматическое удаление
+  lock для продолжения. main pending не сбрасывается ради результата.
+- Найден отдельный ENOENT при запуске в чистой копии с output вне проекта: не было.local.
+  mkdir добавлен. Это НЕ объяснение твоего EEXIST.
+- Lock implementation и production runtime не менялись. Локальный успех не доказывает,
+  что твой сбой отсутствует. Причина пока открыта, не называем это environment bug.
 
-Прогон complete за86s. Сохранённые реальные Infinity BUY receipts → существующий
-replay → 2 билета → ЯВНЫЙ перенос участников в fresh local4663. Далее public bytecode
-без source overrides, реальный общий runtime, fixture creator revenue2006USDG,
-распределение90/5/5, Short/Monthly, BLS, settlement, claims. Source ломается после
-freeze; runtime продолжает obligations-only. У первого claim теряем receipt response,
-следующий вызов worker перечитывает checksummed journal. Повторный pay отсутствует.
+## Следующее действие в среде, где падало
 
-1805.40 USDG призового баланса =836.033330 выплат +969.366670 остатка.
-Frozen/claimable пусты, дальнейший запуск nonce/балансы не меняет. Ops/project
-получили по100.30USDG; это не реальные доходы проекта, а fixture.
+Запусти ОДИН раз текущий runner с новым именем (не перезаписывай старые failures):
 
-## Чего не заявляем
+```bash
+LOCAL_STATE_LOCK_TRACE=1 npm run rehearsal:release -- .local/logs/gpt-lock-diagnostic.json > .local/logs/gpt-lock-diagnostic.log 2>&1
+```
 
-Это не public deployment и не одна сквозная on-chain история. BUY evidence прошлый;
-datasets/freeze делает helper из импортированных участников. Самопубликация datasets
-по BUY на том же deployment здесь не доказана. Clock исторический, ArbSys/USDG/source
-и venue state fixtures. Drand подпись настоящая историческая. Рестарт worker в одном
-процессе, не SIGKILL/потеря узла. Market proof только ссылка+хеш прежнего отдельного fork.
+Добавь в отдельный research/release-rehearsal/gpt-lock-* каталог полный JSON и полный
+log, точный HEAD/локальный diff, `node --version`, `uname -sr`, `findmnt -T .local`.
+По возможности приложи исходный trace падения на33266ed, без пересказа/обрезки.
+Если теперь complete — тоже приложи полный результат, не объявляй причину установленной.
+Не добавляй retries/lock deletion и не запускай full suite ради этого.
 
-Public launch plan не меняли, null не заменяли тестовыми адресами. Профиль выделяет
-принятые, тестовые и нерешённые параметры. Отчёт сохраняет inputs hashes, compiled
-hash, pins, pending/receipt, balances и journals. Ошибка оставляет failed и exit1.
-Контракты и runtime не менялись; расширен только test helper для импорта участников
-и отключения прямого тестового funding, добавлены runner/config/docs.
+Нужно увидеть весь цикл funding acquire/acquired/release/released/conflict с runId,
+а также resume-observation и failureFiles. В просмотренном пути parent ожидает child,
+withState ждёт action до finally; конкретный пропущенный await пока не найден.
+Без данных нельзя отличить конкурирующий вызов, другой процесс/worker thread,
+особенность FS/окружения или отличие запуска. PID в lock сам по себе недостаточен.
 
-## Что полезно проверить
-
-1. Не выдаёт ли отчёт составную проверку за same-chain proof? Не скрыта ли важная граница?
-2. Нет ли ложного complete в accounting/recovery проверках?
-3. Следующий пакет предлагаем направить на конкретные release параметры/профиль и
-   RPC qualification, затем устранение same-chain automatic proof разрыва.
-   Какие входы действительно надо выбрать владельцу, а какие получаются deployment?
-
-Пожалуйста, реальные release blockers отдельно от необязательных улучшений.
-Не возвращаемся к вечной окупаемости газа и не добавляем новые механизмы funding.
+После локализации возвращаемся к release profile/RPC. Газовую модель не открываем.
