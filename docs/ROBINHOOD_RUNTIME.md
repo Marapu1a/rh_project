@@ -58,11 +58,10 @@ FINALIZED_CHECKPOINT и привязанный BuyPolicySource. Это не пе
 может продолжить. Если отправка уже могла состояться, её journal не очищается ради retry:
 known hash сверяется с receipt, unknown hash блокирует все следующие lanes.
 
-Сейчас startup admission строгий для всего нового входа: несовпадение графа или
-профиля останавливает проход, включая claims. Это не on-chain блокировка выплат:
-permissionless claim сохраняется. Перед включением публичного сервиса нужно отдельно
-согласовать допустимый recovery/drain при отказе внешнего источника; нельзя выдавать
-этот entrypoint за уже квалифицированный аварийный public runtime.
+Обновление28.09: [recovery admission](RECOVERY_ADMISSION.md) теперь сверяет journals
+до contract admission, отделяет критические обязательства от полного допуска,
+а Robinhood drain запрещает новые funding и freeze сохранённых Ready jobs.
+Стартовое ограничение на обслуживание старых выплат при source drift снято.
 
 ## CLI
 

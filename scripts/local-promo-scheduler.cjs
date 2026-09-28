@@ -54,7 +54,14 @@ async function tickKind(kind,o,state,save){
   let selected;
   for(const entry of state.jobs[kind]){
     if(entry.retired)continue;
-    if(config.buyPolicy){
+    let frozen=false;
+    if(entry.job){
+      const p=isShort?await source.datasetProposal(entry.job.proposalId,at):await source.month(entry.job.artifact.request.drawId,at);
+      check((isShort?p.status:p.phase)!==0n||!entry.started,'Previously started job disappeared; explicit reorg recovery required');
+      frozen=isShort?p.status===4n:[3n,4n,5n].includes(p.phase);
+    }
+    if(o.obligationsOnly&&!frozen)continue;
+    if(config.buyPolicy&&!frozen){
       const artifact=entry.empty||entry.job.artifact;
       const snapshot=artifact.snapshot||artifact;
       const cutoff=snapshot.cutoff.blockNumber;
@@ -143,6 +150,7 @@ async function tickKind(kind,o,state,save){
     }
     return result;
   }
+  if(o.obligationsOnly)return wait(pending!==zero?'missingFrozenJob':'obligationsOnly');
   if(active!==zero||pending!==zero)return wait('missingJob');
   if(o.allowNewJobs===false)return wait('newJobsDeferred');
   const resolved=await resolveBuyPolicy(config,(m,p)=>provider.send(m,p));

@@ -1,57 +1,60 @@
-# Текущее обращение к GPT — Robinhood runtime
+# Текущее обращение к GPT — recovery admission и автоматическое завершение frozen draw
 
-28.09.2026. После RPC qualification решили не блокировать перенос исполнителя выбором
-провайдера: работаем с известными RPC требованиями, public broadcasts всё ещё закрыты.
+28.09.2026. Закрыли найденную startup boundary целым пакетом, не простым снятием gate.
+Сначала прочитай `docs/RECOVERY_ADMISSION.md`, затем изменённые scripts/tests.
 
-Прочитай `docs/ROBINHOOD_RUNTIME.md`, затем код. Это ограниченный пакет сетевого
-контекста/rehearsal, а не обещание public launch или полного automatic4663 e2e.
+## Решение
 
-## Что сделано и почему
+- Robinhood rehearsal сначала выполняет структурную prepareRuntime с отложенными
+  contract checks и под прежними locks сверяет main/funding/RNG journals. Scheduler
+  sends покрыты main marker. Неизвестный hash блокирует всё; known receipt проверяется
+  по исходным данным и canonical block. Никакого нового формата журнала/reset.
+- Отдельный obligation admission проверяет критические token/quote/registry/vault/
+  controllers/adapter pins, обратные bindings, instances, generation/RNG profile,
+  anchors/stable observation. Current publisher и revenue/BUY source не требуются.
+- Full admission управляет только новыми операциями. Добавлена simulated collector.sync
+  health check: stored sourceFingerprint не обнаруживает актуальный policy drift сам.
+- При failed full admission или Robinhood drain: только prove/deliver, frozen
+  process/finish, terminal claims. Даже сохранённые Ready jobs не freeze; funding
+  pull/pay, publish/begin/checkpoint/closeEmpty запрещены на финальном action guard.
+- Frozen jobs проходят старые checksum/publication/root/context/result checks без
+  повторного чтения внешнего BUY policy. Переписанный artifact не проходит on-chain
+  сверку. Исчезнувшая started-заявка не скрывается frozen-only фильтром.
+- Новый pass автоматически возвращается к normal при восстановлении исходного профиля.
+  Новые pins/policy не принимаются автоматически; старые creator credits остаются в
+  collector до нормального режима. Прежний local31337 drain/handoff не переопределён.
 
-- runtime-network.cjs: AsyncLocalStorage с прежним local31337 default и явными
-  robinhood-inspect / robinhood-rehearsal. Так funding, RNG и executors используют
-  одну сеть на всём async пути; отдельного engine/journal не копировали.
-- Прежние local CLI не расширены. Новые jobs/config/ops имеют robinhood schemas;
-  snapshot/job commitment formats сохранены, chain проверяется на исполнении.
-- Новый entrypoint требует pinned public-launch profile4663. Inspect не создаёт state
-  и не отправляет; CLI использует VoidSigner без секретов. Rehearsal требует loopback,
-  совпадающие chain/block/Hardhat instance для provider и scan RPC. Перед send ещё
-  раз проверяется instance/network, tx имеет explicit4663.
-- В rehearsal снимается только искусственный publicExecutionNotImplemented blocker;
-  остальные checks и releaseBlockers остаются. Public inspector всегда false/blocked.
-- Shared journal/gas/recovery logic не переписаны. RPC transport failure в admission
-  получает retryableRpcRead и новый entrypoint ждёт; semantic mismatch блокирует.
-- Main state identity Robinhood хранит origin+endpointHash вместо полного RPC URL.
+## Проверено
 
-## Что доказано
+33 разных продуктовых адресных сценария +1catalog прошли отдельными запусками.
+11 новых recovery,22 соседних (203.3s). Не full suite; команды и corrections в модуле.
+Solidity не менялся, проверяемая compilation artifact повторно использована.
 
-59 различных адресных продуктовых cases прошли отдельными запусками +1catalog.
-45 соседних заняли219.6s; полного suite не было. Контракты не менялись, использовалась
-проверенная compilation artifact. Точные команды/пределы — в модуле.
+Новый сквозной кейс4663: synthetic prepared/frozen Short+Monthly → сломаны source и
+BuyPolicySource → worker автоматически prove/deliver/process/finish/claim обоих →
+повторный pass0tx → восстановлен source/policy → normal/funding. Раньше process/finish
+в public fixture делались вручную; теперь этот recovery путь полностью выполняет worker.
 
-На Hardhat4663 с настоящими Robinhood wrappers и real drand verifier проверены funding,
-gas/native waits, transient RPC, known receipt reconciliation и unknown-hash stop-all.
-Оба заранее frozen draw получили seed через worker prove/deliver; после terminal
-событий worker обнаружил rewards, выплатил, повторный запуск ничего не отправил.
+Дополнительно: source policy drift без bytecode change; drift в estimate до send;
+Ready jobs при recovery/drain; publisher rotation; known/unknown funding send;
+RNG receipt при broken adapter и последующее продолжение без двойного prove;
+wrong critical bytecode, изменённый frozen artifact, disappeared started job.
 
-В последнем кейсе datasets/begin/publish/seal/process/finish созданы тестом вручную.
-Синтетические USDG/source/participants, исторический clock, ArbSys shim. Это не public
-BUY/replay proof и не новое полное automatic4663 прохождение. Общие scheduler и оба
-executor проверены соседними31337 сценариями. Public sends/fork не запускались.
+Initial participants/dataset/begin/publish/seal подготовлены fixture. USDG/source
+синтетические, clock исторический, ArbSys shim. Normal Ready-resume test подменяет
+operational preflight. Не называем это real BUY→freeze/mainnet/Nitro finality proof.
+Public inspect/no-send gate сохранён, live/fork/pубличных tx не было.
 
-## Что посмотреть независимо
+## Вопросы для независимого review
 
-1. Нет ли утечки network context в local default или обхода public no-send штатным CLI?
-2. Не меняет ли разделение схем/chain checks существующие durable journals/recovery?
-3. Достаточны ли same-node checks для явно локальной rehearsal, без заявлений о защите
-   от злонамеренного RPC или изменённого JS? Никакой public key CLI не загружает.
-4. Startup admission нового входа сейчас строгий: любой профиль/граф mismatch останавливает
-   весь pass, включая claims. On-chain claim остаётся permissionless. Перед activation
-   надо решить recovery/drain при внешнем source drift без ослабления защиты новых draw.
-   Нужен ли следующий узкий пакет именно здесь или сначала qualification конфигурации?
-5. Какие оставшиеся реальные release blockers важнее следующими: archive RPC/pins,
-   key custody, operational fee allocation/refill, автоматический4663 e2e? Не предлагай
-   ещё один общий audit/новые абстракции без конкретного результата.
+1. Нет ли пути к новому обязательству через recovery/Ready job/drain или окна после estimate?
+2. Достаточна ли on-chain сверка frozen artifacts при отказе от повторного BUY-policy read?
+3. Правильно ли reconciliation отделён от contract checks, не теряет ли неизвестный send?
+4. Остались ли обязательные ошибки в этой границе? Не расширяй до универсального
+   аварийного спасателя: damaged critical contracts/missing jobs/unknown hash остаются halt.
+5. Если здесь всё нормально, следующий результат должен быть релизным: archive RPC и
+   реальные deployment/BUY pins либо эксплуатационный fee/refill профиль. Что сейчас
+   действительно блокирует продвижение, без очередной серии вспомогательных аудитов?
 
-Ответы — рекомендации, не разрешение параметров/публичного запуска. Тесты адресные;
-не повторять уже успешные прогоны без причины.
+Дополнительные reads перед действиями осознанны, но provider throughput/cost ещё требуют
+реального измерения. Review не утверждает production timing, экономику или release.

@@ -7,14 +7,15 @@ async function runRobinhoodAutomation(options,hooks={}){
  const {mode='robinhood-inspect'}=options;
  if(options.deploymentProfile?.scope!=='public-launch'||options.deploymentProfile.chainId!=='4663')throw Error('Pinned public Robinhood deployment profile required');
  try{return await withRobinhoodNetwork({...options,mode},async()=>{
+  if(mode==='robinhood-rehearsal'){
+   const result=await runPromoAutomation(options,hooks);
+   return {...result,executionScope:'local-robinhood-rehearsal',publicLaunchReady:false};
+  }
   await prepareRuntime(options);
   const admission=executionAdmission(await inspectDeployment(options.provider,options.deploymentProfile,options));
   if(admission.retryableRpcRead)return {status:'waiting',reason:'rpcUnavailable',retryableRpcRead:true,publicLaunchReady:false};
   if(admission.detail)admission.detail='Deployment observation unavailable; verify endpoint and pins';
-  if(mode==='robinhood-inspect')return {status:'blocked',reason:'publicExecutionDisabled',admission,publicLaunchReady:false};
-  if(admission.status!=='matched')return {status:'blocked',reason:'deploymentAdmission',admission,publicLaunchReady:false};
-  const result=await runPromoAutomation(options,hooks);
-  return {...result,executionScope:'local-robinhood-rehearsal',publicLaunchReady:false};
+  return {status:'blocked',reason:'publicExecutionDisabled',admission,publicLaunchReady:false};
  });}catch(e){if(retryableRead(e))return {status:'waiting',reason:'rpcUnavailable',retryableRpcRead:true,publicLaunchReady:false};throw e;}
 }
 module.exports={runRobinhoodAutomation};

@@ -39,7 +39,7 @@ test('known receipt timeout reconciles and pays once after restart',async t=>{
 test('wrong deployment pins and missing Hardhat metadata cannot enable rehearsal',async t=>{
  const f=await setup(t,compiled),nonce=await f.provider.getTransactionCount(f.owner);
  const opts={...f.options,deploymentProfile:structuredClone(f.options.deploymentProfile)};opts.deploymentProfile.pins.source[1]=ethers.ZeroHash;
- const r=await run(opts);assert.equal(r.reason,'deploymentAdmission',JSON.stringify(r));
+ const r=await run(opts);assert.equal(r.reason,'obligationsOnly',JSON.stringify(r));
  const proxy=new Proxy(f.provider,{get(t,k){if(k==='send')return async(m,p)=>{if(m==='hardhat_metadata')throw Error('not Hardhat');return t.send(m,p);};const v=Reflect.get(t,k);return typeof v==='function'?v.bind(t):v;}});
  await assert.rejects(run({...f.options,provider:proxy}),/not Hardhat/);assert.equal(await f.provider.getTransactionCount(f.owner),nonce);
 });
@@ -49,7 +49,7 @@ test('RPC outage and expensive gas are resumable waits before any broadcast',asy
  f.provider.getNetwork=async()=>{throw Object.assign(Error('offline'),{code:'ECONNRESET'});};
  assert.equal((await run(f.options)).reason,'rpcUnavailable');f.provider.getNetwork=getNetwork;
  const getCode=f.provider.getCode.bind(f.provider);f.provider.getCode=async(a,...args)=>{if(a.toLowerCase()===f.source.target.toLowerCase())throw Object.assign(Error('code read offline'),{code:'ECONNRESET'});return getCode(a,...args);};
- assert.equal((await run(f.options)).reason,'rpcUnavailable');f.provider.getCode=getCode;
+ const sourceDown=await run(f.options);assert.equal(sourceDown.reason,'obligationsOnly');assert.equal(sourceDown.results.admission.full.retryableRpcRead,true);f.provider.getCode=getCode;
  f.provider.getFeeData=async()=>({gasPrice:1000000000001n});const high=await run(f.options);assert.equal(high.results.funding.reason,'gasPrice',JSON.stringify(high));assert.equal(await f.vault.freeShort(),0n);
  f.provider.getFeeData=getFeeData;assert.equal((await run(f.options)).results.funding.status,'complete');
 });

@@ -29,7 +29,9 @@ BLS подписью. Это разные уровни доказательст�
 [RPC qualification](PUBLIC_RPC_QUALIFICATION.md) готов: оба публичных endpoints не прошли
 полную историческую доступность; живой reference BUY ещё не квалифицирован.
 [Общий runtime4663](ROBINHOOD_RUNTIME.md) подготовлен и проверен в локальной репетиции;
-public sends закрыты. Далее пригодный archive provider и реальные параметры; Timing1800s пока кандидат.
+public sends закрыты. [Recovery admission](RECOVERY_ADMISSION.md) отделяет старые
+обязательства от новых funding/draw при source drift; frozen оба draw автоматически
+завершаются на4663 rehearsal. Далее archive provider и реальные параметры; Timing1800s пока кандидат.
 
 ## Оставшиеся релизные блокеры — в порядке работы
 

@@ -223,3 +223,11 @@ fresh-process comparison и optional `scanWithRpc`/replay.
 `robinhood-*` schemas, pinned deployment admission, transient RPC wait, explicit chainId.
 `test/robinhood-runtime*.test.cjs`, profile `robinhood-runtime`.
 [Проверки и оставшиеся границы](ROBINHOOD_RUNTIME.md); публичные отправки закрыты.
+
+## Recovery admission28.09
+
+`obligation-admission.cjs` — критические pins/bindings без revenue/BUY policy/publisher.
+`promo-automation.cjs` — reconciliation-first, obligations-only, финальный action gate
+и simulated source health; `local-promo-scheduler.cjs` — frozen commitments без повторного
+BUY policy admission, строгий фильтр unfrozen jobs. `test/robinhood-recovery.test.cjs`,
+profile `robinhood-recovery`. [Границы и проверки](RECOVERY_ADMISSION.md).
