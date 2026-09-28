@@ -88,3 +88,15 @@ test('recovery does not hide a disappeared started job behind the frozen-only fi
  });
  const r=await run(f.options,{getBeacon:async()=>{throw Error('fixture beacon offline');}});assert.equal(r.status,'error',JSON.stringify(r));assert.match(r.results.settlement.results.SHORT.message,/Previously started job disappeared/);
 });
+
+test('matching but unapproved allocation blocks new work while both frozen draws and claims complete',async t=>{
+ const f=await setup(t,compiled);
+ await rpc('evm_increaseTime',[101]);await rpc('evm_mine');
+ const bps=[10000,0,0];await sent(f.collector.rollCampaign(1,[(await f.provider.getBlock('latest')).timestamp+10000,f.options.fundingJob.recipients,bps]));
+ f.options.fundingJob={...f.options.fundingJob,campaignId:'2',bps};
+ const old=f.options.deploymentProfile;f.options.deploymentProfile=require('../scripts/deployment-admission.cjs').createDeploymentProfile(f.options,{scope:old.scope,executor:old.executor,timing:old.timing,sourceCodeHash:old.pins.source[1]});
+ await prepare(f);const r=await run(f.options,{getBeacon:beacon});assert.equal(r.reason,'obligationsOnly',JSON.stringify(r));
+ assert(r.results.admission.full.reasons.includes('approvedCreatorAllocation'));
+ for(const action of ['finishShort','finishMonth','claim'])assert(r.steps.some(s=>s.action===action),JSON.stringify(r));
+ assert(!r.steps.some(s=>['begin','beginMonth','seal','sealMonth','pull','pay'].includes(s.action)));
+});

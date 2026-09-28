@@ -1,0 +1,39 @@
+{
+  "schema": "ops-market-robinhood-v1",
+  "chainId": 4663,
+  "poolId": "0xdde13ccbbcd10c5fc3351c284eabc77114d2a88078eb1cfd20062124e939d4cf",
+  "poolKey": [
+    "0x0Bd7D308f8E1639FAb988df18A8011f41EAcAD73",
+    "0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168",
+    "0x0000000000000000000000000000000000000000",
+    "0xeE04c68742e6Bf434bE8039580D2e89BBE55bc6f",
+    "90",
+    "0x0000000000000000000000000000000000000000000000000000000000010000"
+  ],
+  "pins": {
+    "router": [
+      "0x57fc55F719DF19B4b90A03F9D78E1177D002E504",
+      "0xf49d04ba34710a0a6bddbf1fbb3580e6b708084205a60e47ccf215af2168405a"
+    ],
+    "manager": [
+      "0xee04c68742e6bf434be8039580d2e89bbe55bc6f",
+      "0xc7a718bdecefbe9d1a1708097bc856f9c13d87701f050cedbafcafe01fd42064"
+    ],
+    "quote": [
+      "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+      "0x864cc9ad53b338b82da1f7cab85ab0b3d5c8861acb422b6fec63cf36234f36a6"
+    ],
+    "weth": [
+      "0x0bd7d308f8e1639fab988df18a8011f41eacad73",
+      "0x5706be52f64875fee65a2cec0d80e47a23d8793cbe85d214b48445e2d05f5353"
+    ],
+    "permit2": [
+      "0x31c2F6fcFf4F8759b3Bd5Bf0e1084A055615c768",
+      "0xb484a796df5e76f7210becfef1660f35acfaac6c9b5e365bef3425f6621c6a5d"
+    ],
+    "quoter": [
+      "0x6b3E15009681869FCF6AE2F3bBf6e33B2D0C590e",
+      "0xfc415f4643ca5d313c472550265e90008ffb42edc5b8fc4a78abac145b97e64b"
+    ]
+  }
+}

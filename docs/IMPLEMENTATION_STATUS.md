@@ -1,5 +1,7 @@
 # Карта реализации
 
+28.09: [Read-only market quote](OPS_MARKET_QUOTE.md) — pinned CLQuoter, exact router eth_call/estimate, wait reasons, новый fork. [Public admission](DEPLOYMENT_ADMISSION.md) отдельно требует9000/500/500 для новых операций; obligations-only сохранён. Swap sender ещё отсутствует.
+
 28.09: [PROJECT_NATIVE](PROMO_NATIVE_REFILL.md) — pinned slot1 через общий refill journal; отдельного swap executor пока нет. Приняты9000/500/500bps; [USDG→ETH fork proof](OPS_MARKET_PROOF.md) прошёл, production quote/recovery остаются.
 
 28.09: observer обходит child failures/claimFailures/requests; source/beacon waits и rejected actions больше не дают ложный recovered. [Allocation/ETH design](OPS_REVENUE_FUNDING_DESIGN.md) — только проект; collector/refill/swap реализация не менялась.

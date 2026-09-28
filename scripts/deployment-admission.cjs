@@ -67,6 +67,7 @@ async function inspectDeployment(provider,profile,config){
   const f=config.fundingJob;
   await binding('collector','sourceFingerprint',f.sourceFingerprint,'bytes32');await binding('collector','campaignId',f.campaignId,'uint64');
   const collector=new ethers.Contract(address('collector'),['function policy(uint64) view returns(tuple(uint64 endsAt,address[3] recipients,uint16[3] bps))'],provider),policy=await collector.policy(f.campaignId,at);
+  if(profile.scope==='public-launch')test([9000n,500n,500n].every((bps,i)=>policy.bps[i]===bps&&BigInt(f.bps[i])===bps),'approvedCreatorAllocation');
   test(policy.recipients.every((x,i)=>same(x,f.recipients[i]))&&policy.bps.every((x,i)=>x===BigInt(f.bps[i])),'campaignPolicy');
   for(const anchor of [f.anchor,config.deliveryJob.anchor,config.schedulerConfig.manifest.anchor])test(anchor.number<=head.number&&same((await provider.getBlock(anchor.number))?.hash,anchor.hash),'deploymentAnchor');
   test(same((await provider.getBlock(head.number))?.hash,head.hash),'stableObservation');

@@ -12,7 +12,7 @@ async function setup(t,compiled){
  const hook=await f.deploy('InfinityHookFixture'),factory=await f.deploy('InfinityFactoryFixture');
  const collector=await f.deploy('InfinityCollector',[f.owner,f.token.target,usd,hook.target,factory.target]);
  const source=await f.deploy('InfinityVaultFixture',[f.token.target,hook.target,factory.target,collector.target]);
- await sent(hook.configure(source.target,300));const recipients=[f.vault.target,ethers.ZeroAddress,ethers.ZeroAddress],bps=[10000,0,0];
+ await sent(hook.configure(source.target,300));const recipients=[f.vault.target,await (await f.provider.getSigner(3)).getAddress(),await (await f.provider.getSigner(4)).getAddress()],bps=[9000,500,500];
  await sent(collector.bindSource(source.target,[(await f.provider.getBlock('latest')).timestamp+100,recipients,bps]));
  const b=await f.provider.getBlock('latest'),anchor={number:b.number,hash:b.hash};
  const key=[...[f.token.target,usd].sort((a,b)=>BigInt(a)<BigInt(b)?-1:1),I.PINS.hook[0],I.PINS.manager[0],10000,ethers.ZeroHash];

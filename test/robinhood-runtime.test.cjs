@@ -13,7 +13,7 @@ test('public inspect refuses all sends even with matching pins; local entry rema
 });
 test('Robinhood rehearsal funds reserves once with the shared journals',async t=>{
  const f=await setup(t,compiled),r=await run(f.options);assert.equal(r.results?.funding?.status,'complete',JSON.stringify(r));
- assert.equal(await f.vault.freeShort(),3000000n);assert.equal(await f.vault.freeNext(),1000000n);assert.equal(await f.vault.freeCurrent(),2000000n);
+ assert.equal(await f.vault.freeShort(),2700000n);assert.equal(await f.vault.freeNext(),900000n);assert.equal(await f.vault.freeCurrent(),1800000n);
  const nonce=await f.provider.getTransactionCount(f.owner);const again=await run(f.options);assert.equal(await f.provider.getTransactionCount(f.owner),nonce,JSON.stringify(again));
  assert.equal(r.publicLaunchReady,false);assert.equal(network.current().chainId,31337n);
 });
@@ -21,7 +21,7 @@ test('native deficit waits without intent; top up resumes funding',async t=>{
  const f=await setup(t,compiled);await rpc('hardhat_setBalance',[f.owner,'0x1000']);
  const r=await run(f.options);assert.equal(r.results?.funding?.reason,'nativeFunding',JSON.stringify(r));assert.equal(await f.vault.freeShort(),0n);
  const file=f.options.statePath+'.funding';assert(!fs.existsSync(file)||!JSON.parse(fs.readFileSync(file)).pending);
- await rpc('hardhat_setBalance',[f.owner,ethers.toQuantity(ethers.parseEther('100'))]);const again=await run(f.options);assert.equal(again.results.funding.status,'complete');assert.equal(await f.vault.freeShort(),3000000n);
+ await rpc('hardhat_setBalance',[f.owner,ethers.toQuantity(ethers.parseEther('100'))]);const again=await run(f.options);assert.equal(again.results.funding.status,'complete');assert.equal(await f.vault.freeShort(),2700000n);
 });
 function faulty(f,mode){const real=f.collector.connect(f.admin),reader=f.collector.connect(f.provider);let once=true;
  const pull=async(...args)=>{const tx=await real.pull(...args);if(once){once=false;if(mode==='unknown')throw Object.assign(Error('lost response'),{code:'ECONNRESET'});return {hash:tx.hash,nonce:tx.nonce,wait:async()=>{throw Object.assign(Error('timeout'),{code:'TIMEOUT'});}};}return tx;};
@@ -34,7 +34,7 @@ test('lost hash blocks every lane on restart, never repeats pull or pays blindly
 });
 test('known receipt timeout reconciles and pays once after restart',async t=>{
  const f=await setup(t,compiled),first=await run({...f.options,collector:faulty(f,'timeout')});assert.equal(first.reason,'pendingReceipt',JSON.stringify(first));
- const again=await run(f.options);assert.equal(again.results.funding.steps.filter(x=>x.action==='pull').length,0);assert.equal(await f.vault.freeShort(),3000000n);
+ const again=await run(f.options);assert.equal(again.results.funding.steps.filter(x=>x.action==='pull').length,0);assert.equal(await f.vault.freeShort(),2700000n);
 });
 test('wrong deployment pins and missing Hardhat metadata cannot enable rehearsal',async t=>{
  const f=await setup(t,compiled),nonce=await f.provider.getTransactionCount(f.owner);

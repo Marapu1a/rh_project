@@ -1,5 +1,7 @@
 # USDG → ETH: первый fork proof
 
+Исторический первый proof. Текущий script уже использует [CLQuoter и точную read-only симуляцию](OPS_MARKET_QUOTE.md); trial/snapshot ниже описывают сохранённый первый прогон.
+
 28.09.2026. **Исполнение на локальном fork прошло; production swap executor ещё нет.**
 [Evidence](../research/ops-funding/market-fork-2026-09-28.json),
 [воспроизводимый research script](../scripts/ops-market-fork.cjs).

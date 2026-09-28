@@ -6,7 +6,7 @@ const pins={router:'0x57fc55F719DF19B4b90A03F9D78E1177D002E504',routerHash:'0xf4
 const keyType='tuple(address,address,address,address,uint24,bytes32)';
 async function main(){
  const out=process.argv[2];assert(out&&!fs.existsSync(out),'New evidence path required');let proxy,remote;
- const e={schema:'ops-market-fork-v1',observedAt:new Date().toISOString(),pins,transactions:[],assumptions:['Local31337 only; sandbox native and artificial USDG balance','Trial swap under snapshot quotes output; not a production quote service','No deployment source recompilation or production swap executor qualification']};
+ const e={schema:'ops-market-fork-v1',observedAt:new Date().toISOString(),pins,transactions:[],assumptions:['Local31337 only; sandbox native and artificial USDG balance','Pinned CLQuoter eth_call plus exact router eth_call; no trial quote transaction','No deployment source recompilation or production swap executor qualification']};
  const stage=s=>{e.stage=s;console.log(s);};
  try{
   stage('fork');proxy=await startReadProxy(process.env.RH_RPC_URL||'https://robinhood-mainnet-rpc.blockreq.com/v1/rpc/public');remote=new ethers.JsonRpcProvider(proxy.url);
@@ -30,10 +30,10 @@ async function main(){
    coder.encode([`tuple(${keyType} poolKey,bool zeroForOne,uint128 amountIn,uint128 amountOutMinimum,bytes hookData)`],[[key,false,amount,min,'0x']]),
    coder.encode(['address','uint256'],[pins.quote,amount]),coder.encode(['address','address','uint256'],[pins.weth,pins.router,0])]]),coder.encode(['address','uint256'],[wallet,min])];
   const balance=async()=>BigInt(await rpc('eth_getBalance',[wallet,'latest']));
-  stage('trial-quote');const snap=await rpc('evm_snapshot'),before=await balance();const trial=await (await router.execute('0x100c',inputs(1n),deadline)).wait();const output=await balance()-before+trial.gasUsed*trial.gasPrice;assert(output>0n);await rpc('evm_revert',[snap]);e.quotedNative=output;
+  stage('readonly-quote');const prepared=await require('./ops-market-quote.cjs').prepareSwap(provider,{source:wallet,amountRaw:String(amount),slippageBps:50,maxImpactBps:100,maxAgeSeconds:300,deadlineSeconds:120,maxGasPrice:'1000000000000',maxGasUnits:'500000',nativeFloor:'1000',extraFeeWei:'0',localFork:true});e.prepared=prepared;assert.equal(prepared.status,'prepared',JSON.stringify(prepared));const output=BigInt(prepared.quotedNative);e.quotedNative=output;
   const usdBefore=await quote.balanceOf(wallet),nativeBefore=await balance(),min=output*9950n/10000n;e.minOut=min;
   stage('negative-minimum');await assert.rejects(router.execute.staticCall('0x100c',inputs(output*2n),deadline));assert.equal(await quote.balanceOf(wallet),usdBefore);
-  stage('swap-unwrap');e.estimatedGas=await router.execute.estimateGas('0x100c',inputs(min),deadline);const receipt=await sent('USDG to native ETH atomic',router.execute('0x100c',inputs(min),deadline));
+  stage('swap-unwrap');e.estimatedGas=await router.execute.estimateGas('0x100c',inputs(min),deadline);const receipt=await sent('USDG to native ETH atomic',signer.sendTransaction(prepared.transaction));
   e.actualUsdDebit=usdBefore-await quote.balanceOf(wallet);e.actualNativeOut=await balance()-nativeBefore+receipt.gasUsed*receipt.gasPrice;
   assert.equal(e.actualUsdDebit,amount);assert(e.actualNativeOut>=min);e.status='complete';
  }catch(error){e.status='failed';e.error=error.message;e.detail=error.info?.error||error.cause?.message;process.exitCode=1;console.error(e.stage,e.error);}finally{e.proxy=proxy?.stats;fs.writeFileSync(out,JSON.stringify(e,(_,v)=>typeof v==='bigint'?String(v):v,2)+'\n');remote?.destroy();proxy?.close();}

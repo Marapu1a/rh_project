@@ -1,68 +1,64 @@
-# Текущий запрос GPT: PROJECT_NATIVE и первый USDG→ETH fork
+# Текущий запрос GPT: approved allocation guard + read-only market quote
 
-28.09.2026. Продолжение cd3ecad; пользователь одобрил пакет и **явно принял90/5/5**:
-90% creator revenue призам,5% operations,5% свободная доля команды. PRODUCT_SPEC и
-planning launch plan обновлены; адреса/газовые caps не подставлялись из fixtures.
+28.09.2026. Продолжение d99ac18.90/5/5 явно принято пользователем; вечную
+окупаемость газа не доказываем. Дорогой gas/нехватка ETH → wait/top-up/resume,
+prize frozen/claimable не трогаем. Public sends закрыты.
 
-## Сохраняйте эти решения в контексте
+## Хвост review закрыт
 
-Не требуется доказать вечную окупаемость газа. Проверяем стоимость конкретной
-отправки и caps; дорогой gas → ждать, мало ETH → bounded refill или ожидание внешнего
-пополнения, затем продолжать сохранённую работу. Unknown send сначала сверяем.
-Prize frozen/claimable не трогаем. Средняя доходность не гарантирует наличие ETH,
-и мы этого не обещаем. Не возвращайте выбор долей в обязательное исследование:
-90/5/5 принято; будущие изменения — отдельное явное решение.
+`inspectDeployment` для public-launch независимо сравнивает actual policy.bps и
+fundingJob.bps с9000/500/500. Совпадающий config+chain с ошибочными долями даёт
+approvedCreatorAllocation. Проверку НЕ добавляли в validateDeploymentProfile,
+который нужен старым obligations и reconciliation: оба frozen draws/claims
+продолжаются через прежний obligations-only. Локальные31337 profiles не менялись.
+Runtime fixture4663 переведена на90/5/5, ожидаемые reserve amounts поправлены.
 
-## Что реализовано
+Это admission worker, не новая неизменяемость owner policy в контракте. Будущее
+изменение принятого распределения требует нового решения и изменения guard.
 
-`promo-native-refill.cjs` принимает PROJECT_NATIVE только с source=проверяемый
-fundingJob.recipients[1]. Все3recipients разные/ненулевые. Custody/registry/assets,
-executor, slot0/slot2 не получают исключений. BOOTSTRAP_NATIVE сохраняет запрет всех
-recipients. `promo-automation.cjs` отдельно передаёт custody и recipients, не удаляет
-source из общего защитного списка без проверки его роли.
+## Read-only quote вместо trial swap
 
-Execute/reconcile общий и не изменён: EOA-only native transfer, единственный main
-pending, gas/caps/cooldown, receipt accounting и unknown-send запрет повтора.
-Стабильный slot1 через кампании: handoff уже требует неизменный nativeRefill policy,
-переносит spent/cooldown/halt; миграция source не добавлена. EOA operations имеет
-контроль над его деньгами; caps worker не называем onchain custody гарантией.
-Новый swap executor пока отсутствует, отдельного конкурирующего ops signer нет.
+[Описание](OPS_MARKET_QUOTE.md), scripts/ops-market-quote.cjs,
+config/ops-market-robinhood.json, test/ops-market-quote.test.cjs.
+В официальном infinity-periphery/script/config/robinhood-mainnet.json найден
+CLQuoter0x6b3E15009681869FCF6AE2F3bBf6e33B2D0C590e. Проверили runtime hash и
+poolManager binding. quoteExactInputSingle работает через eth_call без allowance.
+Не нужен подбор minOut серией проб и не нужен state-changing trial.
 
-## Проверки
+Все asset/pool/quote reads на одном blockTag, pins и poolId проверяются. Full и1%
+input дают ограничение impact; это НЕ независимый oracle против смещённой цены
+всего рынка. minOut в swap и unwrap, recipient=source. Проверяем USDG/оба allowances
+и expiry, gas cap, exact router eth_call и eth_estimateGas, native reserve, затем
+повторяем hash/age/deadline. Неподдерживаемый historical estimate не заменяем latest.
 
-35 разных адресных сценариев подтверждены отдельными запусками:5 accounting/guards,
-26 refill+handoff,4 public-launch guards. В первом запуске26 было23pass/3fail:
-новые fixtures сменили кампанию, но забыли пересоздать deployment profile. Исправили
-fixtures через штатный createDeploymentProfile; только эти3 перепроверены3/3.
-Admission не ослабляли. Команды/границы: [PROMO_NATIVE_REFILL](PROMO_NATIVE_REFILL.md).
-Full suite и public sends не запускались; повторной охоты за lock environment не было.
+Модуль read-only: prepared содержит transaction и authorizationToSend:false.
+Привязка вызывающего source к реальному slot1 и повторная свежесть перед send —
+обязанность следующего executor. Никакого approve/send из quote module нет.
+extraFeeWei и gas bounds явные; Hardhat fee не называем тарифом Nitro.
 
-## Fork: реальный рынок работает
+## Проверки и границы
 
-[OPS_MARKET_PROOF](OPS_MARKET_PROOF.md), [evidence](../research/ops-funding/market-fork-2026-09-28.json),
-[script](../scripts/ops-market-fork.cjs). Только in-process31337, upstream read-only.
-Block74775375; pool key/id/assets/liquidity прочитаны, router hash проверен.
-10USDG →0.003754920360290634native ETH, atomic INFI_SWAP+UNWRAP_WETH; USDG debit
-точный, minOut с0.5% trial slippage пройден; двойной minOut отклонён.
+15 быстрых quote cases: prepared exact payload/один block, stale/reorg, liquidity,
+impact, ERC20/Permit2/expiry, expensive gas, bounds/ETH, simulation/RPC/pin failures.
+Два интеграционных recovery cases: согласованно неверные доли не дают новых операций,
+но оба frozen завершаются с claims; source/BUY outage прежний recovery сохраняет.
+Соседний runtime suite и catalog — результаты в CURRENT_CONTEXT.
 
-Практический нюанс: Pancake Permit2 на4663 —0x31c2F6fcFf4F8759b3Bd5Bf0e1084A055615c768,
-не Uniswap0x0000…BA3. Неправильный адрес дал AllowanceExpired(0), официальный правильный
-адрес подтвердился исполнением. Pool fee field90pips читаем из chain, не по тексту UI.
+Новый fork на74786338:10USDG → quote3718445305557211wei → actual столько же.
+Точная prepared.transaction отправлена только на fork, negative minOut сохранён.
+[Evidence](../research/ops-funding/quoter-fork-2026-09-28.json). Artificial USDG/native
+и локальная gas модель явно обозначены. Полный suite/public sends не запускались.
 
-Sandbox USDG искусственный, ETH Hardhat; gas цены/суммы не являются оценкой Nitro.
-Trial swap для quote использует snapshot/revert: это только proof, НЕ production
-quote API. Source/immutable audit неполон (Sourcify rate/timeouts); нет утверждения,
-что поведенческий proof заменяет source verification. Thin liquidity/recovery swap
-ещё не протестированы. Все эти границы отмечены в документе.
+## Что проверить
 
-## Что проверить и что дальше
+1. Не блокирует ли новый allocation guard reconciliation/старые obligations?
+2. Нет ли перепутанных quote/minOut/deadline/allowance units или незакрытого stale пути?
+3. Достаточен ли этот read-only API для следующего bounded sender, без ненужного
+   общего framework? Отделяем impact от fair-market oracle, не обещаем лишнего.
+4. Следующий пакет — durable approve/Permit2/swap в одном ops nonce/journal с refill;
+   unknown sends сначала reconcile, затем actual native output. Source/immutable
+   audit и реальные deployment caps всё ещё prerequisites, не закрыты этим proof.
 
-1. Корректно ли выделен slot1 без обхода custody protection и сброса истории?
-2. Нет ли пропущенной коллизии при campaign/handoff и старых credits?
-3. Подтверждает ли evidence заявленный swap+unwrap, без завышения выводов о стоимости?
-4. Следующий пакет: production read-only quote/estimate и затем bounded journaled
-   approve/swap под тем же ops signer/nonce, после receipt — existing native refill.
-   Предложите конкретный минимальный quote path для этого pool/router, если видите
-   лучший вариант; не новый общий trading/oracle framework.
-
-Public execution пока закрыт; никакой чужой капитал для тестов не используется.
+Не пересматривайте принятые90/5/5 без конкретного нового основания. Не превращайте
+обычный ETH shortage в остановку старых призовых обязательств или требование
+доказать бесконечную самоокупаемость. Обсуждаем конкретные execution defects.

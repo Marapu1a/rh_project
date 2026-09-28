@@ -109,3 +109,14 @@ clock; это не доказательство production finality или вы�
 требует chain4663, FINALIZED_CHECKPOINT и оба CONTROLLER_PROFILE поверх runtime pins.
 `publicExecutionNotImplemented` сохранён: совпадение bindings не разрешает public worker.
 Incomplete launch plan не заменяет полный deployment profile с адресами и approved settings.
+
+## Approved creator allocation28.09
+
+Для public-launch full admission независимо сверяет config и chain с9000/500/500bps.
+Согласованная ошибка в fundingJob и policy теперь даёт approvedCreatorAllocation.
+Проверка не помещена в структурный validateDeploymentProfile: старые receipt,
+frozen draws и claims продолжаются через существующий obligations-only путь.
+Математика collector и local31337 profiles не менялись. Для будущего изменения
+принятых долей нужно явное продуктовое решение и соответствующее изменение guard;
+одного редактирования runtime config недостаточно. Это worker admission, не изменение
+полномочий owner контракта. Public execution gate остаётся закрытым.
