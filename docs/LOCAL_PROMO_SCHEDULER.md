@@ -240,3 +240,8 @@ node --test --test-name-pattern="launch plan|launch report|filled planning" test
 с SHA256-проверкой. Логи `.local/logs/free-short-{tests,large,wait,neighbors}.log`.
 Результаты относятся к рабочему дереву поверх69b1c8e. Контракты, RNG и выплаты Monthly
 не менялись, fork/live не запускались.
+
+28.09 исправлено бессрочное prizeFunding при FINALIZED_CHECKPOINT: более свежий
+обеспеченный finalized reserve позволяет обновить только ещё не использованный
+cutoff; пока денег мало, candidate сохраняется без новых checkpoint sends.
+[Регрессия, границы и9 адресных проверок](CUTOFF_HISTORY.md).

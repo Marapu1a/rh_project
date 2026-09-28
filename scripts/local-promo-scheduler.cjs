@@ -175,6 +175,7 @@ async function tickKind(kind,o,state,save){
   const currentPolicy=await source[isShort?'shortEpochPolicy':'monthlyEpochPolicy'](current,at);
   if(BigInt(head.number)<currentPolicy.firstBlock)return wait('epochBoundary');
   let cutoffHead=resolved.admission?await provider.getBlock(resolved.admission.checkpoint.number):head;
+  const readinessHead=cutoffHead;
   if(config.cutoffMode==='FINALIZED_CHECKPOINT'){
     if(!state.cutoffs?.[kind]){
       // Do not pay for periodic checkpoints when no finalized attempts need a draw.
@@ -203,7 +204,25 @@ async function tickKind(kind,o,state,save){
   const open=ledger.wallets.some(w=>w[kind].byEpoch.some(e=>BigInt(e.epoch)===epoch&&BigInt(e.open)>0n));
   if(!open&&!draining){if(state.cutoffs?.[kind]){delete state.cutoffs[kind];save(state);}return wait('empty');}
   const budget=isShort?await shortBudgetAt(config,source,provider,cutoffHead.number):undefined;
-  if(isShort&&open&&config.shortBudgetMode==='FREE_SHORT'&&BigInt(budget)/Array.from(policy.weights).reduce((a,b)=>a+b,0n)<policy.minimumUnit)return wait('prizeFunding');
+  if(isShort&&open&&config.shortBudgetMode==='FREE_SHORT'){
+    const funded=value=>BigInt(value)/Array.from(policy.weights).reduce((a,b)=>a+b,0n)>=policy.minimumUnit;
+    if(!funded(budget)){
+      // Only an unused, finalized checkpoint reaches this branch; saved jobs are
+      // handled above. Keep the candidate while funding is still insufficient,
+      // avoiding checkpoint transactions on every poll. Latest-only funds do not
+      // authorize a refresh and an unresolved checkpoint send is never discarded.
+      if(config.cutoffMode==='FINALIZED_CHECKPOINT'&&readinessHead.number>cutoffHead.number){
+        const available=await shortBudgetAt(config,source,provider,readinessHead.number);
+        if(funded(available)){
+          check((await provider.getBlock(readinessHead.number))?.hash===readinessHead.hash,'Funding readiness block changed');
+          state.lastCutoffDiscard={kind,...state.cutoffs[kind],reason:'finalized funding now covers basket',fundingBlock:readinessHead.number,fundingBlockHash:readinessHead.hash};
+          delete state.cutoffs[kind];save(state);
+          return {status:'progress',action:'discardCutoff'};
+        }
+      }
+      return wait('prizeFunding');
+    }
+  }
   const {identity,drawId,input}=datasetInput(kind,config,buyManifest,policy,epoch,cutoffHead,state.configHash,budget);
   if(isShort&&open)check(BigInt(budget)<=await source.maxBudget(at),'Configured Short budget exceeds controller limit');
   const artifact=(isShort?sd:md).buildFromHistory({...input,blocks});

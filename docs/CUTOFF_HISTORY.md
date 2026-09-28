@@ -112,3 +112,40 @@ Ready у честного worker, но не добавляли контракт�
 
 Это адресная проверка, не full baseline и не live/fork deployment. Nitro fixture моделирует
 ArbSys; delayed finalized моделируется локальным RPC. Публичных транзакций не было.
+
+## FREE_SHORT: выход из ожидания funding28.09
+
+При недостаточном историческом freeShort неиспользованный кандидат сохраняется,
+пока более свежий finalized блок тоже не обеспечивает корзину. Это не создаёт новый
+checkpoint на каждом poll. Latest-only пополнение не является основанием обновления.
+
+Когда корзина обеспечена на новом finalized блоке, worker повторно сверяет его hash,
+записывает lastCutoffDiscard с причиной и fundingBlock/hash, удаляет только локальный
+ещё не использованный candidate. Следующий проход обычным prepareCutoff сохраняет
+свежий completed block и ждёт финальности как блока, так и checkpoint transaction.
+Старый on-chain cutoffHashes остаётся историей; никакой draw не отменяется.
+
+Ветка доступна только после prepareCutoff=ready и до создания job. Сохранённый job
+обрабатывается раньше и не попадает сюда. Pending transaction guard и reconciliation
+общей автоматики не изменены. Нет сброса pending send, смены seed или бюджета после
+публикации. Отсутствующий archive state по-прежнему не подменяется latest.
+
+Проверка на рабочем дереве поверх5491a55: новый сценарий сначала воспроизвёл старое
+зависание, затем прошёл после исправления. FINALIZED_CHECKPOINT с синтетическим
+finalized head в локальном EVM: нехватка → повторные polls без новых транзакций →
+latest funding без refresh → finalized funding → новый candidate → job с3000raw →
+позднее funding4000raw → reload → freeze старых3000 → settlement. Attempt1 сохранена.
+Это общий scheduler путь, не proof финальности Robinhood или новый live/fork запуск.
+
+Команды и результаты28.09 (9 разных сценариев, не full baseline):
+
+```text
+node --test --test-name-pattern="FREE_SHORT finalized" test/cutoff-scheduler.test.cjs
+node --test --test-name-pattern="finalized checkpoint scheduler|checkpoint candidate recovers|does not spend gas|maximum begin delay" test/cutoff-scheduler.test.cjs
+node --test --test-name-pattern="FREE_SHORT" test/local-scheduler.test.cjs
+```
+
+1/1 новый сценарий26.8s,5/5 cutoff-соседей49.8s,3/3 LOCAL_HEAD14.7s.
+Логи `.local/logs/free-short-finalized-{red,green}.log`,
+`free-short-cutoff-neighbors.log`, `free-short-local-regression.log`.
+Solidity не менялся; использован обычный artifact предыдущего пакета с проверкой SHA256.

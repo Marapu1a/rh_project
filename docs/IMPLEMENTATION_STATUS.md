@@ -273,3 +273,7 @@ Short cap и minimum Current.160 прогонов/38400шагов; не producti
 исторический freeShort, проверка совместимости maxBudget, readiness и replay бюджета.
 Тесты в `local-scheduler.test.cjs`; [граница](LOCAL_PROMO_SCHEDULER.md).
 Monthly75/25 внесён только в planning/product, не в контракт: выбор веса ещё открыт.
+
+28.09: `local-promo-scheduler.cjs` обновляет unused FREE_SHORT cutoff при достаточном
+новом finalized funding. `cutoff-scheduler.test.cjs` покрывает ожидание/пополнение/
+финальность/reload/freeze/settlement;9 адресных сценариев passed. [Подробности](CUTOFF_HISTORY.md).

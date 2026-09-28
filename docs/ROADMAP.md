@@ -50,6 +50,8 @@ public sends закрыты. [Recovery admission](RECOVERY_ADMISSION.md) отд�
    Отчёт release profile подготовлен: обязательные поля и конфликты решений видны.
    [Численный кандидат Short/Monthly](MVP_ECONOMIC_PROFILE.md) рассчитан; параметры не приняты.
    D без потолка принят: FREE_SHORT на cutoff реализован; профиль требует uint256.max.
+   Funding wait на старом finalized cutoff исправлен и проверен: новый обеспеченный
+   finalized блок разрешает обновить unused candidate, не существующий job.
    Monthly75/25 принят; перед реализацией нужен выбор влияния entries на победителя
    без второго допуска. Корзина/q Short и minimum Current остаются кандидатами.
    Эксплуатационные параметры выбираются отдельно;

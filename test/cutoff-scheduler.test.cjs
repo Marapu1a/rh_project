@@ -4,13 +4,13 @@ const {setup}=require('./fixtures/local-scheduler.cjs'),{sent,advance,rpc}=requi
 const {normalRules}=require('./fixtures/short-outcome.cjs'),{hash}=require('../scripts/direct-buy.cjs');
 const {initialAdapters}=require('../scripts/buy-policy-format.cjs');
 const compiled=compile({writeArtifacts:false});
-async function start(t){
- const f=await setup(t,compiled),owner=await f.admin.getAddress();
+async function start(t,options={}){
+ const f=await setup(t,compiled,options),owner=await f.admin.getAddress();
  const p=await f.deploy('BuyPolicySource',[f.config.lifecycle.instanceId,hash(f.config.manifest),owner,2,initialAdapters(f.config.manifest)]);
  f.config.buyPolicy={chainId:31337,source:p.target,sourceCodeHash:ethers.keccak256(await f.provider.getCode(p.target)),publisher:owner,instanceId:f.config.lifecycle.instanceId,genesisHash:hash(f.config.manifest),noticeBlocks:2};
  f.config.cutoffMode='FINALIZED_CHECKPOINT';let finalized=(await f.provider.getBlock('latest')).number;
  const provider=new Proxy(f.provider,{get(target,key){if(key==='send')return (m,p)=>target.send(m,m==='eth_getBlockByNumber'&&p[0]==='finalized'?['0x'+finalized.toString(16),false]:p);const v=Reflect.get(target,key);return typeof v==='function'?v.bind(target):v;}});
- const tick=async(maxTicks=1)=>{const r=await runScheduler({...f.options,provider},{maxTicks});assert.notEqual(r.status,'error',JSON.stringify(r));return r;};
+ const tick=async(maxTicks=1,kinds)=>{const r=await runScheduler({...f.options,provider,...(kinds?{kinds}:{})},{maxTicks});assert.notEqual(r.status,'error',JSON.stringify(r));return r;};
  return {...f,provider,tick,setFinalized:n=>{finalized=n;}};
 }
 
@@ -73,4 +73,47 @@ test('maximum begin delay does not make checkpoint capture expire before broadca
  assert.equal(await f.short.cutoffHashes(state.cutoffs.SHORT.number),state.cutoffs.SHORT.hash);
  await rpc('hardhat_mine',['0x110']);finalized=await f.provider.getBlock('latest');
  result=await prepareCutoff({...args,finalized});assert.equal(result.status,'ready');
+});
+
+
+test('FREE_SHORT finalized funding wait refreshes only an unused cutoff and preserves saved budget on restart',async t=>{
+ const f=await start(t,{maxBudget:ethers.MaxUint256,weights:[2000]});
+ f.config.shortBudgetMode='FREE_SHORT';delete f.config.shortBudget;
+ const tick=(n=1)=>f.tick(n,['SHORT']);
+ const finalize=async()=>f.setFinalized((await f.provider.getBlock('latest')).number);
+ await sent(f.registry.register());await f.buy(f.admin,100);await advance(6*3600+1);await finalize();
+ await tick();const old=f.readState().cutoffs.SHORT;
+ await finalize();let r=await tick();assert.equal(r.results.SHORT.reason,'prizeFunding');
+ const nonce=await f.provider.getTransactionCount(await f.admin.getAddress());
+ await rpc('hardhat_mine',['0x3']);await finalize();
+ for(let i=0;i<3;i++)assert.equal((await tick()).results.SHORT.reason,'prizeFunding');
+ assert.equal(await f.provider.getTransactionCount(await f.admin.getAddress()),nonce);
+ assert.deepEqual(f.readState().cutoffs.SHORT,old);
+ assert.equal(f.readState().jobs.SHORT.length,0);
+ // Sufficient latest funding is not sufficient finalized evidence yet.
+ await sent(f.quote.approve(f.vault.target,ethers.MaxUint256));await sent(f.vault.fundUSDG(2000,1));
+ assert.equal((await tick()).results.SHORT.reason,'prizeFunding');
+ assert.deepEqual(f.readState().cutoffs.SHORT,old);
+ await rpc('evm_mine');await finalize();
+ r=await tick();assert.equal(r.results.SHORT.action,'discardCutoff');
+ assert.equal(f.readState().cutoffs.SHORT,undefined);
+ assert.equal(await f.short.cutoffHashes(old.number),old.hash);
+ assert.equal(await f.short.activeProposal(),ethers.ZeroHash);
+ await tick();const fresh=f.readState().cutoffs.SHORT;assert(fresh.number>old.number);
+ await finalize();r=await tick();assert.equal(r.results.SHORT.action,'saveJob');
+ const job=f.readState().jobs.SHORT[0].job;
+ assert.equal(job.artifact.request.budget,'3000');
+ assert.equal(job.artifact.snapshot.participants.length,1);
+ assert.equal(job.artifact.snapshot.participants[0].firstAttempt,'1');
+ assert.equal(job.artifact.snapshot.participants[0].lastAttempt,'1');
+ // New invocations reload disk; later funding cannot rewrite even an unbegun job.
+ await sent(f.vault.fundUSDG(4000,1));await finalize();
+ r=await tick(32);assert.equal(r.results.SHORT.reason,'seed');
+ assert.equal(f.readState().jobs.SHORT[0].job.commitment,job.commitment);
+ assert.equal((await f.vault.draws(job.artifact.request.drawId)).budget,3000n);
+ assert.equal(await f.vault.freeShort(),4000n);
+ await sent(f.random.deliver(await f.short.drawRequest(job.artifact.request.drawId),ethers.ZeroHash));
+ await tick(32);
+ assert.equal(await f.short.pendingDatasetDraw(),ethers.ZeroHash);
+ assert.equal((await f.ledger()).draws.length,1);
 });
