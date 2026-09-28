@@ -23,6 +23,25 @@ async function main(){
   for(const slot of [...new Set(trace.structLogs.filter(l=>l.op==='SLOAD').map(l=>'0x'+l.stack.at(-1)))]){const snap=await rpc('evm_snapshot');await rpc('hardhat_setStorageAt',[pins.quote,slot,ethers.zeroPadValue(ethers.toBeHex(100_000000n),32)]);try{if(await quote.balanceOf(wallet)===100_000000n){e.fundingSlot=slot;break;}}catch{}await rpc('evm_revert',[snap]);}assert(e.fundingSlot);
   const sent=async(label,promise)=>{const tx=await promise,r=await tx.wait();assert.equal(r.status,1);e.transactions.push({label,hash:tx.hash,gasUsed:r.gasUsed,gasPrice:r.gasPrice,fee:r.gasUsed*r.gasPrice});return r;};
   const amount=10_000000n,deadline=(await provider.getBlock('latest')).timestamp+600;
+  if(process.argv[3]==='--executor'){
+   const balance=async()=>BigInt(await rpc('eth_getBalance',[wallet,'latest']));
+   const engine=require('./ops-market-executor.cjs'),refill=require('./promo-native-refill.cjs'),stateFile=out+'.state';let state={};
+   const save=s=>fs.writeFileSync(stateFile,JSON.stringify(s));
+   const target=await (await provider.getSigner(1)).getAddress();await rpc('hardhat_setBalance',[target,'0x0']);await rpc('hardhat_setBalance',[wallet,ethers.toQuantity(2000000000000000n)]);const seed=await balance();e.seedETH=String(seed);
+   const config={amountRaw:String(amount),maxUsdPerPeriod:String(amount),periodSeconds:'86400',cooldownSeconds:'0',allowanceSeconds:'600',maxNativeFeesPerPeriod:'10000000000000000',slippageBps:50,maxImpactBps:100,maxAgeSeconds:300,deadlineSeconds:120,maxGasPrice:'2000000000',maxGasUnits:'500000',nativeFloor:'1000',extraFeeWei:'0',localFork:true},ops={maxGasPrice:'2000000000',reserveGasPrice:'2000000000',safetyBps:10000,extraFeePerTx:'0'};
+   for(const action of ['approveUSDG','approvePermit2','swap']){
+    stage('sender-'+action);const broken=new Proxy(signer,{get(o,k){if(k==='sendTransaction')return async req=>{const tx=await signer.sendTransaction(req);return {hash:tx.hash,wait:async()=>{throw Object.assign(Error('simulated process interruption'),{code:'TIMEOUT'});}};};return Reflect.get(o,k);}});
+    await assert.rejects(engine.execute({provider,signer:broken,config,source:wallet,ops,state,save}),/simulated process interruption|Receipt timeout/);
+    state=JSON.parse(fs.readFileSync(stateFile));assert.equal(state.pending.action,action);assert(state.pending.transactionHash);
+    e.receiptLogs??=[];e.receiptLogs.push((await provider.getTransactionReceipt(state.pending.transactionHash)).logs);
+    const nonce=await provider.getTransactionCount(wallet),r=await engine.reconcile({provider,state,save});assert.equal(r.status,'confirmed');assert.equal(await provider.getTransactionCount(wallet),nonce);assert(!state.pending);assert(!state.opsSwapHalt);e.transactions.push({...state.lastOpsSwap});
+   }
+   assert.equal(state.lastOpsSwap.usdDebit,String(amount));assert(BigInt(state.lastOpsSwap.nativeOutput)>0n);
+   assert.equal((await engine.execute({provider,signer,config,source:wallet,ops,state,save})).reason,'opsSwapPeriodLimit');
+   assert.equal(await balance()-seed+BigInt(state.opsSwapHistory.fees),BigInt(state.lastOpsSwap.nativeOutput));
+   stage('sender-refill');const r=await refill.execute({provider,signer,config:{source:wallet,minimumBalance:'1000',transferGas:'30000',maxPerRefill:'10000000000000000',maxPerPeriod:'20000000000000000',periodSeconds:'86400',cooldownSeconds:'0'},sender:target,ops,required:1000000000000000n,state,save});assert.equal(r.status,'confirmed');
+   e.sender={history:state.opsSwapHistory,nativeOutput:state.lastOpsSwap.nativeOutput,refill:r,executorBalance:String(await provider.getBalance(target))};assert.equal(e.sender.executorBalance,'1000000000000000');e.status='complete';return;
+  }
   stage('approve');await sent('USDG approval bounded',quote.approve(pins.permit2,amount));
   const permit=new ethers.Contract(pins.permit2,['function approve(address,address,uint160,uint48)'],signer);await sent('Permit2 bounded allowance',permit.approve(pins.quote,pins.router,amount,deadline));
   const router=new ethers.Contract(pins.router,['function execute(bytes,bytes[],uint256) payable'],signer);

@@ -78,3 +78,5 @@ Unknown send, остаточные allowances и crash между шагами �
 `node --test --test-name-pattern="profile catalog" test/test-launcher.test.cjs` —1/1.
 С15quote cases это26 разных продуктовых сценариев +1catalog, отдельными запусками,
 не full baseline. Контракты и prize math не менялись.
+
+28.09: закрыто несоответствие local poolKey/manager key; оба hash обязаны совпасть с pinned id. [Durable sender](OPS_MARKET_EXECUTOR.md) реализован отдельным модулем.

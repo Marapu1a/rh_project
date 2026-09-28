@@ -1,5 +1,7 @@
 # Карта реализации
 
+28.09: [Ops swap executor](OPS_MARKET_EXECUTOR.md) подключён опционально к PROJECT_NATIVE; общий main journal, отдельный source receipt dispatch, nonce/caps и handoff history. Fork helper→refill пройден; автоматический credit collection и полный watch market e2e ещё впереди.
+
 28.09: [Read-only market quote](OPS_MARKET_QUOTE.md) — pinned CLQuoter, exact router eth_call/estimate, wait reasons, новый fork. [Public admission](DEPLOYMENT_ADMISSION.md) отдельно требует9000/500/500 для новых операций; obligations-only сохранён. Swap sender ещё отсутствует.
 
 28.09: [PROJECT_NATIVE](PROMO_NATIVE_REFILL.md) — pinned slot1 через общий refill journal; отдельного swap executor пока нет. Приняты9000/500/500bps; [USDG→ETH fork proof](OPS_MARKET_PROOF.md) прошёл, production quote/recovery остаются.

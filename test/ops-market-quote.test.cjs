@@ -2,9 +2,9 @@ const {test}=require('node:test'),assert=require('node:assert/strict'),{ethers}=
 const {prepareSwap,profile,interfaces,transaction}=require('../scripts/ops-market-quote.cjs');
 // RPC fixture uses synthetic runtimes/hashes; live pins are exercised by the separate fork.
 function fixture(t){
- const original=structuredClone(profile.pins),codes={};let i=1;
+ const original=structuredClone(profile.pins),originalKey=[...profile.poolKey],codes={};let i=1;
  for(const [name,pin]of Object.entries(profile.pins)){codes[pin[0].toLowerCase()]='0x'+String(i++).padStart(2,'0');pin[1]=ethers.keccak256(codes[pin[0].toLowerCase()]);}
- t.after(()=>{for(const name of Object.keys(original))profile.pins[name]=original[name];});
+ t.after(()=>{profile.poolKey=originalKey;for(const name of Object.keys(original))profile.pins[name]=original[name];});
  const source='0x'+'ab'.repeat(20),options={source,amountRaw:'10000000',slippageBps:50,maxImpactBps:100,maxAgeSeconds:30,deadlineSeconds:60,maxGasPrice:'100',maxGasUnits:'300000',nativeFloor:'1000',extraFeeWei:'2000'};
  const f={options,now:1000,stamp:1000,liquidity:1000n,out:1000000000n,allowance:10000000n,permitAmount:10000000n,permitExpiry:2000n,gasPrice:10n,gas:200000n,native:1000000000n,hash:ethers.id('head'),calls:[]};
  const encode=(name,method,v)=>interfaces[name].encodeFunctionResult(method,v);
@@ -20,7 +20,7 @@ function fixture(t){
  const tx=args[0],name=Object.keys(interfaces).find(n=>profile.pins[n][0].toLowerCase()===tx.to.toLowerCase()),parsed=interfaces[name].parseTransaction(tx),fn=parsed.name;
  if(name==='router'){if(f.rejectSimulation)throw Object.assign(Error('revert'),{code:3});return '0x';}
  if(fn==='poolManager')return encode(name,fn,[profile.pins.manager[0]]);
- if(fn==='poolIdToPoolKey')return encode(name,fn,profile.poolKey);
+ if(fn==='poolIdToPoolKey')return encode(name,fn,originalKey);
  if(fn==='getLiquidity')return encode(name,fn,[f.liquidity]);
  if(fn==='quoteExactInputSingle'){const small=parsed.args[0][2]<10000000n;return encode(name,fn,[small?10000000n:f.out,50000n]);}
  if(fn==='balanceOf')return encode(name,fn,[100000000n]);
@@ -44,3 +44,5 @@ test('runtime mismatch blocks quote before simulation',async t=>{const f=fixture
 test('deadline expiry is rejected even when RPC head stalls within max age',async t=>{
  const f=fixture(t);f.options.maxAgeSeconds=120;f.now=1070;assert.equal((await f.run()).reason,'staleQuote');
 });
+
+test('local key drift is rejected against independent pinned manager key before quote',async t=>{const f=fixture(t);profile.poolKey=[...profile.poolKey];profile.poolKey[4]='100';assert.equal((await f.run()).reason,'poolKeyMismatch');assert(!f.calls.some(([m,a])=>m==='eth_call'&&a[0].to===profile.pins.quoter[0]&&a[0].data.startsWith(interfaces.quoter.getFunction('quoteExactInputSingle').selector)));});

@@ -2,6 +2,15 @@
 const path=require('node:path'),{withState}=require('./local-scheduler-state.cjs');
 const {hash}=require('./direct-buy.cjs');
 const hints={
+ opsFunding:'Continue the durable operations funding stages on the next pass.',
+ opsSwapCooldown:'Wait for the configured operations cooldown.',
+ opsSwapPeriodLimit:'Wait for the next USDG spending period or use externally supplied ETH.',
+ opsSwapFeeLimit:'Wait for the next operations gas budget period or use externally supplied ETH.',
+ insufficientUSDG:'Fund the operations wallet with USDG or ETH; collector credit is not wallet balance.',
+ staleQuote:'Read a fresh market quote before sending.',
+ priceImpact:'Wait for sufficient market depth or review the bounded batch size.',
+ insufficientLiquidity:'Wait for liquidity; prize assets remain untouched.',
+
  expensiveGas:'Wait for gas to fall below the configured ceiling.',
  executorNeedsETH:'Wait for bounded refill or an external ETH top-up.',
  sourceNeedsETH:'Top up the separate operational ETH source.',
@@ -31,7 +40,7 @@ function classify(report){
   if(unavailable)reasons.add(r.reason);
   if((failure||r.status==='rejected')&&!unavailable){attention=true;reasons.add('operationFailed');}
   if(r.retryableRpcRead===true)reasons.add('rpcUnavailable');
-  const names={gasPrice:'expensiveGas',nativeFunding:'executorNeedsETH',refillCooldown:'refillCooldown',refillHalt:'refillHalt',rpcUnavailable:'rpcUnavailable',unknownHash:'reconciliationRequired',unknownTransaction:'reconciliationRequired',unconfirmedReceipt:'reconciliationRequired',pendingReceipt:'receiptPending',refillAccountCode:'configurationRequired',refillGasBound:'configurationRequired',actionGasBound:'configurationRequired',blockGasBound:'configurationRequired',obligationAdmission:'configurationRequired',deploymentAdmission:'configurationRequired',publicExecutionDisabled:'configurationRequired'};
+  const names={opsFunding:'opsFunding',opsSwapCooldown:'opsSwapCooldown',opsSwapPeriodLimit:'opsSwapPeriodLimit',opsSwapFeeLimit:'opsSwapFeeLimit',opsSwapHalt:'reconciliationRequired',sourceNeedsETH:'sourceNeedsETH',insufficientUSDG:'insufficientUSDG',staleQuote:'staleQuote',priceImpact:'priceImpact',insufficientLiquidity:'insufficientLiquidity',gasPrice:'expensiveGas',nativeFunding:'executorNeedsETH',refillCooldown:'refillCooldown',refillHalt:'refillHalt',rpcUnavailable:'rpcUnavailable',unknownHash:'reconciliationRequired',unknownTransaction:'reconciliationRequired',unconfirmedReceipt:'reconciliationRequired',pendingReceipt:'receiptPending',refillAccountCode:'configurationRequired',refillGasBound:'configurationRequired',actionGasBound:'configurationRequired',blockGasBound:'configurationRequired',obligationAdmission:'configurationRequired',deploymentAdmission:'configurationRequired',publicExecutionDisabled:'configurationRequired'};
   if(names[r.reason])reasons.add(names[r.reason]);
   if(['pendingSigner','pendingRefillSigner'].includes(r.reason))reasons.add('signerPending');
   if(['chainChanged','refillSnapshotChanged'].includes(r.reason))reasons.add('chainObservationChanged');

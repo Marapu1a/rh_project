@@ -68,7 +68,7 @@ async function runPromoAutomation({provider,executor,collector,adapter,vault,sho
   const rOptions={provider,adapter,executor,job:deliveryJob,statePath:files.rng,signal,receiptTimeoutMs,kinds:dual?['short','monthly']:['short']};
   const sOptions={provider,short,monthly,publisher:executor,executor,config:schedulerConfig,rpcUrl,statePath:files.scheduler,signal,receiptTimeoutMs,kinds:dual?['SHORT','MONTHLY']:['SHORT'],prioritizeStarted:true};
   async function resolved(){
-   const p=state.pending;if(!p)return null;if(p.worker==='promoNativeRefill'){const r=await refill.reconcile({provider,state,save});results.refill=r;return r.status==='blocked'?blocked(r.reason):null;}if(!p.transactionHash)return blocked('unknownHash');
+   const p=state.pending;if(!p)return null;if(p.worker==='opsMarket'){const r=await require('./ops-market-executor.cjs').reconcile({provider,state,save});results.opsSwap=r;return r.status==='blocked'?blocked(r.reason):null;}if(p.worker==='promoNativeRefill'){const r=await refill.reconcile({provider,state,save});results.refill=r;return r.status==='blocked'?blocked(r.reason):null;}if(!p.transactionHash)return blocked('unknownHash');
    const receipt=await provider.getTransactionReceipt(p.transactionHash);if(!receipt)return blocked('pendingReceipt');
    const b=await provider.getBlock(receipt.blockNumber),tx=await provider.getTransaction(p.transactionHash);
    if(!b||!same(b.hash,receipt.blockHash)||!same(receipt.hash,p.transactionHash)||![0,1].includes(receipt.status)||!tx||!same(tx.hash,p.transactionHash)||!same(tx.from,sender)||!same(tx.to,p.target)||!same(tx.data,p.data)||tx.nonce!==p.nonce)return blocked('unconfirmedReceipt');
@@ -136,6 +136,16 @@ async function runPromoAutomation({provider,executor,collector,adapter,vault,sho
      if(!discoveryReady)wait('payoutDiscovery');
      const balance=BigInt(state.lastBudget.balance),need=committed>balance?committed:required;
      refillAttempted=true;
+     if(nativeRefill.swap){
+      const sourceBalance=await provider.getBalance(nativeRefill.source),sourceNeed=need-balance+BigInt(nativeRefill.minimumBalance)+transactionCost(ops,nativeRefill.transferGas);
+      if(sourceBalance<sourceNeed){
+       results.opsSwap=await require('./ops-market-executor.cjs').execute({provider,signer:refillSigner,config:nativeRefill.swap,source:nativeRefill.source,ops,state,save,signal,receiptTimeoutMs});
+       if(results.opsSwap.status==='confirmed'){sentCount++;const step={action:results.opsSwap.action,...results.opsSwap};steps.push(step);await onStep(step);wait('opsFunding');}
+       // A stopped/unresolved swap cannot fall through to a second source transaction.
+       if(state.pending||signal?.aborted)wait('pendingRefill');
+       if(!['insufficientUSDG','opsSwapHalt','opsSwapPeriodLimit','opsSwapFeeLimit','sourceNeedsETH'].includes(results.opsSwap.reason))wait('opsFunding');
+      }
+     }
      results.refill=await refill.execute({provider,signer:refillSigner,config:nativeRefill,sender,ops,required:need,state,save,signal,receiptTimeoutMs});
      if(results.refill.status==='confirmed'){sentCount++;const step={action:'transferNative',...results.refill};steps.push(step);await onStep(step);return guard(request,action,commit);}
      if(signal?.aborted)throw Object.assign(Error('Stopped'),{code:'LOCAL_EXECUTION_STOPPED'});

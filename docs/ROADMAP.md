@@ -44,7 +44,8 @@ public sends закрыты. [Recovery admission](RECOVERY_ADMISSION.md) отд�
 2. **Эксплуатационный бюджет.**90/5/5 принято (призы/ops/команда), записано в launch plan.
    [PROJECT_NATIVE](PROMO_NATIVE_REFILL.md) подключает стабильный slot1 к bounded ETH refill;
    USDG→ETH [первый fork proof](OPS_MARKET_PROOF.md) прошёл. [Read-only quote/estimate](OPS_MARKET_QUOTE.md) с pinned CLQuoter и точным router call
-   реализованы и проверены на новом fork. Далее journaled swap/approve recovery в общем ops signer контуре.
+   реализованы и проверены на новом fork. [Journaled swap/approve](OPS_MARKET_EXECUTOR.md) реализован; далее ограниченный pay(slot1)
+   за ops seed и общий watch→market→refill→obligations proof. Release pins/caps остаются открытыми.
    Дорогой gas/нехватка ETH → resumable wait/top-up; вечная самоокупаемость не gate.
    Призовые frozen/claimable не расходуются. Public sends закрыты.
 3. **Постоянный сервис.** Ключи и один владелец signer, supervisor, устойчивый несинхронизируемый

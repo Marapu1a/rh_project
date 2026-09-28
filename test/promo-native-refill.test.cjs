@@ -144,3 +144,23 @@ test('project slot1 empty source waits then top-up completes frozen obligations 
  const r=await run(f.options,{getBeacon:beacon});assert.equal(r.results.refill.status,'confirmed',JSON.stringify(r));
  assert(r.steps.some(s=>s.action==='finishMonth'));assert.equal(await f.quote.balanceOf(source),usdBefore);
 });
+
+test('project swap gets seed ETH before partial refill; waiting approval does not drain source',async t=>{
+ const f=await fixture(t,{project:true}),engine=require('../scripts/ops-market-executor.cjs'),original=engine.execute;
+ f.options.nativeRefill.swap={amountRaw:'10000000',maxUsdPerPeriod:'10000000',periodSeconds:'86400',cooldownSeconds:'0',allowanceSeconds:'600',maxNativeFeesPerPeriod:'10000000000000000',slippageBps:50,maxImpactBps:100,maxAgeSeconds:30,deadlineSeconds:120,maxGasPrice:'1000000000',maxGasUnits:'30000',nativeFloor:'1000000',extraFeeWei:'0',localFork:false};
+ await rpc('hardhat_setBalance',[f.options.nativeRefill.source,ethers.toQuantity(1000000000000000n)]);
+ const before=await f.provider.getBalance(f.options.nativeRefill.source);let seen=0;
+ engine.execute=async a=>{seen++;assert.equal(a.source,f.options.nativeRefill.source);assert(!a.state.pending);return {status:'waiting',reason:'opsSwapCooldown'};};
+ try{const r=await run(f.options,{getBeacon:beacon});assert.equal(seen,1);assert.equal(r.results.opsSwap.reason,'opsSwapCooldown');assert.equal(await f.provider.getBalance(f.options.nativeRefill.source),before);assert(!r.steps.some(s=>s.action==='transferNative'));}finally{engine.execute=original;}
+});
+
+test('main recovery dispatch reconciles operations sender rather than executor and never replays approval',async t=>{
+ const f=await fixture(t,{project:true,freeze:false});await run(f.options);
+ const head=await f.provider.getBlock('latest'),source=await f.other.getAddress();
+ const tx=await f.quote.connect(f.other).approve(f.owner,1,{gasLimit:100000,type:2,maxFeePerGas:1000000000000n,maxPriorityFeePerGas:0});await tx.wait();
+ const {prepareRuntime}=require('../scripts/promo-automation.cjs'),{withRobinhoodNetwork}=require('../scripts/runtime-network.cjs');
+ const ready=await withRobinhoodNetwork({...f.options,mode:'robinhood-rehearsal'},()=>prepareRuntime({...f.options,deferContractChecks:true}));
+ const pending={worker:'opsMarket',action:'approveUSDG',chainId:'4663',from:source,to:f.quote.target,data:tx.data,nonce:tx.nonce,gasLimit:'100000',maxFeePerGas:'1000000000000',maxFee:'100000000000000000',maxNativeFeesPerPeriod:'1000000000000000000',anchor:{number:head.number,hash:head.hash,timestamp:head.timestamp},periodSeconds:'86400',maxUsdPerPeriod:'10000000',amountRaw:'10000000',minOut:'1',quote:f.quote.target,weth:f.token.target,transactionHash:tx.hash};
+ await require('../scripts/local-scheduler-state.cjs').withState(ready.files.main,ready.identity,async(state,save)=>{state.pending=pending;save(state);});
+ const nonce=await f.provider.getTransactionCount(source),r=await run(f.options);assert.equal(r.results.opsSwap.status,'confirmed',JSON.stringify(r));assert(!read(f).pending);assert(!read(f).opsSwapHalt);assert.equal(await f.provider.getTransactionCount(source),nonce);
+});

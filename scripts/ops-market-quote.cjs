@@ -35,6 +35,7 @@ async function prepareSwap(provider,{source,amountRaw,slippageBps,maxImpactBps,m
  if(await provider.send('eth_getCode',[source,tag])!=='0x')return wait('sourceNotEOA');
  const call=async(name,method,args=[])=>interfaces[name].decodeFunctionResult(method,await provider.send('eth_call',[{to:profile.pins[name][0],data:interfaces[name].encodeFunctionData(method,args)},tag]));
  if(!same((await call('quoter','poolManager'))[0],profile.pins.manager[0]))return wait('quoterBindingMismatch');
+ if(ethers.keccak256(coder.encode([keyType],[profile.poolKey]))!==profile.poolId)return wait('poolKeyMismatch');
  const key=await call('manager','poolIdToPoolKey',[profile.poolId]);if(ethers.keccak256(coder.encode([keyType],[Array.from(key)]))!==profile.poolId)return wait('poolKeyMismatch');
  if((await call('manager','getLiquidity',[profile.poolId]))[0]===0n)return wait('insufficientLiquidity');
  stage='quote';const small=amount/100n||1n;

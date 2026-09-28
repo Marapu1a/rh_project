@@ -1,6 +1,6 @@
 # Creator revenue → эксплуатация → ETH: проект решения
 
-Обновление28.09: [read-only CLQuoter + exact router simulation](OPS_MARKET_QUOTE.md) реализованы и прошли новый fork; следующим остаётся journaled swap sender. Лимиты quote/gas для deployment ещё выбираются отдельно.
+Обновление28.09: [read-only CLQuoter + exact router simulation](OPS_MARKET_QUOTE.md) реализованы и прошли новый fork; [journaled swap sender](OPS_MARKET_EXECUTOR.md) также реализован и проверен на fork. Следующий шаг — получение slot1 credits и полный watch proof. Лимиты quote/gas для deployment ещё выбираются отдельно.
 
 28.09.2026. **90/5/5 принято пользователем; маршрут конверсии ещё квалифицируется.** Выбранная
 creator fee Infinity — 3%; внутреннее распределение9000/500/500bps принято28.09.2026.

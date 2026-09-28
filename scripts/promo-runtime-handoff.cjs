@@ -78,7 +78,7 @@ async function handoffRuntime(previous,next,{afterRetire=async()=>{}}={}){
    // Durable tombstone first: old worker must stop even if the next save crashes.
    root.handoff={token,target:fresh.files.main,configHash:hash(fresh.identity),blockNumber:at.number,blockHash:at.hash};writers['old:main'](root);
    await afterRetire();
-   for(const key of ['refillHistory','lastRefill','refillHalt'])if(root[key]!==undefined)target[key]=structuredClone(root[key]);
+   for(const key of ['refillHistory','lastRefill','refillHalt','opsSwapHistory','lastOpsSwap','opsSwapHalt'])if(root[key]!==undefined)target[key]=structuredClone(root[key]);
    target.predecessor={token,source:old.files.main};writers['new:main'](target);
    // Child files remain uncreated until their first normal pass. Canonical payout replay starts from genesis.
    return {status:'complete',alreadyCompleted:false,target:fresh.files.main};

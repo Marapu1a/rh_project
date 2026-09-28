@@ -146,3 +146,5 @@ EOA ещё не выбраны. Contracts и призовая математик
 Новые tests проверяют90/5/5 credits, успешный rollover со стабильным source,
 handoff history и отклонение смены source, нехватку ETH/top-up и unknown/known send.
 Публичная сеть не отправлялась. [Отдельный USDG→ETH fork proof](OPS_MARKET_PROOF.md).
+
+28.09: PROJECT_NATIVE поддерживает опциональный [nativeRefill.swap](OPS_MARKET_EXECUTOR.md), с общим main lock, отдельным pending dispatch и неизменяемой через handoff policy. Bootstrap не включает swap.

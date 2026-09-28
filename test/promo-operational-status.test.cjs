@@ -80,3 +80,8 @@ test('a fresh OS process reuses notification history instead of emitting the sam
  const child=r=>JSON.parse(execFileSync(process.execPath,['-e',"require(process.argv[1]).observePromoStatus(process.argv[2],JSON.parse(process.argv[3])).then(r=>process.stdout.write(JSON.stringify(r)))",require.resolve('../scripts/promo-operational-status.cjs'),file,JSON.stringify(r)],{encoding:'utf8'}));
  assert(!child(report).operational.event);assert.equal(child({status:'complete'}).operational.event.sequence,2);
 });
+
+test('operations funding waits and halt cannot become false recovery',()=>{
+ for(const reason of ['opsFunding','opsSwapCooldown','opsSwapFeeLimit','opsSwapPeriodLimit','staleQuote','priceImpact'])assert.equal(classify({status:'waiting',results:{opsSwap:{status:'waiting',reason}}}).state,'waiting');
+ assert.equal(classify({status:'waiting',results:{opsSwap:{status:'waiting',reason:'opsSwapHalt'}}}).state,'attention');
+});

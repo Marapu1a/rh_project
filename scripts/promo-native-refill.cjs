@@ -5,6 +5,7 @@ const {waitLocalReceipt}=require('./local-receipt.cjs');
 const check=(v,m)=>{if(!v)throw Error(m);},same=(a,b)=>String(a).toLowerCase()===String(b).toLowerCase();
 function validate(config,sender,protectedAddresses,recipients=[]){
  if(config==null)return;
+ if(config.swap){check(config.kind==='PROJECT_NATIVE','Swap requires project source');require('./ops-market-executor.cjs').validate(config.swap);check(BigInt(config.swap.nativeFloor)>=BigInt(config.minimumBalance),'Swap must preserve source floor');}
  check(['BOOTSTRAP_NATIVE','PROJECT_NATIVE'].includes(config.kind)&&ethers.isAddress(config.source)&&config.source!==ethers.ZeroAddress,'Explicit bootstrap or project ETH source required');
  if(config.kind==='PROJECT_NATIVE'){
   check(recipients.length===3&&recipients.every(ethers.isAddress)&&new Set(recipients.map(a=>a.toLowerCase())).size===3&&recipients.every(a=>a!==ethers.ZeroAddress),'Project refill requires three distinct nonzero recipients');

@@ -1,64 +1,67 @@
-# Текущий запрос GPT: approved allocation guard + read-only market quote
+# Текущий запрос GPT: durable operations swap и native refill
 
-28.09.2026. Продолжение d99ac18.90/5/5 явно принято пользователем; вечную
-окупаемость газа не доказываем. Дорогой gas/нехватка ETH → wait/top-up/resume,
-prize frozen/claimable не трогаем. Public sends закрыты.
+28.09.2026. Продолжение review 90f19ba. Распределение 90/5/5 принято пользователем.
+Не доказываем вечную окупаемость газа: дорогой gas или нехватка ETH означают ожидание,
+пополнение и продолжение. Призовые frozen/claimable не используются. Public sends закрыты.
 
-## Хвост review закрыт
+## Что сделано
 
-`inspectDeployment` для public-launch независимо сравнивает actual policy.bps и
-fundingJob.bps с9000/500/500. Совпадающий config+chain с ошибочными долями даёт
-approvedCreatorAllocation. Проверку НЕ добавляли в validateDeploymentProfile,
-который нужен старым obligations и reconciliation: оба frozen draws/claims
-продолжаются через прежний obligations-only. Локальные31337 profiles не менялись.
-Runtime fixture4663 переведена на90/5/5, ожидаемые reserve amounts поправлены.
+1. Локальный poolKey теперь хешируется и сверяется с pinned poolId до quote;
+   manager key независимо сверяется с тем же poolId. Есть regression test локальной подмены.
+2. Добавлен [operations sender](OPS_MARKET_EXECUTOR.md): точный USDG approve →
+   Permit2 approve → swap + unwrap → существующий native refill. Один этап за проход,
+   общий automation lock/journal и operations signer; pending сначала reconciles.
+3. Coordinator распознаёт ops intent и проверяет receipt по operations адресу,
+   а не адресу executor. History, caps и halt сохраняются при runtime handoff.
+4. Intent сохраняется до отправки, hash — после. Неизвестная отправка блокирует
+   повторную; подтверждённый receipt учитывается один раз. Revert/anomaly останавливают
+   дальнейшие swaps, чтобы не прожигать seed ETH повторами.
+5. Ограничены batch USDG, расходы USDG и native fees за период, gas price/units,
+   native floor, cooldown, slippage/impact и свежесть quote. Это worker policy,
+   не контрактное ограничение владельца operations EOA.
+6. Permit2 expiry покрывает cooldown и следующий quote deadline, иначе approvals
+   могли бы бесконечно обновляться. Swap подготавливается свежим на каждом проходе.
+7. При нехватке средств конверсия идёт перед частичным refill, сохраняя seed для approve.
+   При исчерпанном лимите/отсутствии USDG доступный ETH всё ещё может пойти в refill.
 
-Это admission worker, не новая неизменяемость owner policy в контракте. Будущее
-изменение принятого распределения требует нового решения и изменения guard.
+На реальном fork выяснилось: pinned WETH сообщает unwrap через Transfer(router, zero),
+а не Withdrawal. Поддержаны оба формата без двойного учёта; расхождение блокирует swaps.
+Это evidence pinned маршрута, не универсальное доказательство доставки ETH любым router.
+Refill независимо читает фактический native balance.
 
-## Read-only quote вместо trial swap
+## Проверки
 
-[Описание](OPS_MARKET_QUOTE.md), scripts/ops-market-quote.cjs,
-config/ops-market-robinhood.json, test/ops-market-quote.test.cjs.
-В официальном infinity-periphery/script/config/robinhood-mainnet.json найден
-CLQuoter0x6b3E15009681869FCF6AE2F3bBf6e33B2D0C590e. Проверили runtime hash и
-poolManager binding. quoteExactInputSingle работает через eth_call без allowance.
-Не нужен подбор minOut серией проб и не нужен state-changing trial.
+49 адресных продуктовых тестов + 1 catalog check прошли. Команды и границы —
+[в документе модуля](OPS_MARKET_EXECUTOR.md). Полный suite не запускали.
 
-Все asset/pool/quote reads на одном blockTag, pins и poolId проверяются. Full и1%
-input дают ограничение impact; это НЕ независимый oracle против смещённой цены
-всего рынка. minOut в swap и unwrap, recipient=source. Проверяем USDG/оба allowances
-и expiry, gas cap, exact router eth_call и eth_estimateGas, native reserve, затем
-повторяем hash/age/deadline. Неподдерживаемый historical estimate не заменяем latest.
+[Ограниченный fork](../research/ops-funding/sender-fork-2026-09-28.json), block 74812400:
+operations начал с 0.002 ETH, потратил 10 USDG, получил 0.003720768049085340 ETH,
+после чего пустой executor получил 0.001 ETH. Реальные router/Permit2/USDG/WETH,
+но искусственно выданный USDG и локальная модель gas; это не тариф Nitro.
 
-Модуль read-only: prepared содержит transaction и authorizationToSend:false.
-Привязка вызывающего source к реальному slot1 и повторная свежесть перед send —
-обязанность следующего executor. Никакого approve/send из quote module нет.
-extraFeeWei и gas bounds явные; Hardhat fee не называем тарифом Nitro.
+Для каждого из трёх этапов отправка состоялась, ожидание receipt искусственно оборвано,
+журнал перечитан с диска, receipt восстановлен без повторной отправки. Это не OS SIGKILL
+и не полный watch end-to-end. Unknown hash, save failures, revert, caps и anomalies
+проверены локальными тестами. Исправленные ошибки первоначального fork не скрываем:
+именно он выявил формат WETH burn event; итоговый повтор прошёл.
 
-## Проверки и границы
+## Что пока не закрыто
 
-15 быстрых quote cases: prepared exact payload/один block, stale/reorg, liquidity,
-impact, ERC20/Permit2/expiry, expensive gas, bounds/ETH, simulation/RPC/pin failures.
-Два интеграционных recovery cases: согласованно неверные доли не дают новых операций,
-но оба frozen завершаются с claims; source/BUY outage прежний recovery сохраняет.
-Соседний runtime suite и catalog — результаты в CURRENT_CONTEXT.
+- Автоматическое получение slot1 credits из collector. Сейчас USDG уже на operations EOA.
+- Полный watch proof всей цепочки и выбор реальных deployment caps.
+- Source/immutable audit и остальные public-launch gates.
+- Начальный seed ETH нужен; approvals и сбор credits тоже требуют gas.
 
-Новый fork на74786338:10USDG → quote3718445305557211wei → actual столько же.
-Точная prepared.transaction отправлена только на fork, negative minOut сохранён.
-[Evidence](../research/ops-funding/quoter-fork-2026-09-28.json). Artificial USDG/native
-и локальная gas модель явно обозначены. Полный suite/public sends не запускались.
+## Вопросы review
 
-## Что проверить
+1. Есть ли конкретная ошибка в intent/receipt accounting, unknown-send recovery,
+   периодных caps или общей nonce последовательности с refill?
+2. Нет ли пути, где coordinator преждевременно расходует seed, дублирует отправку
+   или трактует operations receipt как executor receipt?
+3. Достаточны ли условия expiry/cooldown для отсутствия approval loop при обычном
+   polling? Задержка сверх expiry допустима, автоматические бесконечные повторы — нет.
+4. Следующим ограниченным пакетом предлагаем durable pay(slot1) для накопленных
+   credits, затем полный watch proof. Какие существующие recovery границы надо переиспользовать?
 
-1. Не блокирует ли новый allocation guard reconciliation/старые obligations?
-2. Нет ли перепутанных quote/minOut/deadline/allowance units или незакрытого stale пути?
-3. Достаточен ли этот read-only API для следующего bounded sender, без ненужного
-   общего framework? Отделяем impact от fair-market oracle, не обещаем лишнего.
-4. Следующий пакет — durable approve/Permit2/swap в одном ops nonce/journal с refill;
-   unknown sends сначала reconcile, затем actual native output. Source/immutable
-   audit и реальные deployment caps всё ещё prerequisites, не закрыты этим proof.
-
-Не пересматривайте принятые90/5/5 без конкретного нового основания. Не превращайте
-обычный ETH shortage в остановку старых призовых обязательств или требование
-доказать бесконечную самоокупаемость. Обсуждаем конкретные execution defects.
+Просьба оценивать реализованный объём, не требовать гарантии вечного достатка ETH.
+Нехватка денег и дорогой gas — штатные причины ожидания, а не смерть проекта.
