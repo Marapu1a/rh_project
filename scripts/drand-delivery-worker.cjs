@@ -1,3 +1,4 @@
+const network=require('./runtime-network.cjs');
 const {ethers}=require('ethers');
 const {withState}=require('./local-scheduler-state.cjs');
 const {sendLocalTransaction,withTransactionBoundary,receiptOptions}=require('./local-receipt.cjs');
@@ -13,7 +14,7 @@ const consumerAbi=['function randomProvider() view returns(address)','function p
  'function pendingMonth() view returns(bytes32)','function drawRequest(bytes32) view returns(uint256)',
  'function requests(uint256) view returns(bytes32 drawId,bytes32 context,bool delivered)'];
 function validateJob(j){
- check(j.schema==='local-drand-delivery-v1'&&String(j.chainId)==='31337','Local chain31337 only');
+ check(j.schema===network.schema('local-drand-delivery-v1'),'Explicit worker network schema required');network.checkChain(j.chainId);
  for(const k of ['adapter','short','monthly']){check(ethers.isAddress(j[k])&&!same(j[k],ethers.ZeroAddress),'Invalid '+k);check(/^0x[0-9a-fA-F]{64}$/.test(j[k+'CodeHash']||''),'Missing runtime '+k);}
  check(new Set(['adapter','short','monthly'].map(k=>j[k].toLowerCase())).size===3,'Distinct bindings required');
  check(Number.isSafeInteger(j.anchor?.number)&&j.anchor.number>=0&&/^0x[0-9a-fA-F]{64}$/.test(j.anchor.hash),'Invalid deployment anchor');
@@ -31,7 +32,7 @@ async function runDrandDelivery({provider,adapter,executor,job,statePath,signal,
  check(Array.isArray(kinds)&&kinds.length>0&&new Set(kinds).size===kinds.length&&kinds.every(k=>['short','monthly'].includes(k)),'Invalid delivery kinds');
  job=JSON.parse(JSON.stringify(validateJob(job)));receiptOptions(receiptTimeoutMs);
  check(executor?.provider===provider,'Signer/provider mismatch');check(adapter.runner===provider||adapter.runner?.provider===provider,'Adapter/provider mismatch');
- check(same(adapter.target,job.adapter),'Adapter mismatch');check((await provider.getNetwork()).chainId===31337n,'Local chain31337 only');
+ check(same(adapter.target,job.adapter),'Adapter mismatch');network.checkChain((await provider.getNetwork()).chainId);
  const sender=await executor.getAddress();
  const normalize=v=>Array.isArray(v)?v.map(normalize):v&&typeof v==='object'?Object.fromEntries(Object.entries(v).map(([k,x])=>[k,normalize(x)])):typeof v==='string'&&/^0x[0-9a-fA-F]+$/.test(v)?v.toLowerCase():v;
  return withState(statePath,normalize({worker:'drand-delivery-v1',job,sender}),async(state,save)=>{

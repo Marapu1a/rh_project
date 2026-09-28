@@ -22,6 +22,7 @@
 | Monthly | [Epochs и settlement](MONTHLY_RULES_EPOCHS.md) |
 | Воспроизводимое review | [Канонический runner](REVIEW_TESTING.md) |
 | Диагностика refill / manifest | [Inspector и deployment manifest](LOCAL_NATIVE_REFILL_INSPECTOR.md) |
+| Robinhood runtime / rehearsal | [Отдельный4663 исполнитель](ROBINHOOD_RUNTIME.md) |
 | RPC / historical replay | [Проверка RPC](PUBLIC_RPC_QUALIFICATION.md) |
 | Допуск deployment / timing | [Публичные controllers и launch plan](PUBLIC_CONTROLLERS.md), [профиль и проверки](DEPLOYMENT_ADMISSION.md) |
 | Cutoff / финальность | [История подлинных cutoff и worker](CUTOFF_HISTORY.md) |

@@ -28,12 +28,14 @@ BLS подписью. Это разные уровни доказательст�
 [Public wrappers](PUBLIC_CONTROLLERS.md) теперь подготовлены, частичный fork пройден.
 [RPC qualification](PUBLIC_RPC_QUALIFICATION.md) готов: оба публичных endpoints не прошли
 полную историческую доступность; живой reference BUY ещё не квалифицирован.
-Далее пригодный archive provider и публичный runtime/admission; Timing1800s пока кандидат.
+[Общий runtime4663](ROBINHOOD_RUNTIME.md) подготовлен и проверен в локальной репетиции;
+public sends закрыты. Далее пригодный archive provider и реальные параметры; Timing1800s пока кандидат.
 
 ## Оставшиеся релизные блокеры — в порядке работы
 
 1. **Публичное исполнение и реальные параметры.** Wrappers и incomplete launch plan готовы;
-   shared worker пока local-only. Нужны network-aware public admission и реальные pins. Проверенные сборки контрактов,
+   shared worker получил отдельный4663 контекст и локальную репетицию. Public activation
+   закрыта; нужны реальные pins, signing/key custody и qualified RPC. Проверенные сборки контрактов,
    chain/block model, future-round timing/finality policy, рабочие адреса/пулы и единый
    профиль. Local31337 guard нельзя просто удалить. Production timing нужно обосновать
    наблюдениями и явно принять; preflight не становится контрактной финальностью.

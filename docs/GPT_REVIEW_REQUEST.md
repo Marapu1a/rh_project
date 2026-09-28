@@ -1,39 +1,57 @@
-# Текущее обращение к GPT — RPC qualification
+# Текущее обращение к GPT — Robinhood runtime
 
-28.09.2026. Продолжаем после публичных Robinhood controllers. В этот пакет не входят
-публичные отправки, контракты/экономика, автоматический failover или production indexer.
+28.09.2026. После RPC qualification решили не блокировать перенос исполнителя выбором
+провайдера: работаем с известными RPC требованиями, public broadcasts всё ещё закрыты.
 
-Прочитай `docs/PUBLIC_RPC_QUALIFICATION.md`, затем изменённые scripts/tests.
-Разделены три утверждения: доступны ли данные, воспроизводится ли bounded replay,
-можно ли запускать проект. Последнее всегда false.
+Прочитай `docs/ROBINHOOD_RUNTIME.md`, затем код. Это ограниченный пакет сетевого
+контекста/rehearsal, а не обещание public launch или полного automatic4663 e2e.
 
-Что изменено:
-- существующий `scan(url)` делегирует `scanWithRpc`, чтобы проверять ровно настоящий
-  путь historical runtime pins/full blocks/all receipts → replay без второго decoder;
-- bounded read-only RPC probe с allowlist, request budget, timeout, redacted errors,
-  stats; receipts сверяются с блоком и eth_getLogs, canonical header перечитывается;
-- новый процесс повторяет фиксированные block fingerprints и при manifest ledgerHash;
-- ограниченный discovery прямых Infinity adapter calls; никаких фиктивных public pins.
+## Что сделано и почему
 
-40 продуктовых адресных сценариев и1 catalog прошли отдельными запусками. Контрактные
-full suites не запускали: contracts не изменились. Все8 новых проверок проходили
-после последнего изменения transport;29 соседних проверок прошли на изменённом scan.
+- runtime-network.cjs: AsyncLocalStorage с прежним local31337 default и явными
+  robinhood-inspect / robinhood-rehearsal. Так funding, RNG и executors используют
+  одну сеть на всём async пути; отдельного engine/journal не копировали.
+- Прежние local CLI не расширены. Новые jobs/config/ops имеют robinhood schemas;
+  snapshot/job commitment formats сохранены, chain проверяется на исполнении.
+- Новый entrypoint требует pinned public-launch profile4663. Inspect не создаёт state
+  и не отправляет; CLI использует VoidSigner без секретов. Rehearsal требует loopback,
+  совпадающие chain/block/Hardhat instance для provider и scan RPC. Перед send ещё
+  раз проверяется instance/network, tx имеет explicit4663.
+- В rehearsal снимается только искусственный publicExecutionNotImplemented blocker;
+  остальные checks и releaseBlockers остаются. Public inspector всегда false/blocked.
+- Shared journal/gas/recovery logic не переписаны. RPC transport failure в admission
+  получает retryableRpcRead и новый entrypoint ждёт; semantic mismatch блокирует.
+- Main state identity Robinhood хранит origin+endpointHash вместо полного RPC URL.
 
-Живые результаты: Official отдаёт blocks/receipts/logs и повторяет3 fingerprints,
-но не historical state; Blockreq отдаёт2 recent samples, отказывает старому. Полная
-квалификация обоих отрицательна. При discovery Blockreq также дал range error/429;
-Official закончил bounded поиск100 из106tx, direct adapter call не найден.
-Живой eligible USDG BUY replay остаётся открытым. Положительный путь проверен fixture,
-реальные runtime bytes сохранены; нет подмены fork адресов в public deployment.
+## Что доказано
 
-Посмотри самостоятельно:
-1. Не даёт ли отчёт ложный green при частично доступной истории/пустом replay?
-2. Достаточны ли bounded transport/provenance проверки для диагностического инструмента,
-   без превращения его в новый indexer? `repeatable` — blocks/receipts, не state SLA.
-3. Сохранён ли прежний scan(url) и его policy/runtime checks после выделения транспорта?
-4. Следующий практичный шаг: выбрать archive endpoint, затем public runtime с единым
-   durable signer journal. Есть ли необходимый независимый кодовый шаг, который стоит
-   закрыть пока не выбран provider, без очередной заглушки и открытия public sends?
+59 различных адресных продуктовых cases прошли отдельными запусками +1catalog.
+45 соседних заняли219.6s; полного suite не было. Контракты не менялись, использовалась
+проверенная compilation artifact. Точные команды/пределы — в модуле.
 
-Не трактуй этот ответ как одобрение параметров/релиза. Соблюдай адресный объём тестов;
-при проблемах окружения отдельно укажи причину, не смешивай её с продуктовым failure.
+На Hardhat4663 с настоящими Robinhood wrappers и real drand verifier проверены funding,
+gas/native waits, transient RPC, known receipt reconciliation и unknown-hash stop-all.
+Оба заранее frozen draw получили seed через worker prove/deliver; после terminal
+событий worker обнаружил rewards, выплатил, повторный запуск ничего не отправил.
+
+В последнем кейсе datasets/begin/publish/seal/process/finish созданы тестом вручную.
+Синтетические USDG/source/participants, исторический clock, ArbSys shim. Это не public
+BUY/replay proof и не новое полное automatic4663 прохождение. Общие scheduler и оба
+executor проверены соседними31337 сценариями. Public sends/fork не запускались.
+
+## Что посмотреть независимо
+
+1. Нет ли утечки network context в local default или обхода public no-send штатным CLI?
+2. Не меняет ли разделение схем/chain checks существующие durable journals/recovery?
+3. Достаточны ли same-node checks для явно локальной rehearsal, без заявлений о защите
+   от злонамеренного RPC или изменённого JS? Никакой public key CLI не загружает.
+4. Startup admission нового входа сейчас строгий: любой профиль/граф mismatch останавливает
+   весь pass, включая claims. On-chain claim остаётся permissionless. Перед activation
+   надо решить recovery/drain при внешнем source drift без ослабления защиты новых draw.
+   Нужен ли следующий узкий пакет именно здесь или сначала qualification конфигурации?
+5. Какие оставшиеся реальные release blockers важнее следующими: archive RPC/pins,
+   key custody, operational fee allocation/refill, автоматический4663 e2e? Не предлагай
+   ещё один общий audit/новые абстракции без конкретного результата.
+
+Ответы — рекомендации, не разрешение параметров/публичного запуска. Тесты адресные;
+не повторять уже успешные прогоны без причины.

@@ -1,3 +1,4 @@
+const network=require('./runtime-network.cjs');
 const {ethers}=require('ethers');
 const {withState}=require('./local-scheduler-state.cjs');
 const {sendLocalTransaction,withTransactionBoundary,receiptOptions}=require('./local-receipt.cjs');
@@ -12,7 +13,7 @@ const abi=[...['projectToken','quoteToken','promoVault','source'].map(k=>`functi
  'function pull() returns(uint256)','function pay(address)',
  'error SourceDrift()','error BalanceDeficit()'];
 function validateJob(j){
- check(j.schema==='local-infinity-worker-v1'&&String(j.chainId)==='31337','Local chain31337 worker only');
+ check(j.schema===network.schema('local-infinity-worker-v1'),'Explicit worker network schema required');network.checkChain(j.chainId);
  for(const k of ['collector','token','quote','promo','source'])check(address(j[k]),'Invalid '+k);
  for(const k of ['collectorCodeHash','sourceFingerprint'])check(/^0x[0-9a-fA-F]{64}$/.test(j[k]),'Invalid '+k);
  check(Number.isSafeInteger(j.anchor?.number)&&j.anchor.number>=0&&/^0x[0-9a-fA-F]{64}$/.test(j.anchor.hash),'Invalid deployment anchor');
@@ -30,7 +31,7 @@ async function runInfinityWorker({provider,collector,executor,job,statePath,sign
  check(executor?.provider===provider,'Signer/provider mismatch');
  check(collector.runner===provider||collector.runner?.provider===provider,'Contract/provider mismatch');
  check(same(collector.target,job.collector),'Collector mismatch');
- check((await provider.getNetwork()).chainId===31337n,'Local chain31337 only');
+ network.checkChain((await provider.getNetwork()).chainId);
  const sender=await executor.getAddress();
  const normalize=v=>Array.isArray(v)?v.map(normalize):v&&typeof v==='object'?Object.fromEntries(Object.entries(v).map(([k,x])=>[k,normalize(x)])):typeof v==='string'&&/^0x[0-9a-fA-F]+$/.test(v)?v.toLowerCase():v;
  return withState(statePath,normalize({worker:'infinity-v1',job,sender}),async(state,save)=>{

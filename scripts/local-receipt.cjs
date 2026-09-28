@@ -33,6 +33,8 @@ async function sendLocalTransaction(method,args,overrides,options={}){
   let stage='estimate',tx;
   const boundary=transactionBoundary.getStore();
   try{
+    const network=require('./runtime-network.cjs');await network.beforeSend();
+    if(network.isRobinhood())overrides={...overrides,chainId:4663};
     if(boundary?.preflight)await boundary.preflight(await method.populateTransaction(...args,overrides),method.fragment.name);
     const gasLimit=await method.estimateGas(...args,overrides);
     if(options.signal?.aborted){const e=new Error('Stopped before broadcast');e.code='LOCAL_EXECUTION_STOPPED';throw e;}

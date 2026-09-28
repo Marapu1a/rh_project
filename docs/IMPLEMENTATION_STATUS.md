@@ -214,3 +214,12 @@ fresh-process comparison и optional `scanWithRpc`/replay.
 `scripts/public-infinity-reference-search.cjs`: bounded reference discovery.
 `test/public-rpc-qualification.test.cjs`, profile `public-rpc` без compile.
 [Результаты и ограничения](PUBLIC_RPC_QUALIFICATION.md); public execution не открыт.
+
+## Robinhood runtime 28.09
+
+`runtime-network.cjs` — явный async context сети, локальный default, public no-send
+и Hardhat4663 rehearsal. `robinhood-automation.cjs` и `run-robinhood-automation.cjs` —
+отдельный вход к существующим funding/drand/scheduler/executors/claims; без копии journal.
+`robinhood-*` schemas, pinned deployment admission, transient RPC wait, explicit chainId.
+`test/robinhood-runtime*.test.cjs`, profile `robinhood-runtime`.
+[Проверки и оставшиеся границы](ROBINHOOD_RUNTIME.md); публичные отправки закрыты.

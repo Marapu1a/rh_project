@@ -4,6 +4,8 @@
     "files": [
       "test/rng-timing-survey.test.cjs",
       "test/public-controllers.test.cjs",
+      "test/robinhood-runtime.test.cjs",
+      "test/robinhood-runtime-cli.test.cjs",
       "test/public-launch-checks.test.cjs",
       "test/public-rpc-qualification.test.cjs",
       "test/cutoff-history.test.cjs",
@@ -243,5 +245,6 @@
     "compile": true,
     "files": ["test/public-controllers.test.cjs", "test/public-launch-checks.test.cjs", "test/local-controllers.test.cjs", "test/cutoff-history.test.cjs", "test/deployment-admission.test.cjs"]
   },
-  "public-rpc": {"compile": false, "files": ["test/public-rpc-qualification.test.cjs", "test/infinity-buy.test.cjs", "test/direct-buy.test.cjs"]}
+  "public-rpc": {"compile": false, "files": ["test/public-rpc-qualification.test.cjs", "test/infinity-buy.test.cjs", "test/direct-buy.test.cjs"]},
+  "robinhood-runtime": {"compile": true, "files": ["test/robinhood-runtime.test.cjs", "test/robinhood-runtime-cli.test.cjs", "test/promo-automation.test.cjs", "test/infinity-worker.test.cjs", "test/drand-delivery-worker.test.cjs", "test/cutoff-scheduler.test.cjs", "test/local-executor-stability.test.cjs", "test/short-automation-cli.test.cjs", "test/local-rpc-watch.test.cjs"]}
 }

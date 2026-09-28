@@ -1,3 +1,4 @@
+const network=require('./runtime-network.cjs');
 const {sendLocalTransaction,receiptOptions}=require('./local-receipt.cjs');
 // Local single-job Monthly counterpart. No calendar/seed selection or reset.
 const {ethers}=require('ethers');
@@ -32,7 +33,7 @@ function expectedResult(m,artifact){
 async function stepMonthly({provider,source,job,publisher,executor,gasPrice,signal,receiptTimeoutMs=30000}){
   receiptOptions(receiptTimeoutMs);
   const a=validateMonthlyJob(job),r=a.request,d=a.snapshot.domain;
-  check((await provider.getNetwork()).chainId===31337n&&BigInt(d.chainId)===31337n,'Local chain 31337 only');
+  network.checkChain((await provider.getNetwork()).chainId);network.checkChain(d.chainId);
   check(same(source.target,d.monthlySource),'Wrong Monthly controller');
   await verifyDualBindings(provider,d);await shortDataset.verifyEpochGenesis(provider,d.source,d);
   const cutoff=await provider.getBlock(Number(r.cutoff));

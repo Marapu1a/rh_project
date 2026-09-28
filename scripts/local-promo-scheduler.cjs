@@ -1,3 +1,4 @@
+const network=require('./runtime-network.cjs');
 const {transientRpc,retryableRead}=require('./local-rpc-watch.cjs');
 const {ethers}=require('ethers');
 const {scan}=require('./replay-direct-buy.cjs');
@@ -13,14 +14,14 @@ const check=(ok,msg)=>{if(!ok)throw Error(msg);},zero=ethers.ZeroHash;
 const {resolveBuyPolicy}=require('./buy-policy-runtime.cjs');
 const wait=reason=>({status:'waiting',reason});
 function validateConfig(c,rpcUrl){
-  check(c.schema==='local-promo-scheduler-v1'&&['LOCAL_HEAD','FINALIZED_CHECKPOINT'].includes(c.cutoffMode),'Explicit local scheduler config required');
+  check(c.schema===network.schema('local-promo-scheduler-v1')&&['LOCAL_HEAD','FINALIZED_CHECKPOINT'].includes(c.cutoffMode),'Explicit local scheduler config required');
   if(c.cutoffMode==='FINALIZED_CHECKPOINT')check(c.buyPolicy,'Finalized checkpoint requires admitted BUY policy');
-  validateManifest(c.manifest);check(String(c.manifest.chainId)==='31337'&&c.lifecycle.schema==='attempt-lifecycle-v4','Local v4 only');
+  validateManifest(c.manifest);network.checkChain(c.manifest.chainId);check(c.lifecycle.schema==='attempt-lifecycle-v4','Lifecycle v4 required');
+  if(network.isRobinhood())check(c.cutoffMode==='FINALIZED_CHECKPOINT','Public checkpoint mode required');
   if(c.buyPolicy)check(c.buyPolicy.genesisHash===hash(c.manifest)&&String(c.buyPolicy.chainId)===String(c.manifest.chainId)&&c.buyPolicy.instanceId===c.lifecycle.instanceId,'BUY policy binding mismatch');
   check(BigInt(c.campaignId)>0n&&BigInt(c.shortBudget)>0n,'Invalid campaign/budget');
   check(Number.isInteger(c.chunkSize)&&c.chunkSize>0&&c.chunkSize<=64,'Invalid chunk size');
-  const url=new URL(rpcUrl);
-  check(url.protocol==='http:'&&['localhost','127.0.0.1','[::1]'].includes(url.hostname)&&!url.username&&!url.password,'Loopback HTTP RPC only');
+  network.checkRpc(rpcUrl);
   return domainFor(c.manifest,c.lifecycle);
 }
 async function pendingSigner(provider,signers){
@@ -196,7 +197,7 @@ async function runScheduler(options,{maxTicks=32,onTick=()=>{}}={}){
   check(!options.kinds||(Array.isArray(options.kinds)&&options.kinds.length>0&&new Set(options.kinds).size===options.kinds.length&&options.kinds.every(k=>['SHORT','MONTHLY'].includes(k))),'Invalid scheduler kinds');
   check(Number.isInteger(maxTicks)&&maxTicks>0&&maxTicks<=1000,'Invalid tick limit');
   const domain=validateConfig(options.config,options.rpcUrl);
-  check((await options.provider.getNetwork()).chainId===31337n,'Local chain 31337 only');
+  network.checkChain((await options.provider.getNetwork()).chainId);
   check(options.short.target.toLowerCase()===domain.source&&options.monthly.target.toLowerCase()===domain.monthlySource,'Wrong scheduler controllers');
   await verifyDualBindings(options.provider,domain);await sd.verifyEpochGenesis(options.provider,domain.source,domain);
   return withState(options.statePath,options.config,async(state,save)=>{

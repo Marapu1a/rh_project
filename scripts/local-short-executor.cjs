@@ -1,3 +1,4 @@
+const network=require('./runtime-network.cjs');
 const {sendLocalTransaction,receiptOptions}=require('./local-receipt.cjs');
 // Local-only, single-job executor. The chain is the progress journal.
 const {ethers}=require('ethers');
@@ -31,7 +32,7 @@ function validateJob(job){
 async function stepShort({provider,source,job,publisher,executor,gasPrice,signal,receiptTimeoutMs=30000}){
   receiptOptions(receiptTimeoutMs);
   const a=validateJob(job),r=a.request,domain=a.snapshot.domain;
-  check((await provider.getNetwork()).chainId===31337n&&BigInt(domain.chainId)===31337n,'Local chain 31337 only');
+  network.checkChain((await provider.getNetwork()).chainId);network.checkChain(domain.chainId);
   check(same(source.target,domain.source),'Wrong controller');
   await verifyDualBindings(provider,domain);
   await dataset.verifyEpochGenesis(provider,source.target,domain);

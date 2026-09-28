@@ -71,6 +71,6 @@ async function inspectDeployment(provider,profile,config){
   for(const anchor of [f.anchor,config.deliveryJob.anchor,config.schedulerConfig.manifest.anchor])test(anchor.number<=head.number&&same((await provider.getBlock(anchor.number))?.hash,anchor.hash),'deploymentAnchor');
   test(same((await provider.getBlock(head.number))?.hash,head.hash),'stableObservation');
   return {...result(),observedAtBlock:{number:head.number,hash:head.hash,timestamp:head.timestamp}};
- }catch(e){reasons.push('deploymentObservationUnavailable');return {...result(),detail:e.message};}
+ }catch(e){reasons.push('deploymentObservationUnavailable');return {...result(),detail:e.message,retryableRpcRead:require('./local-rpc-watch.cjs').retryableRead(e)};}
 }
 module.exports={createDeploymentProfile,validateDeploymentProfile,inspectDeployment,TIMING};

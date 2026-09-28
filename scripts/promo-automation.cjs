@@ -1,3 +1,4 @@
+const network=require('./runtime-network.cjs');
 // Local Short/Monthly automation. One process owns this signer and all four state files.
 const path=require('node:path'),{ethers}=require('ethers');
 const {withState}=require('./local-scheduler-state.cjs');
@@ -12,22 +13,22 @@ const MONTHLY_ACTIONS=['beginMonth','publishMonth','sealMonth','processMonth','f
 const check=(v,m)=>{if(!v)throw Error(m);},same=(a,b)=>String(a).toLowerCase()===String(b).toLowerCase(),zero=ethers.ZeroHash;
 const normalize=v=>Array.isArray(v)?v.map(normalize):v&&typeof v==='object'?Object.fromEntries(Object.entries(v).map(([k,x])=>[k,normalize(x)])):typeof v==='string'&&/^0x[0-9a-fA-F]+$/.test(v)?v.toLowerCase():v;
 function validateOps(o){
- check(['local-short-automation-v1','local-promo-automation-v1'].includes(o?.schema),'Explicit automation profile required');
+ check((network.isRobinhood()?[network.schema('local-promo-automation-v1')]:['local-short-automation-v1','local-promo-automation-v1']).includes(o?.schema),'Explicit automation profile required');
  for(const k of ['maxGasPrice','reserveGasPrice','nativeFloor','extraFeePerTx'])check(typeof o[k]==='string'&&/^(0|[1-9][0-9]*)$/.test(o[k]),'Invalid '+k);
  check(BigInt(o.maxGasPrice)>0n&&BigInt(o.reserveGasPrice)>=BigInt(o.maxGasPrice),'Invalid gas prices');
  check(Number.isInteger(o.safetyBps)&&o.safetyBps>=10000&&o.safetyBps<=30000,'Invalid safety factor');
  for(const [k,max]of [['maxTransactions',128],['maxClaims',64],['scanBlocks',2000],['pollSeconds',86400]])check(Number.isInteger(o[k])&&o[k]>0&&o[k]<=max,'Invalid '+k);
- for(const a of [...ACTIONS,...(o.schema==='local-promo-automation-v1'?MONTHLY_ACTIONS:[])])check(typeof o.gasUnits?.[a]==='string'&&/^[1-9][0-9]*$/.test(o.gasUnits[a]),'Missing gas bound '+a);
+ for(const a of [...ACTIONS,...(o.schema===network.schema('local-promo-automation-v1')?MONTHLY_ACTIONS:[])])check(typeof o.gasUnits?.[a]==='string'&&/^[1-9][0-9]*$/.test(o.gasUnits[a]),'Missing gas bound '+a);
  return o;
 }
 async function prepareRuntime({provider,executor,collector,adapter,vault,short,monthly,fundingJob,deliveryJob,schedulerConfig,rpcUrl,statePath,ops,deploymentProfile,receiptTimeoutMs=30000}){
  ops=JSON.parse(JSON.stringify(validateOps(ops)));funding.validateJob(fundingJob);rng.validateJob(deliveryJob);receiptOptions(receiptTimeoutMs);
  if(schedulerConfig.cutoffMode==='FINALIZED_CHECKPOINT')check(typeof ops.gasUnits?.checkpointCutoff==='string'&&/^[1-9][0-9]*$/.test(ops.gasUnits.checkpointCutoff),'Missing gas bound checkpointCutoff');
  if(deploymentProfile)require('./deployment-admission.cjs').validateDeploymentProfile(deploymentProfile,{fundingJob,deliveryJob,schedulerConfig});
- const dual=ops.schema==='local-promo-automation-v1';
+ const dual=ops.schema===network.schema('local-promo-automation-v1');
  const domain=validateConfig(schedulerConfig,rpcUrl),sender=await executor.getAddress();
  if(deploymentProfile)check(same(deploymentProfile.executor,sender),'Deployment profile signer mismatch');
- check(executor.provider===provider&&(await provider.getNetwork()).chainId===31337n,'Local signer/provider required');
+ check(executor.provider===provider,'Signer/provider required');network.checkChain((await provider.getNetwork()).chainId);
  for(const c of [collector,adapter,vault,short,monthly])check(c.runner===provider||c.runner?.provider===provider,'Contract/provider mismatch');
  check(same(short.target,domain.source)&&same(monthly.target,domain.monthlySource)&&same(vault.target,domain.vault),'Draw bindings mismatch');
  check(same(collector.target,fundingJob.collector)&&same(fundingJob.promo,vault.target)&&same(fundingJob.token,schedulerConfig.manifest.token)&&same(fundingJob.quote,schedulerConfig.manifest.quote),'Funding bindings mismatch');
@@ -39,7 +40,7 @@ async function prepareRuntime({provider,executor,collector,adapter,vault,short,m
  for(const [k,c]of [['adapter',adapter],['short',short],['monthly',monthly]])check(same(ethers.keccak256(await provider.getCode(c.target)),deliveryJob[k+'CodeHash']),'Runtime mismatch '+k);
  check(await adapter.PROFILE()===require('./drand-preflight.cjs').PROFILE,'Unsupported RNG');
  const files={main:path.resolve(statePath),funding:path.resolve(statePath)+'.funding',rng:path.resolve(statePath)+'.rng',scheduler:path.resolve(statePath)+'.scheduler'};
- const identity=normalize({schema:ops.schema,sender,fundingJob,deliveryJob,schedulerConfig,rpcUrl,ops,files,...(deploymentProfile?{deploymentProfile}: {})});
+ const identity=normalize({schema:ops.schema,sender,fundingJob,deliveryJob,schedulerConfig,rpcUrl:network.rpcIdentity(rpcUrl),ops,files,...(deploymentProfile?{deploymentProfile}: {})});
  return {ops,dual,domain,sender,files,identity};
 }
 async function runPromoAutomation({provider,executor,collector,adapter,vault,short,monthly,fundingJob,deliveryJob,schedulerConfig,rpcUrl,statePath,ops,deploymentProfile,signal,drain=false,receiptTimeoutMs=30000},{getBeacon,onStep=()=>{}}={}){
@@ -75,7 +76,7 @@ async function runPromoAutomation({provider,executor,collector,adapter,vault,sho
    if(await provider.getTransactionCount(sender,'pending')>await provider.getTransactionCount(sender,'latest'))wait('pendingSigner');
    let required=transactionCost(ops,units)+BigInt(ops.nativeFloor);
    if(deploymentProfile&&['checkpointCutoff','begin','beginMonth','seal','sealMonth'].includes(action)){
-    const admission=await require('./deployment-admission.cjs').inspectDeployment(provider,deploymentProfile,{fundingJob,deliveryJob,schedulerConfig});
+    const admission=network.executionAdmission(await require('./deployment-admission.cjs').inspectDeployment(provider,deploymentProfile,{fundingJob,deliveryJob,schedulerConfig}));
     state.lastDeploymentAdmission=admission;save(state);if(admission.status!=='matched')wait('deploymentAdmission');
    }
    if(action==='seal'||action==='sealMonth'){
@@ -171,7 +172,7 @@ async function runPromoAutomation({provider,executor,collector,adapter,vault,sho
    lane='funding';results.funding=await funding.runInfinityWorker({...fOptions,transactionGuard:guard},{onStep});
    if(results.funding.status==='blocked'||results.funding.status==='stopped')return {...results.funding,haltedLane:lane,results,steps};
    // A definite source error does not erase old debts or disable a funded draw.
-   if(caughtUp&&deploymentProfile&&!drain){const admission=await require('./deployment-admission.cjs').inspectDeployment(provider,deploymentProfile,{fundingJob,deliveryJob,schedulerConfig});state.lastDeploymentAdmission=admission;save(state);if(admission.status!=='matched'){results.draw={status:'waiting',reason:'deploymentAdmission',admission};return result('waiting','deploymentAdmission');}}
+   if(caughtUp&&deploymentProfile&&!drain){const admission=network.executionAdmission(await require('./deployment-admission.cjs').inspectDeployment(provider,deploymentProfile,{fundingJob,deliveryJob,schedulerConfig}));state.lastDeploymentAdmission=admission;save(state);if(admission.status!=='matched'){results.draw={status:'waiting',reason:'deploymentAdmission',admission};return result('waiting','deploymentAdmission');}}
    if(caughtUp){lane='draw';results.draw=await withTransactionBoundary(boundary,()=>runScheduler({...sOptions,allowNewJobs:!drain},{maxTicks:16}));if(state.pending)return blocked(state.pending.transactionHash?'pendingReceipt':'unknownTransaction');if(childHalt(results.draw))return result(results.draw.status,'draw',{retryableRpcRead:results.draw.retryableRpcRead===true});}
    else results.draw={status:'waiting',reason:'payoutDiscovery'};
    return result(results.funding.status==='error'||results.funding.status==='degraded'||results.claimFailures?.length?'degraded':'waiting');
