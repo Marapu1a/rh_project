@@ -43,7 +43,9 @@ public sends закрыты. [Recovery admission](RECOVERY_ADMISSION.md) отд�
    наблюдениями и явно принять; preflight не становится контрактной финальностью.
 2. **Эксплуатационный бюджет.** Утвердить внутренние доли creator fees; подключить
    долю проекта к ETH refill. [Design](OPS_REVENUE_FUNDING_DESIGN.md) подготовлен:3slots,
-   кандидат90/5/5; нужны явный project-funded source и квалификация USDG→ETH рынка. [Bootstrap refill](PROMO_NATIVE_REFILL.md) уже подключён
+   кандидат90/5/5; следующий пакет — явный project-funded source (стабильный slot1 через
+   кампании) и квалификация USDG→ETH рынка. Доказательство вечной самоокупаемости
+   не является gate; дорогой gas/нехватка ETH дают resumable wait/top-up. [Bootstrap refill](PROMO_NATIVE_REFILL.md) уже подключён
    к общему Infinity/drand executor с durable recovery в local/rehearsal; USDG→ETH ещё нет. Газ оплачивать
    из эксплуатационной доли, не frozen/claimable призов. Test100%Promo не релизная экономика.
 3. **Постоянный сервис.** Ключи и один владелец signer, supervisor, устойчивый несинхронизируемый
