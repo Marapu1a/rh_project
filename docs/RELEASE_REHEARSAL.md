@@ -1,5 +1,14 @@
 # Составная репетиция перед запуском
 
+29.09: повтор с MonthlyV2 завершён. Из1805.40USDG призовой казны выплачено849.366662,
+осталось956.033338; Monthly802.70USDG одному кошельку. Проверены source outage,
+known-claim resume и отсутствие повторов. Runner сверяет Monthly с независимым
+V2 reference и допускает законный25% rollover вместо требования Monthly claim всегда.
+Команда: `node scripts/release-rehearsal.cjs .local/logs/monthly-v2-rehearsal-fixed.json`
+(со свежим compile artifact). Это прежняя составная локальная модель, не same-chain
+live/fork доказательство. Параметры Short в fixture остаются тестовыми.
+
+
 Одна команда из корня проекта:
 
 ```powershell

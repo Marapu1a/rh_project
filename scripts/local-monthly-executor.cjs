@@ -2,7 +2,7 @@ const network=require('./runtime-network.cjs');
 const {sendLocalTransaction,receiptOptions}=require('./local-receipt.cjs');
 // Local single-job Monthly counterpart. No calendar/seed selection or reset.
 const {ethers}=require('ethers');
-const dataset=require('./monthly-dataset.cjs'),shortDataset=require('./short-dataset.cjs'),outcome=require('./short-outcome.cjs');
+const dataset=require('./monthly-dataset.cjs'),shortDataset=require('./short-dataset.cjs'),outcome=require('./monthly-outcome.cjs');
 const {hash}=require('./direct-buy.cjs'),{verifyDualBindings}=require('./dual-bindings.cjs');
 const check=(ok,message)=>{if(!ok)throw Error(message);},same=(a,b)=>String(a).toLowerCase()===String(b).toLowerCase();
 function makeMonthlyJob(artifact,chunkSize=64){
@@ -22,14 +22,7 @@ function validateMonthlyJob(job){
     &&s.participants.reduce((n,p)=>n+BigInt(p.count),0n)===BigInt(r.attempts),'Monthly attempts mismatch');
   check(outcome.rulesHash(a.rules)===s.rulesHash,'Monthly rules mismatch');return a;
 }
-function expectedResult(m,artifact){
-  const out=outcome.compute(m.context,m.seed,artifact.snapshot.participants,artifact.rules,[m.budget]);
-  const winner=out.winners[0]||ethers.ZeroAddress;
-  const resultHash=ethers.keccak256(ethers.AbiCoder.defaultAbiCoder().encode(
-    ['bytes32','bytes32','bytes32','bytes32','address','uint256','uint256'],
-    [ethers.id('MONTHLY_RESULT_V1'),m.context,m.seed,m.root,winner,out.admittedCount,m.budget]));
-  return {winner,resultHash,admittedCount:String(out.admittedCount)};
-}
+const expectedResult=outcome.expectedResult;
 async function stepMonthly({provider,source,job,publisher,executor,gasPrice,signal,receiptTimeoutMs=30000}){
   receiptOptions(receiptTimeoutMs);
   const a=validateMonthlyJob(job),r=a.request,d=a.snapshot.domain;
@@ -96,10 +89,11 @@ async function stepMonthly({provider,source,job,publisher,executor,gasPrice,sign
     const decoded=source.interface.parseTransaction({data:tx.data});
     check(decoded?.name==='publishMonth'&&decoded.args[0]===r.drawId,'Monthly publication transport');
     const chunk=Array.from(decoded.args[1],p=>({wallet:p.wallet,firstAttempt:p.firstAttempt,lastAttempt:p.lastAttempt}));
-    check(ethers.keccak256(ethers.AbiCoder.defaultAbiCoder().encode([outcome.PARTICIPANTS],[chunk]))===entry.hash,'Monthly chunk changed');
+    check(ethers.keccak256(ethers.AbiCoder.defaultAbiCoder().encode([require('./short-outcome.cjs').PARTICIPANTS],[chunk]))===entry.hash,'Monthly chunk changed');
     return send(executor,'processMonth',[r.drawId,m.nextChunk,chunk]);
   }
   const expected=expectedResult(m,a);
+  if(Number(a.rules.version)===2)check(m.totalWeight===BigInt(expected.totalWeight)&&m.processedWeight===m.totalWeight,'Monthly weight mismatch');
   check(same(m.winner,expected.winner)&&m.admitted===BigInt(expected.admittedCount)
     &&m.processed===BigInt(r.count),'Monthly independent result mismatch');
   if(m.phase===5n){check(m.resultHash===expected.resultHash,'Monthly result mismatch');return {status:'terminal',drawId:r.drawId,...expected};}

@@ -1,5 +1,13 @@
 # Карта реализации
 
+29.09: [Monthly V2](MONTHLY_RULES_EPOCHS.md) — `MonthlyOutcome.sol` + независимый
+`monthly-outcome.cjs`; общий75/25, один winner с весом e/(e+1), Q128 cumulative selection.
+`MonthlySettlement` фиксирует totalWeight при публикации, обрабатывает chunks и проверяет
+результат. Dataset verifier и executor пересчитывают V2; public wrapper/admission
+требуют новый profile. V1 local/historical алгоритм сохранён, межпоколенческое
+announcement запрещено. Vault/RNG/Short math не менялись; public execution закрыто.
+
+
 28.09 review 50704b7: [разбор funding lock](REHEARSAL_LOCK_INVESTIGATION.md). Сообщённый GPT EEXIST не воспроизведён: Windows baseline + Windows/Linux9p/Linuxext4 с усиленным runner complete, в каждом23/23 lock acquire/release без конфликтов; lock unit9/9. Причина GPT failure НЕ установлена, нужны полный failed JSON и trace. Runner теперь проверяет обе суммы/receipts/уникальность claims и сохраняет failure snapshot; найден и исправлен отдельный ENOENT отсутствующей.local при внешнем output. Lock/runtime/контракты не менялись. Далее сравнить failing trace, затем продолжить release profile/RPC.
 
 28.09: [Составная релизная репетиция](RELEASE_REHEARSAL.md) добавлена: одна команда, матрица accepted/fixture/unresolved, replay сохранённого Infinity BUY → явный импорт 2 билетов → fresh Robinhood runtime, funding 90/5/5, оба draw/BLS/claims, source outage и known-claim restart. Прогон complete за86s: 1805.40 USDG призам =836.033330 выплат +969.366670 остатка; повтор без send. Это НЕ единая live/fork история: BUY saved, datasets/freeze helper, исторический drand; market evidence отдельно. Далее release profile/параметры и RPC, same-chain automatic proof остаётся gate; public sends закрыты.

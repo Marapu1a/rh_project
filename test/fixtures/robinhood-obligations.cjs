@@ -14,7 +14,7 @@ async function prepare(f,{freeze=true,participants,fund=true}={}){
  const shortHash=(await f.short.shortEpochPolicy(1)).hash,monthHash=(await f.monthly.monthlyEpochPolicy(1)).hash;
  const ss=snapshotFor(d,sId,'SHORT',cutoff,shortHash,ps,1),ms=snapshotFor(d,mId,'MONTHLY',cutoff,monthHash,ps,1);
  const sa={schema:'short-dataset-artifact-v1',snapshot:ss,rules:f.rules,weights:['7','5','3'],minimumUnit:'1',request:{drawId:sId,campaignId:'1',rulesEpoch:'1',cutoffBlockNumber:Number(b.number),cutoffBlockHash:b.hash,snapshotHash:hash(ss),expectedRoot:sd.rootFor(ps),expectedCount:ps.length,expectedAttempts:attempts,budget:'100000000'}};
- const ma={schema:'monthly-dataset-artifact-v1',snapshot:ms,rules:f.rules,request:{drawId:mId,campaign:'1',rulesEpoch:'1',cutoff:Number(b.number),cutoffHash:b.hash,snapshotHash:hash(ms),root:md.rootFor(ps),count:ps.length,attempts}};
+ const ma={schema:'monthly-dataset-artifact-v1',snapshot:ms,rules:f.monthlyRules,request:{drawId:mId,campaign:'1',rulesEpoch:'1',cutoff:Number(b.number),cutoffHash:b.hash,snapshotHash:hash(ms),root:md.rootFor(ps),count:ps.length,attempts}};
  const sj=require('../../scripts/local-short-executor.cjs').makeJob(sa,proposal,1),mj=require('../../scripts/local-monthly-executor.cjs').makeMonthlyJob(ma,1);
  await require('../../scripts/local-scheduler-state.cjs').withState(f.options.statePath+'.scheduler',f.options.schedulerConfig,async(state,save)=>{state.jobs.SHORT.push({job:sj,started:true});state.jobs.MONTHLY.push({job:mj,started:true});save(state);});
  for(const c of [f.short,f.monthly])await sent(c.checkpointCutoff(b.number));

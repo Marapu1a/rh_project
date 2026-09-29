@@ -1,5 +1,11 @@
 # Публичное поколение контроллеров: Robinhood + drand
 
+29.09: Monthly переведён на [V2](MONTHLY_RULES_EPOCHS.md):75/25, вес e/(e+1),
+новый profile `promo-robinhood-monthly-drand-v2`, runtime19551bytes. Short22738bytes.
+Public normal и obligation admission требуют новое поколение. Доказательства ниже
+для прежней сборки остаются историческими; новый live/fork deployment не выполнен.
+
+
 28.09.2026. Код публичных wrappers подготовлен и проверен локально. Реального deployment
 на Robinhood нет; публичная отправка executor остаётся запрещена.
 

@@ -16,7 +16,7 @@ async function inspectObligations(provider,profile,config){
   const same=(a,b)=>String(a).toLowerCase()===String(b).toLowerCase();
   for(const kind of ['short','monthly']){
    if(!same(await read(kind,'randomProvider'),profile.pins.adapter[0])||!same(await read('adapter',kind+'Consumer'),profile.pins[kind][0]))throw Error('Obligation RNG binding mismatch');
-   if(await read(kind,'CONTROLLER_PROFILE','bytes32')!==ethers.id('promo-robinhood-'+kind+'-drand-v1'))throw Error('Obligation controller generation mismatch');
+   if(await read(kind,'CONTROLLER_PROFILE','bytes32')!==ethers.id('promo-robinhood-'+kind+'-drand-'+(kind==='monthly'?'v2':'v1')))throw Error('Obligation controller generation mismatch');
   }
   if(await read('adapter','PROFILE','bytes32')!==require('./drand-preflight.cjs').PROFILE||await read('adapter','CHAIN_HASH','bytes32')!=='0x04f1e9062b8a81f848fded9c12306733282b2727ecced50032187751166ec8c3')throw Error('Obligation RNG profile mismatch');
   for(const anchor of [config.deliveryJob.anchor,config.schedulerConfig.manifest.anchor])if((await provider.getBlock(anchor.number))?.hash!==anchor.hash)throw Error('Obligation anchor mismatch');

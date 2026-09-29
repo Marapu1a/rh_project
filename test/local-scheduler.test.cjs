@@ -197,7 +197,9 @@ test('BUY policy publication to scheduler: old frozen jobs survive, new route cr
  // Saved job cannot silently change policy binding under a valid file checksum.
  const changed=f.readState();changed.jobs.SHORT[0].job.artifact.snapshot.domain.buyManifestHash=ethers.id('forged');delete changed.checksum;
  fs.writeFileSync(f.statePath,JSON.stringify({...changed,checksum:hash(changed)}));
- const rejected=await runScheduler(f.options,{maxTicks:1});assert.equal(rejected.status,'error');assert.match(rejected.results.SHORT.message,/policy mismatch/);
+ const nonce=await f.provider.getTransactionCount(await f.admin.getAddress());
+ const rejected=await runScheduler(f.options,{maxTicks:1});assert.equal(rejected.status,'error');assert.match(rejected.results.SHORT.message,/Job checksum mismatch/);
+ assert.equal(await f.provider.getTransactionCount(await f.admin.getAddress()),nonce);
 });
 
 test('unknown activated BUY adapter blocks new datasets but frozen Short and Monthly finish',async t=>{

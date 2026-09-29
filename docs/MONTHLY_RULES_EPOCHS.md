@@ -1,11 +1,46 @@
-# Monthly: версии правил допуска
+# Monthly: исход 75/25, веса и версии правил
 
 > Справка по модулю/эксперименту. Общий текущий статус — [CURRENT_CONTEXT](CURRENT_CONTEXT.md);
 > даты и результаты ниже относятся к указанным этапам, а не задают следующий шаг проекта.
 
-Принято 17.09.2026. Меняются только параметры существующего алгоритма допуска q.
-Monthly interval и notice задаются при deployment и не имеют setter. Казна, Next
-target, один jackpot winner/no-win и правила claim не меняются.
+## Текущее поколение V2 — 29.09.2026
+
+`MonthlyOutcome.sol` и независимый `scripts/monthly-outcome.cjs` реализуют принятые
+75% выплаты всего frozen Current одному кошельку /25% переноса. `Rules` сохраняет
+форму ABI, но фиксированный V2 payload — `(2,3,4,1,1)`; p здесь общий gate, h задаёт
+вес `e/(e+1)`. Новый public `RobinhoodMonthlyController` требует V2 и возвращает
+profile `promo-robinhood-monthly-drand-v2`; deployment admission требует тот же tag.
+
+- Вес — `floor(2^128 * e/(e+1))`, e от1 до uint128.max. Он строго положителен,
+  ошибка округления одного веса меньше2^-128 в единицах исходной кривой.
+- Sorted participants/root определяют накопленную сумму весов до freeze/seed.
+  Checked overflow, неверные суммы/пустые наборы не допускаются до готовности.
+- `MONTHLY_PAYOUT_V2` hash(context,seed): старшие2бита <3 означают выплату.
+  При равномерном seed это ровно75%; предпосылка случайности остаётся у RNG.
+- `MONTHLY_WINNER_V2` независимо отделяет выбор победителя: точка
+  `floor(hash * totalWeight / 2^256)` выбирает один интервал весов. Solidity
+  считает старшую половину произведения через mulDiv/mulmod; JS использует BigInt.
+  Для отдельного интервала дискретизация относительно его Q128-доли <2^-256.
+- Обработка всех committed chunks обязательна в обеих ветках. Total/processed
+  weights проверяются перед settlement; worker независимо пересчитывает результат.
+  Сохранённое поле `admitted` означает число всех участников в выплатной ветке,
+  ноль при переносе; в V2 это НЕ личный фильтр допуска. `bestRank` не используется.
+- Result tag `MONTHLY_RESULT_V2`. Dataset/context schemas не меняются: новый rulesHash,
+  controller address/codeHash уже отделяют поколение. Это новая сборка/deployment,
+  не обновление существующего immutable контракта и не миграция старых jobs.
+- Начисление долга, ротация Next, поздние поступления, old claims и 30суток после
+  settlement сохраняются. Оба исхода расходуют snapshot attempts. MinCurrent100
+  не принят и не добавлен; требуется положительный Current и полный Next target.
+
+V1 остаётся доступен legacy/local потребителям. V1 hashes/results неизменны.
+Announcement не может сменить version относительно genesis; V2 не позволяет
+изменить фиксированные числа даже через новый epoch. Обычная работа не требует
+объявлений. Прежний механизм ниже нужен для существующих epoch consumers.
+
+## Исторический V1 и общий механизм epochs
+
+Принято 17.09.2026 для V1: менять можно параметры алгоритма личного допуска q.
+Monthly interval/notice immutable. В V2 личного допуска нет, параметры фиксированы.
 
 ## Переход
 
@@ -92,7 +127,7 @@ Input JSON: `{manifest, lifecycle, request, rules, blocks?}`. Request содер
 История policy хранится для аудита и растёт с обновлениями; ограничение «две версии»
 относится к одновременно обслуживаемым наборам, а не к удалению старых записей.
 
-## Проверки перед завершением этапа
+## Исторические проверки V1 (не baseline текущего HEAD)
 
 Notice, authorization, неизменность объявленного payload, B/B+1, запрет activation
 при preparation/pending, old-first, отсутствие третьей живой версии, свежий cutoff
@@ -104,3 +139,35 @@ empty без переноса clock, ложный empty в replay, carry, conser
 6/6 и после усиления проверки Short genesis отдельно RPC publication 1/1. Размеры
 research wrappers: Short 21 988, Monthly 17 064, vault 8 496 байт; стандартный локальный
 deployment без viaIR прошёл. Public chain deployment/fork не выполнялся.
+
+## Проверка V2 — 29.09.2026
+
+Итог:71 различный продуктовый сценарий +1catalog прошли адресно; последняя
+recovery-проверка12/12. Это не full baseline.
+
+Свежая сборка `node scripts/compile.cjs`, затем адресные `node --test` с
+`RH_TEST_ARTIFACT=artifacts/compiled.json` и соответствующим SHA256 в
+`RH_TEST_ARTIFACT_SHA256`. Сборка использована повторно, full suite не запускался.
+
+Проверенные файлы: `monthly-jackpot`, `monthly-epochs`, `monthly-replay`,
+`dual-controller`, `public-controllers`, `public-launch-checks`, `local-scheduler`,
+`robinhood-recovery` (все `test/*.test.cjs`). Дополнительно только `profile catalog`
+из `test/test-launcher.test.cjs`. После усиления проверок или исправлений повторены
+только затронутые сценарии: V2 automatic lifecycle, chunk partitions, public constructor,
+BUY policy publication, local-chain rejection; recovery после generation guard fix.
+
+В процессе исправлены пропущенные PARTICIPANTS ABI/obligation-generation bindings;
+новый код затем прошёл независимый worker/rehearsal. Устаревшие fixture expectations
+исправлены: public V2 вместо V1, allocation90/5/5, legitimate rollover,
+outer state checksum не скрывает нарушение inner job checksum. Нет ослабления
+контрактных guards ради тестов. Проверка corrupted job подтверждает отсутствие send.
+
+Логи отдельных запусков: `.local/logs/monthly-v2-{integration,neighbors,lifecycle,partitions,tail-fixes,constructor,recovery-fixed}.log`.
+Начальные integration/neighbors содержат failures ДО исправлений, не являются
+зелёным baseline. Итог считать по последнему адресному результату каждого сценария,
+не складывать повторные прогоны. Solidity runtime: Short22738bytes, Monthly19551bytes.
+
+Общая репетиция: [результат и допущения](RELEASE_REHEARSAL.md),
+`.local/logs/monthly-v2-rehearsal-fixed.json`, status complete, 2 claims без повторов.
+Первый rehearsal остановился на старом obligation profile; новый generation guard
+закрыл эту связку. Live/fork/public deployment в этом пакете не выполнялись.

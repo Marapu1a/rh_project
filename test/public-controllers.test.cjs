@@ -9,6 +9,7 @@ const requests=(b)=>({s:{drawId:drawIdFor('SHORT',id('public short')),campaignId
 
 test('public wrappers enforce checkpoint admission and complete both draws with authentic drand and exact bytecode',async()=>{
  const f=await fixture(compiled);
+ await assert.rejects(f.deploy('RobinhoodMonthlyController',[{...f.base,interval:30*86400},f.rules]));
  for(const [name,c] of [['RobinhoodShortController',f.short],['RobinhoodMonthlyController',f.monthly]])assert((await f.provider.getCode(c.target)).length/2-1<=24576,name);
  await sent(f.quote.mint(f.owner,2000_000000));await sent(f.quote.approve(f.vault.target,ethers.MaxUint256));
  await sent(f.vault.fundUSDG(500_000000,1));await sent(f.vault.fundUSDG(500_000000,2));await sent(f.vault.fundUSDG(100_000000,3));
@@ -29,7 +30,12 @@ test('public wrappers enforce checkpoint admission and complete both draws with 
  assert.equal(await f.vault.reserved(f.quote.target),0n);assert.equal(await f.short.pendingDatasetDraw(),ethers.ZeroHash);assert.equal(await f.monthly.pendingMonth(),ethers.ZeroHash);
  for(const draw of [s.drawId,m.drawId]){
   let paid=0n;for(const p of ps){const reward=await f.vault.reward(draw,p.wallet);if(reward>0n){paid+=reward;await sent(f.vault.claim(draw,p.wallet));}}
-  assert(paid>0n,'The fixed historical fixture must exercise a real USDG payout');
+  if(draw===s.drawId)assert(paid>0n,'Short fixture must exercise a real USDG payout');
+  else{const month=await f.monthly.month(draw),expected=require('../scripts/monthly-outcome.cjs').expectedResult(month,{rules:f.monthlyRules,snapshot:{participants:ps}});
+   assert.equal(month.resultHash,expected.resultHash);assert.equal(paid,expected.winner===ethers.ZeroAddress?0n:month.budget);
+   assert.equal(await f.vault.freeCurrent(),expected.winner===ethers.ZeroAddress?500_000000n:100_000000n);
+   assert.equal(await f.vault.freeNext(),expected.winner===ethers.ZeroAddress?100_000000n:0n);
+  }
  }
  assert.equal(await f.vault.claimable(f.quote.target),0n);
  for(const c of [f.short,f.monthly])await assert.rejects(c.fulfill(1,ethers.ZeroHash));
@@ -38,15 +44,15 @@ test('public wrappers enforce checkpoint admission and complete both draws with 
 test('public constructors reject non-drand RNG, wrong binding, interval and local wrappers on Nitro',async()=>{
  const f=await fixture(compiled),mock=f.token;
  await assert.rejects(f.deploy('RobinhoodShortController',[{...f.base,provider:mock.target,maxBudget:100},f.rules,[7,5,3],1]));
- await assert.rejects(f.deploy('RobinhoodMonthlyController',[{...f.base,provider:mock.target,interval:2592000},f.rules]));
+ await assert.rejects(f.deploy('RobinhoodMonthlyController',[{...f.base,provider:mock.target,interval:2592000},f.monthlyRules]));
  await assert.rejects(f.deploy('RobinhoodShortController',[{...f.base,maxBudget:100},f.rules,[7,5,3],1]));
- await assert.rejects(f.deploy('RobinhoodMonthlyController',[{...f.base,interval:1},f.rules]));
+ await assert.rejects(f.deploy('RobinhoodMonthlyController',[{...f.base,interval:1},f.monthlyRules]),/monthly interval/);
  await assert.rejects(f.deploy('LocalShortController',[{...f.base,maxBudget:100},f.rules,[7,5,3]]));
  await assert.rejects(f.deploy('LocalMonthlyController',[{...f.base,interval:2592000},f.rules]));
 });
 
 test('public empty draining epochs require checkpoints and preserve clocks',async()=>{
- const f=await fixture(compiled);await sent(f.short.announce(f.rules,[7,5,3],1));await sent(f.monthly.announce(f.rules));
+ const f=await fixture(compiled);await sent(f.short.announce(f.rules,[7,5,3],1));await sent(f.monthly.announce(f.monthlyRules));
  await rpc('evm_increaseTime',[2592001]);await rpc('evm_mine');await sent(f.short.activate());await sent(f.monthly.activate());await rpc('evm_mine');
  const b=await f.head(),sc=await f.short.lastShortTerminalAt(),mc=await f.monthly.lastMonthAt();
  for(const c of [f.short,f.monthly]){await assert.rejects(c.closeEmpty(b.number,b.hash,id('empty')));await sent(c.checkpointCutoff(b.number));}
@@ -60,7 +66,7 @@ test('public deployment inspection checks generation and keeps execution disable
  const hook=await f.deploy('InfinityHookFixture'),factory=await f.deploy('InfinityFactoryFixture');
  const collector=await f.deploy('InfinityCollector',[f.owner,f.token.target,f.quote.target,hook.target,factory.target]);
  const source=await f.deploy('InfinityVaultFixture',[f.token.target,hook.target,factory.target,collector.target]);
- await sent(hook.configure(source.target,300));const h=await f.provider.getBlock('latest'),recipients=[f.vault.target,ethers.ZeroAddress,ethers.ZeroAddress],bps=[10000,0,0];
+ await sent(hook.configure(source.target,300));const h=await f.provider.getBlock('latest'),recipients=[f.vault.target,await (await f.provider.getSigner(3)).getAddress(),await (await f.provider.getSigner(4)).getAddress()],bps=[9000,500,500];
  await sent(collector.bindSource(source.target,[h.timestamp+100,recipients,bps]));const anchor={number:h.number,hash:h.hash};
  const config={fundingJob:{chainId:4663,collector:collector.target,collectorCodeHash:await code(collector),source:source.target,sourceFingerprint:await collector.sourceFingerprint(),campaignId:'1',recipients,bps,anchor},
  deliveryJob:{chainId:4663,short:f.short.target,shortCodeHash:await code(f.short),monthly:f.monthly.target,monthlyCodeHash:await code(f.monthly),adapter:f.random.target,adapterCodeHash:await code(f.random),anchor},

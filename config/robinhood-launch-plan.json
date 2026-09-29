@@ -63,7 +63,13 @@
   "unresolved": {
     "timingApproval": null,
     "shortRules": null,
-    "monthlyRules": null,
+    "monthlyRules": {
+      "version": 2,
+      "pNumerator": 3,
+      "pDenominator": 4,
+      "hNumerator": 1,
+      "hDenominator": 1
+    },
     "shortWeights": null,
     "minimumUnitRaw": null,
     "maxShortBudgetRaw": "115792089237316195423570985008687907853269984665640564039457584007913129639935",
@@ -73,7 +79,7 @@
     "archiveRpc": null,
     "durableRuntime": null,
     "nativeRefill": null,
-    "monthlyWinnerWeight": null
+    "monthlyWinnerWeight": "ENTRIES_OVER_ENTRIES_PLUS_ONE_Q128"
   },
   "publicExecutionEnabled": false,
   "evidence": [

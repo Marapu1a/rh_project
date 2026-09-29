@@ -46,7 +46,7 @@ async function main(){
   report.environment.runtimeDirectory=f.directory;report.environment.filesystemType=String(fs.statfsSync(f.directory).type);
   // Seed fixture revenue, then use actual collector allocation and worker delivery.
   await sent(f.quote.mint(f.source.target,2000_000000n));await sent(f.source.fund(f.quote.target,2000_000000n));
-  let r=await run(f.options);assert.equal(r.results.funding.status,'complete',JSON.stringify(r));
+  let r=await run(f.options);assert.equal(r.results.funding?.status,'complete',JSON.stringify(r));
   const opsWallet=f.options.fundingJob.recipients[1],projectWallet=f.options.fundingJob.recipients[2];
   const before=await f.quote.balanceOf(f.vault.target),opsCredit=await f.collector.credit(opsWallet),projectCredit=await f.collector.credit(projectWallet);
   const opsPaid=await f.quote.balanceOf(opsWallet),projectPaid=await f.quote.balanceOf(projectWallet);
@@ -87,7 +87,12 @@ async function main(){
   assert.equal(await f.vault.reserved(f.quote.target),0n);assert.equal(await f.vault.claimable(f.quote.target),0n);
   assert.equal(await f.short.pendingDatasetDraw(),ethers.ZeroHash);assert.equal(await f.monthly.pendingMonth(),ethers.ZeroHash);
   const final=await balances(),paid=participants.reduce((n,p)=>n+BigInt(final[p.wallet])-BigInt(initial[p.wallet]),0n),remaining=await f.quote.balanceOf(f.vault.target);
-  assert.equal(attempts.length,2);assert.deepEqual(new Set(attempts.map(a=>a.drawId)),new Set([ids.sId,ids.mId]));
+  const monthlyState=await f.monthly.month(ids.mId),monthlyExpected=require('./monthly-outcome.cjs').expectedResult(monthlyState,ids.ma);
+  assert.equal(monthlyState.resultHash,monthlyExpected.resultHash);
+  const shortState=await f.short.shortResult(ids.sId),expectedClaims=shortState.winners.map(w=>ids.sId.toLowerCase()+':'+w.toLowerCase());
+  if(monthlyExpected.winner!==ethers.ZeroAddress)expectedClaims.push(ids.mId.toLowerCase()+':'+monthlyExpected.winner.toLowerCase());
+  assert.equal(attempts.length,expectedClaims.length);assert.deepEqual(new Set(attempts.map(a=>a.key)),new Set(expectedClaims));
+  report.monthlyOutcome={rules:ids.ma.rules,...monthlyExpected,budget:String(monthlyState.budget)};
   for(const a of attempts){
    const receipt=await f.provider.getTransactionReceipt(a.transactionHash);assert.equal(receipt.status,1);
    const logs=receipt.logs.filter(l=>l.address.toLowerCase()===f.vault.target.toLowerCase()).map(l=>f.vault.interface.parseLog(l)).filter(l=>l?.name==='RewardPaid');

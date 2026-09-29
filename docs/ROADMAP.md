@@ -1,6 +1,6 @@
 # План до первого публичного запуска
 
-28.09.2026. Это текущие релизные блокеры, а не журнал всех выполненных итераций.
+29.09.2026. Это текущие релизные блокеры, а не журнал всех выполненных итераций.
 История: [снимок прежнего плана](archive/snapshots/ROADMAP_BEFORE_DEPLOYMENT_PROFILE_2026-09-28.md).
 Текущий пакет и проверки: [CURRENT_CONTEXT](CURRENT_CONTEXT.md).
 
@@ -52,8 +52,10 @@ public sends закрыты. [Recovery admission](RECOVERY_ADMISSION.md) отд�
    D без потолка принят: FREE_SHORT на cutoff реализован; профиль требует uint256.max.
    Funding wait на старом finalized cutoff исправлен и проверен: новый обеспеченный
    finalized блок разрешает обновить unused candidate, не существующий job.
-   Monthly75/25 принят; перед реализацией нужен выбор влияния entries на победителя
-   без второго допуска. Корзина/q Short и minimum Current остаются кандидатами.
+   Monthly75/25 и вес e/(e+1) приняты и реализованы как новое поколениеV2:
+   общий исход, обязательный один winner в выплатной ветке, independent worker replay.
+   Ближайший продуктовый шаг — согласовать корзину/q Short и minimum Current;
+   затем свести численный launch profile без тестовых значений вместо решений.
    Эксплуатационные параметры выбираются отдельно;
    для RPC нужен другой archive endpoint (official повторно не прошёл history).
    Same-chain automatic proof ещё открыт.

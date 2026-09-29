@@ -45,5 +45,11 @@ test('public wrappers refuse the local chain while local controllers remain avai
  const base={vault:f.vault.target,registry:f.registry.target,instance:ethers.id('wrong chain'),governor:await f.admin.getAddress(),publisher:await f.admin.getAddress(),provider:f.random.target,notice:3600,cutoffDelayBlocks:1,maxGasPrice:1000000000,nativeFloor:0};
  const rules=require('./fixtures/short-outcome.cjs').normalRules;
  await assert.rejects(f.deploy('RobinhoodShortController',[{...base,maxBudget:100},rules,[7,5,3],1]),/robinhood chain/);
- await assert.rejects(f.deploy('RobinhoodMonthlyController',[{...base,interval:2592000},rules]),/robinhood chain/);
+ await assert.rejects(f.deploy('RobinhoodMonthlyController',[{...base,interval:2592000},require('../scripts/monthly-outcome.cjs').RULES]),/robinhood chain/);
+});
+
+test('accepted Monthly V2 payload and diminishing weight cannot silently drift in launch plan',()=>{
+ const p=structuredClone(require('../config/robinhood-launch-plan.json'));assert.equal(inspectPlan(p).conflicts.length,0);
+ p.unresolved.monthlyRules.pNumerator=1;p.unresolved.monthlyWinnerWeight='LINEAR';
+ const r=inspectPlan(p);assert(r.conflicts.includes('unresolved.monthlyRules.pNumerator'));assert(r.conflicts.includes('unresolved.monthlyWinnerWeight'));
 });

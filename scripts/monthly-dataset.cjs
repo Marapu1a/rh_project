@@ -1,5 +1,6 @@
 const {ethers}=require('ethers'),{hash,canonical}=require('./direct-buy.cjs'),outcome=require('./short-outcome.cjs');
 const {replayAttempts,domainFor,snapshotFor,emptyMonthlyEpochHash}=require('./attempt-lifecycle.cjs');
+const monthlyOutcome=require('./monthly-outcome.cjs');
 const {validateDrawId}=require('./draw-id.cjs');
 const INPUT='tuple(bytes32 drawId,bytes32 snapshotHash,bytes32 root,uint64 campaign,uint64 rulesEpoch,uint256 cutoff,bytes32 cutoffHash,uint256 count,uint256 attempts)';
 const coder=ethers.AbiCoder.defaultAbiCoder(),check=(ok,msg)=>{if(!ok)throw Error(msg);};
@@ -14,7 +15,7 @@ function buildFromHistory(input){
   check(!ledger.draws.some(d=>d.drawId===r.drawId.toLowerCase()),'Draw identity already used');
   check(BigInt(ledger.head.number)===BigInt(r.cutoff)&&ledger.head.hash.toLowerCase()===r.cutoffHash.toLowerCase(),'Replay must end exactly at cutoff');
   const snapshotDomain=domainFor(input.manifest,input.lifecycle,ledger.head.number);
-  const target=state.drainingEpoch||state.currentEpoch,policyHash=outcome.rulesHash(input.rules);
+  const target=state.drainingEpoch||state.currentEpoch,policyHash=monthlyOutcome.rulesHash(input.rules);
   check(BigInt(r.rulesEpoch)===BigInt(target),'Wrong monthly target epoch');
   check(policyHash===state.epochs.find(e=>e.epoch===target).rulesHash,'Wrong monthly epoch policy');
   check(ledger.head.number>=state.epochs.find(e=>e.epoch===state.currentEpoch).firstBlock,'Monthly boundary incomplete');
@@ -41,7 +42,7 @@ async function verifyPublication(provider,source,artifact){
   check(snapshot.kind==='MONTHLY'&&snapshot.drawId===r.drawId&&BigInt(snapshot.rulesEpoch)===BigInt(r.rulesEpoch)
     &&BigInt(snapshot.cutoff.blockNumber)===BigInt(r.cutoff)&&snapshot.cutoff.blockHash===r.cutoffHash,'Monthly snapshot metadata mismatch');
   check(hash(snapshot)===r.snapshotHash&&rootFor(snapshot.participants)===r.root,'Monthly commitment mismatch');
-  check(outcome.rulesHash(artifact.rules)===policy.hash&&snapshot.rulesHash===policy.hash,'Monthly rules mismatch');
+  check(monthlyOutcome.rulesHash(artifact.rules)===policy.hash&&snapshot.rulesHash===policy.hash,'Monthly rules mismatch');
   check(snapshot.participants.every(p=>BigInt(p.count)===BigInt(p.lastAttempt)-BigInt(p.firstAttempt)+1n)
     &&snapshot.participants.reduce((s,p)=>s+BigInt(p.count),0n)===BigInt(r.attempts),'Monthly attempts mismatch');
   const events=await source.queryFilter(source.filters.MonthChunk(r.drawId),Number(r.cutoff)+1),participants=[],publications=[];
@@ -58,6 +59,7 @@ async function verifyPublication(provider,source,artifact){
   check(canonical(participants)===canonical(expected)&&m.count===BigInt(participants.length)&&m.attempts===BigInt(r.attempts)
     &&m.root===rootFor(participants)&&BigInt(publications.length)===await source.monthChunkCount(r.drawId),'Monthly dataset mismatch');
   check([2n,3n,4n,5n].includes(m.phase),'Monthly dataset not ready/sealed');
+  if(Number(artifact.rules.version)===2)check(m.totalWeight===snapshot.participants.reduce((n,p)=>n+monthlyOutcome.weight(BigInt(p.count)),0n),'Monthly total weight mismatch');
   let context=null;
   if(m.phase!==2n){
     context=ethers.keccak256(coder.encode(['bytes32','uint256','address','bytes32','address','address','address',INPUT,'bytes32','uint256'],

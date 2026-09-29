@@ -5,6 +5,7 @@ import {ChainBlocks} from "./ChainBlocks.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {PromoVault} from "./PromoVault.sol";
 import {ShortOutcome} from "./ShortOutcome.sol";
+import {MonthlyOutcome} from "./MonthlyOutcome.sol";
 
 interface IMonthlyControllerBinding { function monthlyController() external view returns(address); }
 
@@ -21,6 +22,7 @@ abstract contract MonthlySettlement is ReentrancyGuard, CutoffHistory {
         Input input; Phase phase; bytes32 root; uint256 count; uint256 attempts; address lastWallet;
         bytes32 context; bytes32 seed; uint256 nextChunk; uint256 processed; uint256 admitted;
         address winner; uint256 bestRank; uint256 budget; bytes32 resultHash;
+        uint256 totalWeight; uint256 processedWeight;
     }
     PromoVault public immutable monthlyVault;
     address public immutable monthlyRegistry;
@@ -58,16 +60,17 @@ abstract contract MonthlySettlement is ReentrancyGuard, CutoffHistory {
     constructor(address vault,address registry,bytes32 instance,uint256 interval,uint256 notice,ShortOutcome.Rules memory rules){
         require(vault!=address(0) && registry.code.length>0 && instance!=bytes32(0) && interval>0 && notice>0,"binding");
         monthlyVault=PromoVault(vault);monthlyRegistry=registry;monthlyInstance=instance;monthlyInterval=interval;
-        monthlyRulesHash=ShortOutcome.rulesHash(rules);monthlyRulesNotice=notice;lastMonthAt=block.timestamp;monthlyStartedAt=block.timestamp;
+        monthlyRulesHash=MonthlyOutcome.rulesHash(rules);monthlyRulesNotice=notice;lastMonthAt=block.timestamp;monthlyStartedAt=block.timestamp;
         _storeMonthlyPolicy(1,rules);policies[1].firstBlock=ChainBlocks.number();
     }
     function month(bytes32 id) public view returns(Month memory){return months[id];}
     function monthRules() public view returns(ShortOutcome.Rules memory){return policies[currentMonthlyEpoch].outcome;}
     function monthlyEpochPolicy(uint64 epoch) public view returns(Policy memory){return policies[epoch];}
     function _storeMonthlyPolicy(uint64 epoch,ShortOutcome.Rules memory rules) private {
-        policies[epoch]=Policy(rules,ShortOutcome.rulesHash(rules),0);emit MonthlyRulesPayload(epoch,rules);
+        policies[epoch]=Policy(rules,MonthlyOutcome.rulesHash(rules),0);emit MonthlyRulesPayload(epoch,rules);
     }
     function _announceMonthlyRules(ShortOutcome.Rules memory rules) internal nonReentrant {
+        require(rules.version==policies[1].outcome.version,"monthly generation");
         require(announcedMonthlyEpoch==0 && drainingMonthlyEpoch==0,"month transition");
         uint64 next=currentMonthlyEpoch+1;_storeMonthlyPolicy(next,rules);
         announcedMonthlyEpoch=next;monthlyRulesEligibleAt=block.timestamp+monthlyRulesNotice;
@@ -109,6 +112,8 @@ abstract contract MonthlySettlement is ReentrancyGuard, CutoffHistory {
             require(p.wallet>m.lastWallet && p.wallet!=address(monthlyVault) && p.firstAttempt>0 && p.lastAttempt>=p.firstAttempt,"month participant");
             m.root=keccak256(abi.encode(m.root,p.wallet,p.firstAttempt,p.lastAttempt));m.lastWallet=p.wallet;
             m.attempts+=uint256(p.lastAttempt)-p.firstAttempt+1;
+            if(policies[m.input.rulesEpoch].outcome.version==2)
+                m.totalWeight+=MonthlyOutcome.weight(uint256(p.lastAttempt)-p.firstAttempt+1);
         }
         m.count+=chunk.length;require(m.attempts<=m.input.attempts,"month attempts");
         bytes32 digest=keccak256(abi.encode(chunk));emit MonthChunk(id,chunks[id].length,digest);chunks[id].push(digest);
@@ -135,17 +140,34 @@ abstract contract MonthlySettlement is ReentrancyGuard, CutoffHistory {
     function processMonth(bytes32 id,uint256 index,ShortOutcome.Participant[] calldata chunk) external nonReentrant {
         Month storage m=months[id];require(m.phase==Phase.Processing && pendingMonth==id && index==m.nextChunk
             && index<chunks[id].length && keccak256(abi.encode(chunk))==chunks[id][index],"month progress");
-        (ShortOutcome.Candidate[] memory selected,uint256 admitted)=ShortOutcome.selectTopK(m.context,m.seed,chunk,policies[m.input.rulesEpoch].outcome,1);
-        if(admitted>0 && (m.winner==address(0) || selected[0].rank<m.bestRank || (selected[0].rank==m.bestRank && selected[0].wallet<m.winner))){
-            m.winner=selected[0].wallet;m.bestRank=selected[0].rank;
+        uint256 admitted;
+        if(policies[m.input.rulesEpoch].outcome.version==2){
+            bool payout=MonthlyOutcome.pays(m.context,m.seed);
+            uint256 point=MonthlyOutcome.selection(m.context,m.seed,m.totalWeight);
+            for(uint256 i;i<chunk.length;++i){
+                uint256 next=m.processedWeight+MonthlyOutcome.weight(uint256(chunk[i].lastAttempt)-chunk[i].firstAttempt+1);
+                if(payout && point>=m.processedWeight && point<next)m.winner=chunk[i].wallet;
+                m.processedWeight=next;
+            }
+            // Compatibility field: all wallets participate in the payout branch.
+            admitted=payout?chunk.length:0;
+        }else{
+            ShortOutcome.Candidate[] memory selected;
+            (selected,admitted)=ShortOutcome.selectTopK(m.context,m.seed,chunk,policies[m.input.rulesEpoch].outcome,1);
+            if(admitted>0 && (m.winner==address(0) || selected[0].rank<m.bestRank || (selected[0].rank==m.bestRank && selected[0].wallet<m.winner))){
+                m.winner=selected[0].wallet;m.bestRank=selected[0].rank;
+            }
         }
         m.processed+=chunk.length;m.admitted+=admitted;++m.nextChunk;emit MonthProgress(id,m.processed,m.admitted);
     }
     function finishMonth(bytes32 id) external nonReentrant {
         Month storage m=months[id];require(pendingMonth==id && m.phase==Phase.Processing
             && m.processed==m.count && m.nextChunk==chunks[id].length,"month unfinished");
+        bool v2=policies[m.input.rulesEpoch].outcome.version==2;
+        if(v2)require(m.totalWeight>0 && m.processedWeight==m.totalWeight
+            && ((m.winner!=address(0))==MonthlyOutcome.pays(m.context,m.seed)),"monthly result");
         monthlyVault.settleMonthly(id,m.winner);
-        m.resultHash=keccak256(abi.encode(keccak256("MONTHLY_RESULT_V1"),m.context,m.seed,m.root,m.winner,m.admitted,m.budget));
+        m.resultHash=keccak256(abi.encode(v2?keccak256("MONTHLY_RESULT_V2"):keccak256("MONTHLY_RESULT_V1"),m.context,m.seed,m.root,m.winner,m.admitted,m.budget));
         m.phase=Phase.Terminal;pendingMonth=bytes32(0);lastMonthAt=block.timestamp;lastMonthBlock=ChainBlocks.number();
         if(drainingMonthlyEpoch==m.input.rulesEpoch)drainingMonthlyEpoch=0;
         emit AttemptsConsumed(id,1,m.input.snapshotHash,m.winner==address(0)?0:1,m.resultHash);

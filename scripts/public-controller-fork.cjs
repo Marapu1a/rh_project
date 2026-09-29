@@ -19,7 +19,7 @@ async function main(){
    const code=await f.provider.getCode(c.target);out.contracts[name]={address:c.target,codeHash:ethers.keccak256(code),runtimeBytes:(code.length-2)/2};assert(out.contracts[name].runtimeBytes<=24576);
   }
   assert.equal(await f.quote.decimals(),6n);out.quote={address:USDG,decimals:6,codeHash:ethers.keccak256(await f.provider.getCode(USDG))};
-  assert.equal(await f.short.CONTROLLER_PROFILE(),ethers.id('promo-robinhood-short-drand-v1'));assert.equal(await f.monthly.CONTROLLER_PROFILE(),ethers.id('promo-robinhood-monthly-drand-v1'));
+  assert.equal(await f.short.CONTROLLER_PROFILE(),ethers.id('promo-robinhood-short-drand-v1'));assert.equal(await f.monthly.CONTROLLER_PROFILE(),ethers.id('promo-robinhood-monthly-drand-v2'));
   assert.equal(await f.random.shortConsumer(),f.short.target);assert.equal(await f.random.monthlyConsumer(),f.monthly.target);
   stage('checkpoint and age');const b=await f.head();out.cutoff={number:String(b.number),hash:b.hash};out.transactions=[];
   for(const c of [f.short,f.monthly]){const r=await sent(c.checkpointCutoff(b.number));out.transactions.push({hash:r.hash,gasUsed:String(r.gasUsed)});}

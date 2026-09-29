@@ -1,5 +1,15 @@
 # Текущий контекст
 
+29.09: **Monthly75/25 + вес e/(e+1) утверждены пользователем и реализованы как V2.**
+Один глобальный исход, в выплатной ветке обязательно один winner всего frozen Current;
+без личного допуска/reroll. Q128 weights, bounded chunks, independent JS verification,
+legacyV1 сохранён; public controller/admission требуют V2. [Модуль и проверки](MONTHLY_RULES_EPOCHS.md).
+71 продуктовый сценарий +1catalog passed адресно; составная локальная репетиция complete,
+не full/live/fork. Public sends закрыты. Далее выбрать численные корзину/q Short и minimum Current,
+свести launch profile; archive RPC/production timing и same-chain proof остаются блокерами.
+MinCurrent100 пока НЕ принят. Старые записи ниже описывают предыдущие этапы.
+
+
 28.09 review5491a55 подтверждён: FREE_SHORT мог навсегда ждать funding на старом FINALIZED_CHECKPOINT. Исправлено обновлением только unused candidate после достаточного нового finalized reserve; polls без денег не тратят gas, сохранённые jobs не меняются. [Доказательство и проверки](CUTOFF_HISTORY.md): red→green,9 адресных сценариев passed, не full/live/fork. Далее Monthly75/25 после выбора влияния entries на победителя; Short корзина/q и minCurrent остаются кандидатами.
 
 28.09 новый выбор пользователя: Short без потолка, Monthly75% весь Current одному победителю /25% перенос, без второго допуска. FREE_SHORT реализован в scheduler с pinned cutoff budget и требованием uint256.max у controller; legacy FIXED сохранён. Planning profile обновлён, public gate закрыт.10 различных адресных сценариев passed (3новых,4соседних,3planning), не full. Monthly реализация ОЖИДАЕТ ответа владельца: как entries влияют на выбор победителя внутри75% (старый личный допуск удаляется). Current>=100, Short корзина/q пока не утверждены. Старые модельные75/25-несовместимые расчёты помечены.
