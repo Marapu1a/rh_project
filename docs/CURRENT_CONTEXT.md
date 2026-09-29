@@ -1,5 +1,7 @@
 # Текущий контекст
 
+29.09: [API наград/выплат](USER_STATUS_API.md) расширен: reward-observation сверяет vault events и draws/reward storage на высоте снимка. Assigned отдельно от paid, ссылки на обе транзакции; отсутствие RewardPaid не заменяется нулём reward. API offline/read-only, stale сохраняет as-of награды, прежний snapshot без reward section→null. 9 продуктовых адресных сценариев +catalog passed, не full/live/fork. Public sends закрыты, frontend/service ещё впереди; throughput линейных history reads пока не измерен.
+
 29.09: [Read-only HTTP API покупок/билетов](USER_STATUS_API.md) готов локально: open/frozen/consumed через lifecycle, постраничные payer-attributed покупки, provenance, stale сохраняет balances, unavailable→null/503. Успешный snapshot теперь имеет отдельный observedAt. Policy publication+cache reorg+unstarted job проверен: explicit mismatch, без send/подмены artifact.8 адресных сценариев passed (исправлен майнинг fixture), не full/live/fork. Далее пользовательские результаты/выплаты из on-chain источника и эксплуатационный service; API пока loopback, public sends закрыты.
 
 29.09: [Indexer → scheduler](PERSISTENT_INDEXER.md) подключён опционально config.indexer (admitted/finalized only). Consumer проверяет identity/freshness/policy/cutoff; lifecycle считает open attempts. Missing cache → wait, оба frozen продолжаются. Watch больше не спит10s при backlog. Сквозной local сценарий прошёл; live Infinity не заявлен. Далее API наблюдаемых статусов и эксплуатационная настройка; public sends закрыты. Ниже — история предыдущих границ.

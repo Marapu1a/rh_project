@@ -29,6 +29,13 @@ test('persistent indexer feeds lifecycle; missing cache waits while frozen draws
  let view=api.walletStatus({config:f.config,wallet});assert.equal(view.status,'observed');
  assert.equal(view.balances.SHORT.open,'0');assert.equal(view.balances.SHORT.consumedTotal,'1');assert.equal(view.balances.MONTHLY.consumedTotal,'1');
  assert.equal(view.purchases.items.length,1);
+ assert(view.rewards.items.length>0);assert(view.rewards.items.every(r=>r.status==='assigned'&&r.payment===null));
+ const prize=view.rewards.items[0];await sent(f.vault.claim(prize.drawId,wallet));
+ f.setFinalized((await f.provider.getBlock('latest')).number);await sync();
+ view=api.walletStatus({config:f.config,wallet});const paid=view.rewards.items.find(r=>r.drawId===prize.drawId);
+ assert.equal(paid.status,'paid');assert(paid.payment.transactionHash);assert.equal(await f.vault.reward(prize.drawId,wallet),0n);
+ // A failed duplicate claim cannot manufacture a second payment.
+ await assert.rejects(f.vault.claim(prize.drawId,wallet));
  view=api.walletStatus({config:f.config,wallet,now:Date.now()+121000});assert.equal(view.status,'stale');assert.equal(view.balances.SHORT.consumedTotal,'1');
  const server=api.createServer(f.config);await new Promise(r=>server.listen(0,'127.0.0.1',r));t.after(()=>new Promise(r=>{server.close(r);server.closeAllConnections();}));
  const url='http://127.0.0.1:'+server.address().port+'/v1/wallets/'+wallet;

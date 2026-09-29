@@ -81,7 +81,8 @@
       "test/monthly-jackpot.test.cjs",
       "test/launch-rules.test.cjs",
       "test/operational-profile.test.cjs",
-      "test/persistent-buy-indexer.test.cjs"
+      "test/persistent-buy-indexer.test.cjs",
+      "test/reward-observation.test.cjs"
     ]
   },
   "accounting": {
@@ -153,7 +154,8 @@
       "test/monthly-replay.test.cjs",
       "test/nitro-blocks.test.cjs",
       "test/infinity-payout-evidence.test.cjs",
-      "test/persistent-buy-indexer.test.cjs"
+      "test/persistent-buy-indexer.test.cjs",
+      "test/reward-observation.test.cjs"
     ]
   },
   "coordinator": {

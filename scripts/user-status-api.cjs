@@ -5,7 +5,7 @@ const {hash}=require('./direct-buy.cjs');
 const {replayAttempts}=require('./attempt-lifecycle.cjs');
 function walletStatus({config,wallet,offset=0,limit=25,now=Date.now()}){
  if(!isAddress(wallet)||!Number.isSafeInteger(offset)||offset<0||!Number.isInteger(limit)||limit<1||limit>100)throw Object.assign(Error('Invalid query'),{status:400});
- const unavailable=()=>({schema:'promo-wallet-status-v1',status:'unavailable',wallet:wallet.toLowerCase(),balances:null,purchases:null});
+ const unavailable=()=>({schema:'promo-wallet-status-v1',status:'unavailable',wallet:wallet.toLowerCase(),balances:null,purchases:null,rewards:null});
  try{
   const {checksum,...state}=JSON.parse(fs.readFileSync(config.indexer.statePath,'utf8'));
   if(checksum!==hash(state)||state.configHash!==hash({kind:'persistent-buy-indexer-v1',config})||state.index?.policyStatus?.mode!=='admitted'||!config.lifecycle)return unavailable();
@@ -16,10 +16,17 @@ function walletStatus({config,wallet,offset=0,limit=25,now=Date.now()}){
   const empty=()=>({mintedTotal:'0',open:'0',frozenByDraw:{},consumedTotal:'0'});
   const decisions=ledger.buyLedger.decisions.filter(d=>d.payer?.toLowerCase()===address);
   const purchases=decisions.slice(offset,offset+limit).map(d=>Object.fromEntries(['transactionHash','blockNumber','blockHash','logIndex','status','reason','grossQuoteRaw','netQuoteDebitRaw','entriesMinted'].filter(k=>d[k]!==undefined).map(k=>[k,d[k]])));
+  let rewards=null;
+  if(index.rewards){
+   const projected=require('./reward-observation.cjs').projectRewards(index.blocks,config.lifecycle.vault);
+   if(BigInt(index.rewards.blockTag)!==BigInt(index.head)||hash(projected)!==hash({draws:index.rewards.draws,rewards:index.rewards.rewards}))return unavailable();
+   const rows=projected.rewards.filter(r=>r.winner===address);
+   rewards={items:rows.slice(offset,offset+limit),offset,limit,total:rows.length,nextOffset:offset+limit<rows.length?offset+limit:null,coverage:'vault-events-and-storage-at-snapshot',vault:config.lifecycle.vault};
+  }
   return {schema:'promo-wallet-status-v1',status:fresh?'observed':'stale',wallet:address,
    provenance:{chainId:String(config.manifest.chainId),anchor:config.manifest.anchor,head:ledger.head,manifestHash:hash(index.manifest),ledgerHash:index.ledgerHash,observedAt:index.observedAt??null,ageSeconds:Number.isFinite(age)?Math.max(0,Math.floor(age/1000)):null,indexerState:state.status?.state??'unknown',targetBlock:state.status?.targetBlock??null,canonicality:'saved-observation-not-live-finality'},
    balances:{SHORT:balance?.SHORT??empty(),MONTHLY:balance?.MONTHLY??empty(),carryRaw:buy?.carryRaw??'0',entryThresholdRaw:config.manifest.entryThresholdRaw,quoteDecimals:config.manifest.quoteDecimals},
-   purchases:{items:purchases,offset,limit,total:decisions.length,nextOffset:offset+purchases.length<decisions.length?offset+purchases.length:null,coverage:'decoded-payer-attributed-candidates-only; absence-is-not-rejection'}};
+   purchases:{items:purchases,offset,limit,total:decisions.length,nextOffset:offset+purchases.length<decisions.length?offset+purchases.length:null,coverage:'decoded-payer-attributed-candidates-only; absence-is-not-rejection'},rewards};
  }catch{return unavailable();}
 }
 function createServer(config){return http.createServer((req,res)=>{

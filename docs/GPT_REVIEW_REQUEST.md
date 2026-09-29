@@ -1,27 +1,23 @@
-# Review: read-only wallet API и policy/cache reorg
+# Review: wallet rewards через vault events + historical storage
 
-29.09.2026. Review b2d4368 учтён. Только статический review, тесты не запускать.
-[Описание API и проверки](USER_STATUS_API.md).
+29.09.2026. Пользователь разрешил следующий пакет сразу после wallet API.
+Тесты не запускать. [Описание](USER_STATUS_API.md).
 
-Закрыт сценарий policy publication+накопленный cache+reorg+сохранённый unstarted job:
-policy исчезает из ветки, индексер откатывает хвост, scheduler отвергает старый job
-как Stored job BUY policy mismatch. Нет send/изменения artifact. Это не auto-reset
-спорной финализированной истории. Публичные sends не открывались.
+reward-observation.cjs читает события закреплённого vault из проверенных indexer blocks,
+строит reserve/assign/finalize/pay и сверяет draws/reward историческими eth_call на
+едином cutoff. RewardPaid обязателен для paid; нулевой долг сам по себе не доказательство.
+Новый снимок сохраняется лишь после state reads и стабильности ветки. API пересчитывает
+события, сверяет сохранённую проекцию и отдаёт только wallet rewards с pagination и
+ссылками на обе транзакции. Нет RPC/Claim/signer в HTTP пути. Старый snapshot без reward
+section→null, stale не превращает прошлые balances/rewards в актуальную истину.
 
-user-status-api.cjs: localhost GET /v1/wallets/:address, ограниченная pagination,
-исходные blocks→replayAttempts, баланс open/frozen/consumed отдельно Short/Monthly,
-carry и доказуемые payer-attributed decoder decisions. Отсутствие покупки в этом
-списке не объявляется проверенным отказом; pending receipt lookup не реализован.
-Checksum/config/admitted/replay обязательны; stale показывает прошлые значения,
-unavailable503 с null. provenance включает высоту/hash/manifestHash/время данных.
-index.observedAt теперь отдельно от status.updatedAt: failure не освежает snapshot.
-Нет RPC/ключей/записи в API, no-store, loopback. JSON/replay всё ещё линейные.
+Предыдущий policy/cache reorg test/API tickets остаются. Сквозной local сценарий расширен:
+после обоих terminal assigned, реальный vault.claim→paid и нулевой reward, duplicate claim
+отклоняется; stale и HTTP ответы сохранены. Unit projection проверяет безпобедный draw,
+удалённую выплату, неверную/двойную выплату, чужой vault и storage mismatch.
 
-8 различных адресных сценариев passed; первый reorg fixture использовал ускоренный
-hardhat_mine и дал non-contiguous branch, последовательный evm_mine исправил тест.
-Это local31337/mock, не actual Infinity/live/fork. Никакого полного прогона не делали.
-
-Проверь смысл статусов и freshness, отсутствие неверных нулей/ложного rejection,
-границы API и возможные утечки служебных данных. Призы/выплаты ещё не входят: дальше
-нужны проверяемые on-chain источники для назначенного и реально выплаченного приза.
-Не усложнять prize math и не объявлять localhost service публичной готовностью.
+Проверь корректность accounting-проекции и что user-facing paid не появляется раньше
+подтверждённого события. Это не RNG proof; глобальный список draws/no-winner для сайта
+отдельно не реализован. JSON/full replay и historical calls растут линейно; не заявляем
+production scale. Public sends не включались, contract math не менялась.
+Следующий практический шаг — эксплуатационное измерение/service и пользовательский UI.

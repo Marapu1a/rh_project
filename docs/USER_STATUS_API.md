@@ -1,7 +1,7 @@
 # Read-only API покупок и билетов
 
 29.09.2026. Реализован локальный HTTP endpoint поверх indexer snapshot и существующего
-replayAttempts. Призы, выплаты, frontend и публичный hosting не входят в этот пакет.
+replayAttempts. Награды/выплаты добавлены наблюдением vault на высоте снимка. Frontend и публичный hosting ещё не подключены.
 
 ```powershell
 node scripts/user-status-api.cjs CONFIG.json 8787
@@ -66,3 +66,35 @@ consumed1 отдельно Short/Monthly; stale сохраняет balances, п�
 нет отправки и изменения artifact. Это осознанная остановка спорного unstarted job,
 не автоматическое восстановление произвольной переорганизации финализированной истории.
 Solidity не менялась; тесты использовали compiled artifact с SHA256. Не full/live/fork.
+
+## Награды и выплаты (29.09)
+
+Ответ теперь содержит rewards с отдельной pagination (те же offset/limit), vault и
+coverage. Каждая запись: drawId, winner, asset, amountRaw, status assigned/paid,
+assignment и payment с transactionHash/blockNumber/blockHash/logIndex.
+Assigned означает обеспеченную награду в завершённом vault draw; paid требует
+успешного RewardPaid с точной суммой и адресом. Нулевой reward без события не считается
+доказательством выплаты. Mempool/отправленная неизвестная транзакция не выдаются за paid.
+
+Индексер читает события только закреплённого lifecycle.vault, проверяет reserve →
+assign → finalize → pay и суммы, затем сверяет draws и reward историческими eth_call
+на том же blockTag. Код vault проверяется существующим scanner по закреплённому hash.
+Новый snapshot публикуется только после всех проверок и проверки стабильности ветки.
+API пересчитывает события из сохранённых receipts и сверяет сохранённую проекцию;
+сам HTTP endpoint не ходит в сеть и не отправляет Claim.
+
+Старый snapshot без rewards даёт rewards=null до нового sync. При устаревании награды
+остаются видны с общим status=stale и as-of высотой; отсутствие новой выплаты в таком
+снимке не значит, что её не было после этой высоты. При ошибке чтения storage индексер
+сохраняет предыдущий хороший snapshot. Нет наград в полном снимке → пустой список,
+не вывод «кошелёк проиграл все розыгрыши». Глобальный список draws/исходов пока не API.
+
+Это проверка accounting vault, не независимое доказательство RNG/правомерности выбора
+победителя. История должна начинаться до относящихся к проекту reserve событий. Рост
+числа historical calls линейный по draws/rewards; production нагрузка ещё не измерена.
+
+Проверки reward-пакета29.09: `node --test --test-name-pattern="persistent indexer feeds" test/cutoff-scheduler.test.cjs` —1passed/34.4s;
+`node --test test/reward-observation.test.cjs test/persistent-buy-indexer.test.cjs` —8passed/1.4s;
+`node --test --test-name-pattern="profile catalog" test/test-launcher.test.cjs` —1passed.
+Итого9 продуктовых адресных сценариев +catalog. Existing compiled artifact/SHA256,
+не full/live/fork. Сырые логи.local/logs/rewards-api-*.log.
