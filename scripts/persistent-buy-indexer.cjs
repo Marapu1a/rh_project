@@ -6,6 +6,26 @@ const {resolveBuyPolicy}=require('./buy-policy-runtime.cjs');
 const {withState}=require('./local-scheduler-state.cjs');
 const tag=n=>'0x'+BigInt(n).toString(16);
 const check=(v,m)=>{if(!v)throw Error(m);};
+const nextDelay=status=>status?.state==='catchingUp'?0:10000;
+async function readSnapshot({config,statePath,manifest,cutoff,rpc,now=Date.now()}){
+ const waiting=reason=>{throw Object.assign(Error(reason),{code:'INDEXER_WAIT',reason});};
+ let state;
+ try{const {checksum,...stored}=JSON.parse(fs.readFileSync(statePath,'utf8'));
+  if(checksum!==hash(stored)||stored.configHash!==hash({kind:'persistent-buy-indexer-v1',config}))return waiting('indexerIdentity');state=stored;
+ }catch(e){if(e.code==='INDEXER_WAIT')throw e;return waiting('indexerUnavailable');}
+ const index=state.index,status=state.status,age=now-Date.parse(status?.updatedAt);
+ if(!index||!['caughtUp','catchingUp'].includes(status?.state)||!Number.isFinite(age)||age<0||age>config.indexer.maxAgeSeconds*1000)return waiting('indexerStale');
+ if(index.policyStatus?.mode!=='admitted')return waiting('indexerUnadmitted');
+ if(index.head<cutoff)return waiting('indexerBehind');
+ const saved=index.manifest.versions?require('./buy-policy-runtime.cjs').prefix(index.manifest,cutoff):index.manifest;
+ if(hash(saved)!==hash(manifest))return waiting('indexerPolicy');
+ const blocks=index.blocks.filter(b=>BigInt(b.number)<=BigInt(cutoff));
+ const head=blocks.at(-1),current=await rpc('eth_getBlockByNumber',[tag(cutoff),false]);
+ if(!head||BigInt(head.number)!==BigInt(cutoff)||head.hash!==current?.hash)return waiting('indexerBranch');
+ // Never consume cached minted totals as open attempts. Caller runs lifecycle replay.
+ replay(manifest,blocks);
+ return {manifest,blocks};
+}
 async function indexOnce({config,rpc,statePath,batchSize=100,reorgLimit=128}){
  check(Number.isInteger(batchSize)&&batchSize>0&&batchSize<=1000,'Invalid index batch');
  check(Number.isInteger(reorgLimit)&&reorgLimit>=0&&reorgLimit<=10000,'Invalid reorg limit');
@@ -62,9 +82,9 @@ async function main(){
  const config=JSON.parse(fs.readFileSync(configFile,'utf8'));
  const rpc=require('./public-rpc-qualification.cjs').httpRpc(process.env.RH_RPC_URL);
  let stopping=false;process.on('SIGINT',()=>{stopping=true;});process.on('SIGTERM',()=>{stopping=true;});
- do{try{console.log(JSON.stringify(await indexOnce({config,rpc,statePath})));}catch{console.error('Indexer waiting: RPC, policy, state or branch validation failed');if(mode==='once'){process.exitCode=1;return;}}
- if(mode==='once'||stopping)break;await new Promise(r=>setTimeout(r,10000));
+ do{let status;try{status=await indexOnce({config,rpc,statePath});console.log(JSON.stringify(status));}catch{console.error('Indexer waiting: RPC, policy, state or branch validation failed');if(mode==='once'){process.exitCode=1;return;}}
+ if(mode==='once'||stopping)break;await new Promise(r=>setTimeout(r,nextDelay(status)));
  }while(!stopping);
 }
-module.exports={indexOnce};
+module.exports={indexOnce,readSnapshot,nextDelay};
 if(require.main===module)main().catch(()=>{console.error('Indexer configuration failure');process.exitCode=1;});

@@ -2,6 +2,10 @@ const {test}=require('node:test'),assert=require('node:assert/strict'),fs=requir
 const {keccak256,id}=require('ethers');
 const {indexOnce}=require('../scripts/persistent-buy-indexer.cjs');
 const {replay,hash}=require('../scripts/direct-buy.cjs');
+test('catch-up delay differs from idle and outage backoff',()=>{
+ const {nextDelay}=require('../scripts/persistent-buy-indexer.cjs');
+ assert.equal(nextDelay({state:'catchingUp'}),0);assert.equal(nextDelay({state:'caughtUp'}),10000);assert.equal(nextDelay(),10000);
+});
 function fixture(t){
  const e=structuredClone(require('../research/direct-buy/evidence.json'));
  for(const k of Object.keys(e.manifest.codeHashes))e.manifest.codeHashes[k]=keccak256('0x01');
@@ -57,4 +61,16 @@ test('removed BUY rolls back its entries and carry using canonical replay',async
  }
  await f.run();const after=f.read().index.ledger;assert.notEqual(hash(after.wallets),hash(before.wallets));
  assert.equal(hash(after),hash(replay(f.config.manifest,f.e.blocks)));
+});
+test('snapshot consumer rejects unadmitted, stale, behind, wrong policy and changed branch',async t=>{
+ const f=fixture(t);f.config.indexer={statePath:f.statePath,maxAgeSeconds:60};await f.run();
+ const {readSnapshot}=require('../scripts/persistent-buy-indexer.cjs');
+ const original=f.read(),cutoff=original.index.head;
+ const request={config:f.config,statePath:f.statePath,manifest:f.config.manifest,cutoff,rpc:async()=>f.e.blocks.at(-1)};
+ await assert.rejects(readSnapshot(request),e=>e.reason==='indexerUnadmitted');
+ const write=change=>{const s=structuredClone(original);delete s.checksum;s.index.policyStatus={mode:'admitted'};change(s);fs.writeFileSync(f.statePath,JSON.stringify({...s,checksum:hash(s)}));};
+ for(const [reason,change] of [['indexerStale',s=>s.status.state='waiting'],['indexerStale',s=>s.status.updatedAt=new Date(0).toISOString()],['indexerBehind',s=>s.index.head--],['indexerPolicy',s=>s.index.manifest.entryThresholdRaw='1']]){
+  write(change);await assert.rejects(readSnapshot(request),e=>e.reason===reason);
+ }
+ write(()=>{});await assert.rejects(readSnapshot({...request,rpc:async()=>({hash:id('other branch')})}),e=>e.reason==='indexerBranch');
 });

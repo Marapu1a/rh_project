@@ -13,7 +13,12 @@ const {sendLocalTransaction,receiptOptions}=require('./local-receipt.cjs');
 const check=(ok,msg)=>{if(!ok)throw Error(msg);},zero=ethers.ZeroHash;
 const {resolveBuyPolicy}=require('./buy-policy-runtime.cjs');
 const wait=reason=>({status:'waiting',reason});
+async function history(o,manifest,cutoff){
+ if(!o.config.indexer)return scan(manifest,o.rpcUrl,cutoff,o.config.lifecycle);
+ return require('./persistent-buy-indexer.cjs').readSnapshot({config:o.config,statePath:o.config.indexer.statePath,manifest,cutoff,rpc:(m,p)=>o.provider.send(m,p)});
+}
 function validateConfig(c,rpcUrl){
+  if(c.indexer)check(c.buyPolicy&&c.cutoffMode==='FINALIZED_CHECKPOINT'&&typeof c.indexer.statePath==='string'&&require('node:path').isAbsolute(c.indexer.statePath)&&Number.isInteger(c.indexer.maxAgeSeconds)&&c.indexer.maxAgeSeconds>0&&c.indexer.maxAgeSeconds<=3600,'Invalid indexer configuration');
   check(c.schema===network.schema('local-promo-scheduler-v1')&&['LOCAL_HEAD','FINALIZED_CHECKPOINT'].includes(c.cutoffMode),'Explicit local scheduler config required');
   if(c.cutoffMode==='FINALIZED_CHECKPOINT')check(c.buyPolicy,'Finalized checkpoint requires admitted BUY policy');
   validateManifest(c.manifest);network.checkChain(c.manifest.chainId);check(c.lifecycle.schema==='attempt-lifecycle-v4','Lifecycle v4 required');
@@ -120,7 +125,7 @@ async function tickKind(kind,o,state,save){
       if(active!==zero||pending!==zero)return wait('otherDraw');
       // Rebuild from public history rather than trusting an empty assertion from disk.
       const historical=await resolveBuyPolicy(config,(m,p)=>provider.send(m,p),cutoff.blockNumber);
-      const blocks=(await scan(historical.manifest,o.rpcUrl,cutoff.blockNumber,config.lifecycle)).blocks;
+      const blocks=(await history(o,historical.manifest,cutoff.blockNumber)).blocks;
       const rebuilt=(isShort?sd:md).buildFromHistory({...selected.input,manifest:historical.manifest,blocks});
       check(hash(rebuilt)===hash(selected.empty),'Empty epoch differs from replay');
       const price=(await provider.getFeeData()).gasPrice;
@@ -138,7 +143,7 @@ async function tickKind(kind,o,state,save){
       check(!selected.started,'Previously started job disappeared; explicit reorg recovery required');
       // Under scheduler lock; no durable "verified" flag that could outlive a reorg/edit.
       const historical=await resolveBuyPolicy(config,(m,p)=>provider.send(m,p),cutoff.blockNumber);
-      const blocks=(await scan(historical.manifest,o.rpcUrl,cutoff.blockNumber,config.lifecycle)).blocks;
+      const blocks=(await history(o,historical.manifest,cutoff.blockNumber)).blocks;
       const ledger=replayAttempts(historical.manifest,config.lifecycle,blocks);
       check(ledger.head.hash===cutoff.blockHash,'Stored job cutoff differs from replay');
       const epochs=isShort?ledger.shortRules:ledger.monthlyRules;
@@ -180,7 +185,7 @@ async function tickKind(kind,o,state,save){
     if(!state.cutoffs?.[kind]){
       // Do not pay for periodic checkpoints when no finalized attempts need a draw.
       const preliminary=replayAttempts(buyManifest,config.lifecycle,
-        (await scan(buyManifest,o.rpcUrl,cutoffHead.number,config.lifecycle)).blocks);
+        (await history(o,buyManifest,cutoffHead.number)).blocks);
       check(preliminary.head.hash===cutoffHead.hash,'Chain changed during readiness scan');
       const pe=isShort?preliminary.shortRules:preliminary.monthlyRules;
       if(BigInt(pe.drainingEpoch||pe.currentEpoch)!==epoch)return wait('finalizedPolicyBoundary');
@@ -196,7 +201,7 @@ async function tickKind(kind,o,state,save){
     }
     buyManifest=(await resolveBuyPolicy(config,(m,p)=>provider.send(m,p),cutoffHead.number)).manifest;
   }
-  const blocks=(await scan(buyManifest,o.rpcUrl,cutoffHead.number,config.lifecycle)).blocks;
+  const blocks=(await history(o,buyManifest,cutoffHead.number)).blocks;
   const ledger=replayAttempts(buyManifest,config.lifecycle,blocks);
   check(ledger.head.hash===cutoffHead.hash,'Chain changed during scheduler scan');
   const epochs=isShort?ledger.shortRules:ledger.monthlyRules;
@@ -257,6 +262,7 @@ async function runScheduler(options,{maxTicks=32,onTick=()=>{}}={}){
       for(const kind of kinds){
         try{results[kind]=await tickKind(kind,options,state,save);}
         catch(e){if(e.code==='SCHEDULER_STORAGE_ERROR')throw e;
+          if(e.code==='INDEXER_WAIT'){results[kind]=wait(e.reason);continue;}
           if(e.code==='LOCAL_BUDGET_WAIT'&&e.stage==='estimate'){
             results[kind]={status:'waiting',reason:'executionBudget',budget:e.budget};continue;
           }

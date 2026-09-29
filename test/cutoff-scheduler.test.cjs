@@ -4,6 +4,28 @@ const {setup}=require('./fixtures/local-scheduler.cjs'),{sent,advance,rpc}=requi
 const {normalRules}=require('./fixtures/short-outcome.cjs'),{hash}=require('../scripts/direct-buy.cjs');
 const {initialAdapters}=require('../scripts/buy-policy-format.cjs');
 const compiled=compile({writeArtifacts:false});
+test('persistent indexer feeds lifecycle; missing cache waits while frozen draws finish',async t=>{
+ const f=await start(t),fs=require('node:fs');
+ f.config.indexer={statePath:f.options.statePath+'.index',maxAgeSeconds:120};
+ const sync=()=>require('../scripts/persistent-buy-indexer.cjs').indexOnce({config:f.config,rpc:(m,p)=>f.provider.send(m,p),statePath:f.config.indexer.statePath,batchSize:1000});
+ await sent(f.registry.register());await f.buy(f.admin,100);await advance(30*86400+1);
+ f.setFinalized((await f.provider.getBlock('latest')).number);
+ let r=await f.tick();assert.equal(r.results.SHORT.reason,'indexerUnavailable');assert.equal(await f.short.activeProposal(),ethers.ZeroHash);
+ await sync();await f.tick();
+ await rpc('evm_mine');f.setFinalized((await f.provider.getBlock('latest')).number);await sync();
+ await f.tick(32);
+ const state=f.readState();
+ for(const [kind,c] of [['SHORT',f.short],['MONTHLY',f.monthly]]){
+  const draw=state.jobs[kind][0].job.artifact.request.drawId;assert.notEqual(await c.drawRequest(draw),0n);
+  await sent(f.random.deliver(await c.drawRequest(draw),ethers.ZeroHash));
+ }
+ fs.renameSync(f.config.indexer.statePath,f.config.indexer.statePath+'.offline');
+ await f.tick(32);assert.equal(await f.short.pendingDatasetDraw(),ethers.ZeroHash);assert.equal(await f.monthly.pendingMonth(),ethers.ZeroHash);
+ fs.renameSync(f.config.indexer.statePath+'.offline',f.config.indexer.statePath);
+ await advance(30*86400+1);f.setFinalized((await f.provider.getBlock('latest')).number);await sync();
+ r=await f.tick();assert.equal(r.results.SHORT.reason,'empty');assert.equal(r.results.MONTHLY.reason,'empty');
+ assert.equal(f.readState().jobs.SHORT.length,1);assert.equal(f.readState().jobs.MONTHLY.length,1);
+});
 async function start(t,options={}){
  const f=await setup(t,compiled,options),owner=await f.admin.getAddress();
  const p=await f.deploy('BuyPolicySource',[f.config.lifecycle.instanceId,hash(f.config.manifest),owner,2,initialAdapters(f.config.manifest)]);

@@ -1,15 +1,21 @@
-# Review: постоянное read-only накопление BUY
+# Review: admitted indexer snapshot → scheduler/lifecycle
 
-29.09.2026. Тесты не запускать. [Описание и границы](PERSISTENT_INDEXER.md).
-Предыдущий operational V2 не изменялся. Сейчас добавлен отдельный once/watch процесс
-поверх scanWithRpc/replay/withState, без второй математики, send или scheduler integration.
+29.09.2026. Ответ7ad0bfc учтён. Только статический review, тесты не запускать.
+[Модуль](PERSISTENT_INDEXER.md). Новая настройка config.indexer включает consumer:
+checksum/config identity, admitted policy, freshness, покрытие cutoff, prefix manifest
+и канонический block hash. Старые minted totals не источник open attempts:
+используются исходные blocks и прежний replayAttempts/buildFromHistory.
+INDEXER_WAIT не препятствует другой lane; frozen не зависит от indexer. Без настройки
+остаётся прежний RPC scan. Настройка входит в существующую runtime identity,
+не разрешает менять живой журнал или включать public sends/handoff.
 
-Проверь cache canonicality/rollback, неизменность последнего хорошего снимка при ошибке,
-идентичность повторного ledger, отсутствие ложного admission и обещаний масштаба.
-Тесты:8/8 продуктовых +catalog; cache fixture legacy/mock, соседний decoder Infinity.
-Самостоятельный service/API сайта и scheduler snapshot consumption ещё не готовы.
-Следующий пакет — интеграция с lifecycle/scheduler без пересмотра frozen результатов.
+Watch при backlog продолжает bounded порции без10s sleep; idle/failure ждут10s.
+Не заявляем производительность: JSON/full replay остаются линейными.
+Проверь границы cutoff/policy/freshness, расход использованных attempts, возможность
+ошибочно блокировать frozen и изоляцию ожиданий. Не расширять призовую математику.
 
-Alchemy прошёл bounded repeat65requests/0errors и historical state до864000blocks;
-в первом проходе1HTTP403, точный запрос затем3/3 успешен. Не SLA/production proof.
-Ключ только в.local. Не предлагай обход frozen, reseed или gas-гарантии.
+Локальный сквозной сценарий с admitted policy: missing cache→wait; sync→оба draw;
+cache недоступен→оба frozen завершаются; следующий цикл→empty без новых jobs.
+Consumer negatives и соседний прежний scheduler проверяются адресно, не full/live/fork.
+Следующий пакет — API статусов с происхождением данных, затем сервер/supervisor и
+квалификация actual Infinity deployment. Alchemy sampled history passed, SLA не заявлен.
