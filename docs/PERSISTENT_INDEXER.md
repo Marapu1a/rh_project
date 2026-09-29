@@ -45,7 +45,7 @@ RPC outage не публикует частичный ledger. Anchor mismatch, �
   линейны по накопленной истории; не заявляем масштабируемую базу данных.
 - Подтверждение worker не контрактная финальность. Reorg здесь пересчитывает только
   read-only снимок; существующие frozen datasets/claims не редактируются.
-- [API покупок/билетов](USER_STATUS_API.md) добавлен локально; supervisor ещё впереди. Без config.indexer scheduler сохраняет
+- [API покупок/билетов](USER_STATUS_API.md) добавлен локально; [supervisor/runbook](INDEXER_SERVICE.md) добавлен; установка на сервер ещё впереди. Без config.indexer scheduler сохраняет
   прежнее независимое чтение; для реального подключения нужны точные deployment pins.
 - Тесты cache используют сохранённую legacy BUY ветку и mock RPC/code; соседние
   Infinity decoder tests проверяют нынешнюю математику. Admitted Infinity end-to-end
@@ -117,3 +117,5 @@ scanMs, replayMs, rewardMs (включая финальную branch прове�
 прочитанного finalized target, не текущего chain tip. Waiting сохраняет прежний index,
 но не выдаёт старые успешные metrics за новый проход. Метрики не меняют admission,
 freshness, RPC retry или призовые правила. Полный JSON/replay остаётся линейным.
+
+Постоянный запуск indexer/API: [service/runbook](INDEXER_SERVICE.md). Успешный return indexOnce дополнительно отдаёт observedAt/policyMode/processedTimestamp для health; записанный snapshot и правила admission не менялись.

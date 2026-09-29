@@ -1,5 +1,7 @@
 # Карта реализации
 
+29.09: `run-indexer-service.cjs` + `indexer-service-child.cjs` — read-only supervisor, health, isolated passes/retry. `ops/rh-promo-indexer.service` — server template; `test/indexer-service.test.cjs` — process recovery. [Runbook](INDEXER_SERVICE.md).
+
 29.09: HTTP использует `createAsyncReader` → `scripts/user-status-worker.cjs`; worker хранит prepared view, main проверяет generation после ответа. Bounded queue/timeout/close, probe `scripts/measure-status-worker.cjs`. [API module](USER_STATUS_API.md).
 
 29.09: `scripts/user-status-api.cjs:createReader` — generation-aware prepared wallet view, HTTP использует его; `walletStatus` остаётся одноразовым replay. `scripts/measure-status-api.cjs` — локальный synthetic benchmark; `test/user-status-cache.test.cjs` — cache/freshness/replacement/outage. Indexer возвращает timing/lag/size metrics. [Границы](USER_STATUS_API.md).

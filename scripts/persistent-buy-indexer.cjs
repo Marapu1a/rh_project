@@ -75,7 +75,7 @@ async function indexOnce({config,rpc,statePath,batchSize=100,reorgLimit=128,full
    state.status.metrics={lagBlocks:target-end,historyBlocks:input.blocks.length,scanMs,replayMs,rewardMs:performance.now()-rewardStarted,beforeSaveMs:performance.now()-started};
    const saveStarted=performance.now();save(state);
    // Final write timing is returned/logged, not followed by another state write.
-   return {...state.status,metrics:{...state.status.metrics,saveMs:performance.now()-saveStarted,totalMs:performance.now()-started,stateBytes:fs.statSync(statePath).size}};
+   return {...state.status,observedAt:state.index.observedAt,policyMode:resolved.policyStatus.mode,processedTimestamp:input.blocks.at(-1)?.timestamp??null,metrics:{...state.status.metrics,saveMs:performance.now()-saveStarted,totalMs:performance.now()-started,stateBytes:fs.statSync(statePath).size}};
   }catch(e){
    if(e.code==='SCHEDULER_STORAGE_ERROR')throw e;
    state.status={state:'waiting',processedBlock:state.index?.head??Number(config.manifest.anchor.number),reason:'Read or validation failed; last good snapshot retained',updatedAt:new Date().toISOString()};

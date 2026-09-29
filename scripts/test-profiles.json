@@ -83,7 +83,8 @@
       "test/operational-profile.test.cjs",
       "test/persistent-buy-indexer.test.cjs",
       "test/reward-observation.test.cjs",
-      "test/user-status-cache.test.cjs"
+      "test/user-status-cache.test.cjs",
+      "test/indexer-service.test.cjs"
     ]
   },
   "accounting": {
@@ -157,7 +158,8 @@
       "test/infinity-payout-evidence.test.cjs",
       "test/persistent-buy-indexer.test.cjs",
       "test/reward-observation.test.cjs",
-      "test/user-status-cache.test.cjs"
+      "test/user-status-cache.test.cjs",
+      "test/indexer-service.test.cjs"
     ]
   },
   "coordinator": {

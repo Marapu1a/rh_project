@@ -1,0 +1,30 @@
+[Unit]
+Description=Read-only promo indexer and wallet API
+Wants=network-online.target
+After=network-online.target
+StartLimitIntervalSec=300
+StartLimitBurst=5
+
+[Service]
+Type=simple
+User=rhpromo
+Group=rhpromo
+WorkingDirectory=/opt/rh_project
+EnvironmentFile=/etc/rh-promo/indexer.env
+ExecStart=/usr/bin/node /opt/rh_project/scripts/run-indexer-service.cjs /etc/rh-promo/indexer.json 8787
+Restart=on-failure
+RestartPreventExitStatus=78
+RestartSec=10
+KillMode=mixed
+TimeoutStopSec=45
+StateDirectory=rh-promo
+UMask=0077
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/rh-promo
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

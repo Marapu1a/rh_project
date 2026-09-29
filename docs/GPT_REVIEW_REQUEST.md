@@ -1,30 +1,29 @@
-# Review: wallet API cache + worker isolation
+# Review: постоянный read-only indexer/API service
 
-29.09.2026. Только статический review, не запускать tests/build/fork.
-После ответа5e8216b сделаны два последовательных пакета:56ccf3e cached prepared view
-и текущий worker isolation. Контракты/math/RNG/public activation не менялись.
+29.09.2026. Только статический review, тесты/build/fork не запускать.
+Предыдущий ответ86bbab8 учтён. Пользователь уточнил границу: решаем обычные конкретные
+отказы и идём к завершению продукта, не ищем бесконечно экзотические пересечения.
 
-[Полные границы и измерения](USER_STATUS_API.md). createReader проверяет новый файл
-(checksum/config/admission/BUY+lifecycle/reward projection) и строит per-wallet Maps;
-повторные чтения проверяют file generation/freshness. Ошибка не возвращает прежний success.
-Теперь createAsyncReader держит этот reader в одном worker_threads worker; main получает
-только wallet response и перепроверяет generation асинхронным stat. Full JSON/replay не
-блокирует HTTP event loop. Queue64, timeout30s: overload→unavailable; timeout/crash
-снимают все pending, worker завершается, следующий запрос запускает новый. Close окончательный.
+[Runbook и реализация](INDEXER_SERVICE.md). Один supervisor держит HTTP API и запускает
+последовательные indexOnce в отдельных OS children. Full scan вне HTTP. Poll10s,
+catch-up сразу, timeout120s; RPC failure/child exit повторяются. Service owner lock
+и существующий pass lock исключают два service owners/одновременные passes.
+Owned leftover lock снимается только после exit своего child и точного PID match;
+unknown lock/storage/corrupt state требуют attention, не reset. Parent SIGKILL/power loss
+могут оставить service lock: описана ручная проверка, auto-delete нет.
 
-Синтетические5013blocks/9.59MB: прежний uncached~696ms, cache warm~0.056ms.
-Worker cold~868ms, main timer maxgap16ms, warm round-trip~0.27ms (100known wallet reads).
-Не actual Infinity/RPC qualification. Полный indexer scan/JSON остаётся линейным;
-метрики прохода/lag/size добавлены предыдущим пакетом. Прежняя подготовка в HTTP
-потоке была отдельным bottleneck; теперь она изолирована, а не magically ускорена.
+Health отдельно показывает fresh snapshot, lag к последнему прочитанному finalized,
+policyMode, время/bytes прохода. Исследовательский unadmitted не ready. Last-pass health
+не называется live finality или wallet worker readiness. Только loopback; полный статус
+пишется JSON без RPC URL/errors. Никаких signer/денежных операций/public sends.
+Unit systemd подготовлен, не установлен; deployment/signing/HTTPS/alerts ещё впереди.
 
-Текущий scoped run:8cache/worker tests +1сквозной indexer/lifecycle/Short/Monthly/claim
-прошли. Проверены outage/replace/restart/stale/corruption, bound queue/timeout/close,
-main-thread responsiveness и детерминированная замена файла во время доставки ответа.
-Предыдущий пакет отдельно проверял indexer/reward module; full не запускался.
+18 адресных tests +catalog passed: настоящие child processes, mock HTTP RPC/legacy
+история, outage/resume, restart, killed child+owned lock, timeout, unknown lock/corrupt
+state, соседи indexer/API. Не full/live/admitted Infinity. Измерение реальной истории
+перенесено в предрелизную проверку (или при конкретном lag), не объявляем throughput.
 
-Проверь реальные дефекты: гонки поколений/late worker messages, shutdown/restart,
-ложный observed/нулевые balances, потеря reward validation. Не добавляй новый admin,
-prize math или требования гарантировать gas. Следующий пакет предлагаем: постоянный
-service/runbook с локальной репетицией restart/outage, потом real admitted indexer
-measurement; actual deployment/signing/frontend ещё открыты, public sends закрыты.
+Просьба проверить реальные ошибки shutdown/lock ownership/retry и честность health.
+Не требовать гарантированной безотказности или новой БД без измеренного препятствия.
+Следующий продуктовый пакет предлагаем посвятить сайту и общему списку розыгрышей,
+затем actual deployment и сквозному предрелизному прогону.

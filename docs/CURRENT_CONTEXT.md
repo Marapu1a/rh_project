@@ -1,6 +1,6 @@
 # Текущий контекст
 
-29.09: [API snapshot worker](USER_STATUS_API.md) вынес full read/hash/replay и Maps из HTTP event loop. Один worker, максимум64 outstanding запросов,30s timeout; overload/crash/замена файла в пути ответа → unavailable, без старого success; lazy restart. Synthetic5013blocks: cold868ms, main timer продолжал работать (max gap16ms), warm round-trip0.27ms.9 адресных сценариев passed, не full/live/fork. Следующий шаг — постоянный service/runbook и измерение живого admitted indexer; сам scan/JSON остаётся линейным. Public sends закрыты.
+29.09: [Постоянный read-only service](INDEXER_SERVICE.md) запускает indexer/API, retries RPC/owned-child crash/timeout, health с отдельными freshness и lag; unknown lock/corrupt state → needsAttention. Linux unit/runbook подготовлены, сервер не развёрнут.18 адресных сценариев +catalog passed на Windows/mock RPC; не full/live/admitted Infinity. Следующий пакет — пользовательский сайт и общий список розыгрышей; real throughput остаётся предрелизной проверкой. Public sends закрыты.
 
 29.09: [Reward checkpoint](USER_STATUS_API.md) устраняет перечитывание всего storage на каждом poll: новые события→только затронутые draws/rewards; reorg/legacy snapshot→полный аудит. Модель120draws/1200rewards:1320initial,0idle,2late claim; audit CLI сохранён.10 адресных сценариев passed; payout fixture детерминизирован, не full/live/fork. Полный BUY replay/JSON остаётся линейным, production throughput ещё не доказан. Следом измерение общего pipeline/постоянный service, public sends закрыты.
 

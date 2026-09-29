@@ -22,6 +22,7 @@
 | Казна и кампании | [Infinity collector](INFINITY_COLLECTOR.md), [worker](INFINITY_WORKER.md), [Vault](PROMO_VAULT_DESIGN.md), [FeeRouter](FEE_ROUTER_ROLLOVER_REPORT.md), [dual architecture](DUAL_CONTROLLER_ARCHITECTURE.md) |
 | BUY policy admission | [Контракт, публикация и применение правил](BUY_POLICY_ADMISSION.md) |
 | Пользовательский API | [Покупки, билеты, свежесть](USER_STATUS_API.md) |
+| Постоянный сервис / восстановление | [Запуск, health, locks, systemd](INDEXER_SERVICE.md) |
 | Постоянное накопление | [Indexer once/watch и ограничения](PERSISTENT_INDEXER.md) |
 | Билеты и проверяемость | [Infinity automatic BUY](INFINITY_BUY.md), [Registry](PARTICIPANT_REGISTRY.md), [BUY](DIRECT_BUY_REPLAY.md), [lifecycle](ATTEMPT_LIFECYCLE.md), [trust](INDEXER_TRUST_MODEL.md) |
 | Short | [Dataset](SHORT_DATASET_PREPARATION.md), [epochs](SHORT_RULES_EPOCHS.md), [settlement](SHORT_SETTLEMENT.md), [basket](SHORT_PRIZE_BASKET.md), [model](SHORT_MODEL.md) |

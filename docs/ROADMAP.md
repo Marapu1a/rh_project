@@ -1,6 +1,6 @@
 # План до первого публичного запуска
 
-29.09: [API snapshot worker](USER_STATUS_API.md) вынес full read/hash/replay и Maps из HTTP event loop. Один worker, максимум64 outstanding запросов,30s timeout; overload/crash/замена файла в пути ответа → unavailable, без старого success; lazy restart. Synthetic5013blocks: cold868ms, main timer продолжал работать (max gap16ms), warm round-trip0.27ms.9 адресных сценариев passed, не full/live/fork. Следующий шаг — постоянный service/runbook и измерение живого admitted indexer; сам scan/JSON остаётся линейным. Public sends закрыты.
+29.09: [Постоянный read-only service](INDEXER_SERVICE.md) запускает indexer/API, retries RPC/owned-child crash/timeout, health с отдельными freshness и lag; unknown lock/corrupt state → needsAttention. Linux unit/runbook подготовлены, сервер не развёрнут.18 адресных сценариев +catalog passed на Windows/mock RPC; не full/live/admitted Infinity. Следующий пакет — пользовательский сайт и общий список розыгрышей; real throughput остаётся предрелизной проверкой. Public sends закрыты.
 
 29.09.2026. Это текущие релизные блокеры, а не журнал всех выполненных итераций.
 История: [снимок прежнего плана](archive/snapshots/ROADMAP_BEFORE_DEPLOYMENT_PROFILE_2026-09-28.md).
@@ -71,12 +71,12 @@ public sends закрыты. [Recovery admission](RECOVERY_ADMISSION.md) отд�
    его окружения не является условием продолжения.
    Дорогой gas/нехватка ETH → resumable wait/top-up; вечная самоокупаемость не gate.
    Призовые frozen/claimable не расходуются. Public sends закрыты.
-3. **Постоянный сервис.** Ключи и один владелец signer, supervisor, устойчивый несинхронизируемый
+3. **Постоянный сервис.** [Read-only supervisor/runbook](INDEXER_SERVICE.md) реализован и локально проверен. Остались установка на сервер, ключи и один владелец signer, устойчивый несинхронизируемый
    runtime volume, резервные RPC, recovery/runbook и внешний канал уведомлений.
    [Статусы ожидания и события](PROMO_OPERATIONAL_WAITS.md) уже подключены к CLI; delivery пока нет. Неизвестная отправка и stale
    lock требуют сверки; их нельзя удалять ради продолжения. Handoff не переносит deployment
    или BUY policy и не исправляет потерю журналов.
-4. **Indexer и пользовательский слой.** [Read-only накопление](PERSISTENT_INDEXER.md) реализовано; snapshot подключён к scheduler/lifecycle опционально с admitted/freshness/cutoff проверками. [API покупок/билетов](USER_STATUS_API.md) реализован локально; API wallet rewards сверяет on-chain события/storage; reward checkpoint ограничивает обычные eth_call новыми изменениями, full audit/reorg сохранены; далее эксплуатационное измерение скорости, сервис и frontend. Alchemy прошёл sampled historical reads; admitted BUY/live proof остаются. Постоянное накопление/reorg/restart вместо повторного
+4. **Indexer и пользовательский слой.** [Read-only накопление](PERSISTENT_INDEXER.md) реализовано; snapshot подключён к scheduler/lifecycle опционально с admitted/freshness/cutoff проверками. [API покупок/билетов](USER_STATUS_API.md) реализован локально; API wallet rewards сверяет on-chain события/storage; reward checkpoint ограничивает обычные eth_call новыми изменениями, full audit/reorg сохранены; далее frontend/общий список розыгрышей; сервис реализован локально, реальная скорость проверяется перед выпуском. Alchemy прошёл sampled historical reads; admitted BUY/live proof остаются. Постоянное накопление/reorg/restart вместо повторного
    полного scan, публичная проверка datasets, прозрачные билеты/условия/результаты/claims на
    сайте. Поддерживаемые маршруты объявлять явно; не обещать билеты за любой transfer.
 5. **Общий контрольный прогон.** Оба draw и следующий цикл на реальных интеграциях, без

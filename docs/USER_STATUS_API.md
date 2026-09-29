@@ -226,3 +226,5 @@ message и async stat, несопоставимо напрямую с прошл
 close, freshness/recovery и детерминированная замена файла при доставке ответа.
 Следующий шаг — эксплуатационный service/runbook и реальные indexer metrics; не новая
 перепись хранения без измерений. Public sends по-прежнему закрыты.
+
+Постоянный запуск: [service/runbook](INDEXER_SERVICE.md). `createServer(config,{health})` опционально подключает loopback `/healthz`; standalone wallet API без callback сохраняет прежние routes. Health сервиса не заменяет проверку конкретного wallet snapshot.

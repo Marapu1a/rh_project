@@ -107,11 +107,13 @@ function createAsyncReader(input,{maxPending=64,timeoutMs=30000}={}){
  function close(){closed=true;if(worker)stop(worker);}
  return {read,close};
 }
-function createServer(config){const reader=createAsyncReader(config);const server=http.createServer(async(req,res)=>{
+function createServer(config,{health}={}){const reader=createAsyncReader(config);const server=http.createServer(async(req,res)=>{
  res.setHeader('Content-Type','application/json; charset=utf-8');res.setHeader('Cache-Control','no-store');
  try{
   if(req.method!=='GET'){res.writeHead(405,{Allow:'GET'});res.end(JSON.stringify({error:'methodNotAllowed'}));return;}
-  const u=new URL(req.url,'http://localhost'),match=/^\/v1\/wallets\/(0x[0-9a-fA-F]{40})$/.exec(u.pathname);
+  const u=new URL(req.url,'http://localhost');
+  if(u.pathname==='/healthz'&&health){const status=health();res.writeHead(status.ready?200:503);res.end(JSON.stringify(status));return;}
+  const match=/^\/v1\/wallets\/(0x[0-9a-fA-F]{40})$/.exec(u.pathname);
   if(!match){res.writeHead(404);res.end(JSON.stringify({error:'notFound'}));return;}
   const o=u.searchParams.get('offset')??'0',l=u.searchParams.get('limit')??'25';
   if([...u.searchParams.keys()].some(k=>!['offset','limit'].includes(k))||u.searchParams.getAll('offset').length>1||u.searchParams.getAll('limit').length>1||!/^\d+$/.test(o)||!/^\d+$/.test(l))throw Object.assign(Error(),{status:400});
