@@ -65,7 +65,7 @@ async function indexOnce({config,rpc,statePath,batchSize=100,reorgLimit=128}){
    const ledger=end>anchor?replay(input.manifest,input.blocks):null;
    check((await rpc('eth_getBlockByNumber',[finalized.number,false])).hash===finalized.hash,'Finalized branch changed during indexing');
    // Publish evidence and derived ledger together; failure leaves the last good snapshot intact.
-   state.index={head:end,blocks:input.blocks,cache,manifest:input.manifest,ledger,ledgerHash:ledger?hash(ledger):null,policyStatus:resolved.policyStatus};
+   state.index={head:end,observedAt:new Date().toISOString(),blocks:input.blocks,cache,manifest:input.manifest,ledger,ledgerHash:ledger?hash(ledger):null,policyStatus:resolved.policyStatus};
    state.status={state:end===target?'caughtUp':'catchingUp',processedBlock:end,targetBlock:target,removedBlocks:removed,cacheHits,updatedAt:new Date().toISOString()};
    save(state);return state.status;
   }catch(e){

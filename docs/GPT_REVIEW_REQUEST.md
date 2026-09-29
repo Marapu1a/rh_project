@@ -1,21 +1,27 @@
-# Review: admitted indexer snapshot → scheduler/lifecycle
+# Review: read-only wallet API и policy/cache reorg
 
-29.09.2026. Ответ7ad0bfc учтён. Только статический review, тесты не запускать.
-[Модуль](PERSISTENT_INDEXER.md). Новая настройка config.indexer включает consumer:
-checksum/config identity, admitted policy, freshness, покрытие cutoff, prefix manifest
-и канонический block hash. Старые minted totals не источник open attempts:
-используются исходные blocks и прежний replayAttempts/buildFromHistory.
-INDEXER_WAIT не препятствует другой lane; frozen не зависит от indexer. Без настройки
-остаётся прежний RPC scan. Настройка входит в существующую runtime identity,
-не разрешает менять живой журнал или включать public sends/handoff.
+29.09.2026. Review b2d4368 учтён. Только статический review, тесты не запускать.
+[Описание API и проверки](USER_STATUS_API.md).
 
-Watch при backlog продолжает bounded порции без10s sleep; idle/failure ждут10s.
-Не заявляем производительность: JSON/full replay остаются линейными.
-Проверь границы cutoff/policy/freshness, расход использованных attempts, возможность
-ошибочно блокировать frozen и изоляцию ожиданий. Не расширять призовую математику.
+Закрыт сценарий policy publication+накопленный cache+reorg+сохранённый unstarted job:
+policy исчезает из ветки, индексер откатывает хвост, scheduler отвергает старый job
+как Stored job BUY policy mismatch. Нет send/изменения artifact. Это не auto-reset
+спорной финализированной истории. Публичные sends не открывались.
 
-Локальный сквозной сценарий с admitted policy: missing cache→wait; sync→оба draw;
-cache недоступен→оба frozen завершаются; следующий цикл→empty без новых jobs.
-Consumer negatives и соседний прежний scheduler проверяются адресно, не full/live/fork.
-Следующий пакет — API статусов с происхождением данных, затем сервер/supervisor и
-квалификация actual Infinity deployment. Alchemy sampled history passed, SLA не заявлен.
+user-status-api.cjs: localhost GET /v1/wallets/:address, ограниченная pagination,
+исходные blocks→replayAttempts, баланс open/frozen/consumed отдельно Short/Monthly,
+carry и доказуемые payer-attributed decoder decisions. Отсутствие покупки в этом
+списке не объявляется проверенным отказом; pending receipt lookup не реализован.
+Checksum/config/admitted/replay обязательны; stale показывает прошлые значения,
+unavailable503 с null. provenance включает высоту/hash/manifestHash/время данных.
+index.observedAt теперь отдельно от status.updatedAt: failure не освежает snapshot.
+Нет RPC/ключей/записи в API, no-store, loopback. JSON/replay всё ещё линейные.
+
+8 различных адресных сценариев passed; первый reorg fixture использовал ускоренный
+hardhat_mine и дал non-contiguous branch, последовательный evm_mine исправил тест.
+Это local31337/mock, не actual Infinity/live/fork. Никакого полного прогона не делали.
+
+Проверь смысл статусов и freshness, отсутствие неверных нулей/ложного rejection,
+границы API и возможные утечки служебных данных. Призы/выплаты ещё не входят: дальше
+нужны проверяемые on-chain источники для назначенного и реально выплаченного приза.
+Не усложнять prize math и не объявлять localhost service публичной готовностью.

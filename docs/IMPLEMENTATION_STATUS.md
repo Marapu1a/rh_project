@@ -1,5 +1,7 @@
 # Карта реализации
 
+29.09: user-status-api.cjs — walletStatus/createServer, loopback GET wallet purchases/attempts, без signer/RPC; replayAttempts и проверенный snapshot. persistent-buy-indexer сохраняет observedAt успешных данных. [API/тесты](USER_STATUS_API.md).
+
 29.09: readSnapshot в persistent-buy-indexer + history в local-promo-scheduler подключают сохранённые blocks к прежним replayAttempts/buildFromHistory. INDEXER_WAIT изолирован по kind; frozen не читает cache. nextDelay убирает обычную паузу при catchingUp. [Модуль](PERSISTENT_INDEXER.md).
 
 29.09: persistent-buy-indexer.cjs использует существующие scanner/replay/withState; once/watch, cache и статусы. [Границы и проверки](PERSISTENT_INDEXER.md). Нет интеграции scheduler/сайта, CPU replay пока полный.

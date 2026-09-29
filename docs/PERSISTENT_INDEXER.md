@@ -45,7 +45,7 @@ RPC outage не публикует частичный ledger. Anchor mismatch, �
   линейны по накопленной истории; не заявляем масштабируемую базу данных.
 - Подтверждение worker не контрактная финальность. Reorg здесь пересчитывает только
   read-only снимок; существующие frozen datasets/claims не редактируются.
-- API сайта и supervisor — следующий пакет. Без config.indexer scheduler сохраняет
+- [API покупок/билетов](USER_STATUS_API.md) добавлен локально; supervisor ещё впереди. Без config.indexer scheduler сохраняет
   прежнее независимое чтение; для реального подключения нужны точные deployment pins.
 - Тесты cache используют сохранённую legacy BUY ветку и mock RPC/code; соседние
   Infinity decoder tests проверяют нынешнюю математику. Admitted Infinity end-to-end
@@ -98,3 +98,6 @@ Fixtures local31337/mock, не live/fork. CPU/диск по-прежнему р�
 `node --test --test-name-pattern="finalized checkpoint scheduler waits without proposals" test/cutoff-scheduler.test.cjs` (1passed,30.9s).
 Итого8 различных сценариев (delay повторён). Для контрактных fixtures использован
 существующий compiled artifact с RH_TEST_ARTIFACT/SHA256; Solidity не менялась.
+
+29.09: index.observedAt фиксирует время последнего успешного снимка. Обновление waiting
+не делает старые данные свежими для API.

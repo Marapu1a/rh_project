@@ -25,6 +25,36 @@ test('persistent indexer feeds lifecycle; missing cache waits while frozen draws
  await advance(30*86400+1);f.setFinalized((await f.provider.getBlock('latest')).number);await sync();
  r=await f.tick();assert.equal(r.results.SHORT.reason,'empty');assert.equal(r.results.MONTHLY.reason,'empty');
  assert.equal(f.readState().jobs.SHORT.length,1);assert.equal(f.readState().jobs.MONTHLY.length,1);
+ const api=require('../scripts/user-status-api.cjs'),wallet=await f.admin.getAddress();
+ let view=api.walletStatus({config:f.config,wallet});assert.equal(view.status,'observed');
+ assert.equal(view.balances.SHORT.open,'0');assert.equal(view.balances.SHORT.consumedTotal,'1');assert.equal(view.balances.MONTHLY.consumedTotal,'1');
+ assert.equal(view.purchases.items.length,1);
+ view=api.walletStatus({config:f.config,wallet,now:Date.now()+121000});assert.equal(view.status,'stale');assert.equal(view.balances.SHORT.consumedTotal,'1');
+ const server=api.createServer(f.config);await new Promise(r=>server.listen(0,'127.0.0.1',r));t.after(()=>new Promise(r=>{server.close(r);server.closeAllConnections();}));
+ const url='http://127.0.0.1:'+server.address().port+'/v1/wallets/'+wallet;
+ assert.equal((await fetch(url)).status,200);assert.equal((await fetch(url+'?limit=101')).status,400);assert.equal((await fetch(url,{method:'POST'})).status,405);
+ fs.renameSync(f.config.indexer.statePath,f.config.indexer.statePath+'.offline');
+ const unavailable=await fetch(url);assert.equal(unavailable.status,503);assert.equal((await unavailable.json()).balances,null);
+});
+test('policy publication reorg with cached unstarted job cannot silently replace its artifact',async t=>{
+ const f=await start(t);f.config.indexer={statePath:f.options.statePath+'.index',maxAgeSeconds:120};
+ const sync=()=>require('../scripts/persistent-buy-indexer.cjs').indexOnce({config:f.config,rpc:(m,p)=>f.provider.send(m,p),statePath:f.config.indexer.statePath,batchSize:1000});
+ await sent(f.registry.register());await f.buy(f.admin,100);await advance(30*86400+1);
+ const point=await rpc('evm_snapshot');
+ const fromBlock=(await f.provider.getBlock('latest')).number+8;
+ const next={...structuredClone(f.config.manifest),schema:'direct-buy-v2',routeVersion:'scheduled-routes-v1',routes:[{id:f.config.manifest.routeVersion,fromBlock:0},{id:'rh-ur-10-060c0f-v1',fromBlock}]};
+ const tx=await require('../scripts/publish-buy-policy.cjs').publishBuyPolicy({trust:f.config.buyPolicy,genesis:f.config.manifest,next,signer:f.admin,rpc,persist:async()=>{}});await tx.wait();
+ for(let i=0;i<10;i++)await rpc('evm_mine');f.setFinalized((await f.provider.getBlock('latest')).number);await sync();await f.tick(1,['SHORT']);
+ await rpc('evm_mine');f.setFinalized((await f.provider.getBlock('latest')).number);await sync();await f.tick(1,['SHORT']);
+ const old=f.readState().jobs.SHORT[0];assert(old);assert.equal(await f.short.activeProposal(),ethers.ZeroHash);
+ const oldHash=hash(old),height=(await f.provider.getBlock('latest')).number;
+ await rpc('evm_revert',[point]);await advance(1);
+ while((await f.provider.getBlock('latest')).number<height)await rpc('evm_mine');
+ f.setFinalized((await f.provider.getBlock('latest')).number);const indexed=await sync();assert(indexed.removedBlocks>0);
+ const nonce=await f.provider.getTransactionCount(await f.admin.getAddress());
+ const result=await runScheduler({...f.options,provider:f.provider,kinds:['SHORT']},{maxTicks:1});
+ assert.equal(result.status,'error');assert.match(result.results.SHORT.message,/Stored job BUY policy mismatch/);
+ assert.equal(hash(f.readState().jobs.SHORT[0]),oldHash);assert.equal(await f.provider.getTransactionCount(await f.admin.getAddress()),nonce);assert.equal(await f.short.activeProposal(),ethers.ZeroHash);
 });
 async function start(t,options={}){
  const f=await setup(t,compiled,options),owner=await f.admin.getAddress();
