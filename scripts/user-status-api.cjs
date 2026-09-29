@@ -67,9 +67,47 @@ function createReader(input){
    return structuredClone(render(config,cached,query));
   }catch{cached=null;key=null;metrics.failures++;return unavailable(query.wallet);}
  }
- return {read,metrics:()=>({...metrics})};
+ return {read,metrics:()=>({...metrics}),generation:()=>key};
 }
-function createServer(config){const reader=createReader(config);return http.createServer((req,res)=>{
+// Keep history parsing/replay and the prepared view in one dedicated thread.
+// Bound outstanding requests; overload/failure is unavailable, never a stale success.
+function createAsyncReader(input,{maxPending=64,timeoutMs=30000}={}){
+ const {Worker}=require('node:worker_threads'),path=require('node:path');
+ const config=structuredClone(input),pending=new Map();let worker=null,sequence=0,closed=false;
+ if(!Number.isInteger(maxPending)||maxPending<1||!Number.isInteger(timeoutMs)||timeoutMs<1)throw Error('Invalid reader limits');
+ function finish(id,result){const item=pending.get(id);if(!item)return;pending.delete(id);clearTimeout(item.timer);item.resolve(result);}
+ function stop(w){
+  if(worker!==w)return;
+  worker=null;for(const [id,item] of pending)finish(id,unavailable(item.wallet));
+  void w.terminate();
+ }
+ function start(){
+  const w=new Worker(path.join(__dirname,'user-status-worker.cjs'),{workerData:config});worker=w;
+  w.on('error',()=>stop(w));w.on('exit',()=>stop(w));
+  w.on('message',async({id,result,key})=>{
+   if(worker!==w||!pending.has(id))return;
+   try{
+    // A file replaced while the response was in transit must not appear current.
+    if(result.status!=='unavailable'&&generation(await fs.promises.stat(config.indexer.statePath,{bigint:true}))!==key)throw Error();
+   }catch{result=unavailable(pending.get(id)?.wallet??result.wallet);}
+   if(worker===w)finish(id,result);
+  });
+  return w;
+ }
+ function read(query){
+  validate(query);
+  if(closed||pending.size>=maxPending)return Promise.resolve(unavailable(query.wallet));
+  return new Promise(resolve=>{
+   let w;try{w=worker??start();}catch{resolve(unavailable(query.wallet));return;}
+   const id=++sequence,timer=setTimeout(()=>stop(w),timeoutMs);
+   pending.set(id,{resolve,timer,wallet:query.wallet});
+   try{w.postMessage({id,query});}catch{stop(w);}
+  });
+ }
+ function close(){closed=true;if(worker)stop(worker);}
+ return {read,close};
+}
+function createServer(config){const reader=createAsyncReader(config);const server=http.createServer(async(req,res)=>{
  res.setHeader('Content-Type','application/json; charset=utf-8');res.setHeader('Cache-Control','no-store');
  try{
   if(req.method!=='GET'){res.writeHead(405,{Allow:'GET'});res.end(JSON.stringify({error:'methodNotAllowed'}));return;}
@@ -77,10 +115,10 @@ function createServer(config){const reader=createReader(config);return http.crea
   if(!match){res.writeHead(404);res.end(JSON.stringify({error:'notFound'}));return;}
   const o=u.searchParams.get('offset')??'0',l=u.searchParams.get('limit')??'25';
   if([...u.searchParams.keys()].some(k=>!['offset','limit'].includes(k))||u.searchParams.getAll('offset').length>1||u.searchParams.getAll('limit').length>1||!/^\d+$/.test(o)||!/^\d+$/.test(l))throw Object.assign(Error(),{status:400});
-  const result=reader.read({wallet:match[1],offset:Number(o),limit:Number(l)});
+  const result=await reader.read({wallet:match[1],offset:Number(o),limit:Number(l)});
   res.writeHead(result.status==='unavailable'?503:200);res.end(JSON.stringify(result));
  }catch(e){res.writeHead(e.status===400?400:503);res.end(JSON.stringify({error:e.status===400?'invalidQuery':'unavailable'}));}
-});}
+});server.on('close',()=>reader.close());return server;}
 if(require.main===module){try{
  const [file,portText='8787']=process.argv.slice(2),port=Number(portText);
  if(!file||!Number.isInteger(port)||port<1||port>65535)throw Error();
@@ -89,4 +127,4 @@ if(require.main===module){try{
  server.listen(port,'127.0.0.1',()=>console.log('Status API listening on 127.0.0.1:'+port));
  for(const signal of ['SIGINT','SIGTERM'])process.on(signal,()=>server.close());
 }catch{console.error('Usage: CONFIG [PORT]');process.exitCode=1;}}
-module.exports={walletStatus,createServer,createReader};
+module.exports={walletStatus,createServer,createReader,createAsyncReader};

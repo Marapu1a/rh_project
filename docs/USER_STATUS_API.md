@@ -184,3 +184,45 @@ JSON hash/read/write и replay остаются линейными. Миграц
 Проверены одинаковый размер atomic replacement, aging, waiting, corruption/missing,
 restart/config mismatch, 20 параллельных HTTP запросов до/во время outage, response
 mutation, checksummed ledger/policy/rewards mismatch. Замер не заменяет эти проверки.
+
+
+## Worker isolation (следующий пакет 29.09.2026)
+
+Описанное выше синхронное ограничение HTTP устранено: createServer теперь использует
+createAsyncReader. Один worker_threads worker содержит createReader и prepared Maps;
+в HTTP-поток возвращается только ответ одного кошелька. Main не получает полный raw
+JSON/Maps и не выполняет history replay. Прежние синхронные API сохранены для one-shot
+чтений и измерений. Конфигурация фиксируется копией при создании.
+
+Первый запрос/новая версия ждёт подготовки, но другие HTTP routes и main event loop
+продолжают работать. Не более64 outstanding запросов; лишние сразу unavailable/503.
+30s timeout включает очередь, исполнение и parent stat. Timeout/error/exit завершает
+все pending как unavailable и уничтожает worker; следующий запрос создаёт новый.
+Closed reader не перезапускается; server close завершает worker. Нет бесконечной
+очереди или выдачи старого observed во время отказа. Не вводится новый статус loading:
+штатный запрос ожидает, перегрузка/ошибка остаются существующим unavailable.
+
+Worker проверяет generation до/после подготовки. Перед передачей HTTP ответа main
+асинхронно проверяет generation ещё раз: снимок, сменившийся во время передачи,
+даёт unavailable. Это не гарантия отсутствия изменений после последней проверки.
+Возраст рассчитывается в worker при обслуживании запроса, не при его постановке
+в очередь. Prepared snapshot и trust boundary single local writer прежние.
+
+Cold по-прежнему линейный; очередь wallet reads во время загрузки ждёт. Публикация
+снимков быстрее их подготовки может давать unavailable; больших ответов serialization
+и сетевого backpressure этот пакет не квалифицирует. Worker не делает indexer scan/JSON
+инкрементальным и не является новым process supervisor или production deployment.
+
+Измерение `node scripts/measure-status-worker.cjs`: synthetic legacy5013blocks,
+cold867.9ms;10ms timer main потока сработал55раз, max gap16.03ms;
+100 warm запросов известного кошелька: mean round-trip0.269ms. Это включает worker
+message и async stat, несопоставимо напрямую с прошлым in-process0.056ms.
+Не Infinity/RPC/месячная нагрузка и не SLA.
+
+Проверки: `node --test test/user-status-cache.test.cjs` —8passed/3.1s;
+`node --test --test-name-pattern="persistent indexer feeds" test/cutoff-scheduler.test.cjs`
+—1passed/35.2s (existing compiled artifact+SHA256).9 адресных сценариев, не full/live/fork.
+Дополнены responsiveness с5000 unrelated tx, bound pending, timeout/повторный запуск,
+close, freshness/recovery и детерминированная замена файла при доставке ответа.
+Следующий шаг — эксплуатационный service/runbook и реальные indexer metrics; не новая
+перепись хранения без измерений. Public sends по-прежнему закрыты.

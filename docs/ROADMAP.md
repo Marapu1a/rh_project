@@ -1,6 +1,6 @@
 # План до первого публичного запуска
 
-29.09: API проверяет новый snapshot один раз и обслуживает повторные запросы из индексов кошельков. Freshness вычисляется каждый запрос; новая повреждённая/недоступная версия → unavailable, без старого success. [Замер и границы](USER_STATUS_API.md): синтетические 5013blocks/9.59MB — ~696ms uncached, ~0.056ms warm; cold ~721ms. 14 разных продуктовых адресных сценариев +catalog passed, не full/live/fork. Добавлены indexer timing/lag/size metrics. Полный replay/JSON на обновлении остаётся линейным; следующий пакет — отделение подготовки snapshot от HTTP event loop и измерение живого indexer, затем service/frontend. Public sends закрыты.
+29.09: [API snapshot worker](USER_STATUS_API.md) вынес full read/hash/replay и Maps из HTTP event loop. Один worker, максимум64 outstanding запросов,30s timeout; overload/crash/замена файла в пути ответа → unavailable, без старого success; lazy restart. Synthetic5013blocks: cold868ms, main timer продолжал работать (max gap16ms), warm round-trip0.27ms.9 адресных сценариев passed, не full/live/fork. Следующий шаг — постоянный service/runbook и измерение живого admitted indexer; сам scan/JSON остаётся линейным. Public sends закрыты.
 
 29.09.2026. Это текущие релизные блокеры, а не журнал всех выполненных итераций.
 История: [снимок прежнего плана](archive/snapshots/ROADMAP_BEFORE_DEPLOYMENT_PROFILE_2026-09-28.md).
