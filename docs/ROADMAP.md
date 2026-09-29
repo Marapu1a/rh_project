@@ -1,5 +1,9 @@
 # План до первого публичного запуска
 
+29.09: визуальная правка сайта опубликована на preview: крупная единая типографика,
+короткие тексты без слоганов; правила и состояния данных сохранены. Backend scope
+не расширялся; следующий интеграционный пакет остаётся draw/reserve API и результаты.
+
 29.09: [Первая страница QIANQI](WEBSITE.md) по пользовательскому макету: responsive, мышата, browser wallet connect и существующий wallet API. Pre-launch без выдуманных банков/claim/buy URL; общий draw API, проверенный asset profile и Claim ещё впереди.3 browser scenarios passed + visual desktop/mobile, не full/live. Локально npm run site →127.0.0.1:4173. Исходные images_for_site сохранены. Public sends закрыты.
 
 29.09.2026. Это текущие релизные блокеры, а не журнал всех выполненных итераций.

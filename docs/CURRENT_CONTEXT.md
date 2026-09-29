@@ -1,5 +1,10 @@
 # Текущий контекст
 
+29.09: типографика сайта упрощена по просьбе владельца:16/22/40px, без мелких слоганов
+и временных надписей; правила/ошибки сохранены. HTTPS preview обновлён на
+type-cleanup-20260929,3 browser scenarios + адресный layout/live smoke passed.
+Декоративный hero сохранён. [Детали](WEBSITE.md).
+
 29.09: Дизайнерский HTTPS preview https://qianqi.109.73.196.111.sslip.io/ развёрнут
 на109.73.196.111, release9ad5660. Host Nginx/systemd, certbot renewal; внешний browser
 smoke passed. Старый frontend сохранён остановленным, backend/db не затронуты.

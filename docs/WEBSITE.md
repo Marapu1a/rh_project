@@ -1,5 +1,16 @@
 # Одностраничный сайт QIANQI
 
+29.09: по замечаниям владельца интерфейс приведён к шкале16/22/40px (текст/заголовки/числа),
+кроме декоративного hero. Удалены слоганы, pre-launch labels и повторяющиеся пояснения;
+важные правила, отсутствие гарантий и состояния unavailable/stale сохранены.
+Короткие тексты применены и к состояниям кошелька. При ширине до440px prize cards идут
+вертикально. Три browser scenarios прошли; после CSS исправления повторён layout test.
+На HTTPS подтверждены три computed font sizes, видимость заголовков карточек/правил,
+отсутствие horizontal overflow. Backend/призовые правила не менялись.
+Текущий static release: `/opt/rh-preview/releases/type-cleanup-20260929`.
+Предыдущий release9ad5660 и server config `.before-typography` сохранены для возврата.
+ACME webroot остаётся на9ad5660 для совместимости с существующим certbot renewal.
+
 ## Дизайнерский стенд
 
 Публичный preview: https://qianqi.109.73.196.111.sslip.io/ — static release9ad5660.
