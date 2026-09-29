@@ -1,5 +1,7 @@
 # Текущий контекст
 
+29.09: [Постоянный read-only indexer](PERSISTENT_INDEXER.md) добавлен: bounded catch-up, durable evidence/ledger, restart без повторного RPC/начисления, reorg rollback, outage status.8/8 адресных tests passed; scheduler ещё читает самостоятельно. Следующий шаг — подключение проверенных снимков к scheduler с сохранением frozen границ. Alchemy прошёл повторные historical reads (65requests/0errors); первый единичный403 не воспроизведён. Archive sampled blocker снят, production RPC/replay ещё не квалифицированы. Public sends закрыты.
+
 29.09: **Операционный профиль V2 реализован**, public sends закрыты.
 [Модуль](OPERATIONAL_LAUNCH_PROFILE.md): явные genesis/roles/notice/gas/BUY pins,
 проверка перед новыми действиями; drift не мешает обоим frozen draws/claims.

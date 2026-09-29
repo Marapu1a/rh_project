@@ -1,5 +1,7 @@
 # Карта реализации
 
+29.09: persistent-buy-indexer.cjs использует существующие scanner/replay/withState; once/watch, cache и статусы. [Границы и проверки](PERSISTENT_INDEXER.md). Нет интеграции scheduler/сайта, CPU replay пока полный.
+
 29.09: [Операционный профиль](OPERATIONAL_LAUNCH_PROFILE.md):
 `operational-profile.cjs` — офлайн genesis/settings + pinned on-chain inspection;
 `deployment-admission.cjs` V2 — roles/notice/gas/BUY expectations, V1 помечен incomplete.

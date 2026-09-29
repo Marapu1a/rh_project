@@ -1,5 +1,7 @@
 # Проверка RPC для публичного runtime
 
+29.09: Alchemy с пользовательским endpoint прошёл повтор (65requests,0errors,repeatable=true), historical state до864000blocks доступен. Первый HTTP403 затем3/3 успешных точных повторов; причина не установлена. [Подробности](PERSISTENT_INDEXER.md). Это доступность выборки, не production qualification.
+
 29.09: повторные bounded probes official/Blockreq не квалифицировали archive.
 Блоки/receipts повторяются на доступных высотах, historical state/deep history не прошли.
 [Свежие отчёты и команды](../research/operational-profile/README.md),

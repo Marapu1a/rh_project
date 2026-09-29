@@ -1,0 +1,106 @@
+{
+  "schema": "public-rpc-qualification-v1",
+  "observedAt": "2026-09-29T02:45:36.747Z",
+  "publicLaunchReady": false,
+  "repeatable": true,
+  "samples": [
+    {
+      "number": "0x47cfd9b",
+      "blockHash": "0xa44922e9e5ee80f7efb43b36e726999c80f372833ba01ace947428cbda05321a",
+      "transactions": 13,
+      "logs": 50,
+      "evidenceHash": "0x8a89c450e77cc9bfc9978ed6169bcea617d5071aaaea901d366c0f4321fb7813",
+      "ok": true
+    },
+    {
+      "number": "0x47cd68b",
+      "blockHash": "0x7688ebf6d563377950118c593f25b5ee8e97c15c986836ab117e3122c07d9321",
+      "transactions": 11,
+      "logs": 19,
+      "evidenceHash": "0x3ce24d965e3b9de8f19ac4a4488109663bc350bc673430a87d35c5552ddcf6cd",
+      "ok": true
+    },
+    {
+      "number": "0x46fce9b",
+      "blockHash": "0x6174c150143f660c0b2c93c7acdcc458be99430ae0d916c35b9dc3fbefa78ecb",
+      "transactions": 10,
+      "logs": 16,
+      "evidenceHash": "0x3f687982c8f79394158f331f0edd2d34644108b457c8a50a08216c01d85afda0",
+      "ok": true
+    }
+  ],
+  "replay": {
+    "status": "not-run",
+    "reason": "No admitted project deployment or suitable reference manifest supplied"
+  },
+  "history": {
+    "schema": "public-rpc-capabilities-v1",
+    "observedAt": "2026-09-29T02:45:36.749Z",
+    "quote": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+    "observations": [
+      {
+        "number": "0x47cfd9b",
+        "depthBlocks": 0,
+        "hash": "0xa44922e9e5ee80f7efb43b36e726999c80f372833ba01ace947428cbda05321a",
+        "codeHash": "0x864cc9ad53b338b82da1f7cab85ab0b3d5c8861acb422b6fec63cf36234f36a6",
+        "decimals": "6",
+        "totalSupply": "685464925444157",
+        "storageSlot0": "0x0000000000000000000000000000000000000000000000000000000000000001",
+        "ok": true
+      },
+      {
+        "number": "0x47cd68b",
+        "depthBlocks": 10000,
+        "hash": "0x7688ebf6d563377950118c593f25b5ee8e97c15c986836ab117e3122c07d9321",
+        "codeHash": "0x864cc9ad53b338b82da1f7cab85ab0b3d5c8861acb422b6fec63cf36234f36a6",
+        "decimals": "6",
+        "totalSupply": "685464925444157",
+        "storageSlot0": "0x0000000000000000000000000000000000000000000000000000000000000001",
+        "ok": true
+      },
+      {
+        "number": "0x46fce9b",
+        "depthBlocks": 864000,
+        "hash": "0x6174c150143f660c0b2c93c7acdcc458be99430ae0d916c35b9dc3fbefa78ecb",
+        "codeHash": "0x864cc9ad53b338b82da1f7cab85ab0b3d5c8861acb422b6fec63cf36234f36a6",
+        "decimals": "6",
+        "totalSupply": "681500278165016",
+        "storageSlot0": "0x0000000000000000000000000000000000000000000000000000000000000001",
+        "ok": true
+      }
+    ],
+    "historicalReadsAvailable": true,
+    "publicLaunchReady": false,
+    "chainId": "4663",
+    "latest": {
+      "number": "0x47d2160",
+      "hash": "0x811f1660ac8d2d7693206af487c277d263985ed03486f2e3a3583fdcd966bc2f",
+      "timestamp": "0x6abb2655"
+    },
+    "finalized": {
+      "number": "0x47cfd9b",
+      "hash": "0xa44922e9e5ee80f7efb43b36e726999c80f372833ba01ace947428cbda05321a",
+      "timestamp": "0x6abb22bc"
+    },
+    "finalizedLagBlocks": "9157",
+    "limitation": "Sampled USDG code/call/storage availability, not a full archive SLA or a read of our not-yet-deployed checkpoint storage. No signing/deployment/finality proof."
+  },
+  "sampledDataAvailable": true,
+  "limits": "Bounded samples, not archive SLA, proof of honest RPC, production policy admission, full project history, or live checkpoint storage. Repeating CLI verifies fresh reads after process restart; it does not qualify worker crash recovery. Empty/no-eligible replay is not BUY coverage.",
+  "stats": {
+    "requests": 65,
+    "failures": 0,
+    "responseBytes": 346634,
+    "elapsedMs": 5952,
+    "methods": {
+      "eth_chainId": 1,
+      "eth_getBlockByNumber": 15,
+      "eth_getCode": 3,
+      "eth_call": 6,
+      "eth_getStorageAt": 3,
+      "eth_getTransactionReceipt": 34,
+      "eth_getLogs": 3
+    }
+  },
+  "endpointOrigin": "https://robinhood-mainnet.g.alchemy.com"
+}

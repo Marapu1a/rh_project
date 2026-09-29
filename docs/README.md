@@ -21,6 +21,7 @@
 | Принятый экономический профиль | [Infinity fork3%](INFINITY_INTEGRATION_RESEARCH.md), [Infinity 1–5%](INFINITY_FEE_SCENARIOS.md), [Принятые параметры и модель малого числа участников](MVP_ECONOMIC_PROFILE.md), [историческая календарная проверка](MVP_CALENDAR_CHECK.md) |
 | Казна и кампании | [Infinity collector](INFINITY_COLLECTOR.md), [worker](INFINITY_WORKER.md), [Vault](PROMO_VAULT_DESIGN.md), [FeeRouter](FEE_ROUTER_ROLLOVER_REPORT.md), [dual architecture](DUAL_CONTROLLER_ARCHITECTURE.md) |
 | BUY policy admission | [Контракт, публикация и применение правил](BUY_POLICY_ADMISSION.md) |
+| Постоянное накопление | [Indexer once/watch и ограничения](PERSISTENT_INDEXER.md) |
 | Билеты и проверяемость | [Infinity automatic BUY](INFINITY_BUY.md), [Registry](PARTICIPANT_REGISTRY.md), [BUY](DIRECT_BUY_REPLAY.md), [lifecycle](ATTEMPT_LIFECYCLE.md), [trust](INDEXER_TRUST_MODEL.md) |
 | Short | [Dataset](SHORT_DATASET_PREPARATION.md), [epochs](SHORT_RULES_EPOCHS.md), [settlement](SHORT_SETTLEMENT.md), [basket](SHORT_PRIZE_BASKET.md), [model](SHORT_MODEL.md) |
 | Monthly | [Epochs и settlement](MONTHLY_RULES_EPOCHS.md) |
