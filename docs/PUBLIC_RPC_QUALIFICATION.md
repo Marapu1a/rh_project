@@ -1,5 +1,10 @@
 # Проверка RPC для публичного runtime
 
+29.09: повторные bounded probes official/Blockreq не квалифицировали archive.
+Блоки/receipts повторяются на доступных высотах, historical state/deep history не прошли.
+[Свежие отчёты и команды](../research/operational-profile/README.md),
+[timing и ограничения](OPERATIONAL_LAUNCH_PROFILE.md). BUY replay в этих прогонах не запускался.
+
 28.09.2026. Это read-only проверка инфраструктуры, не разрешение deployment/отправки.
 Публичное исполнение по-прежнему закрыто. Контракты и экономика не менялись.
 

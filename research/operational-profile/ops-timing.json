@@ -1,0 +1,1186 @@
+{
+  "schema": "rng-timing-survey-v1",
+  "startedAt": "2026-09-29T02:18:20.046Z",
+  "finishedAt": "2026-09-29T02:19:41.137Z",
+  "samples": [
+    {
+      "schema": "rng-timing-observation-v1",
+      "observedAt": "2026-09-29T02:18:21.041Z",
+      "rpcUrl": "https://rpc.mainnet.chain.robinhood.com",
+      "chainId": {
+        "startedAt": "2026-09-29T02:18:20.017Z",
+        "finishedAt": "2026-09-29T02:18:20.558Z",
+        "value": "0x1237"
+      },
+      "latest": {
+        "startedAt": "2026-09-29T02:18:20.046Z",
+        "finishedAt": "2026-09-29T02:18:20.548Z",
+        "value": {
+          "number": "0x47ce1d8",
+          "hash": "0x7fd7e352edeac3aa00192d3d282ca9ede1eb6038b646d30bf4fe0f051c298ef9",
+          "timestamp": "0x6abb1fef"
+        }
+      },
+      "safe": {
+        "startedAt": "2026-09-29T02:18:20.046Z",
+        "finishedAt": "2026-09-29T02:18:20.551Z",
+        "value": {
+          "number": "0x47cc1c7",
+          "hash": "0xb61258fef8218796c22ddd5239c0a637f7390a690cd8f992c593f09804d7db86",
+          "timestamp": "0x6abb1cb5"
+        }
+      },
+      "finalized": {
+        "startedAt": "2026-09-29T02:18:20.047Z",
+        "finishedAt": "2026-09-29T02:18:20.557Z",
+        "value": {
+          "number": "0x47cb2d2",
+          "hash": "0xcbcc50e26bffe3a7c1d82ef34d17c8739f43ca5d6417f9d0afc0936b3218c3ce",
+          "timestamp": "0x6abb1b34"
+        }
+      },
+      "drand": {
+        "chainHash": "04f1e9062b8a81f848fded9c12306733282b2727ecced50032187751166ec8c3",
+        "info": {
+          "startedAt": "2026-09-29T02:18:20.047Z",
+          "finishedAt": "2026-09-29T02:18:21.041Z",
+          "value": {
+            "public_key": "07e1d1d335df83fa98462005690372c643340060d205306a9aa8106b6bd0b3820557ec32c2ad488e4d4f6008f89a346f18492092ccc0d594610de2732c8b808f0095685ae3a85ba243747b1b2f426049010f6b73a0cf1d389351d5aaaa1047f6297d3a4f9749b33eb2d904c9d9ebf17224150ddd7abd7567a9bec6c74480ee0b",
+            "period": 3,
+            "genesis_time": 1727521075,
+            "hash": "04f1e9062b8a81f848fded9c12306733282b2727ecced50032187751166ec8c3",
+            "groupHash": "cd7ad2f0e0cce5d8c288f2dd016ffe7bc8dc88dbb229b3da2b6ad736490dfed6",
+            "schemeID": "bls-bn254-unchained-on-g1",
+            "metadata": {
+              "beaconID": "evmnet"
+            }
+          }
+        },
+        "beacon": {
+          "startedAt": "2026-09-29T02:18:20.062Z",
+          "finishedAt": "2026-09-29T02:18:21.035Z",
+          "value": {
+            "round": 21042410,
+            "randomness": "1b49774266e833ce209521ff802854ba0201d62b2726ff05a78e148b517b19e6",
+            "signature": "1ab809e81bf1c898987a781c863a3fa7ed647e7aa67512c8a927f12879095dc009fe7e839ece4a7dddef304a6f762b31d2e4533e1eb9dc272ffad86c864adb6f"
+          }
+        }
+      },
+      "limitation": "One RPC/HTTP snapshot, unverified beacon and non-atomic heads; not freshness enforcement, consensus proof, latency SLA or permission to freeze."
+    },
+    {
+      "schema": "rng-timing-observation-v1",
+      "observedAt": "2026-09-29T02:18:21.111Z",
+      "rpcUrl": "https://robinhood-mainnet-rpc.blockreq.com/v1/rpc/public",
+      "chainId": {
+        "startedAt": "2026-09-29T02:18:20.063Z",
+        "finishedAt": "2026-09-29T02:18:20.487Z",
+        "value": "0x1237"
+      },
+      "latest": {
+        "startedAt": "2026-09-29T02:18:20.063Z",
+        "finishedAt": "2026-09-29T02:18:20.493Z",
+        "value": {
+          "number": "0x47ce1d8",
+          "hash": "0x7fd7e352edeac3aa00192d3d282ca9ede1eb6038b646d30bf4fe0f051c298ef9",
+          "timestamp": "0x6abb1fef"
+        }
+      },
+      "safe": {
+        "startedAt": "2026-09-29T02:18:20.063Z",
+        "error": "public endpoint cannot serve this request. Register at blockreq.com for full access."
+      },
+      "finalized": {
+        "startedAt": "2026-09-29T02:18:20.064Z",
+        "finishedAt": "2026-09-29T02:18:20.529Z",
+        "value": {
+          "number": "0x47cc1c7",
+          "hash": "0xb61258fef8218796c22ddd5239c0a637f7390a690cd8f992c593f09804d7db86",
+          "timestamp": "0x6abb1cb5"
+        }
+      },
+      "drand": {
+        "chainHash": "04f1e9062b8a81f848fded9c12306733282b2727ecced50032187751166ec8c3",
+        "info": {
+          "startedAt": "2026-09-29T02:18:20.064Z",
+          "finishedAt": "2026-09-29T02:18:21.111Z",
+          "value": {
+            "public_key": "07e1d1d335df83fa98462005690372c643340060d205306a9aa8106b6bd0b3820557ec32c2ad488e4d4f6008f89a346f18492092ccc0d594610de2732c8b808f0095685ae3a85ba243747b1b2f426049010f6b73a0cf1d389351d5aaaa1047f6297d3a4f9749b33eb2d904c9d9ebf17224150ddd7abd7567a9bec6c74480ee0b",
+            "period": 3,
+            "genesis_time": 1727521075,
+            "hash": "04f1e9062b8a81f848fded9c12306733282b2727ecced50032187751166ec8c3",
+            "groupHash": "cd7ad2f0e0cce5d8c288f2dd016ffe7bc8dc88dbb229b3da2b6ad736490dfed6",
+            "schemeID": "bls-bn254-unchained-on-g1",
+            "metadata": {
+              "beaconID": "evmnet"
+            }
+          }
+        },
+        "beacon": {
+          "startedAt": "2026-09-29T02:18:20.065Z",
+          "finishedAt": "2026-09-29T02:18:21.103Z",
+          "value": {
+            "round": 21042410,
+            "randomness": "1b49774266e833ce209521ff802854ba0201d62b2726ff05a78e148b517b19e6",
+            "signature": "1ab809e81bf1c898987a781c863a3fa7ed647e7aa67512c8a927f12879095dc009fe7e839ece4a7dddef304a6f762b31d2e4533e1eb9dc272ffad86c864adb6f"
+          }
+        }
+      },
+      "limitation": "One RPC/HTTP snapshot, unverified beacon and non-atomic heads; not freshness enforcement, consensus proof, latency SLA or permission to freeze."
+    },
+    {
+      "schema": "rng-timing-observation-v1",
+      "observedAt": "2026-09-29T02:18:37.056Z",
+      "rpcUrl": "https://rpc.mainnet.chain.robinhood.com",
+      "chainId": {
+        "startedAt": "2026-09-29T02:18:36.114Z",
+        "finishedAt": "2026-09-29T02:18:36.560Z",
+        "value": "0x1237"
+      },
+      "latest": {
+        "startedAt": "2026-09-29T02:18:36.115Z",
+        "finishedAt": "2026-09-29T02:18:36.563Z",
+        "value": {
+          "number": "0x47ce280",
+          "hash": "0xe9e3634020a42858bc03ed7d015bcf97e01e45e2647dc8cdf3d307e28ba50d7d",
+          "timestamp": "0x6abb1fff"
+        }
+      },
+      "safe": {
+        "startedAt": "2026-09-29T02:18:36.116Z",
+        "finishedAt": "2026-09-29T02:18:36.564Z",
+        "value": {
+          "number": "0x47cd0e9",
+          "hash": "0x1ff1053c6aac02b3b56fc2eee5444a9536d01fc3eec028b5fe625bff62493899",
+          "timestamp": "0x6abb1e3b"
+        }
+      },
+      "finalized": {
+        "startedAt": "2026-09-29T02:18:36.116Z",
+        "finishedAt": "2026-09-29T02:18:36.583Z",
+        "value": {
+          "number": "0x47cc1c7",
+          "hash": "0xb61258fef8218796c22ddd5239c0a637f7390a690cd8f992c593f09804d7db86",
+          "timestamp": "0x6abb1cb5"
+        }
+      },
+      "drand": {
+        "chainHash": "04f1e9062b8a81f848fded9c12306733282b2727ecced50032187751166ec8c3",
+        "info": {
+          "startedAt": "2026-09-29T02:18:36.117Z",
+          "finishedAt": "2026-09-29T02:18:37.024Z",
+          "value": {
+            "public_key": "07e1d1d335df83fa98462005690372c643340060d205306a9aa8106b6bd0b3820557ec32c2ad488e4d4f6008f89a346f18492092ccc0d594610de2732c8b808f0095685ae3a85ba243747b1b2f426049010f6b73a0cf1d389351d5aaaa1047f6297d3a4f9749b33eb2d904c9d9ebf17224150ddd7abd7567a9bec6c74480ee0b",
+            "period": 3,
+            "genesis_time": 1727521075,
+            "hash": "04f1e9062b8a81f848fded9c12306733282b2727ecced50032187751166ec8c3",
+            "groupHash": "cd7ad2f0e0cce5d8c288f2dd016ffe7bc8dc88dbb229b3da2b6ad736490dfed6",
+            "schemeID": "bls-bn254-unchained-on-g1",
+            "metadata": {
+              "beaconID": "evmnet"
+            }
+          }
+        },
+        "beacon": {
+          "startedAt": "2026-09-29T02:18:36.118Z",
+          "finishedAt": "2026-09-29T02:18:37.056Z",
+          "value": {
+            "round": 21042416,
+            "randomness": "20495a365d5a15e556cf39179ef588770132344099b9c6b013b95578b5d8bce8",
+            "signature": "2b60c2035e7db6d42d9d88348fcf073808d1cf742aca7495496a8c46b43a069927b7b4431ef3815799806e13281cd964b003356baaf5637b5f3d53a5212a6d99"
+          }
+        }
+      },
+      "limitation": "One RPC/HTTP snapshot, unverified beacon and non-atomic heads; not freshness enforcement, consensus proof, latency SLA or permission to freeze."
+    },
+    {
+      "schema": "rng-timing-observation-v1",
+      "observedAt": "2026-09-29T02:18:37.104Z",
+      "rpcUrl": "https://robinhood-mainnet-rpc.blockreq.com/v1/rpc/public",
+      "chainId": {
+        "startedAt": "2026-09-29T02:18:36.119Z",
+        "finishedAt": "2026-09-29T02:18:36.489Z",
+        "value": "0x1237"
+      },
+      "latest": {
+        "startedAt": "2026-09-29T02:18:36.120Z",
+        "finishedAt": "2026-09-29T02:18:36.481Z",
+        "value": {
+          "number": "0x47ce278",
+          "hash": "0xc16d794a10880649dbf081c106071a8348cb42a7525d9751ff0651d679d66b7c",
+          "timestamp": "0x6abb1ffe"
+        }
+      },
+      "safe": {
+        "startedAt": "2026-09-29T02:18:36.120Z",
+        "error": "public endpoint cannot serve this request. Register at blockreq.com for full access."
+      },
+      "finalized": {
+        "startedAt": "2026-09-29T02:18:36.120Z",
+        "finishedAt": "2026-09-29T02:18:36.524Z",
+        "value": {
+          "number": "0x47cc1c7",
+          "hash": "0xb61258fef8218796c22ddd5239c0a637f7390a690cd8f992c593f09804d7db86",
+          "timestamp": "0x6abb1cb5"
+        }
+      },
+      "drand": {
+        "chainHash": "04f1e9062b8a81f848fded9c12306733282b2727ecced50032187751166ec8c3",
+        "info": {
+          "startedAt": "2026-09-29T02:18:36.120Z",
+          "finishedAt": "2026-09-29T02:18:37.090Z",
+          "value": {
+            "public_key": "07e1d1d335df83fa98462005690372c643340060d205306a9aa8106b6bd0b3820557ec32c2ad488e4d4f6008f89a346f18492092ccc0d594610de2732c8b808f0095685ae3a85ba243747b1b2f426049010f6b73a0cf1d389351d5aaaa1047f6297d3a4f9749b33eb2d904c9d9ebf17224150ddd7abd7567a9bec6c74480ee0b",
+            "period": 3,
+            "genesis_time": 1727521075,
+            "hash": "04f1e9062b8a81f848fded9c12306733282b2727ecced50032187751166ec8c3",
+            "groupHash": "cd7ad2f0e0cce5d8c288f2dd016ffe7bc8dc88dbb229b3da2b6ad736490dfed6",
+            "schemeID": "bls-bn254-unchained-on-g1",
+            "metadata": {
+              "beaconID": "evmnet"
+            }
+          }
+        },
+        "beacon": {
+          "startedAt": "2026-09-29T02:18:36.121Z",
+          "finishedAt": "2026-09-29T02:18:37.104Z",
+          "value": {
+            "round": 21042416,
+            "randomness": "20495a365d5a15e556cf39179ef588770132344099b9c6b013b95578b5d8bce8",
+            "signature": "2b60c2035e7db6d42d9d88348fcf073808d1cf742aca7495496a8c46b43a069927b7b4431ef3815799806e13281cd964b003356baaf5637b5f3d53a5212a6d99"
+          }
+        }
+      },
+      "limitation": "One RPC/HTTP snapshot, unverified beacon and non-atomic heads; not freshness enforcement, consensus proof, latency SLA or permission to freeze."
+    },
+    {
+      "schema": "rng-timing-observation-v1",
+      "observedAt": "2026-09-29T02:18:53.042Z",
+      "rpcUrl": "https://rpc.mainnet.chain.robinhood.com",
+      "chainId": {
+        "startedAt": "2026-09-29T02:18:52.116Z",
+        "finishedAt": "2026-09-29T02:18:52.553Z",
+        "value": "0x1237"
+      },
+      "latest": {
+        "startedAt": "2026-09-29T02:18:52.116Z",
+        "finishedAt": "2026-09-29T02:18:52.562Z",
+        "value": {
+          "number": "0x47ce31f",
+          "hash": "0x84187d2c112df1c810badab1bb20f218618a00caa688c17737084b1bd0e0ac5c",
+          "timestamp": "0x6abb200f"
+        }
+      },
+      "safe": {
+        "startedAt": "2026-09-29T02:18:52.116Z",
+        "finishedAt": "2026-09-29T02:18:52.557Z",
+        "value": {
+          "number": "0x47cd0e9",
+          "hash": "0x1ff1053c6aac02b3b56fc2eee5444a9536d01fc3eec028b5fe625bff62493899",
+          "timestamp": "0x6abb1e3b"
+        }
+      },
+      "finalized": {
+        "startedAt": "2026-09-29T02:18:52.116Z",
+        "finishedAt": "2026-09-29T02:18:52.560Z",
+        "value": {
+          "number": "0x47cc1c7",
+          "hash": "0xb61258fef8218796c22ddd5239c0a637f7390a690cd8f992c593f09804d7db86",
+          "timestamp": "0x6abb1cb5"
+        }
+      },
+      "drand": {
+        "chainHash": "04f1e9062b8a81f848fded9c12306733282b2727ecced50032187751166ec8c3",
+        "info": {
+          "startedAt": "2026-09-29T02:18:52.117Z",
+          "finishedAt": "2026-09-29T02:18:53.037Z",
+          "value": {
+            "public_key": "07e1d1d335df83fa98462005690372c643340060d205306a9aa8106b6bd0b3820557ec32c2ad488e4d4f6008f89a346f18492092ccc0d594610de2732c8b808f0095685ae3a85ba243747b1b2f426049010f6b73a0cf1d389351d5aaaa1047f6297d3a4f9749b33eb2d904c9d9ebf17224150ddd7abd7567a9bec6c74480ee0b",
+            "period": 3,
+            "genesis_time": 1727521075,
+            "hash": "04f1e9062b8a81f848fded9c12306733282b2727ecced50032187751166ec8c3",
+            "groupHash": "cd7ad2f0e0cce5d8c288f2dd016ffe7bc8dc88dbb229b3da2b6ad736490dfed6",
+            "schemeID": "bls-bn254-unchained-on-g1",
+            "metadata": {
+              "beaconID": "evmnet"
+            }
+          }
+        },
+        "beacon": {
+          "startedAt": "2026-09-29T02:18:52.117Z",
+          "finishedAt": "2026-09-29T02:18:53.042Z",
+          "value": {
+            "round": 21042421,
+            "randomness": "861fed45a9b878dde96fabe92807e009d1060e001481db809c6b450486b8f878",
+            "signature": "187b155cfe126807d3c125d069d8d6b95528bffc8dbd72aef06e0fb77d8da0ad14040779384bf91fd09727d67fef80577df7153594f62b19a344db0f5a6bdba1"
+          }
+        }
+      },
+      "limitation": "One RPC/HTTP snapshot, unverified beacon and non-atomic heads; not freshness enforcement, consensus proof, latency SLA or permission to freeze."
+    },
+    {
+      "schema": "rng-timing-observation-v1",
+      "observedAt": "2026-09-29T02:18:53.106Z",
+      "rpcUrl": "https://robinhood-mainnet-rpc.blockreq.com/v1/rpc/public",
+      "chainId": {
+        "startedAt": "2026-09-29T02:18:52.118Z",
+        "finishedAt": "2026-09-29T02:18:52.480Z",
+        "value": "0x1237"
+      },
+      "latest": {
+        "startedAt": "2026-09-29T02:18:52.119Z",
+        "finishedAt": "2026-09-29T02:18:52.488Z",
+        "value": {
+          "number": "0x47ce325",
+          "hash": "0x097b32aedc7ed26fd1440079d2044c448d04c959b68b1a450186ce90869b47c2",
+          "timestamp": "0x6abb2010"
+        }
+      },
+      "safe": {
+        "startedAt": "2026-09-29T02:18:52.119Z",
+        "error": "public endpoint cannot serve this request. Register at blockreq.com for full access."
+      },
+      "finalized": {
+        "startedAt": "2026-09-29T02:18:52.119Z",
+        "finishedAt": "2026-09-29T02:18:52.542Z",
+        "value": {
+          "number": "0x47cc1c7",
+          "hash": "0xb61258fef8218796c22ddd5239c0a637f7390a690cd8f992c593f09804d7db86",
+          "timestamp": "0x6abb1cb5"
+        }
+      },
+      "drand": {
+        "chainHash": "04f1e9062b8a81f848fded9c12306733282b2727ecced50032187751166ec8c3",
+        "info": {
+          "startedAt": "2026-09-29T02:18:52.119Z",
+          "finishedAt": "2026-09-29T02:18:53.106Z",
+          "value": {
+            "public_key": "07e1d1d335df83fa98462005690372c643340060d205306a9aa8106b6bd0b3820557ec32c2ad488e4d4f6008f89a346f18492092ccc0d594610de2732c8b808f0095685ae3a85ba243747b1b2f426049010f6b73a0cf1d389351d5aaaa1047f6297d3a4f9749b33eb2d904c9d9ebf17224150ddd7abd7567a9bec6c74480ee0b",
+            "period": 3,
+            "genesis_time": 1727521075,
+            "hash": "04f1e9062b8a81f848fded9c12306733282b2727ecced50032187751166ec8c3",
+            "groupHash": "cd7ad2f0e0cce5d8c288f2dd016ffe7bc8dc88dbb229b3da2b6ad736490dfed6",
+            "schemeID": "bls-bn254-unchained-on-g1",
+            "metadata": {
+              "beaconID": "evmnet"
+            }
+          }
+        },
+        "beacon": {
+          "startedAt": "2026-09-29T02:18:52.119Z",
+          "finishedAt": "2026-09-29T02:18:53.106Z",
+          "value": {
+            "round": 21042421,
+            "randomness": "861fed45a9b878dde96fabe92807e009d1060e001481db809c6b450486b8f878",
+            "signature": "187b155cfe126807d3c125d069d8d6b95528bffc8dbd72aef06e0fb77d8da0ad14040779384bf91fd09727d67fef80577df7153594f62b19a344db0f5a6bdba1"
+          }
+        }
+      },
+      "limitation": "One RPC/HTTP snapshot, unverified beacon and non-atomic heads; not freshness enforcement, consensus proof, latency SLA or permission to freeze."
+    },
+    {
+      "schema": "rng-timing-observation-v1",
+      "observedAt": "2026-09-29T02:19:09.047Z",
+      "rpcUrl": "https://rpc.mainnet.chain.robinhood.com",
+      "chainId": {
+        "startedAt": "2026-09-29T02:19:08.118Z",
+        "finishedAt": "2026-09-29T02:19:08.557Z",
+        "value": "0x1237"
+      },
+      "latest": {
+        "startedAt": "2026-09-29T02:19:08.118Z",
+        "finishedAt": "2026-09-29T02:19:08.556Z",
+        "value": {
+          "number": "0x47ce3be",
+          "hash": "0xe84a01b4ce362335ac4611863255dd1177fa0276304f8573dc82bb9e6136ed68",
+          "timestamp": "0x6abb201f"
+        }
+      },
+      "safe": {
+        "startedAt": "2026-09-29T02:19:08.119Z",
+        "finishedAt": "2026-09-29T02:19:08.557Z",
+        "value": {
+          "number": "0x47cd0e9",
+          "hash": "0x1ff1053c6aac02b3b56fc2eee5444a9536d01fc3eec028b5fe625bff62493899",
+          "timestamp": "0x6abb1e3b"
+        }
+      },
+      "finalized": {
+        "startedAt": "2026-09-29T02:19:08.119Z",
+        "finishedAt": "2026-09-29T02:19:08.566Z",
+        "value": {
+          "number": "0x47cc1c7",
+          "hash": "0xb61258fef8218796c22ddd5239c0a637f7390a690cd8f992c593f09804d7db86",
+          "timestamp": "0x6abb1cb5"
+        }
+      },
+      "drand": {
+        "chainHash": "04f1e9062b8a81f848fded9c12306733282b2727ecced50032187751166ec8c3",
+        "info": {
+          "startedAt": "2026-09-29T02:19:08.119Z",
+          "finishedAt": "2026-09-29T02:19:09.047Z",
+          "value": {
+            "public_key": "07e1d1d335df83fa98462005690372c643340060d205306a9aa8106b6bd0b3820557ec32c2ad488e4d4f6008f89a346f18492092ccc0d594610de2732c8b808f0095685ae3a85ba243747b1b2f426049010f6b73a0cf1d389351d5aaaa1047f6297d3a4f9749b33eb2d904c9d9ebf17224150ddd7abd7567a9bec6c74480ee0b",
+            "period": 3,
+            "genesis_time": 1727521075,
+            "hash": "04f1e9062b8a81f848fded9c12306733282b2727ecced50032187751166ec8c3",
+            "groupHash": "cd7ad2f0e0cce5d8c288f2dd016ffe7bc8dc88dbb229b3da2b6ad736490dfed6",
+            "schemeID": "bls-bn254-unchained-on-g1",
+            "metadata": {
+              "beaconID": "evmnet"
+            }
+          }
+        },
+        "beacon": {
+          "startedAt": "2026-09-29T02:19:08.119Z",
+          "finishedAt": "2026-09-29T02:19:09.046Z",
+          "value": {
+            "round": 21042426,
+            "randomness": "20487de32d60250b854b5c697eb791dd281b6ce8b8285cfa7f15674448a41151",
+            "signature": "1253db05a5ddaa3d893c168b87e79cb31379dc38f3128972b2192b870c1d3a541ea4674116b06ceb813223268d138d4184647e8a587ac07735bbce75a7d70501"
+          }
+        }
+      },
+      "limitation": "One RPC/HTTP snapshot, unverified beacon and non-atomic heads; not freshness enforcement, consensus proof, latency SLA or permission to freeze."
+    },
+    {
+      "schema": "rng-timing-observation-v1",
+      "observedAt": "2026-09-29T02:19:09.112Z",
+      "rpcUrl": "https://robinhood-mainnet-rpc.blockreq.com/v1/rpc/public",
+      "chainId": {
+        "startedAt": "2026-09-29T02:19:08.120Z",
+        "finishedAt": "2026-09-29T02:19:08.474Z",
+        "value": "0x1237"
+      },
+      "latest": {
+        "startedAt": "2026-09-29T02:19:08.120Z",
+        "finishedAt": "2026-09-29T02:19:08.507Z",
+        "value": {
+          "number": "0x47ce3b7",
+          "hash": "0x89402a01eae0f310513aad250bf4c1001a0f1d42033ddd4da13e6baab353f1bd",
+          "timestamp": "0x6abb201f"
+        }
+      },
+      "safe": {
+        "startedAt": "2026-09-29T02:19:08.120Z",
+        "error": "public endpoint cannot serve this request. Register at blockreq.com for full access."
+      },
+      "finalized": {
+        "startedAt": "2026-09-29T02:19:08.120Z",
+        "finishedAt": "2026-09-29T02:19:08.509Z",
+        "value": {
+          "number": "0x47cc1c7",
+          "hash": "0xb61258fef8218796c22ddd5239c0a637f7390a690cd8f992c593f09804d7db86",
+          "timestamp": "0x6abb1cb5"
+        }
+      },
+      "drand": {
+        "chainHash": "04f1e9062b8a81f848fded9c12306733282b2727ecced50032187751166ec8c3",
+        "info": {
+          "startedAt": "2026-09-29T02:19:08.120Z",
+          "finishedAt": "2026-09-29T02:19:09.112Z",
+          "value": {
+            "public_key": "07e1d1d335df83fa98462005690372c643340060d205306a9aa8106b6bd0b3820557ec32c2ad488e4d4f6008f89a346f18492092ccc0d594610de2732c8b808f0095685ae3a85ba243747b1b2f426049010f6b73a0cf1d389351d5aaaa1047f6297d3a4f9749b33eb2d904c9d9ebf17224150ddd7abd7567a9bec6c74480ee0b",
+            "period": 3,
+            "genesis_time": 1727521075,
+            "hash": "04f1e9062b8a81f848fded9c12306733282b2727ecced50032187751166ec8c3",
+            "groupHash": "cd7ad2f0e0cce5d8c288f2dd016ffe7bc8dc88dbb229b3da2b6ad736490dfed6",
+            "schemeID": "bls-bn254-unchained-on-g1",
+            "metadata": {
+              "beaconID": "evmnet"
+            }
+          }
+        },
+        "beacon": {
+          "startedAt": "2026-09-29T02:19:08.121Z",
+          "finishedAt": "2026-09-29T02:19:09.101Z",
+          "value": {
+            "round": 21042426,
+            "randomness": "20487de32d60250b854b5c697eb791dd281b6ce8b8285cfa7f15674448a41151",
+            "signature": "1253db05a5ddaa3d893c168b87e79cb31379dc38f3128972b2192b870c1d3a541ea4674116b06ceb813223268d138d4184647e8a587ac07735bbce75a7d70501"
+          }
+        }
+      },
+      "limitation": "One RPC/HTTP snapshot, unverified beacon and non-atomic heads; not freshness enforcement, consensus proof, latency SLA or permission to freeze."
+    },
+    {
+      "schema": "rng-timing-observation-v1",
+      "observedAt": "2026-09-29T02:19:25.032Z",
+      "rpcUrl": "https://rpc.mainnet.chain.robinhood.com",
+      "chainId": {
+        "startedAt": "2026-09-29T02:19:24.120Z",
+        "finishedAt": "2026-09-29T02:19:24.574Z",
+        "value": "0x1237"
+      },
+      "latest": {
+        "startedAt": "2026-09-29T02:19:24.121Z",
+        "finishedAt": "2026-09-29T02:19:24.566Z",
+        "value": {
+          "number": "0x47ce45f",
+          "hash": "0x64d2be3a8953121abb3331ef77193530ce1ce96e80a3d4ba2ef1805f5b6e57bf",
+          "timestamp": "0x6abb2030"
+        }
+      },
+      "safe": {
+        "startedAt": "2026-09-29T02:19:24.121Z",
+        "finishedAt": "2026-09-29T02:19:24.568Z",
+        "value": {
+          "number": "0x47cd0e9",
+          "hash": "0x1ff1053c6aac02b3b56fc2eee5444a9536d01fc3eec028b5fe625bff62493899",
+          "timestamp": "0x6abb1e3b"
+        }
+      },
+      "finalized": {
+        "startedAt": "2026-09-29T02:19:24.121Z",
+        "finishedAt": "2026-09-29T02:19:24.582Z",
+        "value": {
+          "number": "0x47cc1c7",
+          "hash": "0xb61258fef8218796c22ddd5239c0a637f7390a690cd8f992c593f09804d7db86",
+          "timestamp": "0x6abb1cb5"
+        }
+      },
+      "drand": {
+        "chainHash": "04f1e9062b8a81f848fded9c12306733282b2727ecced50032187751166ec8c3",
+        "info": {
+          "startedAt": "2026-09-29T02:19:24.121Z",
+          "finishedAt": "2026-09-29T02:19:25.032Z",
+          "value": {
+            "public_key": "07e1d1d335df83fa98462005690372c643340060d205306a9aa8106b6bd0b3820557ec32c2ad488e4d4f6008f89a346f18492092ccc0d594610de2732c8b808f0095685ae3a85ba243747b1b2f426049010f6b73a0cf1d389351d5aaaa1047f6297d3a4f9749b33eb2d904c9d9ebf17224150ddd7abd7567a9bec6c74480ee0b",
+            "period": 3,
+            "genesis_time": 1727521075,
+            "hash": "04f1e9062b8a81f848fded9c12306733282b2727ecced50032187751166ec8c3",
+            "groupHash": "cd7ad2f0e0cce5d8c288f2dd016ffe7bc8dc88dbb229b3da2b6ad736490dfed6",
+            "schemeID": "bls-bn254-unchained-on-g1",
+            "metadata": {
+              "beaconID": "evmnet"
+            }
+          }
+        },
+        "beacon": {
+          "startedAt": "2026-09-29T02:19:24.122Z",
+          "finishedAt": "2026-09-29T02:19:25.029Z",
+          "value": {
+            "round": 21042432,
+            "randomness": "d2a23ac2c562772c6af1613f72a540810a69c1883028fddd803ed49af84ca49e",
+            "signature": "20b3a1666c1ef7fb5ed75577e167645d691abe1e25cef7a9b3c83623ac74a7f81ab8dd2ffa760f6e99452bf043443150f93abec3949845c58b8482c9a156276e"
+          }
+        }
+      },
+      "limitation": "One RPC/HTTP snapshot, unverified beacon and non-atomic heads; not freshness enforcement, consensus proof, latency SLA or permission to freeze."
+    },
+    {
+      "schema": "rng-timing-observation-v1",
+      "observedAt": "2026-09-29T02:19:25.119Z",
+      "rpcUrl": "https://robinhood-mainnet-rpc.blockreq.com/v1/rpc/public",
+      "chainId": {
+        "startedAt": "2026-09-29T02:19:24.122Z",
+        "finishedAt": "2026-09-29T02:19:24.489Z",
+        "value": "0x1237"
+      },
+      "latest": {
+        "startedAt": "2026-09-29T02:19:24.123Z",
+        "finishedAt": "2026-09-29T02:19:24.498Z",
+        "value": {
+          "number": "0x47ce463",
+          "hash": "0xf5fb4775fe1bbd399d666b966b5b411347c8f7298d84e706ae2b3fce9b0e05e7",
+          "timestamp": "0x6abb2030"
+        }
+      },
+      "safe": {
+        "startedAt": "2026-09-29T02:19:24.123Z",
+        "error": "public endpoint cannot serve this request. Register at blockreq.com for full access."
+      },
+      "finalized": {
+        "startedAt": "2026-09-29T02:19:24.123Z",
+        "finishedAt": "2026-09-29T02:19:24.519Z",
+        "value": {
+          "number": "0x47cc1c7",
+          "hash": "0xb61258fef8218796c22ddd5239c0a637f7390a690cd8f992c593f09804d7db86",
+          "timestamp": "0x6abb1cb5"
+        }
+      },
+      "drand": {
+        "chainHash": "04f1e9062b8a81f848fded9c12306733282b2727ecced50032187751166ec8c3",
+        "info": {
+          "startedAt": "2026-09-29T02:19:24.123Z",
+          "finishedAt": "2026-09-29T02:19:25.115Z",
+          "value": {
+            "public_key": "07e1d1d335df83fa98462005690372c643340060d205306a9aa8106b6bd0b3820557ec32c2ad488e4d4f6008f89a346f18492092ccc0d594610de2732c8b808f0095685ae3a85ba243747b1b2f426049010f6b73a0cf1d389351d5aaaa1047f6297d3a4f9749b33eb2d904c9d9ebf17224150ddd7abd7567a9bec6c74480ee0b",
+            "period": 3,
+            "genesis_time": 1727521075,
+            "hash": "04f1e9062b8a81f848fded9c12306733282b2727ecced50032187751166ec8c3",
+            "groupHash": "cd7ad2f0e0cce5d8c288f2dd016ffe7bc8dc88dbb229b3da2b6ad736490dfed6",
+            "schemeID": "bls-bn254-unchained-on-g1",
+            "metadata": {
+              "beaconID": "evmnet"
+            }
+          }
+        },
+        "beacon": {
+          "startedAt": "2026-09-29T02:19:24.124Z",
+          "finishedAt": "2026-09-29T02:19:25.119Z",
+          "value": {
+            "round": 21042432,
+            "randomness": "d2a23ac2c562772c6af1613f72a540810a69c1883028fddd803ed49af84ca49e",
+            "signature": "20b3a1666c1ef7fb5ed75577e167645d691abe1e25cef7a9b3c83623ac74a7f81ab8dd2ffa760f6e99452bf043443150f93abec3949845c58b8482c9a156276e"
+          }
+        }
+      },
+      "limitation": "One RPC/HTTP snapshot, unverified beacon and non-atomic heads; not freshness enforcement, consensus proof, latency SLA or permission to freeze."
+    },
+    {
+      "schema": "rng-timing-observation-v1",
+      "observedAt": "2026-09-29T02:19:41.060Z",
+      "rpcUrl": "https://rpc.mainnet.chain.robinhood.com",
+      "chainId": {
+        "startedAt": "2026-09-29T02:19:40.133Z",
+        "finishedAt": "2026-09-29T02:19:40.581Z",
+        "value": "0x1237"
+      },
+      "latest": {
+        "startedAt": "2026-09-29T02:19:40.133Z",
+        "finishedAt": "2026-09-29T02:19:40.581Z",
+        "value": {
+          "number": "0x47ce4fa",
+          "hash": "0xb636fb183090fb7df7d4e6fadc180bed37efc1dd62e33ef1196e6917a5b967a0",
+          "timestamp": "0x6abb203f"
+        }
+      },
+      "safe": {
+        "startedAt": "2026-09-29T02:19:40.133Z",
+        "finishedAt": "2026-09-29T02:19:40.581Z",
+        "value": {
+          "number": "0x47cd0e9",
+          "hash": "0x1ff1053c6aac02b3b56fc2eee5444a9536d01fc3eec028b5fe625bff62493899",
+          "timestamp": "0x6abb1e3b"
+        }
+      },
+      "finalized": {
+        "startedAt": "2026-09-29T02:19:40.133Z",
+        "finishedAt": "2026-09-29T02:19:40.584Z",
+        "value": {
+          "number": "0x47cc1c7",
+          "hash": "0xb61258fef8218796c22ddd5239c0a637f7390a690cd8f992c593f09804d7db86",
+          "timestamp": "0x6abb1cb5"
+        }
+      },
+      "drand": {
+        "chainHash": "04f1e9062b8a81f848fded9c12306733282b2727ecced50032187751166ec8c3",
+        "info": {
+          "startedAt": "2026-09-29T02:19:40.133Z",
+          "finishedAt": "2026-09-29T02:19:41.060Z",
+          "value": {
+            "public_key": "07e1d1d335df83fa98462005690372c643340060d205306a9aa8106b6bd0b3820557ec32c2ad488e4d4f6008f89a346f18492092ccc0d594610de2732c8b808f0095685ae3a85ba243747b1b2f426049010f6b73a0cf1d389351d5aaaa1047f6297d3a4f9749b33eb2d904c9d9ebf17224150ddd7abd7567a9bec6c74480ee0b",
+            "period": 3,
+            "genesis_time": 1727521075,
+            "hash": "04f1e9062b8a81f848fded9c12306733282b2727ecced50032187751166ec8c3",
+            "groupHash": "cd7ad2f0e0cce5d8c288f2dd016ffe7bc8dc88dbb229b3da2b6ad736490dfed6",
+            "schemeID": "bls-bn254-unchained-on-g1",
+            "metadata": {
+              "beaconID": "evmnet"
+            }
+          }
+        },
+        "beacon": {
+          "startedAt": "2026-09-29T02:19:40.134Z",
+          "finishedAt": "2026-09-29T02:19:41.058Z",
+          "value": {
+            "round": 21042437,
+            "randomness": "7b37bb0daa5174fe57837757f6653590ccb027f046c9f03834076906bacb92af",
+            "signature": "2bf3b2931e323d7bfa95e51f235482e52b957e6a2848283effbf31bd2a0e9f88211e12a5da9c314cda2cf92fb4ab9d84ebb6e55afd4e0ae0ad5bb17c1c3ac48b"
+          }
+        }
+      },
+      "limitation": "One RPC/HTTP snapshot, unverified beacon and non-atomic heads; not freshness enforcement, consensus proof, latency SLA or permission to freeze."
+    },
+    {
+      "schema": "rng-timing-observation-v1",
+      "observedAt": "2026-09-29T02:19:41.137Z",
+      "rpcUrl": "https://robinhood-mainnet-rpc.blockreq.com/v1/rpc/public",
+      "chainId": {
+        "startedAt": "2026-09-29T02:19:40.134Z",
+        "finishedAt": "2026-09-29T02:19:40.518Z",
+        "value": "0x1237"
+      },
+      "latest": {
+        "startedAt": "2026-09-29T02:19:40.135Z",
+        "finishedAt": "2026-09-29T02:19:40.534Z",
+        "value": {
+          "number": "0x47ce502",
+          "hash": "0x54e00e6fc08aa2891f3515f472c904bddc7d69c846adbe38d1f595bad62a3c34",
+          "timestamp": "0x6abb2040"
+        }
+      },
+      "safe": {
+        "startedAt": "2026-09-29T02:19:40.135Z",
+        "error": "public endpoint cannot serve this request. Register at blockreq.com for full access."
+      },
+      "finalized": {
+        "startedAt": "2026-09-29T02:19:40.135Z",
+        "finishedAt": "2026-09-29T02:19:40.541Z",
+        "value": {
+          "number": "0x47cc1c7",
+          "hash": "0xb61258fef8218796c22ddd5239c0a637f7390a690cd8f992c593f09804d7db86",
+          "timestamp": "0x6abb1cb5"
+        }
+      },
+      "drand": {
+        "chainHash": "04f1e9062b8a81f848fded9c12306733282b2727ecced50032187751166ec8c3",
+        "info": {
+          "startedAt": "2026-09-29T02:19:40.135Z",
+          "finishedAt": "2026-09-29T02:19:41.124Z",
+          "value": {
+            "public_key": "07e1d1d335df83fa98462005690372c643340060d205306a9aa8106b6bd0b3820557ec32c2ad488e4d4f6008f89a346f18492092ccc0d594610de2732c8b808f0095685ae3a85ba243747b1b2f426049010f6b73a0cf1d389351d5aaaa1047f6297d3a4f9749b33eb2d904c9d9ebf17224150ddd7abd7567a9bec6c74480ee0b",
+            "period": 3,
+            "genesis_time": 1727521075,
+            "hash": "04f1e9062b8a81f848fded9c12306733282b2727ecced50032187751166ec8c3",
+            "groupHash": "cd7ad2f0e0cce5d8c288f2dd016ffe7bc8dc88dbb229b3da2b6ad736490dfed6",
+            "schemeID": "bls-bn254-unchained-on-g1",
+            "metadata": {
+              "beaconID": "evmnet"
+            }
+          }
+        },
+        "beacon": {
+          "startedAt": "2026-09-29T02:19:40.136Z",
+          "finishedAt": "2026-09-29T02:19:41.137Z",
+          "value": {
+            "round": 21042437,
+            "randomness": "7b37bb0daa5174fe57837757f6653590ccb027f046c9f03834076906bacb92af",
+            "signature": "2bf3b2931e323d7bfa95e51f235482e52b957e6a2848283effbf31bd2a0e9f88211e12a5da9c314cda2cf92fb4ab9d84ebb6e55afd4e0ae0ad5bb17c1c3ac48b"
+          }
+        }
+      },
+      "limitation": "One RPC/HTTP snapshot, unverified beacon and non-atomic heads; not freshness enforcement, consensus proof, latency SLA or permission to freeze."
+    }
+  ],
+  "summary": {
+    "rows": [
+      {
+        "rpcUrl": "https://rpc.mainnet.chain.robinhood.com",
+        "observedAt": "2026-09-29T02:18:21.041Z",
+        "finalizedBlockLag": "12038",
+        "fitsRecentWindowAtNextBlock": false,
+        "clockLag": "-2",
+        "finalizedLag": "1209",
+        "beaconLag": "-1",
+        "assessments": {
+          "fork60": {
+            "status": "wait",
+            "reasons": [
+              "finalityLag",
+              "insufficientObservedHeadroom"
+            ],
+            "targetRound": "21042431",
+            "targetTime": "1790648365",
+            "authorizationToFreeze": false
+          },
+          "candidate1800": {
+            "status": "wait",
+            "reasons": [
+              "finalityLag"
+            ],
+            "targetRound": "21043011",
+            "targetTime": "1790650105",
+            "authorizationToFreeze": false
+          },
+          "fixture3600": {
+            "status": "observedHealthy",
+            "reasons": [],
+            "targetRound": "21043611",
+            "targetTime": "1790651905",
+            "authorizationToFreeze": false
+          }
+        }
+      },
+      {
+        "rpcUrl": "https://robinhood-mainnet-rpc.blockreq.com/v1/rpc/public",
+        "observedAt": "2026-09-29T02:18:21.111Z",
+        "finalizedBlockLag": "8209",
+        "fitsRecentWindowAtNextBlock": false,
+        "clockLag": "-2",
+        "finalizedLag": "824",
+        "beaconLag": "-1",
+        "assessments": {
+          "fork60": {
+            "status": "wait",
+            "reasons": [
+              "finalityLag",
+              "insufficientObservedHeadroom"
+            ],
+            "targetRound": "21042431",
+            "targetTime": "1790648365",
+            "authorizationToFreeze": false
+          },
+          "candidate1800": {
+            "status": "observedHealthy",
+            "reasons": [],
+            "targetRound": "21043011",
+            "targetTime": "1790650105",
+            "authorizationToFreeze": false
+          },
+          "fixture3600": {
+            "status": "observedHealthy",
+            "reasons": [],
+            "targetRound": "21043611",
+            "targetTime": "1790651905",
+            "authorizationToFreeze": false
+          }
+        }
+      },
+      {
+        "rpcUrl": "https://rpc.mainnet.chain.robinhood.com",
+        "observedAt": "2026-09-29T02:18:37.056Z",
+        "finalizedBlockLag": "8377",
+        "fitsRecentWindowAtNextBlock": false,
+        "clockLag": "-2",
+        "finalizedLag": "840",
+        "beaconLag": "-3",
+        "assessments": {
+          "fork60": {
+            "status": "wait",
+            "reasons": [
+              "finalityLag",
+              "insufficientObservedHeadroom"
+            ],
+            "targetRound": "21042436",
+            "targetTime": "1790648380",
+            "authorizationToFreeze": false
+          },
+          "candidate1800": {
+            "status": "observedHealthy",
+            "reasons": [],
+            "targetRound": "21043016",
+            "targetTime": "1790650120",
+            "authorizationToFreeze": false
+          },
+          "fixture3600": {
+            "status": "observedHealthy",
+            "reasons": [],
+            "targetRound": "21043616",
+            "targetTime": "1790651920",
+            "authorizationToFreeze": false
+          }
+        }
+      },
+      {
+        "rpcUrl": "https://robinhood-mainnet-rpc.blockreq.com/v1/rpc/public",
+        "observedAt": "2026-09-29T02:18:37.104Z",
+        "finalizedBlockLag": "8369",
+        "fitsRecentWindowAtNextBlock": false,
+        "clockLag": "-1",
+        "finalizedLag": "840",
+        "beaconLag": "-3",
+        "assessments": {
+          "fork60": {
+            "status": "wait",
+            "reasons": [
+              "finalityLag",
+              "insufficientObservedHeadroom"
+            ],
+            "targetRound": "21042436",
+            "targetTime": "1790648380",
+            "authorizationToFreeze": false
+          },
+          "candidate1800": {
+            "status": "observedHealthy",
+            "reasons": [],
+            "targetRound": "21043016",
+            "targetTime": "1790650120",
+            "authorizationToFreeze": false
+          },
+          "fixture3600": {
+            "status": "observedHealthy",
+            "reasons": [],
+            "targetRound": "21043616",
+            "targetTime": "1790651920",
+            "authorizationToFreeze": false
+          }
+        }
+      },
+      {
+        "rpcUrl": "https://rpc.mainnet.chain.robinhood.com",
+        "observedAt": "2026-09-29T02:18:53.042Z",
+        "finalizedBlockLag": "8536",
+        "fitsRecentWindowAtNextBlock": false,
+        "clockLag": "-2",
+        "finalizedLag": "856",
+        "beaconLag": "-2",
+        "assessments": {
+          "fork60": {
+            "status": "wait",
+            "reasons": [
+              "finalityLag",
+              "insufficientObservedHeadroom"
+            ],
+            "targetRound": "21042442",
+            "targetTime": "1790648398",
+            "authorizationToFreeze": false
+          },
+          "candidate1800": {
+            "status": "observedHealthy",
+            "reasons": [],
+            "targetRound": "21043022",
+            "targetTime": "1790650138",
+            "authorizationToFreeze": false
+          },
+          "fixture3600": {
+            "status": "observedHealthy",
+            "reasons": [],
+            "targetRound": "21043622",
+            "targetTime": "1790651938",
+            "authorizationToFreeze": false
+          }
+        }
+      },
+      {
+        "rpcUrl": "https://robinhood-mainnet-rpc.blockreq.com/v1/rpc/public",
+        "observedAt": "2026-09-29T02:18:53.106Z",
+        "finalizedBlockLag": "8542",
+        "fitsRecentWindowAtNextBlock": false,
+        "clockLag": "-3",
+        "finalizedLag": "856",
+        "beaconLag": "-2",
+        "assessments": {
+          "fork60": {
+            "status": "wait",
+            "reasons": [
+              "finalityLag",
+              "insufficientObservedHeadroom"
+            ],
+            "targetRound": "21042442",
+            "targetTime": "1790648398",
+            "authorizationToFreeze": false
+          },
+          "candidate1800": {
+            "status": "observedHealthy",
+            "reasons": [],
+            "targetRound": "21043022",
+            "targetTime": "1790650138",
+            "authorizationToFreeze": false
+          },
+          "fixture3600": {
+            "status": "observedHealthy",
+            "reasons": [],
+            "targetRound": "21043622",
+            "targetTime": "1790651938",
+            "authorizationToFreeze": false
+          }
+        }
+      },
+      {
+        "rpcUrl": "https://rpc.mainnet.chain.robinhood.com",
+        "observedAt": "2026-09-29T02:19:09.047Z",
+        "finalizedBlockLag": "8695",
+        "fitsRecentWindowAtNextBlock": false,
+        "clockLag": "-2",
+        "finalizedLag": "872",
+        "beaconLag": "-1",
+        "assessments": {
+          "fork60": {
+            "status": "wait",
+            "reasons": [
+              "finalityLag",
+              "insufficientObservedHeadroom"
+            ],
+            "targetRound": "21042447",
+            "targetTime": "1790648413",
+            "authorizationToFreeze": false
+          },
+          "candidate1800": {
+            "status": "observedHealthy",
+            "reasons": [],
+            "targetRound": "21043027",
+            "targetTime": "1790650153",
+            "authorizationToFreeze": false
+          },
+          "fixture3600": {
+            "status": "observedHealthy",
+            "reasons": [],
+            "targetRound": "21043627",
+            "targetTime": "1790651953",
+            "authorizationToFreeze": false
+          }
+        }
+      },
+      {
+        "rpcUrl": "https://robinhood-mainnet-rpc.blockreq.com/v1/rpc/public",
+        "observedAt": "2026-09-29T02:19:09.112Z",
+        "finalizedBlockLag": "8688",
+        "fitsRecentWindowAtNextBlock": false,
+        "clockLag": "-2",
+        "finalizedLag": "872",
+        "beaconLag": "-1",
+        "assessments": {
+          "fork60": {
+            "status": "wait",
+            "reasons": [
+              "finalityLag",
+              "insufficientObservedHeadroom"
+            ],
+            "targetRound": "21042447",
+            "targetTime": "1790648413",
+            "authorizationToFreeze": false
+          },
+          "candidate1800": {
+            "status": "observedHealthy",
+            "reasons": [],
+            "targetRound": "21043027",
+            "targetTime": "1790650153",
+            "authorizationToFreeze": false
+          },
+          "fixture3600": {
+            "status": "observedHealthy",
+            "reasons": [],
+            "targetRound": "21043627",
+            "targetTime": "1790651953",
+            "authorizationToFreeze": false
+          }
+        }
+      },
+      {
+        "rpcUrl": "https://rpc.mainnet.chain.robinhood.com",
+        "observedAt": "2026-09-29T02:19:25.032Z",
+        "finalizedBlockLag": "8856",
+        "fitsRecentWindowAtNextBlock": false,
+        "clockLag": "-3",
+        "finalizedLag": "888",
+        "beaconLag": "-3",
+        "assessments": {
+          "fork60": {
+            "status": "wait",
+            "reasons": [
+              "finalityLag",
+              "insufficientObservedHeadroom"
+            ],
+            "targetRound": "21042453",
+            "targetTime": "1790648431",
+            "authorizationToFreeze": false
+          },
+          "candidate1800": {
+            "status": "observedHealthy",
+            "reasons": [],
+            "targetRound": "21043033",
+            "targetTime": "1790650171",
+            "authorizationToFreeze": false
+          },
+          "fixture3600": {
+            "status": "observedHealthy",
+            "reasons": [],
+            "targetRound": "21043633",
+            "targetTime": "1790651971",
+            "authorizationToFreeze": false
+          }
+        }
+      },
+      {
+        "rpcUrl": "https://robinhood-mainnet-rpc.blockreq.com/v1/rpc/public",
+        "observedAt": "2026-09-29T02:19:25.119Z",
+        "finalizedBlockLag": "8860",
+        "fitsRecentWindowAtNextBlock": false,
+        "clockLag": "-3",
+        "finalizedLag": "888",
+        "beaconLag": "-3",
+        "assessments": {
+          "fork60": {
+            "status": "wait",
+            "reasons": [
+              "finalityLag",
+              "insufficientObservedHeadroom"
+            ],
+            "targetRound": "21042453",
+            "targetTime": "1790648431",
+            "authorizationToFreeze": false
+          },
+          "candidate1800": {
+            "status": "observedHealthy",
+            "reasons": [],
+            "targetRound": "21043033",
+            "targetTime": "1790650171",
+            "authorizationToFreeze": false
+          },
+          "fixture3600": {
+            "status": "observedHealthy",
+            "reasons": [],
+            "targetRound": "21043633",
+            "targetTime": "1790651971",
+            "authorizationToFreeze": false
+          }
+        }
+      },
+      {
+        "rpcUrl": "https://rpc.mainnet.chain.robinhood.com",
+        "observedAt": "2026-09-29T02:19:41.060Z",
+        "finalizedBlockLag": "9011",
+        "fitsRecentWindowAtNextBlock": false,
+        "clockLag": "-2",
+        "finalizedLag": "904",
+        "beaconLag": "-2",
+        "assessments": {
+          "fork60": {
+            "status": "wait",
+            "reasons": [
+              "finalityLag",
+              "insufficientObservedHeadroom"
+            ],
+            "targetRound": "21042458",
+            "targetTime": "1790648446",
+            "authorizationToFreeze": false
+          },
+          "candidate1800": {
+            "status": "observedHealthy",
+            "reasons": [],
+            "targetRound": "21043038",
+            "targetTime": "1790650186",
+            "authorizationToFreeze": false
+          },
+          "fixture3600": {
+            "status": "observedHealthy",
+            "reasons": [],
+            "targetRound": "21043638",
+            "targetTime": "1790651986",
+            "authorizationToFreeze": false
+          }
+        }
+      },
+      {
+        "rpcUrl": "https://robinhood-mainnet-rpc.blockreq.com/v1/rpc/public",
+        "observedAt": "2026-09-29T02:19:41.137Z",
+        "finalizedBlockLag": "9019",
+        "fitsRecentWindowAtNextBlock": false,
+        "clockLag": "-3",
+        "finalizedLag": "904",
+        "beaconLag": "-2",
+        "assessments": {
+          "fork60": {
+            "status": "wait",
+            "reasons": [
+              "finalityLag",
+              "insufficientObservedHeadroom"
+            ],
+            "targetRound": "21042458",
+            "targetTime": "1790648446",
+            "authorizationToFreeze": false
+          },
+          "candidate1800": {
+            "status": "observedHealthy",
+            "reasons": [],
+            "targetRound": "21043038",
+            "targetTime": "1790650186",
+            "authorizationToFreeze": false
+          },
+          "fixture3600": {
+            "status": "observedHealthy",
+            "reasons": [],
+            "targetRound": "21043638",
+            "targetTime": "1790651986",
+            "authorizationToFreeze": false
+          }
+        }
+      }
+    ],
+    "valid": 12,
+    "total": 12,
+    "limitation": "Bounded non-atomic RPC observations; HTTP beacons are not authenticated by this summary. No worst-case bound, consensus proof or launch authorization."
+  }
+}

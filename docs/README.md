@@ -9,7 +9,7 @@
 
 Достаточно первых двух файлов и документа нужного модуля. Полный архив при старте не читать.
 
-[Правила для пользователей](USER_RULES.md) — основа страницы сайта, без обещания публичной готовности.
+[Правила для пользователей](USER_RULES.md) и [статусы](USER_STATUS_MODEL.md) — основа будущего сайта, без обещания публичной готовности.
 
 ## Модули и проверки — по необходимости
 
@@ -30,6 +30,7 @@
 | Старые обязательства / source drift | [Recovery admission](RECOVERY_ADMISSION.md) |
 | Robinhood runtime / rehearsal | [Отдельный4663 исполнитель](ROBINHOOD_RUNTIME.md) |
 | RPC / historical replay | [Проверка RPC](PUBLIC_RPC_QUALIFICATION.md) |
+| Операционный профиль | [V2, роли, notice, gas, timing/RPC evidence](OPERATIONAL_LAUNCH_PROFILE.md) |
 | Допуск deployment / timing | [Публичные controllers и launch plan](PUBLIC_CONTROLLERS.md), [профиль и проверки](DEPLOYMENT_ADMISSION.md) |
 | Cutoff / финальность | [История подлинных cutoff и worker](CUTOFF_HISTORY.md) |
 | RNG / сеть | [Delivery worker](DRAND_DELIVERY_WORKER.md), [Drand adapter и операционная граница](DRAND_ADAPTER.md), [Drand verifier](DRAND_FEASIBILITY.md), [нерешённый binding](DRAND_BINDING_MODEL.md), [L2 blocks](ROBINHOOD_BLOCK_SEMANTICS.md) |

@@ -2,10 +2,10 @@ const fs=require('node:fs'),path=require('node:path'),http=require('node:http'),
 const {fixture,rpc,sent}=require('./public-controllers.cjs');
 const I=require('../../scripts/infinity-buy.cjs'),{hash}=require('../../scripts/direct-buy.cjs');
 const {initialAdapters}=require('../../scripts/buy-policy-format.cjs');
-async function setup(t,compiled){
+async function setup(t,compiled,{launchRules=false}={}){
  await rpc('hardhat_reset');const usd='0x5fc5360d0400a0fd4f2af552add042d716f1d168';
  await rpc('hardhat_setCode',[usd,'0x'+compiled.LocalUSDGFixture.evm.deployedBytecode.object]);
- const f=await fixture(compiled,{reset:false,quoteAddress:usd,offset:false});
+ const f=await fixture(compiled,{reset:false,quoteAddress:usd,offset:false,launchRules});
  const code=async c=>ethers.keccak256(await f.provider.getCode(c.target));
  for(const [a,c]of Object.entries(require('../../research/public-deployment/infinity-rpc-test-runtimes.json')))await rpc('hardhat_setCode',[a,c]);
  const settlement='0x4f922d5b15e6691e0469663e4f5c4177f23c5faf';await rpc('hardhat_setCode',[settlement,'0x6000']);
@@ -28,6 +28,7 @@ async function setup(t,compiled){
  const {ACTIONS,MONTHLY_ACTIONS}=require('../../scripts/promo-automation.cjs');
  const ops={schema:'robinhood-promo-automation-v1',maxGasPrice:fundingJob.maxGasPrice,reserveGasPrice:fundingJob.maxGasPrice,nativeFloor:'1000',extraFeePerTx:'0',safetyBps:12000,maxTransactions:32,maxClaims:64,scanBlocks:2000,pollSeconds:10,gasUnits:Object.fromEntries([...ACTIONS,...MONTHLY_ACTIONS,'checkpointCutoff'].map(a=>[a,'3000000']))};
  const schedulerConfig={schema:'robinhood-promo-scheduler-v1',manifest,lifecycle,buyPolicy,cutoffMode:'FINALIZED_CHECKPOINT',campaignId:'1',shortBudget:'100000000',chunkSize:1};
+ if(launchRules){schedulerConfig.shortBudgetMode='FREE_SHORT';delete schedulerConfig.shortBudget;}
  const config={fundingJob,deliveryJob,schedulerConfig,ops};
  const deploymentProfile=require('../../scripts/deployment-admission.cjs').createDeploymentProfile(config,{scope:'public-launch',executor:f.owner,sourceCodeHash:await code(source),timing:{leadSeconds:'1800',maxClockLag:'30',maxClockAhead:'5',maxFinalizedLag:'1200',maxBeaconLag:'15',shortInterval:'21600',monthlyInterval:'2592000',cutoffDelayBlocks:'1'}});
  const server=http.createServer(async(req,res)=>{let body='';for await(const p of req)body+=p;const data=JSON.parse(body);const handle=async q=>{try{return {jsonrpc:'2.0',id:q.id,result:await rpc(q.method,q.params)};}catch(e){return {jsonrpc:'2.0',id:q.id,error:{code:-32000,message:e.message}};}};res.setHeader('content-type','application/json');res.end(JSON.stringify(Array.isArray(data)?await Promise.all(data.map(handle)):await handle(data)));});

@@ -61,3 +61,6 @@ research/*
 
 # Local logs and disposable reports; durable evidence belongs in research.
 .local/
+
+!research/operational-profile/
+!research/operational-profile/**

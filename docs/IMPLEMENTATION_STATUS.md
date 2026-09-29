@@ -1,5 +1,14 @@
 # Карта реализации
 
+29.09: [Операционный профиль](OPERATIONAL_LAUNCH_PROFILE.md):
+`operational-profile.cjs` — офлайн genesis/settings + pinned on-chain inspection;
+`deployment-admission.cjs` V2 — roles/notice/gas/BUY expectations, V1 помечен incomplete.
+`promo-automation.cjs` передаёт ops в normal admission; recovery старых долгов отдельный.
+`promo-runtime-handoff.cjs` запрещает V2→V1. Шаблон требует явных значений, CLI без RPC.
+`operational-profile.test.cjs` проверяет drift, оба frozen/claims, no-repeat, export/downgrade.
+11 адресных сценариев +1catalog; изменённый сценарий перепроверен. Контракты не менялись.
+[Пользовательские статусы](USER_STATUS_MODEL.md) — требования к будущему сайту, не готовый API.
+
 29.09: `minimumMonthlyBudget()` фиксирует100000000raw в RobinhoodMonthlyController,
 MonthlySettlement откатывает недостаточный бюджет после sync и до RNG; executor
 возвращает currentFunding. Public admission проверяет минимум. Short числа сохранены

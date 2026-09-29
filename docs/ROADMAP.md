@@ -57,8 +57,11 @@ public sends закрыты. [Recovery admission](RECOVERY_ADMISSION.md) отд�
    общий исход, обязательный один winner в выплатной ветке, independent worker replay.
    Short10мест/5USDG/q=0.8e/(e+1), Monthly Current>=100USDG приняты;
    planning profile обновлён, public minimum проверяется до RNG.
-   Далее operational launch profile и qualified archive RPC; реальные constructor
-   параметры должны совпасть с принятыми числами, заполненный JSON не qualification.
+   [Operational launch profile V2](OPERATIONAL_LAUNCH_PROFILE.md) реализован и адресно проверен:
+   явные роли/notice/gas/BUY pins и принятый genesis, drift → только старые обязательства.
+   Нужны реальные значения и qualified archive RPC; повтор29.09 оба endpoint не квалифицировал.
+   Заполненный JSON не qualification. Следующий ограниченный пакет — постоянное
+   накопление индексера/restart и основания пользовательских статусов (пункт4).
    Эксплуатационные параметры выбираются отдельно;
    для RPC нужен другой archive endpoint (official повторно не прошёл history).
    Same-chain automatic proof ещё открыт.

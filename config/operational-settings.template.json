@@ -1,0 +1,13 @@
+{
+  "roles": {
+    "governor": null,
+    "operations": null,
+    "project": null,
+    "buyPolicyPublisher": null
+  },
+  "controllers": {
+    "short": {"noticeSeconds": null, "maxGasPrice": null, "nativeFloor": null},
+    "monthly": {"noticeSeconds": null, "maxGasPrice": null, "nativeFloor": null}
+  },
+  "buyPolicy": {"source": null, "codeHash": null, "noticeBlocks": null}
+}

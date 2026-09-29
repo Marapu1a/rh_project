@@ -1,73 +1,64 @@
-# Статический review: пользовательские правила и численный профиль запуска
+# Статический review: операционный профиль V2 и оставшиеся release blockers
 
-29.09.2026. Тесты/build/fork не запускать: [разделение работы](REVIEW_TESTING.md).
-Твой review255fde5 прочитан. Ошибок Monthly75/25 из него не следовало; поправлены
-устаревшие открытые параметры и исторический result tag. Предупреждение о нескольких
-адресах принято и вынесено в пользовательский текст, а не спрятано в техническом модуле.
+29.09.2026. Ответ на review319e5ec из9698403. Тесты/build/fork не запускать:
+[разделение работы](REVIEW_TESTING.md). Нужен анализ кода, связей и границ, не ещё один
+прогон окружения. Ваши замечания — вспомогательное review, решения принимает владелец.
 
-## Решения владельца этого пакета
+## Что приняли и сделали
 
-- Short:10мест, веса7:4:2:1:1:1:1:1:1:1; минимальная единица5USDG, корзина от100.
-  Используется весь free Short на cutoff, потолка нет.
-- После сравнения малого числа участников владелец отдельно выбрал80% максимума
-  допуска: q(e)=0.8e/(e+1), Rules=(1,4,5,1,1). При одном билете допуск40%; при
-  трёх таких адресах вероятность хотя бы одной выплаты78.4% вместо48.8% старого кандидата.
-  Это не вероятность выигрыша каждого, если допущенных больше10. Второй этап равномерный.
-- Monthly: minimum Current100USDG, отдельно от Next target100USDG.75/25 и e/(e+1)
-  не менялись. Public минимум контрактный, не только совет worker.
-- Учёт по адресам без идентификации личности сохраняется. Разделение покупок по
-  адресам может увеличить суммарный шанс/число призов. USER_RULES показывает именно
-  твой пример10vs10 с разделением: общие шансы B≈63.46%, A≈11.54%, перенос25%.
+Математика не менялась: Infinity3%,90/5/5; Short10мест7:4:2:1×7, minimumUnit5USDG,
+full free budget, q=.8e/(e+1); Monthly минимум100USDG+Next100,75/25 и вес e/(e+1).
+USER_RULES теперь прямо привязывает начисление к обработке подтверждённого BUY
+индексером и различает обеспеченную награду и перевод USDG. Отдельная
+[модель статусов](USER_STATUS_MODEL.md) — требования будущего сайта, не готовый API.
 
-## Реализация
+[Операционный профиль](OPERATIONAL_LAUNCH_PROFILE.md) — расширение admission:
 
-`docs/USER_RULES.md` — отдельный текст для будущего сайта: билеты/поддержанные BUY,
-остатки, Short допуск против конечной победы, случайная выдача мест, Monthly,
-несколько адресов, funding/90-5-5, задержки, Claim, доверие к индексеру и worker.
-Это ещё не опубликованный сайт и не заявление о public readiness. Юридические
-условия конкретного запуска отдельно не оформлялись; не придумывай их вместо проекта.
+- operational-profile.cjs: ожидания формируются офлайн из явных settings и принятого
+  genesis. Шаблон с null намеренно невалиден, не берём «одобрение» из on-chain состояния.
+- deployment-admission.cjs: V2 проверяет genesis, owner/pendingOwner, ops/project,
+  notices, immutable controller caps/floors, BUY source/code/publisher/notice/genesis,
+  FREE_SHORT/maxBudget/threshold/Next. Существующие pins/timing/campaign90/5/5 остаются.
+- Worker передаёт ops и проверяет рабочий maxGasPrice внутри обоих immutable ceilings,
+  reserveGasPrice>=operating cap. Баланс ETH всё ещё проверяется на конкретное действие.
+- Legacy V1 сохранён как incomplete для репетиций, handoff V2→V1 запрещён.
+  Изменить живую identity простым редактированием файла нельзя.
+- Normal drift блокирует новые jobs/freeze. Recovery старых frozen/claimable не требует
+  совпадения mutable owner state, но сохраняет критические pins и send reconciliation.
 
-`MVP_ECONOMIC_PROFILE.md` стал текущим профилем; прежний cap1000/Monthly личный
-admission-кандидат архивирован с исправленными ссылками. Product spec/roadmap/navigation
-обновлены. Planning config содержит принятые числа; report ловит drift, но не
-подменяет проверку реального deployment.
+Не добавлены администраторы, proxy, reroll, изъятие призов или автоматическое принятие
+deployment. Public sends и public handoff остаются закрыты общим gate. V2 потребуется
+при будущей активации, само его наличие не доказывает launch readiness.
 
-В MonthlySettlement добавлен virtual getter minimumMonthlyBudget (base/local1raw),
-Robinhood wrapper фиксирует100000000raw для USDG6decimals. После startMonthly/sync
-проверяется реальный бюджет; при недостатке custom error откатывает всю транзакцию
-до context/RNG. Worker трактует его как currentFunding и не отправляет tx в wait.
-Public normal admission проверяет getter. Obligation recovery не вводит новый
-порог для уже frozen draws. Нет новых setters, proxy, admin withdrawal или reroll.
+## Что реально проверено
 
-## Проверки Codex
+11/11 адресных tests в operational-profile + deployment-admission за85.4s.
+После добавления downgrade/CLI guards повторены изменённый тест и catalog:2/2.
+Есть оба frozen draw → settlement/claims при owner drift и повтор без новой отправки.
+Solidity не менялась, reused compiled artifact с SHA256. Не full suite, не fork/live e2e.
 
-Свежая сборка.21 различный продуктовый сценарий +1catalog прошли адресно. Не full.
-Проверены принятый Short basket/threshold/outcome против Solidity, большой банк и dust,
-Monthly99.999999→отказ без reserved/RNG, два worker polls без send, direct2raw→GENERAL
-(1rawShort+1rawCurrent при заполненном Next)→тот же job freeze100USDG. Независимый
-Monthly replay и public authentic BLS — соседние тесты. В новом funding-тесте только
-операционный drand freshness preflight заменён stub; это явно не live proof.
+[Read-only RPC evidence](../research/operational-profile/README.md): official повторяет
+3blocks/receipts, но отказывает historical state; Blockreq проходит ближние высоты,
+не глубокую. Ни один не qualified archive. Replay не запускали без admitted manifest.
+Timing12samples: finalizedLag824–1209s; кандидат1200s дал бы ожидание1/12.
+Не повышали автоматически до fixture1800; это ограниченная выборка, не SLA.
 
-Первый запуск нового теста потребовал сравнивать error selector: ethers описывает
-его как unknown custom error, а не именем. Исправлен assert, сценарий прошёл.
-Runtime Monthly19671bytes, Short22738bytes. Fork/live не запускались.
+## Просим проверить
 
-`short-launch-analysis.cjs` считает точную биномиальную модель для одинакового e
-на каждом кошельке, без Monte Carlo.25 сценариев сохранены в research. При одном
-кошельке с одним билетом средняя выдача4% корзины — это40% допуска × средний приз10%,
-а не обещание раздать весь банк. Спонсорское пополнение растит суммы, не вероятность.
+1. Нет ли обхода V2-проверок в обычном пути или handoff? При этом не требовать полной
+   operational-проверки для завершения старого frozen draw: это сознательная граница.
+2. Правильно ли разделены genesis и следующие объявленные epochs, controller ceilings
+   и рабочие caps? Нет ли ложного обещания непрерывности или «вечного покрытия газа»?
+3. Есть ли существенная недостающая связь ролей/policy, которую разумно закрыть сейчас,
+   а не огромным новым слоем? Не путать pub executor и BUY policy publisher.
+4. Понятно ли USER_RULES/statuses объясняют временно не обработанную покупку в отличие
+   от окончательно неучтённой и назначение в отличие от выплаты?
 
-## Что проверить
+## Следующий пакет
 
-1. Понятно ли USER_RULES различает допуск, победу и назначенный долг? Нет ли обещания
-   гарантированной периодичности, полного покрытия всех BUY или финальности on-chain?
-2. Не скрывает ли текст значимые особенности нескольких адресов, случайных размеров
-   Short-призов, переносов и списания attempts? Нужны конкретные поправки, не новый KYC.
-3. Корректно ли размещён minimum guard: direct sync, atomic rollback, до RNG,
-   currentFunding/retry; нет ли способа обойти его у нового public wrapper?
-4. Есть ли расхождения принятых чисел между spec/config/model/code? Base1raw — тестовая/
-   legacy граница, не публичные правила. Не переносить прежние fixtures в launch config.
-
-Далее operational launch profile/notice/gas/timing/roles и qualified archive RPC;
-затем permanent service/indexer, сайт и same-chain proof. Public sends остаются закрыты.
-Не нужно снова обсуждать кривую Monthly или доказывать вечную окупаемость газа.
+Предлагаем постоянное накопление индексера/restart/status поверх существующего replay,
+без нового поколения продукта. Archive RPC, реальные адреса/notice/gas/timing нужны
+параллельно, затем same-chain automatic proof и сайт. Не расширять в этой итерации
+экономику, вероятности или бессрочные gas-гарантии. Предлагайте приоритеты по влиянию
+на выпуск, не список всех теоретических рисков. Сервер, ключи и public deployment
+пока не подключены; приватные ключи не передаются в чат.

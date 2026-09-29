@@ -6,14 +6,17 @@ const TIMING=['leadSeconds','maxClockLag','maxClockAhead','maxFinalizedLag','max
 const check=(v,m)=>{if(!v)throw Error(m);},same=(a,b)=>String(a).toLowerCase()===String(b).toLowerCase();
 const canonical=v=>Array.isArray(v)?v.map(canonical):v&&typeof v==='object'?Object.fromEntries(Object.entries(v).map(([k,x])=>[k,canonical(x)])):typeof v==='string'&&/^0x[0-9a-fA-F]+$/.test(v)?v.toLowerCase():v;
 const configHash=c=>hash(canonical({fundingJob:c.fundingJob,deliveryJob:c.deliveryJob,schedulerConfig:c.schedulerConfig}));
-function createDeploymentProfile(config,{scope,executor,timing,sourceCodeHash}){
+function createDeploymentProfile(config,{scope,executor,timing,sourceCodeHash,operational}){
  const f=config.fundingJob,d=config.deliveryJob,s=config.schedulerConfig,m=s.manifest,l=s.lifecycle;
  const pins={collector:[f.collector,f.collectorCodeHash],source:[f.source,sourceCodeHash],token:[m.token,m.codeHashes.token],quote:[m.quote,m.codeHashes.quote],registry:[m.registry,m.codeHashes.registry],vault:[l.vault,l.vaultCodeHash],short:[d.short,d.shortCodeHash],monthly:[d.monthly,d.monthlyCodeHash],adapter:[d.adapter,d.adapterCodeHash]};
  const profile={schema:'promo-deployment-profile-v1',scope,chainId:String(f.chainId),configHash:configHash(config),executor,quoteDecimals:m.quoteDecimals,timing,pins};
+ if(operational){profile.schema='promo-deployment-profile-v2';profile.operational=operational;}
  validateDeploymentProfile(profile,config);return profile;
 }
 function validateDeploymentProfile(p,config){
- check(p?.schema==='promo-deployment-profile-v1'&&['local-rehearsal','public-launch'].includes(p.scope),'Explicit deployment profile required');
+ check(['promo-deployment-profile-v1','promo-deployment-profile-v2'].includes(p?.schema)&&['local-rehearsal','public-launch'].includes(p.scope),'Explicit deployment profile required');
+ if(p.schema==='promo-deployment-profile-v2')require('./operational-profile.cjs').validate(p.operational);
+ else check(!p.operational,'Operational settings require deployment profile v2');
  check(typeof p.chainId==='string'&&/^[1-9][0-9]*$/.test(p.chainId),'Invalid profile chain');
  check(ethers.isAddress(p.executor)&&p.executor!==ethers.ZeroAddress,'Invalid expected executor');
  check(Number.isInteger(p.quoteDecimals)&&p.quoteDecimals>=0&&p.quoteDecimals<=36,'Invalid quote decimals');
@@ -35,7 +38,7 @@ function validateDeploymentProfile(p,config){
 }
 async function inspectDeployment(provider,profile,config){
  validateDeploymentProfile(profile,config);const reasons=[],checks=[];
- const result=()=>({status:reasons.length?'blocked':'matched',scope:profile.scope,profileHash:hash(profile),checks,reasons,publicLaunchReady:false,authorizationToFreeze:false});
+ const result=()=>({status:reasons.length?'blocked':'matched',scope:profile.scope,profileHash:hash(profile),checks,reasons,operationalCoverage:profile.schema==='promo-deployment-profile-v2'?'v2-explicit':'legacy-incomplete',publicLaunchReady:false,authorizationToFreeze:false});
  const test=(ok,label)=>{checks.push({check:label,ok:!!ok});if(!ok)reasons.push(label);};
  if(profile.scope==='public-launch')reasons.push('publicExecutionNotImplemented');
  try{
@@ -70,6 +73,7 @@ async function inspectDeployment(provider,profile,config){
   const collector=new ethers.Contract(address('collector'),['function policy(uint64) view returns(tuple(uint64 endsAt,address[3] recipients,uint16[3] bps))'],provider),policy=await collector.policy(f.campaignId,at);
   if(profile.scope==='public-launch')test([9000n,500n,500n].every((bps,i)=>policy.bps[i]===bps&&BigInt(f.bps[i])===bps),'approvedCreatorAllocation');
   test(policy.recipients.every((x,i)=>same(x,f.recipients[i]))&&policy.bps.every((x,i)=>x===BigInt(f.bps[i])),'campaignPolicy');
+  if(profile.schema==='promo-deployment-profile-v2')await require('./operational-profile.cjs').inspect({provider,profile,config,at,test});
   for(const anchor of [f.anchor,config.deliveryJob.anchor,config.schedulerConfig.manifest.anchor])test(anchor.number<=head.number&&same((await provider.getBlock(anchor.number))?.hash,anchor.hash),'deploymentAnchor');
   test(same((await provider.getBlock(head.number))?.hash,head.hash),'stableObservation');
   return {...result(),observedAtBlock:{number:head.number,hash:head.hash,timestamp:head.timestamp}};

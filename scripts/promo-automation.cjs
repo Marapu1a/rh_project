@@ -79,7 +79,7 @@ async function runPromoAutomation({provider,executor,collector,adapter,vault,sho
    state.lastObligationAdmission=r;save(state);return r;
   }
   async function fullCheck(){
-   const r=network.executionAdmission(await require('./deployment-admission.cjs').inspectDeployment(provider,deploymentProfile,{fundingJob,deliveryJob,schedulerConfig}));
+   const r=network.executionAdmission(await require('./deployment-admission.cjs').inspectDeployment(provider,deploymentProfile,{fundingJob,deliveryJob,schedulerConfig,ops}));
    if(r.detail)r.detail='Deployment observation unavailable; verify endpoint and pins';
    if(r.status==='matched'){
     try{await new ethers.Contract(collector.target,['function sync()'],provider).sync.staticCall();}
@@ -109,7 +109,7 @@ async function runPromoAutomation({provider,executor,collector,adapter,vault,sho
    if(await provider.getTransactionCount(sender,'pending')>await provider.getTransactionCount(sender,'latest'))wait('pendingSigner');
    let required=transactionCost(ops,units)+BigInt(ops.nativeFloor);
    if(deploymentProfile&&['checkpointCutoff','begin','beginMonth','seal','sealMonth'].includes(action)){
-    const admission=network.executionAdmission(await require('./deployment-admission.cjs').inspectDeployment(provider,deploymentProfile,{fundingJob,deliveryJob,schedulerConfig}));
+    const admission=network.executionAdmission(await require('./deployment-admission.cjs').inspectDeployment(provider,deploymentProfile,{fundingJob,deliveryJob,schedulerConfig,ops}));
     state.lastDeploymentAdmission=admission;save(state);if(admission.status!=='matched')wait('deploymentAdmission');
    }
    if(action==='seal'||action==='sealMonth'){
@@ -248,7 +248,7 @@ async function runPromoAutomation({provider,executor,collector,adapter,vault,sho
    if(state.pending)return blocked(state.pending.transactionHash?'pendingReceipt':'unknownHash');
    if(results.funding.status==='blocked'||results.funding.status==='stopped')return {...results.funding,haltedLane:lane,results,steps};
    // A definite source error does not erase old debts or disable a funded draw.
-   if(caughtUp&&deploymentProfile&&!drain){const admission=network.executionAdmission(await require('./deployment-admission.cjs').inspectDeployment(provider,deploymentProfile,{fundingJob,deliveryJob,schedulerConfig}));state.lastDeploymentAdmission=admission;save(state);if(admission.status!=='matched'){results.draw={status:'waiting',reason:'deploymentAdmission',admission};return result('waiting','deploymentAdmission');}}
+   if(caughtUp&&deploymentProfile&&!drain){const admission=network.executionAdmission(await require('./deployment-admission.cjs').inspectDeployment(provider,deploymentProfile,{fundingJob,deliveryJob,schedulerConfig,ops}));state.lastDeploymentAdmission=admission;save(state);if(admission.status!=='matched'){results.draw={status:'waiting',reason:'deploymentAdmission',admission};return result('waiting','deploymentAdmission');}}
    if(caughtUp){lane='draw';results.draw=await withTransactionBoundary(boundary,()=>runScheduler({...sOptions,allowNewJobs:!drain,obligationsOnly},{maxTicks:16}));if(state.pending)return blocked(state.pending.transactionHash?'pendingReceipt':'unknownTransaction');if(childHalt(results.draw))return result(results.draw.status,'draw',{retryableRpcRead:results.draw.retryableRpcRead===true});}
    else results.draw={status:'waiting',reason:'payoutDiscovery'};
    return result(results.funding.status==='error'||results.funding.status==='degraded'||results.claimFailures?.length?'degraded':'waiting');

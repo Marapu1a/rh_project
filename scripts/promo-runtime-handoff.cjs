@@ -10,6 +10,7 @@ function physical(file){
  return path.join(parent,path.basename(file)).toLowerCase();
 }
 async function handoffRuntime(previous,next,{afterRetire=async()=>{}}={}){
+ check(previous.deploymentProfile?.schema!=='promo-deployment-profile-v2'||next.deploymentProfile?.schema==='promo-deployment-profile-v2','Handoff cannot downgrade operational profile');
  const old=await prepareRuntime(previous),fresh=await prepareRuntime(next);
  check(!previous.nativeRefill||hash(previous.nativeRefill)===hash(next.nativeRefill??null),'Handoff must preserve refill policy');
  check(!previous.deploymentProfile||next.deploymentProfile,'Handoff cannot remove deployment profile');

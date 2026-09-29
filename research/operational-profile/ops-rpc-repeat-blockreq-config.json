@@ -1,0 +1,9 @@
+{
+  "depths": [
+    0,
+    10000,
+    864000
+  ],
+  "maxRequests": 400,
+  "previous": "research/operational-profile/ops-rpc-blockreq-first.json"
+}

@@ -1,5 +1,11 @@
 # Deployment profile и допуск нового розыгрыша
 
+29.09: текущая версия — [операционный профиль V2](OPERATIONAL_LAUNCH_PROFILE.md).
+Он добавляет явные genesis/roles/notice/gas/BUY expectations; normal checks получают ops.
+V1 продолжает локальные репетиции, но помечен legacy-incomplete. Публичные controllers
+и4663 runtime уже существуют, public sends остаются закрыты. Ниже исходное описание
+базовых pins/timing, дополненное этим V2; совпадение не является release authorization.
+
 28.09.2026. Проверяемый профиль конкретного deployment, без новых контрактных прав,
 без деплоя и без разрешения публичной сети. `scripts/deployment-admission.cjs`.
 
@@ -20,13 +26,12 @@ source binding/fingerprint и deployment anchors. В конце перепров
 
 Внешняя mutable политика PAIR по-прежнему проверяется funding worker/collector при pull;
 этот профиль не объявляет её неизменяемой. Он также не проверяет ликвидность, экономическую
-целесообразность комиссий, роли будущего production контракта или честность входных pins.
+целесообразность комиссий, честность входных pins. Операционные роли дополнительно проверяются V2.
 
 Два scope:
 
 - `local-rehearsal`: matched допускается только для chain31337 и совпавших проверок.
-- `public-launch`: всегда содержит блокер publicExecutionNotImplemented. Нынешние
-  контроллеры и worker local-only. Замена chainId/scope не открывает публичный запуск.
+- `public-launch`: всегда содержит блокер publicExecutionNotImplemented. Public controllers и отдельный4663 runtime подготовлены, но публичные sends закрыты. Замена chainId/scope не открывает публичный запуск.
 
 В обоих случаях publicLaunchReady=false, authorizationToFreeze=false. Отдельный успешный
 отчёт нельзя сохранить как вечное разрешение на freeze.

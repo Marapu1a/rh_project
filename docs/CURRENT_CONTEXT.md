@@ -1,5 +1,18 @@
 # Текущий контекст
 
+29.09: **Операционный профиль V2 реализован**, public sends закрыты.
+[Модуль](OPERATIONAL_LAUNCH_PROFILE.md): явные genesis/roles/notice/gas/BUY pins,
+проверка перед новыми действиями; drift не мешает обоим frozen draws/claims.
+V1 сохранён как legacy-incomplete, handoff V2→V1 запрещён.11 адресных сценариев passed;
+после guard/CLI повторён изменённый сценарий +catalog (2/2), не full/live/fork.
+USER_RULES различает обработку покупки, назначение и выплату; [статусы сайта](USER_STATUS_MODEL.md)
+пока спецификация. Свежие official/Blockreq history probes повторены, archive не квалифицирован;
+timing12samples: finalizedLag824–1209s, кандидат1200 дал бы1ожидание, числа не приняты автоматически.
+Следующий разумный пакет — постоянное накопление/indexer restart/status поверх текущего replay;
+archive RPC и явный выбор operational параметров параллельно остаются release blockers.
+Нет public deployment: same-chain automatic proof и публичный сайт ещё впереди.
+Ниже история; более старые «следующие шаги» не заменяют этот статус.
+
 29.09: **Численные параметры первого запуска приняты.** Short10мест, веса7:4:2:1:1:1:1:1:1:1,
 минимальная единица5USDG (корзина от100), весь free Short без потолка;
 q(e)=0.8e/(e+1) подтверждён отдельно. Monthly Current>=100USDG при Next100.
