@@ -17,7 +17,18 @@ test('persistent indexer feeds lifecycle; missing cache waits while frozen draws
  const state=f.readState();
  for(const [kind,c] of [['SHORT',f.short],['MONTHLY',f.monthly]]){
   const draw=state.jobs[kind][0].job.artifact.request.drawId;assert.notEqual(await c.drawRequest(draw),0n);
-  await sent(f.random.deliver(await c.drawRequest(draw),ethers.ZeroHash));
+  let seed=ethers.ZeroHash;
+  if(kind==='SHORT'){
+   // Local RNG fixture: deterministically exercise the payout branch, not a lucky seed.
+   const proposal=await f.short.datasetProposal(state.jobs.SHORT[0].job.proposalId),policy=await f.short.shortEpochPolicy(proposal.request.rulesEpoch);
+   const threshold=require('../scripts/short-outcome.cjs').threshold(1n,policy.outcome);
+   let found=false;for(let n=0;n<1000;n++){
+    seed=ethers.id('reward test '+n);
+    const rank=BigInt(ethers.keccak256(ethers.AbiCoder.defaultAbiCoder().encode(['bytes32','bytes32','bytes32','address'],[ethers.id('SHORT_ADMISSION_V1'),proposal.context,seed,await f.admin.getAddress()])));
+    if(rank<threshold){found=true;break;}
+   }assert(found,'fixture payout seed');
+  }
+  await sent(f.random.deliver(await c.drawRequest(draw),seed));
  }
  fs.renameSync(f.config.indexer.statePath,f.config.indexer.statePath+'.offline');
  await f.tick(32);assert.equal(await f.short.pendingDatasetDraw(),ethers.ZeroHash);assert.equal(await f.monthly.pendingMonth(),ethers.ZeroHash);

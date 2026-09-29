@@ -101,3 +101,7 @@ Fixtures local31337/mock, не live/fork. CPU/диск по-прежнему р�
 
 29.09: index.observedAt фиксирует время последнего успешного снимка. Обновление waiting
 не делает старые данные свежими для API.
+
+29.09: [Reward accounting](USER_STATUS_API.md) продолжает проверенный checkpoint.
+При reorg полный пересчёт; режим audit принудительно проверяет весь storage на высоте
+обработанной порции. Остальной BUY/JSON replay не стал инкрементальным по CPU.

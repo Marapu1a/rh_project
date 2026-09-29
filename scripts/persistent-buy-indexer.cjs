@@ -26,7 +26,7 @@ async function readSnapshot({config,statePath,manifest,cutoff,rpc,now=Date.now()
  replay(manifest,blocks);
  return {manifest,blocks};
 }
-async function indexOnce({config,rpc,statePath,batchSize=100,reorgLimit=128}){
+async function indexOnce({config,rpc,statePath,batchSize=100,reorgLimit=128,fullRewardAudit=false}){
  check(Number.isInteger(batchSize)&&batchSize>0&&batchSize<=1000,'Invalid index batch');
  check(Number.isInteger(reorgLimit)&&reorgLimit>=0&&reorgLimit<=10000,'Invalid reorg limit');
  return withState(statePath,{kind:'persistent-buy-indexer-v1',config},async(state,save)=>{
@@ -63,7 +63,7 @@ async function indexOnce({config,rpc,statePath,batchSize=100,reorgLimit=128}){
    const resolved=await resolveBuyPolicy(config,rpc,end);
    const input=end>anchor?await scanWithRpc(resolved.manifest,read,end,config.lifecycle):{manifest:resolved.manifest,blocks:[]};
    const ledger=end>anchor?replay(input.manifest,input.blocks):null;
-   const rewards=config.lifecycle&&end>anchor?await require('./reward-observation.cjs').observeRewards({blocks:input.blocks,vault:config.lifecycle.vault,rpc,blockTag:tag(end)}):null;
+   const rewards=config.lifecycle&&end>anchor?await require('./reward-observation.cjs').observeRewards({blocks:input.blocks,vault:config.lifecycle.vault,rpc,blockTag:tag(end),previous:removed?null:prior.rewards,fullAudit:fullRewardAudit}):null;
    check((await rpc('eth_getBlockByNumber',[finalized.number,false])).hash===finalized.hash,'Finalized branch changed during indexing');
    // Publish evidence and derived ledger together; failure leaves the last good snapshot intact.
    state.index={head:end,observedAt:new Date().toISOString(),blocks:input.blocks,cache,manifest:input.manifest,ledger,ledgerHash:ledger?hash(ledger):null,rewards,policyStatus:resolved.policyStatus};
@@ -78,13 +78,13 @@ async function indexOnce({config,rpc,statePath,batchSize=100,reorgLimit=128}){
 }
 async function main(){
  const [configFile,statePath,mode='once']=process.argv.slice(2);
- check(configFile&&statePath&&['once','watch'].includes(mode),'Usage: CONFIG STATE [once|watch], RH_RPC_URL required');
+ check(configFile&&statePath&&['once','watch','audit'].includes(mode),'Usage: CONFIG STATE [once|watch|audit], RH_RPC_URL required');
  check(process.env.RH_RPC_URL,'RH_RPC_URL required');
  const config=JSON.parse(fs.readFileSync(configFile,'utf8'));
  const rpc=require('./public-rpc-qualification.cjs').httpRpc(process.env.RH_RPC_URL);
  let stopping=false;process.on('SIGINT',()=>{stopping=true;});process.on('SIGTERM',()=>{stopping=true;});
- do{let status;try{status=await indexOnce({config,rpc,statePath});console.log(JSON.stringify(status));}catch{console.error('Indexer waiting: RPC, policy, state or branch validation failed');if(mode==='once'){process.exitCode=1;return;}}
- if(mode==='once'||stopping)break;await new Promise(r=>setTimeout(r,nextDelay(status)));
+ do{let status;try{status=await indexOnce({config,rpc,statePath,fullRewardAudit:mode==='audit'});console.log(JSON.stringify(status));}catch{console.error('Indexer waiting: RPC, policy, state or branch validation failed');if(mode!=='watch'){process.exitCode=1;return;}}
+ if(mode!=='watch'||stopping)break;await new Promise(r=>setTimeout(r,nextDelay(status)));
  }while(!stopping);
 }
 module.exports={indexOnce,readSnapshot,nextDelay};

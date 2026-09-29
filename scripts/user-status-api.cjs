@@ -21,7 +21,7 @@ function walletStatus({config,wallet,offset=0,limit=25,now=Date.now()}){
    const projected=require('./reward-observation.cjs').projectRewards(index.blocks,config.lifecycle.vault);
    if(BigInt(index.rewards.blockTag)!==BigInt(index.head)||hash(projected)!==hash({draws:index.rewards.draws,rewards:index.rewards.rewards}))return unavailable();
    const rows=projected.rewards.filter(r=>r.winner===address);
-   rewards={items:rows.slice(offset,offset+limit),offset,limit,total:rows.length,nextOffset:offset+limit<rows.length?offset+limit:null,coverage:'vault-events-and-storage-at-snapshot',vault:config.lifecycle.vault};
+   rewards={items:rows.slice(offset,offset+limit),offset,limit,total:rows.length,nextOffset:offset+limit<rows.length?offset+limit:null,coverage:'vault-events-and-checkpointed-storage',vault:config.lifecycle.vault};
   }
   return {schema:'promo-wallet-status-v1',status:fresh?'observed':'stale',wallet:address,
    provenance:{chainId:String(config.manifest.chainId),anchor:config.manifest.anchor,head:ledger.head,manifestHash:hash(index.manifest),ledgerHash:index.ledgerHash,observedAt:index.observedAt??null,ageSeconds:Number.isFinite(age)?Math.max(0,Math.floor(age/1000)):null,indexerState:state.status?.state??'unknown',targetBlock:state.status?.targetBlock??null,canonicality:'saved-observation-not-live-finality'},

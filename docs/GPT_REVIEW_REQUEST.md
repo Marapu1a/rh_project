@@ -1,23 +1,21 @@
-# Review: wallet rewards через vault events + historical storage
+# Review: инкрементальная проверка reward accounting
 
-29.09.2026. Пользователь разрешил следующий пакет сразу после wallet API.
-Тесты не запускать. [Описание](USER_STATUS_API.md).
+Review349fe3b подтверждён и закрывается этим пакетом. Тесты не запускать.
+[Схема/границы](USER_STATUS_API.md). Reward checkpoint сохраняет vault/height/hash.
+Продолжение использует только новые события и читает только touched draws/rewards.
+Исходные blocks всё ещё проходят существующий scanner/replay и canonical checks.
+Поздний claim требует события и storage,0reward не доказывает выплату сам по себе.
+При indexer reorg/старом формате полный rebuild+storage audit. CLI audit принудительно
+перечитывает весь reward storage до обработанного cutoff; новый STATE нужен для
+независимого RPC перечитывания evidence. Никакого безусловного доверия чужому checkpoint.
 
-reward-observation.cjs читает события закреплённого vault из проверенных indexer blocks,
-строит reserve/assign/finalize/pay и сверяет draws/reward историческими eth_call на
-едином cutoff. RewardPaid обязателен для paid; нулевой долг сам по себе не доказательство.
-Новый снимок сохраняется лишь после state reads и стабильности ветки. API пересчитывает
-события, сверяет сохранённую проекцию и отдаёт только wallet rewards с pagination и
-ссылками на обе транзакции. Нет RPC/Claim/signer в HTTP пути. Старый snapshot без reward
-section→null, stale не превращает прошлые balances/rewards в актуальную истину.
+Модель120draws/1200rewards:1320initial calls,0idle/empty extension,2late claim,
+1320full audit/reorg; restart через JSON, ошибка не мутирует previous. Не live benchmark.
+Полный BUY/JSON и API replay остаются линейными. Общий snapshot по-прежнему ждёт
+успешной reward проверки; старые frozen исполняются отдельно.
 
-Предыдущий policy/cache reorg test/API tickets остаются. Сквозной local сценарий расширен:
-после обоих terminal assigned, реальный vault.claim→paid и нулевой reward, duplicate claim
-отклоняется; stale и HTTP ответы сохранены. Unit projection проверяет безпобедный draw,
-удалённую выплату, неверную/двойную выплату, чужой vault и storage mismatch.
-
-Проверь корректность accounting-проекции и что user-facing paid не появляется раньше
-подтверждённого события. Это не RNG proof; глобальный список draws/no-winner для сайта
-отдельно не реализован. JSON/full replay и historical calls растут линейно; не заявляем
-production scale. Public sends не включались, contract math не менялась.
-Следующий практический шаг — эксплуатационное измерение/service и пользовательский UI.
+Сквозной payout test раньше предполагал выигрыш при seed0; обнаружилась нестабильность.
+Теперь только LocalRandomFixture получает детерминированный seed выплатной ветки,
+production RNG не изменён. Проверь индуктивную корректность checkpoint, rollback и
+честность coverage: старый storage не называется заново прочитанным на каждом blockTag.
+Далее общий performance/service, без новой prize math и без бесконечного аудита деталей.

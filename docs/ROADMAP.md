@@ -74,7 +74,7 @@ public sends закрыты. [Recovery admission](RECOVERY_ADMISSION.md) отд�
    [Статусы ожидания и события](PROMO_OPERATIONAL_WAITS.md) уже подключены к CLI; delivery пока нет. Неизвестная отправка и stale
    lock требуют сверки; их нельзя удалять ради продолжения. Handoff не переносит deployment
    или BUY policy и не исправляет потерю журналов.
-4. **Indexer и пользовательский слой.** [Read-only накопление](PERSISTENT_INDEXER.md) реализовано; snapshot подключён к scheduler/lifecycle опционально с admitted/freshness/cutoff проверками. [API покупок/билетов](USER_STATUS_API.md) реализован локально; API wallet rewards сверяет on-chain события/storage; далее эксплуатационное измерение скорости, сервис и frontend. Alchemy прошёл sampled historical reads; admitted BUY/live proof остаются. Постоянное накопление/reorg/restart вместо повторного
+4. **Indexer и пользовательский слой.** [Read-only накопление](PERSISTENT_INDEXER.md) реализовано; snapshot подключён к scheduler/lifecycle опционально с admitted/freshness/cutoff проверками. [API покупок/билетов](USER_STATUS_API.md) реализован локально; API wallet rewards сверяет on-chain события/storage; reward checkpoint ограничивает обычные eth_call новыми изменениями, full audit/reorg сохранены; далее эксплуатационное измерение скорости, сервис и frontend. Alchemy прошёл sampled historical reads; admitted BUY/live proof остаются. Постоянное накопление/reorg/restart вместо повторного
    полного scan, публичная проверка datasets, прозрачные билеты/условия/результаты/claims на
    сайте. Поддерживаемые маршруты объявлять явно; не обещать билеты за любой transfer.
 5. **Общий контрольный прогон.** Оба draw и следующий цикл на реальных интеграциях, без

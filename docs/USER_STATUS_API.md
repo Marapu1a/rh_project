@@ -77,8 +77,8 @@ Assigned означает обеспеченную награду в завер�
 доказательством выплаты. Mempool/отправленная неизвестная транзакция не выдаются за paid.
 
 Индексер читает события только закреплённого lifecycle.vault, проверяет reserve →
-assign → finalize → pay и суммы, затем сверяет draws и reward историческими eth_call
-на том же blockTag. Код vault проверяется существующим scanner по закреплённому hash.
+assign → finalize → pay и суммы, затем сверяет изменившиеся draws и reward историческими eth_call
+на том же blockTag, продолжая проверенный checkpoint. Первичная проверка и audit читают все записи. Код vault проверяется существующим scanner по закреплённому hash.
 Новый snapshot публикуется только после всех проверок и проверки стабильности ветки.
 API пересчитывает события из сохранённых receipts и сверяет сохранённую проекцию;
 сам HTTP endpoint не ходит в сеть и не отправляет Claim.
@@ -91,10 +91,45 @@ API пересчитывает события из сохранённых receip
 
 Это проверка accounting vault, не независимое доказательство RNG/правомерности выбора
 победителя. История должна начинаться до относящихся к проекту reserve событий. Рост
-числа historical calls линейный по draws/rewards; production нагрузка ещё не измерена.
+числа historical calls ограничен затронутыми событиями при обычном продолжении; полный
+аудит/reorg остаются линейными. Production нагрузка ещё не измерена.
 
 Проверки reward-пакета29.09: `node --test --test-name-pattern="persistent indexer feeds" test/cutoff-scheduler.test.cjs` —1passed/34.4s;
 `node --test test/reward-observation.test.cjs test/persistent-buy-indexer.test.cjs` —8passed/1.4s;
 `node --test --test-name-pattern="profile catalog" test/test-launcher.test.cjs` —1passed.
 Итого9 продуктовых адресных сценариев +catalog. Existing compiled artifact/SHA256,
 не full/live/fork. Сырые логи.local/logs/rewards-api-*.log.
+
+## Reward checkpoint (29.09)
+
+Reward snapshot содержит checkpoint(schema/vault/number/hash) и verification(mode/storageCalls).
+Продолжение разрешено только при совпадении vault и hash checkpoint в проверенной ветке.
+На продолжении применяется новый хвост событий, historical storage проверяется только
+для затронутых draws и rewards. Даже поздний Claim старого приза вызывает повторную
+проверку этого draw и этой награды. Новый paid по-прежнему требует event+storage.
+Неизменившиеся записи наследуют предыдущую проверку, а не объявляются заново прочитанными.
+API coverage теперь vault-events-and-checkpointed-storage.
+
+При выявленном indexer reorg checkpoint сбрасывается и выполняется полный аудит текущей
+ветки. Старый snapshot без checkpoint также проходит полный аудит один раз. Нет частичных
+undo-журналов: редкий reorg намеренно дороже обычного poll. Ошибка не меняет старый snapshot.
+Условия корректности: закреплённый immutable vault runtime, полная история событий,
+проверенная каноническая ветка; checksum не заменяет доверие к локальному оператору.
+
+`node scripts/persistent-buy-indexer.cjs CONFIG STATE audit` принудительно пересчитывает
+и читает весь reward accounting до высоты текущей порции indexer. Это не автоматический
+scan всей сети и не гарантия catch-up за один вызов. API функция fullRewardAudit=true
+даёт тот же режим. Независимый аудит с пустым STATE заново читает исходные RPC evidence.
+
+Нагрузочная модель120draws/1200rewards: первый проход1320storage calls; без событий0
+(в том числе новые пустые блоки); поздняя выплата2; full audit/reorg1320. Это подсчёт
+вызовов с mock RPC, не live latency/цена/SLA. Полные BUY replay/JSON и API event replay
+по-прежнему линейны по памяти/CPU/диску. Reward error всё ещё задерживает новый общий
+снимок; старые frozen execution paths независимы от него.
+
+Checkpoint проверки29.09: `node --test test/reward-observation.test.cjs test/persistent-buy-indexer.test.cjs` —9passed/2.9s;
+`node --test --test-name-pattern="persistent indexer feeds" test/cutoff-scheduler.test.cjs` —1passed/34.8s после детерминизации payout fixture;
+`node --test --test-name-pattern="120 draws" test/reward-observation.test.cjs` —1passed/2.9s после добавления empty-extension assertion.
+Итого10 разных адресных сценариев. Первый integration run выявил ошибочное предположение
+теста о выигрыше при seed0, а не storage mismatch. Контракты не менялись; использован
+существующий compiled artifact/SHA256. Не full/live/fork.

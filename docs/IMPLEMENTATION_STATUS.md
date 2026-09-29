@@ -1,5 +1,7 @@
 # Карта реализации
 
+29.09: observeRewards принимает previous/fullAudit, проверяет checkpoint в ветке, продолжает проекцию и читает только touched storage. Indexer отключает reuse при reorg; CLI audit. [Детали](USER_STATUS_API.md).
+
 29.09: reward-observation.cjs — event accounting + исторические draws/reward eth_call; persistent indexer сохраняет результат атомарно вместе с ledger, user-status-api выдаёт paginated wallet rewards. [Семантика и границы](USER_STATUS_API.md). Контракты не менялись.
 
 29.09: user-status-api.cjs — walletStatus/createServer, loopback GET wallet purchases/attempts, без signer/RPC; replayAttempts и проверенный snapshot. persistent-buy-indexer сохраняет observedAt успешных данных. [API/тесты](USER_STATUS_API.md).
