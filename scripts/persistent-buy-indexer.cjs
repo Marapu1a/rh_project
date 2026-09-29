@@ -29,6 +29,7 @@ async function readSnapshot({config,statePath,manifest,cutoff,rpc,now=Date.now()
 async function indexOnce({config,rpc,statePath,batchSize=100,reorgLimit=128,fullRewardAudit=false}){
  check(Number.isInteger(batchSize)&&batchSize>0&&batchSize<=1000,'Invalid index batch');
  check(Number.isInteger(reorgLimit)&&reorgLimit>=0&&reorgLimit<=10000,'Invalid reorg limit');
+ const started=performance.now();
  return withState(statePath,{kind:'persistent-buy-indexer-v1',config},async(state,save)=>{
   try{
    const m=config.manifest,anchor=Number(m.anchor.number);
@@ -61,14 +62,20 @@ async function indexOnce({config,rpc,statePath,batchSize=100,reorgLimit=128,full
     return value;
    };
    const resolved=await resolveBuyPolicy(config,rpc,end);
+   const scanStarted=performance.now();
    const input=end>anchor?await scanWithRpc(resolved.manifest,read,end,config.lifecycle):{manifest:resolved.manifest,blocks:[]};
+   const scanMs=performance.now()-scanStarted,replayStarted=performance.now();
    const ledger=end>anchor?replay(input.manifest,input.blocks):null;
+   const replayMs=performance.now()-replayStarted,rewardStarted=performance.now();
    const rewards=config.lifecycle&&end>anchor?await require('./reward-observation.cjs').observeRewards({blocks:input.blocks,vault:config.lifecycle.vault,rpc,blockTag:tag(end),previous:removed?null:prior.rewards,fullAudit:fullRewardAudit}):null;
    check((await rpc('eth_getBlockByNumber',[finalized.number,false])).hash===finalized.hash,'Finalized branch changed during indexing');
    // Publish evidence and derived ledger together; failure leaves the last good snapshot intact.
    state.index={head:end,observedAt:new Date().toISOString(),blocks:input.blocks,cache,manifest:input.manifest,ledger,ledgerHash:ledger?hash(ledger):null,rewards,policyStatus:resolved.policyStatus};
    state.status={state:end===target?'caughtUp':'catchingUp',processedBlock:end,targetBlock:target,removedBlocks:removed,cacheHits,updatedAt:new Date().toISOString()};
-   save(state);return state.status;
+   state.status.metrics={lagBlocks:target-end,historyBlocks:input.blocks.length,scanMs,replayMs,rewardMs:performance.now()-rewardStarted,beforeSaveMs:performance.now()-started};
+   const saveStarted=performance.now();save(state);
+   // Final write timing is returned/logged, not followed by another state write.
+   return {...state.status,metrics:{...state.status.metrics,saveMs:performance.now()-saveStarted,totalMs:performance.now()-started,stateBytes:fs.statSync(statePath).size}};
   }catch(e){
    if(e.code==='SCHEDULER_STORAGE_ERROR')throw e;
    state.status={state:'waiting',processedBlock:state.index?.head??Number(config.manifest.anchor.number),reason:'Read or validation failed; last good snapshot retained',updatedAt:new Date().toISOString()};

@@ -133,3 +133,54 @@ Checkpoint проверки29.09: `node --test test/reward-observation.test.cjs 
 Итого10 разных адресных сценариев. Первый integration run выявил ошибочное предположение
 теста о выигрыше при seed0, а не storage mismatch. Контракты не менялись; использован
 существующий compiled artifact/SHA256. Не full/live/fork.
+
+
+## Подготовленный снимок API и замер 29.09.2026
+
+HTTP server использует один `createReader(config)` с копией конфигурации. На каждом
+запросе проверяется generation файла: dev/ino/size/mtimeNs/ctimeNs. Новая версия
+проходит checksum, config identity, admission, BUY/lifecycle replay и reward event
+projection до публикации в память. Дескриптор проверяется до/после чтения, путь —
+после подготовки: замена во время загрузки даёт unavailable и повторную попытку
+на следующем запросе. В памяти остаются индексы по кошелькам и provenance, а не raw blocks.
+Ответ клонируется, чтобы вызывающий код не изменил кэш.
+
+Возраст вычисляется заново каждый запрос: кэш не продлевает observedAt. Waiting
+снимок выдаёт stale с прежними as-of данными. Missing/невалидный новый файл сбрасывает
+кэш и даёт unavailable/null/503, а не старое observed или нулевой баланс. Recovery
+автоматический. Restart заново проверяет файл. Пагинация/coverage/HTTP schema сохранены.
+
+Это доверенный локальный single-writer файл на обычной файловой системе с atomic rename.
+Metadata не защищает от злонамеренного оператора/подмены с сохранением metadata;
+checksum не является подписью. Замена сразу после stat видна на следующем запросе:
+ответ — наблюдение конкретной версии, не транзакционная гарантия последнего состояния.
+Не предназначено для сетевого/synced volume. `walletStatus` остаётся uncached one-shot API.
+`reader.metrics()` возвращает loads/hits/failures/loadMs/stateBytes без нового public endpoint.
+
+Команда: `node scripts/measure-status-api.cjs`. Windows, один процесс; пять uncached
+чтений, одно cold и 1000 warm чтений разных адресов. Synthetic non-BUY tx/блоки над
+сохранённым legacy fork evidence, admission выставлен fixture; не живой Infinity,
+не месячная нагрузка и не benchmark RPC/indexer end-to-end. Warm преимущественно
+проверяет неизвестные адреса; стоимость крупных ответов отдельно не квалифицирована.
+
+| Блоки | JSON bytes | Uncached mean ms | Cold ms | Warm mean ms |
+|---|---:|---:|---:|---:|
+| 13 | 88136 | 21.82 | 18.64 | 0.062 |
+| 1013 | 1988136 | 168.42 | 151.55 | 0.059 |
+| 5013 | 9588136 | 695.91 | 721.27 | 0.056 |
+
+Вывод: повторный полный replay больше не нужен каждому HTTP запросу. При смене
+snapshot синхронная загрузка всё ещё блокирует HTTP event loop; весь indexer scan,
+JSON hash/read/write и replay остаются линейными. Миграция БД этим замером не обоснована.
+Следующий ограниченный шаг: подготовка новой версии вне HTTP event loop с теми же
+проверками поколения/ошибок, затем измерение длительности реального admitted indexer
+по добавленным metrics. Не называть сервис production-ready по тёплым чтениям.
+
+Адресные проверки29.09: `node --test test/user-status-cache.test.cjs test/persistent-buy-indexer.test.cjs`
+—10passed; `node --test test/reward-observation.test.cjs` —3passed (в составе первого
+совместного прогона); `node --test --test-name-pattern="persistent indexer feeds" test/cutoff-scheduler.test.cjs`
+—1passed/35s, существующий compiled artifact+SHA256. Catalog —1passed.
+14 разных продуктовых сценариев +catalog, не полный baseline и не live/fork.
+Проверены одинаковый размер atomic replacement, aging, waiting, corruption/missing,
+restart/config mismatch, 20 параллельных HTTP запросов до/во время outage, response
+mutation, checksummed ledger/policy/rewards mismatch. Замер не заменяет эти проверки.

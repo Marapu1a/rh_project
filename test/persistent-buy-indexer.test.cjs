@@ -34,7 +34,7 @@ test('restart reuses evidence without duplicate entries; new blocks catch up in 
  f.calls.length=0;await f.run();assert.equal(f.read().index.ledgerHash,hash(expected));assert(!f.calls.some(([m])=>m==='eth_getTransactionReceipt'));
  assert(!f.calls.some(([m,p])=>m==='eth_getBlockByNumber'&&p[1]===true));
  f.append('next1');f.append('next2');f.calls.length=0;
- assert.equal((await f.run({batchSize:1})).state,'catchingUp');assert.equal((await f.run({batchSize:1})).state,'caughtUp');
+ const partial=await f.run({batchSize:1});assert.equal(partial.state,'catchingUp');assert.equal(partial.metrics.lagBlocks,1);assert.equal(partial.metrics.stateBytes,fs.statSync(f.statePath).size);assert.ok(partial.metrics.totalMs>=partial.metrics.scanMs);assert.equal(f.read().status.metrics.lagBlocks,1);assert.equal((await f.run({batchSize:1})).state,'caughtUp');
  assert.equal(f.read().index.ledgerHash,hash(replay(f.config.manifest,f.e.blocks)));
 });
 test('RPC outage preserves snapshot and resumes; configuration and checksum changes reject',async t=>{

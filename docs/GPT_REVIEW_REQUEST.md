@@ -1,21 +1,29 @@
-# Review: инкрементальная проверка reward accounting
+# Review: подготовленный wallet snapshot и эксплуатационные метрики
 
-Review349fe3b подтверждён и закрывается этим пакетом. Тесты не запускать.
-[Схема/границы](USER_STATUS_API.md). Reward checkpoint сохраняет vault/height/hash.
-Продолжение использует только новые события и читает только touched draws/rewards.
-Исходные blocks всё ещё проходят существующий scanner/replay и canonical checks.
-Поздний claim требует события и storage,0reward не доказывает выплату сам по себе.
-При indexer reorg/старом формате полный rebuild+storage audit. CLI audit принудительно
-перечитывает весь reward storage до обработанного cutoff; новый STATE нужен для
-независимого RPC перечитывания evidence. Никакого безусловного доверия чужому checkpoint.
+29.09.2026. Только статический review, тесты/build/fork не запускать.
+Предыдущий ответ5e8216b учтён: historical reward RPC уже оптимизирован, теперь убран
+повторный полный replay на каждый HTTP запрос. Контракты, math, RNG, public gate не менялись.
 
-Модель120draws/1200rewards:1320initial calls,0idle/empty extension,2late claim,
-1320full audit/reorg; restart через JSON, ошибка не мутирует previous. Не live benchmark.
-Полный BUY/JSON и API replay остаются линейными. Общий snapshot по-прежнему ждёт
-успешной reward проверки; старые frozen исполняются отдельно.
+Изменения: `scripts/user-status-api.cjs` разделяет prepare/render; createServer держит
+createReader с per-wallet Maps. Generation определяется stat metadata; новая версия
+полностью проверяется с fstat/path recheck, ошибка сбрасывает старый cache.
+Freshness остаётся per-request, stale сохраняет as-of, unavailable даёт null/503.
+Config скопирован, ответы клонируются. Raw history после prepare не удерживается.
+One-shot walletStatus сохранён. Indexer сохраняет scan/replay/reward/lag metrics,
+возвращает write/total/size без второго state write.
 
-Сквозной payout test раньше предполагал выигрыш при seed0; обнаружилась нестабильность.
-Теперь только LocalRandomFixture получает детерминированный seed выплатной ветки,
-production RNG не изменён. Проверь индуктивную корректность checkpoint, rollback и
-честность coverage: старый storage не называется заново прочитанным на каждом blockTag.
-Далее общий performance/service, без новой prize math и без бесконечного аудита деталей.
+[Замер, команды и ограничения](USER_STATUS_API.md):13/1013/5013 synthetic legacy blocks,
+последний JSON9.59MB: ~696ms uncached, ~721ms cold, ~0.056ms warm. Это не actual Infinity
+throughput и не реалистичный месяц сети. 14 продуктовых адресных сценариев +catalog passed;
+сквозной Short/Monthly/claim ~35s, full не запускали. Новые тесты cache/restart/outage/
+corruption/config mismatch и metric assertions; reward event/storage validation сохранена.
+
+Оставшийся предел конкретен: новая версия всё ещё синхронно готовится в HTTP event loop,
+indexer полностью сканирует/переписывает JSON. Следующий пакет предлагаем посвятить
+подготовке снимка вне HTTP event loop, затем real indexer замеру по metrics и service/UI.
+Не делаем БД миграцию вслепую и не объявляем общую масштабируемость доказанной.
+
+Просьба проверить: нет ли ложного observed после replacement/outage; сохранены ли
+reward/BUY validation и as-of semantics; достаточна ли generation модель для trusted
+single local writer; не пропускаем ли более простой шаг перед вынесением подготовки
+из event loop. Сосредоточься на реальных дефектах/следующем шаге, без новой prize math.

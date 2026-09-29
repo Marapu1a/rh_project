@@ -82,7 +82,8 @@
       "test/launch-rules.test.cjs",
       "test/operational-profile.test.cjs",
       "test/persistent-buy-indexer.test.cjs",
-      "test/reward-observation.test.cjs"
+      "test/reward-observation.test.cjs",
+      "test/user-status-cache.test.cjs"
     ]
   },
   "accounting": {
@@ -155,7 +156,8 @@
       "test/nitro-blocks.test.cjs",
       "test/infinity-payout-evidence.test.cjs",
       "test/persistent-buy-indexer.test.cjs",
-      "test/reward-observation.test.cjs"
+      "test/reward-observation.test.cjs",
+      "test/user-status-cache.test.cjs"
     ]
   },
   "coordinator": {

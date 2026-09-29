@@ -105,3 +105,15 @@ Fixtures local31337/mock, не live/fork. CPU/диск по-прежнему р�
 29.09: [Reward accounting](USER_STATUS_API.md) продолжает проверенный checkpoint.
 При reorg полный пересчёт; режим audit принудительно проверяет весь storage на высоте
 обработанной порции. Остальной BUY/JSON replay не стал инкрементальным по CPU.
+
+
+## Измерения прохода (29.09)
+
+Успешный status.metrics сохраняет lagBlocks (target−processed), historyBlocks,
+scanMs, replayMs, rewardMs (включая финальную branch проверку), beforeSaveMs.
+Возвращаемый/печатаемый CLI status дополнительно содержит saveMs, totalMs и stateBytes
+после записи. Эти последние поля не сохраняются вторым write только ради измерения.
+Длительности локальные wall-clock, total включает чтение state/lock; lag — относительно
+прочитанного finalized target, не текущего chain tip. Waiting сохраняет прежний index,
+но не выдаёт старые успешные metrics за новый проход. Метрики не меняют admission,
+freshness, RPC retry или призовые правила. Полный JSON/replay остаётся линейным.
