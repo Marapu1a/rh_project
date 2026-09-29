@@ -33,3 +33,17 @@ body{line-height:1.5}
 @media(max-width:850px){.nav-links{display:none}}
 @media(max-width:760px){.draw-stage{grid-template-columns:1fr 1fr}.card-top{font-size:var(--heading)}.account{grid-template-columns:1fr}.steps h3{min-height:0}.wallet-panel{display:block}.wallet-panel .button{margin-top:16px}.wallet-panel .text-button{display:block;margin-top:12px}.section-heading>span{display:block}.ticket-frame{padding:14px 10px}.how{padding:22px}.join-content>div{padding-top:60px}.join-content button{width:auto}.footer-top p{margin-top:12px}}
 @media(max-width:440px){.draw-stage{grid-template-columns:1fr;gap:14px}.bank-state{min-height:0}.card-bottom{display:flex;justify-content:space-between}.card-top{justify-content:center}.bank{margin-top:12px}.hero-caption{display:none}.mascot{top:-99px}.ticket-frame{padding:14px 18px}.wallet-panel,.rewards{padding:20px}th,td{padding-inline:6px}.steps{gap:28px}.steps article{grid-template-columns:40px 1fr;gap:12px}.step-number{letter-spacing:-2px}.section-heading h2{font-size:var(--heading)}}
+
+/* Art-directed hero: wide initial F/H, fixed line proportions, scalable lettering. */
+#hero-title{font-size:inherit;line-height:1;letter-spacing:0;-webkit-text-stroke:0;margin:23px 0 12px}
+.hero-lettering{display:block;width:100%;height:auto;overflow:visible}
+.latin-lettering{font-family:Arial,Helvetica,sans-serif;font-size:144px;font-weight:900;fill:none;stroke:var(--muted);stroke-width:1.5;stroke-linejoin:miter;letter-spacing:-5px}
+.chinese-lettering{font-family:'Microsoft JhengHei','Noto Sans CJK TC',sans-serif;font-size:120px;font-weight:900;fill:var(--muted);letter-spacing:-4px}
+.draw-stage{grid-template-columns:235px 1.35fr 1fr;margin-top:26px}
+.short{grid-column:2}.jackpot{grid-column:3}
+.mascot{position:absolute;left:-60px;bottom:0;top:auto;width:355px;height:385px;overflow:hidden;z-index:4;pointer-events:none}
+.mascot img{width:355px;left:0;bottom:-75px;z-index:auto}
+.short .card-top{justify-content:center}
+@media(max-width:1120px) and (min-width:761px){.draw-stage{grid-template-columns:23% 1.35fr 1fr}.mascot{left:-25px;width:29vw;height:33vw}.mascot img{width:29vw;bottom:-7vw}}
+@media(max-width:760px){.draw-stage{grid-template-columns:1fr 1fr;margin-top:120px}.short{grid-column:1}.jackpot{grid-column:2}.mascot{left:-14px;top:-102px;bottom:auto;width:150px;height:124px}.mascot img{width:150px;left:0;bottom:-50px}.short .card-top{justify-content:center}}
+@media(max-width:440px){.draw-stage{grid-template-columns:1fr}.short,.jackpot{grid-column:1}}
