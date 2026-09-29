@@ -53,3 +53,9 @@ test('accepted Monthly V2 payload and diminishing weight cannot silently drift i
  p.unresolved.monthlyRules.pNumerator=1;p.unresolved.monthlyWinnerWeight='LINEAR';
  const r=inspectPlan(p);assert(r.conflicts.includes('unresolved.monthlyRules.pNumerator'));assert(r.conflicts.includes('unresolved.monthlyWinnerWeight'));
 });
+
+test('accepted Short basket, admission and Monthly minimum cannot drift in launch plan',()=>{
+ const p=structuredClone(require('../config/robinhood-launch-plan.json'));assert.equal(inspectPlan(p).conflicts.length,0);
+ p.unresolved.shortWeights[0]=8;p.unresolved.shortRules.pNumerator=2;p.unresolved.minimumUnitRaw='1';p.product.monthlyMinimumCurrentRaw='1';
+ const r=inspectPlan(p);for(const key of ['unresolved.shortWeights.0','unresolved.shortRules.pNumerator','unresolved.minimumUnitRaw','product.monthlyMinimumCurrentRaw'])assert(r.conflicts.includes(key));
+});

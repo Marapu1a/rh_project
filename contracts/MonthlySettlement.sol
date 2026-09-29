@@ -13,6 +13,7 @@ interface IMonthlyControllerBinding { function monthlyController() external view
 /// publisher and one seed, and enforce finality/execution readiness before seal.
 /// Interval/notice are immutable; admission policies are forward-only epochs.
 abstract contract MonthlySettlement is ReentrancyGuard, CutoffHistory {
+    error MonthlyBudgetNotReady();
     enum Phase { None, Publishing, Ready, WaitingSeed, Processing, Terminal, Superseded }
     struct Input {
         bytes32 drawId; bytes32 snapshotHash; bytes32 root; uint64 campaign; uint64 rulesEpoch;
@@ -64,6 +65,8 @@ abstract contract MonthlySettlement is ReentrancyGuard, CutoffHistory {
         _storeMonthlyPolicy(1,rules);policies[1].firstBlock=ChainBlocks.number();
     }
     function month(bytes32 id) public view returns(Month memory){return months[id];}
+    /// Quote base units. Concrete public deployment fixes its product minimum.
+    function minimumMonthlyBudget() public pure virtual returns(uint256){return 1;}
     function monthRules() public view returns(ShortOutcome.Rules memory){return policies[currentMonthlyEpoch].outcome;}
     function monthlyEpochPolicy(uint64 epoch) public view returns(Policy memory){return policies[epoch];}
     function _storeMonthlyPolicy(uint64 epoch,ShortOutcome.Rules memory rules) private {
@@ -126,6 +129,9 @@ abstract contract MonthlySettlement is ReentrancyGuard, CutoffHistory {
     function _sealMonth(bytes32 id) internal nonReentrant {
         Month storage m=months[id];require(activeMonth==id && pendingMonth==bytes32(0) && m.phase==Phase.Ready,"month ready");
         monthlyVault.startMonthly(id,m.input.campaign);(,,,m.budget,,)=monthlyVault.draws(id);
+        // startMonthly recognizes direct funding. A failed minimum rolls back all
+        // reserve changes before a random request can be made.
+        if(m.budget<minimumMonthlyBudget())revert MonthlyBudgetNotReady();
         m.context=keccak256(abi.encode(keccak256("MONTHLY_DATASET_CONTEXT_V2"),block.chainid,address(this),monthlyInstance,
             monthlyRegistry,address(monthlyVault),monthlyVault.quoteToken(),m.input,policies[m.input.rulesEpoch].hash,m.budget));
         m.phase=Phase.WaitingSeed;pendingMonth=id;activeMonth=bytes32(0);

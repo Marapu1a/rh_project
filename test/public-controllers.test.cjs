@@ -7,6 +7,34 @@ const {drawIdFor}=require('../scripts/draw-id.cjs'),sd=require('../scripts/short
 const ps=require('./fixtures/short-outcome.cjs').participants(2,1),id=ethers.id;
 const requests=(b)=>({s:{drawId:drawIdFor('SHORT',id('public short')),campaignId:1,rulesEpoch:1,cutoffBlockNumber:b.number,cutoffBlockHash:b.hash,snapshotHash:id('short snapshot'),expectedRoot:sd.rootFor(ps),expectedCount:2,expectedAttempts:2,budget:100_000000},m:{drawId:drawIdFor('MONTHLY',id('public month')),campaign:1,rulesEpoch:1,cutoff:b.number,cutoffHash:b.hash,snapshotHash:id('monthly snapshot'),root:monthlyRoot(ps),count:2,attempts:2}});
 
+test('Monthly minimum rejects freeze atomically, worker waits and resumes at 100 USDG including direct funding',async t=>{
+ const f=await require('./fixtures/robinhood-runtime.cjs').setup(t,compiled);
+ const ids=await require('./fixtures/robinhood-obligations.cjs').prepare(f,{freeze:false,fund:false});
+ await sent(f.quote.mint(f.owner,200_000001));await sent(f.quote.approve(f.vault.target,ethers.MaxUint256));
+ await sent(f.vault.fundUSDG(99_999999,2));await sent(f.vault.fundUSDG(100_000000,3));
+ assert.equal(await f.monthly.minimumMonthlyBudget(),100_000000n);
+ await assert.rejects(f.monthly.sealMonth(ids.mId),e=>e.data===ethers.id('MonthlyBudgetNotReady()').slice(0,10));
+ assert.equal(await f.vault.freeCurrent(),99_999999n);assert.equal(await f.vault.freeNext(),100_000000n);
+ assert.equal(await f.vault.reserved(f.quote.target),0n);assert.equal(await f.monthly.drawRequest(ids.mId),0n);
+ assert.equal((await f.monthly.month(ids.mId)).phase,2n);assert.equal(await f.monthly.activeMonth(),ids.mId);
+ const {stepMonthly,makeMonthlyJob}=require('../scripts/local-monthly-executor.cjs'),job=makeMonthlyJob(ids.ma,1);
+ const preflight=require('../scripts/drand-preflight.cjs'),original=preflight.drandPreflight;
+ // Test funding/recovery only; external beacon freshness is independently tested.
+ preflight.drandPreflight=async()=>({status:'observedHealthy'});
+ try{await require('../scripts/runtime-network.cjs').withRobinhoodNetwork(f.options,async()=>{
+  const step=()=>stepMonthly({provider:f.provider,source:f.monthly,job,publisher:f.admin,executor:f.admin});
+  const nonce=await f.provider.getTransactionCount(f.owner);
+  for(let i=0;i<2;i++){const r=await step();assert.equal(r.status,'waiting');assert.equal(r.reason,'currentFunding');}
+  assert.equal(await f.provider.getTransactionCount(f.owner),nonce);
+  // General direct transfer has no sender intent: half Short, remainder Current since Next is full.
+  await sent(f.quote.transfer(f.vault.target,2));assert.equal(await f.vault.unrecognizedUSDG(),2n);
+  const r=await step();assert.equal(r.action,'sealMonth');assert.equal((await f.monthly.month(ids.mId)).budget,100_000000n);
+  assert.equal(await f.vault.freeShort(),1n);assert.equal(await f.vault.freeCurrent(),0n);
+  assert.equal(await f.vault.freeNext(),100_000000n);assert.equal(await f.vault.reserved(f.quote.target),100_000000n);
+  assert((await f.monthly.drawRequest(ids.mId))>0n);
+ });}finally{preflight.drandPreflight=original;}
+});
+
 test('public wrappers enforce checkpoint admission and complete both draws with authentic drand and exact bytecode',async()=>{
  const f=await fixture(compiled);
  await assert.rejects(f.deploy('RobinhoodMonthlyController',[{...f.base,interval:30*86400},f.rules]));

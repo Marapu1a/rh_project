@@ -6,6 +6,15 @@ const REQUIRED = {
  unresolved: ['timingApproval', 'shortRules', 'monthlyRules', 'shortWeights', 'minimumUnitRaw', 'maxShortBudgetRaw', 'rulesNoticeSeconds', 'maxGasPrice', 'controllerNativeFloor', 'archiveRpc', 'durableRuntime', 'nativeRefill', 'monthlyWinnerWeight'],
 };
 const ACCEPTED = {
+ 'product.monthlyMinimumCurrentRaw': '100000000',
+ 'unresolved.minimumUnitRaw': '5000000',
+ 'unresolved.shortWeights.length': 10,
+ ...Object.fromEntries([7,4,2,1,1,1,1,1,1,1].map((w,i)=>['unresolved.shortWeights.'+i,w])),
+ 'unresolved.shortRules.version': 1,
+ 'unresolved.shortRules.pNumerator': 4,
+ 'unresolved.shortRules.pDenominator': 5,
+ 'unresolved.shortRules.hNumerator': 1,
+ 'unresolved.shortRules.hDenominator': 1,
  'product.shortBudgetMode': 'FREE_SHORT',
  'product.monthlyPayoutNumerator': 3,
  'product.monthlyPayoutDenominator': 4,

@@ -50,7 +50,8 @@
     },
     "shortBudgetMode": "FREE_SHORT",
     "monthlyPayoutNumerator": 3,
-    "monthlyPayoutDenominator": 4
+    "monthlyPayoutDenominator": 4,
+    "monthlyMinimumCurrentRaw": "100000000"
   },
   "timingCandidate": {
     "leadSeconds": "1800",
@@ -62,7 +63,13 @@
   },
   "unresolved": {
     "timingApproval": null,
-    "shortRules": null,
+    "shortRules": {
+      "version": 1,
+      "pNumerator": 4,
+      "pDenominator": 5,
+      "hNumerator": 1,
+      "hDenominator": 1
+    },
     "monthlyRules": {
       "version": 2,
       "pNumerator": 3,
@@ -70,8 +77,19 @@
       "hNumerator": 1,
       "hDenominator": 1
     },
-    "shortWeights": null,
-    "minimumUnitRaw": null,
+    "shortWeights": [
+      7,
+      4,
+      2,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    "minimumUnitRaw": "5000000",
     "maxShortBudgetRaw": "115792089237316195423570985008687907853269984665640564039457584007913129639935",
     "rulesNoticeSeconds": null,
     "maxGasPrice": null,

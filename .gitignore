@@ -17,6 +17,7 @@ Thumbs.db
 # Keep only reproducible inputs and evidence referenced by project reports.
 research/*
 !research/README.md
+!research/short-launch-analysis-2026-09-29.json
 !research/rng-provider-study/
 !research/rng-provider-study/**
 !research/drand-feasibility/

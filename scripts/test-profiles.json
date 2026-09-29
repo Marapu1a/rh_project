@@ -78,7 +78,8 @@
       "test/promo-budget-compatibility.test.cjs",
       "test/ops-market-quote.test.cjs",
       "test/ops-market-executor.test.cjs",
-      "test/monthly-jackpot.test.cjs"
+      "test/monthly-jackpot.test.cjs",
+      "test/launch-rules.test.cjs"
     ]
   },
   "accounting": {
@@ -130,7 +131,8 @@
       "test/dual-controller.test.cjs",
       "test/attempt-lifecycle-dual.test.cjs",
       "test/local-controllers.test.cjs",
-      "test/monthly-jackpot.test.cjs"
+      "test/monthly-jackpot.test.cjs",
+      "test/launch-rules.test.cjs"
     ]
   },
   "replay": {

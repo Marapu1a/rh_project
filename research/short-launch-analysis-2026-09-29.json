@@ -1,0 +1,282 @@
+{
+  "schema": "short-launch-analysis-v1",
+  "assumptions": [
+    "Equal entries per wallet; independent uniform hashes; fixed ten prizes randomly assigned without replacement.",
+    "Exact rational binomial model; displayed decimals truncated. Contract admission additionally floors a uint256 threshold.",
+    "Expected payment concerns the constructed basket, excludes raw rounding dust, and is not guaranteed payment. Sponsor money increases prizes, not probabilities."
+  ],
+  "comparisons": [
+    {
+      "pNumerator": 2,
+      "pDenominator": 5,
+      "wallets": 1,
+      "entriesPerWallet": 1,
+      "admissionPercent": 20,
+      "noWinnerPercent": 80,
+      "atLeastOneWinnerPercent": 20,
+      "expectedWinners": 0.2,
+      "walletWinPercent": 20,
+      "expectedBasketPaidPercent": 2
+    },
+    {
+      "pNumerator": 2,
+      "pDenominator": 5,
+      "wallets": 3,
+      "entriesPerWallet": 1,
+      "admissionPercent": 20,
+      "noWinnerPercent": 51.2,
+      "atLeastOneWinnerPercent": 48.8,
+      "expectedWinners": 0.6,
+      "walletWinPercent": 20,
+      "expectedBasketPaidPercent": 6
+    },
+    {
+      "pNumerator": 2,
+      "pDenominator": 5,
+      "wallets": 10,
+      "entriesPerWallet": 1,
+      "admissionPercent": 20,
+      "noWinnerPercent": 10.7374,
+      "atLeastOneWinnerPercent": 89.2625,
+      "expectedWinners": 2,
+      "walletWinPercent": 20,
+      "expectedBasketPaidPercent": 20
+    },
+    {
+      "pNumerator": 2,
+      "pDenominator": 5,
+      "wallets": 25,
+      "entriesPerWallet": 1,
+      "admissionPercent": 20,
+      "noWinnerPercent": 0.3777,
+      "atLeastOneWinnerPercent": 99.6222,
+      "expectedWinners": 4.992443,
+      "walletWinPercent": 19.9697,
+      "expectedBasketPaidPercent": 49.9244
+    },
+    {
+      "pNumerator": 2,
+      "pDenominator": 5,
+      "wallets": 100,
+      "entriesPerWallet": 1,
+      "admissionPercent": 20,
+      "noWinnerPercent": 0,
+      "atLeastOneWinnerPercent": 99.9999,
+      "expectedWinners": 9.996433,
+      "walletWinPercent": 9.9964,
+      "expectedBasketPaidPercent": 99.9643
+    },
+    {
+      "pNumerator": 4,
+      "pDenominator": 5,
+      "wallets": 1,
+      "entriesPerWallet": 1,
+      "admissionPercent": 40,
+      "noWinnerPercent": 60,
+      "atLeastOneWinnerPercent": 40,
+      "expectedWinners": 0.4,
+      "walletWinPercent": 40,
+      "expectedBasketPaidPercent": 4
+    },
+    {
+      "pNumerator": 4,
+      "pDenominator": 5,
+      "wallets": 3,
+      "entriesPerWallet": 1,
+      "admissionPercent": 40,
+      "noWinnerPercent": 21.6,
+      "atLeastOneWinnerPercent": 78.4,
+      "expectedWinners": 1.2,
+      "walletWinPercent": 40,
+      "expectedBasketPaidPercent": 12
+    },
+    {
+      "pNumerator": 4,
+      "pDenominator": 5,
+      "wallets": 10,
+      "entriesPerWallet": 1,
+      "admissionPercent": 40,
+      "noWinnerPercent": 0.6046,
+      "atLeastOneWinnerPercent": 99.3953,
+      "expectedWinners": 4,
+      "walletWinPercent": 40,
+      "expectedBasketPaidPercent": 40
+    },
+    {
+      "pNumerator": 4,
+      "pDenominator": 5,
+      "wallets": 25,
+      "entriesPerWallet": 1,
+      "admissionPercent": 40,
+      "noWinnerPercent": 0.0002,
+      "atLeastOneWinnerPercent": 99.9997,
+      "expectedWinners": 9.033052,
+      "walletWinPercent": 36.1322,
+      "expectedBasketPaidPercent": 90.3305
+    },
+    {
+      "pNumerator": 4,
+      "pDenominator": 5,
+      "wallets": 100,
+      "entriesPerWallet": 1,
+      "admissionPercent": 40,
+      "noWinnerPercent": 0,
+      "atLeastOneWinnerPercent": 99.9999,
+      "expectedWinners": 9.999999,
+      "walletWinPercent": 9.9999,
+      "expectedBasketPaidPercent": 99.9999
+    }
+  ],
+  "approved": [
+    {
+      "wallets": 1,
+      "entriesPerWallet": 1,
+      "admissionPercent": 40,
+      "noWinnerPercent": 60,
+      "atLeastOneWinnerPercent": 40,
+      "expectedWinners": 0.4,
+      "walletWinPercent": 40,
+      "expectedBasketPaidPercent": 4
+    },
+    {
+      "wallets": 3,
+      "entriesPerWallet": 1,
+      "admissionPercent": 40,
+      "noWinnerPercent": 21.6,
+      "atLeastOneWinnerPercent": 78.4,
+      "expectedWinners": 1.2,
+      "walletWinPercent": 40,
+      "expectedBasketPaidPercent": 12
+    },
+    {
+      "wallets": 10,
+      "entriesPerWallet": 1,
+      "admissionPercent": 40,
+      "noWinnerPercent": 0.6046,
+      "atLeastOneWinnerPercent": 99.3953,
+      "expectedWinners": 4,
+      "walletWinPercent": 40,
+      "expectedBasketPaidPercent": 40
+    },
+    {
+      "wallets": 25,
+      "entriesPerWallet": 1,
+      "admissionPercent": 40,
+      "noWinnerPercent": 0.0002,
+      "atLeastOneWinnerPercent": 99.9997,
+      "expectedWinners": 9.033052,
+      "walletWinPercent": 36.1322,
+      "expectedBasketPaidPercent": 90.3305
+    },
+    {
+      "wallets": 100,
+      "entriesPerWallet": 1,
+      "admissionPercent": 40,
+      "noWinnerPercent": 0,
+      "atLeastOneWinnerPercent": 99.9999,
+      "expectedWinners": 9.999999,
+      "walletWinPercent": 9.9999,
+      "expectedBasketPaidPercent": 99.9999
+    },
+    {
+      "wallets": 1,
+      "entriesPerWallet": 5,
+      "admissionPercent": 66.6666,
+      "noWinnerPercent": 33.3333,
+      "atLeastOneWinnerPercent": 66.6666,
+      "expectedWinners": 0.666666,
+      "walletWinPercent": 66.6666,
+      "expectedBasketPaidPercent": 6.6666
+    },
+    {
+      "wallets": 3,
+      "entriesPerWallet": 5,
+      "admissionPercent": 66.6666,
+      "noWinnerPercent": 3.7037,
+      "atLeastOneWinnerPercent": 96.2962,
+      "expectedWinners": 2,
+      "walletWinPercent": 66.6666,
+      "expectedBasketPaidPercent": 20
+    },
+    {
+      "wallets": 10,
+      "entriesPerWallet": 5,
+      "admissionPercent": 66.6666,
+      "noWinnerPercent": 0.0016,
+      "atLeastOneWinnerPercent": 99.9983,
+      "expectedWinners": 6.666666,
+      "walletWinPercent": 66.6666,
+      "expectedBasketPaidPercent": 66.6666
+    },
+    {
+      "wallets": 25,
+      "entriesPerWallet": 5,
+      "admissionPercent": 66.6666,
+      "noWinnerPercent": 0,
+      "atLeastOneWinnerPercent": 99.9999,
+      "expectedWinners": 9.997828,
+      "walletWinPercent": 39.9913,
+      "expectedBasketPaidPercent": 99.9782
+    },
+    {
+      "wallets": 100,
+      "entriesPerWallet": 5,
+      "admissionPercent": 66.6666,
+      "noWinnerPercent": 0,
+      "atLeastOneWinnerPercent": 99.9999,
+      "expectedWinners": 9.999999,
+      "walletWinPercent": 9.9999,
+      "expectedBasketPaidPercent": 99.9999
+    },
+    {
+      "wallets": 1,
+      "entriesPerWallet": 10,
+      "admissionPercent": 72.7272,
+      "noWinnerPercent": 27.2727,
+      "atLeastOneWinnerPercent": 72.7272,
+      "expectedWinners": 0.727272,
+      "walletWinPercent": 72.7272,
+      "expectedBasketPaidPercent": 7.2727
+    },
+    {
+      "wallets": 3,
+      "entriesPerWallet": 10,
+      "admissionPercent": 72.7272,
+      "noWinnerPercent": 2.0285,
+      "atLeastOneWinnerPercent": 97.9714,
+      "expectedWinners": 2.181818,
+      "walletWinPercent": 72.7272,
+      "expectedBasketPaidPercent": 21.8181
+    },
+    {
+      "wallets": 10,
+      "entriesPerWallet": 10,
+      "admissionPercent": 72.7272,
+      "noWinnerPercent": 0.0002,
+      "atLeastOneWinnerPercent": 99.9997,
+      "expectedWinners": 7.272727,
+      "walletWinPercent": 72.7272,
+      "expectedBasketPaidPercent": 72.7272
+    },
+    {
+      "wallets": 25,
+      "entriesPerWallet": 10,
+      "admissionPercent": 72.7272,
+      "noWinnerPercent": 0,
+      "atLeastOneWinnerPercent": 99.9999,
+      "expectedWinners": 9.999834,
+      "walletWinPercent": 39.9993,
+      "expectedBasketPaidPercent": 99.9983
+    },
+    {
+      "wallets": 100,
+      "entriesPerWallet": 10,
+      "admissionPercent": 72.7272,
+      "noWinnerPercent": 0,
+      "atLeastOneWinnerPercent": 99.9999,
+      "expectedWinners": 9.999999,
+      "walletWinPercent": 9.9999,
+      "expectedBasketPaidPercent": 99.9999
+    }
+  ]
+}

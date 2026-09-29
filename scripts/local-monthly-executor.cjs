@@ -71,6 +71,7 @@ async function stepMonthly({provider,source,job,publisher,executor,gasPrice,sign
     if(rng&&rng.status!=='observedHealthy')return wait('rng:'+rng.reasons.join(','));
     try{await source.connect(executor).sealMonth.staticCall(r.drawId,{gasPrice:price});}
     catch(error){
+      if(error.data===ethers.id('MonthlyBudgetNotReady()').slice(0,10))return wait('currentFunding');
       if(error.data===ethers.id('NextStartNotReady()').slice(0,10))return wait('nextStartFunding');
       if(error.data===ethers.id('InvalidDraw()').slice(0,10)){
         const vault=new ethers.Contract(d.vault,['function freeCurrent() view returns(uint256)'],provider);

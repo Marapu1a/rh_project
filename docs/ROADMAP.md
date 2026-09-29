@@ -48,14 +48,17 @@ public sends закрыты. [Recovery admission](RECOVERY_ADMISSION.md) отд�
    прошёл fork, coordinator/продвижение старых обязательств проверены отдельно. Funding пакет закрыт.
    Составная [релизная репетиция](RELEASE_REHEARSAL.md) пройдена с явными fixture-границами.
    Отчёт release profile подготовлен: обязательные поля и конфликты решений видны.
-   [Численный кандидат Short/Monthly](MVP_ECONOMIC_PROFILE.md) рассчитан; параметры не приняты.
+   [Численные правила Short/Monthly](MVP_ECONOMIC_PROFILE.md) приняты29.09;
+   [пользовательское описание](USER_RULES.md) подготовлено для будущего сайта.
    D без потолка принят: FREE_SHORT на cutoff реализован; профиль требует uint256.max.
    Funding wait на старом finalized cutoff исправлен и проверен: новый обеспеченный
    finalized блок разрешает обновить unused candidate, не существующий job.
    Monthly75/25 и вес e/(e+1) приняты и реализованы как новое поколениеV2:
    общий исход, обязательный один winner в выплатной ветке, independent worker replay.
-   Ближайший продуктовый шаг — согласовать корзину/q Short и minimum Current;
-   затем свести численный launch profile без тестовых значений вместо решений.
+   Short10мест/5USDG/q=0.8e/(e+1), Monthly Current>=100USDG приняты;
+   planning profile обновлён, public minimum проверяется до RNG.
+   Далее operational launch profile и qualified archive RPC; реальные constructor
+   параметры должны совпасть с принятыми числами, заполненный JSON не qualification.
    Эксплуатационные параметры выбираются отдельно;
    для RPC нужен другой archive endpoint (official повторно не прошёл history).
    Same-chain automatic proof ещё открыт.

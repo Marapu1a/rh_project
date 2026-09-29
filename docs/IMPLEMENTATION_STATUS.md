@@ -1,5 +1,13 @@
 # Карта реализации
 
+29.09: `minimumMonthlyBudget()` фиксирует100000000raw в RobinhoodMonthlyController,
+MonthlySettlement откатывает недостаточный бюджет после sync и до RNG; executor
+возвращает currentFunding. Public admission проверяет минимум. Short числа сохранены
+в launch plan, валидатор ловит drift. `short-launch-analysis.cjs` — точная модель,
+`launch-rules.test.cjs` сверяет принятые basket/threshold/outcome с Solidity.
+[Пользовательские правила](USER_RULES.md) ещё не подключённый сайт.
+
+
 29.09: [Monthly V2](MONTHLY_RULES_EPOCHS.md) — `MonthlyOutcome.sol` + независимый
 `monthly-outcome.cjs`; общий75/25, один winner с весом e/(e+1), Q128 cumulative selection.
 `MonthlySettlement` фиксирует totalWeight при публикации, обрабатывает chunks и проверяет

@@ -59,6 +59,7 @@ async function inspectDeployment(provider,profile,config){
   if(profile.scope==='public-launch')for(const name of ['short','monthly'])await binding(name,'CONTROLLER_PROFILE',ethers.id('promo-robinhood-'+name+'-drand-'+(name==='monthly'?'v2':'v1')),'bytes32');
   await binding('short','datasetInstance',config.schedulerConfig.lifecycle.instanceId,'bytes32');
   await binding('monthly','monthlyInstance',config.schedulerConfig.lifecycle.monthlyInstanceId,'bytes32');
+  if(profile.scope==='public-launch')await binding('monthly','minimumMonthlyBudget','100000000','uint256');
   await binding('quote','decimals',String(profile.quoteDecimals),'uint8');
   await binding('adapter','PROFILE',PROFILE,'bytes32');await binding('adapter','CHAIN_HASH',CHAIN_HASH,'bytes32');
   for(const key of TIMING.slice(0,5))await binding('adapter',key,profile.timing[key],'uint256');

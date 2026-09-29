@@ -29,8 +29,8 @@ profile `promo-robinhood-monthly-drand-v2`; deployment admission требует 
   controller address/codeHash уже отделяют поколение. Это новая сборка/deployment,
   не обновление существующего immutable контракта и не миграция старых jobs.
 - Начисление долга, ротация Next, поздние поступления, old claims и 30суток после
-  settlement сохраняются. Оба исхода расходуют snapshot attempts. MinCurrent100
-  не принят и не добавлен; требуется положительный Current и полный Next target.
+  settlement сохраняются. Оба исхода расходуют snapshot attempts. Minimum Current100USDG принят29.09: public wrapper требует100000000raw,
+  полный Next target также обязателен. Local/legacy fixtures оставляют минимум1raw.
 
 V1 остаётся доступен legacy/local потребителям. V1 hashes/results неизменны.
 Announcement не может сменить version относительно genesis; V2 не позволяет
@@ -95,7 +95,7 @@ monthly snapshot. V1/V2/V3 не переинтерпретируются. Пол
 Конструктор компонента теперь принимает `(vault, registry, instance, interval, notice, rules)`;
 в `Input` добавлен `uint64 rulesEpoch`. Новый ABI требует нового deployment, не upgrade.
 Monthly random context использует `MONTHLY_DATASET_CONTEXT_V2`, включая Input с epoch,
-неизменяемый hash этой policy и реальный frozen budget. Result tag остаётся V1: его
+неизменяемый hash этой policy и реальный frozen budget. Для исторического V1 result tag остаётся MONTHLY_RESULT_V1 (текущий V2 использует MONTHLY_RESULT_V2): его
 context уже связывает новую схему и конкретный deployment.
 
 Lifecycle v4 сохраняет поля v3 и добавляет в config `monthlyRules: {noticeSeconds,
@@ -171,3 +171,28 @@ outer state checksum не скрывает нарушение inner job checksum
 `.local/logs/monthly-v2-rehearsal-fixed.json`, status complete, 2 claims без повторов.
 Первый rehearsal остановился на старом obligation profile; новый generation guard
 закрыл эту связку. Live/fork/public deployment в этом пакете не выполнялись.
+
+## Минимальная готовность public Monthly — 29.09.2026
+
+Принято Current>=100USDG. `minimumMonthlyBudget()` в public wrapper равен100000000raw;
+в local/legacy base1raw для прежних fixtures. Проверка в `_sealMonth` расположена
+после vault.startMonthly, который распознаёт direct USDG, но до фиксации context/RNG.
+`MonthlyBudgetNotReady()` атомарно откатывает reserve/sync/phase: недостаток не
+оставляет замороженный приз или random request. Worker переводит ошибку в ожидание
+currentFunding. После пополнения продолжает тот же готовый job, без его пересоздания.
+Public admission проверяет getter; для обслуживания старых frozen обязательств
+экономическую готовность повторно не требуют.
+
+Новый тест:99.999999USDG + Next100 → отказ/нет reserved/RNG; два worker polls без
+send; прямой transfer2raw → GENERAL даёт1raw Short и1raw Current, freeze100USDG
+успешен. Preflight freshness в этом тесте stub, authentic BLS проверен соседним
+public controller тестом. Runtime Monthly19671bytes, Short22738bytes.
+
+Свежий compile и четыре адресных файла: public-controllers, public-launch-checks,
+launch-rules, monthly-jackpot —21 различный продуктовый сценарий прошёл; catalog1/1.
+Первый запуск имел один test assertion failure: ethers печатает unknown custom error;
+исправлено сравнение точного selector, этот сценарий повторён и прошёл. Не ошибка
+контрактной проверки. Логи `.local/logs/user-rules-{compile,targeted,minimum}.log`.
+Команда: `node --test test/public-controllers.test.cjs test/public-launch-checks.test.cjs test/launch-rules.test.cjs test/monthly-jackpot.test.cjs`
+со свежими RH_TEST_ARTIFACT/SHA256; повтор только `--test-name-pattern='Monthly minimum|profile catalog'`.
+Полный набор и fork/live не запускались.

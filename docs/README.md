@@ -9,6 +9,8 @@
 
 Достаточно первых двух файлов и документа нужного модуля. Полный архив при старте не читать.
 
+[Правила для пользователей](USER_RULES.md) — основа страницы сайта, без обещания публичной готовности.
+
 ## Модули и проверки — по необходимости
 
 | Задача | Документы |
@@ -16,7 +18,7 @@
 | Репетиция запуска | [Команда, профиль, доказательства и оставшиеся границы](RELEASE_REHEARSAL.md) |
 | Локальный сквозной путь | [Общая автоматика Short/Monthly](PROMO_AUTOMATION.md), [автоматический Short](SHORT_AUTOMATION.md), [Infinity→USDG proof](INFINITY_PAYOUT_PROOF.md), [Monthly и общий контур](LOCAL_MONTHLY_EXECUTOR.md), [исполнитель Short](LOCAL_SHORT_EXECUTOR.md), [BUY cycle](LOCAL_BUY_CYCLE.md), [контроллеры](LOCAL_CONTROLLER_SKELETON.md) |
 | Creator allocation / USDG→ETH (design) | [Доли, custody, маршрут и открытые проверки](OPS_REVENUE_FUNDING_DESIGN.md), [USDG→ETH fork proof](OPS_MARKET_PROOF.md), [read-only quote](OPS_MARKET_QUOTE.md), [durable sender](OPS_MARKET_EXECUTOR.md) |
-| Экономический профиль (кандидат) | [Infinity fork3%](INFINITY_INTEGRATION_RESEARCH.md), [Infinity 1–5%](INFINITY_FEE_SCENARIOS.md), [Текущий кандидат и160 модельных прогонов](MVP_ECONOMIC_PROFILE.md), [историческая календарная проверка](MVP_CALENDAR_CHECK.md) |
+| Принятый экономический профиль | [Infinity fork3%](INFINITY_INTEGRATION_RESEARCH.md), [Infinity 1–5%](INFINITY_FEE_SCENARIOS.md), [Принятые параметры и модель малого числа участников](MVP_ECONOMIC_PROFILE.md), [историческая календарная проверка](MVP_CALENDAR_CHECK.md) |
 | Казна и кампании | [Infinity collector](INFINITY_COLLECTOR.md), [worker](INFINITY_WORKER.md), [Vault](PROMO_VAULT_DESIGN.md), [FeeRouter](FEE_ROUTER_ROLLOVER_REPORT.md), [dual architecture](DUAL_CONTROLLER_ARCHITECTURE.md) |
 | BUY policy admission | [Контракт, публикация и применение правил](BUY_POLICY_ADMISSION.md) |
 | Билеты и проверяемость | [Infinity automatic BUY](INFINITY_BUY.md), [Registry](PARTICIPANT_REGISTRY.md), [BUY](DIRECT_BUY_REPLAY.md), [lifecycle](ATTEMPT_LIFECYCLE.md), [trust](INDEXER_TRUST_MODEL.md) |

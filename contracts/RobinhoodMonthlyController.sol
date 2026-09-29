@@ -12,6 +12,7 @@ contract RobinhoodMonthlyController is MonthlyControllerBase {
         require(s.interval==30 days,"monthly interval");
         RobinhoodControllerChecks.verify(s.provider,false);
     }
+    function minimumMonthlyBudget() public pure override returns(uint256){return 100_000000;}
     function _checkCutoffHistory(uint256 number,bytes32 hash) internal view override {
         require(hash!=bytes32(0)&&cutoffHashes[number]==hash,"checkpoint required");
     }
