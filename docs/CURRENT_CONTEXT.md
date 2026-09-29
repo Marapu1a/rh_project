@@ -1,5 +1,10 @@
 # Текущий контекст
 
+29.09: Дизайнерский HTTPS preview https://qianqi.109.73.196.111.sslip.io/ развёрнут
+на109.73.196.111, release9ad5660. Host Nginx/systemd, certbot renewal; внешний browser
+smoke passed. Старый frontend сохранён остановленным, backend/db не затронуты.
+Без RPC/indexer/signing; [пути и возврат](WEBSITE.md). SSH ключ сохранён вне git.
+
 29.09: [Первая страница QIANQI](WEBSITE.md) по пользовательскому макету: responsive, мышата, browser wallet connect и существующий wallet API. Pre-launch без выдуманных банков/claim/buy URL; общий draw API, проверенный asset profile и Claim ещё впереди.3 browser scenarios passed + visual desktop/mobile, не full/live. Локально npm run site →127.0.0.1:4173. Исходные images_for_site сохранены. Public sends закрыты.
 
 29.09: [Reward checkpoint](USER_STATUS_API.md) устраняет перечитывание всего storage на каждом poll: новые события→только затронутые draws/rewards; reorg/legacy snapshot→полный аудит. Модель120draws/1200rewards:1320initial,0idle,2late claim; audit CLI сохранён.10 адресных сценариев passed; payout fixture детерминизирован, не full/live/fork. Полный BUY replay/JSON остаётся линейным, production throughput ещё не доказан. Следом измерение общего pipeline/постоянный service, public sends закрыты.

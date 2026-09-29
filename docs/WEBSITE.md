@@ -1,5 +1,41 @@
 # Одностраничный сайт QIANQI
 
+## Дизайнерский стенд
+
+Публичный preview: https://qianqi.109.73.196.111.sslip.io/ — static release9ad5660.
+http://109.73.196.111/ перенаправляет на HTTPS. Временное DNS-имя sslip.io привязано
+к IP; позднее можно заменить своим доменом. Это открытый визуальный стенд, не приватный
+кабинет: robots/noindex являются указанием поисковикам, не контролем доступа.
+
+На сервере109.73.196.111 отдельный host Nginx/systemd `qianqi-preview`, enabled/active.
+Files `/opt/rh-preview/releases/9ad5660`, config `/opt/rh-preview/nginx-host.conf`
+и `nginx-host-server.conf`; воспроизводимые копии в [ops/preview](../ops/preview/).
+Let’s Encrypt certificate до28.12.2026, certbot.timer active и deploy hook для reload.
+Ключи SSH/TLS не включены в репозиторий. SSH доступ сохранён до явного закрытия владельцем.
+
+Никакие RPC credentials, signer или indexer не развёрнуты: /v1/ отвечает503 JSON.
+HTTPS позволяет проверять wallet connect, но без боевых выплат/операций. Браузерная
+проверка настоящего расширения кошелька остаётся отдельной от визуального smoke.
+
+Старый `gk_project-frontend-1` остановлен, не удалён; backend/db продолжают работать.
+Compose configs и container inspect сохранены в root-only
+`/root/rh-preview-backups/before-9ad5660/`; inspect/env не копировать в git.
+Первоначальный пробный Docker `qianqi-preview` также остановлен; активен systemd service.
+Возврат старого сайта на сервере:
+
+```sh
+systemctl disable --now qianqi-preview
+docker start gk_project-frontend-1
+```
+
+Проверено29.09: HTTPS возвращает весь HTML8286bytes с доверенным сертификатом;
+реальный внешний Chromium загрузил страницу и диалог, mobile390 без overflow.
+HTTP проба отдельных assets дала200, wallet API503. Сначала некоторые HTTP body reads
+обрывались после первого фрагмента; смена Docker/host Nginx сама этого не устранила.
+На HTTPS браузерный smoke прошёл. Причина промежуточной сетевой проблемы не установлена;
+изменения экспериментальной Docker MTU-сети отменены, сеть старого проекта не менялась.
+Скриншот `.local/logs/qianqi-live-check.png`. Это не live integration/payout qualification.
+
 Первая адаптивная версия по макетам пользователя: `web/index.html`, `style.css`,
 `app.js`. Без framework/build pipeline: статические файлы, CSP-compatible scripts,
 локальные изображения. Иллюстрации скопированы из пользовательского images_for_site
