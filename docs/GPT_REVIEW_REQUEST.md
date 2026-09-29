@@ -1,29 +1,24 @@
-# Review: постоянный read-only indexer/API service
+# Review: первая одностраничная QIANQI страница
 
-29.09.2026. Только статический review, тесты/build/fork не запускать.
-Предыдущий ответ86bbab8 учтён. Пользователь уточнил границу: решаем обычные конкретные
-отказы и идём к завершению продукта, не ищем бесконечно экзотические пересечения.
+29.09.2026. Только static review, не запускать tests/build/fork.
+Пользователь дал макеты и images_for_site; задача воспроизвести визуальный стиль
+одной страницы, без новых продуктовых правил. [Готовое/ограничения](WEBSITE.md).
 
-[Runbook и реализация](INDEXER_SERVICE.md). Один supervisor держит HTTP API и запускает
-последовательные indexOnce в отдельных OS children. Full scan вне HTTP. Poll10s,
-catch-up сразу, timeout120s; RPC failure/child exit повторяются. Service owner lock
-и существующий pass lock исключают два service owners/одновременные passes.
-Owned leftover lock снимается только после exit своего child и точного PID match;
-unknown lock/storage/corrupt state требуют attention, не reset. Parent SIGKILL/power loss
-могут оставить service lock: описана ручная проверка, auto-delete нет.
+web/ — адаптивная vanilla HTML/CSS/JS страница. Browser EIP-1193 connect/EIP-6963
+выбор wallet, chain4663, accountsChanged/chainChanged/disconnect, version guard
+на fetch. GET через фиксированный server proxy к существующему wallet API.
+Observed/stale/unavailable различаются; при failure данные очищаются, не обнуляются.
+Суммы rewards не форматируются по quote decimals: ждём проверенный asset profile.
+Нет txn signing/Claim/произвольных buy links. Банки pre-launch прочерки, не fake jackpot.
 
-Health отдельно показывает fresh snapshot, lag к последнему прочитанному finalized,
-policyMode, время/bytes прохода. Исследовательский unadmitted не ready. Last-pass health
-не называется live finality или wallet worker readiness. Только loopback; полный статус
-пишется JSON без RPC URL/errors. Никаких signer/денежных операций/public sends.
-Unit systemd подготовлен, не установлен; deployment/signing/HTTPS/alerts ещё впереди.
+Макет Daily/buy-or-sell/register исправлен на Short/eligible BUY/no registration.
+3 browser сценария passed, реальные wallets/API заменены тестовыми; desktop/mobile
+просмотрены. Full/backend suite не запускались: backend контрактов не менялся.
+Исходные пользовательские assets сохранены отдельно, рабочие копии web/assets.
 
-18 адресных tests +catalog passed: настоящие child processes, mock HTTP RPC/legacy
-история, outage/resume, restart, killed child+owned lock, timeout, unknown lock/corrupt
-state, соседи indexer/API. Не full/live/admitted Infinity. Измерение реальной истории
-перенесено в предрелизную проверку (или при конкретном lag), не объявляем throughput.
-
-Просьба проверить реальные ошибки shutdown/lock ownership/retry и честность health.
-Не требовать гарантированной безотказности или новой БД без измеренного препятствия.
-Следующий продуктовый пакет предлагаем посвятить сайту и общему списку розыгрышей,
-затем actual deployment и сквозному предрелизному прогону.
+Проверь соответствие существующим правилам/API, reset данных при wallet changes,
+ошибки UI, которые могут ввести пользователя в заблуждение. Это не production launch:
+общий draw/reserve API, проверенные payout asset/claim, полная история, мобильный QR
+и реальный deployment ещё впереди. Следующий пакет — общий draw API и карточки/результаты.
+Предыдущий service93bd488 остаётся отдельным локально проверенным пакетом; если ещё
+не прочитал его, read-only supervisor/recovery описаны в INDEXER_SERVICE.md.

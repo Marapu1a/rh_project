@@ -1,6 +1,6 @@
 # План до первого публичного запуска
 
-29.09: [Постоянный read-only service](INDEXER_SERVICE.md) запускает indexer/API, retries RPC/owned-child crash/timeout, health с отдельными freshness и lag; unknown lock/corrupt state → needsAttention. Linux unit/runbook подготовлены, сервер не развёрнут.18 адресных сценариев +catalog passed на Windows/mock RPC; не full/live/admitted Infinity. Следующий пакет — пользовательский сайт и общий список розыгрышей; real throughput остаётся предрелизной проверкой. Public sends закрыты.
+29.09: [Первая страница QIANQI](WEBSITE.md) по пользовательскому макету: responsive, мышата, browser wallet connect и существующий wallet API. Pre-launch без выдуманных банков/claim/buy URL; общий draw API, проверенный asset profile и Claim ещё впереди.3 browser scenarios passed + visual desktop/mobile, не full/live. Локально npm run site →127.0.0.1:4173. Исходные images_for_site сохранены. Public sends закрыты.
 
 29.09.2026. Это текущие релизные блокеры, а не журнал всех выполненных итераций.
 История: [снимок прежнего плана](archive/snapshots/ROADMAP_BEFORE_DEPLOYMENT_PROFILE_2026-09-28.md).

@@ -21,6 +21,7 @@
 | Принятый экономический профиль | [Infinity fork3%](INFINITY_INTEGRATION_RESEARCH.md), [Infinity 1–5%](INFINITY_FEE_SCENARIOS.md), [Принятые параметры и модель малого числа участников](MVP_ECONOMIC_PROFILE.md), [историческая календарная проверка](MVP_CALENDAR_CHECK.md) |
 | Казна и кампании | [Infinity collector](INFINITY_COLLECTOR.md), [worker](INFINITY_WORKER.md), [Vault](PROMO_VAULT_DESIGN.md), [FeeRouter](FEE_ROUTER_ROLLOVER_REPORT.md), [dual architecture](DUAL_CONTROLLER_ARCHITECTURE.md) |
 | BUY policy admission | [Контракт, публикация и применение правил](BUY_POLICY_ADMISSION.md) |
+| Сайт QIANQI | [Локальный запуск, кошелёк и границы](WEBSITE.md) |
 | Пользовательский API | [Покупки, билеты, свежесть](USER_STATUS_API.md) |
 | Постоянный сервис / восстановление | [Запуск, health, locks, systemd](INDEXER_SERVICE.md) |
 | Постоянное накопление | [Indexer once/watch и ограничения](PERSISTENT_INDEXER.md) |
