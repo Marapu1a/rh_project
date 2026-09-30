@@ -1,5 +1,25 @@
 # Текущий контекст
 
+30.09: по решению владельца следующий этап — финальный review всей цепочки и воспроизводимый сквозной прогон до mainnet. Текущий пакет фиксируется в git; [обращение GPT](GPT_REVIEW_REQUEST.md) обновлено, [проверки/пробелы](FINAL_TESTING_HANDOFF.md) перечислены. Нового full baseline нет; GPT делает static review/матрицу, Codex выполняет финальные проверки. Public sends закрыты.
+
+30.09: prepare-pair-launch создает draft calldata collector/PAIR и выполняет live read-only simulation: обе eth_call прошли, gas estimates получены (~0.00061634ETH с launch fee только за эти2операции). USDG109.622644 подтверждены. Metadata/настройки draft, public sends нет. Последовательный local fork collector→PAIR прошел; получатель комиссий проверен. Остальные Promo contracts не покрыты оценкой. [Детали](LAUNCH_PREPARATION.md).
+
+30.09: владелец назначил creator также governor/project, executor отдельный. Первая покупка101USDG запланирована прямым поддержанным маршрутом после deployment/indexer: встроенный Developer Buy не покрыт текущим decoder. USDG balance0, пополнение/обмен не выполнялись. Адресные plan5/5 и Infinity BUY4/4. [Детали](LAUNCH_PREPARATION.md).
+
+30.09: добавлен read-only PAIR launch preview (readiness/opening/source, без calldata). Live12 checks passed; пользовательский creator записан в launch plan, баланс0.00311832ETH прочитан, total deployment cost еще неизвестен. Следом metadata/роли/immutable settings и проверка token/collector prediction перед simulation. [Детали](LAUNCH_PREPARATION.md).
+
+30.09: прочитаны live PAIR docs и код формы Infinity. Creator Fees UI кодирует подключенный кошелек получателем; наш collector подключается через modeData того же PAIR launchInfinity (существующий fork путь). Следующий шаг — подготовить обозримую транзакцию запуска с collector и актуальными opening данными, без смены fee mode. [Подробности](LAUNCH_PREPARATION.md). Sends не было.
+
+30.09: начата подготовка реального запуска. Read-only Infinity pins/implementation/quote/fee сверены на одном текущем блоке, matched; launch fee0.0005ETH без gas. Публичные RPC не прошли archive probes. В launch plan добавлены недостающие opening/metadata/protection/creator/budget inputs, записан фактический сервер без signer custody. Нужны понятный выбор кошельков/RPC и параметры до estimate/deploy; пользователь попросил объяснить термины. [Подготовка и evidence](LAUNCH_PREPARATION.md). Публичных sends/новых signing keys не было.
+
+30.09: read-only пакет опубликован на qianqi.site, release data-20260930: overview/reserves/history, frozen tickets, суммы/tx наград. Service qianqi-api работает в standby awaitingDeployment; индексатор ждёт реальных contract/RPC pins. DNS/HTTPS исправны, renewal dry-run прошёл.19/19 HK browser,3/3 original, адресные API/service/observer проверки прошли; не full/mainnet proof. [Подробности](PUBLIC_STATUS_API.md). Следом подготовка/допуск реального deployment, затем включение индексатора. Buy/Claim/signing не открыты.
+
+30.09, итог DNS-проверки: выявлена рассинхронизация authoritative Timeweb: ns1/ns3/ns4 →201.51.22.244, ns2 →109.73.196.111 (TTL600), поэтому это НЕ только recursive cache. Первичная выдача HTTPS успешна, но `certbot renew --dry-run --no-random-sleep-on-renew` failed: staging CA пришёл на старый109.73.196.111 и получил404. Реальный сертификат не изменён, timer active. До устранения DNS публичная доступность не гарантирована; после синхронизации повторить обычный браузер без IP pin и renewal dry-run. Нужна проверка DNS панели/поддержки Timeweb, доступа к DNS API у агента нет.
+
+30.09: HK-фронт опубликован на новом Timeweb Amsterdam201.51.22.244: https://qianqi.site (также www), HTTPS/Certbot timer, кастомная404. 16/16 HK+wallet и3/3 исходный сайт passed; live Chromium с закреплённым новым IP:4ширины, links/assets/dialogs/404/503 без JS/CSP errors. DNS authoritative уже новый, recursive cache ещё отдавал старый IP. API/indexer/финансовая логика не подключены. Следом draw/reserve API и frozen/open UI; детали WEBSITE.
+
+30.09: SSH-доступ к новому Timeweb Amsterdam 201.51.22.244 проверен отдельным ключом qianqi-ams-201-51-22-244 (вне git). Ubuntu26.04.1 LTS, RAM3.8GiB, диск38GiB/36GiB свободно; failed units нет. A qianqi.site и CNAME www указывают на новый сервер. Nginx/Node не установлены, сайт/HTTPS ещё не развёрнуты. Проверка: ssh read-only (id/os/free/df/ss/systemctl), Resolve-DnsName обоих имён. Старый preview сохранён.
+
 30.09: владелец завершил этап дизайна/текстов сайта. Текущий HK + wallet пакет подготовлен к публикации в Git и static review по [постоянному обращению](GPT_REVIEW_REQUEST.md). Следующий предлагаемый этап — общий draw/reserve API и результаты. 15/15 HK+wallet и 3/3 исходник уже прошли после финальных текстов; повтор/full ради commit не нужен. HTTPS пока на старом hk-copy-20260929; актуальная версия локально. Последние 30 сообщений прошлого диалога прочитаны: решаем конкретные препятствия пользовательскому пути, без бесконечной гипотетической оптимизации.
 
 

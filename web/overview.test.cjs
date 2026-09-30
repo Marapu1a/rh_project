@@ -1,0 +1,22 @@
+const {test}=require('node:test'),assert=require('node:assert/strict'),{chromium}=require('@playwright/test');
+const {createSite}=require('../scripts/serve-site.cjs');
+const wallet='0x'+'1'.repeat(40),draw='0x'+'2'.repeat(64),tx='0x'+'3'.repeat(64),asset='0x'+'4'.repeat(40);
+const data=()=>({schema:'promo-overview-v1',status:'observed',asset:{address:asset,decimals:6,symbol:'USDG'},reserves:{freeShort:'0',freeCurrent:'200000000',freeNext:'100000000',nextStartTarget:'100000000',reserved:'100000000',claimable:'70000000'},draws:{SHORT:{active:{budgetRaw:'100000000'},freeRaw:'0',earliestAt:'1900000000',state:'inProgress'},MONTHLY:{active:null,freeRaw:'200000000',earliestAt:'1900000000',state:'awaitingTime'}},history:{items:[{drawId:draw,kind:'MONTHLY',status:'noWinner',budgetRaw:'100000000',awardedRaw:'0',paidRaw:'0',terminal:{source:{transactionHash:tx}}}],total:1,nextOffset:null},provenance:{chainId:'4663',head:{number:100,hash:tx},observedAt:'2026-09-30T00:00:00Z',indexerState:'caughtUp'}});
+async function setup(t){const server=createSite();await new Promise(r=>server.listen(0,'127.0.0.1',r));const browser=await chromium.launch(),page=await browser.newPage();t.after(async()=>{await browser.close();server.closeAllConnections();await new Promise(r=>server.close(r));});return {page,url:'http://127.0.0.1:'+server.address().port+'/concepts/hk/'};}
+test('overview renders amounts, rollover, delayed snapshot, safe transaction links and mobile layout',async t=>{
+ const {page,url}=await setup(t);const d=data();d.status='stale';await page.route('**/v1/overview?*',r=>r.fulfill({json:d}));await page.goto(url);await page.waitForFunction(()=>document.getElementById('short-bank').textContent==='100');
+ assert.equal(await page.locator('#monthly-bank').textContent(),'200');assert.match(await page.locator('#overview-status').textContent(),/delayed/);assert.match(await page.locator('#draw-history').textContent(),/rollover/);assert.match(await page.locator('#overview-provenance').textContent(),/block 100/);
+ assert.equal(await page.locator('#draw-history a').getAttribute('href'),'https://robinhoodchain.blockscout.com/tx/'+tx);
+ for(const width of [1440,768,390,320]){await page.setViewportSize({width,height:900});await page.locator('.live-summary details').evaluate(d=>d.open=true);assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);}
+});
+test('unavailable overview has unknown pools and no fabricated history',async t=>{
+ const {page,url}=await setup(t);await page.route('**/v1/overview?*',r=>r.fulfill({status:503,json:{status:'unavailable'}}));await page.goto(url);await page.waitForFunction(()=>document.getElementById('overview-status').textContent.includes('Missing numbers'));assert.equal(await page.locator('#short-bank').textContent(),'—');assert.equal(await page.locator('#draw-history a').count(),0);
+});
+test('wallet keeps locked tickets visible at zero open; formats only verified matching reward assets',async t=>{
+ const {page,url}=await setup(t);await page.addInitScript(wallet=>{window.ethereum={request:async({method})=>method==='eth_requestAccounts'?[wallet]:'0x1237'};},wallet);
+ await page.route('**/v1/overview?*',r=>r.fulfill({json:data()}));
+ await page.route('**/v1/wallets/**',r=>r.fulfill({json:{schema:'promo-wallet-status-v1',status:'observed',wallet,asset:{address:asset,decimals:6},provenance:{chainId:'4663',head:{number:101},observedAt:'2026-09-30T00:01:00Z'},balances:{SHORT:{open:'0',frozenByDraw:{[draw]:{count:'4'}}},MONTHLY:{open:'4',frozenByDraw:{}},carryRaw:'0',entryThresholdRaw:'100000000',quoteDecimals:6},rewards:{items:[{drawId:draw,asset,amountRaw:'70000000',status:'assigned',assignment:{transactionHash:tx},payment:null}],total:1}}}));
+ await page.goto(url);await page.locator('header .connect').click();await page.waitForFunction(()=>document.getElementById('short-count').textContent==='0');assert.match(await page.locator('#locked-tickets').textContent(),/4 tickets in progress/);assert.match(await page.locator('#rewards-body').textContent(),/70 USDG/);assert.match(await page.locator('#provenance').textContent(),/101/);assert.match(await page.locator('#overview-provenance').textContent(),/100/);
+ await page.setViewportSize({width:320,height:900});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
+ await page.locator('#disconnect').click();assert.equal(await page.locator('#locked-tickets').textContent(),'');
+});

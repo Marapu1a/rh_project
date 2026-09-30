@@ -19,6 +19,6 @@ test('wallet reads real API schema, marks stale and clears data on failure/accou
  await page.evaluate(()=>window.walletEvents.accountsChanged([]));assert.equal(await page.locator('#disconnect').isVisible(),false);
 });
 test('wrong chain and rejected connection never present wallet balances',async t=>{
- const first=await open(t);await inject(first.page,{chain:'0x1'});let requests=0;await first.page.route('**/v1/**',r=>{requests++;return r.abort();});await first.page.goto(first.url);await first.page.locator('header .connect').click();await first.page.waitForFunction(()=>document.getElementById('wallet-status').textContent.includes('Wrong network'));assert.equal(requests,0);
+ const first=await open(t);await inject(first.page,{chain:'0x1'});let requests=0;await first.page.route('**/v1/wallets/**',r=>{requests++;return r.abort();});await first.page.goto(first.url);await first.page.locator('header .connect').click();await first.page.waitForFunction(()=>document.getElementById('wallet-status').textContent.includes('Wrong network'));assert.equal(requests,0);
  const second=await open(t);await inject(second.page,{reject:true});await second.page.goto(second.url);await second.page.locator('header .connect').click();await second.page.waitForFunction(()=>document.getElementById('dialog').open);assert.match(await second.page.locator('#dialog-copy').textContent(),/declined/);assert.equal(await second.page.locator('#short-count').textContent(),'—');
 });

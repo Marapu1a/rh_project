@@ -32,10 +32,10 @@
     }
   },
   "roles": {
-    "governor": null,
+    "governor": "0x098afA6731239a00CE0aff669aaefD16b7C72114",
     "publisherExecutor": null,
     "operations": null,
-    "project": null
+    "project": "0x098afA6731239a00CE0aff669aaefD16b7C72114"
   },
   "product": {
     "creatorFeeBps": 300,
@@ -95,7 +95,16 @@
     "maxGasPrice": null,
     "controllerNativeFloor": null,
     "archiveRpc": null,
-    "durableRuntime": null,
+    "durableRuntime": {
+      "host": "201.51.22.244",
+      "location": "Timeweb Amsterdam",
+      "apiService": "qianqi-api",
+      "status": "readonly-standby",
+      "domain": "qianqi.site",
+      "stateDirectory": "/var/lib/qianqi",
+      "signerCustody": null,
+      "executionEnabled": false
+    },
     "nativeRefill": null,
     "monthlyWinnerWeight": "ENTRIES_OVER_ENTRIES_PLUS_ONE_Q128"
   },
@@ -104,5 +113,39 @@
     "../research/public-deployment/rpc-official-2026-09-28.json",
     "../research/public-deployment/rpc-blockreq-2026-09-28.json"
   ],
-  "limitation": "A planning record, not executable deployment settings. Nulls must not be replaced with test fixtures. Current public executor remains disabled."
+  "limitation": "A planning record, not executable deployment settings. Nulls must not be replaced with test fixtures. Current public executor remains disabled.",
+  "launch": {
+    "creator": "0x098afA6731239a00CE0aff669aaefD16b7C72114",
+    "name": "QIANQI",
+    "symbol": "QIANQI",
+    "metadataURI": null,
+    "metadataHash": null,
+    "openingProfile": null,
+    "sniperProtection": null,
+    "protectionBlocks": null,
+    "userSalt": null,
+    "vanityNonce": null,
+    "developerBuy": {
+      "enabled": false,
+      "reason": "Initial purchase prepared separately through admitted direct USDG route"
+    },
+    "launchFeeBudgetWei": null
+  },
+  "initialPurchase": {
+    "status": "planning-not-executable",
+    "timing": "after-deployment-and-indexer-admission",
+    "payer": "0x098afA6731239a00CE0aff669aaefD16b7C72114",
+    "recipient": "0x098afA6731239a00CE0aff669aaefD16b7C72114",
+    "quote": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+    "maxWalletDebitRaw": "101000000",
+    "gasBudgetWei": null,
+    "amountOutMinimum": null,
+    "routeVersion": "rh-infinity-exact-input-v1",
+    "expectedIfNetDebitRaw101000000": {
+      "shortEntries": "1",
+      "monthlyEntries": "1",
+      "carryRaw": "1000000"
+    },
+    "authorizationToSend": false
+  }
 }

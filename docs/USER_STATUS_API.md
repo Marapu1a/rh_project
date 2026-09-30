@@ -1,5 +1,8 @@
 # Read-only API покупок и билетов
 
+30.09: добавлен overview API, asset для наград и подключение HK. Публичный сервис
+установлен в standby без deployment config. [Контракт и проверки](PUBLIC_STATUS_API.md).
+
 29.09.2026. Реализован локальный HTTP endpoint поверх indexer snapshot и существующего
 replayAttempts. Награды/выплаты добавлены наблюдением vault на высоте снимка. Frontend и публичный hosting ещё не подключены.
 

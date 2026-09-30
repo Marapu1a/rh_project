@@ -1,5 +1,13 @@
 # Карта реализации
 
+30.09: prepare-pair-launch создает draft calldata collector/PAIR и выполняет live read-only simulation: обе eth_call прошли, gas estimates получены (~0.00061634ETH с launch fee только за эти2операции). USDG109.622644 подтверждены. Metadata/настройки draft, public sends нет. Последовательный local fork collector→PAIR прошел; получатель комиссий проверен. Остальные Promo contracts не покрыты оценкой. [Детали](LAUNCH_PREPARATION.md).
+
+30.09: добавлен read-only PAIR launch preview (readiness/opening/source, без calldata). Live12 checks passed; пользовательский creator записан в launch plan, баланс0.00311832ETH прочитан, total deployment cost еще неизвестен. Следом metadata/роли/immutable settings и проверка token/collector prediction перед simulation. [Детали](LAUNCH_PREPARATION.md).
+
+30.09: `launch-source-preflight.cjs` — read-only runtime/proxy/graph/quote/fee check на одном блоке; `public-launch-plan.cjs` дополнен required launch inputs. `launch-source-preflight.test.cjs` —3 адресных сценария; плановые проверки5/5. [Результат и ограничения](LAUNCH_PREPARATION.md).
+
+30.09: `public-observation.cjs` + `public-status.cjs` — резервный snapshot и overview projection, opt-in persistent indexer, общий user-status worker/API. `web/overview.js` + app.js — карточки/history/frozen/asset amounts. `start-public-service.cjs` и `deploy/public-api/` — read-only service/standby. Новые public-status/public-observation/overview tests. [Контракт, установка и пределы](PUBLIC_STATUS_API.md).
+
 30.09: `web/app.js` — EIP-6963 discovery, wallet/account menu, session-scoped restoration, EIP-1193 event handling, permission/network requests только по клику. `web/wallet.test.cjs` (`npm run test:site:wallet`) — 12 адресных сценариев, synthetic providers. Shared wallet-dialog CSS в обеих темах. [Контракт поведения](WEBSITE.md).
 
 

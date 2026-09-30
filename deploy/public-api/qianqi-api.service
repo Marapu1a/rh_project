@@ -1,0 +1,30 @@
+[Unit]
+Description=QIANQI read-only indexer and public status API
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=qianqi
+Group=qianqi
+WorkingDirectory=/opt/qianqi-api/current
+ExecStart=/usr/bin/node scripts/start-public-service.cjs
+Environment=NODE_ENV=production
+Environment=PORT=8787
+EnvironmentFile=-/etc/qianqi/api.env
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=35
+StateDirectory=qianqi
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/qianqi
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+LimitNOFILE=4096
+MemoryMax=2G
+
+[Install]
+WantedBy=multi-user.target

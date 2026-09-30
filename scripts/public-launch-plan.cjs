@@ -3,6 +3,7 @@ const fs = require('node:fs');
 const REQUIRED = {
  contracts: ['token', 'registry', 'vault', 'short', 'monthly', 'adapter', 'collector', 'pairSource', 'buyPolicySource', 'pool', 'quote'],
  roles: ['governor', 'publisherExecutor', 'operations', 'project'],
+ launch: ['creator', 'name', 'symbol', 'metadataURI', 'metadataHash', 'openingProfile', 'sniperProtection', 'protectionBlocks', 'userSalt', 'vanityNonce', 'developerBuy', 'launchFeeBudgetWei'],
  unresolved: ['timingApproval', 'shortRules', 'monthlyRules', 'shortWeights', 'minimumUnitRaw', 'maxShortBudgetRaw', 'rulesNoticeSeconds', 'maxGasPrice', 'controllerNativeFloor', 'archiveRpc', 'durableRuntime', 'nativeRefill', 'monthlyWinnerWeight'],
 };
 const ACCEPTED = {
@@ -40,7 +41,7 @@ function inspectPlan(p) {
  if (p?.schema !== 'robinhood-launch-plan-v1' || p.status !== 'incomplete-not-executable' || p.network?.chainId !== 4663 || p.controllers?.cutoffMode !== 'FINALIZED_CHECKPOINT' || p.publicExecutionEnabled !== false) throw Error('Explicit incomplete Robinhood plan required');
  const settings = Object.entries(REQUIRED).flatMap(([section, names]) => names.map(name => {
   const path = section + '.' + name;
-  const category = section === 'contracts' ? 'deployment-derived' : section === 'roles' ? 'owner-choice' : ['archiveRpc', 'durableRuntime', 'nativeRefill'].includes(name) ? 'operational-qualification' : 'owner-choice';
+  const category = section === 'contracts' ? 'deployment-derived' : section === 'launch' && ['metadataHash','userSalt','vanityNonce'].includes(name) ? 'deployment-derived' : section === 'roles' || section === 'launch' ? 'owner-choice' : ['archiveRpc', 'durableRuntime', 'nativeRefill'].includes(name) ? 'operational-qualification' : 'owner-choice';
   return {path, category, status: absent(get(p, path)) ? 'missing' : 'provided-not-verified'};
  }));
  const accepted = Object.entries(ACCEPTED).map(([path, expected]) => ({path, expected, matches: get(p, path) === expected}));

@@ -13,10 +13,12 @@ function prepare(config,raw){
   projected=require('./reward-observation.cjs').projectRewards(index.blocks,config.lifecycle.vault);
   if(BigInt(index.rewards.blockTag)!==BigInt(index.head)||hash(projected)!==hash({draws:index.rewards.draws,rewards:index.rewards.rewards}))throw Error('Invalid rewards');
  }
+ const publicView=require("./public-status.cjs").preparePublic(config,index,ledger,projected);
  const group=(rows,key)=>{const m=new Map();for(const row of rows){const k=key(row)?.toLowerCase();if(k){if(!m.has(k))m.set(k,[]);m.get(k).push(row);}}return m;};
- return {state:{status:state.status},index:{observedAt:index.observedAt,ledgerHash:index.ledgerHash,rewards:!!index.rewards},ledger:{head:ledger.head},manifestHash:hash(index.manifest),balances:new Map(ledger.wallets.map(w=>[w.wallet,w])),buys:new Map(ledger.buyLedger.wallets.map(w=>[w.wallet,w])),decisions:group(ledger.buyLedger.decisions,d=>d.payer),rewards:projected?group(projected.rewards,r=>r.winner):null};
+ return {publicView,state:{status:state.status},index:{observedAt:index.observedAt,ledgerHash:index.ledgerHash,rewards:!!index.rewards},ledger:{head:ledger.head},manifestHash:hash(index.manifest),balances:new Map(ledger.wallets.map(w=>[w.wallet,w])),buys:new Map(ledger.buyLedger.wallets.map(w=>[w.wallet,w])),decisions:group(ledger.buyLedger.decisions,d=>d.payer),rewards:projected?group(projected.rewards,r=>r.winner):null};
 }
 function render(config,view,{wallet,offset=0,limit=25,now=Date.now()}){
+ if(wallet===undefined)return require("./public-status.cjs").renderPublic(config,view,{offset,limit,now});
  const {state,index,ledger}=view;
   const age=now-Date.parse(index.observedAt),fresh=['caughtUp','catchingUp'].includes(state.status?.state)&&Number.isFinite(age)&&age>=0&&age<=config.indexer.maxAgeSeconds*1000;
   const address=wallet.toLowerCase(),balance=view.balances.get(address),buy=view.buys.get(address);
@@ -31,13 +33,13 @@ function render(config,view,{wallet,offset=0,limit=25,now=Date.now()}){
   return {schema:'promo-wallet-status-v1',status:fresh?'observed':'stale',wallet:address,
    provenance:{chainId:String(config.manifest.chainId),anchor:config.manifest.anchor,head:ledger.head,manifestHash:view.manifestHash,ledgerHash:index.ledgerHash,observedAt:index.observedAt??null,ageSeconds:Number.isFinite(age)?Math.max(0,Math.floor(age/1000)):null,indexerState:state.status?.state??'unknown',targetBlock:state.status?.targetBlock??null,canonicality:'saved-observation-not-live-finality'},
    balances:{SHORT:balance?.SHORT??empty(),MONTHLY:balance?.MONTHLY??empty(),carryRaw:buy?.carryRaw??'0',entryThresholdRaw:config.manifest.entryThresholdRaw,quoteDecimals:config.manifest.quoteDecimals},
-   purchases:{items:purchases,offset,limit,total:decisions.length,nextOffset:offset+purchases.length<decisions.length?offset+purchases.length:null,coverage:'decoded-payer-attributed-candidates-only; absence-is-not-rejection'},rewards};
+   purchases:{items:purchases,offset,limit,total:decisions.length,nextOffset:offset+purchases.length<decisions.length?offset+purchases.length:null,coverage:'decoded-payer-attributed-candidates-only; absence-is-not-rejection'},rewards,asset:view.publicView?.asset??null};
 }
 
 function validate({wallet,offset=0,limit=25}){
- if(!isAddress(wallet)||!Number.isSafeInteger(offset)||offset<0||!Number.isInteger(limit)||limit<1||limit>100)throw Object.assign(Error('Invalid query'),{status:400});
+ if((wallet!==undefined&&!isAddress(wallet))||!Number.isSafeInteger(offset)||offset<0||!Number.isInteger(limit)||limit<1||limit>100)throw Object.assign(Error('Invalid query'),{status:400});
 }
-const unavailable=wallet=>({schema:'promo-wallet-status-v1',status:'unavailable',wallet:wallet.toLowerCase(),balances:null,purchases:null,rewards:null});
+const unavailable=wallet=>wallet===undefined?({schema:'promo-overview-v1',status:'unavailable',asset:null,reserves:null,draws:null,history:null,provenance:null}):({schema:'promo-wallet-status-v1',status:'unavailable',wallet:wallet.toLowerCase(),balances:null,purchases:null,rewards:null});
 // An uncached reader remains useful for one-shot callers and measurement.
 function walletStatus({config,...query}){
  validate(query);
@@ -107,24 +109,25 @@ function createAsyncReader(input,{maxPending=64,timeoutMs=30000}={}){
  function close(){closed=true;if(worker)stop(worker);}
  return {read,close};
 }
-function createServer(config,{health}={}){const reader=createAsyncReader(config);const server=http.createServer(async(req,res)=>{
+function createServer(config,{health}={}){const reader=config?createAsyncReader(config):{read:async q=>unavailable(q.wallet),close:()=>{}};const server=http.createServer(async(req,res)=>{
  res.setHeader('Content-Type','application/json; charset=utf-8');res.setHeader('Cache-Control','no-store');
  try{
   if(req.method!=='GET'){res.writeHead(405,{Allow:'GET'});res.end(JSON.stringify({error:'methodNotAllowed'}));return;}
   const u=new URL(req.url,'http://localhost');
   if(u.pathname==='/healthz'&&health){const status=health();res.writeHead(status.ready?200:503);res.end(JSON.stringify(status));return;}
   const match=/^\/v1\/wallets\/(0x[0-9a-fA-F]{40})$/.exec(u.pathname);
-  if(!match){res.writeHead(404);res.end(JSON.stringify({error:'notFound'}));return;}
+  if(!match&&u.pathname!=='/v1/overview'){res.writeHead(404);res.end(JSON.stringify({error:'notFound'}));return;}
   const o=u.searchParams.get('offset')??'0',l=u.searchParams.get('limit')??'25';
   if([...u.searchParams.keys()].some(k=>!['offset','limit'].includes(k))||u.searchParams.getAll('offset').length>1||u.searchParams.getAll('limit').length>1||!/^\d+$/.test(o)||!/^\d+$/.test(l))throw Object.assign(Error(),{status:400});
-  const result=await reader.read({wallet:match[1],offset:Number(o),limit:Number(l)});
+  const query={wallet:match?.[1],offset:Number(o),limit:Number(l)};validate(query);
+  const result=await reader.read(query);
   res.writeHead(result.status==='unavailable'?503:200);res.end(JSON.stringify(result));
  }catch(e){res.writeHead(e.status===400?400:503);res.end(JSON.stringify({error:e.status===400?'invalidQuery':'unavailable'}));}
 });server.on('close',()=>reader.close());return server;}
 if(require.main===module){try{
  const [file,portText='8787']=process.argv.slice(2),port=Number(portText);
  if(!file||!Number.isInteger(port)||port<1||port>65535)throw Error();
- const config=JSON.parse(fs.readFileSync(file,'utf8')),server=createServer(config);
+ const config=file==='--standby'?null:JSON.parse(fs.readFileSync(file,'utf8')),server=createServer(config,{health:()=>({ready:false,status:config?'snapshotOnly':'awaitingDeployment'})});
  server.on('error',()=>{console.error('Status API failed to listen');process.exitCode=1;});
  server.listen(port,'127.0.0.1',()=>console.log('Status API listening on 127.0.0.1:'+port));
  for(const signal of ['SIGINT','SIGTERM'])process.on(signal,()=>server.close());

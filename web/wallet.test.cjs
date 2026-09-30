@@ -91,3 +91,12 @@ test('ambiguous wallet identity is not silently restored',async t=>{
  await page.addInitScript(()=>{addEventListener('eip6963:requestProvider',()=>dispatchEvent(new CustomEvent('eip6963:announceProvider',{detail:{info:{uuid:'other',name:'Alpha',rdns:'org.example.alpha'},provider:{request:async()=>{throw Error('Must not be selected');}}}})));});
  await page.reload();await page.waitForTimeout(350);assert.equal(await page.evaluate(()=>calls.length),0);assert.equal(await page.locator('#disconnect').isVisible(),false);
 });
+
+ test('silent restore never substitutes another permitted address',async t=>{
+ const {page,requests}=await setup(t);await choose(page);await count(page,'1');
+ await page.addInitScript(()=>{ws.Alpha.list=['0x'+'2'.repeat(40)];});requests.length=0;await page.reload();
+ await page.waitForFunction(()=>calls.some(c=>c.method==='eth_accounts'));
+ await page.waitForFunction(()=>sessionStorage.getItem('qianqi.wallet.v1')===null);
+ assert.deepEqual(requests,[]);assert.equal(await page.locator('#disconnect').isVisible(),false);
+ await choose(page);await count(page,'2');
+ });

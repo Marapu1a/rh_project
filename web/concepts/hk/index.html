@@ -11,10 +11,10 @@
     <link rel="icon" href="/assets/logo-cn.png">
     <link rel="stylesheet" href="/concepts/hk/style.css">
     <script src="/app.js" defer></script>
+    <script src="/overview.js" defer></script>
 </head>
 
 <body>
-    <div class="edition-bar"><span>DESIGN STUDY 01 / HONG KONG</span><a href="/">Original design</a></div>
     <header>
         <nav class="wrap" aria-label="Main navigation"><a class="brand" href="#">QIANQI<span
                     lang="zh-Hant">千祺</span></a>
@@ -54,8 +54,8 @@
                     <div class="draw-card-title">
                         <h2>Short</h2><span>01 / SHORT DRAW</span>
                     </div>
-                    <div class="bank"><strong>—</strong><span>USDG</span></div>
-                    <p>At least 6 hours between draws</p>
+                    <div class="bank"><strong id="short-bank">—</strong><span>USDG</span></div>
+                    <p id="short-draw-state">Waiting for live data</p><p id="short-time" class="small">At least 6 hours between draws</p>
                     <div class="draw-card-meta"><span>Starts with a 100 USDG pool</span><span>Up to 10 prizes</span>
                     </div>
                 </article>
@@ -63,13 +63,18 @@
                     <div class="draw-card-title">
                         <h2>Monthly</h2><span>02 / JACKPOT</span>
                     </div>
-                    <div class="bank"><strong>—</strong><span>USDG</span></div>
-                    <p>At least 30 days between draws</p>
+                    <div class="bank"><strong id="monthly-bank">—</strong><span>USDG</span></div>
+                    <p id="monthly-draw-state">Waiting for live data</p><p id="monthly-time" class="small">At least 30 days between draws</p>
                     <div class="draw-card-meta"><span>75%: one winner</span><span>25% rollover</span></div>
                 </article>
             </div>
         </section>
         <p class="draw-note wrap"><span class="status-dot"></span>You’re getting a first look. We haven’t launched yet — live prize pools, checked buy links and claim links are still on the way.</p>
+        <section class="wrap live-summary" aria-label="Draw data">
+            <p id="overview-status" role="status">Prize data is not connected yet.</p>
+            <p id="reserve-summary"></p><p id="overview-provenance" class="small"></p>
+            <details><summary>Past draws</summary><div id="draw-history">No confirmed results loaded.</div><button id="history-next" class="text-button" hidden>Older draws</button></details>
+        </section>
         <section class="money wrap" id="money" aria-labelledby="money-title">
             <div class="section-heading">
                 <h2 id="money-title">Follow every cut.</h2><span>NO MYSTERY MATH</span>
@@ -117,11 +122,11 @@
                 <div class="section-heading">
                     <h2>Your tickets.</h2><span class="dot"></span>
                 </div>
-                <div class="ticket-counts">
+                <p class="small">AVAILABLE FOR FUTURE DRAWS</p><div class="ticket-counts">
                     <div><span>SHORT</span><strong id="short-count">—</strong></div>
                     <div><span>MONTHLY</span><strong id="monthly-count">—</strong></div>
                 </div>
-                <p id="carry">Connect and check your tickets.</p><button class="button dark connect"><span class="connect-label">CONNECT WALLET</span></button><button class="text-button" id="disconnect" hidden>Disconnect this
+                <div id="locked-tickets" aria-live="polite"></div><p id="carry">Connect and check your tickets.</p><button class="button dark connect"><span class="connect-label">CONNECT WALLET</span></button><button class="text-button" id="disconnect" hidden>Disconnect this
                     site</button>
                 <p class="small">Eligible buys get tickets. Holding alone doesn’t.</p>
             </aside>
@@ -226,7 +231,7 @@
         <div class="wrap footer-top"><a class="brand" href="#"><strong>QIANQI</strong> COIN</a>
             <p>A little luck. No promised wins or profits.</p><a href="#rules">Rules</a>
         </div>
-        <div class="footer-bottom wrap"><span>© QIANQI · 千祺</span><a href="/">View original design</a></div>
+        <div class="footer-bottom wrap"><span>© QIANQI · 千祺</span><a href="#rules">Know the rules</a></div>
     </footer>
     <dialog id="dialog"><button class="dialog-close" aria-label="Close dialog">×</button><img id="dialog-mouse"
             src="/assets/mouse-error.png" alt="" hidden>

@@ -22,7 +22,7 @@
 | Казна и кампании | [Infinity collector](INFINITY_COLLECTOR.md), [worker](INFINITY_WORKER.md), [Vault](PROMO_VAULT_DESIGN.md), [FeeRouter](FEE_ROUTER_ROLLOVER_REPORT.md), [dual architecture](DUAL_CONTROLLER_ARCHITECTURE.md) |
 | BUY policy admission | [Контракт, публикация и применение правил](BUY_POLICY_ADMISSION.md) |
 | Сайт QIANQI | [Локальный запуск, кошелёк и границы](WEBSITE.md) |
-| Пользовательский API | [Покупки, билеты, свежесть](USER_STATUS_API.md) |
+| Пользовательский API | [Покупки, билеты, свежесть](USER_STATUS_API.md), [резервы/розыгрыши и сервер](PUBLIC_STATUS_API.md) |
 | Постоянный сервис / восстановление | [Запуск, health, locks, systemd](INDEXER_SERVICE.md) |
 | Постоянное накопление | [Indexer once/watch и ограничения](PERSISTENT_INDEXER.md) |
 | Билеты и проверяемость | [Infinity automatic BUY](INFINITY_BUY.md), [Registry](PARTICIPANT_REGISTRY.md), [BUY](DIRECT_BUY_REPLAY.md), [lifecycle](ATTEMPT_LIFECYCLE.md), [trust](INDEXER_TRUST_MODEL.md) |
@@ -36,6 +36,7 @@
 | RPC / historical replay | [Проверка RPC](PUBLIC_RPC_QUALIFICATION.md) |
 | Операционный профиль | [V2, роли, notice, gas, timing/RPC evidence](OPERATIONAL_LAUNCH_PROFILE.md) |
 | Допуск deployment / timing | [Публичные controllers и launch plan](PUBLIC_CONTROLLERS.md), [профиль и проверки](DEPLOYMENT_ADMISSION.md) |
+| Подготовка реального запуска | [Источник PAIR, кошельки/RPC и недостающие параметры](LAUNCH_PREPARATION.md) |
 | Cutoff / финальность | [История подлинных cutoff и worker](CUTOFF_HISTORY.md) |
 | RNG / сеть | [Delivery worker](DRAND_DELIVERY_WORKER.md), [Drand adapter и операционная граница](DRAND_ADAPTER.md), [Drand verifier](DRAND_FEASIBILITY.md), [нерешённый binding](DRAND_BINDING_MODEL.md), [L2 blocks](ROBINHOOD_BLOCK_SEMANTICS.md) |
 | Ранние компоненты Short | [Commitment](SHORT_DRAW_COMMITMENT.md), [outcome](SHORT_OUTCOME_VERIFICATION.md) — сохранённые API/тесты, не основной полный pipeline |

@@ -1,0 +1,68 @@
+{
+  "schema": "qianqi-launch-draft-v1",
+  "status": "draft-not-signable",
+  "block": {
+    "number": "0x48f26b6",
+    "hash": "0x12553688034960b4e9f463efcb5107c217e904528f3c91b310327f3430d98ab1",
+    "timestamp": "0x6abcf698"
+  },
+  "predicted": {
+    "token": "0x0F4f8e6FFA9d4066d45ad0d570A4C2267e04f2fD",
+    "lock": "0x2f27Aa6A58862738AdF7498AF860D9EF4390112E",
+    "collector": "0xF55755a2433cFdDdcc3949824Fae6C951B138f20",
+    "factory": "0xEa89a751169717F0677Da93ba1575c7EAeCb4132"
+  },
+  "metadataPublished": false,
+  "assumptions": [
+    "Draft metadata URI/content",
+    "Standard token without vanity suffix",
+    "Protection disabled as in current PAIR frontend; not final owner choice",
+    "Collector and launch simulated independently, not a sequential deployment proof"
+  ],
+  "results": {
+    "collector": {
+      "callPassed": true,
+      "gasUnits": "2407408",
+      "sampledGasCostWei": "53449272416000"
+    },
+    "launch": {
+      "callPassed": true,
+      "gasUnits": "2832762",
+      "sampledGasCostWei": "62892981924000"
+    }
+  },
+  "launchFeeWei": "500000000000000",
+  "totalProjectCostWei": null,
+  "remaining": [
+    "Sequential rehearsal",
+    "Metadata publication and identity freeze",
+    "Other contract roles and immutable settings",
+    "Promo deployments/bind/admission",
+    "RPC and executor custody"
+  ],
+  "authorizationToSend": false,
+  "sequentialLocalFork": {
+    "schema": "qianqi-sequential-draft-v1",
+    "publicSends": false,
+    "transactions": [
+      {
+        "name": "collector",
+        "hash": "0x02b07bdcafa3095bbc9a4b4e4290ece27220359e03c944fc0bf0569250ad6ae6",
+        "gasUsed": "0x246d5e"
+      },
+      {
+        "name": "launch",
+        "hash": "0x18961153777873b564cc36ebdc9b5e181ce40fe53316974b60e01f0e0d0c6b1c",
+        "gasUsed": "0x28f2d2"
+      }
+    ],
+    "limitations": [
+      "Local chain31337 with owner impersonation only on fork",
+      "Draft metadata, no Promo deployment or buy proof"
+    ],
+    "recipient": "0xF55755a2433cFdDdcc3949824Fae6C951B138f20",
+    "source": "0xf6d0Ee94C120867Fc7A5B5c6FF9D29278E693182",
+    "status": "passed"
+  },
+  "note": "Historical draft evidence, no public deployment or complete Promo proof. Local transaction hashes only."
+}

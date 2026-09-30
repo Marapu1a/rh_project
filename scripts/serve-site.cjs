@@ -4,6 +4,8 @@ const root=path.resolve(__dirname,'../web');
 const files=new Map([['/','index.html'],['/app.js','app.js'],['/style.css','style.css'],...['mouse-thinking.png','mouse-happy.png','mouse-error.png','logo-cn.png'].map(n=>['/assets/'+n,'assets/'+n])]);
 files.set('/concepts/hk/','concepts/hk/index.html');
 files.set('/concepts/hk/style.css','concepts/hk/style.css');
+files.set('/404.css','404.css');
+files.set('/overview.js','overview.js');
 function createSite({apiOrigin='http://127.0.0.1:8787'}={}){
  const origin=new URL(apiOrigin);if(!['http:','https:'].includes(origin.protocol)||origin.username||origin.password||origin.pathname!=='/'||origin.search||origin.hash)throw Error('Invalid API origin');
  return http.createServer(async(req,res)=>{
@@ -11,11 +13,11 @@ function createSite({apiOrigin='http://127.0.0.1:8787'}={}){
   if(req.method!=='GET'){res.writeHead(405,{Allow:'GET'});res.end();return;}
   try{
    const url=new URL(req.url,'http://localhost');
-   if(/^\/v1\/wallets\/0x[\da-fA-F]{40}$/.test(url.pathname)){
+   if(url.pathname==='/v1/overview'||/^\/v1\/wallets\/0x[\da-fA-F]{40}$/.test(url.pathname)){
     res.setHeader('Cache-Control','no-store');res.setHeader('Content-Type','application/json');
     try{const upstream=await fetch(new URL(url.pathname+url.search,origin),{signal:AbortSignal.timeout(8000),redirect:'error'});const body=await upstream.text();res.writeHead(upstream.status);res.end(body);}catch{res.writeHead(503);res.end(JSON.stringify({error:'unavailable'}));}return;
    }
-   const file=files.get(url.pathname);if(!file){res.writeHead(404);res.end('Not found');return;}
+   const file=files.get(url.pathname);if(!file){res.writeHead(404,{'Content-Type':'text/html; charset=utf-8'});res.end(await fs.readFile(path.join(root,'404.html')));return;}
    const body=await fs.readFile(path.join(root,file));res.setHeader('Content-Type',file.endsWith('.css')?'text/css':file.endsWith('.js')?'text/javascript':file.endsWith('.png')?'image/png':'text/html; charset=utf-8');res.setHeader('Cache-Control','no-cache');res.end(body);
   }catch{res.writeHead(503);res.end('Unavailable');}
  });

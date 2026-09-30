@@ -68,9 +68,10 @@ async function indexOnce({config,rpc,statePath,batchSize=100,reorgLimit=128,full
    const ledger=end>anchor?replay(input.manifest,input.blocks):null;
    const replayMs=performance.now()-replayStarted,rewardStarted=performance.now();
    const rewards=config.lifecycle&&end>anchor?await require('./reward-observation.cjs').observeRewards({blocks:input.blocks,vault:config.lifecycle.vault,rpc,blockTag:tag(end),previous:removed?null:prior.rewards,fullAudit:fullRewardAudit}):null;
+   const publicObservation=config.publicStatus===true&&end>anchor?await require('./public-observation.cjs').observePublic({config,manifest:input.manifest,rpc,blockTag:tag(end),blockHash:input.blocks.at(-1).hash}):null;
    check((await rpc('eth_getBlockByNumber',[finalized.number,false])).hash===finalized.hash,'Finalized branch changed during indexing');
    // Publish evidence and derived ledger together; failure leaves the last good snapshot intact.
-   state.index={head:end,observedAt:new Date().toISOString(),blocks:input.blocks,cache,manifest:input.manifest,ledger,ledgerHash:ledger?hash(ledger):null,rewards,policyStatus:resolved.policyStatus};
+   state.index={head:end,observedAt:new Date().toISOString(),blocks:input.blocks,cache,manifest:input.manifest,ledger,ledgerHash:ledger?hash(ledger):null,rewards,publicObservation,policyStatus:resolved.policyStatus};
    state.status={state:end===target?'caughtUp':'catchingUp',processedBlock:end,targetBlock:target,removedBlocks:removed,cacheHits,updatedAt:new Date().toISOString()};
    state.status.metrics={lagBlocks:target-end,historyBlocks:input.blocks.length,scanMs,replayMs,rewardMs:performance.now()-rewardStarted,beforeSaveMs:performance.now()-started};
    const saveStarted=performance.now();save(state);

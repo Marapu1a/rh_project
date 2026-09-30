@@ -84,7 +84,12 @@
       "test/persistent-buy-indexer.test.cjs",
       "test/reward-observation.test.cjs",
       "test/user-status-cache.test.cjs",
-      "test/indexer-service.test.cjs"
+      "test/indexer-service.test.cjs",
+      "test/public-status.test.cjs",
+      "test/public-observation.test.cjs",
+      "test/launch-source-preflight.test.cjs",
+      "test/pair-launch-preview.test.cjs",
+      "test/prepare-pair-launch.test.cjs"
     ]
   },
   "accounting": {
@@ -159,7 +164,9 @@
       "test/persistent-buy-indexer.test.cjs",
       "test/reward-observation.test.cjs",
       "test/user-status-cache.test.cjs",
-      "test/indexer-service.test.cjs"
+      "test/indexer-service.test.cjs",
+      "test/public-status.test.cjs",
+      "test/public-observation.test.cjs"
     ]
   },
   "coordinator": {
@@ -275,7 +282,10 @@
       "test/public-launch-checks.test.cjs",
       "test/local-controllers.test.cjs",
       "test/cutoff-history.test.cjs",
-      "test/deployment-admission.test.cjs"
+      "test/deployment-admission.test.cjs",
+      "test/launch-source-preflight.test.cjs",
+      "test/pair-launch-preview.test.cjs",
+      "test/prepare-pair-launch.test.cjs"
     ]
   },
   "public-rpc": {

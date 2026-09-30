@@ -1,5 +1,23 @@
 # План до первого публичного запуска
 
+30.09: по решению владельца следующий этап — финальный review всей цепочки и воспроизводимый сквозной прогон до mainnet. Текущий пакет фиксируется в git; [обращение GPT](GPT_REVIEW_REQUEST.md) обновлено, [проверки/пробелы](FINAL_TESTING_HANDOFF.md) перечислены. Нового full baseline нет; GPT делает static review/матрицу, Codex выполняет финальные проверки. Public sends закрыты.
+
+30.09: prepare-pair-launch создает draft calldata collector/PAIR и выполняет live read-only simulation: обе eth_call прошли, gas estimates получены (~0.00061634ETH с launch fee только за эти2операции). USDG109.622644 подтверждены. Metadata/настройки draft, public sends нет. Последовательный local fork collector→PAIR прошел; получатель комиссий проверен. Остальные Promo contracts не покрыты оценкой. [Детали](LAUNCH_PREPARATION.md).
+
+30.09: владелец назначил creator также governor/project, executor отдельный. Первая покупка101USDG запланирована прямым поддержанным маршрутом после deployment/indexer: встроенный Developer Buy не покрыт текущим decoder. USDG balance0, пополнение/обмен не выполнялись. Адресные plan5/5 и Infinity BUY4/4. [Детали](LAUNCH_PREPARATION.md).
+
+30.09: добавлен read-only PAIR launch preview (readiness/opening/source, без calldata). Live12 checks passed; пользовательский creator записан в launch plan, баланс0.00311832ETH прочитан, total deployment cost еще неизвестен. Следом metadata/роли/immutable settings и проверка token/collector prediction перед simulation. [Детали](LAUNCH_PREPARATION.md).
+
+30.09: прочитаны live PAIR docs и код формы Infinity. Creator Fees UI кодирует подключенный кошелек получателем; наш collector подключается через modeData того же PAIR launchInfinity (существующий fork путь). Следующий шаг — подготовить обозримую транзакцию запуска с collector и актуальными opening данными, без смены fee mode. [Подробности](LAUNCH_PREPARATION.md). Sends не было.
+
+30.09: шаг подготовки deployment: актуальный PAIR source preflight готов, план больше не скрывает launch opening/metadata/protection inputs. Архивный RPC и реальные роли не выбраны; нужен их выбор, затем точные args/estimate/локальная репетиция. [Конкретные результаты и следующие действия](LAUNCH_PREPARATION.md).
+
+30.09: overview/reserves/history/frozen UI реализован и опубликован; API service установлен в standby до настоящего deployment. Observer проверен на локальных EVM contracts, API/browser на synthetic fixtures. DNS/HTTPS закрыты. Следом проверка недостающих deployment/RPC/asset/route pins и подготовка реального запуска, затем activation индексатора. Buy/Claim/executor не объявлены готовыми. [Пакет](PUBLIC_STATUS_API.md).
+
+30.09: инфраструктурный шаг публикации фронта выполнен: HK в корне qianqi.site, HTTPS,404, адресные browser/live проверки. Исправлен silent restore чужого разрешённого адреса. Следующий пакет — подключение read-only API/indexer, draw/reserve/status и frozen/open UI; публичные финансовые sends не открывались.
+
+30.09: новый Timeweb Amsterdam подготовлен со стороны доступа: SSH ключ работает, DNS qianqi.site/www указывает на201.51.22.244. Следующий инфраструктурный шаг — развернуть согласованный HK-фронт и HTTPS; API/indexer/executor на новый сервер ещё не установлены. Это не публичный запуск финансовой логики.
+
 30.09: дизайн, тексты и browser-wallet UX согласованы, этап сайта закрыт в этих границах. Пакет передаётся на static review через [постоянное обращение](GPT_REVIEW_REQUEST.md). Следующий ограниченный шаг после ревью — наблюдаемые draw/reserve данные, состояния и история результатов в текущем UI; полноценный live launch не объявлен.
 
 
