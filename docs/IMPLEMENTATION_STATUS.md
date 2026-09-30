@@ -1,5 +1,11 @@
 # Карта реализации
 
+30.09: `web/app.js` — EIP-6963 discovery, wallet/account menu, session-scoped restoration, EIP-1193 event handling, permission/network requests только по клику. `web/wallet.test.cjs` (`npm run test:site:wallet`) — 12 адресных сценариев, synthetic providers. Shared wallet-dialog CSS в обеих темах. [Контракт поведения](WEBSITE.md).
+
+
+29.09: `web/concepts/hk/index.html` и самостоятельный `style.css` — альтернативная композиция сайта. `serve-site.cjs` разрешает два новых static routes; `SITE_TEST_PATH=/concepts/hk/` выбирает вариант в существующих browser tests. Preview Nginx направляет только `/concepts/hk/` на отдельный release; исходный root сохранён. [Детали](WEBSITE.md).
+
+
 29.09: `web/` + `scripts/serve-site.cjs` — одностраничный pre-launch сайт, read-only wallet API proxy и browser wallet connect. `web/site.test.cjs` — отдельные browser tests. [Состояние/границы](WEBSITE.md).
 
 29.09: `run-indexer-service.cjs` + `indexer-service-child.cjs` — read-only supervisor, health, isolated passes/retry. `ops/rh-promo-indexer.service` — server template; `test/indexer-service.test.cjs` — process recovery. [Runbook](INDEXER_SERVICE.md).

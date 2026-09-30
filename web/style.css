@@ -47,3 +47,6 @@ body{line-height:1.5}
 @media(max-width:1120px) and (min-width:761px){.draw-stage{grid-template-columns:23% 1.35fr 1fr}.mascot{left:-25px;width:29vw;height:33vw}.mascot img{width:29vw;bottom:-7vw}}
 @media(max-width:760px){.draw-stage{grid-template-columns:1fr 1fr;margin-top:120px}.short{grid-column:1}.jackpot{grid-column:2}.mascot{left:-14px;top:-102px;bottom:auto;width:150px;height:124px}.mascot img{width:150px;left:0;bottom:-50px}.short .card-top{justify-content:center}}
 @media(max-width:440px){.draw-stage{grid-template-columns:1fr}.short,.jackpot{grid-column:1}}
+
+/* Account addresses must remain readable on narrow wallet dialogs. */
+#wallet-options .button{display:block;text-align:left;overflow-wrap:anywhere;white-space:normal}#wallet-options .button[aria-pressed="true"]{border-width:2px;font-weight:700}

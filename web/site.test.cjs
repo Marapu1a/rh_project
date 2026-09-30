@@ -2,11 +2,11 @@ const {test}=require('node:test'),assert=require('node:assert/strict');
 const {chromium}=require('@playwright/test');
 const {createSite}=require('../scripts/serve-site.cjs');
 const wallet='0x'+'1'.repeat(40);
-async function open(t){const server=createSite();await new Promise(r=>server.listen(0,'127.0.0.1',r));const browser=await chromium.launch({headless:true});t.after(async()=>{await browser.close();server.closeAllConnections();await new Promise(r=>server.close(r));});const page=await browser.newPage({viewport:{width:1440,height:1080},reducedMotion:'reduce'});return {page,url:`http://127.0.0.1:${server.address().port}`};}
+async function open(t){const server=createSite();await new Promise(r=>server.listen(0,'127.0.0.1',r));const browser=await chromium.launch({headless:true});t.after(async()=>{await browser.close();server.closeAllConnections();await new Promise(r=>server.close(r));});const page=await browser.newPage({viewport:{width:1440,height:1080},reducedMotion:'reduce'});return {page,url:`http://127.0.0.1:${server.address().port}${process.env.SITE_TEST_PATH || "/"}`};}
 async function inject(page,{chain='0x1237',reject=false}={}){await page.addInitScript(({wallet,chain,reject})=>{window.walletEvents={};window.ethereum={request:async({method})=>{if(reject)throw {code:4001};if(method==='eth_requestAccounts')return [wallet];if(method==='eth_chainId')return chain;throw Error('Unexpected wallet operation');},on:(name,fn)=>{window.walletEvents[name]=fn;},removeListener:name=>{delete window.walletEvents[name];}};},{wallet,chain,reject});}
 test('desktop/mobile layout, rules, honest pre-launch and no-wallet dialog',async t=>{
  const {page,url}=await open(t);await page.goto(url);assert.match(await page.title(),/QIANQI/);
- await page.locator('#buy').click();assert.match(await page.locator('#dialog-copy').textContent(),/No verified buying link/);await page.keyboard.press('Escape');
+ await page.locator('#buy').click();assert.match(await page.locator('#dialog-copy').textContent(),/checked buy link/);await page.keyboard.press('Escape');
  await page.locator('header .connect').click();assert.match(await page.locator('#dialog-title').textContent(),/Wallet required/);await page.keyboard.press('Escape');
  await page.locator('summary').first().click();assert.equal(await page.locator('details').first().getAttribute('open'),'');
  for(const width of [1440,768,390,320]){await page.setViewportSize({width,height:900});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,`overflow at ${width}`);}

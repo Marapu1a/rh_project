@@ -2,6 +2,8 @@
 const http=require('node:http'),fs=require('node:fs/promises'),path=require('node:path');
 const root=path.resolve(__dirname,'../web');
 const files=new Map([['/','index.html'],['/app.js','app.js'],['/style.css','style.css'],...['mouse-thinking.png','mouse-happy.png','mouse-error.png','logo-cn.png'].map(n=>['/assets/'+n,'assets/'+n])]);
+files.set('/concepts/hk/','concepts/hk/index.html');
+files.set('/concepts/hk/style.css','concepts/hk/style.css');
 function createSite({apiOrigin='http://127.0.0.1:8787'}={}){
  const origin=new URL(apiOrigin);if(!['http:','https:'].includes(origin.protocol)||origin.username||origin.password||origin.pathname!=='/'||origin.search||origin.hash)throw Error('Invalid API origin');
  return http.createServer(async(req,res)=>{
