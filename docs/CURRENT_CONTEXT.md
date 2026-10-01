@@ -1,5 +1,23 @@
 # Текущий контекст
 
+01.10: подготовлен пакет внешнего статического review Pons MVP относительно67cc1aa. До следующего технического шага разбираем findings GPT. Обновлены [обращение](GPT_REVIEW_REQUEST.md) и [компактное evidence](evidence/PONS_AUTOMATION_2026-10-01.json); прежнее исследование архивировано. Новый ответ пока не получен. В этом handoff код не менялся, продуктовые тесты не повторялись.
+
+01.10: локальный Pons coordinator завершён: fork77338337 PONS_AUTOMATION_PASSED, 13 проходов/22 уникальные транзакции, live drand, stop/resume, оба draw и claims. Выплачено114.657578USDG; reserved/claimable=0; повторный проход без отправок,86 consumed+1 OPEN каждого вида.25/25 scheduler/locks и7/7 новых адресных проверок PASS (не full suite). Далее — сверка фактического BUY routing UI Pons; публичный admission/service ещё закрыты. [Evidence и границы](PONS_AUTOMATION.md).
+
+01.10: Pons полный локальный Promo cycle PASS на fork77287946: curve/v4 → funding → Short/Monthly freeze → live drand → settlement/claims.86 consumed и1 поздняя OPEN попытка в каждом виде. Short7.319631USDG, Monthly100USDG; conserved accounting, journal resume и повторные вызовы проверены.16/16 соседних tests PASS. Только fork: synthetic USDG, ArbSys shim, constructor clock backdating, lead60s; public sends закрыты. Далее — постоянный Pons coordinator. [Evidence/границы](PONS_PROMO_CYCLE.md).
+
+01.10: Pons curve+v4 BUY реализован локально. Настоящие Universal Router/Permit2: BUY101 и60+40, net TOKEN после hook fees, общий entry/lifecycle.55/55 адресных tests и fork77277186 (33 шага) PASS. Следующий шаг — общий локальный Promo cycle с draws/payout/recovery. Public admission/sender и фактический UI Pons ещё не проверены. [Evidence и границы](PONS_V4_BUY.md).
+
+01.10: curve BUY real-runtime fork77265497 PASS: BUY101 и частичный graduation/refund → entry → открытые Short/Monthly; вместе с funding27 шагов. Только локальный fork, без draws/public sends. [Evidence и границы](PONS_BUY.md).
+
+01.10: Pons direct curve BUY подключён к entry и открытым Short/Monthly. Порог100USDG сохранён; net debit/refund, replay/dedup и смена ветки проверены адресно49/49. Следующий пакет — v4 BUY после graduation. Public admission/sender пока закрыты. [Код и проверки](PONS_BUY.md).
+
+01.10: Pons curve/hook binding+sweep и независимый ручной runner реализованы локально.7/7 адресных tests; real-runtime fork77216884 — COLLECTOR_MANUAL_FORK_PASSED,27шагов, PromoVault289.338015USDG. Ожидание TOKEN conversion не блокирует старый escrow claim/pay. Public sends закрыты; keeper impersonation только локально. Следом Pons BUY adapters/entry integration; source admission и публичный sender ещё открыты. [Контур/команды/ограничения](PONS_COLLECTOR.md).
+
+01.10: первый локальный Pons escrow collector выполнен: pull→credits90/5/5→PromoVault GENERAL,4/4 адресных tests PASS. Это LocalPonsCollector/fixture escrow, без curve/hook sweep, real fork или deployment admission. Следом строго привязанные sweep methods и ручной исполнитель. Добавлена локальная /transparency/ с датированными ограничениями/проверяемыми ссылками, браузер390/1440 PASS. Не опубликовано. [Контур и границы](PONS_COLLECTOR.md).
+
+01.10: прочитан ответ GPT67cc1aa к31be52d. Новых deployment sources, ABI оператора или live ACL proof не получено; RPC/fork/compile GPT не запускал. Подтверждены известные границы и право collector на curve sweep. Не повторять неопределённый поиск как обязательный следующий этап: при принятом гибком funding ближайший пакет — отдельный PonsCollector с независимыми quote-only sweep и escrow claim, затем ручной исполнитель и адресные тесты. Operator остаётся unknown/Pons-dependent; public sends закрыты.
+
 01.10: владелец допускает ручной/полуручной сбор доступных комиссий с последующей автоматизацией; pending не входит в призовой бюджет. Следующий шаг — внешнее исследование GPT по Pons sources/operator, до реализации collector. [Обращение](GPT_REVIEW_REQUEST.md) обновлено; ответ ещё не получен.
 
 30.09: перенос придержан по решению владельца до внешней проверки. Hook runtime воспроизведён; реальные TOKEN→USDG conversion и escrow credits подтверждены. Factory source не собирается, source escrow/operator не найден; независимый вызов operator-контракта не доказан. [Проверка и вопросы Pons](PONS_VERIFICATION.md).

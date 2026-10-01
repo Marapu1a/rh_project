@@ -1,5 +1,19 @@
 # Карта реализации
 
+01.10: добавлены scripts/pons-automation.cjs, run-pons-automation.cjs и automation rehearsal. Используют существующие scheduler/drand, durable intent/receipt journal, independent funding, payout queue, газовые лимиты и --drain. Только идентифицированный локальный fork; fork77338337 PASS,25/25 соседних+7/7 новых адресных tests. [Модуль](PONS_AUTOMATION.md).
+
+01.10: [pons-promo-cycle.cjs](../scripts/pons-promo-cycle.cjs), runner --cycle: реальные Robinhood controllers/DrandRandomAdapter/DualControllerPromoVault на локальном fork, existing Short/Monthly executors, persisted drand journal. Использует launch-plan math; только constructor clocks компилируются с backdating в памяти. Fork77287946 PASS,16/16 соседних tests. Production Solidity/автоматика не переключены. [Evidence](PONS_PROMO_CYCLE.md).
+
+01.10: [pons-v4-buy.cjs](../scripts/pons-v4-buy.cjs) добавляет объединённый curve+UR профиль; проверяет hook fee/output и USDG settlement. Подключён к replay/RPC reader; [тесты](../test/pons-v4-buy.test.cjs) и группа pons-v4-buy:55/55 PASS. Runner --v4 использует настоящие UR/Permit2 на local fork,33 шага PASS. [Границы](PONS_V4_BUY.md).
+
+01.10: curve BUY real-runtime fork77265497 PASS: BUY101 и частичный graduation/refund → entry → открытые Short/Monthly; вместе с funding27 шагов. Только локальный fork, без draws/public sends. [Evidence и границы](PONS_BUY.md).
+
+01.10: [pons-curve-buy.cjs](../scripts/pons-curve-buy.cjs) — прямой curve BUY; подключён к direct-buy/replay-direct-buy и существующему attempt lifecycle. RPC reader сверяет runtime и связи venue на каждом блоке. [Тесты](../test/pons-curve-buy.test.cjs), профиль pons-buy:49/49 PASS. [Границы](PONS_BUY.md).
+
+01.10: LocalPonsCollector теперь использует [IPonsVenue](../contracts/IPonsVenue.sol), однократный venue binding и отдельные curve/pool sweep. [Ручной runner](../scripts/pons-collector-manual.cjs), [fork](../scripts/pons-collector-fork.cjs);7/7 tests и локальный real-runtime funding proof PASS. Это не full suite, BUY/draw proof или production admission. [Подробности](PONS_COLLECTOR.md).
+
+01.10: [LocalPonsCollector](../contracts/LocalPonsCollector.sol), [тесты](../test/pons-collector.test.cjs), профиль `pons-collector`: escrow fixture→реальный PromoVault,4/4 PASS. Sweep/ручной runner/real-source admission ещё отсутствуют; [границы](PONS_COLLECTOR.md). Страница /transparency/ — локальный датированный статус, не мониторинг сервиса.
+
 Текущая адаптация: [Pons migration](PONS_MIGRATION.md); PAIR сохранён как резерв. Отдельные draft config/ABI готовы, production collector и BUY adapters ещё не реализованы.
 
 30.09: [pons-fork-rehearsal.cjs](../scripts/pons-fork-rehearsal.cjs) — отдельный research runner:

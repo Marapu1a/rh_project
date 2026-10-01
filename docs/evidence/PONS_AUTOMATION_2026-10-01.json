@@ -1,0 +1,855 @@
+{
+  "schema": "pons-review-evidence-v1",
+  "date": "2026-10-01",
+  "baseline": "67cc1aa",
+  "scope": "Derived local evidence supplied by Codex; not an independent run or production admission. Source hashes captured at handoff, not at historical test start.",
+  "originalReport": {
+    "path": ".local/logs/pons-automation-20261001-f.json",
+    "sha256": "7996dd8171d9e7e07058eb13e6824f3109263d30a4f35bf7d5f3699a704e95c1"
+  },
+  "status": "PONS_AUTOMATION_PASSED",
+  "publicSends": false,
+  "anchor": {
+    "number": 77338337,
+    "hash": "0x3b11b2ce1e5df74857922b8c1a3f44f8f8b5aad815cfebcd2168b98bcfa40033"
+  },
+  "assumptions": [
+    "Local impersonation and synthetic USDG funding only",
+    "ABI from current Pons docs/repository, runtime source equivalence not yet proved",
+    "RPC account proofs pin empty base storage for local owner CREATE addresses at the fixed fork block; EDR writes remain unchanged",
+    "Direct curve BUY replay plus pinned UR route when --v4; open Short/Monthly accounting, no draw settlement or public admission",
+    "v4 uses pinned live Universal Router + Permit2; minOut=1 is test-only, no production trade protection claim",
+    "Pons sweep operator impersonated ONLY locally to prove conditional conversion; we do not control it on mainnet",
+    "Constructor clocks backdated only in in-memory compiled ShortRulesEpochs/MonthlySettlement; repository contracts unchanged",
+    "Local ArbSys shim, not Nitro finality proof",
+    "Current launch-plan rules/weights/minimum, no changed odds or selected seeds",
+    "Live drand BLS proof; 60-second lead is test-only",
+    "Synthetic owner USDG may donate missing Monthly readiness reserves; never injected into prize vault storage",
+    "Automation fork mines a block every second while workers read; RNG freshness gates unchanged"
+  ],
+  "codeHashes": {
+    "0x7eD598BcEf8bd9Edd8C97A195C6d13f40801EC7e": "0x89a27da6f703e0a7cdd4f233e7cb57604ff75b164530962d3ff7cf8483a67d84",
+    "0xE5e702641Ea86F4ae6cC3cDaeD2B886f976Be044": "0xc21b1e6c1b45403e81a581f22ed6d9c747997af1cfdac1b1dc9f4b1d346a10db",
+    "0xd3AFEB2a57f70eF218Aa82451c51B2fb0416Ac9e": "0xf25f75cfbc1637ba068dc34f69098fa4e8a80f8ee8fe7bf7820594e0b3fed2f1",
+    "0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168": "0x864cc9ad53b338b82da1f7cab85ab0b3d5c8861acb422b6fec63cf36234f36a6"
+  },
+  "emptyBaseStorage": [
+    {
+      "address": "0xf55755a2433cfdddcc3949824fae6c951b138f20",
+      "blockNumber": 77338337,
+      "storageHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+      "codeHash": "0x0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "address": "0x9fbaab62db88123fdb61217d244003a201a0cd9b",
+      "blockNumber": 77338337,
+      "storageHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+      "codeHash": "0x0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "address": "0x53c0d6f3e22fa34ce59daabc6327ad10732b14cf",
+      "blockNumber": 77338337,
+      "storageHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+      "codeHash": "0x0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "address": "0xa631f7845af257daee0b9f6ff744334294ce6846",
+      "blockNumber": 77338337,
+      "storageHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+      "codeHash": "0x0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "address": "0x3ee0c608815ec5a621f330fb8899ed31fe682393",
+      "blockNumber": 77338337,
+      "storageHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+      "codeHash": "0x0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "address": "0x2e9e7412e19497b60f25d05b68717067a6b743d4",
+      "blockNumber": 77338337,
+      "storageHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+      "codeHash": "0x0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "address": "0xe1d3976951d1c145854a6ea994d269c9f9515b6f",
+      "blockNumber": 77338337,
+      "storageHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+      "codeHash": "0x0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "address": "0x4c6fcd1645f15e6ecfc02e74a68ac81e3ed02738",
+      "blockNumber": 77338337,
+      "storageHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+      "codeHash": "0x0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "address": "0x5ba7797cdae450e5985208667da4a73c908aa182",
+      "blockNumber": 77338337,
+      "storageHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+      "codeHash": "0x0000000000000000000000000000000000000000000000000000000000000000"
+    }
+  ],
+  "lifecycle": {
+    "schema": "attempt-lifecycle-v4",
+    "source": "0x3EE0c608815Ec5a621F330Fb8899ED31Fe682393",
+    "sourceCodeHash": "0x0b9509b66fb9b1432d99b8027d2456b000403d6fbb56908fd8623115abd9189f",
+    "instanceId": "0xfb3741d54920c85c2431daecd29ed922a6323d242dd900f81fe802eb2f97aed2",
+    "monthlySource": "0x2E9e7412e19497b60f25D05b68717067A6B743D4",
+    "monthlySourceCodeHash": "0x9c053c1a55958df7e68f5fba1a7ea6f13f9435d449b047bd73a052341f9cff92",
+    "monthlyInstanceId": "0xb6f9997302a4fa351b637ae02b9973916ddfd4af0939e529eeff9ae884d5c30c",
+    "vault": "0xE1d3976951d1C145854a6eA994D269c9F9515b6f",
+    "vaultCodeHash": "0x225819a154f17d77c2db3b439ff4b981a6d839c821395a988d606fc3adda7d1e",
+    "shortRules": {
+      "rulesHash": "0xc3e677a4bf6150a309c48a3b3aded3bb04116c495fae0932dfca91dd9c1d018a",
+      "noticeSeconds": "3600",
+      "startedAt": "1790832504",
+      "firstBlock": "77338343"
+    },
+    "monthlyPolicy": {
+      "rulesHash": "0xbb9ada4f36d634fd406cf18e3858a4c5a5ef76707d196511fbb413da4f34d8f7",
+      "interval": "2592000",
+      "startedAt": "1788262105"
+    },
+    "monthlyRules": {
+      "noticeSeconds": "3600",
+      "firstBlock": "77338344"
+    }
+  },
+  "requests": [
+    {
+      "id": "1",
+      "round": "21111138",
+      "context": "0x79faeadbbab482510fed22fb622cbbc63cd71b8ead8c03afd59f8fd8d82cb47c",
+      "consumer": "0x3EE0c608815Ec5a621F330Fb8899ED31Fe682393"
+    },
+    {
+      "id": "2",
+      "round": "21111139",
+      "context": "0xc1b72c6e076e939f81a122fc43ee35e1306685b5583540fc3fc668f1883ad8d0",
+      "consumer": "0x2E9e7412e19497b60f25D05b68717067A6B743D4"
+    }
+  ],
+  "fundingAtFreeze": {
+    "balance": "346425927",
+    "parts": [
+      "0",
+      "0",
+      "100000000",
+      "246425927",
+      "0",
+      "0"
+    ]
+  },
+  "after": {
+    "balance": "231768349",
+    "parts": [
+      "131768349",
+      "100000000",
+      "0",
+      "0",
+      "0",
+      "0"
+    ]
+  },
+  "paid": "114657578",
+  "ledger": [
+    {
+      "wallet": "0x098afa6731239a00ce0aff669aaefd16b7c72114",
+      "SHORT": {
+        "mintedTotal": "87",
+        "open": "1",
+        "frozenByDraw": {},
+        "consumedTotal": "86",
+        "byEpoch": [
+          {
+            "epoch": "1",
+            "minted": "87",
+            "consumed": "86",
+            "frozen": "0",
+            "open": "1",
+            "firstOpenAttempt": "87",
+            "lastOpenAttempt": "87"
+          }
+        ]
+      },
+      "MONTHLY": {
+        "mintedTotal": "87",
+        "open": "1",
+        "frozenByDraw": {},
+        "consumedTotal": "86",
+        "byEpoch": [
+          {
+            "epoch": "1",
+            "minted": "87",
+            "consumed": "86",
+            "frozen": "0",
+            "open": "1",
+            "firstOpenAttempt": "87",
+            "lastOpenAttempt": "87"
+          }
+        ]
+      }
+    }
+  ],
+  "runs": [
+    {
+      "status": "waiting",
+      "reason": "transactionLimit",
+      "steps": [
+        {
+          "action": "pull",
+          "transactionHash": "0x3a2fd93f19c984bb034fc90abf74fe6ab7cf49697ea6077c260be3a43ab00d5b",
+          "nonce": 57,
+          "status": 1,
+          "blockNumber": 77338410,
+          "blockHash": "0xfd4f1d5908fa3ad60e59e6e8eacdd84df4b6bdff07fc9734788b4aeb6b18979a"
+        },
+        {
+          "action": "pay",
+          "transactionHash": "0x3b18f113fdd2e2e493a89e7cc6b7f81dafa99ebde66c13d09e748947e2659fbf",
+          "nonce": 58,
+          "status": 1,
+          "blockNumber": 77338412,
+          "blockHash": "0x17c42fa3d35c62d3402400ac17289b3e7455844237f8d50584f192c636a8433b"
+        }
+      ],
+      "funding": [
+        {
+          "action": "sync",
+          "status": "empty"
+        }
+      ]
+    },
+    {
+      "status": "waiting",
+      "reason": "poll",
+      "steps": [
+        {
+          "action": "pay",
+          "transactionHash": "0xf898226a663452cca2b576d9568c603a4329e349d6d5c64502450865f1e1dd44",
+          "nonce": 59,
+          "status": 1,
+          "blockNumber": 77338440,
+          "blockHash": "0x2b9ebfe693f1b63424ef62b66e5b8c473851316c731dd91a003fbfbde66b6c11"
+        },
+        {
+          "action": "pay",
+          "transactionHash": "0x88bbff95006c66cff193d06a241ca6d7cd30df9f89d8ed48e81be61de1bf2cda",
+          "nonce": 60,
+          "status": 1,
+          "blockNumber": 77338442,
+          "blockHash": "0x18376f4345f2a6652920dda99cf83d456db5c6b114c934f49f1a18dee4b66735"
+        }
+      ],
+      "funding": [
+        {
+          "action": "pull",
+          "status": "empty"
+        },
+        {
+          "action": "sync",
+          "status": "empty"
+        },
+        {
+          "action": "pay-prizes",
+          "status": "empty"
+        },
+        {
+          "action": "sweep",
+          "status": "empty"
+        },
+        {
+          "action": "pull",
+          "status": "empty"
+        },
+        {
+          "action": "pay-prizes",
+          "status": "empty"
+        },
+        {
+          "action": "pay-ops",
+          "status": "empty"
+        },
+        {
+          "action": "pay-team",
+          "status": "empty"
+        }
+      ]
+    },
+    {
+      "status": "waiting",
+      "reason": "poll",
+      "steps": [
+        {
+          "action": "checkpointCutoff",
+          "transactionHash": "0x6ea41804baecfd8aea8f2a2c6f9893612f49ab395b10dabfdc1ee82a569b2f70",
+          "nonce": 61,
+          "status": 1,
+          "blockNumber": 77338487,
+          "blockHash": "0x6d97e2b87d7b56e359914da4a0d8b8ed1da6b937254fa5e4c19c79c73f7d55c7"
+        },
+        {
+          "action": "checkpointCutoff",
+          "transactionHash": "0x24dd0f28b82f1b18abebafe2c6603bdd8694b323571b4b265f54f8b0a1c26f2e",
+          "nonce": 62,
+          "status": 1,
+          "blockNumber": 77338492,
+          "blockHash": "0x44ac4f1ccf79ab0dc7493d702efc785a404821a36fe7aad79a36bfe5eb38c4cf"
+        }
+      ],
+      "funding": [
+        {
+          "action": "pull",
+          "status": "empty"
+        },
+        {
+          "action": "sync",
+          "status": "empty"
+        },
+        {
+          "action": "pay-prizes",
+          "status": "empty"
+        },
+        {
+          "action": "pay-ops",
+          "status": "empty"
+        },
+        {
+          "action": "pay-team",
+          "status": "empty"
+        },
+        {
+          "action": "sweep",
+          "status": "empty"
+        },
+        {
+          "action": "pull",
+          "status": "empty"
+        },
+        {
+          "action": "pay-prizes",
+          "status": "empty"
+        },
+        {
+          "action": "pay-ops",
+          "status": "empty"
+        },
+        {
+          "action": "pay-team",
+          "status": "empty"
+        }
+      ]
+    },
+    {
+      "status": "waiting",
+      "reason": "poll",
+      "steps": [
+        {
+          "action": "begin",
+          "transactionHash": "0x8f9d01b213b05d70b1776c82efc76f6447f0b37d9a5b325332344b58ad04287e",
+          "nonce": 63,
+          "status": 1,
+          "blockNumber": 77338539,
+          "blockHash": "0xe69cbefa61a994d931217ab8e9ff4d8ae8f816e427595c258cb0bacb6fef092d"
+        },
+        {
+          "action": "beginMonth",
+          "transactionHash": "0xbfed209bfef24cb61806e5fe9fd09041cf5b071043293802dad0c5a0e90cfe24",
+          "nonce": 64,
+          "status": 1,
+          "blockNumber": 77338544,
+          "blockHash": "0x23f74e6256e707a4f9801f21212f82580aa9e7ffc794892dd0f684ec9ce30f89"
+        }
+      ],
+      "funding": [
+        {
+          "action": "pull",
+          "status": "empty"
+        },
+        {
+          "action": "sync",
+          "status": "empty"
+        },
+        {
+          "action": "pay-prizes",
+          "status": "empty"
+        },
+        {
+          "action": "pay-ops",
+          "status": "empty"
+        },
+        {
+          "action": "pay-team",
+          "status": "empty"
+        },
+        {
+          "action": "sweep",
+          "status": "empty"
+        },
+        {
+          "action": "pull",
+          "status": "empty"
+        },
+        {
+          "action": "pay-prizes",
+          "status": "empty"
+        },
+        {
+          "action": "pay-ops",
+          "status": "empty"
+        },
+        {
+          "action": "pay-team",
+          "status": "empty"
+        }
+      ]
+    },
+    {
+      "status": "waiting",
+      "reason": "poll",
+      "steps": [
+        {
+          "action": "publish",
+          "transactionHash": "0x01fe958eb5ceb7d32518a091c0b035447ee52e1bbf21eeaad54d160d88c429f3",
+          "nonce": 65,
+          "status": 1,
+          "blockNumber": 77338580,
+          "blockHash": "0xbb52e48a298c8301155e5131ddc6a1a5462f14a40e7f82143c70f4c5544e38e4"
+        },
+        {
+          "action": "publishMonth",
+          "transactionHash": "0x7d23e98354c692ea04250b7be4ffc667044f7cf376868b5684ea2d0da0002b4c",
+          "nonce": 66,
+          "status": 1,
+          "blockNumber": 77338583,
+          "blockHash": "0xca86dafffcec8a1441f6efe838ba1e4b249fe7273e70086c23bb437a84c24baf"
+        }
+      ],
+      "funding": [
+        {
+          "action": "pull",
+          "status": "empty"
+        },
+        {
+          "action": "sync",
+          "status": "empty"
+        },
+        {
+          "action": "pay-prizes",
+          "status": "empty"
+        },
+        {
+          "action": "pay-ops",
+          "status": "empty"
+        },
+        {
+          "action": "pay-team",
+          "status": "empty"
+        },
+        {
+          "action": "sweep",
+          "status": "empty"
+        },
+        {
+          "action": "pull",
+          "status": "empty"
+        },
+        {
+          "action": "pay-prizes",
+          "status": "empty"
+        },
+        {
+          "action": "pay-ops",
+          "status": "empty"
+        },
+        {
+          "action": "pay-team",
+          "status": "empty"
+        }
+      ]
+    },
+    {
+      "status": "waiting",
+      "reason": "poll",
+      "steps": [
+        {
+          "action": "seal",
+          "transactionHash": "0xc55b8ed86bc4a8ad15053388f7eec1cbf0b7682aa3e959865846bb2b5533a62e",
+          "nonce": 67,
+          "status": 1,
+          "blockNumber": 77338624,
+          "blockHash": "0xbb9de710c0d7a6cca080f438a54f2c7794f8c3ac1c63429335767699bb054079"
+        },
+        {
+          "action": "sealMonth",
+          "transactionHash": "0x8d48a28e1ee1b96d968bab0f8d681b7568afd4329e180eb4ee8aa187e33fe03f",
+          "nonce": 68,
+          "status": 1,
+          "blockNumber": 77338628,
+          "blockHash": "0x260f268fe1e9d084682b1d120f0020fe3d0642b8ee0b30ac38930d217d288994"
+        }
+      ],
+      "funding": [
+        {
+          "action": "pull",
+          "status": "empty"
+        },
+        {
+          "action": "sync",
+          "status": "empty"
+        },
+        {
+          "action": "pay-prizes",
+          "status": "empty"
+        },
+        {
+          "action": "pay-ops",
+          "status": "empty"
+        },
+        {
+          "action": "pay-team",
+          "status": "empty"
+        },
+        {
+          "action": "sweep",
+          "status": "empty"
+        },
+        {
+          "action": "pull",
+          "status": "empty"
+        },
+        {
+          "action": "pay-prizes",
+          "status": "empty"
+        },
+        {
+          "action": "pay-ops",
+          "status": "empty"
+        },
+        {
+          "action": "pay-team",
+          "status": "empty"
+        }
+      ]
+    },
+    {
+      "status": "stopped",
+      "reason": "settlement",
+      "steps": [
+        {
+          "action": "prove",
+          "transactionHash": "0xc2f991ad6ba100f23155846fefe8bdece1ae0322e364fe7096c725259b8de199"
+        }
+      ]
+    },
+    {
+      "status": "waiting",
+      "reason": "poll",
+      "steps": [
+        {
+          "action": "deliver",
+          "transactionHash": "0x32d7ca6a9e3f359271216e0ceec1ee804af9ca534c11e9d7198298fae84ebe50"
+        },
+        {
+          "action": "prove",
+          "transactionHash": "0xbab6f0faef2ffea2756fccb2fda097b9bcbb9e0be417325080f308f27ea9945e"
+        }
+      ],
+      "funding": [
+        {
+          "action": "pull",
+          "status": "empty"
+        },
+        {
+          "action": "sync",
+          "status": "empty"
+        },
+        {
+          "action": "pay-prizes",
+          "status": "empty"
+        },
+        {
+          "action": "pay-ops",
+          "status": "empty"
+        },
+        {
+          "action": "pay-team",
+          "status": "empty"
+        },
+        {
+          "action": "sweep",
+          "status": "waiting"
+        },
+        {
+          "action": "pull",
+          "status": "empty"
+        },
+        {
+          "action": "pay-prizes",
+          "status": "empty"
+        },
+        {
+          "action": "pay-ops",
+          "status": "empty"
+        },
+        {
+          "action": "pay-team",
+          "status": "empty"
+        }
+      ]
+    },
+    {
+      "status": "waiting",
+      "reason": "poll",
+      "steps": [
+        {
+          "action": "deliver",
+          "transactionHash": "0xd2180f57063caaa931f52909a45c019690a6a5f000423617197a5a6559f3dfa9"
+        },
+        {
+          "action": "processShort",
+          "transactionHash": "0xf3e59a11ca8e1fc40e1e756afc04dc67a42f137a74779b047c5c6f4e56c30660",
+          "nonce": 74,
+          "status": 1,
+          "blockNumber": 77338795,
+          "blockHash": "0x83c33c2884a1de6196ccee761e39e768db8aa05e07294677cc28b8e631a35fad"
+        }
+      ],
+      "funding": [
+        {
+          "action": "pull",
+          "status": "empty"
+        },
+        {
+          "action": "sync",
+          "status": "empty"
+        },
+        {
+          "action": "pay-prizes",
+          "status": "empty"
+        },
+        {
+          "action": "pay-ops",
+          "status": "empty"
+        },
+        {
+          "action": "pay-team",
+          "status": "empty"
+        },
+        {
+          "action": "sweep",
+          "status": "waiting"
+        },
+        {
+          "action": "pull",
+          "status": "empty"
+        },
+        {
+          "action": "pay-prizes",
+          "status": "empty"
+        },
+        {
+          "action": "pay-ops",
+          "status": "empty"
+        },
+        {
+          "action": "pay-team",
+          "status": "empty"
+        }
+      ]
+    },
+    {
+      "status": "waiting",
+      "reason": "transactionLimit",
+      "steps": [
+        {
+          "action": "finishShort",
+          "transactionHash": "0xbfca7c40e5bd3ce73b425895488c3ce20e0988ddfbef58791e896251cced4c9e",
+          "nonce": 75,
+          "status": 1,
+          "blockNumber": 77338834,
+          "blockHash": "0x3742beed24a43601b2fb257c18a6fcbc618b691f140ef0ff4e754613735baa51"
+        },
+        {
+          "action": "processMonth",
+          "transactionHash": "0x4c0f5ffd1998f8bb90f93750b3b4e245f7c1ab634ed9d9cff58f49a37471feae",
+          "nonce": 76,
+          "status": 1,
+          "blockNumber": 77338837,
+          "blockHash": "0x8ef46f6ca24fa44a3b15bafe6c3424a8012eb32c6318abc46cf8e2c3630c98a8"
+        }
+      ]
+    },
+    {
+      "status": "waiting",
+      "reason": "transactionLimit",
+      "steps": [
+        {
+          "action": "claim",
+          "transactionHash": "0x43e4c228d2cffc946a096886f6064e4c1e077eea3dc7d8685cfbd8f9f5122f6f",
+          "nonce": 77,
+          "status": 1,
+          "blockNumber": 77338866,
+          "blockHash": "0xcb7cbb12412cb0e2a9e41caff6fe5a358963b58a4c08604babba047a05f7c45a"
+        },
+        {
+          "action": "finishMonth",
+          "transactionHash": "0xebcb1127c5dabbc9188c48b6797551a367a50f97c005e6f6ab0c57f2caae61f2",
+          "nonce": 78,
+          "status": 1,
+          "blockNumber": 77338870,
+          "blockHash": "0x3fd10e53f608a0b558905f84e41e78e640ebbc23aaa4b721165e519f3e4dcefc"
+        }
+      ]
+    },
+    {
+      "status": "waiting",
+      "reason": "poll",
+      "steps": [
+        {
+          "action": "claim",
+          "transactionHash": "0x7f8803b70c2e50c2fc4f93ea909dfa056dd79a0b16e802e841325dca469e4f08",
+          "nonce": 79,
+          "status": 1,
+          "blockNumber": 77338898,
+          "blockHash": "0x82a66be9e6b1c39b858a6f9f5ad769ff8a1790db88fc4fd5bf5250646e47a473"
+        }
+      ],
+      "funding": [
+        {
+          "action": "pull",
+          "status": "empty"
+        },
+        {
+          "action": "sync",
+          "status": "empty"
+        },
+        {
+          "action": "pay-prizes",
+          "status": "empty"
+        },
+        {
+          "action": "pay-ops",
+          "status": "empty"
+        },
+        {
+          "action": "pay-team",
+          "status": "empty"
+        },
+        {
+          "action": "sweep",
+          "status": "waiting"
+        },
+        {
+          "action": "pull",
+          "status": "empty"
+        },
+        {
+          "action": "pay-prizes",
+          "status": "empty"
+        },
+        {
+          "action": "pay-ops",
+          "status": "empty"
+        },
+        {
+          "action": "pay-team",
+          "status": "empty"
+        }
+      ]
+    },
+    {
+      "status": "waiting",
+      "reason": "poll",
+      "steps": [],
+      "funding": [
+        {
+          "action": "pull",
+          "status": "empty"
+        },
+        {
+          "action": "sync",
+          "status": "empty"
+        },
+        {
+          "action": "pay-prizes",
+          "status": "empty"
+        },
+        {
+          "action": "pay-ops",
+          "status": "empty"
+        },
+        {
+          "action": "pay-team",
+          "status": "empty"
+        },
+        {
+          "action": "sweep",
+          "status": "waiting"
+        },
+        {
+          "action": "pull",
+          "status": "empty"
+        },
+        {
+          "action": "pay-prizes",
+          "status": "empty"
+        },
+        {
+          "action": "pay-ops",
+          "status": "empty"
+        },
+        {
+          "action": "pay-team",
+          "status": "empty"
+        }
+      ]
+    }
+  ],
+  "checks": {
+    "runs": 13,
+    "transactions": 22,
+    "lastRunEmpty": true,
+    "maxTransactionsPerRun": 2,
+    "tests": [
+      {
+        "scope": "scheduler/locks",
+        "passed": 25,
+        "note": "Initial combined batch30/31: one new Pons validation test failed, then fixed."
+      },
+      {
+        "scope": "Pons automation and empty storage cache",
+        "passed": 7,
+        "command": "node --test test/fork-empty-storage.test.cjs test/pons-automation.test.cjs"
+      }
+    ],
+    "fullSuite": false
+  },
+  "sourceHashesAtHandoff": {
+    "contracts/IPonsVenue.sol": "bfcaa5cf01e49bb6a73bfd780f008ed80b62ac8687409b7037d17b2b33330b43",
+    "contracts/LocalPonsCollector.sol": "af61949f7d3651cced9dc7d6a3b2f66f4c89cc1d27706c5e60012d455c02029e",
+    "scripts/pons-automation-rehearsal.cjs": "88495d6c24b051ae6b75d554e5a62e7a1c586abb8943608172f68386996fa06b",
+    "scripts/pons-automation.cjs": "05de2f14ca8058d4de5d9f688a6c69bc3e8bab8de9282a77568dda385836e16d",
+    "scripts/pons-collector-fork.cjs": "49b673092c426d1882eb1f8440a9ed1a8d643dd57e10685229c7ca0728738f94",
+    "scripts/pons-collector-manual.cjs": "5a811e214be3691032321e8cbee46602464f9523a006db4c863f7e54c3fe6e9c",
+    "scripts/pons-curve-buy.cjs": "4e3f81c0f84486032d0741551b99a055cf4157cfa06d00e6b85124ffe4d0a5bc",
+    "scripts/pons-promo-cycle.cjs": "fa7ab4761502e894c87cad205701ccbc5ee75a6fdb25306c89319d0102286e9d",
+    "scripts/pons-v4-buy.cjs": "813b1e2795cbb32caab31468dae289edd59d4041e76026be9724c9a4a6b54cbd",
+    "scripts/run-pons-automation.cjs": "5c98779c4c4cc4ec45f584a46f758cc838cafc969866c325e1cfe93fbbbb7139",
+    "test/contracts/PonsEscrowFixture.sol": "5d820ad5b026138e9144eb246efaf7dab77207c578c17e329897ed72489182d4",
+    "test/contracts/PonsVenueFixture.sol": "ff02ed37aa69cdc19efb47ef6712e5073ba19ad922f873bcfd4a29a413c4a0a4",
+    "test/fork-empty-storage.test.cjs": "98980d78fac9e38ae280555291bca90696b743da8d5a2d9c2b207e8b703ecef6",
+    "test/pons-automation.test.cjs": "87dc38d8ba74c7d51b4396ae0a01404042707ff9d8579e150e165e4e22ba32e4",
+    "test/pons-collector.test.cjs": "3c438eae4e7f972de345c40748ae0319ebaf9d62f042b6069a5cb703625e9b8c",
+    "test/pons-curve-buy.test.cjs": "9f76dd13312eb29971118f7bf24770dcbcede1bc592a7e7339571b8ab8b7f745",
+    "test/pons-v4-buy.test.cjs": "41d873db3ee5e9b41ffb605bcd81c3c094f0ec9fdba35e776f18109a7ae7242c",
+    "scripts/direct-buy.cjs": "0351a5c0dd0a45d89fae4b44895c508be6a196c9a62b046226f7db78e715588b",
+    "scripts/local-promo-scheduler.cjs": "cb80bb0d563d7ecfef4bed64f19e1ac1e87aeb5efdaf15e15bde4b1c06ccc3a5",
+    "scripts/pons-fork-rehearsal.cjs": "66f2f5e21e725657a80187acb1943d3b337cfc211ec42ac68670b2c62781d4ee",
+    "scripts/read-only-fork-rpc.cjs": "ba6fefbfd25308fadb1f056288388b797737ed92ce95b99ee64a73d8349dfef1",
+    "scripts/replay-direct-buy.cjs": "d3b9b0366f40a6e83b0262c869e0571b76e5be4f1aab42f908a8475d255e2370",
+    "scripts/serve-site.cjs": "d508df6b0729697a65df5642eb4a7e390e0f6852531263fbcb778b0ff19f00bd",
+    "scripts/test-profiles.json": "a3275083ac08eb0cb641d77f4fed164c76860142263b8c14e5359df3e08e2e19"
+  },
+  "sourceHashEncoding": "Git index blob bytes (LF normalization), captured at handoff"
+}

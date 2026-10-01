@@ -10,6 +10,8 @@
 
 ## Ревью и ответы GPT
 
+- [Pons research: запрос01.10](GPT_REVIEW_REQUEST_PONS_RESEARCH_2026-10-01.md) и [ответ](GPT_REVIEW_RESPONSE_PONS_RESEARCH_2026-10-01.md) — до реализации локального MVP.
+
 - [GPT_REVIEW_RESPONSE](reviews/GPT_REVIEW_RESPONSE.md)
 - [INDEPENDENT_AUDIT_2026-09-19](reviews/INDEPENDENT_AUDIT_2026-09-19.md)
 

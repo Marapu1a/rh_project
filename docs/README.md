@@ -1,5 +1,13 @@
 # Навигация по документации
 
+Pons: [локальный coordinator, journal и recovery](PONS_AUTOMATION.md).
+
+Pons полный локальный цикл: [покупки, funding, Short/Monthly, drand, выплаты и восстановление](PONS_PROMO_CYCLE.md).
+
+Pons curve + v4 BUY: [маршруты Universal Router, учёт hook fees, fork evidence и ограничения](PONS_V4_BUY.md).
+
+Pons BUY: [учёт прямых покупок на кривой, проверки и ограничения](PONS_BUY.md).
+
 Текущая адаптация: [Pons migration](PONS_MIGRATION.md); PAIR сохранён как резерв. Отдельные draft config/ABI готовы, production collector и BUY adapters ещё не реализованы.
 
 ## Для продолжения работы
@@ -17,6 +25,7 @@
 
 | Задача | Документы |
 |---|---|
+| Pons escrow collector | [Локальная реализация и границы](PONS_COLLECTOR.md) |
 | Альтернативный запуск Pons V2 | [Исследование и local fork диагностика](PONS_V2_RESEARCH.md) |
 | КТ1: непрерывный BUY/indexer | [Runner и блокировка PAIR implementation](KT1_BUY_REHEARSAL.md) |
 | Финальные контрольные точки | [КТ1–КТ7 и критерии PASS](FINAL_CHECKPOINTS.md) |

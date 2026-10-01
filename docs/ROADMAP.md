@@ -1,5 +1,23 @@
 # План до первого публичного запуска
 
+01.10: подготовлен пакет внешнего статического review Pons MVP относительно67cc1aa. До следующего технического шага разбираем findings GPT. Обновлены [обращение](GPT_REVIEW_REQUEST.md) и [компактное evidence](evidence/PONS_AUTOMATION_2026-10-01.json); прежнее исследование архивировано. Новый ответ пока не получен. В этом handoff код не менялся, продуктовые тесты не повторялись.
+
+01.10: локальный Pons coordinator завершён: fork77338337 PONS_AUTOMATION_PASSED, 13 проходов/22 уникальные транзакции, live drand, stop/resume, оба draw и claims. Выплачено114.657578USDG; reserved/claimable=0; повторный проход без отправок,86 consumed+1 OPEN каждого вида.25/25 scheduler/locks и7/7 новых адресных проверок PASS (не full suite). Далее — сверка фактического BUY routing UI Pons; публичный admission/service ещё закрыты. [Evidence и границы](PONS_AUTOMATION.md).
+
+01.10: локальная сквозная интеграция Pons закрыта: BUY/funding → оба draw → настоящие drand proofs → выплаты и resume, fork77287946 PASS;16/16 соседних tests. Следующий ограниченный пакет — Pons coordinator с durable journal и его recovery checks. UI routing/source admission/public policy остаются отдельными launch-границами. [Результаты](PONS_PROMO_CYCLE.md).
+
+01.10: локальный curve+v4 BUY пакет закрыт:55/55 tests,33 шага real-runtime fork PASS. Следующий ограниченный пакет — связать BUY accounting и funding с существующим Short/Monthly draw/payout/recovery прогоном. Отдельно остаются live UI routing, source/public policy admission и запуск сервисов. [Проверки](PONS_V4_BUY.md).
+
+01.10: curve BUY real-runtime fork77265497 PASS: BUY101 и частичный graduation/refund → entry → открытые Short/Monthly; вместе с funding27 шагов. Только локальный fork, без draws/public sends. [Evidence и границы](PONS_BUY.md).
+
+01.10: bounded step curve BUY реализован локально: платежи/возвраты → entry → открытые Short/Monthly,49/49 адресных тестов. Следующий шаг — отдельный v4 BUY adapter, затем общий draw/payout/recovery прогон. [Границы проверки](PONS_BUY.md).
+
+01.10: локальный денежный Pons пакет завершён: bind/sweep→manual claim/pay→PromoVault,7/7+fork PASS. Следующий ограниченный пакет — curve BUY decoder с net USDG/refunds/recipient, затем v4 и tickets. Public deployment/production sender/source admission остаются отдельными границами. [Результаты](PONS_COLLECTOR.md).
+
+01.10: Pons шаг получения из escrow завершён локально (4/4, не full/fork). Страница прозрачности готова локально. Следующий шаг: curve/hook source binding и отдельные sweep, затем ручной runner и интеграция с Pons fork. До этого прототип не использовать для запуска. [Детали](PONS_COLLECTOR.md).
+
+01.10: ответ GPT67cc1aa разобран; исследование не закрыло source/operator неизвестные. Следующий предлагаемый ограниченный пакет — PonsCollector: отдельные sweep и claim, распределение фактически полученного USDG90/5/5, независимость claim от неудачи sweep; затем ручное исполнение. Полную source verification сохраняем отдельной открытой границей перед публичным запуском, не условием начала локальной реализации.
+
 01.10: текущий шаг — передать GPT [исследование Pons sources/operator](GPT_REVIEW_REQUEST.md), разобрать ответ, затем реализовать минимальный ручной сбор доступных USDG. Полная независимость от Pons не обязательна; недоступные комиссии ждут и не финансируют призы. Запрос подготовлен, ответ ожидается.
 
 30.09: перенос придержан по решению владельца до внешней проверки. Hook runtime воспроизведён; реальные TOKEN→USDG conversion и escrow credits подтверждены. Factory source не собирается, source escrow/operator не найден; независимый вызов operator-контракта не доказан. [Проверка и вопросы Pons](PONS_VERIFICATION.md).

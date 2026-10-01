@@ -1,6 +1,8 @@
 const fs=require('node:fs');
 const {keccak256}=require('ethers');
 const AUTO=require('./pair-auto-buy.cjs');
+const PONS=require('./pons-curve-buy.cjs');
+const PONS_V4=require('./pons-v4-buy.cjs');
 const {replay,canonical,hash,validateManifest,buyPolicyHistory,routeDependencies}=require('./direct-buy.cjs');
 
 // Independent reader: fetch whole blocks and every receipt, not an operator BUY list.
@@ -15,6 +17,7 @@ async function scan(input,rpcUrl,toBlock,lifecycle=null){
 }
 async function scanWithRpc(input,rpc,toBlock,lifecycle=null){
   const manifest=buyPolicyHistory(input).genesis;
+  const pons=manifest.schema===PONS.SCHEMA?PONS:manifest.schema===PONS_V4.SCHEMA?PONS_V4:null;
   if(BigInt(await rpc('eth_chainId'))!==BigInt(manifest.chainId))throw Error('Wrong RPC chain');
   const tag=n=>'0x'+BigInt(n).toString(16);
   const anchor=await rpc('eth_getBlockByNumber',[tag(manifest.anchor.number),false]);
@@ -25,7 +28,7 @@ async function scanWithRpc(input,rpc,toBlock,lifecycle=null){
     const code=await rpc('eth_getCode',[dependency.address,tag(toBlock)]);
     if(code==='0x'||keccak256(code)!==dependency.codeHash)throw Error('Unexpected BUY adapter dependency runtime');
   }
-  for(const field of ['router','manager','hook','token','quote','registry',...(manifest.schema==='direct-buy-infinity-v1'?['settlement']:[])]){
+  for(const field of pons?pons.FIELDS:['router','manager','hook','token','quote','registry',...(manifest.schema==='direct-buy-infinity-v1'?['settlement']:[])]){
     const code=await rpc('eth_getCode',[manifest[field],tag(toBlock)]);
     if(code==='0x'||keccak256(code)!==manifest.codeHashes[field])throw Error('Unexpected '+field+' runtime; review deployment binding');
   }
@@ -41,6 +44,11 @@ async function scanWithRpc(input,rpc,toBlock,lifecycle=null){
   for(let n=BigInt(manifest.anchor.number)+1n;n<=BigInt(toBlock);n++){
     const block=await rpc('eth_getBlockByNumber',[tag(n),true]);
     const transactions=[];
+    if(pons)await pons.validateBindings(manifest,rpc,tag(n));
+    if(pons)for(const field of pons.FIELDS){
+      const code=await rpc('eth_getCode',[manifest[field],tag(n)]);
+      if(code==='0x'||keccak256(code)!==manifest.codeHashes[field])throw Error('Unexpected historical Pons '+field+' runtime');
+    }
     if(manifest.schema==='direct-buy-infinity-v1')for(const field of ['router','manager','hook','token','quote','settlement']){
       const code=await rpc('eth_getCode',[manifest[field],tag(n)]);
       if(code==='0x'||keccak256(code)!==manifest.codeHashes[field])throw Error('Unexpected historical Infinity '+field+' runtime');

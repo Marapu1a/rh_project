@@ -21,8 +21,10 @@ function validateConfig(c,rpcUrl){
   if(c.indexer)check(c.buyPolicy&&c.cutoffMode==='FINALIZED_CHECKPOINT'&&typeof c.indexer.statePath==='string'&&require('node:path').isAbsolute(c.indexer.statePath)&&Number.isInteger(c.indexer.maxAgeSeconds)&&c.indexer.maxAgeSeconds>0&&c.indexer.maxAgeSeconds<=3600,'Invalid indexer configuration');
   check(c.schema===network.schema('local-promo-scheduler-v1')&&['LOCAL_HEAD','FINALIZED_CHECKPOINT'].includes(c.cutoffMode),'Explicit local scheduler config required');
   if(c.cutoffMode==='FINALIZED_CHECKPOINT')check(c.buyPolicy,'Finalized checkpoint requires admitted BUY policy');
+  const ponsResearch=c.ponsRehearsal===true&&network.current().mode==='robinhood-rehearsal'&&c.manifest.schema==='direct-buy-pons-v2'&&c.buyPolicyMode==='unadmitted'&&!c.buyPolicy;
+  if(c.ponsRehearsal!==undefined)check(ponsResearch,'Pons research mode requires an identified local rehearsal');
   validateManifest(c.manifest);network.checkChain(c.manifest.chainId);check(c.lifecycle.schema==='attempt-lifecycle-v4','Lifecycle v4 required');
-  if(network.isRobinhood())check(c.cutoffMode==='FINALIZED_CHECKPOINT','Public checkpoint mode required');
+  if(network.isRobinhood())check(c.cutoffMode==='FINALIZED_CHECKPOINT'||ponsResearch&&c.cutoffMode==='LOCAL_HEAD','Public checkpoint mode required');
   if(c.buyPolicy)check(c.buyPolicy.genesisHash===hash(c.manifest)&&String(c.buyPolicy.chainId)===String(c.manifest.chainId)&&c.buyPolicy.instanceId===c.lifecycle.instanceId,'BUY policy binding mismatch');
   check(BigInt(c.campaignId)>0n,'Invalid campaign');
   check(c.shortBudgetMode===undefined||['FIXED','FREE_SHORT'].includes(c.shortBudgetMode),'Invalid Short budget mode');
@@ -157,6 +159,12 @@ async function tickKind(kind,o,state,save){
       if(isShort)check(selected.job.proposalId===ethers.id('scheduler proposal '+rebuiltInput.identity),'Stored proposal identity differs from replay');
       // Recheck cutoff after policy reads; executors also check canonicality and on-chain state.
       check((await provider.getBlock(Number(cutoff.blockNumber)))?.hash===cutoff.blockHash,'Stored job cutoff changed during verification');
+    }
+    if(config.ponsRehearsal&&await source.cutoffHashes(cutoff.blockNumber)===zero){
+      check(publisher,'Checkpoint publisher required');
+      const price=(await provider.getFeeData()).gasPrice;
+      const receipt=await sendLocalTransaction(source.connect(publisher).checkpointCutoff,[cutoff.blockNumber],{type:2,maxFeePerGas:price,maxPriorityFeePerGas:0},{signal,receiptTimeoutMs:o.receiptTimeoutMs});
+      return {status:'progress',action:'checkpointCutoff',transactionHash:receipt.hash};
     }
     const result=await (isShort?sw.stepShort:mw.stepMonthly)({provider,source,publisher,executor,job:selected.job,signal,receiptTimeoutMs:o.receiptTimeoutMs});
     if(result.status==='progress'){selected.started=true;save(state);}

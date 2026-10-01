@@ -1,5 +1,7 @@
 # Одностраничный сайт QIANQI
 
+01.10: local /transparency/ (web/transparency/index.html + style.css), ссылка в HK footer. Датированные факты/ожидания Pons, бюджет только по фактическому USDG, внешние evidence links. Не live monitor и не deployed. Browser390/1440 без overflow/page errors, footer navigation PASS. При deployment включить каталог transparency в release.
+
 30.09: HK release data-20260930 на qianqi.site: overview/reserves/history, frozen tickets, суммы и tx наград. API за Nginx работает в standby до deployment. DNS/HTTPS и renewal dry-run прошли. [Детали, rollback и проверки](PUBLIC_STATUS_API.md).
 
 30.09, итог DNS-проверки: выявлена рассинхронизация authoritative Timeweb: ns1/ns3/ns4 →201.51.22.244, ns2 →109.73.196.111 (TTL600), поэтому это НЕ только recursive cache. Первичная выдача HTTPS успешна, но `certbot renew --dry-run --no-random-sleep-on-renew` failed: staging CA пришёл на старый109.73.196.111 и получил404. Реальный сертификат не изменён, timer active. До устранения DNS публичная доступность не гарантирована; после синхронизации повторить обычный браузер без IP pin и renewal dry-run. Нужна проверка DNS панели/поддержки Timeweb, доступа к DNS API у агента нет.

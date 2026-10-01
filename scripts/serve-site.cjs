@@ -5,6 +5,8 @@ const files=new Map([['/','index.html'],['/app.js','app.js'],['/style.css','styl
 files.set('/concepts/hk/','concepts/hk/index.html');
 files.set('/concepts/hk/style.css','concepts/hk/style.css');
 files.set('/404.css','404.css');
+files.set('/transparency/','transparency/index.html');
+files.set('/transparency/style.css','transparency/style.css');
 files.set('/overview.js','overview.js');
 function createSite({apiOrigin='http://127.0.0.1:8787'}={}){
  const origin=new URL(apiOrigin);if(!['http:','https:'].includes(origin.protocol)||origin.username||origin.password||origin.pathname!=='/'||origin.search||origin.hash)throw Error('Invalid API origin');

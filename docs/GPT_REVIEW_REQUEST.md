@@ -1,101 +1,53 @@
-# Обращение к GPT: Pons V2 — исходники, оператор и сбор комиссий
+# Обращение к GPT: независимый review локального Pons MVP
 
-01.10.2026. Нужны исследование внешних первоисточников и практический план интеграции.
-Ответ на русском в docs/GPT_REVIEW_RESPONSE.md. Укажи HEAD, дату и доступные инструменты.
-Не отправляй транзакции/сообщения Pons и не меняй продуктовый код.
+01.10.2026. Проверь текущий HEAD относительно 67cc1aa: накопленный переход на Pons, особенно coordinator и восстановление. Ответ на русском в docs/GPT_REVIEW_RESPONSE.md. Укажи фактически прочитанный HEAD и ограничения инструментов.
 
-## Задача и решение владельца
+## Режим работы
 
-QIANQI — спекулятивный токен с автоматическими USDG-розыгрышами. Готовим переход
-PAIR Infinity → Pons V2, Robinhood Chain4663. PAIR сохраняется резервом.
-Creator tax3%, buyback/holder fee sharing выключены; полученный доход90/5/5:
-призы/ops/команда. Призовые правила, порог100USDG, frozen/claimable и RNG не менять.
+Статический review кода, связей модулей и evidence по [правилам review](REVIEW_TESTING.md). Не запускай тесты, сборку, fork/rehearsal, не устанавливай зависимости и не отлаживай окружение. Предлагай конкретные проверки Codex. Не меняй продуктовый код, не отправляй транзакции, сообщения или deployment. Внешние docs/RPC — только read-only и при конкретном вопросе; отсутствие доступа укажи прямо.
 
-Владелец согласен на гибкое пополнение: собираем доступные USDG; TOKEN и несобранные
-комиссии не считаем доступным призовым бюджетом. Ждём и повторяем при подходящем
-состоянии, не жжём gas заведомыми revert. На старте допустим ручной/полуручной
-запуск проверенных операций, позже автоматизируем тот же путь. Ручной режим
-не обходит permissions. Полная независимость от Pons не обязательна для разработки.
-Сначала выясняем внешние возможности, прежде чем писать PonsCollector.
+## Пакет и решения
 
-## Входные документы
+Реализованы LocalPonsCollector с раздельными sweep/pull/pay, ручной runner, curve и Universal Router v4 BUY adapters, интеграция с ticket lifecycle, сквозной Promo cycle и постоянный coordinator с журналами. Общий scheduler получил ограниченный rehearsal-путь. Добавлена статическая /transparency/. PAIR сохранён. Публичный signer/admission/service для Pons ещё не открыт.
 
-- [Результаты проверки](PONS_VERIFICATION.md).
-- [Fork-прогон](PONS_V2_RESEARCH.md).
-- [Перенос](PONS_MIGRATION.md), [draft](../config/pons-migration-draft.json).
-- [Runner](../scripts/pons-fork-rehearsal.cjs), [ABI](../scripts/integrations/pons-v2.cjs).
-- [Существующий collector PAIR](../contracts/InfinityCollector.sol) — по необходимости.
+Creator tax3%; фактически полученный USDG распределяется90/5/5: призы/ops/команда. Pending TOKEN/комиссии не считаются призовыми деньгами. Каждые100USDG подходящих покупок дают по попытке Short/Monthly; остаток накапливается, продажи попыток не дают. Порог, призовую математику и RNG менять не надо. Frozen/claimable не тратятся на эксплуатацию; reset/reroll/вывод призовой казны запрещены.
 
-.local/ не передаётся через Git: скачай внешние исходники самостоятельно; наши
-локальные результаты ниже — входные свидетельства, не твоя независимая проверка.
-[Старое обращение](archive/GPT_REVIEW_REQUEST_BEFORE_PONS_2026-10-01.md) историческое.
-Если веб/RPC недоступны, прямо укажи это, не имитируй исследование.
+## Карта кода
 
-## Источники и адреса
+Начни с этого обращения и diff67cc1aa..HEAD. Весь архив читать не нужно.
 
-- https://docs.ponsfamily.com/v2
-- https://github.com/ponsdotdev/pons-labs
-- Исследованный commit b51431f7d5242fc5414a7da7d3659ad3bc749eb7.
-- https://www.ponsfamily.com/launchpad/create
-- RPC https://rpc.mainnet.chain.robinhood.com
-- Explorer https://robinhoodchain.blockscout.com
-- Factory 0x7eD598BcEf8bd9Edd8C97A195C6d13f40801EC7e
-- Hook 0xE5e702641Ea86F4ae6cC3cDaeD2B886f976Be044
-- Escrow 0xd3AFEB2a57f70eF218Aa82451c51B2fb0416Ac9e
-- Operator CONTRACT 0xa1018c1D9655292A2dE0F7dEa9a0F848EaA8cA83
-- Keeper EOA наблюдавшихся tx 0x49BbF2b70955Fb3a106e084D4BFDa92d334573d2
-- USDG 0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168
-- PoolManager 0x8366a39CC670B4001A1121B8F6A443A643e40951
+- [Coordinator](PONS_AUTOMATION.md): scripts/pons-automation.cjs, run-pons-automation.cjs, local-promo-scheduler.cjs. Смежные границы: local-scheduler-state.cjs, local-receipt.cjs, drand-delivery-worker.cjs, runtime-network.cjs.
+- [Collector](PONS_COLLECTOR.md): contracts/LocalPonsCollector.sol, IPonsVenue.sol, scripts/pons-collector-manual.cjs.
+- [Curve BUY](PONS_BUY.md), [v4 BUY](PONS_V4_BUY.md): pons-curve-buy.cjs, pons-v4-buy.cjs, direct-buy.cjs, replay-direct-buy.cjs; существующий attempt-lifecycle.cjs.
+- [Полный цикл](PONS_PROMO_CYCLE.md): pons-collector-fork.cjs, pons-promo-cycle.cjs, pons-automation-rehearsal.cjs, read-only-fork-rpc.cjs.
+- Tests: pons-automation, fork-empty-storage, pons-collector, pons-curve-buy, pons-v4-buy; соседние local-scheduler, local-state-lock, drand-delivery-worker.
+- [Продукт](PRODUCT_SPEC.md), [переход](PONS_MIGRATION.md); web/transparency/ и footer HK. Проверь честность пользовательских формулировок и актуальность статусов.
 
-## Уже проверено Codex — не полный допуск
+## Evidence и пределы
 
-- Fork: launch, buy101USDG/sell, claim/split90/5/5, graduation, v4 trades,
-  conversion при локальной имитации operator. Не PromoVault/tickets/draw proof.
-- Hook15167bytes совпал с solc0.8.35, optimizer200, viaIR=true, cancun после
-  исключения metadata/immutable slots. Два immutable адреса отдельно сверены.
-- Factory указанного commit не собирается: строка749 вызывает
-  PonsV2BondingCurve.exemptFromSnipeTax, отсутствующую в опубликованном curve.
-  Не дописывай чужой код догадками ради объявления match.
-- Реализации escrow/operator в checkout не найдены.
-- Блоки76631780–76641780:76 PoolFeesSwept в76tx/76pools; пять receipts status1.
-  Короткое окно активности, не SLA и не оценка failures.
-- Реальная conversion:
-  https://robinhoodchain.blockscout.com/tx/0x07664000987d99b4ebcddd6cbb0eba414fedda11e8c74efb69397bd4b8fd6c67
-  30.09 15:58:21UTC swap получил9.644785USDG; вместе с накопленными quote fees
-  creator credit15.976329USDG, protocol6.846997USDG, buyback0.
-- Hook требует operator для conversion, но operator — контракт: это НЕ доказательство
-  того, что вызывать его может только команда Pons.
-- sweepPool(bytes32), selector0x431d17b7: eth_call по12пулам даёт одинаковый
-  revert0x78013180(...1) для нашего адреса и keeper. Это не доказательство ACL.
-  Selector0x21724275: keeper revert0x4e7e2916, посторонний0xc22a648e.
-  Названия ошибок/ABI не установлены.
-- TOKEN pending может блокировать creator sweep целиком, включая USDG на hook.
-  Уже зачисленный escrow claim — отдельная операция.
-- Blockscout API403, IPFS429/timeouts, Sourcify hook full/partial404, большие RPC
-  queries timeout/429. Ограничения доступа не доказывают отсутствие исходников.
+[Компактный отчёт](evidence/PONS_AUTOMATION_2026-10-01.json): исходный report SHA256, fork anchor, допущения, действия/tx, ledger, баланс, хеши исходников на момент передачи. Это данные Codex, не твой независимый запуск; tx относятся к локальной ветке, не публичному explorer. Полный .local/ через Git не передаётся. Хеши исходников сняты при handoff, не в момент начала предыдущих тестов.
 
-## Что исследовать
+Последний coordinator fork77338337: PONS_AUTOMATION_PASSED;13 проходов,22 уникальные транзакции, максимум2 за проход. Live drand21111138/21111139, остановка после prove и продолжение из журналов. Выплачено114.657578USDG; баланс346.425927 →231.768349; reserved/claimable=0.86 consumed+1 OPEN каждого вида; финальный проход без транзакций и изменения nonce.
 
-1. Найди точные deployment sources, ABI и build inputs factory/curve/hook/escrow/
-   operator, далее зависимости по необходимости. Репозиторий/история, verified
-   explorer, Sourcify, IPFS metadata, официальные ссылки. Отличай V1/V2 и mainnet/
-   testnet. На каждый результат дай URL, commit/address и степень bytecode-проверки.
-2. Разбери operator: функции, ACL, обнаруженные selectors/reverts, eligibility,
-   cooldown/minimum/quote/slippage. Может ли наш EOA или collector сам запустить
-   sweep? Нужны ли регистрация keeper/pool, особые роли, подпись Pons?
-3. Проверь покрытие USDG pools, пороги/cadence и ручной маршрут через UI/контракт,
-   fallback при offline keeper. Отдели документацию от наблюдения и предположения.
-   Успех одного pool не доказывает обслуживание всех.
-4. Предложи минимальный путь curve/hook sweep → escrow claim → collector90/5/5 →
-   PromoVault. Таблица: этап/кто вызывает/что ждём/когда повторяем/gas/зависимость
-   от Pons. Сначала ручное исполнение, потом scheduler без смены денежной логики.
-5. Раздели блокеры безопасного запуска и допустимые задержки финансирования.
-   Если остались вопросы только к Pons — составь короткий запрос, не отправляй.
+Адресные проверки:25/25 scheduler/locks и7/7 новых. Первоначальный batch был30/31 из-за порядка валидации нового теста; исправление проверено отдельно. Ранее BUY55/55, collector7/7 и cycle-neighbors16/16 — отдельные исторические запуски, не один full baseline. Полный набор на текущем HEAD не заявляем и ради передачи не повторяем.
 
-## Ответ
+Допущения: synthetic USDG/ETH; impersonated Pons operator; ArbSys shim; constructor clocks backdated только в памяти; drand lead60s; swap minOut1 только в тесте. Периодический mining воспроизводит ход времени. Для новых CREATE-адресов заранее снимали eth_getProof на fork anchor и кешировали пустой base storage: доверие RPC без самостоятельной криптографической проверки proof. Записи EDR не подменяются. Ранние прогоны останавливались из-за газа/часов/удаления historical RPC state; только финальный -f завершён.
 
-- Что найдено сверх наших результатов и что осталось неизвестным.
-- Таблица source verification с прямыми ссылками и пределами проверки.
-- Operator: функции/ACL/условия/доказательства, без придуманных названий ошибок.
-- Практический ручной путь, будущая автоматика и один минимальный пакет для Codex.
-- Никаких обещаний production readiness, изменений призовой математики или public sends.
+## Приоритетные вопросы
+
+1. Деньги: conservation, повторный pull/sync/pay/claim, кредитование фактического delta,90/5/5, доступность escrow при pending TOKEN, permissions/binding и изоляция funding failure от действующих обязательств.
+2. Recovery: окна до/после broadcast, потеря hash, timeout/revert/reorg, сбой сохранения после receipt; главный и дочерние журналы, lock/stale lock, конфигурация и nonce. Возможны ли двойная отправка или необратимое зависание? Нужны конкретный путь и охват тестами.
+3. Coordinator: приоритет обязательств, drain/watch/SIGINT, газовый резерв двух lanes, лимит отправок включая failed RNG tx, частичные выплаты/отклоняющий получатель, starvation, offline RPC/drand/Pons operator. Лимиты и артефакты должны переживать restart.
+4. BUY: net USDG/refund, net TOKEN после hook fees, payer/recipient, commands/pool pins, duplicates/reorg/cutoff, graduation и late BUY. Не перепутана ли лабораторная calldata с фактическим UI Pons?
+5. Исключения стенда: возможен ли unadmitted/LOCAL_HEAD с public signer? Не маскируют ли backdating, mining, empty storage cache или сценарий реальные дефекты? Отличи воспроизведение пустого исходного состояния от необоснованной подмены.
+6. Пробелы evidence: один кошелёк, один цикл, кооперативная остановка после prove — что это НЕ проверяет? Выбери полезные сценарии с разными участниками, отказами и настоящим process crash. Бессистемный full run не заменяет анализ.
+7. Следующий шаг: сначала найденные дефекты, затем фактический UI routing Pons или иная граница? Предложи один ограниченный пакет с критериями PASS; прочие улучшения отдельно. Не возвращай проект к исследованию launchpad без новой причины.
+
+## Формат ответа
+
+- Краткий вердикт о локальном MVP отдельно от допуска к реальным средствам.
+- Findings по важности: файл:строка → триггер → последствие → evidence → минимальное исправление и тест. Отличай доказанный дефект от гипотезы/известного ограничения. Если критических дефектов не нашёл, скажи прямо.
+- Пробелы покрытия и3–5 проверок для Codex с ожидаемым результатом; что обязательно до запуска, что позже.
+- Один следующий пакет без изменения продуктовых правил.
+
+Предыдущие [запрос](archive/GPT_REVIEW_REQUEST_PONS_RESEARCH_2026-10-01.md) и [ответ](archive/GPT_REVIEW_RESPONSE_PONS_RESEARCH_2026-10-01.md) сохранены как история; они не являются review новой реализации.

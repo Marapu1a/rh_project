@@ -1,13 +1,15 @@
 // Research transport only: rate-limit EDR's concurrent reads without changing state/results.
 const http=require('node:http');
+const {keccak256,toQuantity,isAddress}=require('ethers');
 const allowed=new Set(['eth_chainId','net_version','eth_blockNumber','eth_getBlockByNumber','eth_getBlockByHash','eth_getCode','eth_getStorageAt','eth_getBalance','eth_getTransactionCount','eth_getTransactionByHash','eth_getTransactionReceipt','eth_gasPrice','eth_call']);
 async function startReadProxy(upstream) {
   let tail=Promise.resolve();
   const stats={requests:0,retries:0,errors:0};
-  const cache=new Map();
+  const cache=new Map(),emptyStorage=new Set();
   const sleep=ms=>new Promise(r=>setTimeout(r,ms));
   async function forward(q) {
-    if(!allowed.has(q.method)) return {jsonrpc:'2.0',id:q.id,error:{code:-32601,message:'Research proxy permits read-only RPC methods only'}};
+    if(!allowed.has(q.method)&&q.method!=='eth_getProof') return {jsonrpc:'2.0',id:q.id,error:{code:-32601,message:'Research proxy permits read-only RPC methods only'}};
+    if(q.method==='eth_getStorageAt'&&emptyStorage.has(JSON.stringify([q.params[0].toLowerCase(),q.params[2]])))return {jsonrpc:'2.0',id:q.id,result:'0x'+'00'.repeat(32)};
     const key=JSON.stringify([q.method,q.params]);
     const mutable=/latest|pending|safe|finalized/.test(key)||['eth_blockNumber','eth_gasPrice'].includes(q.method);
     if(!mutable && cache.has(key))return {...cache.get(key),id:q.id};
@@ -38,6 +40,20 @@ async function startReadProxy(upstream) {
     }catch(e){res.writeHead(400);res.end(JSON.stringify({error:e.message}));}
   });
   await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
-  return {url:`http://127.0.0.1:${server.address().port}`,stats,close:()=>{server.closeAllConnections();server.close();}};
+  async function pinEmptyStorage(address,blockNumber){
+    if(!isAddress(address)||!Number.isSafeInteger(blockNumber)||blockNumber<0)throw Error('Explicit address/block required');
+    const tag=toQuantity(blockNumber),a=address.toLowerCase();
+    const reply=await forward({jsonrpc:'2.0',id:1,method:'eth_getProof',params:[a,[],tag]});
+    if(reply.error)throw Error('Empty storage snapshot unavailable: '+reply.error.message);
+    const proof=reply.result;
+    const zero='0x'+'00'.repeat(32);
+    const absent=proof&&proof.storageHash===zero&&proof.codeHash===zero&&BigInt(proof.nonce)===0n&&BigInt(proof.balance)===0n&&Array.isArray(proof.accountProof)&&proof.accountProof.length>0;
+    const empty=proof&&proof.storageHash===keccak256('0x80')&&proof.codeHash===keccak256('0x');
+    if(!proof||proof.address.toLowerCase()!==a||!empty&&!absent)throw Error('Account is not proven empty at fork anchor');
+    // This is the base state at one fixed block, not local post-deployment storage.
+    // EDR still owns every deployment/write. Never substitute values for live accounts.
+    emptyStorage.add(JSON.stringify([a,tag]));return {address:a,blockNumber,storageHash:proof.storageHash,codeHash:proof.codeHash};
+  }
+  return {url:`http://127.0.0.1:${server.address().port}`,stats,pinEmptyStorage,close:()=>{server.closeAllConnections();server.close();}};
 }
 module.exports={startReadProxy};

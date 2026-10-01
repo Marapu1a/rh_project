@@ -69,3 +69,5 @@ async function main(){
  finally{out.proxyStats=proxy?.stats;save();proxy?.close();remote?.destroy();console.log(JSON.stringify({status:out.status,error:out.error,economics:out.economics,rates:out.rates,policy:out.policy,split:out.split,graduation:out.graduation},(_,v)=>typeof v==='bigint'?v.toString():v,2));}
 }
 if(require.main===module)main().catch(e=>{console.error(e);process.exitCode=1;});
+
+module.exports={swapHelper};

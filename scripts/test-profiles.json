@@ -23,6 +23,8 @@
       "test/short-prize-basket.test.cjs",
       "test/participant-registry.test.cjs",
       "test/direct-buy.test.cjs",
+      "test/pons-curve-buy.test.cjs",
+      "test/pons-v4-buy.test.cjs",
       "test/infinity-buy.test.cjs",
       "test/infinity-buy-evidence.test.cjs",
       "test/pair-auto-buy.test.cjs",
@@ -90,7 +92,10 @@
       "test/launch-source-preflight.test.cjs",
       "test/pair-launch-preview.test.cjs",
       "test/prepare-pair-launch.test.cjs",
-      "test/kt1-buy-rehearsal.test.cjs"
+      "test/kt1-buy-rehearsal.test.cjs",
+      "test/pons-collector.test.cjs",
+      "test/pons-automation.test.cjs",
+      "test/fork-empty-storage.test.cjs"
     ]
   },
   "accounting": {
@@ -352,6 +357,48 @@
     "files": [
       "test/ops-market-quote.test.cjs",
       "test/ops-market-executor.test.cjs"
+    ]
+  },
+  "pons-buy": {
+    "compile": false,
+    "files": [
+      "test/pons-curve-buy.test.cjs",
+      "test/infinity-buy.test.cjs",
+      "test/direct-buy.test.cjs",
+      "test/attempt-lifecycle.test.cjs"
+    ]
+  },
+  "pons-v4-buy": {
+    "compile": false,
+    "files": [
+      "test/pons-v4-buy.test.cjs",
+      "test/pons-curve-buy.test.cjs",
+      "test/infinity-buy.test.cjs",
+      "test/direct-buy.test.cjs",
+      "test/attempt-lifecycle.test.cjs"
+    ]
+  },
+  "pons-cycle-neighbors": {
+    "compile": true,
+    "files": [
+      "test/local-controllers.test.cjs",
+      "test/drand-delivery-worker.test.cjs",
+      "test/attempt-lifecycle-dual.test.cjs"
+    ]
+  },
+  "pons-collector": {
+    "compile": true,
+    "files": [
+      "test/pons-collector.test.cjs"
+    ]
+  },
+  "pons-automation": {
+    "compile": true,
+    "files": [
+      "test/pons-automation.test.cjs",
+      "test/local-scheduler.test.cjs",
+      "test/local-state-lock.test.cjs",
+      "test/fork-empty-storage.test.cjs"
     ]
   }
 }
