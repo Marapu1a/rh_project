@@ -1,11 +1,11 @@
 const {ethers}=require('ethers'),hre=require('hardhat');
 const rpc=(m,p=[])=>hre.network.provider.send(m,p),sent=async tx=>(await tx).wait();
-async function fixture(compiled,{reset=true,quoteAddress,offset=true,minimumUnit=1,launchRules=false}={}){
+async function fixture(compiled,{reset=true,quoteAddress,tokenAddress,offset=true,minimumUnit=1,launchRules=false}={}){
  if(reset)await rpc('hardhat_reset');
  await rpc('hardhat_setCode',['0x0000000000000000000000000000000000000064','0x'+compiled[offset?'OffsetArbSysFixture':'PublicArbSysFixture'].evm.deployedBytecode.object]);
  const provider=new ethers.BrowserProvider(hre.network.provider,undefined,{cacheTimeout:-1}),admin=await provider.getSigner(),other=await provider.getSigner(1),owner=await admin.getAddress();
  const deploy=async(n,args=[])=>{const a=compiled[n],c=await new ethers.ContractFactory(a.abi,a.evm.bytecode.object,admin).deploy(...args);await c.waitForDeployment();return c;};
- const token=await deploy('MockToken'),quote=quoteAddress?new ethers.Contract(quoteAddress,compiled.LocalUSDGFixture.abi,admin):await deploy('LocalUSDGFixture'),registry=await deploy('ParticipantRegistry');
+ const token=tokenAddress?new ethers.Contract(tokenAddress,compiled.MockToken.abi,admin):await deploy('MockToken'),quote=quoteAddress?new ethers.Contract(quoteAddress,compiled.LocalUSDGFixture.abi,admin):await deploy('LocalUSDGFixture'),registry=await deploy('ParticipantRegistry');
  const nonce=await provider.getTransactionCount(owner),address=n=>ethers.getCreateAddress({from:owner,nonce:nonce+n});
  const random=await deploy('DrandRandomAdapter',[address(1),address(2),[1800,30,5,1200,15]]);
  const base={vault:address(3),registry:registry.target,instance:ethers.id('public short fixture'),governor:owner,publisher:owner,provider:random.target,notice:3600,cutoffDelayBlocks:1,maxGasPrice:10n**12n,nativeFloor:0};

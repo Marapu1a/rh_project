@@ -1,5 +1,27 @@
 # Текущий контекст
 
+01.10: владелец допускает ручной/полуручной сбор доступных комиссий с последующей автоматизацией; pending не входит в призовой бюджет. Следующий шаг — внешнее исследование GPT по Pons sources/operator, до реализации collector. [Обращение](GPT_REVIEW_REQUEST.md) обновлено; ответ ещё не получен.
+
+30.09: перенос придержан по решению владельца до внешней проверки. Hook runtime воспроизведён; реальные TOKEN→USDG conversion и escrow credits подтверждены. Factory source не собирается, source escrow/operator не найден; независимый вызов operator-контракта не доказан. [Проверка и вопросы Pons](PONS_VERIFICATION.md).
+
+30.09: по решению владельца начинаем перенос на Pons V2; PAIR сохранён как резервная интеграция на прежних путях и в проверенном локальном ZIP (676 файлов). Шаг 1 выполнен: snapshot/manifest, отдельный draft profile и ABI module. Следующий шаг — PonsCollector + реальные PromoVault funding tests. Runtime/public deployment не переключены. [План переноса](PONS_MIGRATION.md).
+
+30.09: Pons local fork diagnostic PASSED на anchor76626917: launch, curve buy101/sell, probe90/5/5, graduation, v4 buy/sell, operator conversion/claim. Подтверждены creator tax3% +70% base1% при buyback off и зависимость conversion от Pons operator. Следом решение по этой зависимости, production collector/BUY integration; миграция ещё не выполнена. [Результаты](PONS_V2_RESEARCH.md).
+
+30.09: первичная проверка Pons V2 — USDG доступен в UI (graduation8090), live canLaunch владельца=true, fee0.0005ETH, tax cap10%. Открыты точный fee split и зависимость post-graduation conversion от Pons operator. Следом same-block economics и отдельный fork proof; миграция не принята. [Исследование](PONS_V2_RESEARCH.md).
+
+30.09: исследуем самостоятельный запуск на PancakeSwap Infinity по новому запросу владельца; переход с PAIR ещё не принят. Live UI Robinhood ETH/USDG котирует, поддержка собственного fee hook внешним routing не доказана. Найдена официальная форма hook review; текущие collector/BUY завязаны на PAIR. [Результаты и следующий локальный прототип](DIRECT_INFINITY_RESEARCH.md). Прежнее решение о PAIR ниже — исторический контекст текущего сравнения.
+
+Решение владельца30.09: первый запуск остается PAIR Infinity, другие сети позднее. Продолжаем review новой wrapper; подготовлен local-only trace diagnostic. Opening API сейчас503 из-за upstream RPC rate limit, source review остается открытым. [Детали](KT1_BUY_REHEARSAL.md).
+
+Расследование PAIR30.09: новая wrapper хранит прежнюю legacyImplementation; одиночный диагностический launch eth_call со сборщиком прошел. Но появились2непроверенные зависимости, verified source недоступен (Explorer403/Sourcify404/IPFS timeout). Pins не меняли, КТ1 остается BLOCKED до source review. [Evidence и границы](KT1_BUY_REHEARSAL.md).
+
+КТ1 начата, но BLOCKED до fork/BUY: PAIR proxy implementation сменился с0x4AdC… на0x557cb0e797973ef01f0e7fe9de0b75f2b5b587b7 (2RPC подтвердили). Runner same-chain подготовлен, compile и5адресных tests passed; интеграционный путь еще не доказан. Следом review новой implementation, затем повтор КТ1 без обхода pins. [Отчет](KT1_BUY_REHEARSAL.md).
+
+Картинки владельца подготовлены локально: token logo256x256 и preview1080x800, оба PNG<1MiB; web/assets/qianqi-{logo,preview}.png. Metadata draft использует новый logo, старый TOKEN prediction требует пересчета. Не опубликовано; ближайший основной этап остается КТ1. [Детали](LAUNCH_PREPARATION.md).
+
+30.09: прочитан ответ GPT61663a8 (review8192d35), два pagination дефекта сверены с кодом. Подготовлены [КТ1–КТ7](FINAL_CHECKPOINTS.md): same-chain BUY/indexer → funding → draws/payout → recovery/UI → full baseline → конкретный launch review. Ближайший пакет КТ1. Все точки TODO; текущий шаг docs-only, новые тесты/финансовые sends не выполнялись.
+
 30.09: по решению владельца следующий этап — финальный review всей цепочки и воспроизводимый сквозной прогон до mainnet. Текущий пакет фиксируется в git; [обращение GPT](GPT_REVIEW_REQUEST.md) обновлено, [проверки/пробелы](FINAL_TESTING_HANDOFF.md) перечислены. Нового full baseline нет; GPT делает static review/матрицу, Codex выполняет финальные проверки. Public sends закрыты.
 
 30.09: prepare-pair-launch создает draft calldata collector/PAIR и выполняет live read-only simulation: обе eth_call прошли, gas estimates получены (~0.00061634ETH с launch fee только за эти2операции). USDG109.622644 подтверждены. Metadata/настройки draft, public sends нет. Последовательный local fork collector→PAIR прошел; получатель комиссий проверен. Остальные Promo contracts не покрыты оценкой. [Детали](LAUNCH_PREPARATION.md).

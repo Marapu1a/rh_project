@@ -1,0 +1,151 @@
+{
+  "schema": "robinhood-launch-plan-v1",
+  "status": "incomplete-not-executable",
+  "network": {
+    "chainId": 4663,
+    "blockModel": "Nitro-ArbSys",
+    "nativeCurrency": "ETH"
+  },
+  "controllers": {
+    "short": "RobinhoodShortController",
+    "monthly": "RobinhoodMonthlyController",
+    "adapter": "DrandRandomAdapter",
+    "vault": "DualControllerPromoVault",
+    "cutoffMode": "FINALIZED_CHECKPOINT"
+  },
+  "contracts": {
+    "token": null,
+    "registry": null,
+    "vault": null,
+    "short": null,
+    "monthly": null,
+    "adapter": null,
+    "collector": null,
+    "pairSource": null,
+    "buyPolicySource": null,
+    "pool": null,
+    "quote": {
+      "address": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+      "codeHash": "0x864cc9ad53b338b82da1f7cab85ab0b3d5c8861acb422b6fec63cf36234f36a6",
+      "decimals": 6,
+      "observedAtBlock": "0x471e99d"
+    }
+  },
+  "roles": {
+    "governor": "0x098afA6731239a00CE0aff669aaefD16b7C72114",
+    "publisherExecutor": null,
+    "operations": null,
+    "project": "0x098afA6731239a00CE0aff669aaefD16b7C72114"
+  },
+  "product": {
+    "creatorFeeBps": 300,
+    "entryThresholdRaw": "100000000",
+    "nextStartTargetRaw": "100000000",
+    "shortInterval": 21600,
+    "monthlyInterval": 2592000,
+    "creatorAllocationBps": {
+      "promo": 9000,
+      "operations": 500,
+      "project": 500
+    },
+    "shortBudgetMode": "FREE_SHORT",
+    "monthlyPayoutNumerator": 3,
+    "monthlyPayoutDenominator": 4,
+    "monthlyMinimumCurrentRaw": "100000000"
+  },
+  "timingCandidate": {
+    "leadSeconds": "1800",
+    "maxClockLag": "30",
+    "maxClockAhead": "5",
+    "maxFinalizedLag": "1200",
+    "maxBeaconLag": "15",
+    "cutoffDelayBlocks": "1"
+  },
+  "unresolved": {
+    "timingApproval": null,
+    "shortRules": {
+      "version": 1,
+      "pNumerator": 4,
+      "pDenominator": 5,
+      "hNumerator": 1,
+      "hDenominator": 1
+    },
+    "monthlyRules": {
+      "version": 2,
+      "pNumerator": 3,
+      "pDenominator": 4,
+      "hNumerator": 1,
+      "hDenominator": 1
+    },
+    "shortWeights": [
+      7,
+      4,
+      2,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    "minimumUnitRaw": "5000000",
+    "maxShortBudgetRaw": "115792089237316195423570985008687907853269984665640564039457584007913129639935",
+    "rulesNoticeSeconds": null,
+    "maxGasPrice": null,
+    "controllerNativeFloor": null,
+    "archiveRpc": null,
+    "durableRuntime": {
+      "host": "201.51.22.244",
+      "location": "Timeweb Amsterdam",
+      "apiService": "qianqi-api",
+      "status": "readonly-standby",
+      "domain": "qianqi.site",
+      "stateDirectory": "/var/lib/qianqi",
+      "signerCustody": null,
+      "executionEnabled": false
+    },
+    "nativeRefill": null,
+    "monthlyWinnerWeight": "ENTRIES_OVER_ENTRIES_PLUS_ONE_Q128"
+  },
+  "publicExecutionEnabled": false,
+  "evidence": [
+    "../research/public-deployment/rpc-official-2026-09-28.json",
+    "../research/public-deployment/rpc-blockreq-2026-09-28.json"
+  ],
+  "limitation": "A planning record, not executable deployment settings. Nulls must not be replaced with test fixtures. Current public executor remains disabled.",
+  "launch": {
+    "creator": "0x098afA6731239a00CE0aff669aaefD16b7C72114",
+    "name": "QIANQI",
+    "symbol": "QIANQI",
+    "metadataURI": null,
+    "metadataHash": null,
+    "openingProfile": null,
+    "sniperProtection": null,
+    "protectionBlocks": null,
+    "userSalt": null,
+    "vanityNonce": null,
+    "developerBuy": {
+      "enabled": false,
+      "reason": "Initial purchase prepared separately through admitted direct USDG route"
+    },
+    "launchFeeBudgetWei": null
+  },
+  "initialPurchase": {
+    "status": "planning-not-executable",
+    "timing": "after-deployment-and-indexer-admission",
+    "payer": "0x098afA6731239a00CE0aff669aaefD16b7C72114",
+    "recipient": "0x098afA6731239a00CE0aff669aaefD16b7C72114",
+    "quote": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+    "maxWalletDebitRaw": "101000000",
+    "gasBudgetWei": null,
+    "amountOutMinimum": null,
+    "routeVersion": "rh-infinity-exact-input-v1",
+    "expectedIfNetDebitRaw101000000": {
+      "shortEntries": "1",
+      "monthlyEntries": "1",
+      "carryRaw": "1000000"
+    },
+    "authorizationToSend": false
+  }
+}

@@ -2,6 +2,8 @@
   "name": "QIANQI",
   "symbol": "QIANQI",
   "description": "A token to trade. A chance to win. A speculative token with automatic USDG prize draws for eligible purchases. Trading fees and voluntary donations fuel the prizes. No registration, no staking, no extra tasks. Rules and risks at qianqi.site.",
-  "image": "https://qianqi.site/assets/mouse-thinking.png",
-  "links": {"website": "https://qianqi.site"}
+  "image": "https://qianqi.site/assets/qianqi-logo.png",
+  "links": {
+    "website": "https://qianqi.site"
+  }
 }

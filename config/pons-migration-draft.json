@@ -1,0 +1,33 @@
+{
+  "schema": "pons-migration-draft-v1",
+  "status": "local-development-only",
+  "publicSendsEnabled": false,
+  "chainId": 4663,
+  "creatorTaxBps": 300,
+  "buybackEnabled": false,
+  "holderFeeSharing": false,
+  "allocationBps": {
+    "prizes": 9000,
+    "operations": 500,
+    "team": 500
+  },
+  "firstBuyDebitUSDG": "101",
+  "source": {
+    "factory": "0x7eD598BcEf8bd9Edd8C97A195C6d13f40801EC7e",
+    "quote": "0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168",
+    "referenceBlock": 76626917,
+    "requireFreshAdmission": true
+  },
+  "contracts": {
+    "token": null,
+    "collector": null,
+    "curve": null,
+    "poolId": null
+  },
+  "pending": [
+    "production collector and source admission",
+    "curve and v4 BUY decoders",
+    "operator outage handling",
+    "full Promo integration and launch review"
+  ]
+}

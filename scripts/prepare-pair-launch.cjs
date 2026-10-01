@@ -19,7 +19,7 @@ async function prepare(){
  const p=JSON.parse(fs.readFileSync('config/robinhood-launch-plan.json','utf8'));
  const owner=getAddress(p.launch.creator);assert(owner===getAddress(p.roles.governor),'Governor must match this draft deployer');
  const rpc=httpRpc(process.env.RH_RPC_URL||'https://rpc.mainnet.chain.robinhood.com');
- const evidence=await collect(p,{rpc});assert(evidence.preview.candidateUsableForFurtherSimulation,'Fresh source/opening required');
+ const evidence=await collect(p,{rpc});if(!evidence.preview.candidateUsableForFurtherSimulation)throw Object.assign(Error('Fresh source/opening required'),{code:'LAUNCH_PREFLIGHT_BLOCKED',evidence});
  const block=evidence.evidence.source.block,tag=block.number;
  const read=async(to,signature,args=[])=>{const i=new Interface([signature]),f=i.fragments[0];return i.decodeFunctionResult(f,await rpc('eth_call',[{to,data:i.encodeFunctionData(f,args)},tag]));};
  const sources=require('./launch-source-preflight.cjs').inputs(),engine=sources.sources.engine.address,hook=sources.sources.hook.address;

@@ -1,5 +1,14 @@
 # Карта реализации
 
+Текущая адаптация: [Pons migration](PONS_MIGRATION.md); PAIR сохранён как резерв. Отдельные draft config/ABI готовы, production collector и BUY adapters ещё не реализованы.
+
+30.09: [pons-fork-rehearsal.cjs](../scripts/pons-fork-rehearsal.cjs) — отдельный research runner:
+live fork launch→curve BUY/SELL→probe collector90/5/5→graduation→v4 BUY/SELL→
+operator conversion→claim. Exit0 на anchor76626917. Probe contracts не production;
+PromoVault/indexer/tickets не подключены. [Результаты и границы](PONS_V2_RESEARCH.md).
+
+КТ1 начата, но BLOCKED до fork/BUY: PAIR proxy implementation сменился с0x4AdC… на0x557cb0e797973ef01f0e7fe9de0b75f2b5b587b7 (2RPC подтвердили). Runner same-chain подготовлен, compile и5адресных tests passed; интеграционный путь еще не доказан. Следом review новой implementation, затем повтор КТ1 без обхода pins. [Отчет](KT1_BUY_REHEARSAL.md).
+
 30.09: prepare-pair-launch создает draft calldata collector/PAIR и выполняет live read-only simulation: обе eth_call прошли, gas estimates получены (~0.00061634ETH с launch fee только за эти2операции). USDG109.622644 подтверждены. Metadata/настройки draft, public sends нет. Последовательный local fork collector→PAIR прошел; получатель комиссий проверен. Остальные Promo contracts не покрыты оценкой. [Детали](LAUNCH_PREPARATION.md).
 
 30.09: добавлен read-only PAIR launch preview (readiness/opening/source, без calldata). Live12 checks passed; пользовательский creator записан в launch plan, баланс0.00311832ETH прочитан, total deployment cost еще неизвестен. Следом metadata/роли/immutable settings и проверка token/collector prediction перед simulation. [Детали](LAUNCH_PREPARATION.md).

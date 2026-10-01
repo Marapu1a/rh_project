@@ -1,5 +1,7 @@
 # Навигация по документации
 
+Текущая адаптация: [Pons migration](PONS_MIGRATION.md); PAIR сохранён как резерв. Отдельные draft config/ABI готовы, production collector и BUY adapters ещё не реализованы.
+
 ## Для продолжения работы
 
 1. [CURRENT_CONTEXT](CURRENT_CONTEXT.md) — где остановились и ближайший кусок.
@@ -15,6 +17,9 @@
 
 | Задача | Документы |
 |---|---|
+| Альтернативный запуск Pons V2 | [Исследование и local fork диагностика](PONS_V2_RESEARCH.md) |
+| КТ1: непрерывный BUY/indexer | [Runner и блокировка PAIR implementation](KT1_BUY_REHEARSAL.md) |
+| Финальные контрольные точки | [КТ1–КТ7 и критерии PASS](FINAL_CHECKPOINTS.md) |
 | Репетиция запуска | [Команда, профиль, доказательства и оставшиеся границы](RELEASE_REHEARSAL.md) |
 | Локальный сквозной путь | [Общая автоматика Short/Monthly](PROMO_AUTOMATION.md), [автоматический Short](SHORT_AUTOMATION.md), [Infinity→USDG proof](INFINITY_PAYOUT_PROOF.md), [Monthly и общий контур](LOCAL_MONTHLY_EXECUTOR.md), [исполнитель Short](LOCAL_SHORT_EXECUTOR.md), [BUY cycle](LOCAL_BUY_CYCLE.md), [контроллеры](LOCAL_CONTROLLER_SKELETON.md) |
 | Creator allocation / USDG→ETH (design) | [Доли, custody, маршрут и открытые проверки](OPS_REVENUE_FUNDING_DESIGN.md), [USDG→ETH fork proof](OPS_MARKET_PROOF.md), [read-only quote](OPS_MARKET_QUOTE.md), [durable sender](OPS_MARKET_EXECUTOR.md) |

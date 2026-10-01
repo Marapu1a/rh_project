@@ -20,7 +20,8 @@ async function inspect({rpc,expected=inputs()}){
  const read=async(address,signature,args=[])=>{const abi=new Interface([signature]),fn=abi.fragments[0];return abi.decodeFunctionResult(fn,await rpc('eth_call',[{to:address,data:abi.encodeFunctionData(fn,args)},tag]))[0];};
  await Promise.all(Object.entries(expected.sources).map(([name,s])=>check(name+'Runtime',()=>rpc('eth_getCode',[s.address,tag]),code=>code!=='0x'&&keccak256(code)===s.onchainBytecodeHash)));
  await check('quoteRuntime',()=>rpc('eth_getCode',[expected.quote.address,tag]),code=>code!=='0x'&&keccak256(code)===expected.quote.codeHash);
- await check('launchImplementation',()=>rpc('eth_getStorageAt',[expected.proxy,SLOT,tag]),v=>isHexString(v,32)&&v.slice(-40).toLowerCase()===expected.sources.launch.address.slice(2).toLowerCase());
+ const implementation=await check('launchImplementation',()=>rpc('eth_getStorageAt',[expected.proxy,SLOT,tag]),v=>isHexString(v,32)&&v.slice(-40).toLowerCase()===expected.sources.launch.address.slice(2).toLowerCase());
+ out.implementation={expected:expected.sources.launch.address,observed:isHexString(implementation,32)?'0x'+implementation.slice(-40):null};
  await check('engineLaunchpad',()=>read(expected.sources.engine.address,'function launchpad() view returns(address)'),v=>v.toLowerCase()===expected.proxy.toLowerCase());
  await check('engineAdmission',()=>read(expected.sources.engine.address,'function validateLaunchpad(address) view returns(bool)',[expected.proxy]),v=>v===true);
  const decimals=await check('quoteDecimals',()=>read(expected.quote.address,'function decimals() view returns(uint8)'),v=>Number(v)===expected.quote.decimals);

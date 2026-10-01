@@ -1,7 +1,7 @@
 // Local website server with a fixed read-only API proxy. No signer, RPC or public exposure.
 const http=require('node:http'),fs=require('node:fs/promises'),path=require('node:path');
 const root=path.resolve(__dirname,'../web');
-const files=new Map([['/','index.html'],['/app.js','app.js'],['/style.css','style.css'],...['mouse-thinking.png','mouse-happy.png','mouse-error.png','logo-cn.png'].map(n=>['/assets/'+n,'assets/'+n])]);
+const files=new Map([['/','index.html'],['/app.js','app.js'],['/style.css','style.css'],...['mouse-thinking.png','mouse-happy.png','mouse-error.png','logo-cn.png','qianqi-logo.png','qianqi-preview.png'].map(n=>['/assets/'+n,'assets/'+n])]);
 files.set('/concepts/hk/','concepts/hk/index.html');
 files.set('/concepts/hk/style.css','concepts/hk/style.css');
 files.set('/404.css','404.css');

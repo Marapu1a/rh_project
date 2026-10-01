@@ -188,3 +188,15 @@ owner impersonated только локально, баланс не подмен
 Metadata и публичный запуск не опубликованы, prize/BUY/end-to-end не проверены.
 Следующий пакет — реальные роли executor/operations и immutable настройки Promo,
 затем подготовка остальных contracts, metadata freeze и wallet review/signing UI.
+
+## Финальные картинки от владельца
+
+Получены images_for_site/qianqi_logo.png (256x256,17556bytes) и
+qianqi_preniew.png (1080x800,535877bytes). PNG просмотрены, оба менее1MiB.
+Без перекодирования скопированы в web/assets/qianqi-logo.png и qianqi-preview.png;
+исходники сохранены. В metadata draft image теперь квадратная иконка.
+Широкая картинка подготовлена отдельно; поле banner в PAIR не подтверждено,
+не добавлять неподдержанное поле metadata. Local server routes добавлены.
+Файлы пока только локальны, на сервер/PAIR не загружены.
+Изменение metadata image меняет commitment и predicted TOKEN; прежние launch
+calldata/predictions в evidence исторические, повторно использовать для подписи нельзя.
