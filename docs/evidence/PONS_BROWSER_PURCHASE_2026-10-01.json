@@ -1,0 +1,139 @@
+{
+  "date": "2026-10-01",
+  "status": "PONS_BROWSER_PURCHASE_FORK_PASSED",
+  "anchor": {
+    "number": 77427785,
+    "hash": "0x98ad73f041d609398c49b5a86ace6f7523cb59175254d5eec9268d6e4157a4ae"
+  },
+  "publicSends": false,
+  "source": ".local/logs/pons-browser-20261001-b.json",
+  "scope": "Chromium DOM confirmations + real local planner + in-process Hardhat, sessionStorage erased and page reloaded before each receipt check. No wallet extension or public sender.",
+  "assumptions": [
+    "Local impersonation and synthetic USDG funding only",
+    "LocalPonsCollector prototype and real PromoVault; controller is unused hook address, no draws tested",
+    "ABI from current Pons docs/repository, runtime source equivalence not yet proved",
+    "Direct curve BUY replay plus pinned UR route when --v4; open Short/Monthly accounting, no draw settlement or public admission",
+    "BUY uses local unsigned planner, exact approvals and simulated 1% minOut; SELL uses fixture minOut=1. Owner USDG/Permit2 allowances deliberately reduced locally to test recovery.",
+    "Pons sweep operator impersonated ONLY locally to prove conditional conversion; we do not control it on mainnet"
+  ],
+  "steps": [
+    {
+      "kind": "approve-usdg",
+      "venue": "curve",
+      "amountRaw": "101000000",
+      "quoteOut": null,
+      "minimumOut": null,
+      "hash": "0x9ae31d158550594832f33022a71adc19d151b92df5ac5a32acdb1e7a3c47e0ec",
+      "calldataHash": "0xbfb980de1d2e8c0bbe23e79748774582d90cd37a5be1e2d8a8884c0025ddc646"
+    },
+    {
+      "kind": "buy",
+      "venue": "curve",
+      "amountRaw": "101000000",
+      "quoteOut": "29091258220920743123229801",
+      "minimumOut": "28800345638711535691997502",
+      "hash": "0x4b2ebbe2b52b34f6cd07c70c88cdb1140b98dcf3abb85d7b343ea209093f6566",
+      "calldataHash": "0x29ce96652b081e2f70960caa839acbdbdb607c96ab95282ab6c71fe417cd5218"
+    },
+    {
+      "kind": "reset-usdg-approval",
+      "venue": "pool",
+      "amountRaw": "101000000",
+      "quoteOut": null,
+      "minimumOut": null,
+      "hash": "0xa2d15c3adfe097ade496d8297c95727f64559dcc7d73d15a1e49a26178abbbe6",
+      "calldataHash": "0xcbd6108e33dd81f7e87909205e8d21d987835ad3bbdb28e8c3439727795a61aa"
+    },
+    {
+      "kind": "approve-usdg",
+      "venue": "pool",
+      "amountRaw": "101000000",
+      "quoteOut": null,
+      "minimumOut": null,
+      "hash": "0x5492a72b8ada27361d2474419118b75534433150804990c42cd861d7d5cfa30c",
+      "calldataHash": "0xefd34a5cd3eb1014eaba04c3a7bded755c60735936ee2be5dff369b428f3bc78"
+    },
+    {
+      "kind": "approve-router",
+      "venue": "pool",
+      "amountRaw": "101000000",
+      "quoteOut": null,
+      "minimumOut": null,
+      "hash": "0x720a156f11a1ff0e78399f8b6c36ad4de56522724742e9e01f5ce48e91fa894c",
+      "calldataHash": "0x0f0a456582cdc618a05509d24e412d31a62f77a14908300c6305aa65e685f7fc"
+    },
+    {
+      "kind": "buy",
+      "venue": "pool",
+      "amountRaw": "101000000",
+      "quoteOut": "2422641957676279652316312",
+      "minimumOut": "2398415538099516855793148",
+      "hash": "0xbfcfa7d7796cac70c6127fc99c0037f50ba5014f164e8e866001c5e1b304442e",
+      "calldataHash": "0xed7e9ef8ffc3d559b51a053346915e1eb8c165dbd851bc0db3b38d0e734417b7"
+    },
+    {
+      "kind": "approve-usdg",
+      "venue": "pool",
+      "amountRaw": "60000000",
+      "quoteOut": null,
+      "minimumOut": null,
+      "hash": "0xcddc29fc1522d28e846579ee45c2495c87320be604ba7d3b002f66530ad0cbc7",
+      "calldataHash": "0x83402e6ee4d3c5d7d09dcc959eb37bfbc22b7bff4cba4843cb61011d9dd1c813"
+    },
+    {
+      "kind": "approve-router",
+      "venue": "pool",
+      "amountRaw": "60000000",
+      "quoteOut": null,
+      "minimumOut": null,
+      "hash": "0x9edaccb2f6d7b42edf1d0f892599c9e4c529040a788f898cc7cfbef572e8bef4",
+      "calldataHash": "0x6e8c98ef5331d092bfbd99477628f1d76d03f4a04585e2eafb8bbd55349a4079"
+    },
+    {
+      "kind": "buy",
+      "venue": "pool",
+      "amountRaw": "60000000",
+      "quoteOut": "1411071323138901626427536",
+      "minimumOut": "1396960609907512610163260",
+      "hash": "0xb44a302643334b7e50607247ab1ef93cf0ef0afb58fbcb5d2ca804de8b9b8047",
+      "calldataHash": "0xc67a4919ca71563521f84f113207aa2dea31a530a61ea01d1154ccfa83b1b018"
+    },
+    {
+      "kind": "approve-usdg",
+      "venue": "pool",
+      "amountRaw": "40000000",
+      "quoteOut": null,
+      "minimumOut": null,
+      "hash": "0x2edeaeb9d9d879c4de7c477a14fd97604d1a686f40c2acc7dc48392df23b62a4",
+      "calldataHash": "0x3e38cba72ff524a999e4174581fa772fccb9f9cd3e9ac5a7e7b2771f54e66968"
+    },
+    {
+      "kind": "approve-router",
+      "venue": "pool",
+      "amountRaw": "40000000",
+      "quoteOut": null,
+      "minimumOut": null,
+      "hash": "0xda4fd5b80ac164473aaa19de12bb58ecac68550a97ee5fe5e013351bb994271c",
+      "calldataHash": "0x02fc54b1e646bf835bde5e4ef7423c9501c4f0ef24fb7f0152d78ff1157686f3"
+    },
+    {
+      "kind": "buy",
+      "venue": "pool",
+      "amountRaw": "40000000",
+      "quoteOut": "929352225051398728156436",
+      "minimumOut": "920058702800884740874871",
+      "hash": "0x7cf06ee903926b587f44d9d0404b918d9a5c718d3f9256539f5afa7ca801b13b",
+      "calldataHash": "0x32b6a21fc4133f433c3137bcb37047314a580917afd5b02658420d70ceeae854"
+    }
+  ],
+  "recoveredRequests": 12,
+  "journal": {
+    "pending": null,
+    "completed": 12
+  },
+  "targetedTests": {
+    "passed": 18,
+    "fullSuite": false
+  },
+  "firstRun": "a failed ledger 60+40 expectation: after reload amount defaulted to 101. Fixed amount restoration from saved plan; fractional reload regression added."
+}

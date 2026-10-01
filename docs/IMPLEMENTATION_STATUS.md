@@ -1,5 +1,19 @@
 # Карта реализации
 
+[Полный indexed coordinator cycle](PONS_INDEXED_CYCLE.md) — локальный PASS01.10; следующий шаг — независимое review.
+
+[Pons: допуск политики и чтение сохранённого индекса](PONS_INDEXED_COORDINATOR.md) — локальная связка проверена; полный indexed draw cycle следующий.
+
+01.10: persistent-buy-indexer.cjs кеширует fixed-height eth_call; pons-indexer-rehearsal.cjs проверяет CLI restart/reorg на local fork. [Evidence и границы](PONS_PERSISTENT_INDEXER.md).
+
+01.10: scripts/pons-browser-bridge.cjs + pons-browser-rehearsal.cjs связывают экран с Hardhat через Playwright bindings. Exact request journal/canonical receipt; fork и18 tests PASS. [Границы](PONS_BROWSER_BRIDGE.md).
+
+01.10: web/purchase-demo/ — отдельный opt-in экран и simulated wallet; serve-site включает его только через RH_PURCHASE_DEMO=1. [Код, проверки и ограничения](PONS_PURCHASE_UI.md).
+
+Локальный direct BUY: scripts/pons-direct-purchase.cjs готовит unsigned next step, scripts/pons-direct-purchase-rehearsal.cjs исполняет только в проверенном Hardhat fork. [Границы и проверки](PONS_DIRECT_PURCHASE.md). Фронт/public sender не включены.
+
+01.10: основной Pons journal выделен в scripts/pons-transaction-journal.cjs без изменения формата; coordinator использует его же. Manual inspect перечисляет уникальных получателей всех policy, partial reads видны явно. Добавлены process-kill tests и профиль pons-recovery:25 адресных checks PASS; [границы](PONS_AUTOMATION.md).
+
 01.10: добавлены scripts/pons-automation.cjs, run-pons-automation.cjs и automation rehearsal. Используют существующие scheduler/drand, durable intent/receipt journal, independent funding, payout queue, газовые лимиты и --drain. Только идентифицированный локальный fork; fork77338337 PASS,25/25 соседних+7/7 новых адресных tests. [Модуль](PONS_AUTOMATION.md).
 
 01.10: [pons-promo-cycle.cjs](../scripts/pons-promo-cycle.cjs), runner --cycle: реальные Robinhood controllers/DrandRandomAdapter/DualControllerPromoVault на локальном fork, existing Short/Monthly executors, persisted drand journal. Использует launch-plan math; только constructor clocks компилируются с backdating в памяти. Fork77287946 PASS,16/16 соседних tests. Production Solidity/автоматика не переключены. [Evidence](PONS_PROMO_CYCLE.md).

@@ -95,7 +95,13 @@
       "test/kt1-buy-rehearsal.test.cjs",
       "test/pons-collector.test.cjs",
       "test/pons-automation.test.cjs",
-      "test/fork-empty-storage.test.cjs"
+      "test/fork-empty-storage.test.cjs",
+      "test/pons-crash-recovery.test.cjs",
+      "test/pons-direct-purchase.test.cjs",
+      "test/purchase-review.test.cjs",
+      "test/pons-browser-bridge.test.cjs",
+      "test/pons-persistent-indexer.test.cjs",
+      "test/pons-policy-indexer.test.cjs"
     ]
   },
   "accounting": {
@@ -399,6 +405,57 @@
       "test/local-scheduler.test.cjs",
       "test/local-state-lock.test.cjs",
       "test/fork-empty-storage.test.cjs"
+    ]
+  },
+  "pons-recovery": {
+    "compile": true,
+    "files": [
+      "test/pons-collector.test.cjs",
+      "test/pons-automation.test.cjs",
+      "test/pons-crash-recovery.test.cjs",
+      "test/drand-delivery-worker.test.cjs"
+    ]
+  },
+  "pons-direct-purchase": {
+    "compile": false,
+    "files": [
+      "test/pons-direct-purchase.test.cjs",
+      "test/pons-v4-buy.test.cjs",
+      "test/pons-curve-buy.test.cjs"
+    ]
+  },
+  "purchase-ui": {
+    "compile": false,
+    "files": [
+      "test/purchase-review.test.cjs",
+      "web/purchase-demo.test.cjs"
+    ]
+  },
+  "pons-browser": {
+    "compile": false,
+    "files": [
+      "test/pons-browser-bridge.test.cjs",
+      "test/purchase-review.test.cjs",
+      "web/purchase-demo.test.cjs"
+    ]
+  },
+  "pons-indexer": {
+    "compile": false,
+    "files": [
+      "test/pons-persistent-indexer.test.cjs",
+      "test/persistent-buy-indexer.test.cjs",
+      "test/pons-curve-buy.test.cjs",
+      "test/pons-v4-buy.test.cjs"
+    ]
+  },
+  "pons-policy-indexer": {
+    "compile": false,
+    "files": [
+      "test/pons-policy-indexer.test.cjs",
+      "test/pons-persistent-indexer.test.cjs",
+      "test/pons-automation.test.cjs",
+      "test/persistent-buy-indexer.test.cjs",
+      "test/direct-buy.test.cjs"
     ]
   }
 }

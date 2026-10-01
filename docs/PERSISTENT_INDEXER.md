@@ -1,5 +1,10 @@
 # Постоянное накопление BUY history
 
+[Pons: допуск политики и чтение сохранённого индекса](PONS_INDEXED_COORDINATOR.md) — локальная связка проверена; полный indexed draw cycle следующий.
+
+01.10: добавлен cache фиксированных eth_call для исторических Pons bindings.
+[Pons restart/reorg/fork proof и границы](PONS_PERSISTENT_INDEXER.md).
+
 29.09.2026. `scripts/persistent-buy-indexer.cjs` — отдельный read-only процесс.
 Подключается к scheduler явно через config.indexer; сам не отправляет транзакции. Это слой накопления,
 не готовый production indexer или новый источник полномочий на freeze.

@@ -1,5 +1,28 @@
 # Текущий контекст
 
+01.10: indexed Pons coordinator PASS на fork77469814: 13 проходов, отставание индекса блокирует новые draws, оба finalized checkpoints, Short/Monthly, live drand, stop/resume и выплаты.21 адресная проверка PASS. Public sends закрыты; последовательный локальный прогон, не production/watch. Далее — независимое review накопленного пакета. [Результат](PONS_INDEXED_CYCLE.md).
+
+01.10: Pons policy admission и подключение сохранённого индекса к coordinator реализованы.44 адресных tests PASS; real-runtime fork77447532 PONS_ADMITTED_INDEXER_PASSED: настоящий локальный BuyPolicySource, чтение admitted snapshot,3 перезапуска, rollback и outage/resume. Public sends закрыты. Следующий шаг — полный indexed coordinator cycle с finalized cutoff; в этом пакете он не выполнялся. [Результат и границы](PONS_INDEXED_COORDINATOR.md).
+
+01.10: Pons persistent indexer PASS на fork77435048: bounded catch-up,3 отдельных CLI запуска, без исторических RPC reads на повторе, rollback1 блока с BUY40, outage/resume.21 адресный сценарий закрыт; не full suite/kill/power-loss. Cache теперь включает fixed-height eth_call bindings. Research snapshot остаётся unadmitted. Далее — Pons policy admission и чтение snapshot coordinator; public service закрыт. [Результат](PONS_PERSISTENT_INDEXER.md).
+
+
+01.10: browser → real local planner/fork PASS77427785:12 запросов/12 reload recoveries,4 BUY101/101/60/40, exact calldata и canonical receipt checks;18 адресных tests PASS. Исправлен найденный fork баг восстановления суммы101 вместо60/40. Далее — Pons persistent BUY indexer/admission, restart/reorg. Публичные отправки и wallet extensions не включены. [Результат](PONS_BROWSER_BRIDGE.md).
+
+
+01.10: локальный purchase browser rehearsal готов на127.0.0.1:4174/purchase-demo/ (opt-in).13 адресных UI/state сценариев и16 существующих site/wallet tests PASS; это simulated adapter без кошелька/RPC. Следующий шаг — связать browser flow с local-only planner/fork и проверить exact payload/receipt recovery; public gate закрыт. [Границы](PONS_PURCHASE_UI.md).
+
+
+01.10: local direct USDG purchase PASS: fork77402505,12 последовательных запросов/4 BUY, quote и1% minOut, недостаточные/истёкшие approvals, учёт101 и60+40.15 адресных tests PASS; не full suite и не browser wallet. Фронт/public sender не включены. Далее — локальный browser review flow с account/chain/reject/pending проверками, затем admission/indexer. [Детали](PONS_DIRECT_PURCHASE.md).
+
+
+01.10: read-only UI Pons выявил direct curve/v4 совместимый формат, но также автоматический 0x route и wallet batching. Полный UI admission остаётся частичным. Следующий bounded step — управляемый direct USDG BUY с последовательными approvals и unsigned/fork проверкой; затем persistent indexer. Runtime/правила не менялись, публичных отправок нет. [Результат](PONS_UI_ROUTING.md).
+
+
+01.10: пакет после GPT review выполнен локально: historical recipients в manual inspect/pay, crash recovery main/drand (6 сценариев внутри1 теста),25 адресных tests вместе с соседями PASS. Ненулевые reserved/claimable сохранены; known hash без повтора, unknown hash blocked; stale lock требует явной проверки. Transparency обновлена,390/1440 browser PASS. Это31337 journal/worker proof, не новый полный Pons fork/CLI crash admission. Далее — фактический UI BUY route Pons, затем persistent indexer/admission. [Результат и границы](PONS_AUTOMATION.md).
+
+01.10: получен и сверен с кодом GPT review1b70082 для32d2568. Подтверждены слепота manual plan к старым credits и устаревшая transparency; уточнены funding isolation, full replay и пределы crash coverage. Следующий ограниченный пакет — обнаружение старых получателей и настоящий process-kill/recovery, затем UI routing/indexer admission. Реализация не менялась, тесты не повторялись. [Разбор и PASS](PONS_REVIEW_TRIAGE.md).
+
 01.10: подготовлен пакет внешнего статического review Pons MVP относительно67cc1aa. До следующего технического шага разбираем findings GPT. Обновлены [обращение](GPT_REVIEW_REQUEST.md) и [компактное evidence](evidence/PONS_AUTOMATION_2026-10-01.json); прежнее исследование архивировано. Новый ответ пока не получен. В этом handoff код не менялся, продуктовые тесты не повторялись.
 
 01.10: локальный Pons coordinator завершён: fork77338337 PONS_AUTOMATION_PASSED, 13 проходов/22 уникальные транзакции, live drand, stop/resume, оба draw и claims. Выплачено114.657578USDG; reserved/claimable=0; повторный проход без отправок,86 consumed+1 OPEN каждого вида.25/25 scheduler/locks и7/7 новых адресных проверок PASS (не full suite). Далее — сверка фактического BUY routing UI Pons; публичный admission/service ещё закрыты. [Evidence и границы](PONS_AUTOMATION.md).

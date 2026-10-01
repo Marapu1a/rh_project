@@ -1,5 +1,7 @@
 # Pons: локальный постоянный исполнитель
 
+[Pons: допуск политики и чтение сохранённого индекса](PONS_INDEXED_COORDINATOR.md) — локальная связка проверена; полный indexed draw cycle следующий.
+
 Статус 01.10.2026: локальный coordinator и сквозной fork прошли проверку. Это прототип на идентифицированном Hardhat fork Robinhood. Публичная отправка и production deployment не разрешены этим модулем. PAIR сохранён.
 
 `scripts/run-pons-automation.cjs` объединяет существующий scheduler Short/Monthly, drand worker, очередь выплат и Pons collector. Правила билетов и призов не меняются.
@@ -17,6 +19,48 @@ node scripts/run-pons-automation.cjs --config CONFIG.json --state STATE.json --r
 Порядок прохода: восстановление журналов → известные выплаты → drand → завершение существующих розыгрышей → выплаты → доступные комиссии → новые задания scheduler. Sweep, pull и pay проверяются отдельно: ожидание конвертации TOKEN у Pons не блокирует уже начисленный USDG. Неподтверждённая отправка останавливает новые транзакции.
 
 ## Восстановление и границы
+
+01.10, после review: основной transaction journal вынесен без изменения формата и
+порядка записи в [pons-transaction-journal.cjs](../scripts/pons-transaction-journal.cjs).
+Coordinator использует его же `createBoundary/reconcilePending`, проверенные новым
+process-crash тестом. Это не новая миграция journal и не расширение public admission.
+
+### Проверка настоящего process crash
+
+`node --test test/pons-crash-recovery.test.cjs` —1/1 PASS, шесть сценариев внутри
+теста: main/drand × потерянный hash / сохранённый hash / receipt status0.
+Лог `.local/logs/pons-crash-final.txt`, данные `.local/logs/pons-crash-*`.
+В каждом сценарии отдельный дочерний Node-процесс принудительно завершается
+SIGKILL после реальной отправки, пока исходный Hardhat узел продолжает работать.
+
+- До записи hash остаётся intent, после записи hash — известная pending tx.
+- Повторный запуск со stale lock сначала отказывается работать. Только тестовый
+  родитель после подтверждённого выхода владельца снимает свой конкретный lock;
+  байты journal не меняются. Это явная процедура оператора, не автоматический unlock.
+- Unknown hash остаётся blocked; known hash сверяется по receipt без повторной tx.
+  Для status0 специально отправляется принятая узлом транзакция с недостаточным
+  execution gas; до mining pendingReceipt, после mining сохраняется status0.
+- Основной журнал обслуживает реальный collector pay; drand worker использует
+  настоящий adapter и сохранённый BLS vector. После known-hash recovery drand
+  завершает deliver, следующий запуск не отправляет ничего.
+- Одновременно существуют ненулевые Short reserved и уже назначенный Monthly
+  claimable; оба значения сохраняются через crash/reconciliation/delivery.
+
+**Границы:** это изолированная сеть31337, синтетические balances/participants и
+исторический drand vector. Не новый Pons4663 fork и не полный coordinator CLI/watch
+при process kill. Основной журнал проверяется через тот же выделенный helper;
+бюджеты/scheduler orchestration не воспроизводятся в этом дочернем процессе.
+Главный и drand журналы убиваются по отдельности, не вложенные locks одновременно.
+Отказ диска/питания, kill во время atomic rename, отдельное окно после receipt до
+save, полный reorg/restart indexer ещё не покрыты этим тестом. Existing unit guards
+на reorg не равны такому интеграционному доказательству.
+
+Соседние проверки01.10:24/24 collector/automation/drand прошли; первоначальный batch
+24/25 выявил ошибку тестового gas override (ниже intrinsic gas), не дефект journal.
+После исправления только crash тест повторён и прошёл. Итого25 адресных tests,
+не full suite. Новый профиль `pons-recovery` содержит эти четыре test-файла.
+
+### Рабочие ограничения
 
 - Главный журнал записывает намерение до отправки, затем hash/nonce и подтверждённый receipt. Scheduler и drand используют дочерние журналы `.scheduler` и `.rng`.
 - Известный hash сверяется с каноническим блоком, sender, nonce, адресом, calldata, value и статусом. При неизвестном hash, незавершённом receipt или реорганизации автоматическая повторная отправка запрещена: требуется разбор состояния. Не удалять журнал для обхода остановки.

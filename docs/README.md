@@ -1,5 +1,21 @@
 # Навигация по документации
 
+[Полный indexed coordinator cycle](PONS_INDEXED_CYCLE.md) — локальный PASS01.10; следующий шаг — независимое review.
+
+[Pons: допуск политики и чтение сохранённого индекса](PONS_INDEXED_COORDINATOR.md) — локальная связка проверена; полный indexed draw cycle следующий.
+
+Pons: [постоянный индексатор, restart и reorg](PONS_PERSISTENT_INDEXER.md).
+
+Pons: [browser → настоящий local fork, exact payload и recovery](PONS_BROWSER_BRIDGE.md).
+
+Pons: [локальный browser purchase flow и проверки](PONS_PURCHASE_UI.md).
+
+Pons: [прямой USDG BUY — локальный planner и wallet rehearsal](PONS_DIRECT_PURCHASE.md).
+
+Pons: [проверка UI routing и границы учёта](PONS_UI_ROUTING.md).
+
+Pons: [разбор внешнего review и следующий пакет](PONS_REVIEW_TRIAGE.md).
+
 Pons: [локальный coordinator, journal и recovery](PONS_AUTOMATION.md).
 
 Pons полный локальный цикл: [покупки, funding, Short/Monthly, drand, выплаты и восстановление](PONS_PROMO_CYCLE.md).

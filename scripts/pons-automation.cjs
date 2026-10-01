@@ -5,13 +5,16 @@ const {sendLocalTransaction,withTransactionBoundary}=require('./local-receipt.cj
 const {runScheduler}=require('./local-promo-scheduler.cjs'),{runDrandDelivery}=require('./drand-delivery-worker.cjs');
 const {inspect,ABI}=require('./pons-collector-manual.cjs'),V=require('./pons-v4-buy.cjs');
 const check=(v,m)=>{if(!v)throw Error(m);},same=(a,b)=>String(a).toLowerCase()===String(b).toLowerCase();
-async function reconcilePending(state,save,provider,sender){
- const p=state.pending;if(!p)return null;
- if(!p.transactionHash)return {status:'blocked',reason:'unknownHash'};
- const r=await provider.getTransactionReceipt(p.transactionHash);if(!r)return {status:'blocked',reason:'pendingReceipt'};
- const tx=await provider.getTransaction(p.transactionHash),b=await provider.getBlock(r.blockNumber);
- if(!tx||!b||!same(b.hash,r.blockHash)||!same(r.hash,p.transactionHash)||!same(tx.hash,p.transactionHash)||tx.nonce!==p.nonce||!same(tx.from,sender)||!same(tx.to,p.target)||!same(tx.data,p.data)||BigInt(tx.value||0)!==BigInt(p.value||0)||![0,1].includes(r.status))return {status:'blocked',reason:'unconfirmedReceipt'};
- state.lastResolved={...p,status:r.status,blockNumber:r.blockNumber,blockHash:r.blockHash};delete state.pending;save(state);return null;
+const {reconcilePending,createBoundary}=require('./pons-transaction-journal.cjs');
+function schedulerConfigFor(c){
+ const base={schema:'robinhood-promo-scheduler-v1',manifest:c.manifest,lifecycle:c.lifecycle,campaignId:'1',shortBudgetMode:'FREE_SHORT',chunkSize:64};
+ if(c.indexer!==undefined||c.buyPolicy!==undefined){
+  check(c.buyPolicy&&c.indexer,'Pons indexed mode requires policy and indexer together');
+  check(c.buyPolicy.genesisHash===require('./direct-buy.cjs').hash(c.manifest)&&c.buyPolicy.instanceId===c.lifecycle.instanceId&&String(c.buyPolicy.chainId)===String(c.manifest.chainId),'Pons policy identity mismatch');
+  check(typeof c.indexer.statePath==='string'&&path.isAbsolute(c.indexer.statePath)&&Number.isInteger(c.indexer.maxAgeSeconds)&&c.indexer.maxAgeSeconds>0&&c.indexer.maxAgeSeconds<=3600,'Invalid Pons indexer config');
+  return {...base,cutoffMode:'FINALIZED_CHECKPOINT',buyPolicyMode:'admitted',buyPolicy:c.buyPolicy,indexer:c.indexer};
+ }
+ return {...base,cutoffMode:'LOCAL_HEAD',ponsRehearsal:true,buyPolicyMode:'unadmitted'};
 }
 function validate(c){
  check(c.schema==='pons-rehearsal-automation-v1','Explicit Pons rehearsal config required');V.validate(c.manifest);
@@ -25,6 +28,7 @@ function validate(c){
  check(/^0x[0-9a-fA-F]{64}$/.test(c.instanceId),'Explicit Hardhat instance required');
  check(c.deliveryJob.adapter&&same(c.deliveryJob.short,c.lifecycle.source)&&same(c.deliveryJob.monthly,c.lifecycle.monthlySource),'RNG binding mismatch');
  check(c.campaignId==='1'&&Array.isArray(c.recipients)&&c.recipients.length===3&&same(c.recipients[0],c.vault)&&c.recipients.every(ethers.isAddress),'Funding policy required');
+ schedulerConfigFor(c);
 }
 async function runPonsAutomation({provider,executor,config:c,rpcUrl,statePath,signal,drain=false,receiptTimeoutMs=30000},{onStep=()=>{},getBeacon}={}){
  validate(c);check(same(await executor.getAddress(),c.executor)&&executor.provider===provider,'Executor/provider mismatch');
@@ -32,7 +36,7 @@ async function runPonsAutomation({provider,executor,config:c,rpcUrl,statePath,si
   const meta=await provider.send('hardhat_metadata',[]);check(meta.instanceId===c.instanceId&&Number(meta.forkedNetwork?.chainId)===4663,'Wrong local Robinhood fork');
   const compiled=require('./compile.cjs').compile(),contract=(name,address)=>new ethers.Contract(address,compiled[name].abi,provider);
   const short=contract('RobinhoodShortController',c.lifecycle.source),monthly=contract('RobinhoodMonthlyController',c.lifecycle.monthlySource),vault=contract('DualControllerPromoVault',c.vault),adapter=contract('DrandRandomAdapter',c.deliveryJob.adapter),collector=new ethers.Contract(c.collector,ABI,provider);
-  const schedulerConfig={schema:'robinhood-promo-scheduler-v1',manifest:c.manifest,lifecycle:c.lifecycle,cutoffMode:'LOCAL_HEAD',ponsRehearsal:true,buyPolicyMode:'unadmitted',campaignId:'1',shortBudgetMode:'FREE_SHORT',chunkSize:64};
+  const schedulerConfig=schedulerConfigFor(c);
   const file=path.resolve(statePath),identity={config:c,rpcUrl,sender:c.executor};
   return withState(file,identity,async(state,save)=>{
    const steps=[],results={},result=(status,reason)=>({status,reason,steps,results,publicSends:false});let sentCount=0;
@@ -55,10 +59,7 @@ async function runPonsAutomation({provider,executor,config:c,rpcUrl,statePath,si
     if(await provider.getBalance(c.executor)<BigInt(c.nativeFloor)+calls*BigInt(c.gasLimit)*BigInt(c.maxGasPrice))wait('nativeFunding');
     if(request.gasLimit&&BigInt(request.gasLimit)>BigInt(c.gasLimit))wait('gasBound');
    }
-   const boundary={preflight:guard,before:async(request,action)=>{await guard(request,action);check(!state.pending,'Unresolved intent');state.pending={action,target:request.to,data:request.data,value:String(request.value||0),from:c.executor};save(state);},sent:async tx=>{state.pending={...state.pending,transactionHash:tx.hash,nonce:tx.nonce};save(state);},confirmed:async r=>{
-    check(state.pending&&same(r.hash,state.pending.transactionHash)&&same((await provider.getBlock(r.blockNumber))?.hash,r.blockHash),'Noncanonical receipt');
-    const s={...state.pending,status:r.status,blockNumber:r.blockNumber,blockHash:r.blockHash};state.lastResolved=s;delete state.pending;save(state);steps.push(s);sentCount++;await onStep(s);
-   }};
+   const boundary=createBoundary({state,save,provider,sender:c.executor,guard,onConfirmed:async s=>{steps.push(s);sentCount++;await onStep(s);}});
    const deliver={provider,adapter,executor,job:c.deliveryJob,statePath:file+'.rng',signal,receiptTimeoutMs};
    const schedule={provider,short,monthly,publisher:executor,executor,config:schedulerConfig,rpcUrl,statePath:file+'.scheduler',signal,receiptTimeoutMs};
    async function send(method,args=[]){const price=(await provider.getFeeData()).gasPrice;return sendLocalTransaction(method,args,{type:2,maxFeePerGas:price,maxPriorityFeePerGas:0},{signal,receiptTimeoutMs});}
@@ -118,4 +119,4 @@ async function runPonsAutomation({provider,executor,config:c,rpcUrl,statePath,si
   });
  });
 }
-module.exports={validate,reconcilePending,runPonsAutomation};
+module.exports={validate,reconcilePending,runPonsAutomation,schedulerConfigFor};

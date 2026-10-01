@@ -1,5 +1,11 @@
 # Одностраничный сайт QIANQI
 
+01.10: scripts/pons-browser-bridge.cjs + pons-browser-rehearsal.cjs связывают экран с Hardhat через Playwright bindings. Exact request journal/canonical receipt; fork и18 tests PASS. [Границы](PONS_BROWSER_BRIDGE.md).
+
+01.10: web/purchase-demo/ — отдельный opt-in экран и simulated wallet; serve-site включает его только через RH_PURCHASE_DEMO=1. [Код, проверки и ограничения](PONS_PURCHASE_UI.md).
+
+01.10: локальная transparency теперь описывает полный лабораторный cycle и coordinator, planned stop и тестовые ограничения; внешний source review датирован отдельно. Chromium390/1440, HTTP200, без overflow/page errors. На сервер не публиковалось.
+
 01.10: local /transparency/ (web/transparency/index.html + style.css), ссылка в HK footer. Датированные факты/ожидания Pons, бюджет только по фактическому USDG, внешние evidence links. Не live monitor и не deployed. Browser390/1440 без overflow/page errors, footer navigation PASS. При deployment включить каталог transparency в release.
 
 30.09: HK release data-20260930 на qianqi.site: overview/reserves/history, frozen tickets, суммы и tx наград. API за Nginx работает в standby до deployment. DNS/HTTPS и renewal dry-run прошли. [Детали, rollback и проверки](PUBLIC_STATUS_API.md).

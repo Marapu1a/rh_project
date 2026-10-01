@@ -78,6 +78,23 @@ owner/operator; threshold minOut0 и широкий price limit test-router, con
 
 ## Ручной runner
 
+01.10, после review: inspect перечисляет получателей всех policy1…campaignId и
+читает общий credit каждого адреса один раз. `payouts` — список уникальных адресов,
+истории их кампаний и имён действий `pay:0x…`. Старые неоплаченные ops/team остаются
+видны после rollover. `pay-prizes/pay-ops/pay-team` — совместимые алиасы текущих
+ролей; они могут ссылаться на тот же адрес, поэтому для обхода выплат использовать
+именно `payouts`, а не все ключи actions.
+
+`policyScan.complete=false`, `policyScan.errors` и `policyError` показывают неполное
+чтение истории; известные адреса и доступные выплаты не скрываются. Это не полная
+сводка задолженности при ошибках чтения. После каждой отправки нужно новое inspect.
+История policy читается целиком; для большого числа кампаний потребуется отдельная
+оптимизация. Admission coordinator по-прежнему ограничен campaign1.
+
+Проверка01.10:9/9 collector tests PASS в `.local/logs/pons-recovery-review-tests.txt`:
+A/B → C/D → A/A, старые и новые credits, дедупликация и повторный pay; отдельный
+отказ чтения исторической policy. Контракт/90/5/5 не менялись.
+
 [pons-collector-manual.cjs](../scripts/pons-collector-manual.cjs) без execute только
 читает snapshot и независимо симулирует готовые действия. Никаких private keys.
 

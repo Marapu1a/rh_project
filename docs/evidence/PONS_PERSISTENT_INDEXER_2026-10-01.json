@@ -1,0 +1,32 @@
+{
+  "date": "2026-10-01",
+  "anchor": {
+    "number": 77435048,
+    "hash": "0xa8c9261d823deaab7b56bf1ba573bcc0b4efc5456762852013d58ab814b90de9"
+  },
+  "publicSends": false,
+  "source": ".local/logs/pons-indexer-20261001-a.json",
+  "status": "PONS_PERSISTENT_INDEXER_PASSED",
+  "firstBatch": 77435058,
+  "head": 77435087,
+  "removedBlocks": 1,
+  "childRestarts": 3,
+  "noHistoricalReadsOnRestart": true,
+  "ledgerHash": "0xa4093a2c62ee684362f797b94786503891392629b81d3fcd23d01a00a27e1858",
+  "policyMode": "unadmitted",
+  "publicConsumerBlocked": true,
+  "assumptions": [
+    "Local latest is mapped to finalized only in read-only rehearsal RPC; not mainnet finality proof",
+    "Additional 40 USDG BUY is reverted on the local fork; frozen datasets/claims are not changed"
+  ],
+  "targetedTests": {
+    "passed": 21,
+    "fullSuite": false
+  },
+  "limits": [
+    "Finalized tag locally mapped to latest for rehearsal only",
+    "Orderly child-process restarts, not process-kill or power-loss proof",
+    "Historical RPC reads cached; CPU replay and JSON persistence remain linear",
+    "Public policy admission and scheduler consumption remain blocked"
+  ]
+}

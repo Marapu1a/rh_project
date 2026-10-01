@@ -1,0 +1,204 @@
+{
+  "date": "2026-10-01",
+  "status": "PONS_INDEXED_AUTOMATION_PASSED",
+  "anchor": {
+    "number": 77469814,
+    "hash": "0x37b49912119cc74e32c4f2adfdd8e4dfe4a0f5fcfe93932fe02ca2ee136df2e8"
+  },
+  "reportSha256": "7c2fc5bd9ce05e511429b2a89e44a4525cf32d40d4488d146d5bacdecbbb47c3",
+  "publicSends": false,
+  "runs": 13,
+  "steps": [
+    {
+      "action": "pull",
+      "hash": "0x50355ff6f4cb06c4b5f9cc7221a50543df86d0b3620c4ab35af7408d94b84cf1"
+    },
+    {
+      "action": "pay",
+      "hash": "0x53f78b6a0e1e1d2da280d33059a95e5c3d44ae9220598dcb2ebc915fb9753b5c"
+    },
+    {
+      "action": "pay",
+      "hash": "0x37d93d919c1f856f485f9153b8ec2557f1a811e67197df663d8c885327e360b2"
+    },
+    {
+      "action": "pay",
+      "hash": "0x786e114ae9ea5baa79c567e02434cb85bfbb67c704452b8c268829cd64b91814"
+    },
+    {
+      "action": "checkpointCutoff",
+      "hash": "0xdbdda4787692e00bfb0d3fda116801f09f5a59df49ac43ce606fc395f0a25993"
+    },
+    {
+      "action": "checkpointCutoff",
+      "hash": "0x2f00e8f7a848c0ed5fb6d12685d3642f94accc08e5f0530de8726fa206857cbb"
+    },
+    {
+      "action": "begin",
+      "hash": "0xb33c1982a9d3f4eb06293a67cfc0d2bbc98924c85e323b582253a856749c1890"
+    },
+    {
+      "action": "beginMonth",
+      "hash": "0xeb46cc26bba70d8cc30b255074b1f4db3a1db05711b31d7eeb9c45cf68217669"
+    },
+    {
+      "action": "publish",
+      "hash": "0x3b4a58499b99ca424332557ce36d6523cc05f43c08c7bc6f00d9de650d05fd6a"
+    },
+    {
+      "action": "publishMonth",
+      "hash": "0x815f5650eaff68ebeda6bd065c8819c0a58f4a21137b142755c45bf2837558f8"
+    },
+    {
+      "action": "seal",
+      "hash": "0xc2c0bfed97dac29eaf263d5392753ffe902782f3b13a9001d37ae45839f60be9"
+    },
+    {
+      "action": "sealMonth",
+      "hash": "0x4fc545c45a2dafed4c538e96ae0f7ae9ccf76daf9cc5ee50d6aea603fcd3b69a"
+    },
+    {
+      "action": "prove",
+      "hash": "0x36078a16e3306151c917227ca8449ab1c791bc535553896d0791c6c2b0502c65"
+    },
+    {
+      "action": "deliver",
+      "hash": "0x7b5bc6e2a042f99e58dd87e7d1aa54c0d1734140e32fcc53dc44c3db56220917"
+    },
+    {
+      "action": "prove",
+      "hash": "0x424f86b7041c7a7b035a5405017d002c5e3f94dbc11af313be4d9f8369734ccf"
+    },
+    {
+      "action": "deliver",
+      "hash": "0x2d92ca2bfe8b44bd1085331e96401a2a84c19a937067630157491fd2626a6406"
+    },
+    {
+      "action": "processShort",
+      "hash": "0xaa278652b4fa8721fc088787377f383f7825df922cc292327a36981db336b2db"
+    },
+    {
+      "action": "finishShort",
+      "hash": "0x23e6690fef59c7666965964fc98346ba3bc6e77b4250a3fdca73d1c2b5d994d4"
+    },
+    {
+      "action": "processMonth",
+      "hash": "0xd219b7c91eb71beda7b1258c6977de1a4b74387de44c971ee222c60e62504b4f"
+    },
+    {
+      "action": "claim",
+      "hash": "0x585603eeac7c6181e3a52d167c928e7334415ec09c13f6959d5d56602cae13ad"
+    },
+    {
+      "action": "finishMonth",
+      "hash": "0x1dfa8e33aebfc538eb555c91078277f6f9de65bf68773e44c53122327ec20f1e"
+    },
+    {
+      "action": "claim",
+      "hash": "0x60d70ffe8af670a3ec3e1ae3eebd4414980f9deb7b25654fd0137efa1a56ed6d"
+    }
+  ],
+  "uniqueTransactions": 22,
+  "indexerBehindVerified": true,
+  "requests": [
+    {
+      "id": "1",
+      "round": "21115514",
+      "context": "0x35c5d6741b6e299e91231ac917df3868e5a0e3df80be3badd05bea3dfdaa0f64",
+      "consumer": "0x3EE0c608815Ec5a621F330Fb8899ED31Fe682393"
+    },
+    {
+      "id": "2",
+      "round": "21115515",
+      "context": "0xb8c5588834a369cb8ae7a6e11639b08ad8f3e403212ea1c903c64cd9de913a77",
+      "consumer": "0x2E9e7412e19497b60f25D05b68717067A6B743D4"
+    }
+  ],
+  "paidRaw": "107337115",
+  "fundingAtFreeze": {
+    "balance": "346425927",
+    "parts": [
+      "0",
+      "0",
+      "100000000",
+      "246425927",
+      "0",
+      "0"
+    ]
+  },
+  "after": {
+    "balance": "239088812",
+    "parts": [
+      "139088812",
+      "100000000",
+      "0",
+      "0",
+      "0",
+      "0"
+    ]
+  },
+  "wallets": [
+    {
+      "wallet": "0x098afa6731239a00ce0aff669aaefd16b7c72114",
+      "SHORT": {
+        "mintedTotal": "87",
+        "open": "1",
+        "frozenByDraw": {},
+        "consumedTotal": "86",
+        "byEpoch": [
+          {
+            "epoch": "1",
+            "minted": "87",
+            "consumed": "86",
+            "frozen": "0",
+            "open": "1",
+            "firstOpenAttempt": "87",
+            "lastOpenAttempt": "87"
+          }
+        ]
+      },
+      "MONTHLY": {
+        "mintedTotal": "87",
+        "open": "1",
+        "frozenByDraw": {},
+        "consumedTotal": "86",
+        "byEpoch": [
+          {
+            "epoch": "1",
+            "minted": "87",
+            "consumed": "86",
+            "frozen": "0",
+            "open": "1",
+            "firstOpenAttempt": "87",
+            "lastOpenAttempt": "87"
+          }
+        ]
+      }
+    }
+  ],
+  "assumptions": [
+    "Constructor clocks backdated only in in-memory compiled ShortRulesEpochs/MonthlySettlement; repository contracts unchanged",
+    "Local ArbSys shim, not Nitro finality proof",
+    "Current launch-plan rules/weights/minimum, no changed odds or selected seeds",
+    "Live drand BLS proof; 60-second lead is test-only",
+    "Synthetic owner USDG may donate missing Monthly readiness reserves; never injected into prize vault storage",
+    "Local finalized pinned for initial snapshot admission; advances with local latest after proposals begin. Not mainnet finality proof",
+    "Automation fork mines a block every second while workers read; RNG freshness gates unchanged"
+  ],
+  "tests": {
+    "passed": 21,
+    "fullSuite": false,
+    "command": "node --test test/pons-policy-indexer.test.cjs test/cutoff-scheduler.test.cjs test/cutoff-automation.test.cjs test/pons-automation.test.cjs"
+  },
+  "earlierRuns": {
+    "a": "Stopped at rng:finalityLag,insufficientObservedHeadroom; repeated compilation and pinned finalized",
+    "b": "Stopped at rng:finalityLag; pinned finalized during continuously mined pass",
+    "c": "FAILED before coordinator passes: harness used activeDraw instead of activeProposal; fixed in d"
+  },
+  "limits": [
+    "Sequential index refresh, not concurrent watch/systemd",
+    "No public deployment or signer",
+    "External Pons source equivalence/operator independence not proved",
+    "A/B were stopped incomplete, not PASS"
+  ]
+}

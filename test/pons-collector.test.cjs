@@ -91,6 +91,31 @@ test('Pons venue: curve and pool sweeps fund actual vault; operator wait preserv
  await assert.rejects(()=>executeLocal(p,c.target,awaitAddress(owner),'sweep','wrong-instance'));
 });
 function awaitAddress(signer){return signer.address;}
+test('Pons manual: rollover discovers old credits once, including reused role addresses',async()=>{
+ const {c,policy,p,owner,ops,team,promo,quote,fund,ends}=await fixture();await send(c.bindPromo(policy));
+ await fund(1000);await send(c.pull());
+ const nextOps=await p.getSigner(3),nextTeam=await p.getSigner(4);
+ await hre.network.provider.send('evm_setNextBlockTimestamp',[ends]);await hre.network.provider.send('evm_mine');
+ await send(c.rollCampaign(1,[ends+1000,[promo.target,nextOps.address,nextTeam.address],[9000,500,500]]));
+ await fund(2000);await send(c.pull());
+ await hre.network.provider.send('evm_setNextBlockTimestamp',[ends+1000]);await hre.network.provider.send('evm_mine');
+ await send(c.rollCampaign(2,[ends+2000,[promo.target,ops.address,ops.address],[9000,500,500]]));
+ await fund(1000);await send(c.pull());
+ let plan=await inspect(p,c.target,owner.address);assert.equal(plan.policyScan.complete,true);assert.equal(plan.payouts.length,5);
+ assert.equal(new Set(plan.payouts.map(x=>x.recipient.toLowerCase())).size,5);
+ assert.equal(plan.actions['pay-ops'],plan.actions['pay-team']);
+ const expected=new Map([[promo.target,3600n],[ops.address,150n],[team.address,50n],[nextOps.address,100n],[nextTeam.address,100n]]);
+ for(const [recipient,amount]of expected){const a=plan.actions['pay:'+recipient.toLowerCase()];assert.equal(a.status,'ready');assert.equal(BigInt(a.due),amount);await send(c[a.method](...a.args));await send(c.pay(recipient));assert.equal(await quote.balanceOf(recipient),amount);}
+ assert.equal(await c.accounted(),0n);assert.equal(await quote.balanceOf(c.target),0n);
+ plan=await inspect(p,c.target,owner.address);assert(plan.payouts.every(x=>plan.actions[x.action].status==='empty'));
+});
+test('Pons manual: failed historical policy read is explicit and does not hide other payouts',async()=>{
+ const {c,policy,p,owner,promo,fund,ends}=await fixture();await send(c.bindPromo(policy));await fund(1000);await send(c.pull());
+ await hre.network.provider.send('evm_setNextBlockTimestamp',[ends]);await hre.network.provider.send('evm_mine');await send(c.rollCampaign(1,[ends+1000,policy[1],policy[2]]));
+ const selector=c.interface.encodeFunctionData('policy',[1]);
+ const reader=new Proxy(p,{get(t,k){if(k==='call')return async tx=>{if(tx.data===selector)throw Error('historical policy unavailable');return t.call(tx);};const v=Reflect.get(t,k);return typeof v==='function'?v.bind(t):v;}});
+ const plan=await inspect(reader,c.target,owner.address);assert.equal(plan.policyScan.complete,false);assert.equal(plan.policyScan.errors[0].campaignId,'1');assert.equal(plan.actions['pay-prizes'].status,'ready');assert(plan.payouts.some(x=>x.recipient===promo.target));
+});
 test('Pons manual: failing sweep simulation does not hide ready escrow claim',async()=>{
  const {c,venue,quote,p,owner,fund}=await venueFixture();await send(c.bindVenue(venue.target));
  await fund(1000);await send(quote.mint(venue.target,1000));await send(venue.fund(1000));await send(venue.setState(0,false,true));

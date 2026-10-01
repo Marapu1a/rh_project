@@ -1,0 +1,248 @@
+{
+  "date": "2026-10-01",
+  "status": "PONS_DIRECT_PURCHASE_FORK_PASSED",
+  "anchor": {
+    "number": 77402505,
+    "hash": "0x913044794ff3d3fb5a012bc714f78159666dabb0440d52f713b1928a8dd2ed07"
+  },
+  "publicSends": false,
+  "source": ".local/logs/pons-direct-purchase-20261001-c.json",
+  "assumptions": [
+    "Local impersonation and synthetic USDG funding only",
+    "LocalPonsCollector prototype and real PromoVault; controller is unused hook address, no draws tested",
+    "ABI from current Pons docs/repository, runtime source equivalence not yet proved",
+    "Direct curve BUY replay plus pinned UR route when --v4; open Short/Monthly accounting, no draw settlement or public admission",
+    "BUY uses local unsigned planner, exact approvals and simulated 1% minOut; SELL uses fixture minOut=1. Owner USDG/Permit2 allowances deliberately reduced locally to test recovery.",
+    "Pons sweep operator impersonated ONLY locally to prove conditional conversion; we do not control it on mainnet"
+  ],
+  "scope": "Local planner + simulated EIP-1193 wallet on Hardhat fork. Not browser extension or production admission.",
+  "sequence": [
+    {
+      "kind": "approve-usdg",
+      "venue": "curve",
+      "amountRaw": "101000000",
+      "hash": "0x1aeb9825b5c0b877c1a30323d3fa4fbcd116884c4f5b41d3fa0f099265991349"
+    },
+    {
+      "kind": "buy",
+      "venue": "curve",
+      "amountRaw": "101000000",
+      "hash": "0xca78e403695dc70be1bfcc20f04feb5468c9011f9218400d4d24afd6beececae"
+    },
+    {
+      "kind": "reset-usdg-approval",
+      "venue": "pool",
+      "amountRaw": "101000000",
+      "hash": "0x343be8bc5d12e9e81a9a37829ac10d315c85d6cc673ce88a1718a192c051510b"
+    },
+    {
+      "kind": "approve-usdg",
+      "venue": "pool",
+      "amountRaw": "101000000",
+      "hash": "0x3be639c3ef63a003b83e60a399effc4529a3510d7c55e49dc6a266b88e537558"
+    },
+    {
+      "kind": "approve-router",
+      "venue": "pool",
+      "amountRaw": "101000000",
+      "hash": "0x7530b4729a0edb79691d1b521a642fabcfc582367a2016408ca1d49e1e576dac"
+    },
+    {
+      "kind": "buy",
+      "venue": "pool",
+      "amountRaw": "101000000",
+      "hash": "0xb2f3f9b9ac1fc93cd785b50f5eb76cb1db88ab780e045dae730307ec4666a486"
+    },
+    {
+      "kind": "approve-usdg",
+      "venue": "pool",
+      "amountRaw": "60000000",
+      "hash": "0x17466ed7d65a2133a4cde6e95f36ede1c89d23b68dbc1a16d94c1f02b918a188"
+    },
+    {
+      "kind": "approve-router",
+      "venue": "pool",
+      "amountRaw": "60000000",
+      "hash": "0x89e5efe2eef79f636da89c35f66e100a726412397eea2f191167adacb4ca3ba0"
+    },
+    {
+      "kind": "buy",
+      "venue": "pool",
+      "amountRaw": "60000000",
+      "hash": "0xfddbefe74208b0775a8200e3520d8453566c070be3aac4f0912de3aad1d983cc"
+    },
+    {
+      "kind": "approve-usdg",
+      "venue": "pool",
+      "amountRaw": "40000000",
+      "hash": "0xc1f0b10f25d1708f0aff3d057ef13ce6c488d316f0c14a94c096fb9aa6bd3264"
+    },
+    {
+      "kind": "approve-router",
+      "venue": "pool",
+      "amountRaw": "40000000",
+      "hash": "0x0f72c136271ddf46c27d8a111b00be03fde83771c7a565da64da9fb357520ca7"
+    },
+    {
+      "kind": "buy",
+      "venue": "pool",
+      "amountRaw": "40000000",
+      "hash": "0xdd90696e875fe94c1a126fa2cfbde4d0ec6d4c54d33be02ad9a45f5e1df7fdfe"
+    }
+  ],
+  "buys": [
+    {
+      "venue": "curve",
+      "amountRaw": "101000000",
+      "quoteOut": "29091258220920743123229801",
+      "minimumOut": "28800345638711535691997502",
+      "actualTokenOut": "29091258220920743123229801",
+      "transactionHash": "0xca78e403695dc70be1bfcc20f04feb5468c9011f9218400d4d24afd6beececae",
+      "decision": {
+        "candidateId": "4663:0xc6c6a95cb1d281734710c74d3020eb5161ee5df157bf4a96a5f9ca7ec52c2c33:0xca78e403695dc70be1bfcc20f04feb5468c9011f9218400d4d24afd6beececae:2",
+        "blockNumber": 77402514,
+        "blockHash": "0xc6c6a95cb1d281734710c74d3020eb5161ee5df157bf4a96a5f9ca7ec52c2c33",
+        "transactionHash": "0xca78e403695dc70be1bfcc20f04feb5468c9011f9218400d4d24afd6beececae",
+        "transactionIndex": 0,
+        "logIndex": 2,
+        "payer": "0x098afa6731239a00ce0aff669aaefd16b7c72114",
+        "recipient": "0x098afa6731239a00ce0aff669aaefd16b7c72114",
+        "grossQuoteRaw": "101000000",
+        "evidenceLogIndexes": [
+          2,
+          0,
+          1
+        ],
+        "status": "ELIGIBLE",
+        "reason": "SUPPORTED_BUY",
+        "netQuoteDebitRaw": "101000000",
+        "refundQuoteRaw": "0",
+        "quoteBasis": "wallet-net-debit-v1",
+        "entriesMinted": "1"
+      }
+    },
+    {
+      "venue": "pool",
+      "amountRaw": "101000000",
+      "quoteOut": "2422641957676279652576351",
+      "minimumOut": "2398415538099516856050587",
+      "actualTokenOut": "2422641957676279652576351",
+      "transactionHash": "0xb2f3f9b9ac1fc93cd785b50f5eb76cb1db88ab780e045dae730307ec4666a486",
+      "decision": {
+        "candidateId": "4663:0x16e1c2b6bf49df17a6e2d5a7347db9af34566e49d5fcf225e3ae5802cfd5c9aa:0xb2f3f9b9ac1fc93cd785b50f5eb76cb1db88ab780e045dae730307ec4666a486:0",
+        "blockNumber": 77402537,
+        "blockHash": "0x16e1c2b6bf49df17a6e2d5a7347db9af34566e49d5fcf225e3ae5802cfd5c9aa",
+        "transactionHash": "0xb2f3f9b9ac1fc93cd785b50f5eb76cb1db88ab780e045dae730307ec4666a486",
+        "transactionIndex": 0,
+        "logIndex": 0,
+        "poolId": "0x5bb1ddd0dc59daf2c0f55e0ba091ec1a139948054fcc6b4339a9f89ead1306ff",
+        "payer": "0x098afa6731239a00ce0aff669aaefd16b7c72114",
+        "recipient": "0x098afa6731239a00ce0aff669aaefd16b7c72114",
+        "grossQuoteRaw": "101000000",
+        "evidenceLogIndexes": [
+          0,
+          1,
+          3,
+          4,
+          2
+        ],
+        "status": "ELIGIBLE",
+        "reason": "SUPPORTED_BUY",
+        "netQuoteDebitRaw": "101000000",
+        "refundQuoteRaw": "0",
+        "poolTokenOutRaw": "2523585372579457971433697",
+        "netTokenOutRaw": "2422641957676279652576351",
+        "hookFeeTokenRaw": "100943414903178318857346",
+        "quoteBasis": "wallet-net-debit-v1",
+        "entriesMinted": "1"
+      }
+    },
+    {
+      "venue": "pool",
+      "amountRaw": "60000000",
+      "quoteOut": "1411071323138901626441066",
+      "minimumOut": "1396960609907512610176655",
+      "actualTokenOut": "1411071323138901626441066",
+      "transactionHash": "0xfddbefe74208b0775a8200e3520d8453566c070be3aac4f0912de3aad1d983cc",
+      "decision": {
+        "candidateId": "4663:0xc5a126e3dfe83889c7a864fb44f252a67aea8ee8bb285db2fd2778abcbff1ca7:0xfddbefe74208b0775a8200e3520d8453566c070be3aac4f0912de3aad1d983cc:0",
+        "blockNumber": 77402540,
+        "blockHash": "0xc5a126e3dfe83889c7a864fb44f252a67aea8ee8bb285db2fd2778abcbff1ca7",
+        "transactionHash": "0xfddbefe74208b0775a8200e3520d8453566c070be3aac4f0912de3aad1d983cc",
+        "transactionIndex": 0,
+        "logIndex": 0,
+        "poolId": "0x5bb1ddd0dc59daf2c0f55e0ba091ec1a139948054fcc6b4339a9f89ead1306ff",
+        "payer": "0x098afa6731239a00ce0aff669aaefd16b7c72114",
+        "recipient": "0x098afa6731239a00ce0aff669aaefd16b7c72114",
+        "grossQuoteRaw": "60000000",
+        "evidenceLogIndexes": [
+          0,
+          1,
+          3,
+          4,
+          2
+        ],
+        "status": "ELIGIBLE",
+        "reason": "SUPPORTED_BUY",
+        "netQuoteDebitRaw": "60000000",
+        "refundQuoteRaw": "0",
+        "poolTokenOutRaw": "1469865961603022527542776",
+        "netTokenOutRaw": "1411071323138901626441066",
+        "hookFeeTokenRaw": "58794638464120901101710",
+        "quoteBasis": "wallet-net-debit-v1",
+        "entriesMinted": "1"
+      }
+    },
+    {
+      "venue": "pool",
+      "amountRaw": "40000000",
+      "quoteOut": "929352225051398728165235",
+      "minimumOut": "920058702800884740883582",
+      "actualTokenOut": "929352225051398728165235",
+      "transactionHash": "0xdd90696e875fe94c1a126fa2cfbde4d0ec6d4c54d33be02ad9a45f5e1df7fdfe",
+      "decision": {
+        "candidateId": "4663:0xc0ff7c230899ee93ed8fd09cad6028192a691f0f7924c82ed9c5fb6f9d6fa878:0xdd90696e875fe94c1a126fa2cfbde4d0ec6d4c54d33be02ad9a45f5e1df7fdfe:0",
+        "blockNumber": 77402543,
+        "blockHash": "0xc0ff7c230899ee93ed8fd09cad6028192a691f0f7924c82ed9c5fb6f9d6fa878",
+        "transactionHash": "0xdd90696e875fe94c1a126fa2cfbde4d0ec6d4c54d33be02ad9a45f5e1df7fdfe",
+        "transactionIndex": 0,
+        "logIndex": 0,
+        "poolId": "0x5bb1ddd0dc59daf2c0f55e0ba091ec1a139948054fcc6b4339a9f89ead1306ff",
+        "payer": "0x098afa6731239a00ce0aff669aaefd16b7c72114",
+        "recipient": "0x098afa6731239a00ce0aff669aaefd16b7c72114",
+        "grossQuoteRaw": "40000000",
+        "evidenceLogIndexes": [
+          0,
+          1,
+          3,
+          4,
+          2
+        ],
+        "status": "ELIGIBLE",
+        "reason": "SUPPORTED_BUY",
+        "netQuoteDebitRaw": "40000000",
+        "refundQuoteRaw": "0",
+        "poolTokenOutRaw": "968075234428540341838785",
+        "netTokenOutRaw": "929352225051398728165235",
+        "hookFeeTokenRaw": "38723009377141613673550",
+        "quoteBasis": "wallet-net-debit-v1",
+        "entriesMinted": "0"
+      }
+    }
+  ],
+  "tests": {
+    "targeted": 15,
+    "failed": 0,
+    "fullSuite": false
+  },
+  "priorRuns": [
+    {
+      "run": "a",
+      "result": "Harness failed: impersonated owner absent from eth_accounts; fixed local wallet account model."
+    },
+    {
+      "run": "b",
+      "result": "Curve/v4 replay passed, existing mainnet allowances skipped pool approvals; c forces insufficient/expired allowances."
+    }
+  ]
+}

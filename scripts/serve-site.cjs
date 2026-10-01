@@ -8,7 +8,9 @@ files.set('/404.css','404.css');
 files.set('/transparency/','transparency/index.html');
 files.set('/transparency/style.css','transparency/style.css');
 files.set('/overview.js','overview.js');
-function createSite({apiOrigin='http://127.0.0.1:8787'}={}){
+function createSite({apiOrigin='http://127.0.0.1:8787',purchaseDemo=false}={}){
+ const routes=new Map(files);
+ if(purchaseDemo)for(const name of ['index.html','style.css','review.js','demo.js'])routes.set('/purchase-demo/'+(name==='index.html'?'':name),'purchase-demo/'+name);
  const origin=new URL(apiOrigin);if(!['http:','https:'].includes(origin.protocol)||origin.username||origin.password||origin.pathname!=='/'||origin.search||origin.hash)throw Error('Invalid API origin');
  return http.createServer(async(req,res)=>{
   res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('Referrer-Policy','no-referrer');res.setHeader('Content-Security-Policy',"default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'");
@@ -19,10 +21,10 @@ function createSite({apiOrigin='http://127.0.0.1:8787'}={}){
     res.setHeader('Cache-Control','no-store');res.setHeader('Content-Type','application/json');
     try{const upstream=await fetch(new URL(url.pathname+url.search,origin),{signal:AbortSignal.timeout(8000),redirect:'error'});const body=await upstream.text();res.writeHead(upstream.status);res.end(body);}catch{res.writeHead(503);res.end(JSON.stringify({error:'unavailable'}));}return;
    }
-   const file=files.get(url.pathname);if(!file){res.writeHead(404,{'Content-Type':'text/html; charset=utf-8'});res.end(await fs.readFile(path.join(root,'404.html')));return;}
+   const file=routes.get(url.pathname);if(!file){res.writeHead(404,{'Content-Type':'text/html; charset=utf-8'});res.end(await fs.readFile(path.join(root,'404.html')));return;}
    const body=await fs.readFile(path.join(root,file));res.setHeader('Content-Type',file.endsWith('.css')?'text/css':file.endsWith('.js')?'text/javascript':file.endsWith('.png')?'image/png':'text/html; charset=utf-8');res.setHeader('Cache-Control','no-cache');res.end(body);
   }catch{res.writeHead(503);res.end('Unavailable');}
  });
 }
-if(require.main===module){const port=Number(process.env.PORT??4173);const server=createSite({apiOrigin:process.env.RH_STATUS_API_ORIGIN??'http://127.0.0.1:8787'});server.on('error',()=>{console.error('Website failed to listen');process.exitCode=1;});server.listen(port,'127.0.0.1',()=>console.log(`Website: http://127.0.0.1:${port}`));for(const signal of ['SIGINT','SIGTERM'])process.once(signal,()=>server.close());}
+if(require.main===module){const port=Number(process.env.PORT??4173);const server=createSite({apiOrigin:process.env.RH_STATUS_API_ORIGIN??'http://127.0.0.1:8787',purchaseDemo:process.env.RH_PURCHASE_DEMO==='1'});server.on('error',()=>{console.error('Website failed to listen');process.exitCode=1;});server.listen(port,'127.0.0.1',()=>console.log(`Website: http://127.0.0.1:${port}`));for(const signal of ['SIGINT','SIGTERM'])process.once(signal,()=>server.close());}
 module.exports={createSite};

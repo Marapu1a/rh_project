@@ -19,12 +19,23 @@ async function inspect(provider,address,from){
  await action('sync',async()=>{const q=new ethers.Contract(await c.quoteToken(tag),['function balanceOf(address) view returns(uint256)'],provider);
   const balance=await q.balanceOf(c.target,tag),accounted=await c.accounted(tag);if(balance<accounted)throw Error('Balance deficit');
   return {status:balance>accounted?'ready':'empty',amount:String(balance-accounted),method:'sync'};});
- let recipients;try{recipients=(await c.policy(await c.campaignId(tag),tag)).recipients;}catch(e){out.policyError=err(e);}
- for(const [i,name] of ['pay-prizes','pay-ops','pay-team'].entries())await action(name,async()=>{
-  if(!recipients)throw Error('Recipients unavailable');const recipient=recipients[i],due=await c.credit(recipient,tag);
-  return {status:due>0n?'ready':'empty',due:String(due),method:'pay',args:[recipient]};});
+  // Credits belong to addresses, not only the current campaign's role names.
+  let recipients;const known=new Map();out.policyScan={complete:true,errors:[]};out.payouts=[];
+  try{
+   const current=await c.campaignId(tag);out.policyScan.campaignId=String(current);
+   for(let id=1n;id<=current;id++)try{
+    const policy=await c.policy(id,tag);if(id===current)recipients=policy.recipients;
+    for(const address of policy.recipients){const key=address.toLowerCase();if(!known.has(key))known.set(key,{recipient:address,campaigns:[]});const item=known.get(key);if(!item.campaigns.includes(String(id)))item.campaigns.push(String(id));}
+   }catch(e){out.policyScan.complete=false;out.policyScan.errors.push({campaignId:String(id),error:err(e)});}
+  }catch(e){out.policyScan.complete=false;out.policyError=err(e);}
+  for(const [key,item]of known){const name='pay:'+key;await action(name,async()=>{
+   const due=await c.credit(item.recipient,tag);return {status:due>0n?'ready':'empty',due:String(due),method:'pay',args:[item.recipient]};
+  });out.payouts.push({...item,action:name});}
+  for(const [i,name] of ['pay-prizes','pay-ops','pay-team'].entries()){
+   out.actions[name]=recipients?out.actions['pay:'+recipients[i].toLowerCase()]:{status:'unavailable',error:{message:'Current recipients unavailable'}};
+  }
  // Independently simulate each ready action; sweep failure must not hide claim/pay.
- for(const a of Object.values(out.actions))if(a.status==='ready'){
+  for(const a of new Set(Object.values(out.actions)))if(a.status==='ready'){
   a.request={to:c.target,from:out.from,data:c.interface.encodeFunctionData(a.method,a.args||[])};
   try{await provider.call({...a.request,blockTag:b.number});a.simulated=true;}catch(e){a.status='blocked';a.error=err(e);}
  }

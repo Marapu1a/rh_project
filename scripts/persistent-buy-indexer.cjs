@@ -54,6 +54,9 @@ async function indexOnce({config,rpc,statePath,batchSize=100,reorgLimit=128,full
     let cacheable=false;
     if(method==='eth_getBlockByNumber'&&params[1]===true){height=Number(BigInt(params[0]));cacheable=true;}
     else if(method==='eth_getCode'){height=Number(BigInt(params[1]));cacheable=true;}
+    // Pons bindings are checked at each scanned block. Cache only fixed-height
+    // calls, never latest/finalized or state overrides. Tail rollback evicts them.
+    else if(method==='eth_call'&&params.length===2&&/^0x[0-9a-f]+$/i.test(params[1])){height=Number(BigInt(params[1]));cacheable=true;}
     else if(method==='eth_getTransactionReceipt')cacheable=true;
     const key=hash({method,params});
     if(cacheable&&cache[key]){cacheHits++;return structuredClone(cache[key].value);}

@@ -22,22 +22,24 @@
     <section aria-labelledby="waiting"><p class="eyebrow">02 · THE DEPENDENCY</p><h2 id="waiting">Some fees have to wait.</h2>
       <p>After a Pons token moves into its Uniswap pool, some fees arrive in that token instead of USDG. Pons uses an operator contract to convert them. A pending conversion can also hold up other fees still sitting in the same pool’s fee contract.</p>
       <p>We’ve checked a real conversion into USDG. We haven’t yet confirmed whether our own executor can trigger that operator independently, or what service schedule covers a new pool.</p>
-      <p>USDG already credited to our recipient in Pons escrow can be claimed separately. We’re building collection around that separation: take what’s available, keep the rest marked as waiting. Manual collection may come first; scheduled collection comes later.</p>
+      <p>USDG already credited to our recipient in Pons escrow can be claimed separately. Our local collector and automated runner use that separation: take what’s available, keep the rest marked as waiting. They are tested locally, not running with public funds.</p>
       <a href="https://docs.ponsfamily.com/v2">Read Pons’s fee and payout documentation</a>
     </section>
     <section aria-labelledby="checks"><p class="eyebrow">03 · THE CHECKS</p><h2 id="checks">Tested isn’t the same as live.</h2>
       <ul>
-        <li><strong>Checked locally:</strong> a token launch, trading before and after the move into Uniswap, fee collection and a test split. This did not prove the complete ticket-to-prize system.</li>
+        <li><strong>Checked locally:</strong> launch, trading, fee collection, automatic entries, both prize draws and payouts completed together. The automated runner also resumed after a planned stop without repeating its confirmed transactions.</li>
+        <li><strong>Test conditions:</strong> one buyer, test balances and a locally simulated Pons operator, with shortened waiting times. Those results do not prove public operation, the real Pons website’s purchase route or recovery from every possible crash.</li>
         <li><strong>Observed on-chain:</strong> an actual TOKEN-to-USDG conversion and credit to a creator. That proves a working transaction, not a promise of future uptime.</li>
         <li><strong>Partly verified:</strong> the deployed fee hook’s executable code matches our build of the published source, with embedded addresses checked separately. Verification of the full contract set remains open.</li>
         <li><strong>Still open:</strong> the published factory source calls a function missing from the published curve. We haven’t obtained complete verified source and access rules for the escrow and operator.</li>
       </ul>
-      <p>These findings come from our 30 September checks. We’ll update this page as evidence changes, including fixes and new limitations.</p>
+      <p>External contract findings are from 30 September; the complete local cycle was checked on 1 October. Public purchase routes and launch checks remain open.</p>
     </section>
     <section aria-labelledby="evidence"><p class="eyebrow">04 · CHECK FOR YOURSELF</p><h2 id="evidence">The receipts.</h2>
       <ul class="links">
         <li><a href="https://robinhoodchain.blockscout.com/tx/0x07664000987d99b4ebcddd6cbb0eba414fedda11e8c74efb69397bd4b8fd6c67">Observed USDG conversion transaction</a></li>
         <li><a href="https://github.com/Marapu1a/rh_project/blob/main/docs/PONS_VERIFICATION.md">Our verification notes and remaining questions</a></li>
+        <li><a href="https://github.com/Marapu1a/rh_project/blob/main/docs/PONS_AUTOMATION.md">Local automation results and test limits</a></li>
         <li><a href="https://github.com/ponsdotdev/pons-labs/tree/b51431f7d5242fc5414a7da7d3659ad3bc749eb7/contractsV2">Pons source version we checked</a></li>
         <li><a href="https://robinhoodchain.blockscout.com/address/0xa1018c1D9655292A2dE0F7dEa9a0F848EaA8cA83">Pons operator contract</a></li>
       </ul>

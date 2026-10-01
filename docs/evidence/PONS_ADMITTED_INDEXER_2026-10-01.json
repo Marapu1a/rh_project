@@ -1,0 +1,46 @@
+{
+  "date": "2026-10-01",
+  "status": "PONS_ADMITTED_INDEXER_PASSED",
+  "anchor": {
+    "number": 77447532,
+    "hash": "0x77727d0377a4c22aa41fc42f4c0df2dd6e862d5c221b969df535d0f2a271d7f5"
+  },
+  "localBuyPolicy": {
+    "source": "0x7EE3D49BC0BcB1f2dB9C5Bf9D56CAcB045c3a53d",
+    "publisher": "0x098afA6731239a00CE0aff669aaefD16b7C72114",
+    "instanceId": "0x65d3222d21d6dd0a5aadce27c734378d33050dd09ea189d1b61dac1994f56330",
+    "genesisHash": "0x3d63acb79a57fccc4a031b853c8d907c2bf5ed464c296b3433d361443573f477",
+    "sourceCodeHash": "0x50ce8faf1e1136ea51796fb5b35a9d1d6a970f604a6f1c93fe91b16286d12cef",
+    "chainId": 4663,
+    "noticeBlocks": 20
+  },
+  "indexer": {
+    "status": "PONS_ADMITTED_INDEXER_PASSED",
+    "firstBatch": 77447542,
+    "head": 77447572,
+    "removedBlocks": 1,
+    "childRestarts": 3,
+    "noHistoricalReadsOnRestart": true,
+    "ledgerHash": "0x78ee2152ec355fcc8770727252232c5d9ac9ee20028b60c0335d834ab43e7f8b",
+    "policyMode": "admitted",
+    "snapshotConsumed": true,
+    "publicConsumerBlocked": false,
+    "publicSends": false,
+    "assumptions": [
+      "Local latest is mapped to finalized only in read-only rehearsal RPC; not mainnet finality proof",
+      "Additional 40 USDG BUY is reverted on the local fork; frozen datasets/claims are not changed"
+    ]
+  },
+  "publicSends": false,
+  "tests": {
+    "passed": 44,
+    "profile": "pons-policy-indexer",
+    "fullSuite": false
+  },
+  "limits": [
+    "Local policy deployment only; no external Pons source equivalence claim",
+    "publicConsumerBlocked=false means admitted snapshot reader accepted it locally, not public deployment admission",
+    "Full indexed coordinator draw cycle not executed",
+    "Local finalized mapping; synthetic funding and fork-only transactions"
+  ]
+}

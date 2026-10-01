@@ -1,0 +1,44 @@
+{
+  "observedAt": "2026-10-01T13:03:17.449Z",
+  "method": "Read-only browser download and static review of delivered JavaScript; no wallet connection, signature or transaction.",
+  "page": "https://www.ponsfamily.com/launchpad/0xBc3B252BdA74b4705025c4ebd23B2eb021025ad3",
+  "chunks": [
+    {
+      "name": "1o7nuc0r25-tr.js",
+      "url": "https://www.ponsfamily.com/_next/static/immutable/chunks/1o7nuc0r25-tr.js",
+      "sha256": "2f0261d33977b3603606e200e6af12bd7b908c0b9620fdf0184d932450c11076",
+      "bytes": 172130
+    },
+    {
+      "name": "42myse99zr3ep.js",
+      "url": "https://www.ponsfamily.com/_next/static/immutable/chunks/42myse99zr3ep.js",
+      "sha256": "d84bf0452ea29a8b1d8d38e91b70f4eaf3b6c86f7386fbf9d3a679aab2132bcc",
+      "bytes": 42498
+    },
+    {
+      "name": "2ag-ww6xlt2tl.js",
+      "url": "https://www.ponsfamily.com/_next/static/immutable/chunks/2ag-ww6xlt2tl.js",
+      "sha256": "f1c97d7d183fcb5fccee3d57d846aad3ed7ebbac192b62757c8e93982df29e0b",
+      "bytes": 31516
+    },
+    {
+      "name": "1boq_la3j1vnm.js",
+      "url": "https://www.ponsfamily.com/_next/static/immutable/chunks/1boq_la3j1vnm.js",
+      "sha256": "1e44b9d8dc2d855405c69fdc72c696d9edb7579a3c4b90a9e96bd06d0b257d3b",
+      "bytes": 25492
+    }
+  ],
+  "findings": {
+    "curve": "buy(quoteIn,minTokensOut,account), allowance approval when needed",
+    "pool": "UniversalRouter execute: command 0x10, actions 0x060c0f, minHopPriceX36=0, hookData=0x; separate ERC20/Permit2 approval calls",
+    "router": "0x8876789976dEcBfCbBbe364623C63652db8C0904",
+    "routeSelection": "Pool quote compared with 0x quote: choose aggregator when improvement >=10 basis points, or direct quote unavailable.",
+    "submission": "One call: sendTransaction. Multiple calls: sendCalls; selected unsupported-wallet errors fall back to sequential sendTransaction.",
+    "otherPaymentAsset": "Funding conversion calls may precede trade."
+  },
+  "limits": [
+    "No captured wallet request or mined transaction from this UI session.",
+    "Static direct-call compatibility is not full UI admission.",
+    "Batch envelope and aggregator execution require separate attribution evidence."
+  ]
+}
