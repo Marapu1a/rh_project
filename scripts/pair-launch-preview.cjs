@@ -6,6 +6,7 @@ const {inspect}=require('./launch-source-preflight.cjs');
 const {httpRpc}=require('./public-rpc-qualification.cjs');
 const BASE='https://pair.fund';
 function review({plan,readiness,opening,source,now=Math.floor(Date.now()/1000)}){
+ if(plan?.integration!=='pair-infinity')throw Error('PAIR reserve plan required');
  const checks=[];const check=(name,ok)=>checks.push({name,ok:!!ok});
  const p=inspectPlan(plan),quote=plan.contracts.quote;
  check('pairReady',readiness?.ready===true);
@@ -43,6 +44,7 @@ function review({plan,readiness,opening,source,now=Math.floor(Date.now()/1000)})
   limitation:'API candidate only, not on-chain opening admission. Five-minute age limit is a local preview filter, not PAIR policy. Address orientation, metadata, factory prediction, simulation and exact costs remain required. No test opening prices substituted.'};
 }
 async function collect(plan,{fetcher=fetch,rpc=httpRpc(process.env.RH_RPC_URL||'https://rpc.mainnet.chain.robinhood.com')}={}){
+ if(plan?.integration!=='pair-infinity')throw Error('PAIR reserve plan required');
  async function json(url,options={}){const r=await fetcher(BASE+url,{...options,signal:AbortSignal.timeout(20000)});if(!r.ok)throw Error('PAIR read failed');return r.json();}
  const [readiness,opening,source]=await Promise.all([
   json('/api/launches/pancake-v1-infinity/readiness'),
@@ -53,7 +55,7 @@ async function collect(plan,{fetcher=fetch,rpc=httpRpc(process.env.RH_RPC_URL||'
 }
 if(require.main===module)(async()=>{
  const file=process.argv[2];if(!file||fs.existsSync(file))throw Error('New output path required');
- const plan=JSON.parse(fs.readFileSync('config/robinhood-launch-plan.json','utf8'));
+ const plan=JSON.parse(fs.readFileSync('config/reserve/pair-launch-plan.json','utf8'));
  const result=await collect(plan);fs.writeFileSync(file,JSON.stringify(result,null,2)+'\n',{flag:'wx'});
  console.log(JSON.stringify(result.preview,null,2));
 })().catch(()=>{console.error('PAIR preview failed; no transactions sent');process.exitCode=1;});

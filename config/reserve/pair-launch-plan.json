@@ -21,21 +21,15 @@
     "monthly": null,
     "adapter": null,
     "collector": null,
+    "pairSource": null,
     "buyPolicySource": null,
+    "pool": null,
     "quote": {
       "address": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
       "codeHash": "0x864cc9ad53b338b82da1f7cab85ab0b3d5c8861acb422b6fec63cf36234f36a6",
       "decimals": 6,
       "observedAtBlock": "0x471e99d"
-    },
-    "factory": null,
-    "curve": null,
-    "hook": null,
-    "escrow": null,
-    "poolId": null,
-    "router": null,
-    "manager": null,
-    "permit2": null
+    }
   },
   "roles": {
     "governor": "0x098afA6731239a00CE0aff669aaefD16b7C72114",
@@ -115,21 +109,27 @@
     "monthlyWinnerWeight": "ENTRIES_OVER_ENTRIES_PLUS_ONE_Q128"
   },
   "publicExecutionEnabled": false,
-  "evidence": [],
-  "limitation": "Pons planning only, not executable. Nulls require Pons deployment/qualification; public sends remain disabled. PAIR reserve: config/reserve/pair-launch-plan.json.",
+  "evidence": [
+    "../research/public-deployment/rpc-official-2026-09-28.json",
+    "../research/public-deployment/rpc-blockreq-2026-09-28.json"
+  ],
+  "limitation": "A planning record, not executable deployment settings. Nulls must not be replaced with test fixtures. Current public executor remains disabled.",
   "launch": {
     "creator": "0x098afA6731239a00CE0aff669aaefD16b7C72114",
     "name": "QIANQI",
     "symbol": "QIANQI",
     "metadataURI": null,
     "metadataHash": null,
-    "launchFeeBudgetWei": null,
-    "creatorFeeRecipient": null,
-    "launchParameters": null,
+    "openingProfile": null,
+    "sniperProtection": null,
+    "protectionBlocks": null,
+    "userSalt": null,
+    "vanityNonce": null,
     "developerBuy": {
       "enabled": false,
       "reason": "Initial purchase prepared separately through admitted direct USDG route"
-    }
+    },
+    "launchFeeBudgetWei": null
   },
   "initialPurchase": {
     "status": "planning-not-executable",
@@ -140,7 +140,7 @@
     "maxWalletDebitRaw": "101000000",
     "gasBudgetWei": null,
     "amountOutMinimum": null,
-    "routeVersion": "rh-pons-curve-ur-v1",
+    "routeVersion": "rh-infinity-exact-input-v1",
     "expectedIfNetDebitRaw101000000": {
       "shortEntries": "1",
       "monthlyEntries": "1",
@@ -148,6 +148,6 @@
     },
     "authorizationToSend": false
   },
-  "integration": "pons-v2",
-  "scope": "active-release-planning"
+  "integration": "pair-infinity",
+  "scope": "reserve-not-active-release"
 }

@@ -1,5 +1,15 @@
 # План до первого публичного запуска
 
+01.10: подготовлен запрос GPT по G02 до реализации: shared config/index для coordinator/API, identity fields, projection failures, migration и frozen obligations. Предложение ещё не реализовано; ждём статический ответ. Предыдущие request/response сохранены в archive. [Запрос](GPT_REVIEW_REQUEST.md).
+
+01.10: активный launch plan переведён на явный pons-v2, PAIR plan сохранён в config/reserve; старые PAIR preparers используют только резерв и отказывают Pons до RPC. Убраны PAIR-тексты из обеих тем, актуализированы ссылки/статус migration draft.13 адресных checks PASS (частичный набор). Публичный запуск остаётся закрыт. Далее — общий config индекса/API/coordinator (G02). [Границы](ACTIVE_RELEASE_PATH.md).
+
+01.10: R0 инвентаризация завершена: local core подтверждён историческим evidence, public release не закончен. Карта9 gaps, runtime/roles/trust; найдено несовпадение shared snapshot config(publicStatus/API vs scheduler), Buy/Claim UI и Pons deploy/config gaps. Код/правила не менялись, tests/live audit не запускались. Далее R1 focused code review. [Карта](RELEASE_INVENTORY.md).
+
+01.10: подготовлен общий план полной проверки перед запуском: R0–R9, code/security review, инварианты, full RC baseline, реальные timing, сбои, нагрузка, кошельки и deployment gates. Это план, не выполненный аудит; код публичного запуска ещё нельзя считать законченным. Следующий шаг — R0 inventory/gap map; timing-пакет включён в R3. [План](PRELAUNCH_VERIFICATION_PLAN.md).
+
+01.10: прочитан GPT review3b36e0a к12e64bb, замечания сверены с кодом. Подтверждённого обхода admission/ошибки учёта не найдено; главный пробел — реальные finality/RNG timing. Следующий пакет: read-only замеры и воспроизведение лага/outage. Timing1800/1200 — candidate, approval=null. Код и правила не менялись. [Разбор](PONS_INDEXED_REVIEW_TRIAGE.md).
+
 01.10: indexed Pons coordinator PASS на fork77469814: 13 проходов, отставание индекса блокирует новые draws, оба finalized checkpoints, Short/Monthly, live drand, stop/resume и выплаты.21 адресная проверка PASS. Public sends закрыты; последовательный локальный прогон, не production/watch. Далее — независимое review накопленного пакета. [Результат](PONS_INDEXED_CYCLE.md).
 
 01.10: Pons policy admission и подключение сохранённого индекса к coordinator реализованы.44 адресных tests PASS; real-runtime fork77447532 PONS_ADMITTED_INDEXER_PASSED: настоящий локальный BuyPolicySource, чтение admitted snapshot,3 перезапуска, rollback и outage/resume. Public sends закрыты. Следующий шаг — полный indexed coordinator cycle с finalized cutoff; в этом пакете он не выполнялся. [Результат и границы](PONS_INDEXED_COORDINATOR.md).

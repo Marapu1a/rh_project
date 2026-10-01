@@ -39,7 +39,12 @@ const get = (p, path) => path.split('.').reduce((v, key) => v?.[key], p);
 const absent = value => value == null || value === '';
 function inspectPlan(p) {
  if (p?.schema !== 'robinhood-launch-plan-v1' || p.status !== 'incomplete-not-executable' || p.network?.chainId !== 4663 || p.controllers?.cutoffMode !== 'FINALIZED_CHECKPOINT' || p.publicExecutionEnabled !== false) throw Error('Explicit incomplete Robinhood plan required');
- const settings = Object.entries(REQUIRED).flatMap(([section, names]) => names.map(name => {
+ if(!['pons-v2','pair-infinity'].includes(p.integration))throw Error('Explicit launch integration required');
+ const pons=p.integration==='pons-v2';
+ if(pons&&(p.initialPurchase?.routeVersion!==require('./pons-v4-buy.cjs').ID||'pairSource' in (p.contracts||{})||['openingProfile','sniperProtection','protectionBlocks','vanityNonce','userSalt'].some(k=>k in (p.launch||{}))))throw Error('Pons plan contains incompatible launch route/settings');
+ if(!pons&&p.initialPurchase?.routeVersion!=='rh-infinity-exact-input-v1')throw Error('PAIR reserve route required');
+ const required=pons?{...REQUIRED,contracts:['token','registry','vault','short','monthly','adapter','collector','buyPolicySource','quote','factory','curve','hook','escrow','poolId','router','manager','permit2'],launch:['creator','name','symbol','metadataURI','metadataHash','launchFeeBudgetWei','creatorFeeRecipient','launchParameters','developerBuy']}:REQUIRED;
+ const settings = Object.entries(required).flatMap(([section, names]) => names.map(name => {
   const path = section + '.' + name;
   const category = section === 'contracts' ? 'deployment-derived' : section === 'launch' && ['metadataHash','userSalt','vanityNonce'].includes(name) ? 'deployment-derived' : section === 'roles' || section === 'launch' ? 'owner-choice' : ['archiveRpc', 'durableRuntime', 'nativeRefill'].includes(name) ? 'operational-qualification' : 'owner-choice';
   return {path, category, status: absent(get(p, path)) ? 'missing' : 'provided-not-verified'};
@@ -47,6 +52,7 @@ function inspectPlan(p) {
  const accepted = Object.entries(ACCEPTED).map(([path, expected]) => ({path, expected, matches: get(p, path) === expected}));
  return {
   schema: p.schema,
+  integration:p.integration,
   missing: settings.filter(row => row.status === 'missing').map(row => row.path),
   accepted, conflicts: accepted.filter(row => !row.matches).map(row => row.path), settings,
   timing: {status: 'candidate-not-qualified', candidate: p.timingCandidate ?? null, approvalPresent: !absent(p.unresolved?.timingApproval)},

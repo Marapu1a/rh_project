@@ -16,7 +16,7 @@ function compileCollector(){
  assert(!(result.errors||[]).some(x=>x.severity==='error'),'Collector compile failed');return result.contracts[name].InfinityCollector;
 }
 async function prepare(){
- const p=JSON.parse(fs.readFileSync('config/robinhood-launch-plan.json','utf8'));
+ const p=JSON.parse(fs.readFileSync('config/reserve/pair-launch-plan.json','utf8'));
  const owner=getAddress(p.launch.creator);assert(owner===getAddress(p.roles.governor),'Governor must match this draft deployer');
  const rpc=httpRpc(process.env.RH_RPC_URL||'https://rpc.mainnet.chain.robinhood.com');
  const evidence=await collect(p,{rpc});if(!evidence.preview.candidateUsableForFurtherSimulation)throw Object.assign(Error('Fresh source/opening required'),{code:'LAUNCH_PREFLIGHT_BLOCKED',evidence});

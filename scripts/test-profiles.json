@@ -101,7 +101,8 @@
       "test/purchase-review.test.cjs",
       "test/pons-browser-bridge.test.cjs",
       "test/pons-persistent-indexer.test.cjs",
-      "test/pons-policy-indexer.test.cjs"
+      "test/pons-policy-indexer.test.cjs",
+      "test/launch-integration.test.cjs"
     ]
   },
   "accounting": {
@@ -456,6 +457,14 @@
       "test/pons-automation.test.cjs",
       "test/persistent-buy-indexer.test.cjs",
       "test/direct-buy.test.cjs"
+    ]
+  },
+  "launch-integration": {
+    "compile": false,
+    "files": [
+      "test/launch-integration.test.cjs",
+      "test/pair-launch-preview.test.cjs",
+      "test/launch-source-preflight.test.cjs"
     ]
   }
 }

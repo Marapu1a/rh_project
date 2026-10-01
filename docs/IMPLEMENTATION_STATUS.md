@@ -1,5 +1,9 @@
 # Карта реализации
 
+[Активный Pons-план и явно выделенный резерв PAIR](ACTIVE_RELEASE_PATH.md).
+
+[R0: актуальная карта реализации, ролей и недоделок](RELEASE_INVENTORY.md) — статическая инвентаризация01.10, не live audit.
+
 [Полный indexed coordinator cycle](PONS_INDEXED_CYCLE.md) — локальный PASS01.10; следующий шаг — независимое review.
 
 [Pons: допуск политики и чтение сохранённого индекса](PONS_INDEXED_COORDINATOR.md) — локальная связка проверена; полный indexed draw cycle следующий.
@@ -28,7 +32,7 @@
 
 01.10: [LocalPonsCollector](../contracts/LocalPonsCollector.sol), [тесты](../test/pons-collector.test.cjs), профиль `pons-collector`: escrow fixture→реальный PromoVault,4/4 PASS. Sweep/ручной runner/real-source admission ещё отсутствуют; [границы](PONS_COLLECTOR.md). Страница /transparency/ — локальный датированный статус, не мониторинг сервиса.
 
-Текущая адаптация: [Pons migration](PONS_MIGRATION.md); PAIR сохранён как резерв. Отдельные draft config/ABI готовы, production collector и BUY adapters ещё не реализованы.
+Текущая адаптация: [Pons migration](PONS_MIGRATION.md); PAIR сохранён как резерв. Локальные collector и BUY adapters реализованы; публичные entrypoints/deployment ещё не квалифицированы.
 
 30.09: [pons-fork-rehearsal.cjs](../scripts/pons-fork-rehearsal.cjs) — отдельный research runner:
 live fork launch→curve BUY/SELL→probe collector90/5/5→graduation→v4 BUY/SELL→

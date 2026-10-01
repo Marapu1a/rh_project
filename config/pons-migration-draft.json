@@ -1,6 +1,6 @@
 {
   "schema": "pons-migration-draft-v1",
-  "status": "local-development-only",
+  "status": "historical-migration-snapshot",
   "publicSendsEnabled": false,
   "chainId": 4663,
   "creatorTaxBps": 300,
@@ -25,9 +25,7 @@
     "poolId": null
   },
   "pending": [
-    "production collector and source admission",
-    "curve and v4 BUY decoders",
-    "operator outage handling",
-    "full Promo integration and launch review"
-  ]
+    "Historical list at migration start; see docs/RELEASE_INVENTORY.md for current gaps"
+  ],
+  "supersededBy": "config/robinhood-launch-plan.json"
 }

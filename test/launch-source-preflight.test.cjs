@@ -1,7 +1,7 @@
 const {test}=require('node:test'),assert=require('node:assert/strict'),{Interface,keccak256,toBeHex,id}=require('ethers');
 const {inspect}=require('../scripts/launch-source-preflight.cjs');
 test('launch input omissions stay visible; explicit false and zero are not missing',()=>{
- const p=structuredClone(require('../config/robinhood-launch-plan.json'));
+ const p=structuredClone(require('../config/reserve/pair-launch-plan.json'));
  p.launch.sniperProtection=false;p.launch.protectionBlocks=0;p.launch.vanityNonce=0;
  const r=require('../scripts/public-launch-plan.cjs').inspectPlan(p);
  assert(r.missing.includes('launch.openingProfile'));assert(r.missing.includes('launch.metadataURI'));

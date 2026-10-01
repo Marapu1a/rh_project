@@ -24,13 +24,13 @@ async function main(){
  report.environment={node:process.version,platform:process.platform,arch:process.arch,pid:process.pid,lockTrace:process.env.LOCAL_STATE_LOCK_TRACE==='1'};
  const cleanups=[];const stage=(name,data)=>{report.stages.push({name,...data});console.log(name);};
  try{
-  const profile=read('config/release-rehearsal.json'),launch=read('config/robinhood-launch-plan.json');
+  const profile=read('config/release-rehearsal.json'),launch=read('config/reserve/pair-launch-plan.json');
   assert.equal(profile.scope,'composed-local-evidence-not-public-e2e');assert.equal(profile.publicExecutionEnabled,false);
   assert.equal(launch.product.creatorFeeBps,300);assert.deepEqual(Object.values(launch.product.creatorAllocationBps),[9000,500,500]);
   assert.equal(launch.product.entryThresholdRaw,'100000000');assert.equal(launch.product.nextStartTargetRaw,'100000000');
   assert.deepEqual([launch.product.shortInterval,launch.product.monthlyInterval],[21600,2592000]);
   report.profile=profile;report.launchPlan=require('./public-launch-plan.cjs').inspectPlan(launch);
-  report.inputs=Object.fromEntries(['config/release-rehearsal.json','config/robinhood-launch-plan.json',profile.buyEvidence,profile.opsEvidence,'scripts/release-rehearsal.cjs','scripts/promo-automation.cjs','scripts/ops-market-executor.cjs','test/fixtures/robinhood-obligations.cjs'].map(f=>[f,digest(f)]));
+  report.inputs=Object.fromEntries(['config/release-rehearsal.json','config/reserve/pair-launch-plan.json',profile.buyEvidence,profile.opsEvidence,'scripts/release-rehearsal.cjs','scripts/promo-automation.cjs','scripts/ops-market-executor.cjs','test/fixtures/robinhood-obligations.cjs'].map(f=>[f,digest(f)]));
   const saved=read(profile.buyEvidence),input=saved.entries.replayInput;
   assert.equal(saved.success,true);const ledger=replay(input.manifest,input.blocks);
   assert.equal(hash(ledger),hash(replay(input.manifest,[...input.blocks,...input.blocks])));

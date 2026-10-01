@@ -6,7 +6,7 @@ const PROXY='0xB0D389250c61c69EcCD5d986fC8482CBfA5418C4';
 const SLOT='0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc';
 function inputs(){
  const source=n=>JSON.parse(fs.readFileSync(path.join(__dirname,'../research/infinity-source-audit',n+'.json'),'utf8'));
- const quote=JSON.parse(fs.readFileSync(path.join(__dirname,'../config/robinhood-launch-plan.json'),'utf8')).contracts.quote;
+ const quote=JSON.parse(fs.readFileSync(path.join(__dirname,'../config/reserve/pair-launch-plan.json'),'utf8')).contracts.quote;
  return {proxy:PROXY,sources:Object.fromEntries(['launch','engine','hook','adapter'].map(n=>[n,source(n)])),quote};
 }
 async function inspect({rpc,expected=inputs()}){

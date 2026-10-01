@@ -1,5 +1,13 @@
 # Навигация по документации
 
+[Активный Pons-план и явно выделенный резерв PAIR](ACTIVE_RELEASE_PATH.md).
+
+[R0: актуальная карта реализации, ролей и недоделок](RELEASE_INVENTORY.md) — статическая инвентаризация01.10, не live audit.
+
+[Полная проверка перед запуском: этапы и критерии допуска](PRELAUNCH_VERIFICATION_PLAN.md).
+
+[Разбор indexed review и следующий timing-пакет](PONS_INDEXED_REVIEW_TRIAGE.md).
+
 [Полный indexed coordinator cycle](PONS_INDEXED_CYCLE.md) — локальный PASS01.10; следующий шаг — независимое review.
 
 [Pons: допуск политики и чтение сохранённого индекса](PONS_INDEXED_COORDINATOR.md) — локальная связка проверена; полный indexed draw cycle следующий.
@@ -24,7 +32,7 @@ Pons curve + v4 BUY: [маршруты Universal Router, учёт hook fees, for
 
 Pons BUY: [учёт прямых покупок на кривой, проверки и ограничения](PONS_BUY.md).
 
-Текущая адаптация: [Pons migration](PONS_MIGRATION.md); PAIR сохранён как резерв. Отдельные draft config/ABI готовы, production collector и BUY adapters ещё не реализованы.
+Текущая адаптация: [Pons migration](PONS_MIGRATION.md); PAIR сохранён как резерв. Локальные collector и BUY adapters реализованы; публичные entrypoints/deployment ещё не квалифицированы.
 
 ## Для продолжения работы
 
