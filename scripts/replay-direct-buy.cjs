@@ -17,6 +17,8 @@ async function scan(input,rpcUrl,toBlock,lifecycle=null){
 async function scanWithRpc(input,rpc,toBlock,lifecycle=null,{fromBlock}={}){
   const manifest=buyPolicyHistory(input).genesis;
   const pons=PONS_PROFILES.get(manifest.schema),batch=pons?.FIELDS.includes('batchExecutor');
+  const curveBuyTopic=batch?require('./pons-curve-buy.cjs').EVENTS.getEvent('CurveBuy').topicHash:null;
+  const poolSwapTopic=batch&&manifest.manager?require('./pons-v4-buy.cjs').SWAP.getEvent('Swap').topicHash:null;
   if(BigInt(await rpc('eth_chainId'))!==BigInt(manifest.chainId))throw Error('Wrong RPC chain');
   const tag=n=>'0x'+BigInt(n).toString(16);
   const anchor=await rpc('eth_getBlockByNumber',[tag(manifest.anchor.number),false]);
@@ -61,8 +63,14 @@ async function scanWithRpc(input,rpc,toBlock,lifecycle=null,{fromBlock}={}){
         const code=await rpc('eth_getCode',[AUTO.ADDRESS,tag(n)]);
         if(code==='0x'||keccak256(code)!==AUTO.CODE_HASH)throw Error('Unexpected historical AUTO runtime');
       }
-      if(batch&&tx.to&&tx.from.toLowerCase()===tx.to.toLowerCase()){const payer=tx.from.toLowerCase();if(!batchAccounts[payer])batchAccounts[payer]={parentHash:block.parentHash,code:await rpc('eth_getCode',[payer,tag(n-1n)])};}
-      transactions.push({tx,receipt:await rpc('eth_getTransactionReceipt',[tx.hash])});
+      const receipt=await rpc('eth_getTransactionReceipt',[tx.hash]);
+      // Keep all receipts. Only a target venue candidate needs account delegation
+      // evidence; unrelated self-calls must not require historical account state.
+      const candidate=batch&&receipt.logs.some(l=>
+        l.address.toLowerCase()===manifest.curve.toLowerCase()&&l.topics[0]===curveBuyTopic||
+        manifest.manager&&l.address.toLowerCase()===manifest.manager.toLowerCase()&&l.topics[0]===poolSwapTopic&&l.topics[1]?.toLowerCase()===manifest.poolId.toLowerCase());
+      if(candidate&&tx.to&&tx.from.toLowerCase()===tx.to.toLowerCase()){const payer=tx.from.toLowerCase();if(!batchAccounts[payer])batchAccounts[payer]={parentHash:block.parentHash,code:await rpc('eth_getCode',[payer,tag(n-1n)])};}
+      transactions.push({tx,receipt});
     }
     blocks.push({number:block.number,hash:block.hash,parentHash:block.parentHash,timestamp:block.timestamp,transactions,...(batch?{batchAccounts}:{})});
   }

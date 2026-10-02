@@ -73,6 +73,19 @@ test('batch BUY → durable index → Short/Monthly → HTTP; restart and reorg'
  f.flags.outage=true;await assert.rejects(f.run(),/offline/);assert.equal((await view()).status,'stale');
  f.flags.outage=false;await f.run();assert.equal((await view()).status,'observed');
 });
+
+test('100 unrelated self-calls need no parent code; target failure still closes indexing',async t=>{
+ const f=setup(t),block=f.blocks[1],template=block.transactions[0];
+ for(let i=0;i<100;i++){
+  const tx={...structuredClone(template.tx),from:addr(10000+i),to:addr(10000+i),hash:E.id('foreign'+i),transactionIndex:E.toQuantity(i+1),input:'0x',authorizationList:[]};
+  const receipt={...structuredClone(template.receipt),from:tx.from,to:tx.to,transactionHash:tx.hash,transactionIndex:tx.transactionIndex,logs:[]};block.transactions.push({tx,receipt});
+ }
+ let accountReads=0,foreignReads=0;const rpc=async(m,p)=>{if(m==='eth_getCode'&&BigInt(p[0])>=10000n&&BigInt(p[0])<10100n){foreignReads++;throw Error('foreign unavailable');}if(m==='eth_getCode'&&p[0].toLowerCase()===f.wallet)accountReads++;return f.rpc(m,p);};
+ await indexOnce({config:f.config,statePath:f.statePath,rpc});assert.equal(foreignReads,0);assert.equal(accountReads,2);
+ assert.equal(JSON.parse(fs.readFileSync(f.statePath)).index.ledger.decisions.filter(d=>d.status==='ELIGIBLE').length,2);
+ const other=f.statePath+'.unavailable';t.after(()=>{if(fs.existsSync(other))fs.unlinkSync(other);});
+ await assert.rejects(indexOnce({config:f.config,statePath:other,rpc:async(m,p)=>{if(m==='eth_getCode'&&p[0].toLowerCase()===f.wallet)throw Error('target parent unavailable');return f.rpc(m,p);}}),/target parent unavailable/);
+});
 test('wrong runtime/binding retains snapshot; same-block delegation activity is not guessed',async t=>{
  const f=setup(t);await f.run();const original=JSON.parse(fs.readFileSync(f.statePath)).index;
  // A fresh state avoids a previously verified cache when injecting bad RPC code.

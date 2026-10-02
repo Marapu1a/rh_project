@@ -114,7 +114,10 @@
       "test/pons-batch-integration.test.cjs",
       "test/pons-pool-terminal.test.cjs",
       "test/pons-pool-batch.test.cjs",
-      "test/pons-funding-pass.test.cjs"
+      "test/pons-funding-pass.test.cjs",
+      "test/pons-gas-budget.test.cjs",
+      "test/pons-wallet-verifier.test.cjs",
+      "test/pons-zeroex-evidence.test.cjs"
     ]
   },
   "accounting": {
@@ -418,7 +421,8 @@
       "test/local-scheduler.test.cjs",
       "test/local-state-lock.test.cjs",
       "test/fork-empty-storage.test.cjs",
-      "test/pons-funding-pass.test.cjs"
+      "test/pons-funding-pass.test.cjs",
+      "test/pons-gas-budget.test.cjs"
     ]
   },
   "pons-recovery": {
@@ -491,7 +495,8 @@
       "test/indexer-service.test.cjs",
       "test/pons-policy-indexer.test.cjs",
       "test/public-rpc-qualification.test.cjs",
-      "test/pons-crash-recovery.test.cjs"
+      "test/pons-crash-recovery.test.cjs",
+      "test/pons-wallet-verifier.test.cjs"
     ]
   },
   "pons-channels": {
@@ -507,7 +512,8 @@
       "test/pons-signed-7702.test.cjs",
       "test/pons-batch-integration.test.cjs",
       "test/pons-pool-terminal.test.cjs",
-      "test/pons-pool-batch.test.cjs"
+      "test/pons-pool-batch.test.cjs",
+      "test/pons-zeroex-evidence.test.cjs"
     ]
   }
 }

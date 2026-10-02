@@ -177,11 +177,11 @@ async function tickKind(kind,o,state,save){
   if(o.obligationsOnly)return wait(pending!==zero?'missingFrozenJob':'obligationsOnly');
   if(active!==zero||pending!==zero)return wait('missingJob');
   if(o.allowNewJobs===false)return wait('newJobsDeferred');
-  const resolved=await resolveBuyPolicy(config,(m,p)=>provider.send(m,p));
-  let buyManifest=resolved.manifest;
   const last=await source[isShort?'lastShortTerminalAt':'lastMonthAt'](at);
   const interval=await source[isShort?'SHORT_INTERVAL':'monthlyInterval'](at);
   if(BigInt(head.timestamp)<last+interval)return wait('schedule');
+  const resolved=await resolveBuyPolicy(config,(m,p)=>provider.send(m,p));
+  let buyManifest=resolved.manifest;
   if(!publisher||(await publisher.getAddress()).toLowerCase()!==(await source.publisher(at)).toLowerCase())return wait('publisher');
   if(await pendingSigner(provider,[publisher,executor]))return wait('pendingTransaction');
   const epoch=draining||current;

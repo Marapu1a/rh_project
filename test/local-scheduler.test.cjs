@@ -6,6 +6,16 @@ const {compile}=require('../scripts/compile.cjs'),{runScheduler}=require('../scr
 const {setup}=require('./fixtures/local-scheduler.cjs'),{sent,advance,rpc}=require('./fixtures/local-controllers.cjs');
 const {normalRules}=require('./fixtures/short-outcome.cjs');
 const compiled=compile();
+
+test('schedule wait avoids policy RPC; when due the same invalid policy blocks both kinds',async t=>{
+ const f=await setup(t,compiled);const a=compiled.BuyPolicySource,source=await new ethers.ContractFactory(a.abi,a.evm.bytecode.object,f.admin).deploy(f.lifecycle?.instanceId??f.config.lifecycle.instanceId,require('../scripts/direct-buy.cjs').hash(f.config.manifest),await f.admin.getAddress(),20,initialAdapters(f.config.manifest));await source.waitForDeployment();
+ const address=source.target.toLowerCase();f.config.buyPolicy={source:source.target,publisher:await f.admin.getAddress(),instanceId:f.config.lifecycle.instanceId,genesisHash:require('../scripts/direct-buy.cjs').hash(f.config.manifest),sourceCodeHash:ethers.id('deliberately wrong runtime'),chainId:31337,noticeBlocks:20};
+ const send=f.provider.send.bind(f.provider);let reads=0;
+ f.provider.send=async(m,p=[])=>{if(m==='eth_getCode'&&p[0]?.toLowerCase()===address||m==='eth_call'&&p[0]?.to?.toLowerCase()===address)reads++;return send(m,p);};
+ t.after(()=>{f.provider.send=send;});
+ const early=await runScheduler(f.options,{maxTicks:1});assert.equal(early.results.SHORT.reason,'schedule');assert.equal(early.results.MONTHLY.reason,'schedule');assert.equal(reads,0);
+ await advance(30*86400+1);const due=await runScheduler(f.options,{maxTicks:1});assert.equal(due.status,'error');assert(reads>0);assert.equal(await f.short.pendingDatasetDraw(),ethers.ZeroHash);assert.equal(await f.monthly.pendingMonth(),ethers.ZeroHash);
+});
 test('previously frozen job cannot silently begin again after reorg with surviving cutoff',async t=>{
   const f=await setup(t,compiled);await registeredBuy(f);await advance(30*86400+1);await run(f,1);
   const point=await rpc('evm_snapshot');
@@ -216,7 +226,10 @@ test('unknown activated BUY adapter blocks new datasets but frozen Short and Mon
   const c=kind==='SHORT'?f.short:f.monthly;
   await sent(f.random.deliver(await c.drawRequest(saved.jobs[kind][0].job.artifact.request.drawId),ethers.ZeroHash));
  }
- await run(f); // terminal is a completed pass; the next pass considers a new dataset.
+ await run(f); // Frozen jobs finish independently of the new unsupported policy.
+ const idle=await runScheduler(f.options,{maxTicks:1});assert.equal(idle.status,'waiting');
+ for(const kind of ['SHORT','MONTHLY'])assert.equal(idle.results[kind].reason,'schedule');
+ await advance(30*86400+1); // Policy is required only when another dataset is due.
  const result=await runScheduler(f.options,{maxTicks:1});
  assert.equal(result.status,'error',JSON.stringify(result));
  for(const kind of ['SHORT','MONTHLY'])assert.match(result.results[kind].message,/adapter update required/);

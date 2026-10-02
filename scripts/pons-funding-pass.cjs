@@ -7,7 +7,7 @@ async function runFundingPass({loadPlan,send,results=[]}){
   plan??=await loadPlan();const a=plan.actions[action];
   if(a?.status!=='ready'){results.push({action,status:a?.status||'unavailable'});continue;}
   try{await send(a.method,a.args||[]);}
-  catch(e){if(!e.definiteRejection)throw e;results.push({action,status:'reverted'});}
+  catch(e){if(e.code==='LOCAL_BUDGET_WAIT'&&e.budget?.reason==='nativeFunding'){results.push({action,status:'waiting',budget:e.budget});continue;}if(!e.definiteRejection)throw e;results.push({action,status:'reverted'});}
   finally{plan=null;}
  }
  return results;

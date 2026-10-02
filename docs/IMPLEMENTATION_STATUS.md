@@ -14,15 +14,17 @@
 | Pons funding | contracts/LocalPonsCollector.sol, IPonsVenue.sol; scripts/pons-collector-manual.cjs, pons-funding-pass.cjs | Доступный USDG → credits 90/5/5 → vault; ожидание источника отдельно от существующих выплат. [Коллектор](PONS_COLLECTOR.md) |
 | Казна и draws | contracts/DualControllerPromoVault.sol, RobinhoodShortController.sol, RobinhoodMonthlyController.sol и bases | Резервы, settlement/claims; интегрированы локально. [Архитектура](DUAL_CONTROLLER_ARCHITECTURE.md), [цикл](PONS_INDEXED_CYCLE.md) |
 | RNG и cutoff | contracts/DrandRandomAdapter.sol; scripts/drand-delivery-worker.cjs; CutoffHistory | Один round/result, journal, checkpoint; реальные timing/finality отдельно. [Worker](DRAND_DELIVERY_WORKER.md), [cutoff](CUTOFF_HISTORY.md) |
-| Координатор | scripts/pons-automation.cjs, run-pons-automation.cjs, pons-transaction-journal.cjs, local-promo-scheduler.cjs | Funding/scheduler/claims, pending journal, recovery/drain, local-only. [Модуль](PONS_AUTOMATION.md) |
+| Координатор | scripts/pons-automation.cjs, run-pons-automation.cjs, pons-transaction-journal.cjs, pons-gas-budget.cjs, local-promo-scheduler.cjs | Funding/scheduler/claims, pending journal, recovery/drain, local-only; газ ближайшей tx, schedule до admission. [Модуль](PONS_AUTOMATION.md), [ожидание ETH](PONS_EXECUTION_READINESS.md) |
 | API / сервис | scripts/user-status-api.cjs, user-status-worker.cjs, public-observation.cjs, public-status.cjs, run-indexer-service.cjs | Проверенный snapshot, свежесть/покупки/билеты/rewards; тестовый shared path. [API](USER_STATUS_API.md), [проекция](PUBLIC_STATUS_API.md) |
 | Сайт / кошелёк | web/, web/concepts/hk/, web/purchase-demo/; scripts/pons-direct-purchase.cjs, pons-browser-bridge.cjs | Сайт/подключение и локальная purchase rehearsal; реальный полный Buy/Claim ещё отдельная задача. [Сайт](WEBSITE.md), [bridge](PONS_BROWSER_BRIDGE.md) |
 | Fork/harness | scripts/pons-*-fork.cjs, pons-*-rehearsal.cjs, verify-pons-wallet-api.cjs | Только тестовые инструменты; synthetic funding/finality/clock должны называться в отчёте |
+| 0x execution diagnostics | scripts/pons-zeroex-fork.cjs, pons-zeroex-evidence.cjs | Три локальных обмена; различает wallet debit, посредника и целевой pool. Не eligibility adapter. [Доказательства](PONS_ZEROEX_EXECUTION.md) |
 | Резерв PAIR/Infinity | config/reserve/, прежние PAIR/Infinity adapters и FeeRouter | Сохранённые реализации и evidence; не Pons runtime. [Граница](ACTIVE_RELEASE_PATH.md) |
 
 ## Проверки и доказательства
 
-- Последний пакет: [аудит02.10](PONS_AUDIT_2026-10-02.md), 239/239 расширенных tests;
+- Текущие адресные исправления: [газ, scanner и CLI verifier](PONS_EXECUTION_READINESS.md).
+- Предыдущий пакет: [аудит02.10](PONS_AUDIT_2026-10-02.md), 239/239 расширенных tests;
   отдельный fixture 4/4. Рабочее дерево поверх b9b7e04; не полный RC baseline.
 - Fresh local fork78099955: четыре pool terminal ветки до policy/index/API.
   [Evidence](evidence/PONS_POOL_BATCH_INDEX_API_2026-10-02.json).

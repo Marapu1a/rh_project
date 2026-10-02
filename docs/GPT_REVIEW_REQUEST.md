@@ -1,115 +1,137 @@
-# GPT review: тестовый контур Pons и накопленный пакет
+# GPT research: Pons graduation → достоверный учёт покупок
 
-02.10.2026. Проведи статическое review diff `b9b7e04..HEAD` и релевантного кода.
-В начале ответа назови полный прочитанный SHA. Ответ запиши в
-`docs/GPT_REVIEW_RESPONSE.md`. Код и продуктовые правила не меняй.
+02.10.2026. Нужны внешнее исследование и статический разбор, которые помогут
+реализовать следующий ограниченный пакет A2/G10. Не повторяй общий обзор launchpad.
+В начале ответа укажи прочитанный полный HEAD SHA, доступность рабочего дерева,
+дату внешней проверки и недоступные инструменты/источники. Ответ запиши в
+`docs/GPT_REVIEW_RESPONSE.md` с заголовком этой задачи. Старый ответ не является её результатом.
 
 ## Цель и границы
 
-**Сначала доводим проект до правильной работы в тестовом окружении. Затем отдельным
-этапом переносим на боевой.** Не смешивай эти этапы. Ранее размещённый сайт не означает
-работающую промо-систему. Нужны конкретные ошибки, недосмотры и ненужная сложность,
-а также оценка ближайшего плана, не общий checklist криптопроекта.
+QIANQI запускается через Pons V2, Robinhood Chain 4663. Нужно надёжно учитывать
+подходящие покупки после graduation и не путать их с переводами/служебными обменами.
+Билеты учитываются по покупке; финансирование призов — по реально полученным средствам.
+Порог 100 USDG и действующие продуктовые правила не меняем.
 
-По [REVIEW_TESTING](REVIEW_TESTING.md): не запускай tests/build/fork/RPC, не устанавливай
-зависимости, не отправляй транзакции. Читай код, тесты и сохранённые evidence.
-Если нужен эксперимент, предложи Codex точный сценарий и ожидаемый результат.
-Предыдущие GPT-обращения завершены и архивированы; не выполняй их как новую задачу.
+Сначала тестовое окружение, боевой перенос отдельно. Не редактируй runtime-код,
+не устанавливай зависимости, не запускай tests/build/fork и не отправляй транзакции.
+Исследуй доступные публичные документацию, исходники, explorer/API; допустимы адресные
+readonly RPC-запросы, если доступны без настройки окружения. Не сканируй всю историю.
+Если инструментов нет, явно назови предел и предложи точный эксперимент для Codex.
+Не обращайся к командам проектов и не подключай кошельки.
 
-## Порядок чтения
+## Что прочитать
 
-1. [Контекст](CURRENT_CONTEXT.md), [roadmap](ROADMAP.md), [карта кода](IMPLEMENTATION_STATUS.md).
-2. Релевантные правила [PRODUCT_SPEC](PRODUCT_SPEC.md).
-3. [Последний аудит](PONS_AUDIT_2026-10-02.md), [матрица каналов](PONS_CHANNEL_COVERAGE.md),
-   [общий config](SHARED_INDEX_CONFIG.md).
-4. Diff и зависимости по вопросам ниже. Не читать весь архив/raw/research подряд.
+1. [CURRENT_CONTEXT](CURRENT_CONTEXT.md), текущий A2/G10 в [ROADMAP](ROADMAP.md).
+2. [Исследование graduation](PONS_GRADUATION_REVIEW_2026-10-02.md) и его
+   [evidence](evidence/PONS_GRADUATION_REVIEW_2026-10-02.json).
+3. [Три локальных исполнения 0x](PONS_ZEROEX_EXECUTION.md),
+   [evidence](evidence/PONS_ZEROEX_EXECUTION_2026-10-02.json),
+   [матрица охвата](PONS_CHANNEL_COVERAGE.md), [правила](PRODUCT_SPEC.md).
+4. По конкретным вопросам: `scripts/pons-zeroex-evidence.cjs`,
+   `scripts/pons-v4-buy.cjs`, `scripts/pons-pool-batch-buy.cjs`,
+   `scripts/pons-channel-attribution.cjs`, `scripts/pons-batch-route.cjs`,
+   `scripts/pons-launch-buy.cjs`, `scripts/pons-profiles.cjs`,
+   `scripts/persistent-buy-indexer.cjs` и прямые зависимости.
+   Карта — [IMPLEMENTATION_STATUS](IMPLEMENTATION_STATUS.md).
 
-## Состав пакета
+Не читай весь архив. Предыдущий запрос [сохранён отдельно](archive/GPT_REVIEW_REQUEST_BEFORE_GRADUATION_2026-10-02.md).
+Если новые файлы отсутствуют в доступной ревизии, перечисли их: не подменяй задачу
+review старого diff. Локальные исследования могут ещё не быть опубликованы в HEAD.
 
-- Shared index config writer/API/coordinator, отдельный отказ public projection.
-- Curve self-batch, EIP-7702 type4/type2, общий genesis launch-v1 и новый launch-v2:
-  точные pool terminal batches USDG3 calls / ETH6 calls до policy/index/API.
-- Единый dispatch `pons-profiles.cjs`; прежняя семантика старых genesis сохранена.
-- Suffix scan, idle ledger/reward reuse, replay revision; сокращение повторных
-  funding plans/binding reads; исправление чужой invalid authorization.
-- Уборка документации: основной контекст, тестовый/боевой этапы, архив оригиналов.
+## Уже найдено — перепроверь, но не начинай с нуля
 
-## Приоритетные вопросы
+- Pons graduation сохраняет ERC20 и создаёт v4 pool с hook; direct/self-batch
+  pool-путь у нас уже есть. Новый пробел — aggregator и дополнительные wallet wrappers.
+- Один исполненный локально PRIORS quote прошёл через другие v3/v4 pools без Pons hook.
+  Это не характеристика всех 0x сделок.
+- Найдены реальные 0x → Pons pool swaps с HookFeeCollected, включая EntryPoint.
+  Выборка взята из ленты Pons и не показывает долю всего оборота на всех рынках.
+- В текущем V2 frontend после graduation direct/0x сравниваются по выходу.
+- Harmonic имеет creatorTax=0, но долю base fee; подтверждён фактический claim.
+  Pending TOKEN в hook, claimable escrow и поступившие средства — разные состояния.
+- В ленту PRIORS попала служебная конвертация hook: не каждый Swap — пользовательская покупка.
 
-### 1. Допуск и сумма покупки
+Стартовые источники: https://docs.ponsfamily.com/v2 ;
+https://www.ponsfamily.com/launchpad/0xdEe52F2ab639b6942B0d0F0565400b93b7a0fbe5 .
+Адреса, hashes, deployment/source URLs, состояние и receipts — в отчёте/evidence.
+Дополнительно ищи официальные материалы и исходники 0x Settler/AllowanceHolder,
+Uniswap v4 и используемого EntryPoint/account implementation. Не переноси описание
+с другой сети/версии без сверки deployed runtime и конкретного пути.
 
-Файлы: `pons-batch-route.cjs`, `pons-batch-buy.cjs`, `pons-batch-funding.cjs`,
-`pons-launch-buy.cjs`, `pons-pool-batch-buy.cjs`, `pons-v4-buy.cjs`,
-`pons-channel-attribution.cjs`, `direct-buy.cjs`.
+## Приоритет 1 — как доказать покупателя и подходящую сумму
 
-Проверь signature/domain/nonce/delegation, parent-state и same-block authorization,
-atomic mode, полноту calls/approvals, payer=recipient, funding projection,
-USDG basis/refund, SELL/другие swaps, receipt provenance и отсутствие двойного начисления.
-Безопасно ли исключается ровно matching funding Transfer при сохранении исходных logs?
-Правильно ли пропускаются invalid tuples без пропуска значимой смены исполнения?
-Не расширился ли допуск старых genesis? Не выводится ли eligibility только из calldata?
+Разбери хотя бы один реальный BUY через 0x → Pons pool. Наш образец Harmonic:
+`0x764d4c88d4ec43fb0dcea2105b8fffecfedb1bfd773558dd20d92b7e5873aad8`.
+Он содержит EntryPoint/Settler: если проще начать с EOA → AllowanceHolder → Settler,
+найди конкретный BUY receipt этого пути. SELL не заменяет доказательство BUY.
 
-### 2. Индексатор, восстановление и лишняя работа
+Дай таблицу: внешний отправитель, smart account/UserOperation, spender, плательщик,
+router, конечный poolId/hook, получатель TOKEN, валюта/сумма подходящей покупки.
+Для каждого поля — откуда оно доказано и какой контрпример опровергает наивный способ.
+Нельзя считать tx.from, API account или Swap.sender покупателем автоматически.
 
-Файлы: `persistent-buy-indexer.cjs`, `replay-direct-buy.cjs`, `buy-policy-*.cjs`,
-`shared-index-config.cjs`, API/worker, `local-promo-scheduler.cjs`.
+Главный вопрос: достаточно ли calldata + receipt + исторического code/state,
+или для конкретной ветки необходим trace? Если необходим — какой именно, какая
+доступность у публичного RPC, как ограничить объём и что делать при недоступности?
+Не предлагай тяжёлый trace каждого блока или доверие Pons API как источник допуска.
+Раздели надёжно определимый узкий маршрут и случаи, где идентичность недоказуема.
 
-Проверь prefix+suffix, reorg/cache eviction (тот же tx на другой ветке), notices,
-replay revision, idle reuse/rewards, cutoff/freshness, integrity против temporary RPC
-failure, consumer identities и frozen jobs. Найди оставшиеся необоснованные
-исторические RPC/CPU проходы. JSON/write и replay при новых блоках ещё O(history) —
-известное ограничение: оцени приоритет и минимальный измеримый следующий шаг,
-не предлагай новую платформу хранения без обоснования.
+Обязательно рассмотри:
+- exact-input/exact-output, partial fill/refund, router/protocol fees и hook fee
+  в TOKEN: как не приравнять gross debit кошелька к USDG basis покупки;
+- split по целевому и внешним pools: можно ли выделить только подходящую часть
+  без изменения продукта; если нет, явно назови это новой продуктовой развилкой;
+- multi-hop funding, разные payer/recipient, посторонние transfers, остатки на router;
+- несколько UserOperation/BUY одного или разных пользователей в одном tx,
+  reverted внутренний вызов, logs и границы исполнения;
+- служебная конвертация, buyback, SELL и повторный учёт одной экономической покупки.
 
-### 3. Funding и неизвестные отправки
+Нужно предложение нормализованного proof/идентификатора покупки и проверяемых
+инвариантов, не универсальная whitelist всех вызовов известного router.
+Сверь с существующим кодом: что можно переиспользовать, где текущая схема "один tx"
+не подходит, какие точные модули менять. Не меняй старые genesis задним числом.
 
-Файлы: `pons-funding-pass.cjs`, `pons-collector-manual.cjs`, `pons-automation.cjs`,
-`pons-transaction-journal.cjs`, `contracts/LocalPonsCollector.sol`, соседние guards.
+## Приоритет 2 — минимальный полезный охват после graduation
 
-Кэш плана живёт до попытки транзакции, не между polls. Проверь fresh state после
-send/revert, unknown outcome, payout priority, campaigns/старые credits, source drift,
-доступные claim/pay при ожидании conversion. Не предлагай тратить frozen/claimable,
-reroll/reset, подмену RNG или снятие local-only guards.
+Предложи порядок 2–3 осмысленных пакетов: какой конкретный путь даёт наибольшую
+практическую пользу при небольшом усложнении. Отдели:
+прямой router; 0x через EOA; подтверждённый self-batch; ERC-4337; внешний pool.
+Не объявляй популярность/проценты охвата без независимых данных: лента Pons смещена.
+Если wrapper зависит от account implementation, укажи проверяемую версию/границы,
+а не общий допуск по имени MetaMask или наличию EntryPoint.
 
-### 4. Покрытие и сложность
+Для первой реализации дай небольшую матрицу positive/negative/recovery примеров,
+реальные tx-образцы либо точные сценарии локального fork. Отдельно: последний curve
+BUY с refund и созданием pool; первая pool покупка; повтор/реорг; неизвестный маршрут.
+Каждый сценарий должен иметь ожидаемый результат, а не только название теста.
 
-Найди существенные негативные сценарии, которые отсутствуют либо подтверждены только
-моделью. Отличай executed receipts от synthetic RPC chain/code injection/fixtures.
-Не приписываем ли установленному MetaMask результаты harness? Есть ли dead code,
-опасные defaults/retries, дубли или лишние абстракции? Обоснуй пользу упрощения;
-несколько genesis-версий нельзя объединять ценой изменения исторических решений.
+## Приоритет 3 — ограничения сбора и новые ловушки
 
-### 5. Контекст и следующий шаг
+Проверь source/deployment: в каких случаях creator сам может сделать sweep/claim,
+а где требуется feeSweepOperator; что меняется при claim-to/смене recipient/holder
+fee sharing. Если конкретной функции нет — не выдумывай workaround.
+Есть ли публичные свидетельства, что оператор сейчас реально конвертирует комиссии?
+Один прошлый успешный sweep не гарантирует будущую доступность сервиса.
 
-Согласованы ли актуальные документы и код, не потеряно ли принятое ограничение при
-архивации? Обоснован ли следующий пакет:0x execution/attribution → минимальный
-adapter/index/API, затем unknown-route observability и wallet UX? Если есть более
-ранний blocker корректности тестового контура — назови его. Production gaps не
-выдавай за неожиданные дефекты этого этапа. Новые сети/продуктовые правила вне задачи.
+Проверь источник доходов Harmonic: creator tax против доли base fee; его собственная
+buy/burn автоматика против buyback Pons. Не переноси особенности чужого legacy launch
+на будущий QIANQI. Найди противоречия нашему отчёту и случаи, когда наш предполагаемый
+ручной fallback не имеет permissions. Не предлагай менять призовую математику или
+считать pending TOKEN доступными призами. Нехватка газа → ожидание/уведомление,
+а не фиксированный резерв 0.6 ETH как условие запуска.
 
-## Доказательства и пределы
+## Формат полезного ответа
 
-- [Точный список и результаты](evidence/PONS_AUDIT_TESTS_2026-10-02.json):39 файлов,
-  239/239 PASS, затем отдельный evidence fixture4/4. Рабочее дерево поверх b9b7e04,
-  не полный RC baseline; commit/push не повод повторять тесты. Недоступный сырой
-  .local/logs файл не означает отсутствия проверки; используй committed evidence.
-- [Fresh pool batch → policy/index/API](evidence/PONS_POOL_BATCH_INDEX_API_2026-10-02.json):
-  fork78099955, четыре независимые USDG/ETH × sequential/batch ветки. Synthetic funding,
-  open lifecycle v1, latest→finalized; не полный draw cycle и не public activation.
-  Wrapper оговаривает устаревшие generic limits исходного runner.
-- [Общий профиль](evidence/PONS_COMBINED_PROFILE_2026-10-02.json),
-  [signed7702](evidence/PONS_SIGNED_7702_2026-10-02.json),
-  [steady-state7702](evidence/PONS_STEADY_7702_2026-10-02.json).
-- [Прежний indexed draw cycle](PONS_INDEXED_CYCLE.md) — другая дата/ревизия,
-  не проверка нового adapter через все draws.
--0x не квалифицирован. Реальный wallet UI, production manifest/custody/timing/rollout
-  не объявляются завершёнными. Ориентируйся на границы конкретного evidence.
+1. Коротко: что изменяет ближайшую реализацию; что опровергнуто/подтверждено.
+2. Таблица маршрутов: доказательства, ограничения, поддержка сейчас/предлагается.
+3. Подробный разбор BUY и минимальный алгоритм proof/суммы/дедупликации.
+4. Конкретные изменения по файлам и ограниченный следующий пакет с критериями готовности.
+5. Findings: серьёзность, файл/строка либо source/tx, механизм ошибки, исправление,
+   проверочный сценарий. Отдельно гипотезы, внешние зависимости и продуктовые решения.
+6. Источники и остающиеся вопросы. Для live фактов — chain, block/hash, адрес,
+   tx/событие/функция и дата; для предположений — прямо пометка "не проверено".
 
-## Формат ответа
-
-1. Прочитанный SHA, краткий вывод, реально просмотренный объём.
-2. Findings по важности: файл/строка, trigger, последствие, путь по коду, минимальная
-   правка и regression-сценарий. Пометки: confirmed / hypothesis / known limitation.
-3. До пяти обоснованных упрощений или пробелов покрытия.
-4. Следующий осмысленный пакет: что исправить до0x либо почему можно продолжать план.
-5. Непроверенные границы отдельно. Если новых дефектов нет — так и напиши.
+Если не нашёл подтверждения, это полезный результат при точном описании пробела.
+Не выдавай готовность production, не запускай общий аудит проекта заново и не
+заменяй алгоритм фразами "проверять безопасно", "нужен аудит", "добавить тесты".

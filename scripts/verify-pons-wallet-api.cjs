@@ -39,7 +39,8 @@ async function verify({config,wallet,expected}){
 if(require.main===module)(async()=>{
  const [input,output]=process.argv.slice(2);assert(input&&output&&!fs.existsSync(output),'Supply cycle report and new output');
  const report=JSON.parse(fs.readFileSync(input)),cycle=report.cycle;
- const config=require('./pons-automation.cjs').schedulerConfigFor(cycle.automation.config);
+ const scheduler=require('./pons-automation.cjs').schedulerConfigFor(cycle.automation.config);
+ const config=require('./shared-index-config.cjs').buildIndexConfigs(scheduler).indexConfig;
  const wallet=cycle.automation.config.executor;
  const expected=cycle.finalLedger.wallets.find(w=>w.wallet.toLowerCase()===wallet.toLowerCase());
  const result=await verify({config,wallet,expected});fs.writeFileSync(output,JSON.stringify(result,null,2));console.log(result.status);

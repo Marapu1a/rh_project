@@ -36,7 +36,10 @@ async function sendLocalTransaction(method,args,overrides,options={}){
     const network=require('./runtime-network.cjs');await network.beforeSend();
     if(network.isRobinhood())overrides={...overrides,chainId:4663};
     if(boundary?.preflight)await boundary.preflight(await method.populateTransaction(...args,overrides),method.fragment.name);
-    const gasLimit=await method.estimateGas(...args,overrides);
+    let estimate;
+    try{estimate=await method.estimateGas(...args,overrides);}
+    catch(e){await boundary?.estimateFailed?.(e,await method.populateTransaction(...args,overrides),method.fragment.name);throw e;}
+    const gasLimit=boundary?.gasLimit?await boundary.gasLimit(estimate):estimate;
     if(options.signal?.aborted){const e=new Error('Stopped before broadcast');e.code='LOCAL_EXECUTION_STOPPED';throw e;}
     // A successful before hook commits the attempt: do not leave a prepared marker by
     // cancelling between persistence and broadcast. Later abort stops wait/subsequent sends.

@@ -28,8 +28,10 @@
 | [PONS_BROWSER_BRIDGE](PONS_BROWSER_BRIDGE.md) | Browser → local fork purchase |
 | [PONS_BUY](PONS_BUY.md) | Pons: покупки на кривой |
 | [PONS_CHANNEL_COVERAGE](PONS_CHANNEL_COVERAGE.md) | G10 — охват торговых маршрутов Pons |
+| [PONS_GRADUATION_REVIEW_2026-10-02](PONS_GRADUATION_REVIEW_2026-10-02.md) | Graduation: реальные маршруты Harmonic/PRIORS, hook fees, claim и границы учёта |
 | [PONS_COLLECTOR](PONS_COLLECTOR.md) | Pons: локальный сбор комиссий и ручное исполнение |
 | [PONS_DIRECT_PURCHASE](PONS_DIRECT_PURCHASE.md) | Прямой USDG BUY — локальный прототип |
+| [PONS_EXECUTION_READINESS](PONS_EXECUTION_READINESS.md) | Газ ближайшего действия, ожидание ETH и исправления review |
 | [PONS_INDEXED_COORDINATOR](PONS_INDEXED_COORDINATOR.md) | Pons: допуск политики и сохранённый индекс |
 | [PONS_INDEXED_CYCLE](PONS_INDEXED_CYCLE.md) | Сквозной Pons coordinator с сохранённым индексом |
 | [PONS_LAUNCH_PROFILE](PONS_LAUNCH_PROFILE.md) | Общий профиль покупок Pons |
@@ -39,6 +41,7 @@
 | [PONS_PURCHASE_UI](PONS_PURCHASE_UI.md) | Локальный интерфейс покупки |
 | [PONS_UI_ROUTING](PONS_UI_ROUTING.md) | Pons UI routing — 01.10.2026 |
 | [PONS_V4_BUY](PONS_V4_BUY.md) | Pons: учёт curve и v4 BUY |
+| [PONS_ZEROEX_EXECUTION](PONS_ZEROEX_EXECUTION.md) | Реальные 0x calldata на fork: атрибуция, комиссии и split вне Pons pool |
 | [SHARED_INDEX_CONFIG](SHARED_INDEX_CONFIG.md) | Общий индекс для Pons, координатора и API |
 
 ## Общее ядро, API, UI и вспомогательные модули
@@ -160,7 +163,7 @@ Pons. Сводную актуальную связь даёт [карта реа
 | [AUTOMATION_REVIEW_2026-09-20](AUTOMATION_REVIEW_2026-09-20.md) | Проверка последних связок — 20.09.2026 |
 | [FINAL_TESTING_HANDOFF](FINAL_TESTING_HANDOFF.md) | Передача на финальное тестирование —30.09.2026 |
 | [GPT_PROMO_REVIEW_REQUEST_2026-09-12](GPT_PROMO_REVIEW_REQUEST_2026-09-12.md) | Старое обращение к GPT перенесено в архив |
-| [GPT_REVIEW_REQUEST](GPT_REVIEW_REQUEST.md) | Запрос GPT: общий config indexer / coordinator / API до реализации |
+| [GPT_REVIEW_REQUEST](GPT_REVIEW_REQUEST.md) | Текущий запрос: Pons graduation, 0x attribution и ограничения fee collection |
 | [GPT_REVIEW_RESPONSE](GPT_REVIEW_RESPONSE.md) | Постоянный ответ GPT — общий indexer/coordinator/API config (G02) |
 | [PONS_INDEXED_REVIEW_TRIAGE](PONS_INDEXED_REVIEW_TRIAGE.md) | Разбор indexed review — 01.10.2026 |
 | [PONS_MIGRATION](PONS_MIGRATION.md) | Перенос первого выпуска на Pons V2 |

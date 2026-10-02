@@ -1,5 +1,10 @@
 const {test}=require('node:test'),assert=require('node:assert/strict');
 const {runFundingPass}=require('../scripts/pons-funding-pass.cjs');
+test('unaffordable action waits while a cheaper payout can proceed',async()=>{
+ const sent=[];let paid=false;
+ const results=await runFundingPass({loadPlan:async()=>({actions:{pull:{status:'ready',method:'pull'},'pay-prizes':{status:paid?'empty':'ready',method:'pay'}}}),send:async method=>{if(method==='pull')throw Object.assign(Error('nativeFunding'),{code:'LOCAL_BUDGET_WAIT',budget:{reason:'nativeFunding'}});paid=true;sent.push(method);}});
+ assert.deepEqual(sent,['pay']);assert(results.some(r=>r.action==='pull'&&r.status==='waiting'));
+});
 test('idle funding pass inspects once, but each poll reads a fresh plan',async()=>{
  let reads=0;const loadPlan=async()=>{reads++;return {actions:{}};};
  const send=async()=>assert.fail('idle send');

@@ -19,6 +19,18 @@ async function setup({due=true}={}){
  return {...f,job,options,ids:[await f.short.drawRequest(short.drawId),await f.monthly.drawRequest(month.drawId)]};
 }
 const beacon=async round=>{assert.equal(round,String(vector.round));return vector;};
+test('Pons estimated transaction policy bypasses standalone floor, waits without intent and resumes',async()=>{
+ const f=await setup();f.options.job.nativeFloor=String(10n**30n);
+ const state={},notifications=[];let funded=false;
+ const proxy={getBalance:async address=>funded?f.provider.getBalance(address):0n};
+ const gas=require('../scripts/pons-gas-budget.cjs').createGasBudget({provider:proxy,sender:await f.executor.getAddress(),maxGasLimit:'3000000',state,save:()=>{},notifications});
+ const options={...f.options,transactionGasLimit:gas.gasLimit,transactionEstimateFailed:gas.estimateFailed,transactionGuard:async(request,action)=>gas.check(request,action,(await f.provider.getFeeData()).gasPrice)};
+ const first=await runDrandDelivery(options,{getBeacon:beacon});assert.equal(first.status,'waiting');assert.equal(first.steps.length,0);assert(first.requests.every(r=>r.reason==='nativeFunding'));
+ assert.equal(fs.existsSync(f.options.statePath),false);const notices=notifications.length;
+ await runDrandDelivery(options,{getBeacon:beacon});assert.equal(notifications.length,notices);
+ funded=true;const resumed=await runDrandDelivery(options,{getBeacon:beacon});assert.equal(resumed.status,'complete');assert.equal(resumed.steps.length,4);assert(notifications.some(n=>n.type==='nativeFundingAvailable'));
+ const again=await runDrandDelivery(options,{getBeacon:beacon});assert.equal(again.steps.length,0);
+});
 function faulty(f,kind){
  const real=f.random.connect(f.executor),reader=f.random.connect(f.provider);let once=true;
  const wrap=name=>{const method=async(...args)=>{const tx=await real[name](...args);if(once){once=false;if(kind==='unknown')throw Object.assign(Error('lost hash'),{code:'ECONNRESET'});return {hash:tx.hash,nonce:tx.nonce,wait:async()=>{throw Object.assign(Error('timeout'),{code:'TIMEOUT'});}};}return tx;};method.estimateGas=real[name].estimateGas;method.populateTransaction=real[name].populateTransaction;method.fragment=real[name].fragment;return method;};

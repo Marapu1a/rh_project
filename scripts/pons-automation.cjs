@@ -3,7 +3,7 @@ const {ethers}=require('ethers'),path=require('node:path');
 const network=require('./runtime-network.cjs'),{withState}=require('./local-scheduler-state.cjs');
 const {sendLocalTransaction,withTransactionBoundary}=require('./local-receipt.cjs');
 const {runScheduler}=require('./local-promo-scheduler.cjs'),{runDrandDelivery}=require('./drand-delivery-worker.cjs');
-const {inspect,ABI}=require('./pons-collector-manual.cjs'),V=require('./pons-v4-buy.cjs');
+const {inspect,ABI}=require('./pons-collector-manual.cjs');
 const check=(v,m)=>{if(!v)throw Error(m);},same=(a,b)=>String(a).toLowerCase()===String(b).toLowerCase();
 const {reconcilePending,createBoundary}=require('./pons-transaction-journal.cjs');
 function schedulerConfigFor(c){
@@ -39,7 +39,9 @@ async function runPonsAutomation({provider,executor,config:c,rpcUrl,statePath,si
   const schedulerConfig=schedulerConfigFor(c);
   const file=path.resolve(statePath),identity={config:c,rpcUrl,sender:c.executor};
   return withState(file,identity,async(state,save)=>{
-   const steps=[],results={},result=(status,reason)=>({status,reason,steps,results,publicSends:false});let sentCount=0;
+   const steps=[],results={notifications:[]};let sentCount=0;
+   const gas=require('./pons-gas-budget.cjs').createGasBudget({provider,sender:c.executor,maxGasLimit:c.gasLimit,state,save,notifications:results.notifications});
+   const result=(status,reason)=>({status,reason:status==='waiting'&&gas.waiting().length?'nativeFunding':reason,steps,results:{...results,nativeFunding:gas.waiting()},publicSends:false});
    const wait=reason=>{throw Object.assign(Error(reason),{code:'LOCAL_BUDGET_WAIT',budget:{reason},workerWait:reason});};
    async function guard(request,action){
     check(!state.pending,'Unresolved intent');
@@ -48,18 +50,10 @@ async function runPonsAutomation({provider,executor,config:c,rpcUrl,statePath,si
     if(await provider.getTransactionCount(c.executor,'pending')>await provider.getTransactionCount(c.executor,'latest'))wait('pendingNonce');
     const price=(await provider.getFeeData()).gasPrice;if(price===null||price>BigInt(c.maxGasPrice))wait('gasPrice');
     if(BigInt(request.maxFeePerGas??request.gasPrice??price)>BigInt(c.maxGasPrice))wait('gasPrice');
-    // Reserve conservative gas for both datasets, all possible claims and remaining RNG actions.
-    let calls=20n+BigInt(state.payouts?.length||0);
-    for(const [source,keys,isShort]of [[short,['activeProposal','pendingDatasetDraw'],true],[monthly,['activeMonth','pendingMonth'],false]]){
-     const active=await source[keys[0]](),pending=await source[keys[1]]();
-     if(active!==ethers.ZeroHash){const p=isShort?await short.datasetProposal(active):await monthly.month(active);calls+=BigInt(isShort?p.request.expectedCount:p.input.count)*2n+10n;}
-     else if(pending!==ethers.ZeroHash){const p=isShort?await short.datasetProposal((await short.settlements(pending)).proposalId):await monthly.month(pending);calls+=BigInt(isShort?p.request.expectedCount:p.input.count)*2n+10n;}
-    }
-    if(action==='begin'||action==='beginMonth'){const parsed=(action==='begin'?short:monthly).interface.parseTransaction({data:request.data});calls+=2n*BigInt(action==='begin'?parsed.args[1].expectedCount:parsed.args[0].count)+10n;}
-    if(await provider.getBalance(c.executor)<BigInt(c.nativeFloor)+calls*BigInt(c.gasLimit)*BigInt(c.maxGasPrice))wait('nativeFunding');
     if(request.gasLimit&&BigInt(request.gasLimit)>BigInt(c.gasLimit))wait('gasBound');
+    await gas.check(request,action,price);
    }
-   const boundary=createBoundary({state,save,provider,sender:c.executor,guard,onConfirmed:async s=>{steps.push(s);sentCount++;await onStep(s);}});
+   const boundary={...createBoundary({state,save,provider,sender:c.executor,guard,onConfirmed:async s=>{steps.push(s);sentCount++;await onStep(s);}}),gasLimit:gas.gasLimit,estimateFailed:gas.estimateFailed};
    const deliver={provider,adapter,executor,job:c.deliveryJob,statePath:file+'.rng',signal,receiptTimeoutMs};
    const schedule={provider,short,monthly,publisher:executor,executor,config:schedulerConfig,...(schedulerConfig.indexer?{indexConfig:require('./shared-index-config.cjs').buildIndexConfigs(schedulerConfig).indexConfig}:{}),rpcUrl,statePath:file+'.scheduler',signal,receiptTimeoutMs};
    async function send(method,args=[]){const price=(await provider.getFeeData()).gasPrice;return sendLocalTransaction(method,args,{type:2,maxFeePerGas:price,maxPriorityFeePerGas:0},{signal,receiptTimeoutMs});}
@@ -80,7 +74,7 @@ async function runPonsAutomation({provider,executor,config:c,rpcUrl,statePath,si
     for(const p of [...state.payouts]){
      check(same((await provider.getBlock(p.blockNumber))?.hash,p.blockHash),'Payout origin reorg');
      try{if(await vault.reward(p.draw,p.winner)>0n)await send(vault.connect(executor).claim,[p.draw,p.winner]);}
-     catch(e){if(!e.definiteRejection)throw e;(results.claimFailures??=[]).push({draw:p.draw,winner:p.winner});continue;}
+     catch(e){if(e.code==='LOCAL_BUDGET_WAIT'&&e.budget?.reason==='nativeFunding')continue;if(!e.definiteRejection)throw e;(results.claimFailures??=[]).push({draw:p.draw,winner:p.winner});continue;}
      state.payouts=state.payouts.filter(x=>x!==p);save(state);
     }
    }
@@ -92,7 +86,7 @@ async function runPonsAutomation({provider,executor,config:c,rpcUrl,statePath,si
     check(same(await short.randomProvider(),adapter.target)&&same(await monthly.randomProvider(),adapter.target),'RNG binding changed');
     return await withTransactionBoundary(boundary,async()=>{
      await claims();
-     results.rng=await runDrandDelivery({...deliver,transactionGuard:async(request,action,before)=>{await guard(request,action);if(before)sentCount++;}},{...(getBeacon?{getBeacon}:{}),onStep:async s=>{steps.push(s);await onStep(s);}});
+     results.rng=await runDrandDelivery({...deliver,transactionGasLimit:gas.gasLimit,transactionEstimateFailed:gas.estimateFailed,transactionGuard:async(request,action,before)=>{await guard(request,action);if(before)sentCount++;}},{...(getBeacon?{getBeacon}:{}),onStep:async s=>{steps.push(s);await onStep(s);}});
      if(['blocked','error','stopped'].includes(results.rng.status))return result(results.rng.status,results.rng.reason);
      results.settlement=await runScheduler({...schedule,allowNewJobs:false,obligationsOnly:drain},{maxTicks:16});
      if(state.pending)return result('blocked',state.pending.transactionHash?'pendingReceipt':'unknownHash');
@@ -107,7 +101,7 @@ async function runPonsAutomation({provider,executor,config:c,rpcUrl,statePath,si
        results.funding=[];
        await require('./pons-funding-pass.cjs').runFundingPass({loadPlan:()=>inspect(provider,c.collector,c.executor),send:(method,args)=>send(collector.connect(executor)[method],args),results:results.funding});
       }catch(e){if(state.pending||['LOCAL_BUDGET_WAIT','SCHEDULER_STORAGE_ERROR'].includes(e.code))throw e;results.fundingError=e.message;}
-      if(!results.fundingError){results.scheduler=await runScheduler(schedule,{maxTicks:16});if(state.pending)return result('blocked',state.pending.transactionHash?'pendingReceipt':'unknownHash');if(['error','blocked','stopped'].includes(results.scheduler.status))return result(results.scheduler.status,'scheduler');}
+      if(!results.fundingError&&!gas.waiting().length){results.scheduler=await runScheduler(schedule,{maxTicks:16});if(state.pending)return result('blocked',state.pending.transactionHash?'pendingReceipt':'unknownHash');if(['error','blocked','stopped'].includes(results.scheduler.status))return result(results.scheduler.status,'scheduler');}
      }
      await claims();return result('waiting',drain?'draining':'poll');
     });

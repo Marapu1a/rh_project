@@ -13,7 +13,7 @@
 | Прямой USDG→pool Universal Router | Поддержан | pons-v4-buy, точные commands/actions/settlement |
 | Терминал ETH→USDG→pool, последовательно | Поддержан для подтверждённого direct BUY | Funding отдельно, один целевой BUY |
 | Терминал USDG/ETH→pool, self-batch3/6 calls | Поддержан в новом genesis launch-v2 | [Fresh fork → policy/index/API](PONS_AUDIT_2026-10-02.md) |
-| Терминал через0x | **Не подтверждён; текущая задача** | Есть unsigned price/quotes; execution/attribution отсутствуют |
+| Pons API через 0x | Исполнение трёх quotes проверено, **допуск не добавлен** | [RDH curve / WETH / graduated PRIORS](PONS_ZEROEX_EXECUTION.md); PRIORS split-route не использует Pons pool |
 | Произвольные relayers, smart wallets, другие swaps | Не допускаются автоматически | Transfer/баланс TOKEN не доказательство подходящего BUY |
 
 Единый реестр: scripts/pons-profiles.cjs. Новый профиль:
@@ -31,8 +31,11 @@ USDG101 даёт один Short и один Monthly, carry1; ETH funding учи�
 
 ## Осталось для завершения G10
 
-1. Подтвердить достижимый0x execution на локальном fork: spender/allowances,
-   payer/recipient, вход/выход/refund, call boundary и исходный receipt.
+1. 0x execution/spender/payer/recipient и вход/выход подтверждены в трёх
+   [локальных сценариях](PONS_ZEROEX_EXECUTION.md). Остались refund, точный допуск
+   безопасной ветки. [Реальные pool receipts найдены](PONS_GRADUATION_REVIEW_2026-10-02.md),
+   включая 0x/EntryPoint; нужен локальный replay и точная attribution. Сам API quote
+   не доказывает выбор UI; текущий frontend сравнивает direct/aggregator после graduation.
 2. После proof определить минимальный adapter и проверить policy/index/API либо
    зафиксировать конкретную неподдержанную ветку. Одно предупреждение не заменяет охват.
 3. Проверить обнаружение неизвестных покупок целевого рынка, сохранённую причину,

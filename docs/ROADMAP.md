@@ -9,7 +9,7 @@ Gxx — идентификаторы прежней gap-карты, Rxx — ви
 | Порядок | Пакет | Статус и результат |
 |---|---|---|
 | A1 / G02 | Общий indexer/API/coordinator config | Выполнен локально; [описание](SHARED_INDEX_CONFIG.md) |
-| A2 / G10 | Каналы покупки Pons | В работе: direct и подтверждённые self-batch curve/pool проверены; далее 0x, неизвестные маршруты и wallet UX |
+| A2 / G10 | Каналы покупки Pons | В работе: direct/self-batch проверены; 0x execution исследован без нового допуска; graduation/реальные 0x → Pons receipts исследованы; далее точный admission и wallet UX |
 | A3 / G03 | Полный пользовательский путь | Довести тестовые Buy/Claim, account/network/reject/pending/recovery и честные статусы; bridge не равен extension proof |
 | A4 / G05–G07 | Реальные условия и длительная работа | Timing/finality, внешний источник/доступные funding actions, native budget, нагрузка, backup/restore на тестовом стенде |
 | A5 / G08, R1–R8 | Закрепить тестовый кандидат | Review кода/инвариантов, согласованные happy/fault прогоны, полный baseline конкретной ревизии, закрытые findings |
@@ -20,13 +20,23 @@ Gxx — идентификаторы прежней gap-карты, Rxx — ви
 
 ### Сейчас: A2 / G10
 
-Промежуточная контрольная точка: [статическое review GPT](GPT_REVIEW_REQUEST.md)
-накопленного кода и плана. Ответ ожидается; findings разбираем до следующей реализации.
+Review завершено, [замечания сверены](PONS_REVIEW_TRIAGE_2026-10-02.md).
+Пакет до 0x выполнен в тестовом контуре: CLI verifier/shared config, parent-code reads
+только для кандидатов, schedule перед admission, газ ближайшего действия и ожидание
+пополнения. [Результат и адресные проверки](PONS_EXECUTION_READINESS.md).
+Замер роста всей истории остаётся в A4; новый полный fork-cycle этим пакетом не заявлен.
 
-1. Исполнить достижимый 0x маршрут Pons на изолированном fork и собрать receipts.
-2. Установить payer/recipient/USDG debit, approvals, refund и границы исполнения;
-   только после этого добавлять versioned adapter и проверять index/API.
-3. Проверить обнаружение неизвестных покупок и доступность причины пользователю/оператору.
+1. **Выполнено частично по охвату:** [три исполнения 0x](PONS_ZEROEX_EXECUTION.md),
+   payer/recipient, approvals и debit подтверждены. Graduated-пример покупает токен
+   вне Pons pool; это не основание учитывать любой aggregator. Refund-ветка не воспроизведена.
+2. **Исследовано:** [graduation, hook fees и реальные маршруты](PONS_GRADUATION_REVIEW_2026-10-02.md).
+   Целевые pool receipts найдены, включая 0x и EntryPoint; это ещё не admission.
+3. **Следующий пакет:** локально воспроизвести конкретный 0x → Pons pool BUY, проверить
+   payer/recipient, refund/fees и runtime/call boundaries → versioned adapter → policy/index/API.
+   ERC-4337 attribution — отдельная граница. Неизвестные покупки/внешние рынки получают
+   понятную причину; служебные swaps и простой Transfer не дают билетов.
+   Подготовлен [внешний research-запрос](GPT_REVIEW_REQUEST.md); его выводы сверить
+   с receipts и кодом перед расширением допуска.
 4. Завершить матрицу каналов и wallet behavior; неизвестное не объявлять поддержанным.
 
 [Матрица охвата и критерии](PONS_CHANNEL_COVERAGE.md).

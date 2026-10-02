@@ -28,7 +28,8 @@ async function fetchBeacon(round,{signal}={}){
  if(!response.ok)throw Error('Beacon HTTP '+response.status);
  return response.json();
 }
-async function runDrandDelivery({provider,adapter,executor,job,statePath,signal,receiptTimeoutMs=30000,reconcileOnly=false,transactionGuard,kinds=['short','monthly']},{getBeacon=fetchBeacon,onStep=()=>{}}={}){
+async function runDrandDelivery({provider,adapter,executor,job,statePath,signal,receiptTimeoutMs=30000,reconcileOnly=false,transactionGuard,transactionGasLimit,transactionEstimateFailed,kinds=['short','monthly']},{getBeacon=fetchBeacon,onStep=()=>{}}={}){
+ check(!transactionGasLimit||typeof transactionGasLimit==='function'&&typeof transactionGuard==='function','Estimated gas policy requires parent guard');
  check(Array.isArray(kinds)&&kinds.length>0&&new Set(kinds).size===kinds.length&&kinds.every(k=>['short','monthly'].includes(k)),'Invalid delivery kinds');
  job=JSON.parse(JSON.stringify(validateJob(job)));receiptOptions(receiptTimeoutMs);
  check(executor?.provider===provider,'Signer/provider mismatch');check(adapter.runner===provider||adapter.runner?.provider===provider,'Adapter/provider mismatch');
@@ -69,12 +70,14 @@ async function runDrandDelivery({provider,adapter,executor,job,statePath,signal,
    async function budget(request,action){
     if(signal?.aborted)throw Object.assign(Error('Aborted'),{code:'LOCAL_EXECUTION_STOPPED'});
     const price=(await provider.getFeeData()).gasPrice;if(price==null||price>BigInt(job.maxGasPrice))wait('gasPrice');
-    const units=BigInt(request.gasLimit??job.gasUnits[action]),required=units*BigInt(request.maxFeePerGas??price)+BigInt(job.nativeFloor);
-    if(await provider.getBalance(sender)<required)wait('nativeFunding');
+    // Pons parent guard budgets the estimated current transaction. Other callers
+    // retain their existing standalone floor, job identity and budget semantics.
+    if(!transactionGasLimit){const units=BigInt(request.gasLimit??job.gasUnits[action]),required=units*BigInt(request.maxFeePerGas??price)+BigInt(job.nativeFloor);
+     if(await provider.getBalance(sender)<required)wait('nativeFunding');}
     if(await provider.getTransactionCount(sender,'pending')>await provider.getTransactionCount(sender,'latest'))wait('pendingSigner');
     if(!same((await provider.getBlock(head.number))?.hash,head.hash))wait('chainChanged');
    }
-   const boundary={preflight:async(request,action)=>{await transactionGuard?.(request,action,false);await budget(request,action);},before:async(request,action)=>{
+   const boundary={gasLimit:transactionGasLimit,estimateFailed:transactionEstimateFailed,preflight:async(request,action)=>{await transactionGuard?.(request,action,false);await budget(request,action);},before:async(request,action)=>{
     await transactionGuard?.(request,action,true);await budget(request,action);check(!state.pending,'Unresolved intent');
     state.pending={worker:'drand',action,target:request.to,data:request.data,from:sender,stage:'broadcast'};save(state);
    },sent:async tx=>{state.pending={...state.pending,transactionHash:tx.hash,nonce:tx.nonce,stage:'confirm'};save(state);},confirmed:async r=>{
@@ -101,10 +104,10 @@ async function runDrandDelivery({provider,adapter,executor,job,statePath,signal,
      if(!await adapter.verify(r.round,signature)){record.status='rejected';failures.push({...record,reason:'invalidProof'});continue;}
      // Another permissionless keeper may have completed this step while HTTP was pending.
      r=await adapter.requests(lane.id);
-     if(!r.proven)try{await send('prove',[lane.id,signature]);}catch(e){if(e.definiteRejection){record.status='rejected';failures.push({...record,reason:'proveRejected'});continue;}throw e;}
+     if(!r.proven)try{await send('prove',[lane.id,signature]);}catch(e){if(transactionGasLimit&&e.budget?.reason==='nativeFunding'){record.status='waiting';record.reason='nativeFunding';continue;}if(e.definiteRejection){record.status='rejected';failures.push({...record,reason:'proveRejected'});continue;}throw e;}
     }
     r=await adapter.requests(lane.id);
-    if(!r.delivered)try{await send('deliver',[lane.id]);}catch(e){if(e.definiteRejection){record.status='rejected';failures.push({...record,reason:'callbackRejected'});continue;}throw e;}
+    if(!r.delivered)try{await send('deliver',[lane.id]);}catch(e){if(transactionGasLimit&&e.budget?.reason==='nativeFunding'){record.status='waiting';record.reason='nativeFunding';continue;}if(e.definiteRejection){record.status='rejected';failures.push({...record,reason:'callbackRejected'});continue;}throw e;}
     record.status='delivered';
    }
    return result(failures.length?'degraded':requests.some(r=>r.status==='waiting')?'waiting':'complete');
