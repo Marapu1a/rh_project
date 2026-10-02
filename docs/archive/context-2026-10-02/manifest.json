@@ -1,0 +1,243 @@
+{
+  "date": "2026-10-02",
+  "files": [
+    {
+      "source": "docs/CURRENT_CONTEXT.md",
+      "archive": "docs/archive/context-2026-10-02/docs/CURRENT_CONTEXT.md",
+      "sourceSha256": "096624a30572ff8e44b934cd1f5d2ffe6c3456cb59f018bb380e80efaaa2ecbe",
+      "archiveSha256": "55dcef87ab4731d22da3cb0425d743bab4e5b2379ef3f7aa8d3de04bb73b3cc6",
+      "transformation": "Added historical notice and rebased relative Markdown links; original text retained; readable line endings normalized to LF",
+      "raw": "docs/archive/context-2026-10-02/raw/docs/CURRENT_CONTEXT.md"
+    },
+    {
+      "source": "docs/ROADMAP.md",
+      "archive": "docs/archive/context-2026-10-02/docs/ROADMAP.md",
+      "sourceSha256": "14c5506c46fcbd289e1d741fd654929c56e8f06a03c39acc16d111b8ef9aaaa0",
+      "archiveSha256": "f0732410f5c5c829abe1db019a34b56cbfb85841c693ad866f6bfb126d425766",
+      "transformation": "Added historical notice and rebased relative Markdown links; original text retained; readable line endings normalized to LF",
+      "raw": "docs/archive/context-2026-10-02/raw/docs/ROADMAP.md"
+    },
+    {
+      "source": "docs/IMPLEMENTATION_STATUS.md",
+      "archive": "docs/archive/context-2026-10-02/docs/IMPLEMENTATION_STATUS.md",
+      "sourceSha256": "ca9dae7653ecb9be183a656bd99d5153c4f66792b2eae082eca6bbfbcf0765b0",
+      "archiveSha256": "9464f7e0f695c1d11cd61996bc54a1381b63704ac84d9505e967c3c30a73259d",
+      "transformation": "Added historical notice and rebased relative Markdown links; original text retained; readable line endings normalized to LF",
+      "raw": "docs/archive/context-2026-10-02/raw/docs/IMPLEMENTATION_STATUS.md"
+    },
+    {
+      "source": "docs/README.md",
+      "archive": "docs/archive/context-2026-10-02/docs/README.md",
+      "sourceSha256": "17a2a080498eb54d8d8404ceba2d1b1b2a8e9f62d6bb0536b25cdfe119febc59",
+      "archiveSha256": "aaee6e9bca40bcfc6b8403442f6c23be4d2f04a42a3a08b0c28be8edc0785a9d",
+      "transformation": "Added historical notice and rebased relative Markdown links; original text retained; readable line endings normalized to LF",
+      "raw": "docs/archive/context-2026-10-02/raw/docs/README.md"
+    },
+    {
+      "source": "README.md",
+      "archive": "docs/archive/context-2026-10-02/ROOT_README.md",
+      "sourceSha256": "04df24e1d1580cafcc10481aeac84baee2961485bb3f8688721f036ff2b0ae86",
+      "archiveSha256": "bb9547dbecbb25cf9add2542350318075c21ee4c0f3abe277fb8ce0622edeaee",
+      "transformation": "Added historical notice and rebased relative Markdown links; original text retained; readable line endings normalized to LF",
+      "raw": "docs/archive/context-2026-10-02/raw/README.md"
+    },
+    {
+      "source": "docs/PONS_CHANNEL_COVERAGE.md",
+      "archive": "docs/archive/context-2026-10-02/docs/PONS_CHANNEL_COVERAGE.md",
+      "sourceSha256": "6ba9c327a9353b1ba1698f349f38fd039d1fd38b7faa0a7fd6c348743821a2aa",
+      "archiveSha256": "7e91648c5d97222bb776a81bafea8625a236750f7f9ff1ca3a1ef33e70ddc320",
+      "transformation": "Added historical notice and rebased relative Markdown links; original text retained; readable line endings normalized to LF",
+      "raw": "docs/archive/context-2026-10-02/raw/docs/PONS_CHANNEL_COVERAGE.md"
+    },
+    {
+      "source": "docs/GPT_REVIEW_REQUEST.md",
+      "archive": "docs/archive/context-2026-10-02/docs/GPT_REVIEW_REQUEST.md",
+      "sourceSha256": "de03ba14f664f83dae1a0c9083d2a156bdbe18390a8e3d2a9105babfa7c9e2b7",
+      "archiveSha256": "14f3297063a7d512e652c241af65f20f453fb284fa618e76439e79a4d0fc976b",
+      "transformation": "Added historical notice and rebased relative Markdown links; original text retained; readable line endings normalized to LF",
+      "raw": "docs/archive/context-2026-10-02/raw/docs/GPT_REVIEW_REQUEST.md"
+    },
+    {
+      "source": "docs/GPT_REVIEW_RESPONSE.md",
+      "archive": "docs/archive/context-2026-10-02/docs/GPT_REVIEW_RESPONSE.md",
+      "sourceSha256": "f140fe5f47a9d3788e548b77b5606371cf767689fe9e743e7bb9b9f9d400cd54",
+      "archiveSha256": "efaba10046139520185fcbb1f5571808f25401f1604dfb6d0b0215d45fb22cd0",
+      "transformation": "Added historical notice and rebased relative Markdown links; original text retained; readable line endings normalized to LF",
+      "raw": "docs/archive/context-2026-10-02/raw/docs/GPT_REVIEW_RESPONSE.md"
+    },
+    {
+      "source": "docs/AUTOMATION_REVIEW_2026-09-20.md",
+      "archive": "docs/archive/context-2026-10-02/docs/AUTOMATION_REVIEW_2026-09-20.md",
+      "sourceSha256": "8fa09276f310286dc3af25cc8833c6f741b8c101d952686932848ce908acb765",
+      "archiveSha256": "0a16536492b4e0b69c0051e9f16353681636bb8e8b2e8a41bc5eba49822aaf72",
+      "transformation": "Added historical notice and rebased relative Markdown links; original text retained; readable line endings normalized to LF",
+      "raw": "docs/archive/context-2026-10-02/raw/docs/AUTOMATION_REVIEW_2026-09-20.md"
+    },
+    {
+      "source": "docs/FINAL_TESTING_HANDOFF.md",
+      "archive": "docs/archive/context-2026-10-02/docs/FINAL_TESTING_HANDOFF.md",
+      "sourceSha256": "df9746b4f2e6979c3cbf7cba21a66df071f9871befd5cf796aac1640f6109421",
+      "archiveSha256": "d4c4ac935dbca73e6d419e7531625ce1d9ff68b533265a6db5fc4430c2ce3d8a",
+      "transformation": "Added historical notice and rebased relative Markdown links; original text retained; readable line endings normalized to LF",
+      "raw": "docs/archive/context-2026-10-02/raw/docs/FINAL_TESTING_HANDOFF.md"
+    },
+    {
+      "source": "docs/GPT_PROMO_REVIEW_REQUEST_2026-09-12.md",
+      "archive": "docs/archive/context-2026-10-02/docs/GPT_PROMO_REVIEW_REQUEST_2026-09-12.md",
+      "sourceSha256": "4d48643cf3335fa9c3cf061497077b2a6e81972712f8e6666b070b1e61a8baf7",
+      "archiveSha256": "9cc4ec64651914ce47df50392c63b4d4fe35bcb62782b80ba0bdf422a521a7b2",
+      "transformation": "Added historical notice and rebased relative Markdown links; original text retained; readable line endings normalized to LF",
+      "raw": "docs/archive/context-2026-10-02/raw/docs/GPT_PROMO_REVIEW_REQUEST_2026-09-12.md"
+    },
+    {
+      "source": "docs/PROMO_CURRENT_SPEC_2026-09-12.md",
+      "archive": "docs/archive/context-2026-10-02/docs/PROMO_CURRENT_SPEC_2026-09-12.md",
+      "sourceSha256": "f2d533e4268c4d7f92b45e428eba074a434a10789f054ca4708894150aafd436",
+      "archiveSha256": "36e42f2324bf3a50585660d08648d3512b30793f3f715e967c245822eb487cd1",
+      "transformation": "Added historical notice and rebased relative Markdown links; original text retained; readable line endings normalized to LF",
+      "raw": "docs/archive/context-2026-10-02/raw/docs/PROMO_CURRENT_SPEC_2026-09-12.md"
+    },
+    {
+      "source": "docs/PONS_VERIFICATION.md",
+      "archive": "docs/archive/context-2026-10-02/docs/PONS_VERIFICATION.md",
+      "sourceSha256": "46396773729cb52d8dae6f7d6f673ca75111ac3228f1ec831036706d6b75652b",
+      "archiveSha256": "7858da3d444ba121ed1d55ee74680010f5e16ba71d1a21e6031cd4181358d9c8",
+      "transformation": "Added historical notice and rebased relative Markdown links; original text retained; readable line endings normalized to LF",
+      "raw": "docs/archive/context-2026-10-02/raw/docs/PONS_VERIFICATION.md"
+    },
+    {
+      "source": "docs/PONS_MIGRATION.md",
+      "archive": "docs/archive/context-2026-10-02/docs/PONS_MIGRATION.md",
+      "sourceSha256": "73777211962532fd0e7312aadc80a82b8aed33e90be52551cda7248a87fe2924",
+      "archiveSha256": "ba3639c618ce4a7ce43f3aa8cc0c54af254c362cce62d8d77d5a6d7f27cada8c",
+      "transformation": "Added historical notice and rebased relative Markdown links; original text retained; readable line endings normalized to LF",
+      "raw": "docs/archive/context-2026-10-02/raw/docs/PONS_MIGRATION.md"
+    },
+    {
+      "source": "docs/PONS_REVIEW_TRIAGE.md",
+      "archive": "docs/archive/context-2026-10-02/docs/PONS_REVIEW_TRIAGE.md",
+      "sourceSha256": "f7638b4d25486286f921fad065db53679a20ed483dd85754109bb0b670c7d101",
+      "archiveSha256": "9c4b1b56a8a9211a97bf1eadb53e2d0cec37d79f5e2229864b848e19c581d989",
+      "transformation": "Added historical notice and rebased relative Markdown links; original text retained; readable line endings normalized to LF",
+      "raw": "docs/archive/context-2026-10-02/raw/docs/PONS_REVIEW_TRIAGE.md"
+    },
+    {
+      "source": "docs/PONS_INDEXED_REVIEW_TRIAGE.md",
+      "archive": "docs/archive/context-2026-10-02/docs/PONS_INDEXED_REVIEW_TRIAGE.md",
+      "sourceSha256": "1fce47542266871de1d4f41f77793c17cc6f4bdcf5f2cc6a20b674f38ffc581a",
+      "archiveSha256": "d0a7590b77f9f6746a84678f7e152f9d1652ba3a0a35a579e669a1944a3f9e44",
+      "transformation": "Added historical notice and rebased relative Markdown links; original text retained; readable line endings normalized to LF",
+      "raw": "docs/archive/context-2026-10-02/raw/docs/PONS_INDEXED_REVIEW_TRIAGE.md"
+    },
+    {
+      "source": "docs/SHARED_CONFIG_REVIEW_TRIAGE.md",
+      "archive": "docs/archive/context-2026-10-02/docs/SHARED_CONFIG_REVIEW_TRIAGE.md",
+      "sourceSha256": "49e5720984b81096857751bad74fa2d182a4f3fa44a1f2489212bce377598cab",
+      "archiveSha256": "6e6cc96149464f140e4320dd39a3a08f239ccf5cd62a1125764739227cb889cf",
+      "transformation": "Added historical notice and rebased relative Markdown links; original text retained; readable line endings normalized to LF",
+      "raw": "docs/archive/context-2026-10-02/raw/docs/SHARED_CONFIG_REVIEW_TRIAGE.md"
+    },
+    {
+      "source": "docs/PONS_V2_RESEARCH.md",
+      "archive": "docs/archive/context-2026-10-02/docs/PONS_V2_RESEARCH.md",
+      "sourceSha256": "8ecbf4841587ad6f47a009df8463eada1279cd222a775473b8455ffeeac93c15",
+      "archiveSha256": "63559558af886e9a6e26277b9f6aab84c29851fbd5870c0f8a127bc2885ac4eb",
+      "transformation": "Added historical notice and rebased relative Markdown links; original text retained; readable line endings normalized to LF",
+      "raw": "docs/archive/context-2026-10-02/raw/docs/PONS_V2_RESEARCH.md"
+    },
+    {
+      "source": "docs/RELEASE_INVENTORY.md",
+      "archive": "docs/archive/context-2026-10-02/docs/RELEASE_INVENTORY.md",
+      "sourceSha256": "26692c7673eb273f1cd426413d64d88f4001f3afcdebac98e14a9a2437b4732a",
+      "archiveSha256": "3e7576913fd5e055f6eee89fae366f4ea3f2195d6ee90ab6c8d5fb30dd6e3b1c",
+      "transformation": "Added historical notice and rebased relative Markdown links; original text retained; readable line endings normalized to LF",
+      "raw": "docs/archive/context-2026-10-02/raw/docs/RELEASE_INVENTORY.md"
+    },
+    {
+      "source": "docs/PONS_BATCH_ATTRIBUTION.md",
+      "archive": "docs/archive/context-2026-10-02/docs/PONS_BATCH_ATTRIBUTION.md",
+      "sourceSha256": "e6447020c7ceec1e6bc0a248b905e57e8cc5d38b56e71429dbefd01635786bcc",
+      "archiveSha256": "1b0dabdcdf8f0574b09501c51687e2e813303ded9313cd571534ca2671ef447a",
+      "transformation": "Added historical notice and rebased relative Markdown links; original text retained; readable line endings normalized to LF",
+      "raw": "docs/archive/context-2026-10-02/raw/docs/PONS_BATCH_ATTRIBUTION.md"
+    },
+    {
+      "source": "docs/PONS_LAUNCH_PROFILE.md",
+      "archive": "docs/archive/context-2026-10-02/docs/PONS_LAUNCH_PROFILE.md",
+      "sourceSha256": "1208bebce328bb086d3f0840fbfc79d8eff1795d40ac0f86cf98a6070110bf34",
+      "archiveSha256": "70df581d6778728ae096224eabe871a3d65586ab3f8f660f6ab321036aba0191",
+      "transformation": "Added historical notice and rebased relative Markdown links; original text retained; readable line endings normalized to LF",
+      "raw": "docs/archive/context-2026-10-02/raw/docs/PONS_LAUNCH_PROFILE.md"
+    },
+    {
+      "source": "docs/PONS_POOL_TERMINAL.md",
+      "archive": "docs/archive/context-2026-10-02/docs/PONS_POOL_TERMINAL.md",
+      "sourceSha256": "7462e152a249a110bf36b04ffe07549462fe4ea0c90f3bf71ccc5c3d91a8553d",
+      "archiveSha256": "10d9664e57f6986f42345c6a76745885ed4806f304d7b25eb5f221052d42646d",
+      "transformation": "Added historical notice and rebased relative Markdown links; original text retained; readable line endings normalized to LF",
+      "raw": "docs/archive/context-2026-10-02/raw/docs/PONS_POOL_TERMINAL.md"
+    },
+    {
+      "source": "docs/PONS_PERSISTENT_INDEXER.md",
+      "archive": "docs/archive/context-2026-10-02/docs/PONS_PERSISTENT_INDEXER.md",
+      "sourceSha256": "71c9a7b6e3309522a59ee46c61388524b5a2866fa34f1f2728d21450739ec24f",
+      "archiveSha256": "2b599dfbd24251f63340291a836ca241d30a636d4aca1cd042b8c2e814d1e4db",
+      "transformation": "Added historical notice and rebased relative Markdown links; original text retained; readable line endings normalized to LF",
+      "raw": "docs/archive/context-2026-10-02/raw/docs/PONS_PERSISTENT_INDEXER.md"
+    },
+    {
+      "source": "docs/PERSISTENT_INDEXER.md",
+      "archive": "docs/archive/context-2026-10-02/docs/PERSISTENT_INDEXER.md",
+      "sourceSha256": "d36325fb3f16c1908b8c5ebad710eafe78f80127ff287fbffc88733e99cb292c",
+      "archiveSha256": "4000a90dfb7e7a86cd7d20c0eebd2ecd6b2bd79d4c1c8e5e88d78f72921d7bd7",
+      "transformation": "Added historical notice and rebased relative Markdown links; original text retained; readable line endings normalized to LF",
+      "raw": "docs/archive/context-2026-10-02/raw/docs/PERSISTENT_INDEXER.md"
+    },
+    {
+      "source": "docs/PONS_INDEXED_COORDINATOR.md",
+      "archive": "docs/archive/context-2026-10-02/docs/PONS_INDEXED_COORDINATOR.md",
+      "sourceSha256": "86f811f1eee787a7175038a66da63ffd2b88b55c162802a4c3f92d0117c0436c",
+      "archiveSha256": "eb323823c32f3de225de71513b9d0946d0841f1c59845e5c67932bbcad8c7a87",
+      "transformation": "Added historical notice and rebased relative Markdown links; original text retained; readable line endings normalized to LF",
+      "raw": "docs/archive/context-2026-10-02/raw/docs/PONS_INDEXED_COORDINATOR.md"
+    },
+    {
+      "source": "docs/PONS_INDEXED_CYCLE.md",
+      "archive": "docs/archive/context-2026-10-02/docs/PONS_INDEXED_CYCLE.md",
+      "sourceSha256": "1291d5a8d46d30d32fb1a4be49eb011c76b154d78b2c92f73572a12308cd1790",
+      "archiveSha256": "0ea325fe385cce243735444010b2ab1d332d91c20e16afe0103ef15767a1e951",
+      "transformation": "Added historical notice and rebased relative Markdown links; original text retained; readable line endings normalized to LF",
+      "raw": "docs/archive/context-2026-10-02/raw/docs/PONS_INDEXED_CYCLE.md"
+    },
+    {
+      "source": "docs/PRELAUNCH_VERIFICATION_PLAN.md",
+      "archive": "docs/archive/context-2026-10-02/docs/PRELAUNCH_VERIFICATION_PLAN.md",
+      "sourceSha256": "f85838f6bf0d91f4b4410656c62cb210e3f1e4bc26bbc7e76a6cb9a3a9d40d96",
+      "archiveSha256": "f83023f4cb4b02250c23b9ab7694f902f6afbeae64f43a089d2ae2d6ed08586a",
+      "transformation": "Added historical notice and rebased relative Markdown links; original text retained; readable line endings normalized to LF",
+      "raw": "docs/archive/context-2026-10-02/raw/docs/PRELAUNCH_VERIFICATION_PLAN.md"
+    },
+    {
+      "source": "docs/ACTIVE_RELEASE_PATH.md",
+      "archive": "docs/archive/context-2026-10-02/docs/ACTIVE_RELEASE_PATH.md",
+      "sourceSha256": "8dcfbebf51d4057d6ed0bfdfa5f472f30aefec73174e84ed859fc7b81a4bec33",
+      "archiveSha256": "afe724e578a40ba9a5e7b7a750d9b953a584b45253c08764c8cede0bad4d64c8",
+      "transformation": "Added historical notice and rebased relative Markdown links; original text retained; readable line endings normalized to LF",
+      "raw": "docs/archive/context-2026-10-02/raw/docs/ACTIVE_RELEASE_PATH.md"
+    },
+    {
+      "source": "AGENTS.md",
+      "archive": "docs/archive/context-2026-10-02/AGENTS.md",
+      "sourceSha256": "5e04e18cb36ac579b2b37fd1a9de4085f0723129b98e82d3cfa12ff105265e8f",
+      "archiveSha256": "ca1ef3e34923bf773cd485b545669a991a9310a7902b2109d2d0ab767eb33b96",
+      "transformation": "Added historical notice and rebased relative Markdown links; original text retained; readable line endings normalized to LF",
+      "raw": "docs/archive/context-2026-10-02/raw/AGENTS.md"
+    },
+    {
+      "source": "docs/archive/README.md",
+      "raw": "docs/archive/context-2026-10-02/raw/docs/archive/README.md",
+      "sourceSha256": "1e65a49ab06b06364f12b9b28bdd202f5b14fb0426a8125bf106223fdaae18ff",
+      "transformation": "Exact raw original; current index has new snapshot link"
+    }
+  ]
+}

@@ -19,7 +19,7 @@ async function finish({out,save,provider,user,quote,cycle,manifest,rpc,buy,direc
  }
  const options={provider,executor:user,config,rpcUrl:'http://127.0.0.1:'+server.address().port,statePath:directory+'/automation.json'};report.automation={config,runs:[]};fs.writeFileSync(directory+'/config.json',JSON.stringify(config,null,2));
  async function clock(){await new Promise(r=>setTimeout(r,1100));}
- async function tick(extra={},hooks={}){await clock();if(indexed){finalized=await rpc('eth_blockNumber');liveFinality=liveFinality||await short.activeProposal()!==ethers.ZeroHash||await monthly.activeMonth()!==ethers.ZeroHash;if(!extra.skipIndex)await require('./persistent-buy-indexer.cjs').indexOnce({config:require('./pons-automation.cjs').schedulerConfigFor(config),statePath:config.indexer.statePath,rpc:(m,p)=>provider.send(m,p)});}const r=await runPonsAutomation({...options,...extra},hooks);report.automation.runs.push(r);save();assert(!['error','blocked'].includes(r.status),JSON.stringify(r));return r;}
+ async function tick(extra={},hooks={}){await clock();if(indexed){finalized=await rpc('eth_blockNumber');liveFinality=liveFinality||await short.activeProposal()!==ethers.ZeroHash||await monthly.activeMonth()!==ethers.ZeroHash;if(!extra.skipIndex)await require('./persistent-buy-indexer.cjs').indexOnce({config:require('./shared-index-config.cjs').buildIndexConfigs(require('./pons-automation.cjs').schedulerConfigFor(config)).indexConfig,statePath:config.indexer.statePath,rpc:(m,p)=>provider.send(m,p)});}const r=await runPonsAutomation({...options,...extra},hooks);report.automation.runs.push(r);save();assert(!['error','blocked'].includes(r.status),JSON.stringify(r));return r;}
  try{
   // A real chain keeps producing blocks while the coordinator performs reads.
   // Keep all drand freshness limits unchanged; advance only the local test chain.
@@ -31,7 +31,7 @@ async function finish({out,save,provider,user,quote,cycle,manifest,rpc,buy,direc
   const hook=new ethers.Contract(out.graph.hook,['function sweepPoolFees(bytes32,uint256,uint256)'],new ethers.JsonRpcSigner(provider,out.operator));
   const conversion=await (await hook.sweepPoolFees(out.poolId,1,0,{gasLimit:6000000})).wait();report.automation.localOperatorPreparation=conversion.hash;
   if(indexed){
-   finalized=await rpc('eth_blockNumber');await require('./persistent-buy-indexer.cjs').indexOnce({config:require('./pons-automation.cjs').schedulerConfigFor(config),statePath:config.indexer.statePath,rpc:(m,p)=>provider.send(m,p)});
+   finalized=await rpc('eth_blockNumber');await require('./persistent-buy-indexer.cjs').indexOnce({config:require('./shared-index-config.cjs').buildIndexConfigs(require('./pons-automation.cjs').schedulerConfigFor(config)).indexConfig,statePath:config.indexer.statePath,rpc:(m,p)=>provider.send(m,p)});
    await rpc('evm_mine');let lagged;for(let n=0;n<8;n++){lagged=await tick({skipIndex:true});if(JSON.stringify(lagged).includes('indexerBehind'))break;}assert(JSON.stringify(lagged).includes('indexerBehind'),'Expected indexerBehind wait');assert.equal(await short.pendingDatasetDraw(),ethers.ZeroHash);assert.equal(await monthly.pendingMonth(),ethers.ZeroHash);report.automation.indexerBehindVerified=true;
   }
   let shortId,monthId;
@@ -48,7 +48,7 @@ async function finish({out,save,provider,user,quote,cycle,manifest,rpc,buy,direc
   report.after=await invariant();report.paid=report.fundingAtFreeze.balance-report.after.balance;assert(report.paid>=0n);
   report.finalReplay=await scanWithRpc(manifest,rpc,await rpc('eth_blockNumber'),lifecycle);report.finalReplay.lifecycle=lifecycle;report.finalLedger=replayAttempts(manifest,lifecycle,report.finalReplay.blocks);
   const final=report.finalLedger.wallets.find(w=>w.wallet===owner);for(const k of ['SHORT','MONTHLY']){assert.equal(final[k].consumedTotal,'86');assert.equal(final[k].open,'1');}
-  const nonce=await provider.getTransactionCount(owner),again=await tick();assert.equal(again.steps.length,0);assert.equal(await provider.getTransactionCount(owner),nonce);report.status=indexed?'PONS_INDEXED_AUTOMATION_PASSED':'PONS_AUTOMATION_PASSED';save();
+  const nonce=await provider.getTransactionCount(owner),again=await tick();assert.equal(again.steps.length,0);assert.equal(await provider.getTransactionCount(owner),nonce);if(indexed){report.walletApi=await require('./verify-pons-wallet-api.cjs').verify({config:require('./shared-index-config.cjs').buildIndexConfigs(require('./pons-automation.cjs').schedulerConfigFor(config)).indexConfig,wallet:owner,expected:final});} report.status=indexed?'PONS_INDEXED_AUTOMATION_PASSED':'PONS_AUTOMATION_PASSED';save();
  }finally{provider.send=originalSend;await rpc('evm_setIntervalMining',[0]);server.closeAllConnections();await new Promise(r=>server.close(r));}
 }
 module.exports={finish};

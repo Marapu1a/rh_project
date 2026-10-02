@@ -102,7 +102,19 @@
       "test/pons-browser-bridge.test.cjs",
       "test/pons-persistent-indexer.test.cjs",
       "test/pons-policy-indexer.test.cjs",
-      "test/launch-integration.test.cjs"
+      "test/launch-integration.test.cjs",
+      "test/shared-index-config.test.cjs",
+      "test/pons-channel-receipts.test.cjs",
+      "test/pons-terminal-capture.test.cjs",
+      "test/pons-channel-attribution.test.cjs",
+      "test/pons-metamask-model.test.cjs",
+      "test/pons-batch-buy.test.cjs",
+      "test/pons-batch-funding.test.cjs",
+      "test/pons-signed-7702.test.cjs",
+      "test/pons-batch-integration.test.cjs",
+      "test/pons-pool-terminal.test.cjs",
+      "test/pons-pool-batch.test.cjs",
+      "test/pons-funding-pass.test.cjs"
     ]
   },
   "accounting": {
@@ -405,7 +417,8 @@
       "test/pons-automation.test.cjs",
       "test/local-scheduler.test.cjs",
       "test/local-state-lock.test.cjs",
-      "test/fork-empty-storage.test.cjs"
+      "test/fork-empty-storage.test.cjs",
+      "test/pons-funding-pass.test.cjs"
     ]
   },
   "pons-recovery": {
@@ -465,6 +478,36 @@
       "test/launch-integration.test.cjs",
       "test/pair-launch-preview.test.cjs",
       "test/launch-source-preflight.test.cjs"
+    ]
+  },
+  "shared-index": {
+    "compile": true,
+    "files": [
+      "test/shared-index-config.test.cjs",
+      "test/cutoff-scheduler.test.cjs",
+      "test/public-status.test.cjs",
+      "test/public-observation.test.cjs",
+      "test/user-status-cache.test.cjs",
+      "test/indexer-service.test.cjs",
+      "test/pons-policy-indexer.test.cjs",
+      "test/public-rpc-qualification.test.cjs",
+      "test/pons-crash-recovery.test.cjs"
+    ]
+  },
+  "pons-channels": {
+    "compile": false,
+    "files": [
+      "test/pons-channel-receipts.test.cjs",
+      "test/pons-curve-buy.test.cjs",
+      "test/pons-terminal-capture.test.cjs",
+      "test/pons-channel-attribution.test.cjs",
+      "test/pons-metamask-model.test.cjs",
+      "test/pons-batch-buy.test.cjs",
+      "test/pons-batch-funding.test.cjs",
+      "test/pons-signed-7702.test.cjs",
+      "test/pons-batch-integration.test.cjs",
+      "test/pons-pool-terminal.test.cjs",
+      "test/pons-pool-batch.test.cjs"
     ]
   }
 }

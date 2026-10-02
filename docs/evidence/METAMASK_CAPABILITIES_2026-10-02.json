@@ -1,0 +1,34 @@
+{
+  "kind": "user-wallet-readonly-observation",
+  "report": {
+    "schema": "qianqi-wallet-capabilities-v1",
+    "observedAt": "2026-10-02T06:18:56.329Z",
+    "provider": "io.metamask",
+    "versionUserReported": "",
+    "account": "0x098afa6731239a00ce0aff669aaefd16b7c72114",
+    "targetChain": "0x1237",
+    "chainBefore": "0x1237",
+    "chainAfter": "0x1237",
+    "stable": true,
+    "capabilities": {
+      "0x1237": {
+        "atomic": {
+          "status": "ready"
+        },
+        "auxiliaryFunds": {
+          "supported": true
+        }
+      }
+    },
+    "capabilityError": null,
+    "admitted": false
+  },
+  "interpretation": "atomic ready: upgrade pending user approval, not proof of atomic execution",
+  "source": "https://eips.ethereum.org/EIPS/eip-5792#atomic-capability",
+  "limits": [
+    "Provider self-reported; no cryptographic attestation",
+    "Extension version unknown",
+    "No upgrade, signature or send performed by probe",
+    "No transaction receipt or execution implementation identified"
+  ]
+}

@@ -1,0 +1,107 @@
+{
+  "status": "PONS_SAVED_CYCLE_HTTP_PASSED",
+  "publicSends": false,
+  "results": [
+    {
+      "status": "stale",
+      "head": {
+        "number": 77470388,
+        "hash": "0x6502d372bf3914737f023c1ac78e9f0de6a9f36be9feffea0fc5f062dc8a9878"
+      },
+      "balances": {
+        "SHORT": {
+          "mintedTotal": "87",
+          "open": "1",
+          "frozenByDraw": {},
+          "consumedTotal": "86",
+          "byEpoch": [
+            {
+              "epoch": "1",
+              "minted": "87",
+              "consumed": "86",
+              "frozen": "0",
+              "open": "1",
+              "firstOpenAttempt": "87",
+              "lastOpenAttempt": "87"
+            }
+          ]
+        },
+        "MONTHLY": {
+          "mintedTotal": "87",
+          "open": "1",
+          "frozenByDraw": {},
+          "consumedTotal": "86",
+          "byEpoch": [
+            {
+              "epoch": "1",
+              "minted": "87",
+              "consumed": "86",
+              "frozen": "0",
+              "open": "1",
+              "firstOpenAttempt": "87",
+              "lastOpenAttempt": "87"
+            }
+          ]
+        },
+        "carryRaw": "80328733",
+        "entryThresholdRaw": "100000000",
+        "quoteDecimals": 6
+      },
+      "purchases": 7,
+      "rewards": 2
+    },
+    {
+      "status": "stale",
+      "head": {
+        "number": 77470388,
+        "hash": "0x6502d372bf3914737f023c1ac78e9f0de6a9f36be9feffea0fc5f062dc8a9878"
+      },
+      "balances": {
+        "SHORT": {
+          "mintedTotal": "87",
+          "open": "1",
+          "frozenByDraw": {},
+          "consumedTotal": "86",
+          "byEpoch": [
+            {
+              "epoch": "1",
+              "minted": "87",
+              "consumed": "86",
+              "frozen": "0",
+              "open": "1",
+              "firstOpenAttempt": "87",
+              "lastOpenAttempt": "87"
+            }
+          ]
+        },
+        "MONTHLY": {
+          "mintedTotal": "87",
+          "open": "1",
+          "frozenByDraw": {},
+          "consumedTotal": "86",
+          "byEpoch": [
+            {
+              "epoch": "1",
+              "minted": "87",
+              "consumed": "86",
+              "frozen": "0",
+              "open": "1",
+              "firstOpenAttempt": "87",
+              "lastOpenAttempt": "87"
+            }
+          ]
+        },
+        "carryRaw": "80328733",
+        "entryThresholdRaw": "100000000",
+        "quoteDecimals": 6
+      },
+      "purchases": 7,
+      "rewards": 2
+    }
+  ],
+  "limits": [
+    "Saved local-fork cycle, not fresh public chain",
+    "Historical config retained; not new shared-config deployment validation",
+    "No browser or wallet batch admission test"
+  ]
+}

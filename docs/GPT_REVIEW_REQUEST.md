@@ -1,65 +1,115 @@
-# Запрос GPT: общий config indexer / coordinator / API до реализации
+# GPT review: тестовый контур Pons и накопленный пакет
 
-01.10.2026. Нужен архитектурный review конкретной связки G02. Прочитай текущий HEAD
-и назови его; изменения после3b36e0a отделили активный Pons plan от PAIR reserve,
-но общий config ещё НЕ реализован. Предложение ниже — гипотеза для проверки.
+02.10.2026. Проведи статическое review diff `b9b7e04..HEAD` и релевантного кода.
+В начале ответа назови полный прочитанный SHA. Ответ запиши в
+`docs/GPT_REVIEW_RESPONSE.md`. Код и продуктовые правила не меняй.
 
-Только статический анализ по [REVIEW_TESTING.md](REVIEW_TESTING.md): не запускать
-tests/build/fork/RPC, не устанавливать зависимости, не менять runtime-код и не
-отправлять транзакции. Ответ записать в docs/GPT_REVIEW_RESPONSE.md. Предыдущий
-[ответ](archive/GPT_REVIEW_RESPONSE_INDEXED_CYCLE_2026-10-01.md) сохранён, не повторять
-общий аудит вместо ответа на этот вопрос.
+## Цель и границы
 
-## Проблема и исходные файлы
+**Сначала доводим проект до правильной работы в тестовом окружении. Затем отдельным
+этапом переносим на боевой.** Не смешивай эти этапы. Ранее размещённый сайт не означает
+работающую промо-систему. Нужны конкретные ошибки, недосмотры и ненужная сложность,
+а также оценка ближайшего плана, не общий checklist криптопроекта.
 
-- scripts/pons-automation.cjs: schedulerConfigFor создаёт scheduler config без publicStatus.
-- scripts/start-public-service.cjs требует publicStatus=true.
-- scripts/persistent-buy-indexer.cjs: indexOnce пишет state с identity от всего config; readSnapshot сверяет её; publicObservation создаётся только при publicStatus=true.
-- scripts/user-status-api.cjs проверяет тот же config hash; public-status.cjs/public-observation.cjs используют дополнительную проекцию.
-- scripts/run-indexer-service.cjs и indexer-service-child.cjs: один писатель/изоляция проходов; local-scheduler-state.cjs: locks/checksum/identity.
-- scripts/local-promo-scheduler.cjs: потребление истории, prebegin verification и обслуживание frozen; pons-transaction-journal.cjs и RNG journal: отдельные обязательства/intent.
+По [REVIEW_TESTING](REVIEW_TESTING.md): не запускай tests/build/fork/RPC, не устанавливай
+зависимости, не отправляй транзакции. Читай код, тесты и сохранённые evidence.
+Если нужен эксперимент, предложи Codex точный сценарий и ожидаемый результат.
+Предыдущие GPT-обращения завершены и архивированы; не выполняй их как новую задачу.
 
-Получается, что произвольное добавление publicStatus=true для API даёт другой
-identity относительно config, сформированного coordinator. Это статическое
-наблюдение, не воспроизведённый сбой production. Карта: [RELEASE_INVENTORY.md](RELEASE_INVENTORY.md),
-активный путь: [ACTIVE_RELEASE_PATH.md](ACTIVE_RELEASE_PATH.md).
+## Порядок чтения
 
-## Предложение для критики
+1. [Контекст](CURRENT_CONTEXT.md), [roadmap](ROADMAP.md), [карта кода](IMPLEMENTATION_STATUS.md).
+2. Релевантные правила [PRODUCT_SPEC](PRODUCT_SPEC.md).
+3. [Последний аудит](PONS_AUDIT_2026-10-02.md), [матрица каналов](PONS_CHANNEL_COVERAGE.md),
+   [общий config](SHARED_INDEX_CONFIG.md).
+4. Diff и зависимости по вопросам ниже. Не читать весь архив/raw/research подряд.
 
-Один канонический конфиг данных и один persisted index, единственный writer —
-индексатор. Coordinator/API — читатели. Общие manifest, chain, buyPolicy, lifecycle
-и необходимые настройки публичной проекции формируются в одном месте. Port/poll
-и прочие operational options отдельно. Identity остаётся строгой; нельзя просто
-выкинуть поля из hash без обоснования. Не решили пока, нужен ли новый versioned
-data config, или достаточно минимального общего builder существующей формы.
+## Состав пакета
 
-Stale/behind запрещает новые jobs; API честно сообщает stale/unavailable; frozen
-settlement/claims не зависят от свежего BUY индекса, но нуждаются в chain/RNG.
-Старые журналы не сбрасывать, не перепривязывать автоматически, не делать unadmitted
-fallback. Сбой необязательной public projection не должен незаметно менять денежные
-данные; желаемую политику отказа необходимо спроектировать, а не считать готовой.
+- Shared index config writer/API/coordinator, отдельный отказ public projection.
+- Curve self-batch, EIP-7702 type4/type2, общий genesis launch-v1 и новый launch-v2:
+  точные pool terminal batches USDG3 calls / ETH6 calls до policy/index/API.
+- Единый dispatch `pons-profiles.cjs`; прежняя семантика старых genesis сохранена.
+- Suffix scan, idle ledger/reward reuse, replay revision; сокращение повторных
+  funding plans/binding reads; исправление чужой invalid authorization.
+- Уборка документации: основной контекст, тестовый/боевой этапы, архив оригиналов.
 
-## Вопросы, на которые нужен конкретный ответ
+## Приоритетные вопросы
 
-1. Правильно ли одно состояние, или цена связи API/координатора выше пользы? Сравни минимальный shared builder и отдельный versioned data config. Рекомендуй один вариант с причинами, без общей инфраструктурной переделки.
-2. Дай таблицу полей: влияет на identity данных / identity исполнения / freshness чтения / operational-only. Включи manifest, chain, buyPolicy, lifecycle, publicStatus, cutoffMode, campaignId, shortBudgetMode, chunkSize, statePath, maxAgeSeconds, port и poll. Что требует пересчёта, а что можно менять безопасно?
-3. Что произойдёт, если publicObservation RPC вернёт ошибку: останется ли актуальный BUY snapshot? Нельзя ли API сделать причиной остановки draws? Предложи атомарность/статусы проекций без выдачи старых totals за новые.
-4. Как обеспечить согласованную generation при atomic rename, одновременном API read и index write, изменении config, reorg, restart, damaged snapshot? Раздели cache integrity и доверие к RPC.
-5. Как перейти от существующих state files без потери frozen obligations и pending intents? Нужна ли миграция вообще, можно ли пересобрать только производный индекс? Не разрешай сброс main/RNG/scheduler journals. Учти, что сейчас hash config входит и в scheduler job identity.
-6. Какие существующие тесты уже доказывают свойства, а каких не хватает? Предложи компактную матрицу интеграционных проверок, включая один writer + оба readers, public projection outage, stale/behind, config mismatch, replacement during read, frozen claims при недоступном индексе.
-7. Дай точный следующий ограниченный пакет: файлы/функции, последовательность правок, критерии PASS. Отдельно отметь фактический баг, архитектурный риск и неподтверждённое предположение.
+### 1. Допуск и сумма покупки
 
-## Неизменяемые границы и evidence
+Файлы: `pons-batch-route.cjs`, `pons-batch-buy.cjs`, `pons-batch-funding.cjs`,
+`pons-launch-buy.cjs`, `pons-pool-batch-buy.cjs`, `pons-v4-buy.cjs`,
+`pons-channel-attribution.cjs`, `direct-buy.cjs`.
 
-100USDG → Short+Monthly, creator3%, received USDG90/5/5, pending TOKEN не budget.
-Frozen/claimable не идут на ops; reset/reroll/подмена RNG/вывод казны не добавляются.
-Public executor ещё закрыт; этот review его не открывает. PAIR остаётся резервом.
+Проверь signature/domain/nonce/delegation, parent-state и same-block authorization,
+atomic mode, полноту calls/approvals, payer=recipient, funding projection,
+USDG basis/refund, SELL/другие swaps, receipt provenance и отсутствие двойного начисления.
+Безопасно ли исключается ровно matching funding Transfer при сохранении исходных logs?
+Правильно ли пропускаются invalid tuples без пропуска значимой смены исполнения?
+Не расширился ли допуск старых genesis? Не выводится ли eligibility только из calldata?
 
-Исторический indexed cycle:13 проходов/22tx,107.337115USDG,21 адресный test PASS,
-не full baseline; [допущения](PONS_INDEXED_CYCLE.md). Последний пакет разделения
-Pons/PAIR:13 адресных planning/route checks и3+3 browser tests PASS. Новые тесты ради
-этого запроса не запускались. Полный .local transcript недоступен через репозиторий.
+### 2. Индексатор, восстановление и лишняя работа
 
-Ответ: сначала краткий вердикт и рекомендуемая конструкция, затем таблица identity,
-переход состояния, failure policy и список нужных тестов. Не выдавай предложение
-за выполненную реализацию и не объявляй релиз готовым.
+Файлы: `persistent-buy-indexer.cjs`, `replay-direct-buy.cjs`, `buy-policy-*.cjs`,
+`shared-index-config.cjs`, API/worker, `local-promo-scheduler.cjs`.
+
+Проверь prefix+suffix, reorg/cache eviction (тот же tx на другой ветке), notices,
+replay revision, idle reuse/rewards, cutoff/freshness, integrity против temporary RPC
+failure, consumer identities и frozen jobs. Найди оставшиеся необоснованные
+исторические RPC/CPU проходы. JSON/write и replay при новых блоках ещё O(history) —
+известное ограничение: оцени приоритет и минимальный измеримый следующий шаг,
+не предлагай новую платформу хранения без обоснования.
+
+### 3. Funding и неизвестные отправки
+
+Файлы: `pons-funding-pass.cjs`, `pons-collector-manual.cjs`, `pons-automation.cjs`,
+`pons-transaction-journal.cjs`, `contracts/LocalPonsCollector.sol`, соседние guards.
+
+Кэш плана живёт до попытки транзакции, не между polls. Проверь fresh state после
+send/revert, unknown outcome, payout priority, campaigns/старые credits, source drift,
+доступные claim/pay при ожидании conversion. Не предлагай тратить frozen/claimable,
+reroll/reset, подмену RNG или снятие local-only guards.
+
+### 4. Покрытие и сложность
+
+Найди существенные негативные сценарии, которые отсутствуют либо подтверждены только
+моделью. Отличай executed receipts от synthetic RPC chain/code injection/fixtures.
+Не приписываем ли установленному MetaMask результаты harness? Есть ли dead code,
+опасные defaults/retries, дубли или лишние абстракции? Обоснуй пользу упрощения;
+несколько genesis-версий нельзя объединять ценой изменения исторических решений.
+
+### 5. Контекст и следующий шаг
+
+Согласованы ли актуальные документы и код, не потеряно ли принятое ограничение при
+архивации? Обоснован ли следующий пакет:0x execution/attribution → минимальный
+adapter/index/API, затем unknown-route observability и wallet UX? Если есть более
+ранний blocker корректности тестового контура — назови его. Production gaps не
+выдавай за неожиданные дефекты этого этапа. Новые сети/продуктовые правила вне задачи.
+
+## Доказательства и пределы
+
+- [Точный список и результаты](evidence/PONS_AUDIT_TESTS_2026-10-02.json):39 файлов,
+  239/239 PASS, затем отдельный evidence fixture4/4. Рабочее дерево поверх b9b7e04,
+  не полный RC baseline; commit/push не повод повторять тесты. Недоступный сырой
+  .local/logs файл не означает отсутствия проверки; используй committed evidence.
+- [Fresh pool batch → policy/index/API](evidence/PONS_POOL_BATCH_INDEX_API_2026-10-02.json):
+  fork78099955, четыре независимые USDG/ETH × sequential/batch ветки. Synthetic funding,
+  open lifecycle v1, latest→finalized; не полный draw cycle и не public activation.
+  Wrapper оговаривает устаревшие generic limits исходного runner.
+- [Общий профиль](evidence/PONS_COMBINED_PROFILE_2026-10-02.json),
+  [signed7702](evidence/PONS_SIGNED_7702_2026-10-02.json),
+  [steady-state7702](evidence/PONS_STEADY_7702_2026-10-02.json).
+- [Прежний indexed draw cycle](PONS_INDEXED_CYCLE.md) — другая дата/ревизия,
+  не проверка нового adapter через все draws.
+-0x не квалифицирован. Реальный wallet UI, production manifest/custody/timing/rollout
+  не объявляются завершёнными. Ориентируйся на границы конкретного evidence.
+
+## Формат ответа
+
+1. Прочитанный SHA, краткий вывод, реально просмотренный объём.
+2. Findings по важности: файл/строка, trigger, последствие, путь по коду, минимальная
+   правка и regression-сценарий. Пометки: confirmed / hypothesis / known limitation.
+3. До пяти обоснованных упрощений или пробелов покрытия.
+4. Следующий осмысленный пакет: что исправить до0x либо почему можно продолжать план.
+5. Непроверенные границы отдельно. Если новых дефектов нет — так и напиши.

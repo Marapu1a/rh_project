@@ -1,5 +1,6 @@
 // Research-only. All writes target in-process Hardhat; upstream proxy is read-only.
-process.env.HARDHAT_CONFIG=require.resolve('../test/fixtures/public-hardhat.config.cjs');
+process.env.HARDHAT_CONFIG=require.resolve(process.argv.includes('--combined-profile')?'../test/fixtures/pons-7702-hardhat.config.cjs':'../test/fixtures/public-hardhat.config.cjs');
+if(process.argv.includes('--combined-profile')&&!process.argv.includes('--v4'))process.argv.push('--v4');
 if(process.argv.includes('--indexed-automation')&&!process.argv.includes('--automation'))process.argv.push('--automation');
 if(process.argv.includes('--policy-indexer')&&!process.argv.includes('--persistent-indexer'))process.argv.push('--persistent-indexer');
 if(process.argv.includes('--persistent-indexer')&&!process.argv.includes('--v4'))process.argv.push('--v4');
@@ -9,7 +10,7 @@ if(process.argv.includes('--automation')&&!process.argv.includes('--cycle'))proc
 if(process.argv.includes('--cycle')&&!process.argv.includes('--v4'))process.argv.push('--v4');
 const fs=require('node:fs'),assert=require('node:assert/strict'),{ethers}=require('ethers'),hre=require('hardhat'),solc=require('solc');
 const {startReadProxy}=require('./read-only-fork-rpc.cjs');
-const FACTORY='0x7eD598BcEf8bd9Edd8C97A195C6d13f40801EC7e',USDG='0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168',OWNER='0x098afA6731239a00CE0aff669aaefD16b7C72114';
+const FACTORY='0x7eD598BcEf8bd9Edd8C97A195C6d13f40801EC7e',USDG='0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168',OWNER=process.argv.includes('--combined-profile')?new ethers.Wallet(require('./pons-launch-rehearsal.cjs').KEY).address:'0x098afA6731239a00CE0aff669aaefD16b7C72114';
 const { FAB, ERC, CUR } = require('./integrations/pons-v2.cjs');
 const {swapHelper}=require('./pons-fork-rehearsal.cjs');
 const cycleHarness=require('./pons-promo-cycle.cjs');
@@ -75,6 +76,7 @@ async function main(){
    buyManifest.poolId=V4.poolId(buyManifest.poolKey);
    for(const [k,[a,digest]]of Object.entries(V4.PINS)){buyManifest[k]=a;buyManifest.codeHashes[k]=digest;assert.equal(ethers.keccak256(await p.getCode(a)),digest,'Changed '+k+' runtime');}
   }
+  if(process.argv.includes('--combined-profile'))await require('./pons-launch-rehearsal.cjs').configure(buyManifest,p);
   out.assumptions=out.assumptions.filter(a=>!a.startsWith('No BUY indexer'));out.assumptions.push('Direct curve BUY replay plus pinned UR route when --v4; open Short/Monthly accounting, no draw settlement or public admission');
  }
  async function checkBuys(label){
@@ -87,7 +89,8 @@ async function main(){
   if(process.argv.includes('--browser-purchase')){browserPurchase??=await require('./pons-browser-rehearsal.cjs').open(options);return browserPurchase.purchase(amount);}
   return require('./pons-direct-purchase-rehearsal.cjs').purchase(options);}
  const before=await quote.balanceOf(OWNER);
- if(process.argv.includes('--direct-purchase'))await send(directPurchase(101_000000n),'direct wallet buy101');
+ if(process.argv.includes('--combined-profile')){const expected=await curve.buy.staticCall(101_000000n,0,OWNER);const hash=await require('./pons-launch-rehearsal.cjs').buy({rpc,curve,quote,account:OWNER,expected});out.steps.push({stage:'signed type4 curve batch101',hash});save();}
+ else if(process.argv.includes('--direct-purchase'))await send(directPurchase(101_000000n),'direct wallet buy101');
  else{const expected=await curve.buy.staticCall(101_000000n,0,OWNER);await send(curve.buy(101_000000n,expected*99n/100n,OWNER,{gasLimit:3000000}),'buy101');}
  assert.equal(before-await quote.balanceOf(OWNER),101_000000n);
  out.buy={debit:101_000000n,tokens:await token.balanceOf(OWNER),baseFee:await curve.quoteFeeBalance(),creatorTax:await curve.creatorTaxBalance()};assert.equal(out.buy.creatorTax,3030000n);
@@ -95,7 +98,7 @@ async function main(){
  await send(token.approve(out.curve,ethers.MaxUint256),'approve token');const sellAmount=out.buy.tokens/2n,sellQuote=await curve.sell.staticCall(sellAmount,0,OWNER);await send(curve.sell(sellAmount,sellQuote*99n/100n,OWNER,{gasLimit:3000000}),'sell half');
  console.log('sweep and claim');out.beforeSweep={base:await curve.quoteFeeBalance(),tax:await curve.creatorTaxBalance()};await send(collector.sweepCurve({gasLimit:3000000}),'recipient sweep');out.claimable=await ledger.balanceOfToken(collector.target,USDG);assert(out.claimable>0n);assert.equal(out.claimable,out.beforeSweep.base-out.beforeSweep.base*out.policy[1]/10000n+out.beforeSweep.tax);
  const balances=await Promise.all(destinations.map(a=>quote.balanceOf(a)));await manual('pull');for(const a of ['pay-prizes','pay-ops','pay-team'])await manual(a);out.split=await Promise.all(destinations.map(async(a,i)=>(await quote.balanceOf(a))-balances[i]));assert(out.claimable-out.split.reduce((a,b)=>a+b,0n)<3n);assert.equal(out.split[1],out.claimable*500n/10000n);assert.equal(out.split[2],out.split[1]);
- console.log('graduation');if(process.argv.includes('--direct-purchase'))await send(quote.approve(out.curve,15000_000000n),'approve graduation fixture');await send(curve.buy(15000_000000n,0,OWNER,{gasLimit:16000000}),'threshold buy (test-only zero minOut)');let record=await factory.getLaunchedToken(out.token);if(record.phase===1n){await send(factory.createGraduatedPool(out.token,{gasLimit:16000000}),'finish graduation');record=await factory.getLaunchedToken(out.token);}out.graduation={phase:record.phase,record:Array.from(record)};assert.equal(record.phase,2n);out.status='PRE_GRADUATION_AND_GRADUATION_PASSED';
+ console.log('graduation');if(process.argv.includes('--direct-purchase')||process.argv.includes('--combined-profile'))await send(quote.approve(out.curve,15000_000000n),'approve graduation fixture');await send(curve.buy(15000_000000n,0,OWNER,{gasLimit:16000000}),'threshold buy (test-only zero minOut)');let record=await factory.getLaunchedToken(out.token);if(record.phase===1n){await send(factory.createGraduatedPool(out.token,{gasLimit:16000000}),'finish graduation');record=await factory.getLaunchedToken(out.token);}out.graduation={phase:record.phase,record:Array.from(record)};assert.equal(record.phase,2n);out.status='PRE_GRADUATION_AND_GRADUATION_PASSED';
  console.log('post-graduation explicit v4 swaps');
  if(buyManifest){const l=await checkBuys('graduation'),eligible=l.decisions.filter(d=>d.status==='ELIGIBLE');assert.equal(eligible.length,2);assert(BigInt(eligible[1].refundQuoteRaw)>0n);assert.equal(BigInt(eligible[1].netQuoteDebitRaw)+BigInt(eligible[1].refundQuoteRaw),15000_000000n);assert(l.decisions.some(d=>d.reason==='SELL'));console.log('curve BUY replay passed');}
  const h=new ethers.Contract(hook,['function poolManager() view returns(address)','function feeSweepOperator() view returns(address)','function pendingFees(bytes32,address) view returns(uint256)','function pendingCreatorTax(bytes32,address) view returns(uint256)','function sweepPoolFees(bytes32,uint256,uint256)'],owner);
@@ -149,6 +152,7 @@ async function main(){
   if(process.argv.includes('--policy-indexer')){const art=compiled.BuyPolicySource,instanceId=ethers.id('pons-local-indexer-policy'),genesisHash=D.hash(buyManifest);const source=await new ethers.ContractFactory(art.abi,art.evm.bytecode.object,owner).deploy(instanceId,genesisHash,OWNER,20,require('./buy-policy-format.cjs').initialAdapters(buyManifest));await source.waitForDeployment();buyPolicy={source:source.target,publisher:OWNER,instanceId,genesisHash,sourceCodeHash:ethers.keccak256(await p.getCode(source.target)),chainId:4663,noticeBlocks:20};out.localBuyPolicy=buyPolicy;save();}
   out.persistentIndexer=await require('./pons-indexer-rehearsal.cjs').run({rpc,manifest:buyManifest,prefix:file,buyPolicy,buy:amount=>send(trade(currencies[0]===USDG,amount),'indexer reorg fixture BUY')});out.status=out.persistentIndexer.status;
  }
+ if(process.argv.includes('--combined-profile')){out.combined=await require('./pons-launch-rehearsal.cjs').finish({rpc,manifest:buyManifest,owner,provider:p,compiled,promo,prefix:file});out.status=out.combined.status;}
  if(cycle){console.log('Pons full Promo cycle');await cycleHarness.finish({out,save,provider:p,user:owner,quote,cycle,manifest:buyManifest,rpc,buy:amount=>send(trade(currencies[0]===USDG,amount),'v4 BUY after freeze')});out.status=out.cycle.status;}
  }catch(e){out.status='FAILED';out.error={message:e.shortMessage||e.message,data:e.data,info:e.info,stack:e.stack};process.exitCode=1;}
  finally{try{await browserPurchase?.close();}catch(e){out.status='FAILED';out.error={message:e.message};process.exitCode=1;}out.proxyStats=proxy?.stats;save();proxy?.close();remote?.destroy();console.log(JSON.stringify({status:out.status,error:out.error,economics:out.economics,rates:out.rates,policy:out.policy,split:out.split,graduation:out.graduation},(_,v)=>typeof v==='bigint'?v.toString():v,2));}

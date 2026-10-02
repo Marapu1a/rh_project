@@ -61,3 +61,10 @@ test('HTTP timeout aborts a stalled endpoint without retries',async()=>{
  const http=require('node:http'),server=http.createServer(()=>{});await new Promise(r=>server.listen(0,'127.0.0.1',r));
  try{await assert.rejects(httpRpc('http://127.0.0.1:'+server.address().port,{timeoutMs:25})('eth_chainId',[]),/timeout/);}finally{server.closeAllConnections();await new Promise(r=>server.close(r));}
 });
+
+test('only transient HTTP failures carry the optional projection outage code',async()=>{
+ const http=require('node:http');let status=503,body='unavailable';
+ const server=http.createServer((req,res)=>{res.statusCode=status;res.end(body);});await new Promise(r=>server.listen(0,'127.0.0.1',r));
+ try{for(const code of [408,429,502,503,504,403,500,200]){status=code;await assert.rejects(httpRpc('http://127.0.0.1:'+server.address().port)('eth_chainId',[]),e=>[408,429,502,503,504].includes(code)?e.code==='RPC_READ_UNAVAILABLE':e.code!=='RPC_READ_UNAVAILABLE');}}
+ finally{server.closeAllConnections();await new Promise(r=>server.close(r));}
+});

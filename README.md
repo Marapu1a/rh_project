@@ -1,37 +1,29 @@
-# PAIR / Robinhood Promo MVP
+# QIANQI — токен и промо на Pons
 
-Спекулятивный TOKEN и отдельное добровольное промо: короткие 6-часовые розыгрыши
-и месячный jackpot, денежные призы в USDG. Комиссии и внешние пополнения финансируют
-призы; эксплуатационные расходы отделены от призовых обязательств.
+Спекулятивный токен с отдельным механизмом призов в USDG. Поддержанные покупки
+учитываются автоматически; призы финансируются полученными комиссиями и пополнениями.
+Правила и ограничения — в [PRODUCT_SPEC](docs/PRODUCT_SPEC.md).
 
-Сейчас это локальный MVP в разработке, без публичного deployment. Работает путь
-от локальных BUY через replay и два Short + два Monthly цикла до claim. Торговый стенд и RNG тестовые.
+**Сейчас доводим проект до правильной работы в тестовом окружении.
+Перенос на боевой — отдельный следующий этап.** Локальные fork/API/draw результаты
+не означают публичный запуск. PAIR/Infinity сохранён как резерв.
 
 ## Продолжить работу
 
-- [Текущий контекст](docs/CURRENT_CONTEXT.md) — читать первым.
-- [План](docs/ROADMAP.md) — что делаем следующим шагом.
-- [Продуктовые правила](docs/PRODUCT_SPEC.md) — принятые решения.
-- [Карта кода](docs/IMPLEMENTATION_STATUS.md) и [навигация](docs/README.md).
+1. [CURRENT_CONTEXT](docs/CURRENT_CONTEXT.md) — основной вход.
+2. [ROADMAP](docs/ROADMAP.md) — текущий пакет и этапы.
+3. [Документация](docs/README.md) и [карта кода](docs/IMPLEMENTATION_STATUS.md) — нужный модуль.
 
 ## Локальная проверка
 
 ```powershell
 npm ci --ignore-scripts
-npm run test:local:buy-cycle
+node scripts/test-launcher.cjs --profile pons-channels
 ```
 
-`npm run test:local:controllers` — отдельная проверка контроллеров;
-`npm test` — основной Node-набор. Нужны Node/npm; Python нужен только для отдельных
-моделей. Последний фактически проверенный объём указан в текущем контексте.
+Это адресная группа, не полный baseline и не live fork. Остальные команды и выбор
+объёма — [REVIEW_TESTING](docs/REVIEW_TESTING.md). Последний подтверждённый результат
+и ограничения указаны в текущем контексте.
 
-[Локальный Short executor](docs/LOCAL_SHORT_EXECUTOR.md) продолжает подготовленный job
-после перезапуска: `npm run local:short -- --job FILE --rpc http://127.0.0.1:8545 --publisher 0 --executor 1 --watch`.
-Нужен уже развёрнутый локальный узел; автономная проверка — `npm run test:local:executor`.
-
-[Monthly worker и совместный контур](docs/LOCAL_MONTHLY_EXECUTOR.md):
-`npm run test:local:monthly`; запуск существующего Monthly job — `npm run local:monthly -- --job FILE --rpc http://127.0.0.1:8545 --publisher 0 --executor 1 --watch`.
-
-[История](docs/archive/README.md) читается по конкретному вопросу.
-[Research evidence](research/README.md) сохранены для воспроизводимости.
-Временные логи — `.local/logs/` (не входят в Git).
+[История](docs/archive/README.md), [полный каталог](docs/DOCUMENT_CATALOG.md),
+[evidence и логи](docs/ARTIFACTS.md) сохранены отдельно.

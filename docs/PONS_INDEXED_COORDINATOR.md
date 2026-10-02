@@ -1,5 +1,9 @@
 # Pons: допуск политики и сохранённый индекс
 
+> Актуализация02.10: это модуль с датированными этапами/evidence, а не текущая очередь работ. Подтверждённые curve/pool self-batches теперь подключены к index/API новым genesis v2; scanner читает новый suffix, idle replay устранён. [Текущая матрица](PONS_CHANNEL_COVERAGE.md), [аудит](PONS_AUDIT_2026-10-02.md), [план](ROADMAP.md).
+
+Текущий конфиг writer/API: [общий indexConfig](SHARED_INDEX_CONFIG.md). Описанный ниже исторический прогон предшествует G02.
+
 [Полный indexed coordinator cycle](PONS_INDEXED_CYCLE.md) — локальный PASS01.10; следующий шаг — независимое review.
 
 01.10.2026: локальная связка реализована. Публичный исполнитель остаётся закрыт.
@@ -15,7 +19,7 @@ BuyPolicySource. Это допуск конкретного manifest, а не а
 genesisHash/chainId/lifecycle.instanceId, абсолютный statePath и maxAgeSeconds
 от1 до3600. Без обоих полей сохранён прежний явно исследовательский режим.
 
-Индексатору нужен **точно результат schedulerConfigFor(config)**, сохранённый
+Индексатору нужен **indexConfig из buildIndexConfigs(schedulerConfigFor(config))**, сохранённый
 как JSON, а не весь конфиг координатора: checksum состояния учитывает конфиг.
 Например, из локального Node-скрипта в корне проекта:
 
@@ -24,7 +28,7 @@ const fs = require('fs');
 const {schedulerConfigFor} = require('./scripts/pons-automation.cjs');
 const config = JSON.parse(fs.readFileSync('.local/pons-config.json', 'utf8'));
 fs.writeFileSync('.local/pons-indexer-config.json',
-  JSON.stringify(schedulerConfigFor(config), null, 2));
+  JSON.stringify(require('./scripts/shared-index-config.cjs').buildIndexConfigs(schedulerConfigFor(config)).indexConfig, null, 2));
 ```
 
 Далее использовать существующий once/watch интерфейс из

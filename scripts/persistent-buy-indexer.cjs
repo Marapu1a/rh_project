@@ -7,6 +7,8 @@ const {withState}=require('./local-scheduler-state.cjs');
 const tag=n=>'0x'+BigInt(n).toString(16);
 const check=(v,m)=>{if(!v)throw Error(m);};
 const nextDelay=status=>status?.state==='catchingUp'?0:10000;
+// Bump when replay semantics change; never reuse a ledger produced by an older engine.
+const REPLAY_REVISION='pons-pool-batch-range-v1';
 async function readSnapshot({config,statePath,manifest,cutoff,rpc,now=Date.now()}){
  const waiting=reason=>{throw Object.assign(Error(reason),{code:'INDEXER_WAIT',reason});};
  let state;
@@ -61,28 +63,38 @@ async function indexOnce({config,rpc,statePath,batchSize=100,reorgLimit=128,full
     const key=hash({method,params});
     if(cacheable&&cache[key]){cacheHits++;return structuredClone(cache[key].value);}
     const value=await rpc(method,params);check(value!=null,'Missing indexer RPC result');
-    if(cacheable)cache[key]={height,value:structuredClone(value)};
+    // A parent-state read can precede a receipt (delegated-account batches).
+    // Bind receipt eviction to its own block, not the last RPC read's height.
+    const cacheHeight=method==='eth_getTransactionReceipt'?Number(BigInt(value.blockNumber)):height;
+    if(cacheable)cache[key]={height:cacheHeight,value:structuredClone(value)};
     return value;
    };
    const resolved=await resolveBuyPolicy(config,rpc,end);
    const scanStarted=performance.now();
-   const input=end>anchor?await scanWithRpc(resolved.manifest,read,end,config.lifecycle):{manifest:resolved.manifest,blocks:[]};
+   const suffix=end>base?await scanWithRpc(resolved.manifest,read,end,config.lifecycle,{fromBlock:base+1}):{blocks:[]};
+   const input={manifest:resolved.manifest,blocks:[...prior.blocks.slice(0,keep),...suffix.blocks]};
    const scanMs=performance.now()-scanStarted,replayStarted=performance.now();
-   const ledger=end>anchor?replay(input.manifest,input.blocks):null;
+   const unchanged=!fullRewardAudit&&!removed&&end===base&&prior.replayRevision===REPLAY_REVISION&&prior.ledger&&hash(prior.manifest)===hash(input.manifest);
+   const ledger=end>anchor?(unchanged?prior.ledger:replay(input.manifest,input.blocks)):null;
    const replayMs=performance.now()-replayStarted,rewardStarted=performance.now();
-   const rewards=config.lifecycle&&end>anchor?await require('./reward-observation.cjs').observeRewards({blocks:input.blocks,vault:config.lifecycle.vault,rpc,blockTag:tag(end),previous:removed?null:prior.rewards,fullAudit:fullRewardAudit}):null;
-   const publicObservation=config.publicStatus===true&&end>anchor?await require('./public-observation.cjs').observePublic({config,manifest:input.manifest,rpc,blockTag:tag(end),blockHash:input.blocks.at(-1).hash}):null;
+   const rewards=config.lifecycle&&end>anchor?(unchanged&&prior.rewards?prior.rewards:await require('./reward-observation.cjs').observeRewards({blocks:input.blocks,vault:config.lifecycle.vault,rpc,blockTag:tag(end),previous:removed?null:prior.rewards,fullAudit:fullRewardAudit})):null;
+   let publicObservation=null,publicProjection=null;
+   if(config.publicStatus===true&&end>anchor){
+    const binding={head:end,blockHash:input.blocks.at(-1).hash,manifestHash:hash(input.manifest)};
+    try{publicObservation=await require('./public-observation.cjs').observePublic({config,manifest:input.manifest,rpc,blockTag:tag(end),blockHash:binding.blockHash});publicProjection={...binding,state:'available'};}
+    catch(e){if(e.code!=='RPC_READ_UNAVAILABLE')throw Object.assign(Error('Public projection integrity/read failure'),{code:'PUBLIC_PROJECTION_FAILURE',cause:e});publicProjection={...binding,state:'unavailable',reason:'rpcUnavailable'};}
+   }
    check((await rpc('eth_getBlockByNumber',[finalized.number,false])).hash===finalized.hash,'Finalized branch changed during indexing');
    // Publish evidence and derived ledger together; failure leaves the last good snapshot intact.
-   state.index={head:end,observedAt:new Date().toISOString(),blocks:input.blocks,cache,manifest:input.manifest,ledger,ledgerHash:ledger?hash(ledger):null,rewards,publicObservation,policyStatus:resolved.policyStatus};
+   state.index={head:end,observedAt:new Date().toISOString(),blocks:input.blocks,cache,manifest:input.manifest,ledger,ledgerHash:unchanged?prior.ledgerHash:ledger?hash(ledger):null,replayRevision:REPLAY_REVISION,rewards,publicObservation,publicProjection,policyStatus:resolved.policyStatus};
    state.status={state:end===target?'caughtUp':'catchingUp',processedBlock:end,targetBlock:target,removedBlocks:removed,cacheHits,updatedAt:new Date().toISOString()};
-   state.status.metrics={lagBlocks:target-end,historyBlocks:input.blocks.length,scanMs,replayMs,rewardMs:performance.now()-rewardStarted,beforeSaveMs:performance.now()-started};
+   state.status.metrics={lagBlocks:target-end,historyBlocks:input.blocks.length,scannedBlocks:suffix.blocks.length,replayedBlocks:unchanged?0:input.blocks.length,scanMs,replayMs,rewardMs:performance.now()-rewardStarted,beforeSaveMs:performance.now()-started};
    const saveStarted=performance.now();save(state);
    // Final write timing is returned/logged, not followed by another state write.
    return {...state.status,observedAt:state.index.observedAt,policyMode:resolved.policyStatus.mode,processedTimestamp:input.blocks.at(-1)?.timestamp??null,metrics:{...state.status.metrics,saveMs:performance.now()-saveStarted,totalMs:performance.now()-started,stateBytes:fs.statSync(statePath).size}};
   }catch(e){
    if(e.code==='SCHEDULER_STORAGE_ERROR')throw e;
-   state.status={state:'waiting',processedBlock:state.index?.head??Number(config.manifest.anchor.number),reason:'Read or validation failed; last good snapshot retained',updatedAt:new Date().toISOString()};
+   state.status={state:'waiting',processedBlock:state.index?.head??Number(config.manifest.anchor.number),reason:e.code==='PUBLIC_PROJECTION_FAILURE'?'publicProjectionIntegrityOrReadFailure':'Read or validation failed; last good snapshot retained',updatedAt:new Date().toISOString()};
    save(state);throw e;
   }
  });

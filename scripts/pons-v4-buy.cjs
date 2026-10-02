@@ -19,8 +19,8 @@ function validate(m){
  check(BigInt(k[2])===0n&&BigInt(k[3])>0n&&poolId(k)===low(m.poolId),'Pons pool ID/fee mismatch');
  check(Number.isInteger(m.hookFeeBps)&&Number.isInteger(m.creatorTaxBps)&&m.hookFeeBps>=0&&m.creatorTaxBps>=0&&m.hookFeeBps+m.creatorTaxBps<=2000,'Invalid fee rates');
 }
-async function validateBindings(m,rpc,tag){
- const record=await CURVE.validateBindings(m,rpc,tag);
+async function validateBindings(m,rpc,tag,curveRecord){
+ const record=curveRecord||await CURVE.validateBindings(m,rpc,tag);
  check(record.poolFee===BigInt(m.poolKey[2])&&record.tickSpacing===BigInt(m.poolKey[3])&&record.creatorTaxBps===BigInt(m.creatorTaxBps),'Pons pool record mismatch');
  const abi=new Interface(['function poolManager() view returns(address)','function launches(bytes32) view returns(bool registered,bool memecoinIsCurrency0,address memecoin,address quoteToken,address creator,address buybackCreatorRecipient,address protocolFeeRecipient,uint16 creatorTaxBps,uint16 protocolFeeShareBps,uint16 buybackBurnBps,uint16 hookFeeBps,uint16 maxInternalPriceImpactBps,bool buybackEnabled)']);
  const read=async(name,args=[])=>abi.decodeFunctionResult(name,await rpc('eth_call',[{to:m.hook,data:abi.encodeFunctionData(name,args)},tag]));

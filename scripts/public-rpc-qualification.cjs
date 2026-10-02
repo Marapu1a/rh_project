@@ -18,7 +18,8 @@ function measuredRpc(send,{maxRequests=1000}={}){
 function httpRpc(url,{timeoutMs=15000}={}){
  const parsed=new URL(url);check(['http:','https:'].includes(parsed.protocol),'HTTP RPC required');let id=0;
  return async(method,params)=>{
-  const requestId=++id;let response;try{response=await fetch(url,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:requestId,method,params}),signal:AbortSignal.timeout(timeoutMs)});}catch{throw Error('RPC transport failure or timeout');}
+  const requestId=++id;let response;try{response=await fetch(url,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:requestId,method,params}),signal:AbortSignal.timeout(timeoutMs)});}catch{throw Object.assign(Error('RPC transport failure or timeout'),{code:'RPC_READ_UNAVAILABLE'});}
+  if([408,429,502,503,504].includes(response.status))throw Object.assign(Error('RPC HTTP '+response.status),{code:'RPC_READ_UNAVAILABLE'});
   check(response.ok,'RPC HTTP '+response.status);let data;try{data=await response.json();}catch{throw Error('Invalid RPC JSON');}
   // Do not echo provider messages: they may include credential-bearing URLs.
   check(data.id===requestId,'RPC response id mismatch');if(data.error)throw Error('RPC error code '+data.error.code);return data.result;

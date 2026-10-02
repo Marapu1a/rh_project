@@ -17,7 +17,7 @@ function schedulerConfigFor(c){
  return {...base,cutoffMode:'LOCAL_HEAD',ponsRehearsal:true,buyPolicyMode:'unadmitted'};
 }
 function validate(c){
- check(c.schema==='pons-rehearsal-automation-v1','Explicit Pons rehearsal config required');V.validate(c.manifest);
+ check(c.schema==='pons-rehearsal-automation-v1','Explicit Pons rehearsal config required');const profile=require('./pons-profiles.cjs').pool(c.manifest.schema);check(profile,'Expected Pons pool-capable profile');profile.validate(c.manifest);
  check(c.lifecycle.schema==='attempt-lifecycle-v4'&&same(c.lifecycle.vault,c.vault),'Lifecycle binding mismatch');
  for(const k of ['collector','escrow','vault','executor'])check(ethers.isAddress(c[k]),'Invalid '+k);
  for(const k of ['collector','escrow'])check(/^0x[0-9a-f]{64}$/.test(c.codeHashes?.[k]||''),'Missing '+k+' runtime');
@@ -61,7 +61,7 @@ async function runPonsAutomation({provider,executor,config:c,rpcUrl,statePath,si
    }
    const boundary=createBoundary({state,save,provider,sender:c.executor,guard,onConfirmed:async s=>{steps.push(s);sentCount++;await onStep(s);}});
    const deliver={provider,adapter,executor,job:c.deliveryJob,statePath:file+'.rng',signal,receiptTimeoutMs};
-   const schedule={provider,short,monthly,publisher:executor,executor,config:schedulerConfig,rpcUrl,statePath:file+'.scheduler',signal,receiptTimeoutMs};
+   const schedule={provider,short,monthly,publisher:executor,executor,config:schedulerConfig,...(schedulerConfig.indexer?{indexConfig:require('./shared-index-config.cjs').buildIndexConfigs(schedulerConfig).indexConfig}:{}),rpcUrl,statePath:file+'.scheduler',signal,receiptTimeoutMs};
    async function send(method,args=[]){const price=(await provider.getFeeData()).gasPrice;return sendLocalTransaction(method,args,{type:2,maxFeePerGas:price,maxPriorityFeePerGas:0},{signal,receiptTimeoutMs});}
    async function claims(){
     state.payouts??=[];
@@ -105,11 +105,7 @@ async function runPonsAutomation({provider,executor,config:c,rpcUrl,statePath,si
        check(String(await collector.campaignId())===c.campaignId,'Campaign changed');const policy=await collector.policy(c.campaignId);
        check(policy.recipients.every((a,i)=>same(a,c.recipients[i]))&&policy.bps.every((n,i)=>n===BigInt([9000,500,500][i])),'Funding allocation changed');
        results.funding=[];
-       for(const action of ['pull','sync','pay-prizes','pay-ops','pay-team','sweep','pull','pay-prizes','pay-ops','pay-team']){
-        const a=(await inspect(provider,c.collector,c.executor)).actions[action];
-        if(a?.status!=='ready'){results.funding.push({action,status:a?.status||'unavailable'});continue;}
-        try{await send(collector.connect(executor)[a.method],a.args||[]);}catch(e){if(!e.definiteRejection)throw e;results.funding.push({action,status:'reverted'});}
-       }
+       await require('./pons-funding-pass.cjs').runFundingPass({loadPlan:()=>inspect(provider,c.collector,c.executor),send:(method,args)=>send(collector.connect(executor)[method],args),results:results.funding});
       }catch(e){if(state.pending||['LOCAL_BUDGET_WAIT','SCHEDULER_STORAGE_ERROR'].includes(e.code))throw e;results.fundingError=e.message;}
       if(!results.fundingError){results.scheduler=await runScheduler(schedule,{maxTicks:16});if(state.pending)return result('blocked',state.pending.transactionHash?'pendingReceipt':'unknownHash');if(['error','blocked','stopped'].includes(results.scheduler.status))return result(results.scheduler.status,'scheduler');}
      }

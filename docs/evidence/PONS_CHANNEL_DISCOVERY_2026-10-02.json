@@ -1,0 +1,328 @@
+{
+  "observedAt": "2026-10-02T05:02:36.823Z",
+  "page": "https://www.ponsfamily.com/launchpad/0xBc3B252BdA74b4705025c4ebd23B2eb021025ad3",
+  "method": "Read-only HTML and linked JS download, no wallet or transaction",
+  "chunks": [
+    {
+      "url": "https://www.ponsfamily.com/_next/static/immutable/chunks/24l7gmtgbcdtf.js",
+      "sha256": "a9056e0782fb6869623794c29a59ad29155fb509e066c666c7b5277f04819c41",
+      "bytes": 12934,
+      "markers": []
+    },
+    {
+      "url": "https://www.ponsfamily.com/_next/static/immutable/chunks/0h5-4plnmslxz.js",
+      "sha256": "89e9d5d1424c0d6ef393cf0b48f7ef2dfcc0f095f8ed8da476ba2ad4687e90d6",
+      "bytes": 32024,
+      "markers": []
+    },
+    {
+      "url": "https://www.ponsfamily.com/_next/static/immutable/chunks/03ih6_d8rly6j.js",
+      "sha256": "61322b0113347544e795ae502d11c75d460334556c517218c11cf960abc2ea9a",
+      "bytes": 229503,
+      "markers": []
+    },
+    {
+      "url": "https://www.ponsfamily.com/_next/static/immutable/chunks/00cbwvqtmwgla.js",
+      "sha256": "729e9318852f6b492473da50bc0cc42818112ee7f9b7600508a23b9525ef047f",
+      "bytes": 155744,
+      "markers": []
+    },
+    {
+      "url": "https://www.ponsfamily.com/_next/static/immutable/chunks/turbopack-2afeuehvzkkc7.js",
+      "sha256": "cd376687ca948c0c4b54278d63d3592f3c7191fdc4f25458abd58c09b87f4d7b",
+      "bytes": 10987,
+      "markers": []
+    },
+    {
+      "url": "https://www.ponsfamily.com/_next/static/immutable/chunks/262l52gh2q116.js",
+      "sha256": "3e7839a89a339b8771e6866d6a275a4e75ef90c166abff6785d2c297d85f7882",
+      "bytes": 9487,
+      "markers": []
+    },
+    {
+      "url": "https://www.ponsfamily.com/_next/static/immutable/chunks/2al3u6gfy048a.js",
+      "sha256": "3956f0f961b3fc772ed053eb5a1849a6866d74f8f78e9d7cb7570d4f416ffaa3",
+      "bytes": 30498,
+      "markers": []
+    },
+    {
+      "url": "https://www.ponsfamily.com/_next/static/immutable/chunks/3z3lh37cyfque.js",
+      "sha256": "869a6f579317d6fe734bbd22e59fa06416eea37519ebab38806b89d3d2152c1d",
+      "bytes": 30272,
+      "markers": []
+    },
+    {
+      "url": "https://www.ponsfamily.com/_next/static/immutable/chunks/33o64p5wm8frk.js",
+      "sha256": "3d89ba0122e41f237472d618332bcd69369aec0dafb3e007c951e6bc9f0c2e7d",
+      "bytes": 38532,
+      "markers": []
+    },
+    {
+      "url": "https://www.ponsfamily.com/_next/static/immutable/chunks/2ca0v8br1j_a1.js",
+      "sha256": "f6c47e9e609f560b30116870fe4b0f8d76f6ad178770b467d356caeb8ef4acb7",
+      "bytes": 26872,
+      "markers": []
+    },
+    {
+      "url": "https://www.ponsfamily.com/_next/static/immutable/chunks/1un0chz5lv7d5.js",
+      "sha256": "c872bbfaee8ea412659a37ef5bf64922c4fccd3d2e12d9bb61582781bfc70fa6",
+      "bytes": 25670,
+      "markers": []
+    },
+    {
+      "url": "https://www.ponsfamily.com/_next/static/immutable/chunks/40a73qr3gn63z.js",
+      "sha256": "ebad34dafc433b3838adebd768c81a812f9c33ef77e9cdd09953ab16edf76b9e",
+      "bytes": 51497,
+      "markers": []
+    },
+    {
+      "url": "https://www.ponsfamily.com/_next/static/immutable/chunks/3is61i3543qma.js",
+      "sha256": "3bb2ed507a9f6dfd5b99339c0245aaa70788b8e6f57a19e42da113b75ace9fbc",
+      "bytes": 104087,
+      "markers": []
+    },
+    {
+      "url": "https://www.ponsfamily.com/_next/static/immutable/chunks/2x50wsyu_avm_.js",
+      "sha256": "20a287f0f15234c4be8c94b8e52754c76e5e9d9a5fabd2912df7d9f63cb97282",
+      "bytes": 29669,
+      "markers": []
+    },
+    {
+      "url": "https://www.ponsfamily.com/_next/static/immutable/chunks/0pxoz2j2b3ywi.js",
+      "sha256": "09729237aa4ae88d334d0a443426585e5fd1f14d74d69fc1bb2d9629dce5412a",
+      "bytes": 32858,
+      "markers": []
+    },
+    {
+      "url": "https://www.ponsfamily.com/_next/static/immutable/chunks/1vyepjlucfto1.js",
+      "sha256": "075645b469186134b8d73795297669dec46c1fb1d07001971a065ee15b9cbec3",
+      "bytes": 60187,
+      "markers": []
+    },
+    {
+      "url": "https://www.ponsfamily.com/_next/static/immutable/chunks/3_byz5wxkxt__.js",
+      "sha256": "3512cc3e227b31c65ba29b9fcaf6344547e0073920d5e9043cbd052b419bc748",
+      "bytes": 36324,
+      "markers": []
+    },
+    {
+      "url": "https://www.ponsfamily.com/_next/static/immutable/chunks/1zzhw5hjt4_rl.js",
+      "sha256": "2b491089f501598f69b6085dd2a143d14f53f969feb5d9cfff4fc79c4e14d6cc",
+      "bytes": 38714,
+      "markers": []
+    },
+    {
+      "url": "https://www.ponsfamily.com/_next/static/immutable/chunks/0dhxf8rr61moh.js",
+      "sha256": "155a5be2b74875a837d1c775464dac02c64e9d7ad65bc26857409a8b496e3959",
+      "bytes": 77054,
+      "markers": []
+    },
+    {
+      "url": "https://www.ponsfamily.com/_next/static/immutable/chunks/0sxxgvnobu8-d.js",
+      "sha256": "521d161fe03e92b3569bbb934c54ee2daff689e1697ea295e05a55059013846c",
+      "bytes": 95204,
+      "markers": []
+    },
+    {
+      "url": "https://www.ponsfamily.com/_next/static/immutable/chunks/06ods7onyk9uf.js",
+      "sha256": "788b0ccbcd99a8ab2274f7414db72fb660641a1e9b76fef7f6b3409d6b1eb74d",
+      "bytes": 977573,
+      "markers": []
+    },
+    {
+      "url": "https://www.ponsfamily.com/_next/static/immutable/chunks/0cgo30ub1z_pb.js",
+      "sha256": "ff330cf512583d7edd1bc2f3151443c9cac5d22e1d73e8a31a88c80dea328c76",
+      "bytes": 250348,
+      "markers": []
+    },
+    {
+      "url": "https://www.ponsfamily.com/_next/static/immutable/chunks/3b848nrz22dkq.js",
+      "sha256": "1e26e40213990c2dba9befaa012b8c50802ad7857c99f27f46253c74c2d06561",
+      "bytes": 167339,
+      "markers": []
+    },
+    {
+      "url": "https://www.ponsfamily.com/_next/static/immutable/chunks/2civu5_j_h5ht.js",
+      "sha256": "b26c21dc5e045b888ae6ddff4ad90c9cfbfa7a8eb1c1f2901875549dd95fc7d6",
+      "bytes": 54086,
+      "markers": []
+    },
+    {
+      "url": "https://www.ponsfamily.com/_next/static/immutable/chunks/1h3ump9i3lreo.js",
+      "sha256": "3c2977e8f778d0b195973853c5c3bc6078786431ecac7181e76d7235ecf72a2c",
+      "bytes": 438765,
+      "markers": []
+    },
+    {
+      "url": "https://www.ponsfamily.com/_next/static/immutable/chunks/2a_1bj2p7a_d3.js",
+      "sha256": "2494e48ec4a4d4b6fbf848b349a22b254531a0c800154bc88ab9b167917ce398",
+      "bytes": 119030,
+      "markers": []
+    },
+    {
+      "url": "https://www.ponsfamily.com/_next/static/immutable/chunks/3oc_vc9bwcwn4.js",
+      "sha256": "8350e4df34bd48c002df39667c6adf26c75d5b932fe0731e6b029cc94c69adb6",
+      "bytes": 162050,
+      "markers": []
+    },
+    {
+      "url": "https://www.ponsfamily.com/_next/static/immutable/chunks/2qjv0_f8k1-47.js",
+      "sha256": "e6f103d58ee7a0053815ba82e63cf052c0a996ae833e375d50f170e0ed5946d9",
+      "bytes": 62134,
+      "markers": []
+    },
+    {
+      "url": "https://www.ponsfamily.com/_next/static/immutable/chunks/3x6nkh-5w4b07.js",
+      "sha256": "45ead9cba3528dead4418eea3937ad1fb74386cb20190aae47d9c13dc6bd824e",
+      "bytes": 195108,
+      "markers": []
+    },
+    {
+      "url": "https://www.ponsfamily.com/_next/static/immutable/chunks/1vr5v8n43mi-v.js",
+      "sha256": "d77c941e158aa0c5e224b3931d0e8b585f1c8786ba5a395aeeb882f04656bacc",
+      "bytes": 60084,
+      "markers": []
+    },
+    {
+      "url": "https://www.ponsfamily.com/_next/static/immutable/chunks/1b84z36zsid71.js",
+      "sha256": "9c4ce42ce0754569f975130dcbde2ac01baf2f0df60f7853feb8dc59d168fca4",
+      "bytes": 279864,
+      "markers": []
+    },
+    {
+      "url": "https://www.ponsfamily.com/_next/static/immutable/chunks/3akiry-r5694v.js",
+      "sha256": "f02154c93ff77868b269aaf6fc789a5be8469fda0ea6a2c02a659822fb275279",
+      "bytes": 43043,
+      "markers": []
+    },
+    {
+      "url": "https://www.ponsfamily.com/_next/static/immutable/chunks/0pukiy8731rnz.js",
+      "sha256": "174421468983f90c45f69dcc93708a6757a166d84193404ba5d133ef801eb3ef",
+      "bytes": 14434,
+      "markers": []
+    },
+    {
+      "url": "https://www.ponsfamily.com/_next/static/immutable/chunks/3pyhw92mtrx2y.js",
+      "sha256": "b040a58690c52ba0bb5686ef9540ff16d316f8505ca4abdd73ee5a33792a914c",
+      "bytes": 13162,
+      "markers": [
+        "sendWalletCallBundle"
+      ]
+    },
+    {
+      "url": "https://www.ponsfamily.com/_next/static/immutable/chunks/2m8038qmufya1.js",
+      "sha256": "bddcafe3e3a9cebb48e268210047f4ced1ab651b7810d92072f72a5dc02d5f93",
+      "bytes": 25189,
+      "markers": []
+    },
+    {
+      "url": "https://www.ponsfamily.com/_next/static/immutable/chunks/2plbf1ddw6k86.js",
+      "sha256": "978f55555f163a38b4029e6f0118fd8508d52db3ee330b4610ce494f17ff40c5",
+      "bytes": 24191,
+      "markers": []
+    },
+    {
+      "url": "https://www.ponsfamily.com/_next/static/immutable/chunks/1boq_la3j1vnm.js",
+      "sha256": "1e44b9d8dc2d855405c69fdc72c696d9edb7579a3c4b90a9e96bd06d0b257d3b",
+      "bytes": 25492,
+      "markers": []
+    },
+    {
+      "url": "https://www.ponsfamily.com/_next/static/immutable/chunks/2ag-ww6xlt2tl.js",
+      "sha256": "f1c97d7d183fcb5fccee3d57d846aad3ed7ebbac192b62757c8e93982df29e0b",
+      "bytes": 31516,
+      "markers": [
+        "sendWalletCallBundle"
+      ]
+    },
+    {
+      "url": "https://www.ponsfamily.com/_next/static/immutable/chunks/2hpaihfj3j5h8.js",
+      "sha256": "6312e5a513b4a1509c2c0e8d9d3940972d357869f20d11351bfe4d4e9d4dac69",
+      "bytes": 28178,
+      "markers": []
+    },
+    {
+      "url": "https://www.ponsfamily.com/_next/static/immutable/chunks/0x3-lnllvcbs6.js",
+      "sha256": "eb2c8ef4bf3611d85cf75cd8f721efcef89eae47d45a8f150c8dfaa387c688b9",
+      "bytes": 29575,
+      "markers": []
+    },
+    {
+      "url": "https://www.ponsfamily.com/_next/static/immutable/chunks/2h7sjj9b74as9.js",
+      "sha256": "860a604e31dc31a3ac4598c580e932ec5bf738cd884cb1bd5dca443f110c3e7f",
+      "bytes": 76921,
+      "markers": [
+        "sendWalletCallBundle"
+      ]
+    },
+    {
+      "url": "https://www.ponsfamily.com/_next/static/immutable/chunks/43e_mztsz1tw7.js",
+      "sha256": "1e12619a5303883476ef97b7139c6f62eb00c126566e5bb5d6d9026994eb449e",
+      "bytes": 1152,
+      "markers": []
+    },
+    {
+      "url": "https://www.ponsfamily.com/_next/static/immutable/chunks/2sbufj_-xmord.js",
+      "sha256": "53feb7335228fd58aee41a2cb7aab757473495d20eec06d1019c527ede33e3d0",
+      "bytes": 76694,
+      "markers": []
+    },
+    {
+      "url": "https://www.ponsfamily.com/_next/static/immutable/chunks/42myse99zr3ep.js",
+      "sha256": "d84bf0452ea29a8b1d8d38e91b70f4eaf3b6c86f7386fbf9d3a679aab2132bcc",
+      "bytes": 42498,
+      "markers": [
+        "buildPonsV2TradePlan"
+      ]
+    },
+    {
+      "url": "https://www.ponsfamily.com/_next/static/immutable/chunks/1o7nuc0r25-tr.js",
+      "sha256": "2f0261d33977b3603606e200e6af12bd7b908c0b9620fdf0184d932450c11076",
+      "bytes": 172130,
+      "markers": [
+        "buildPonsV2TradePlan",
+        "pickPonsBestRoute",
+        "sendWalletCallBundle",
+        "requestZeroExQuote"
+      ]
+    },
+    {
+      "url": "https://www.ponsfamily.com/_next/static/immutable/chunks/2r7celfkplsf2.js",
+      "sha256": "d1eba568cae2dd5f5bbb38dfd0df7e11df84bac1d38cd49333a31ffd9b3fc602",
+      "bytes": 8396,
+      "markers": []
+    },
+    {
+      "url": "https://www.ponsfamily.com/_next/static/immutable/chunks/0c0hxoamwjsbw.js",
+      "sha256": "0973c1d64c88adc8e3c950410cb58b288f72118d5965b78049438deb8f2f9683",
+      "bytes": 112594,
+      "markers": []
+    }
+  ],
+  "priorChunks": [
+    {
+      "url": "https://www.ponsfamily.com/_next/static/immutable/chunks/1o7nuc0r25-tr.js",
+      "currentLinked": true,
+      "sameHash": true
+    },
+    {
+      "url": "https://www.ponsfamily.com/_next/static/immutable/chunks/42myse99zr3ep.js",
+      "currentLinked": true,
+      "sameHash": true
+    },
+    {
+      "url": "https://www.ponsfamily.com/_next/static/immutable/chunks/2ag-ww6xlt2tl.js",
+      "currentLinked": true,
+      "sameHash": true
+    },
+    {
+      "url": "https://www.ponsfamily.com/_next/static/immutable/chunks/1boq_la3j1vnm.js",
+      "currentLinked": true,
+      "sameHash": true
+    }
+  ],
+  "limits": [
+    "Static discovery only; dynamically loaded chunks may be absent",
+    "No captured wallet payload or mined UI receipt"
+  ]
+}

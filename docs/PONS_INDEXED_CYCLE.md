@@ -1,5 +1,9 @@
 # Сквозной Pons coordinator с сохранённым индексом
 
+> Актуализация02.10: это модуль с датированными этапами/evidence, а не текущая очередь работ. Подтверждённые curve/pool self-batches теперь подключены к index/API новым genesis v2; scanner читает новый suffix, idle replay устранён. [Текущая матрица](PONS_CHANNEL_COVERAGE.md), [аудит](PONS_AUDIT_2026-10-02.md), [план](ROADMAP.md).
+
+Текущий конфиг writer/API: [общий indexConfig](SHARED_INDEX_CONFIG.md). Описанный ниже исторический прогон предшествует G02.
+
 Прогон выполняется локально флагом `--indexed-automation` у
 `scripts/pons-collector-fork.cjs`. Он включает обычный automation rehearsal,
 разворачивает BuyPolicySource с instanceId lifecycle и передаёт индексатору
@@ -43,3 +47,11 @@ finalized устаревшим и корректно вызвать `rng:finalit
 PONS_INDEXED_AUTOMATION_PASSED на fork77469814, 13 проходов. Выплачено 107.337115 USDG; reserved/claimable в конце нулевые.86 consumed и1 OPEN каждого вида. Остановка после prove и продолжение, финальный повтор без отправок.21 адресная проверка PASS, не full suite.
 
 [Компактное evidence](evidence/PONS_INDEXED_CYCLE_2026-10-01.json); полный локальный отчёт: .local/logs/pons-indexed-cycle-20261001-d.json. Команда: `node scripts/pons-collector-fork.cjs .local/logs/pons-indexed-cycle-20261001-d.json --indexed-automation` с указанным выше обычным artifact и RH_FORK_RPC_URL.
+
+## Контрольная точка HTTP — 02.10.2026
+
+`node scripts/verify-pons-wallet-api.cjs .local/logs/pons-indexed-cycle-20261001-d.json .local/logs/pons-cycle-http-20261002.json` — PONS_SAVED_CYCLE_HTTP_PASSED. [Результат](evidence/PONS_CYCLE_HTTP_2026-10-02.json). Проверен исходный сохранённый snapshot без обновления observedAt/configHash: historical read валиден, текущий HTTP ответ stale. Балансы и rewards совпадают с ledger и между двумя запусками настоящего HTTP server/worker; проверены pagination, 400 на неверный limit, 405 на POST. Snapshot побайтово не изменён.
+
+Проверка добавлена в конец scripts/pons-automation-rehearsal.cjs для будущих indexed runs с текущим shared indexConfig. Именно эта новая связка на свежем fork пока НЕ запускалась; сохранённый snapshot использует историческую scheduler identity. Синтаксис обоих scripts проверен. Повреждение snapshots покрыто существующими user-status-cache tests, в этом пакете повторно не запускались. Это не browser rendering, не mainnet finality и не batch admission.
+
+Согласованный размер следующих пакетов: (1) единый допуск и сквозной учёт штатных Pons routes, включая batch если он требуется терминалом; (2) deployment config и подключение UI/API; (3) общий release rehearsal. Не продолжать размножение standalone shape inspectors. Не объявлять G10 закрытым по этой HTTP проверке.

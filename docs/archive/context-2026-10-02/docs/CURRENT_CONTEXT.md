@@ -1,0 +1,678 @@
+> Исторический снимок до уборки 02.10.2026. Не текущий план. [Актуальный контекст](../../../CURRENT_CONTEXT.md).
+
+# Текущий контекст
+
+02.10: G10 pool self-batch подключён к новому genesis v2 → policy → durable index → HTTP API; fresh fork78099955, все4 USDG/ETH sequential/batch ветки PASS. Затем исправлены повторный scanner/idle replay истории, до10 одинаковых funding inspect за poll, duplicate bindings и отказ из-за чужой невалидной7702 authorization. Расширенная проверка39 файлов:239/239 PASS, дополнительный evidence test4/4 PASS; публичный допуск закрыт. Следующий маршрут G10 —0x, затем G04. [Отчёт и ограничения](../../../PONS_AUDIT_2026-10-02.md).
+
+02.10: G10 Pons pool terminal matrix PASS на fresh fork78091768: исходные frontend USDG3/ETH6 calls исполнены последовательно и signed type2 self-batch. Прямые BUY ELIGIBLE, оба batch UNSUPPORTED_ROUTE; minOut/net settlement проверены.3 fixture tests PASS.0x price+unsigned quotes доступны для RDH/WETH, execution ещё не проверен. Далее — versioned v4 self-batch adapter→index/API;0x отдельный маршрут. Runtime admission не расширен. [Evidence и границы](../../../PONS_POOL_TERMINAL.md).
+
+02.10: G10 — общий genesis profile curve direct/self-batch + direct v4 готов. 43 адресных tests PASS; свежий fork78075403: signed type4 BUY→graduation/refund→v4→локальный BuyPolicySource→durable index→HTTP API PASS. 5 BUY,86 Short/Monthly, carry79328733; повтор индекса/API стабилен. Open lifecycle v1, synthetic funding/finality; не draw cycle и не MetaMask UI. Публичный допуск не включён. Далее — post-graduation terminal batch/conversion coverage, затем G04. [Результат](../../../PONS_LAUNCH_PROFILE.md).
+
+02.10: G10 — curve self-batch подключён к versioned policy/replay/scanner/persistent index и HTTP API. Интеграционный RPC fixture: type4 USDG + type2 ETH→BUY дают Short/Monthly, restart/dedup/reorg (включая тот же tx на новой ветке)/outage PASS. 79 адресных checks PASS; после pin tightening повторены3 integration PASS. Live bindings PASS. Только curve profile, не batch v4; источник policy и цепочка в integration mocked. Публичная политика не включена. [Границы](../../../PONS_BATCH_ATTRIBUTION.md).
+
+02.10: G10 — signed upgrade и steady-state type2 BUY проверены на свежем локальном fork для USDG/ETH; два намеренно reverting batch сохраняют token balances. 30 адресных tests PASS. Пользователь: MetaMask13.48.0; package/yarn lock и generator сверены (tx-controller69.8.1), executor зависит от remote flags. Не завершён допуск: scanner/cache не сохраняют state-at-execution delegation; нужен versioned evidence+policy→ledger→API, а не разрешение calldata. [Evidence](../../../PONS_BATCH_ATTRIBUTION.md).
+
+02.10: G10 signed EIP7702 fork PASS: отдельная Prague VM, настоящие локальные type4 self-calls с подписанной authorization; USDG101 и ETH→USDG→BUY успешны, EF0100 delegation проверена без hardhat_setCode. 32 адресных tests PASS. Пакет допуска НЕ закрыт: нет доказательства формата установленного MetaMask, steady-state type2 и versioned policy/indexer integration; билеты по batch не включены. [Evidence](../../../PONS_BATCH_ATTRIBUTION.md).
+
+02.10: контрольная точка Pons cycle→HTTP API PASS на неизменном сохранённом fork snapshot01.10: 87 minted/86 consumed/1 open обоих типов, carry80328733, покупки/rewards совпали после restart HTTP/worker; stale сохранён честно. verify-pons-wallet-api включён в будущий indexed rehearsal. Новый полный fork не запускался. Работа далее крупными пакетами; текущий blocker — batch runtime/authorization admission, не базовый ledger. [Границы](../../../PONS_INDEXED_CYCLE.md).
+
+02.10: G10 ETH funding shape decoder готов: exact wrap→approve→single-hop swap→approve→BUY, funding2728530 / BUY2701245 / остаток27285 raw USDG. 28 адресных tests PASS. Без обрезки logs, без eligibility; runtime/trace boundaries ещё не доказаны. Следующий шаг — подтверждение executor/router/pool и границ исполнения, до подключения к ledger. [Детали](../../../PONS_BATCH_ATTRIBUTION.md).
+
+02.10: G10 — отдельный research batch decoder распознаёт точный approve→USDG curve BUY и сумму101USDG на сохранённом runtime-model receipt; SHAPE_MATCH не означает eligibility/admission. ETH funding, relayer, дополнительные calls и неоднозначные переводы отклоняются. 20 адресных проверок PASS. Следующий шаг — execution boundaries для ETH funding, затем runtime/7702 admission. [Детали](../../../PONS_BATCH_ATTRIBUTION.md).
+
+02.10: G10 MetaMask runtime model — local fork PASS: USDG101 и ETH funding→BUY исполнены пакетами, по одному CurveBuy. Прямой адаптер оба отклоняет NOT_DIRECT_CURVE_CALL, билеты не начислялись. 2 fixture tests PASS. Код executor скопирован на fake account через hardhat_setCode: это НЕ EIP-7702 authorization и НЕ MetaMask UI. Следующий шаг — отдельный batch decoder с проверкой execution/account/funding, затем настоящий 7702 envelope. [Границы](../../../PONS_BATCH_ATTRIBUTION.md).
+
+02.10: получен настоящий ответ MetaMask для выбранного аккаунта на chain4663: atomic.status=ready, ошибок нет, аккаунт/сеть стабильны. По EIP-5792 это возможность upgrade после согласия пользователя, а не уже включённое atomic execution. Probe ничего не подписывал/отправлял. Следующий шаг — локальный прогон конкретного MetaMask executor; batch admission остаётся закрытым. [Результат](../../../PONS_BATCH_ATTRIBUTION.md).
+
+02.10: G10 — готов локальный read-only MetaMask probe: http://127.0.0.1:4175, запуск `node scripts/wallet-capabilities-server.cjs`. EIP-6963 выбор MetaMask, capabilities chain4663, проверка смены аккаунта/сети, отчёт в .local/logs. Browser smoke с mock provider: supported/unsupported/reject и чужой Origin PASS; настоящий ответ расширения ожидается. Подписи и транзакции отсутствуют. [Детали](../../../PONS_BATCH_ATTRIBUTION.md).
+
+02.10: G10.4 — read-only attribution inspector и реальные RDH flow fixtures готовы. 7 адресных tests PASS, после усиления identity повторены4 PASS. Нельзя отождествлять tx.from, curveCaller и конечного получателя; ETH funding внутри batch нельзя считать curve refund. Выборка indirect не доказывает wallet-batch; активные adapters/начисление не менялись. Следующий шаг — конкретный wallet runtime/envelope (пользователь подтвердил MetaMask; возможности установленной версии ещё не сняты) и mined batch proof. [Разбор](../../../PONS_BATCH_ATTRIBUTION.md).
+
+02.10: G10.3 — исходные функции Pons дали USDG/ETH→curve calldata; последовательное исполнение на свежем local fork PASS (2+5 tx, по одному ELIGIBLE BUY: 101 и 2.697638 USDG). 4 fixture tests PASS. Wallet dispatcher проверен заглушкой: batch-first/fallback, найден text-based fallback даже для 4001. Это не extension/batch receipt и не full admitted indexer. Далее — batch/account attribution, затем v4/0x; G04 остаётся после G10. [Evidence и границы](../../../PONS_CHANNEL_COVERAGE.md).
+
+02.10: G10 получил реальные receipt-fixtures RDH: из первых 8 BUY в выборке pure decoder даёт 1 ELIGIBLE и 7 UNSUPPORTED_ROUTE. Это не статистика рынка и не доказательство UI-origin. 9 адресных tests PASS, runtime/правила не менялись. Browser unsigned capture ещё не выполнен (accounts/chainId только); следующий шаг — изолированный Pons terminal harness для USDG/ETH→curve, затем локальные receipts и v4. [Evidence и границы](../../../PONS_CHANNEL_COVERAGE.md).
+
+02.10: по решению пользователя добавлен G10 — полный охват штатных каналов покупки Pons и расширяемые адаптеры, перед окончательным G04. Статическая инвентаризация выполнена: 47 текущих JS chunks, 4 ключевых совпадают с hashes 01.10; USDG direct, funding conversion, 0x и wallet bundle требуют раздельного подтверждения. Следующий шаг — unsigned terminal payload и локальный receipt для USDG/ETH на curve/v4, без public sends. Порог/математика не менялись; retroactive tickets не утверждены. [План и матрица](../../../PONS_CHANNEL_COVERAGE.md).
+
+01.10: G02 реализован локально: общий indexConfig для writer/API/координатора, прежние scheduler/parent identities сохранены. Временный RPC-отказ проекции не блокирует BUY; integrity/ABI ошибки закрывают новый допуск. Исправлено чтение версии манифеста из admitted policy history. Сквозной локальный цикл с outage/recovery и frozen settlement PASS. Начальный адресный профиль: 37/38; найденный сбой исправлен и перепроверен (6 выбранных кейсов PASS), затем reader/cache/builder и RPC проверки PASS. Не full suite и не новый Pons fork; деплоя/миграции не было. Далее G04: Pons deploy/config manifest. [Детали](../../../SHARED_INDEX_CONFIG.md).
+
+01.10: review G02 b9b7e04 сверено с кодом. Подтверждены config identity mismatch и общий отказ индекса при observePublic error. Рекомендуется builder двух конфигов с неизменной scheduler/job identity, отдельный projection status и явная пересборка только derived index. Реализация ещё не начата. [Разбор](../../../SHARED_CONFIG_REVIEW_TRIAGE.md).
+
+01.10: подготовлен запрос GPT по G02 до реализации: shared config/index для coordinator/API, identity fields, projection failures, migration и frozen obligations. Предложение ещё не реализовано; ждём статический ответ. Предыдущие request/response сохранены в archive. [Запрос](../../../GPT_REVIEW_REQUEST.md).
+
+01.10: активный launch plan переведён на явный pons-v2, PAIR plan сохранён в config/reserve; старые PAIR preparers используют только резерв и отказывают Pons до RPC. Убраны PAIR-тексты из обеих тем, актуализированы ссылки/статус migration draft.13 адресных checks PASS (частичный набор). Публичный запуск остаётся закрыт. Далее — общий config индекса/API/coordinator (G02). [Границы](../../../ACTIVE_RELEASE_PATH.md).
+
+01.10: R0 инвентаризация завершена: local core подтверждён историческим evidence, public release не закончен. Карта9 gaps, runtime/roles/trust; найдено несовпадение shared snapshot config(publicStatus/API vs scheduler), Buy/Claim UI и Pons deploy/config gaps. Код/правила не менялись, tests/live audit не запускались. Далее R1 focused code review. [Карта](../../../RELEASE_INVENTORY.md).
+
+01.10: подготовлен общий план полной проверки перед запуском: R0–R9, code/security review, инварианты, full RC baseline, реальные timing, сбои, нагрузка, кошельки и deployment gates. Это план, не выполненный аудит; код публичного запуска ещё нельзя считать законченным. Следующий шаг — R0 inventory/gap map; timing-пакет включён в R3. [План](../../../PRELAUNCH_VERIFICATION_PLAN.md).
+
+01.10: прочитан GPT review3b36e0a к12e64bb, замечания сверены с кодом. Подтверждённого обхода admission/ошибки учёта не найдено; главный пробел — реальные finality/RNG timing. Следующий пакет: read-only замеры и воспроизведение лага/outage. Timing1800/1200 — candidate, approval=null. Код и правила не менялись. [Разбор](../../../PONS_INDEXED_REVIEW_TRIAGE.md).
+
+01.10: indexed Pons coordinator PASS на fork77469814: 13 проходов, отставание индекса блокирует новые draws, оба finalized checkpoints, Short/Monthly, live drand, stop/resume и выплаты.21 адресная проверка PASS. Public sends закрыты; последовательный локальный прогон, не production/watch. Далее — независимое review накопленного пакета. [Результат](../../../PONS_INDEXED_CYCLE.md).
+
+01.10: Pons policy admission и подключение сохранённого индекса к coordinator реализованы.44 адресных tests PASS; real-runtime fork77447532 PONS_ADMITTED_INDEXER_PASSED: настоящий локальный BuyPolicySource, чтение admitted snapshot,3 перезапуска, rollback и outage/resume. Public sends закрыты. Следующий шаг — полный indexed coordinator cycle с finalized cutoff; в этом пакете он не выполнялся. [Результат и границы](../../../PONS_INDEXED_COORDINATOR.md).
+
+01.10: Pons persistent indexer PASS на fork77435048: bounded catch-up,3 отдельных CLI запуска, без исторических RPC reads на повторе, rollback1 блока с BUY40, outage/resume.21 адресный сценарий закрыт; не full suite/kill/power-loss. Cache теперь включает fixed-height eth_call bindings. Research snapshot остаётся unadmitted. Далее — Pons policy admission и чтение snapshot coordinator; public service закрыт. [Результат](../../../PONS_PERSISTENT_INDEXER.md).
+
+
+01.10: browser → real local planner/fork PASS77427785:12 запросов/12 reload recoveries,4 BUY101/101/60/40, exact calldata и canonical receipt checks;18 адресных tests PASS. Исправлен найденный fork баг восстановления суммы101 вместо60/40. Далее — Pons persistent BUY indexer/admission, restart/reorg. Публичные отправки и wallet extensions не включены. [Результат](../../../PONS_BROWSER_BRIDGE.md).
+
+
+01.10: локальный purchase browser rehearsal готов на127.0.0.1:4174/purchase-demo/ (opt-in).13 адресных UI/state сценариев и16 существующих site/wallet tests PASS; это simulated adapter без кошелька/RPC. Следующий шаг — связать browser flow с local-only planner/fork и проверить exact payload/receipt recovery; public gate закрыт. [Границы](../../../PONS_PURCHASE_UI.md).
+
+
+01.10: local direct USDG purchase PASS: fork77402505,12 последовательных запросов/4 BUY, quote и1% minOut, недостаточные/истёкшие approvals, учёт101 и60+40.15 адресных tests PASS; не full suite и не browser wallet. Фронт/public sender не включены. Далее — локальный browser review flow с account/chain/reject/pending проверками, затем admission/indexer. [Детали](../../../PONS_DIRECT_PURCHASE.md).
+
+
+01.10: read-only UI Pons выявил direct curve/v4 совместимый формат, но также автоматический 0x route и wallet batching. Полный UI admission остаётся частичным. Следующий bounded step — управляемый direct USDG BUY с последовательными approvals и unsigned/fork проверкой; затем persistent indexer. Runtime/правила не менялись, публичных отправок нет. [Результат](../../../PONS_UI_ROUTING.md).
+
+
+01.10: пакет после GPT review выполнен локально: historical recipients в manual inspect/pay, crash recovery main/drand (6 сценариев внутри1 теста),25 адресных tests вместе с соседями PASS. Ненулевые reserved/claimable сохранены; known hash без повтора, unknown hash blocked; stale lock требует явной проверки. Transparency обновлена,390/1440 browser PASS. Это31337 journal/worker proof, не новый полный Pons fork/CLI crash admission. Далее — фактический UI BUY route Pons, затем persistent indexer/admission. [Результат и границы](../../../PONS_AUTOMATION.md).
+
+01.10: получен и сверен с кодом GPT review1b70082 для32d2568. Подтверждены слепота manual plan к старым credits и устаревшая transparency; уточнены funding isolation, full replay и пределы crash coverage. Следующий ограниченный пакет — обнаружение старых получателей и настоящий process-kill/recovery, затем UI routing/indexer admission. Реализация не менялась, тесты не повторялись. [Разбор и PASS](../../../PONS_REVIEW_TRIAGE.md).
+
+01.10: подготовлен пакет внешнего статического review Pons MVP относительно67cc1aa. До следующего технического шага разбираем findings GPT. Обновлены [обращение](../../../GPT_REVIEW_REQUEST.md) и [компактное evidence](../../../evidence/PONS_AUTOMATION_2026-10-01.json); прежнее исследование архивировано. Новый ответ пока не получен. В этом handoff код не менялся, продуктовые тесты не повторялись.
+
+01.10: локальный Pons coordinator завершён: fork77338337 PONS_AUTOMATION_PASSED, 13 проходов/22 уникальные транзакции, live drand, stop/resume, оба draw и claims. Выплачено114.657578USDG; reserved/claimable=0; повторный проход без отправок,86 consumed+1 OPEN каждого вида.25/25 scheduler/locks и7/7 новых адресных проверок PASS (не full suite). Далее — сверка фактического BUY routing UI Pons; публичный admission/service ещё закрыты. [Evidence и границы](../../../PONS_AUTOMATION.md).
+
+01.10: Pons полный локальный Promo cycle PASS на fork77287946: curve/v4 → funding → Short/Monthly freeze → live drand → settlement/claims.86 consumed и1 поздняя OPEN попытка в каждом виде. Short7.319631USDG, Monthly100USDG; conserved accounting, journal resume и повторные вызовы проверены.16/16 соседних tests PASS. Только fork: synthetic USDG, ArbSys shim, constructor clock backdating, lead60s; public sends закрыты. Далее — постоянный Pons coordinator. [Evidence/границы](../../../PONS_PROMO_CYCLE.md).
+
+01.10: Pons curve+v4 BUY реализован локально. Настоящие Universal Router/Permit2: BUY101 и60+40, net TOKEN после hook fees, общий entry/lifecycle.55/55 адресных tests и fork77277186 (33 шага) PASS. Следующий шаг — общий локальный Promo cycle с draws/payout/recovery. Public admission/sender и фактический UI Pons ещё не проверены. [Evidence и границы](../../../PONS_V4_BUY.md).
+
+01.10: curve BUY real-runtime fork77265497 PASS: BUY101 и частичный graduation/refund → entry → открытые Short/Monthly; вместе с funding27 шагов. Только локальный fork, без draws/public sends. [Evidence и границы](../../../PONS_BUY.md).
+
+01.10: Pons direct curve BUY подключён к entry и открытым Short/Monthly. Порог100USDG сохранён; net debit/refund, replay/dedup и смена ветки проверены адресно49/49. Следующий пакет — v4 BUY после graduation. Public admission/sender пока закрыты. [Код и проверки](../../../PONS_BUY.md).
+
+01.10: Pons curve/hook binding+sweep и независимый ручной runner реализованы локально.7/7 адресных tests; real-runtime fork77216884 — COLLECTOR_MANUAL_FORK_PASSED,27шагов, PromoVault289.338015USDG. Ожидание TOKEN conversion не блокирует старый escrow claim/pay. Public sends закрыты; keeper impersonation только локально. Следом Pons BUY adapters/entry integration; source admission и публичный sender ещё открыты. [Контур/команды/ограничения](../../../PONS_COLLECTOR.md).
+
+01.10: первый локальный Pons escrow collector выполнен: pull→credits90/5/5→PromoVault GENERAL,4/4 адресных tests PASS. Это LocalPonsCollector/fixture escrow, без curve/hook sweep, real fork или deployment admission. Следом строго привязанные sweep methods и ручной исполнитель. Добавлена локальная /transparency/ с датированными ограничениями/проверяемыми ссылками, браузер390/1440 PASS. Не опубликовано. [Контур и границы](../../../PONS_COLLECTOR.md).
+
+01.10: прочитан ответ GPT67cc1aa к31be52d. Новых deployment sources, ABI оператора или live ACL proof не получено; RPC/fork/compile GPT не запускал. Подтверждены известные границы и право collector на curve sweep. Не повторять неопределённый поиск как обязательный следующий этап: при принятом гибком funding ближайший пакет — отдельный PonsCollector с независимыми quote-only sweep и escrow claim, затем ручной исполнитель и адресные тесты. Operator остаётся unknown/Pons-dependent; public sends закрыты.
+
+01.10: владелец допускает ручной/полуручной сбор доступных комиссий с последующей автоматизацией; pending не входит в призовой бюджет. Следующий шаг — внешнее исследование GPT по Pons sources/operator, до реализации collector. [Обращение](../../../GPT_REVIEW_REQUEST.md) обновлено; ответ ещё не получен.
+
+30.09: перенос придержан по решению владельца до внешней проверки. Hook runtime воспроизведён; реальные TOKEN→USDG conversion и escrow credits подтверждены. Factory source не собирается, source escrow/operator не найден; независимый вызов operator-контракта не доказан. [Проверка и вопросы Pons](../../../PONS_VERIFICATION.md).
+
+30.09: по решению владельца начинаем перенос на Pons V2; PAIR сохранён как резервная интеграция на прежних путях и в проверенном локальном ZIP (676 файлов). Шаг 1 выполнен: snapshot/manifest, отдельный draft profile и ABI module. Следующий шаг — PonsCollector + реальные PromoVault funding tests. Runtime/public deployment не переключены. [План переноса](../../../PONS_MIGRATION.md).
+
+30.09: Pons local fork diagnostic PASSED на anchor76626917: launch, curve buy101/sell, probe90/5/5, graduation, v4 buy/sell, operator conversion/claim. Подтверждены creator tax3% +70% base1% при buyback off и зависимость conversion от Pons operator. Следом решение по этой зависимости, production collector/BUY integration; миграция ещё не выполнена. [Результаты](../../../PONS_V2_RESEARCH.md).
+
+30.09: первичная проверка Pons V2 — USDG доступен в UI (graduation8090), live canLaunch владельца=true, fee0.0005ETH, tax cap10%. Открыты точный fee split и зависимость post-graduation conversion от Pons operator. Следом same-block economics и отдельный fork proof; миграция не принята. [Исследование](../../../PONS_V2_RESEARCH.md).
+
+30.09: исследуем самостоятельный запуск на PancakeSwap Infinity по новому запросу владельца; переход с PAIR ещё не принят. Live UI Robinhood ETH/USDG котирует, поддержка собственного fee hook внешним routing не доказана. Найдена официальная форма hook review; текущие collector/BUY завязаны на PAIR. [Результаты и следующий локальный прототип](../../../DIRECT_INFINITY_RESEARCH.md). Прежнее решение о PAIR ниже — исторический контекст текущего сравнения.
+
+Решение владельца30.09: первый запуск остается PAIR Infinity, другие сети позднее. Продолжаем review новой wrapper; подготовлен local-only trace diagnostic. Opening API сейчас503 из-за upstream RPC rate limit, source review остается открытым. [Детали](../../../KT1_BUY_REHEARSAL.md).
+
+Расследование PAIR30.09: новая wrapper хранит прежнюю legacyImplementation; одиночный диагностический launch eth_call со сборщиком прошел. Но появились2непроверенные зависимости, verified source недоступен (Explorer403/Sourcify404/IPFS timeout). Pins не меняли, КТ1 остается BLOCKED до source review. [Evidence и границы](../../../KT1_BUY_REHEARSAL.md).
+
+КТ1 начата, но BLOCKED до fork/BUY: PAIR proxy implementation сменился с0x4AdC… на0x557cb0e797973ef01f0e7fe9de0b75f2b5b587b7 (2RPC подтвердили). Runner same-chain подготовлен, compile и5адресных tests passed; интеграционный путь еще не доказан. Следом review новой implementation, затем повтор КТ1 без обхода pins. [Отчет](../../../KT1_BUY_REHEARSAL.md).
+
+Картинки владельца подготовлены локально: token logo256x256 и preview1080x800, оба PNG<1MiB; web/assets/qianqi-{logo,preview}.png. Metadata draft использует новый logo, старый TOKEN prediction требует пересчета. Не опубликовано; ближайший основной этап остается КТ1. [Детали](../../../LAUNCH_PREPARATION.md).
+
+30.09: прочитан ответ GPT61663a8 (review8192d35), два pagination дефекта сверены с кодом. Подготовлены [КТ1–КТ7](../../../FINAL_CHECKPOINTS.md): same-chain BUY/indexer → funding → draws/payout → recovery/UI → full baseline → конкретный launch review. Ближайший пакет КТ1. Все точки TODO; текущий шаг docs-only, новые тесты/финансовые sends не выполнялись.
+
+30.09: по решению владельца следующий этап — финальный review всей цепочки и воспроизводимый сквозной прогон до mainnet. Текущий пакет фиксируется в git; [обращение GPT](../../../GPT_REVIEW_REQUEST.md) обновлено, [проверки/пробелы](../../../FINAL_TESTING_HANDOFF.md) перечислены. Нового full baseline нет; GPT делает static review/матрицу, Codex выполняет финальные проверки. Public sends закрыты.
+
+30.09: prepare-pair-launch создает draft calldata collector/PAIR и выполняет live read-only simulation: обе eth_call прошли, gas estimates получены (~0.00061634ETH с launch fee только за эти2операции). USDG109.622644 подтверждены. Metadata/настройки draft, public sends нет. Последовательный local fork collector→PAIR прошел; получатель комиссий проверен. Остальные Promo contracts не покрыты оценкой. [Детали](../../../LAUNCH_PREPARATION.md).
+
+30.09: владелец назначил creator также governor/project, executor отдельный. Первая покупка101USDG запланирована прямым поддержанным маршрутом после deployment/indexer: встроенный Developer Buy не покрыт текущим decoder. USDG balance0, пополнение/обмен не выполнялись. Адресные plan5/5 и Infinity BUY4/4. [Детали](../../../LAUNCH_PREPARATION.md).
+
+30.09: добавлен read-only PAIR launch preview (readiness/opening/source, без calldata). Live12 checks passed; пользовательский creator записан в launch plan, баланс0.00311832ETH прочитан, total deployment cost еще неизвестен. Следом metadata/роли/immutable settings и проверка token/collector prediction перед simulation. [Детали](../../../LAUNCH_PREPARATION.md).
+
+30.09: прочитаны live PAIR docs и код формы Infinity. Creator Fees UI кодирует подключенный кошелек получателем; наш collector подключается через modeData того же PAIR launchInfinity (существующий fork путь). Следующий шаг — подготовить обозримую транзакцию запуска с collector и актуальными opening данными, без смены fee mode. [Подробности](../../../LAUNCH_PREPARATION.md). Sends не было.
+
+30.09: начата подготовка реального запуска. Read-only Infinity pins/implementation/quote/fee сверены на одном текущем блоке, matched; launch fee0.0005ETH без gas. Публичные RPC не прошли archive probes. В launch plan добавлены недостающие opening/metadata/protection/creator/budget inputs, записан фактический сервер без signer custody. Нужны понятный выбор кошельков/RPC и параметры до estimate/deploy; пользователь попросил объяснить термины. [Подготовка и evidence](../../../LAUNCH_PREPARATION.md). Публичных sends/новых signing keys не было.
+
+30.09: read-only пакет опубликован на qianqi.site, release data-20260930: overview/reserves/history, frozen tickets, суммы/tx наград. Service qianqi-api работает в standby awaitingDeployment; индексатор ждёт реальных contract/RPC pins. DNS/HTTPS исправны, renewal dry-run прошёл.19/19 HK browser,3/3 original, адресные API/service/observer проверки прошли; не full/mainnet proof. [Подробности](../../../PUBLIC_STATUS_API.md). Следом подготовка/допуск реального deployment, затем включение индексатора. Buy/Claim/signing не открыты.
+
+30.09, итог DNS-проверки: выявлена рассинхронизация authoritative Timeweb: ns1/ns3/ns4 →201.51.22.244, ns2 →109.73.196.111 (TTL600), поэтому это НЕ только recursive cache. Первичная выдача HTTPS успешна, но `certbot renew --dry-run --no-random-sleep-on-renew` failed: staging CA пришёл на старый109.73.196.111 и получил404. Реальный сертификат не изменён, timer active. До устранения DNS публичная доступность не гарантирована; после синхронизации повторить обычный браузер без IP pin и renewal dry-run. Нужна проверка DNS панели/поддержки Timeweb, доступа к DNS API у агента нет.
+
+30.09: HK-фронт опубликован на новом Timeweb Amsterdam201.51.22.244: https://qianqi.site (также www), HTTPS/Certbot timer, кастомная404. 16/16 HK+wallet и3/3 исходный сайт passed; live Chromium с закреплённым новым IP:4ширины, links/assets/dialogs/404/503 без JS/CSP errors. DNS authoritative уже новый, recursive cache ещё отдавал старый IP. API/indexer/финансовая логика не подключены. Следом draw/reserve API и frozen/open UI; детали WEBSITE.
+
+30.09: SSH-доступ к новому Timeweb Amsterdam 201.51.22.244 проверен отдельным ключом qianqi-ams-201-51-22-244 (вне git). Ubuntu26.04.1 LTS, RAM3.8GiB, диск38GiB/36GiB свободно; failed units нет. A qianqi.site и CNAME www указывают на новый сервер. Nginx/Node не установлены, сайт/HTTPS ещё не развёрнуты. Проверка: ssh read-only (id/os/free/df/ss/systemctl), Resolve-DnsName обоих имён. Старый preview сохранён.
+
+30.09: владелец завершил этап дизайна/текстов сайта. Текущий HK + wallet пакет подготовлен к публикации в Git и static review по [постоянному обращению](../../../GPT_REVIEW_REQUEST.md). Следующий предлагаемый этап — общий draw/reserve API и результаты. 15/15 HK+wallet и 3/3 исходник уже прошли после финальных текстов; повтор/full ради commit не нужен. HTTPS пока на старом hk-copy-20260929; актуальная версия локально. Последние 30 сообщений прошлого диалога прочитаны: решаем конкретные препятствия пользовательскому пути, без бесконечной гипотетической оптимизации.
+
+
+30.09: HK-копирайт целиком приведён к согласованному живому тону: funding/шаги/FAQ/пустые состояния и сообщения wallet. Слоган и одобренный hero сохранены, числа/шансы/ограничения не менялись. Только локально. HK+wallet 15/15 и исходник 3/3 browser tests passed; 9 открытых FAQ/anchors на 4 ширинах без overflow. [Детали](../../../WEBSITE.md).
+
+
+30.09: согласованный владельцем живой текст hero вставлен локально в HK: «A speculative token with a little extra thrill…» / «Trading fees fuel the prizes…». Слоган и правила сохранены; публикации на сервер не было.
+
+
+30.09: локально доработано подключение browser wallets: EIP-6963 chooser, меню разрешённых accounts, смена wallet/network, silent session restore через eth_accounts, явный disconnect и защита от stale responses. HK 15/15 адресных browser tests + исходник 3/3 passed; mobile menu просмотрено. Подписи/транзакции/WalletConnect не добавлены; тестовый сервер не обновлялся. [Детали](../../../WEBSITE.md).
+
+
+30.09: по просьбе владельца SVG-стрелки HK удалены полностью; кнопки и ссылки текстовые. connect-label сохранён, чтобы wallet updates не возвращали стрелки. Только локально; тексты владельца сохранены.
+
+
+30.09: локально в HK убраны декоративные Unicode-стрелки; действия используют единые SVG 18px. Текущие правки текстов владельца сохранены. Wallet updates сохраняют SVG; исходник поддерживает прежний вид. По 3 browser tests для обоих вариантов passed; после HTML-правки HK 3/3 повторены, local smoke icons passed. На сервер не опубликовано. [Детали](../../../WEBSITE.md).
+
+
+29.09: владелец предпочёл HK-вариант; тексты переписаны по USER_RULES и PRODUCT_SPEC. В hero — два энтузиаста/спекулятивный токен/автоматические entries; на виду 90/5/5, девять разделов правил раскрывают шансы, расход билетов, multi-wallet и доверительные границы. Опубликован `hk-copy-20260929`; исходный `/` и предыдущий HK release сохранены. 3/3 адресных browser tests + HTTPS smoke на 4 ширинах passed. [Детали](../../../WEBSITE.md).
+
+
+29.09: отдельная концепция фронта HK опубликована на `/concepts/hk/`; исходный сайт остаётся на `/` без изменений. Новая композиция QIANQI/千祺, сцена с мышонком, лента розыгрышей и перестроенные нижние секции. Оба варианта доступны для сравнения, выбор дизайна ещё открыт. По 3 browser tests для каждого + внешний HTTPS smoke на 4 ширинах passed; не live wallet/product qualification. [Детали](../../../WEBSITE.md).
+
+
+29.09: hero приближен к Figma: широкие F/H, плотные строки, обрезанный мышонок поверх
+края заголовка/карточки. Preview hero-20260929 опубликован; layout/live mobile checks
+passed. Только HTML/CSS, продуктовая логика без изменений. [Детали](../../../WEBSITE.md).
+
+29.09: типографика сайта упрощена по просьбе владельца:16/22/40px, без мелких слоганов
+и временных надписей; правила/ошибки сохранены. HTTPS preview обновлён на
+type-cleanup-20260929,3 browser scenarios + адресный layout/live smoke passed.
+Декоративный hero сохранён. [Детали](../../../WEBSITE.md).
+
+29.09: Дизайнерский HTTPS preview https://qianqi.109.73.196.111.sslip.io/ развёрнут
+на109.73.196.111, release9ad5660. Host Nginx/systemd, certbot renewal; внешний browser
+smoke passed. Старый frontend сохранён остановленным, backend/db не затронуты.
+Без RPC/indexer/signing; [пути и возврат](../../../WEBSITE.md). SSH ключ сохранён вне git.
+
+29.09: [Первая страница QIANQI](../../../WEBSITE.md) по пользовательскому макету: responsive, мышата, browser wallet connect и существующий wallet API. Pre-launch без выдуманных банков/claim/buy URL; общий draw API, проверенный asset profile и Claim ещё впереди.3 browser scenarios passed + visual desktop/mobile, не full/live. Локально npm run site →127.0.0.1:4173. Исходные images_for_site сохранены. Public sends закрыты.
+
+29.09: [Reward checkpoint](../../../USER_STATUS_API.md) устраняет перечитывание всего storage на каждом poll: новые события→только затронутые draws/rewards; reorg/legacy snapshot→полный аудит. Модель120draws/1200rewards:1320initial,0idle,2late claim; audit CLI сохранён.10 адресных сценариев passed; payout fixture детерминизирован, не full/live/fork. Полный BUY replay/JSON остаётся линейным, production throughput ещё не доказан. Следом измерение общего pipeline/постоянный service, public sends закрыты.
+
+29.09: [API наград/выплат](../../../USER_STATUS_API.md) расширен: reward-observation сверяет vault events и draws/reward storage на высоте снимка. Assigned отдельно от paid, ссылки на обе транзакции; отсутствие RewardPaid не заменяется нулём reward. API offline/read-only, stale сохраняет as-of награды, прежний snapshot без reward section→null. 9 продуктовых адресных сценариев +catalog passed, не full/live/fork. Public sends закрыты, frontend/service ещё впереди; throughput линейных history reads пока не измерен.
+
+29.09: [Read-only HTTP API покупок/билетов](../../../USER_STATUS_API.md) готов локально: open/frozen/consumed через lifecycle, постраничные payer-attributed покупки, provenance, stale сохраняет balances, unavailable→null/503. Успешный snapshot теперь имеет отдельный observedAt. Policy publication+cache reorg+unstarted job проверен: explicit mismatch, без send/подмены artifact.8 адресных сценариев passed (исправлен майнинг fixture), не full/live/fork. Далее пользовательские результаты/выплаты из on-chain источника и эксплуатационный service; API пока loopback, public sends закрыты.
+
+29.09: [Indexer → scheduler](../../../PERSISTENT_INDEXER.md) подключён опционально config.indexer (admitted/finalized only). Consumer проверяет identity/freshness/policy/cutoff; lifecycle считает open attempts. Missing cache → wait, оба frozen продолжаются. Watch больше не спит10s при backlog. Сквозной local сценарий прошёл; live Infinity не заявлен. Далее API наблюдаемых статусов и эксплуатационная настройка; public sends закрыты. Ниже — история предыдущих границ.
+
+29.09: [Постоянный read-only indexer](../../../PERSISTENT_INDEXER.md) добавлен: bounded catch-up, durable evidence/ledger, restart без повторного RPC/начисления, reorg rollback, outage status.8/8 адресных tests passed; scheduler ещё читает самостоятельно. Следующий шаг — подключение проверенных снимков к scheduler с сохранением frozen границ. Alchemy прошёл повторные historical reads (65requests/0errors); первый единичный403 не воспроизведён. Archive sampled blocker снят, production RPC/replay ещё не квалифицированы. Public sends закрыты.
+
+29.09: **Операционный профиль V2 реализован**, public sends закрыты.
+[Модуль](../../../OPERATIONAL_LAUNCH_PROFILE.md): явные genesis/roles/notice/gas/BUY pins,
+проверка перед новыми действиями; drift не мешает обоим frozen draws/claims.
+V1 сохранён как legacy-incomplete, handoff V2→V1 запрещён.11 адресных сценариев passed;
+после guard/CLI повторён изменённый сценарий +catalog (2/2), не full/live/fork.
+USER_RULES различает обработку покупки, назначение и выплату; [статусы сайта](../../../USER_STATUS_MODEL.md)
+пока спецификация. Свежие official/Blockreq history probes повторены, archive не квалифицирован;
+timing12samples: finalizedLag824–1209s, кандидат1200 дал бы1ожидание, числа не приняты автоматически.
+Следующий разумный пакет — постоянное накопление/indexer restart/status поверх текущего replay;
+archive RPC и явный выбор operational параметров параллельно остаются release blockers.
+Нет public deployment: same-chain automatic proof и публичный сайт ещё впереди.
+Ниже история; более старые «следующие шаги» не заменяют этот статус.
+
+29.09: **Численные параметры первого запуска приняты.** Short10мест, веса7:4:2:1:1:1:1:1:1:1,
+минимальная единица5USDG (корзина от100), весь free Short без потолка;
+q(e)=0.8e/(e+1) подтверждён отдельно. Monthly Current>=100USDG при Next100.
+[USER_RULES](../../../USER_RULES.md) — отдельное понятное описание для будущего сайта,
+включая преимущество нескольких адресов. [Численный профиль](../../../MVP_ECONOMIC_PROFILE.md)
+обновлён; старый кандидат архивирован. Public Monthly атомарно проверяет минимум до
+RNG, worker ждёт funding без sends; launch plan проверяет выбранные числа.
+21 продуктовый сценарий +1catalog passed адресно, не full/live/fork. Следующий пакет:
+операционный launch profile (notice/gas/timing/roles) и archive RPC qualification;
+публичное исполнение, сайт/постоянный indexer и same-chain proof ещё открыты.
+Старые записи ниже — история, в том числе прежние «числа не приняты».
+
+
+29.09: **Monthly75/25 + вес e/(e+1) утверждены пользователем и реализованы как V2.**
+Один глобальный исход, в выплатной ветке обязательно один winner всего frozen Current;
+без личного допуска/reroll. Q128 weights, bounded chunks, independent JS verification,
+legacyV1 сохранён; public controller/admission требуют V2. [Модуль и проверки](../../../MONTHLY_RULES_EPOCHS.md).
+71 продуктовый сценарий +1catalog passed адресно; составная локальная репетиция complete,
+не full/live/fork. Public sends закрыты. Далее выбрать численные корзину/q Short и minimum Current,
+свести launch profile; archive RPC/production timing и same-chain proof остаются блокерами.
+MinCurrent100 пока НЕ принят. Старые записи ниже описывают предыдущие этапы.
+
+
+28.09 review5491a55 подтверждён: FREE_SHORT мог навсегда ждать funding на старом FINALIZED_CHECKPOINT. Исправлено обновлением только unused candidate после достаточного нового finalized reserve; polls без денег не тратят gas, сохранённые jobs не меняются. [Доказательство и проверки](../../../CUTOFF_HISTORY.md): red→green,9 адресных сценариев passed, не full/live/fork. Далее Monthly75/25 после выбора влияния entries на победителя; Short корзина/q и minCurrent остаются кандидатами.
+
+28.09 новый выбор пользователя: Short без потолка, Monthly75% весь Current одному победителю /25% перенос, без второго допуска. FREE_SHORT реализован в scheduler с pinned cutoff budget и требованием uint256.max у controller; legacy FIXED сохранён. Planning profile обновлён, public gate закрыт.10 различных адресных сценариев passed (3новых,4соседних,3planning), не full. Monthly реализация ОЖИДАЕТ ответа владельца: как entries влияют на выбор победителя внутри75% (старый личный допуск удаляется). Current>=100, Short корзина/q пока не утверждены. Старые модельные75/25-несовместимые расчёты помечены.
+
+28.09 продуктовый пакет: PRODUCT_SPEC приведён к Infinity без регистрации и90/5/5; legacy BUY явно отделён, старые spec/расчёты сохранены в archive/snapshots. [Единый кандидат](../../../MVP_ECONOMIC_PROFILE.md):10мест, m5USDG, D=min(freeShort,1000), qShort0.4e/(e+1), qMonthly0.1e/(e+1), Current>=100 — НЕ утверждены.160 модельных прогонов/38400шагов прошли invariants; rulesHash/threshold проверены, не Solidity/full/fork. Бюджет scheduler пока фиксирован; minCurrent100 в контракте отсутствует — не обещать их как реализованные. Далее обсудить числа/ограничение Short с владельцем, затем bounded implementation; archive RPC остаётся отдельным блокером.
+
+28.09 release profile: [отчёт запуска](../../../PUBLIC_CONTROLLERS.md) разделяет принятые решения/выбор владельца/deployment/эксплуатационную проверку, ловит удалённые обязательные поля и конфликты экономики. Заполненность НЕ означает qualification. 13 адресных tests passed, не full. [Свежая RPC-проба](../../../PUBLIC_RPC_QUALIFICATION.md): official отдаёт блоки/117receipts, но historical code отказал на3высотах; archive RPC всё ещё нужен. Далее выбрать численные Short/Monthly правила и эксплуатационные параметры, получить archive endpoint; same-chain proof/public gate остаются открыты/закрыт соответственно.
+
+28.09 решение пользователя: [GPT выполняет review без запуска тестов](../../../REVIEW_TESTING.md), проверки выполняет Codex. Повторный GPT lock-прогон отменён и не блокирует следующий пакет: release profile/параметры и RPC. Причина сообщённого EEXIST остаётся неизвестной; новых продуктовых проверок в этом docs-only шаге нет.
+
+28.09 review 50704b7: [разбор funding lock](../../../REHEARSAL_LOCK_INVESTIGATION.md). Сообщённый GPT EEXIST не воспроизведён: Windows baseline + Windows/Linux9p/Linuxext4 с усиленным runner complete, в каждом23/23 lock acquire/release без конфликтов; lock unit9/9. Причина GPT failure НЕ установлена, нужны полный failed JSON и trace. Runner теперь проверяет обе суммы/receipts/уникальность claims и сохраняет failure snapshot; найден и исправлен отдельный ENOENT отсутствующей.local при внешнем output. Lock/runtime/контракты не менялись. Просьба сравнить failing trace отменена последующим решением пользователя выше.
+
+28.09: [Составная релизная репетиция](../../../RELEASE_REHEARSAL.md) добавлена: одна команда, матрица accepted/fixture/unresolved, replay сохранённого Infinity BUY → явный импорт 2 билетов → fresh Robinhood runtime, funding 90/5/5, оба draw/BLS/claims, source outage и known-claim restart. Прогон complete за86s: 1805.40 USDG призам =836.033330 выплат +969.366670 остатка; повтор без send. Это НЕ единая live/fork история: BUY saved, datasets/freeze helper, исторический drand; market evidence отдельно. Далее release profile/параметры и RPC, same-chain automatic proof остаётся gate; public sends закрыты.
+
+28.09: [Operations funding](../../../OPS_MARKET_EXECUTOR.md) завершён в согласованном объёме: journaled pay(slot1) получает существующий credit, fee caps/nonce/recovery общие со swap. Старые обязательства получают ETH на одно действие независимо от рынка, сохраняя swap.nativeFloor; новые freeze сохраняют полный forecast. 27 адресных продуктовых сценариев прошли отдельными запусками, не full. Fork credit→swap→refill прошёл; coordinator проверен отдельно. Далее общая релизная репетиция и реальные deployment/RPC параметры, без расширения funding. Public sends закрыты.
+
+28.09: [Ops sender](../../../OPS_MARKET_EXECUTOR.md) реализован: pinned slot1, bounded approve/Permit2/swap, main intent/receipt recovery, caps/cooldown, перенос history/halt через handoff. Local poolKey mismatch исправлен независимым тестом.49 продуктовых адресных tests +1catalog прошли отдельно. Fork74812400: seed0.002ETH +10USDG→0.003720768049085340ETH, executor0→0.001ETH; receipt-loss/disk reload без повторов. Не OS-kill/full watch e2e; public sends закрыты. Далее pay(slot1) из collector за ops seed, затем общий watch proof и release qualification.
+
+28.09: [Public admission](../../../DEPLOYMENT_ADMISSION.md) требует принятые9000/500/500 независимо от совпадения config/chain; wrong allocation → obligations-only, оба frozen/claims продолжаются. [Read-only quote](../../../OPS_MARKET_QUOTE.md): pinned CLQuoter, exact router call/estimate, allowance/gas/freshness waits, без signer/sends. Новый fork74786338:10USDG→0.003718445305557211ETH, quote=actual без trial swap.26 адресных продуктовых tests +1catalog прошли отдельными запусками, не full; public sends закрыты. Далее journaled approve/Permit2/swap под общим ops signer с refill, actual-output recovery и deployment caps/source qualification.
+
+28.09: пользователь утвердил90/5/5 (призы/ops/команда), PRODUCT_SPEC и launch plan обновлены. [PROJECT_NATIVE](../../../PROMO_NATIVE_REFILL.md) допускает только pinned slot1, сохраняет custody exclusions/caps/recovery и стабильный source через handoff.35 разных адресных сценариев подтверждены отдельными запусками;3 новых fixture failures исправлены и перепроверены, не full. [USDG→ETH fork](../../../OPS_MARKET_PROOF.md):10USDG→0.003754920360290634ETH, atomic swap+unwrap и negative minOut; тестовые USDG/native, не Nitro cost quote. Далее production read-only quote и journaled swap executor; public gate закрыт.
+
+28.09 review cd3ecad: monitoring fix подтверждён GPT; nativeRefill policy неизменна при текущем handoff, поэтому ops slot1/source стабилен между кампаниями. Пользователь подтвердил: не доказываем вечную окупаемость газа, shortage/дорогой gas → resumable wait/top-up. [Design](../../../OPS_REVENUE_FUNDING_DESIGN.md) и запрос GPT уточнены. Следующий предлагаемый пакет — project-funded slot1 refill + qualification реального USDG/WETH рынка; swap executor позже,90/5/5 ещё кандидат. В этом шаге только документы, код/тесты не менялись.
+
+28.09: исправлен ложный recovered: monitoring учитывает failures/claimFailures/requests, sourceReadUnavailable и beaconUnavailable; успех другой lane их не скрывает. 18 адресных status/watch tests прошли, не full/fork/live. [Проект creator allocation и ETH funding](../../../OPS_REVENUE_FUNDING_DESIGN.md): существующие3slots, кандидат90/5/5, отдельный operations EOA; доли НЕ утверждены, swap НЕ реализован. Найден конфликт recipient/source текущего bootstrap refill. Далее выбрать доли, явный project-funded режим и квалификация USDG→ETH рынка; public gate сохранён.
+
+28.09: [Эксплуатационные ожидания](../../../PROMO_OPERATIONAL_WAITS.md): общий floor/gas bounds покрывают child budgets; несовместимый профиль отклоняется до исполнения. Оба CLI сохраняют причины ожидания и события смены/восстановления в STATE.status, без повторов после restart; мониторинг не управляет sends.28 адресных сценариев +1catalog прошли отдельными запусками, не full/fork/live. Проверен путь дорогой gas → ожидание → refill → оба draw/claims. Внешний канал уведомлений не подключён. Далее creator allocation/USDG→ETH и public RPC/deployment qualification.
+
+28.09: [Bootstrap ETH refill](../../../PROMO_NATIVE_REFILL.md) подключён к общей Infinity/drand автоматике: отдельный EOA → executor, приоритет обоих frozen draws и claims, один перевод/pass, caps с gas/cooldown, main pending и durable receipt recovery. Handoff сохраняет spent/cooldown/halt.56 различных адресных сценариев +1catalog прошли отдельными запусками, не full; после усиления save повторены3 recovery-кейса. Контракты и призовая математика не менялись, public sends закрыты. Далее creator allocation/USDG→ETH и archive RPC/реальные launch pins; текущий refill расходует заранее внесённый ETH.
+
+28.09: [Recovery admission](../../../RECOVERY_ADMISSION.md) закрыт: journals сверяются до contract admission; source/policy/publisher drift переводит4663 в obligations-only, новые funding/publish/freeze запрещены даже для Ready jobs. Frozen оба draw автоматически проходят drand→process/finish→claims без revenue/BUY policy; исходный профиль восстановлен→normal/funding автоматически. Критические pins и unknown hash по-прежнему блокируют sends.33 продуктовых адресных сценария +1catalog прошли отдельными запусками (22 соседних203.3s), не full/live/fork. Дальше archive RPC/реальные deployment pins и эксплуатационный профиль; public execution gate сохранён.
+
+28.09: [Robinhood runtime](../../../ROBINHOOD_RUNTIME.md): отдельный4663 вход и AsyncLocalStorage network context поверх общей автоматики; local CLI/31337 сохранены. Inspect без signer key/отправок, rehearsal только совпадающий loopback Hardhat instance; public sends всё ещё disabled. Проверены funding, gas/native wait, unknown/known send recovery, drand обоих frozen draw и old reward claims; datasets/process/finish в4663 кейсе ручные fixture, не новый automatic e2e.59 продуктовых адресных сценариев +1 catalog прошли отдельными запусками; соседний45-case run219.6s, не full. Далее archive provider/реальные pins и qualification; строгий startup admission/recovery старых долгов нужно уточнить перед public activation.
+
+28.09: [RPC qualification](../../../PUBLIC_RPC_QUALIFICATION.md): bounded full blocks/receipts/logs + historical state, fresh-process fingerprints, optional existing BUY scan/replay. Official повторил3 блока, но historical state недоступен; Blockreq повторил2 доступных блока, старый диапазон отказал. Живой USDG BUY reference не найден в ограниченной выборке; positive replay только fixture.40 продуктовых адресных сценариев +1 catalog прошли отдельными запусками, не full. Public sends заблокированы; далее пригодный archive provider и public runtime, actual checkpoint storage после deployment.
+
+28.09: [Публичные controllers](../../../PUBLIC_CONTROLLERS.md) подготовлены: общий execution base с Local wrappers, отдельные Robinhood4663/drand/checkpoint guards, явный Short minimumUnit. Runtime22738/17943bytes. 18 продуктовых адресных сценариев +1 catalog check прошли. Частичный fork: exact public bytecode, drand bindings, USDG и aged checkpoints; ArbSys shim, без clock/source overrides, без полного monthly/RNG/live proof. Official RPC не отдал finalized state; Blockreq ограничен32768blocks — нужен archive. [Launch plan](../../../../config/robinhood-launch-plan.json) явно incomplete; public executor остаётся blocked. Далее public runtime/admission и операционная конфигурация, не публичная отправка по тестовым параметрам.
+
+28.09: [Cutoff history](../../../CUTOFF_HISTORY.md) закрывает конфликт finalized/256 в ядре и локальной автоматике: подлинный hash записывается заранее без proposal, затем FINALIZED_CHECKPOINT ждёт финальности блока и storage записи, строит dataset и начинает draw. Оба closeEmpty поддержаны, unknown sends идут через общий журнал, пустой current не тратит checkpoint gas. 24 продуктовых сценария прошли отдельными адресными запусками +1 catalog check; public guards сохранены. Далее публичное поколение controllers/profile и timing; incremental indexer остаётся эксплуатационной задачей, но не гонкой на256blocks.
+
+28.09: [Реальные timing/cutoff](../../../PUBLIC_NETWORK_TIMING.md):12 read-only наблюдений выявили несовместимость finalized cutoff (9139–9923 блока позади latest) с begin window256. Timing1800s — только кандидат. Адресно4 survey+2 Nitro теста прошли; contracts не менялись. Следующий пакет: разделить provisional anchoring и finalized admission перед freeze, сначала проверить liveness/reorg и скорость подготовки. Public launch остаётся blocked.
+
+28.09: [Deployment admission](../../../DEPLOYMENT_ADMISSION.md) добавлен: offline профиль pins/roles/assets/timing, read-only проверка и gate перед новыми jobs/begin/freeze; freshness повторяется перед freeze-send после gas estimate. Старые frozen/claims продолжаются, legacy local configs без профиля сохранены.8 адресных сценариев прошли отдельными запусками; не full/live fork. Public launch всегда blocked: публичные controllers и production timing не готовы. [ROADMAP](../../../ROADMAP.md) сокращён до актуальных релизных блокеров, прежний план архивирован со ссылками. Далее публичное поколение deployment и обоснованные timing параметры, затем ETH refill/операционная конфигурация.
+
+28.09: [Runtime/campaign handoff](../../../PROMO_AUTOMATION.md) добавлен для прежнего deployment: drain без новых jobs, проверка четырёх journals/chain, durable retirement старого runtime и новый payout replay. Unknown/pending/active jobs блокируют переход, unpaid prize и creator credits сохранены.8 handoff cases +4CLI прошли отдельными запусками;3 lock-сценария прошли с49 чистыми acquire/release, причина сбоя GPT не подтверждена. Contracts/full/fork не менялись/не запускались. Далее production admission/timing/keys/ETH refill; миграция deployment/BUY policy этим handoff не разрешается.
+
+27.09: [Общая автоматика Short/Monthly](../../../PROMO_AUTOMATION.md) реализована: один signer и journal boundary, два payout cursor, общая очередь fixed-winner claims. Перед freeze учитываются новый draw, оба уже pending draw и старые выплаты. Контракты/призовая математика не менялись. Monthly локально проходит автоматическую подготовку → drand → settlement → USDG; Short-only совместимость сохранена. 17 адресных сценариев прошли отдельными запусками; не full/live fork. Тестовые допущения и команды — в модуле. Далее безопасный runtime/campaign handoff, затем production admission/timing/keys/ETH refill; публичный запуск ещё закрыт.
+
+27.09: [Автоматический Short](../../../SHORT_AUTOMATION.md) реализован: единый signer/порядок, общий gas guard, durable очередь старых rewards и permissionless claim. Новый Infinity fork: watch сам прошёл funding→drand→settlement→claim;11.934252USDG =0.999999выплата+10.934253остаток, rerun0tx. Адресные проверки; не full/mainnet. Constructor clock/test timing остаются fixture. Далее Monthly e2e и production admission/timing/ops funding.
+
+27.09: [Infinity→Short→USDG fork](../../../INFINITY_PAYOUT_PROOF.md) complete. Комиссии11.934252USDG → тот же vault →2entries → live drand → выплата2.333331USDG; остаток9.600921, Monthly attempts сохранены. Исправлен поиск публикаций с блока0: теперь cutoff+1. Regression2/2, соседний Short/Monthly1/1, saved evidence4/4; не full. Явный test-only constructor clock override и lead60s, не production timing/bytecode proof. Далее общий coordinator/budget и Monthly e2e.
+
+27.09: [Drand delivery worker](../../../DRAND_DELIVERY_WORKER.md) реализован: автоматическое обнаружение Short/Monthly requests, exact-round proof, отдельный retry callback, journal/reconciliation и gas wait. Missing PROFILE разрешён только pinned LocalRandomFixture на31337. Адресно worker9/9, CLI2/2, соседний preflight1/1; не full/fork. Следующий пакет — единый Infinity funding/BUY→drand→settlement→USDG claim прогон. Worker пока local-only; timing параметры и production admission остаются открытыми.
+
+27.09: [Drand adapter + pre-freeze check](../../../DRAND_ADAPTER.md) реализованы. Владелец принял операционное доверие к свежести/finality, без контрактной гарантии. Реальная BLS подпись, immutable round/context, permissionless prove/deliver, retry без reroll. Локально оба контроллера прошли settlement/claim и отдельный no-win; адресные проверки, не full/fork. Следующий пакет — автоматический journaled prove/deliver worker, затем общий Infinity→RNG→payout прогон. Timing значения пока тестовые кандидаты.
+
+27.09: [Infinity BUY → automatic entries](../../../INFINITY_BUY.md) реализован отдельной genesis policy: net USDG debit с fees минус refunds, без регистрации; V2 не изменён. Новый fork:2BUY→2entries+6.60carry→admitted scan→scheduler begin/publish; повторный replay стабилен. Адресно43/43 + saved evidence2/2, без full. Ближайший шаг — production RNG и сквозное исполнение до выплаты; integration budget/RNG пока локальные fixtures.
+
+27.09 review worker: исправлена диагностика deficit при последнем pay; адресно2/2. [Ограничение автоматизации](../../../INFINITY_WORKER.md): максимум8 legacy witnesses, новый job/state после rollover; до релиза закрыть обход старых долгов и обновление job. Следующий продуктовый шаг — Infinity decoder/automatic genesis после выбора базы билетов.
+
+27.09: [Infinity worker/CLI/watch](../../../INFINITY_WORKER.md) реализован с existing state lock/journal/receipt boundary. Pull→pay→GENERAL, source drift не блокирует старые credits, unknown sends не повторяются, gas/native shortages→wait. Worker7/7 + additions2/2, shared17pass, saved1/1; final reconciliation2/2 повторно. Новый fork+3USDG в reserves, rerun0tx. Только local31337/loopback: mainnet admission/keys/shared budget ещё отдельно. Далее Infinity decoder/automatic genesis; база билетов требует решения.
+
+27.09: [InfinityCollector + GENERAL funding](../../../INFINITY_COLLECTOR.md) реализованы отдельно от V2. Atomic rollover, source fingerprint до/после claim, old credits доступны при drift; fixed Promo pay+sync. Новый fork complete:5.934270USDG в reserves (fees+18raw direct). Адресно52pass, fixture failure исправлен1/1, добавления2/2; не единый55/55 и не full. Далее review и узкий worker с existing reconciliation; Infinity entries/genesis отдельно, gross basis пока не утверждена.
+
+27.09: пользователь выбрал Infinity3% для первого релиза. [План и вопросы GPT](../../../GPT_REVIEW_REQUEST.md) обновлены с учётом review beeef4e. Ближайший пакет — USDG collector/campaign boundary и fixed funding; API/bind/policy drift обсуждаем до кода. Далее Infinity decoder+automatic eligibility, workers и сквозной proof. V2 не развиваем параллельно, старый код сохраняем.
+
+27.09: выбраны3% Infinity creator fee. [Новый USDG fork](../../../INFINITY_INTEGRATION_RESEARCH.md) complete: launch→BUY→contract claim→SELL→contract claim; receiver получил5.934252USDG. Offline4/4, full не запускался. Это локальный fixture, не production collector. Далее ограниченная модель collector/campaign boundary и подключение к funding; decoder/admission отдельно.
+
+27.09: [Infinity source/receipt research](../../../INFINITY_INTEGRATION_RESEARCH.md): BUY/SELL fee formulas подтверждены, дополнительный pool fee в примере1.1098%. Creator recipient может быть контрактом, но текущий FeeRouter ABI несовместим. Следующий research proof — новый USDG launch + contract claim на fork; переход сети/venue и ставка ещё не выбраны.
+
+27.09: по запросу пользователя сравнили Infinity policy fees1–5%: [расчёты](../../../INFINITY_FEE_SCENARIOS.md). Документация описывает дополнительные0.3% protocol и отдельный pool fee. Внутренние10/90 — кандидат; ставка и переход на Infinity не выбраны. До продолжения integration уточнить реальный hook/vault/fee base; automatic eligibility остаётся следующим продуктовым пакетом.
+
+26.09: native BUY → admitted policy → full-block scan → replay проверен на новом
+fork PAIR. До регистрации BUY100 не даёт билет; после регистрации BUY100 даёт1,
+carry0; повторное чтение не удваивает результат. Комиссии обеих покупок дали
+1.399999USDG резервам. Адресно29/29, без full suite. [Детали](../../../DIRECT_BUY_REPLAY.md).
+Следующий шаг — отдельная версия automatic eligibility без registration gate;
+потом payout worker. Текущие правила регистрации этим proof не отменяются.
+
+26.09: [PAIR source health](../../../PAIR_SOURCE_HEALTH.md) готов как read-only CLI/watch с
+независимо закреплённым manifest hash. Проверяет code/implementation/source bindings,
+epoch/recipient/LP на одном блоке; future launch changes отдельно. Не gate, не rebind.
+Unit/CLI17/17 + saved evidence1/1 + anchor negatives3/3. Новый native fork: match,
+0issues/36observations. Далее native BUY eligibility/admission, automatic участие/payout.
+
+26.09: [source-read isolation](../../../LOCAL_PRIZE_FLOW.md) добавлена в prize-flow: только
+transient epoch/claimable read errors пропускают остаток source lane; local inventory
+продолжает обрабатываться с degraded report. Unknown sends, contract/read corruption,
+deficit и policy mismatch остаются stop. Source rebind/epoch adoption не добавлены.
+Адресно26pass + исправленный fixture deficit1/1; единый зелёный27/27 не заявляется.
+Full/fork не запускались, подробности и команды в модуле.
+Pinned source manifest/health добавлен следующим пакетом выше; native eligibility и payout до релиза.
+
+26.09: [native launch proof](../../../NATIVE_LAUNCH_PROOF.md) завершён на новом fork:
+обычный creator → TOKEN/USDG mode1 → FeeRouter → BUY100USDG → 0.699999USDG в reserves.
+Bootstrap использует проверенный будущий converter address, PAIR owner не impersonated.
+bindSource проверяет регистрацию/quote/NFT custody до необратимой записи.
+Адресно45/45 + saved evidence2/2; full не запускался. Последовавшая source read
+failure isolation описана выше. UI PAIR/V2 eligibility, automatic payout и production открыты.
+
+26.09: ответ GPT на пакет после573e012 получен в98e6302; его следующий launch/bind
+пакет выполнен, детали выше. [Обращение](../../../GPT_REVIEW_REQUEST.md) сохранено для контекста.
+Automatic eligibility без регистрации и payout-worker остаются незакрытыми задачами.
+
+26.09: [PAIR dependency audit](../../../PAIR_DEPENDENCY_BOUNDARY.md) подтвердил текущий native
+mode1 graph, 1% LP fee и 70/30 collected revenue; registry CTO может менять recipients
+существующего vault. FeeRouter source одноразовый, epoch change блокирует rollover;
+старые credits доступны, но source read errors ещё недостаточно изолированы в worker.
+Read-only snapshot block72884069; в самом аудите runtime не менялся. Предложенный
+mode1 launch с FeeRouter затем проверен в пакете выше; изоляция source ещё впереди.
+
+25.09 launch compatibility: AUTO относится к V1, текущий FeeRouter source — к V2 native.
+Единого launch profile пока нет. Рекомендован к проверке V2 native TOKEN/USDG
+с единственным recipient=FeeRouter; это ещё не утверждённый режим запуска.
+Fresh release graph и создание такой связки на fork закрыты 26.09; см. результат выше.
+[Сверка и ограничения](../../../PAIR_LAUNCH_COMPATIBILITY.md).
+
+25.09: PAIR выбран площадкой выпуска. Узкий V1 AUTO adapter реализован: USDG funding,
+1–2 legs, payer=recipient, однократный gross volume. Typed policy и scan/replay связаны;
+локальный fork registration→admission→ledger прошёл, адресные проверки 55/55.
+Публичной активации нет, V2/Infinity не поддержаны этим adapter.
+[Реализация и evidence](../../../DIRECT_BUY_REPLAY.md), [карта маршрутов](../../../ROUTE_RESEARCH_2026-09-24.md).
+Следующая граница: сверить выбранный launch release/fee mode с этим V1 профилем
+и проверить маршрут актуального UI; новые семейства добавлять только по evidence.
+
+Обновлено 25.09.2026: настоящий V4 TOKEN→USDG маршрут проверен на fork, quote автоматически подключён к worker.
+
+## Где находимся
+
+Локальный сквозной MVP: meme TOKEN + добровольное Promo, Short раз в 6 часов и
+месячный jackpot, денежные призы USDG. Публичного deployment нет.
+
+Работают две соединённые coordinator цепочки:
+- BUY → replay/builders → сохранённые jobs → Short/Monthly → awards/claim → следующий цикл;
+- source collect/harvest TOKEN+USDG → FeeRouter credits/pay → converter → USDG reserves;
+  отдельная доля проекта не поступает в призовую custody.
+
+Это chainId 31337, упрощённый venue, fixed swap fixture и управляемый тестовый RNG.
+Реальные DEX/RNG, production finality и автоматическое эксплуатационное финансирование
+ещё не готовы. Локальный скелет связан, production-продукт не завершён.
+
+## Правило проверки следующих шагов
+
+23.09 пользователь отменил автоматический full run после каждого небольшого шага.
+По умолчанию — затронутый путь и значимые соседи; docs-only — ссылки/diff.
+Полный набор — по масштабу/риску или на контрольной точке с кратким обоснованием.
+Группы и --match добавлены в launcher/review runner; compile-once и per-file timing
+проверены. [Правила и карта выбора](../../../REVIEW_TESTING.md).
+
+## Предыдущий канонический полный baseline
+
+23.09: `npm run test:review` на чистом HEAD `4efca7d` — **341/341**,
+fail/skipped/cancelled 0. Прежние 336 сценариев сохранены, добавлены 5 infrastructure.
+Compile 17.05 s + tests 1112.25 s = 1129.30 s (18m49s); полный review 1136.57 s,
+install 5.74 s. Одна обычная компиляция проекта, 22 reuse; маленькие Probe-компиляции
+инфраструктурных тестов отдельно. Install/test/final exit 0, cleanupError null,
+worktree удалён. Предыдущий baseline 0e5d8ea: 1466.8 s, экономия около 23% / 5m37s
+на compilation+tests; прежний review total отдельно не измерялся.
+Node v24.21.0, npm 11.19.0, Hardhat 2.29.1, ethers 6.17.0, solc 0.8.37;
+npm ci --ignore-scripts. Fork/live не запускались.
+Evidence: `.local/logs/compile-once-review.log`,
+`C:\Temp\rh-review-nPLCK9\.local\logs\result.json` и `test-run-dkTHDw.json`.
+Адресные проверки: infrastructure 9/9 (~2.5 s), два контрактных файла 24/24
+(47.3 s включая compile), isolated math --match "two draws": 2 сценария, exit 0,
+cleanup OK. Эти выборки пересекаются с full, результаты не суммировать.
+[Процедура и измерения](../../../REVIEW_TESTING.md).
+
+## Предыдущий результат: manifest и refill
+
+[Native refill planner](../../../LOCAL_NATIVE_REFILL.md) реализован как чистый расчёт: отдельный
+native ops source, общий payer/RNG forecast, low/target, source floor, gas перевода,
+лимиты периода/операции, cooldown, stale/pending stop. Один план — один перевод,
+Приоритет committed → candidate → buffers, общий payer считается один раз. fundingReady не подменяет draw readiness.
+
+Local executor делает один native transfer под существующим coordinator lock, проверяет
+source signer/provider, balances/fee/estimate/head/nonce и сохраняет intent до send.
+Автосбор draw obligations и запуск funding подключены к coordinator через optional nativeRefill/CLI.
+Один anchor для obligations/balances; после одного refill текущий pass заканчивается.
+В ops-контуре TOKEN/USDG не конвертируются,
+project share не утверждается, призовые buckets не являются источником ops.
+State policy/source/network hash не позволяет тихо сбросить funding history при смене config.
+
+Двойные lock failures теперь сохраняют primary error и cleanupErrors вместе с
+классификацией исходной транзакции. Runtime state/lock должен быть на постоянном локальном
+volume без фоновой синхронизации checkout; lock не является distributed lease.
+
+Предыдущая [калибровка](../../../LOCAL_EXECUTION_CALIBRATION.md): N100/1k/10k, 10/64 места,
+два seed и 34 clean child handoffs. Это sampled envelope, не доказанный worst-case.
+
+
+Чистые переходы intent/hash/receipt готовы: success учитывает value + gas, mined revert — gas;
+обе попытки включают cooldown. Ledger и очистка pending сохраняются одним atomic save.
+Coordinator направляет nativeRefill pending в typed receipt recovery; unknown hash остаётся stop.
+
+Intent сохраняет type/gasLimit/maxFeePerGas/maxPriorityFeePerGas; returned/RPC tx сверяются.
+Mismatch сохраняет hash, учитывает receipt и ставит durable nativeRefillHalt. Coordinator
+и refill executor останавливают автоматику, не повторяют перевод. Это обнаружение после
+broadcast, не гарантия против первого перерасхода неисправным signer.
+
+Исправлен config admission: все execution/controller targets проверяются до работы с журналом.
+Под lock проверяется совместимость existing funding history ДО сохранения нового configHash.
+Отказ не меняет state; правильные настройки можно повторить без сброса spend/cooldown/nonce.
+Pending по-прежнему запрещает migration. Repair/reset ранее испорченного admission не добавлен.
+
+Read-only inspector проверяет state/config/domain, lock metadata и исходную transaction/receipt.
+CLI выдаёт JSON + nextAction, ничего не пишет и не отправляет. Concurrent state/lock change
+делает report неактуальным; known receipt показывает только projected accounting.
+Manifest exporter/verifier используют общий с runtime identity builder и независимый deployment JSON.
+Checksum/provenance не являются доказательством одобрения. Nonce RPC outage не скрывает known receipt.
+Проверки 22.09: основной пакет coordinator + native-refill suites — 70/70 (498.8 s);
+финальный `npm run test:local:refill` — 67/67 (15.8 s), включая budget и lock.
+После дополнения CLI assertions: `node --test --test-name-pattern="inspection manifest" test/local-coordinator.test.cjs` — 1/1 (40.3 s).
+Это пересекающиеся наборы предыдущего пакета, результаты не суммировать.
+Актуальный полный baseline приведён выше.
+[Команды, clean-cwd проверка и ограничения](../../../LOCAL_NATIVE_REFILL_INSPECTOR.md).
+
+## Последняя проверка отказов
+
+Добавлены реальные child-process kill checkpoints: prepared, send до hash-save, сохранённый hash,
+receipt до final-save и после final-save. После смерти child stale lock блокирует restart;
+только тестовый harness подтверждает exit и снимает собственный lock для проверки journal recovery.
+Hashless остаётся stop, known hash учитывается ровно один раз. RPC receipt outage не меняет state.
+Runtime-код не менялся. Детали и границы — [LOCAL_NATIVE_REFILL_RECOVERY](../../../LOCAL_NATIVE_REFILL_RECOVERY.md).
+
+## Последний шаг: публичный read-only профиль
+
+23.09 [PAIR/network dossier](../../../PAIR_PROFILE_EVIDENCE_2026-09-23.md): свежие pinned RPC
+снимки, mode bindings, API readiness, source/runtime нового coordinator, public Swap
+sample и getters исторического vault. Runtime не менялся, sends/fork/full отсутствуют.
+Старый native graph hashes совпали, standard-route API503, launchpad coordinator другой.
+Старый fork TOKEN отсутствует public; 12 sampled tx не доказывают нужный TOKEN/USDG BUY.
+Нельзя утверждать доступный creator revenue/стоимость draw/RNG без целевого deployment.
+23.09: найден [чужой публичный TOKEN/USDG reference](../../../PAIR_USDG_REFERENCE_2026-09-23.md):
+20 launch events, 6 vault candidates, LP owner/binding и 11 historical swaps.
+Три direct BUY используют 0x060c0f вместо поддерживаемого 0x060b0e и отвергаются.
+Settlement/delivery проверены по сохранённым исходникам и receipts;
+route adapter добавлен ниже. Это не наш deployment;
+collect/claim и актуальная ликвидность ещё не доказаны.
+23.09: welcome bonus отклонён владельцем; единственная логика — eligible BUY.
+В [decoder](../../../DIRECT_BUY_REPLAY.md) добавлен opt-in scheduled manifest, direct route
+0x060c0f и helper append-only upgrade с будущим activation block. Старый v1 сохранён.
+Публичные BUY fixtures и негативные проверки проходят; production activation не задана.
+Review 132b6af: смена manifest ломает старые snapshot hashes. v2 пока только для
+нового экземпляра. validateRouteUpgrade заменён на validateRouteExtensionCandidate:
+это проверка формы, не admission. Регрессия pending/settled воспроизводит отказ.
+24.09: versioned BUY policy реализована в pure replay; старые FREEZE/EMPTY сохраняют
+manifest своего cutoff, BUY выбирает версию по блоку, carry непрерывен.
+24.09: [цепочка BUY policy](../../../BUY_POLICY_ADMISSION.md) доведена до контракта
+BuyPolicySource, exact-byte prepare/publish, completeness по getters, RPC CLI,
+cutoff-aware builders и scheduler/coordinator. Конфигурация источника постоянна;
+новые версии не меняют identity и старые snapshot hashes. Сквозной EVM тест проходит.
+Production authority/notice/finality не назначены; local guards сохранены.
+JSON API заменён typed adapter activation. Ошибочный неизвестный id от publisher
+всё ещё способен остановить новые datasets с активации; история старого cutoff доступна.
+Source collect/fork отдельно.
+Сайт/уведомления и статистика частоты routes ещё не реализованы.
+
+## Текущий шаг к релизу
+
+24.09: обновлено [обращение к GPT](../../../GPT_REVIEW_REQUEST.md): TOKEN-first против
+pool-Swap-first discovery, attribution и расширяемые adapters. Владелец уточнил
+цель: промо привлекает покупателей на сайт; расширять подтверждённый охват полезно,
+но сомнительные покупки не засчитывать. Это не обещание билетов всем держателям.
+Гипотеза о российском рынке не является юридическим выводом или решением запуска.
+
+По указанию пользователя сначала проверены реальные семейства покупки:
+[маршруты и граница учёта](../../../ROUTE_RESEARCH_2026-09-24.md). Исходный актив не равен
+quote последнего пула; PAIR AUTO и wallet aggregators требуют отдельной атрибуции.
+Предложение — расширяемые проверенные adapters, не decoder на каждый ERC20.
+Правило nominal USDG не изменено, новый route пока не реализован.
+Review d512733 принят с уточнением владельца: без отдельного candidate registry.
+Реализованы typed source announcements, детерминированная сборка manifests,
+явный unadmitted research mode и cutoff isolation неизвестных adapters.
+Старый JSON source ABI несовместим: это новый deployment, публичного старого нет.
+Сам source не проверяет семантику будущего decoder; обещания полной доступности нет.
+Review 9a6a9c1 прочитан. Scheduler теперь независимо пересобирает весь persisted
+artifact перед первым begin, восстанавливая параметры из config и on-chain policy.
+У начатых jobs сохраняется сверка прежних commitments, без пересоздания.
+Границы — LOCAL_PROMO_SCHEDULER.md; следующий шаг — один подтверждённый route adapter.
+
+Ответ GPT b4a89ef прочитан. По указанию пользователя sponsor/merchant ветка отложена;
+[архив обсуждения](../../studies/SPONSOR_PARTNERSHIP_DISCUSSION_2026-09-23.md).
+Никаких sponsor API и новых условий участия не утверждено.
+
+[Численный профиль](../../../MVP_ECONOMIC_PROFILE.md) остаётся кандидатом. Добавлен локальный
+scripts/mvp-economic-sweep.py: 72 аналитических single-draw сценария концентрации и
+9 funding-сценариев. Assertions прошли. Выявлено усиление ожидаемых наград при дроблении
+по wallets и субсидировании Short. Это не full calendar/farming profitability model.
+Контракты/config не менялись; unit/full/fork/live не запускались.
+
+Календарный этап выполнен: [MVP_CALENDAR_CHECK](../../../MVP_CALENDAR_CHECK.md),
+13 сценариев × 20 seeds × 2 порядка = 520 прогонов по 120 дней. Инварианты денег/
+попыток/интервалов прошли. scripts/mvp-calendar-model.py использует Short reference
+model; контракты/config не менялись, full/fork/live не запускались. Отдельный риск —
+стоимость множества no-win draws при одном wallet; расходы в этой модели отсутствуют.
+
+Дальше двигать базовый MVP: окончательная экономика с реальными execution costs,
+затем ограниченный реальный integration slice из ROADMAP §4. Не объявлять кандидаты
+утверждёнными и не снимать local guards для запуска на реальной сети. До deployment
+нужны реальные venue/swap/RNG/finality, execution funding, recovery и внешний аудит.
+
+## Последний кусок: watch RPC recovery
+
+Тестовая инфраструктура принята review 130a029. Следующий пакет — восстановление
+CLI --watch после временных RPC read outages. Backoff 1–30 s; known receipt сначала
+сверяется по сохранённому hash. Отправка без hash, state/config/lock/cleanup errors,
+смена сети, policy halt и неизвестные ошибки останавливают цикл.
+Нет auto-unlock, reset, replacement, fallback RPC/signers или supervisor.
+Сигналы прерывают ожидание; мгновенная отмена in-flight scan не обещается.
+[Модель и ограничения](../../../LOCAL_PROMO_COORDINATOR.md#watch-временная-недоступность-rpc-23092026).
+
+Проверки 23.09 (actual executedCases, не file wrappers):
+- `npm run test:group -- --profile watch` — 6/6, 0.26 s, compile=0.
+- `npm run test:group -- --profile coordinator --match "watch "` — 8/8,
+  62.2 s вместе с compile; journal recovery и CLI. Первый тестовый fault injection
+  не сработал из-за ethers wrapper; заменён реальным timeout с выключенным automining.
+- `npm run test:group -- --profile coordinator --match "watch CLI|hashless broadcast failure|native refill pending|scheduler isolates known rejection|cleanup"`
+  — 10/10, 87.7 s вместе с compile; финальная CLI/neighbor проверка.
+- `npm run test:group -- --profile infrastructure` — 9/9, 2.19 s, catalog/review guards.
+Выборки пересекаются; не суммировать. Full/fork/live не запускались. Старый full baseline
+выше относится к предыдущему code HEAD, а не ко всему текущему пакету.
+Evidence: `.local/logs/rpc-watch-{final-unit,integration,neighbors,catalog}.log`.
+
+Ближайшая незакрытая эксплуатационная граница: process-death всего coordinator,
+владение stale lock и ограниченный recovery design. Refill process-death уже проверен;
+это не доказательство автоматического перезапуска всей системы.
+
+## Основные ограничения
+
+- Local guards не снимать для запуска в другой сети. Источник комиссий, BUY decoder,
+  block identities, fee model, DEX/RNG и compiler target проверяются для каждого профиля.
+- FeeRouter ещё напрямую связан с PAIR API. Новая сеть/площадка — независимый deployment;
+  старые prize balances/credits не переносятся и не выводятся.
+- Fixed floor не заменяет market price guard. Legacy USDG-only TOKEN debt лишь
+  диагностируется; публичный pay остаётся возможным. Полнота legacy list доверена config.
+- Budget — off-chain forecast, не escrow и не запрет прямого seal вне coordinator.
+  Fixture estimates не доказаны для всех возможных данных/seed; требуется калибровка.
+- Seed/finality, publisher trust, durable recovery и incremental indexer не завершены.
+
+## Не пересматривать случайно
+
+Frozen/claimable не финансируют эксплуатацию. External funding не создаёт project fee.
+Creator/project shares ещё не утверждены; fixture percentages не продуктовая экономика.
+Campaign boundary — успешный rollover; endsAt только плановое время.
+Текущие денежные призы USDG, Luck удалён, sponsor layer отдельно. Нет admin prize withdrawal,
+proxy, reroll/reset или подмены random. Immutable destination старого converter сохраняется.
+
+[Продуктовые решения](../../../PRODUCT_SPEC.md), [карта реализации](../../../IMPLEMENTATION_STATUS.md),
+[исторический снимок статусов](../../snapshots/PROJECT_PROGRESS_BEFORE_REVIEW_2026-09-20.md).
+Ответ GPT — вспомогательное мнение, не автоматическое задание.
+
+Проверки 23.09: npm run test:direct-buy — 14/14; node --test
+test/attempt-lifecycle.test.cjs test/monthly-replay.test.cjs — 21/21.
+Full/fork/live sends не запускались.
+
+Исправление границы 23.09: npm run test:direct-buy — 15/15; миграция существующего
+экземпляра НЕ реализована. Старые snapshots и events не изменялись.
+
+24.09: адресный запуск direct-buy + attempt-lifecycle + monthly-replay — 39/39.
+Подробности и ограничения: DIRECT_BUY_REPLAY.md. Full/fork не запускались.
+
+24.09, завершение BUY policy: targeted пакет 59/59, после финальных изменений
+повтор затронутых 3/3 (не суммировать). Локальная EVM, реальный source/publish;
+venue/RNG прежние fixtures. Evidence и ограничения в BUY_POLICY_ADMISSION.md.
+
+24.09, проверка typed policy: основной адресный запуск — 60/62; два устаревших
+тестовых ожидания исправлены, финальная выборка 3/3 закрыла их и новый CLI case.
+Frozen completion при неизвестном active adapter подтверждено; full/fork не запускали.
+Команды, timings и пределы — [BUY policy](../../../BUY_POLICY_ADMISSION.md).
+
+24.09, pre-begin replay: scheduler **13/13** и сквозной coordinator **1/1**,
+оба адресных запуска exit 0. Согласованная подмена ranges/participants/request
+отклоняется до отправки; оригинал и begun recovery работают. Команды/evidence —
+[LOCAL_PROMO_SCHEDULER](../../../LOCAL_PROMO_SCHEDULER.md). Full/fork/live не запускались.
+
+24.09: кандидат 0x0a10 проверен на свежем local fork настоящего router/Permit2
+и существующего public reference pool. Успешно потрачено 100 USDG, TOKEN получен
+тем же payer, nonce permit 0→1. Исправлена только настройка harness: пустой local
+block после fork устраняет отсутствие historical hardfork config chain4663.
+Код/балансы пула не заменялись; искусственный USDG capital только у test wallet.
+Этот evidence теперь покрыт adapter rh-ur-0a10-060b0e-v1. Commands/actions,
+PermitSingle и фактический settlement проверяются; RPC scan закрепляет Permit2
+runtime для активного cutoff. Legacy policy не включает маршрут автоматически.
+Адресно: BUY/lifecycle/monthly 46/46 (4.90 s), EVM publication 2/2 (18.91 s с compile).
+После сохранения legacy rejection reason финальная адресная выборка 7/7, 0.56 s.
+Публичная активация и новый fork в этом шаге не выполнялись; подробности —
+[DIRECT_BUY_REPLAY](../../../DIRECT_BUY_REPLAY.md#permit2-buy-adapter-24092026).
+Review ffad0e0 не выявил blockers. Затем [сквозной fork](../../../PERMIT_BUY_INTEGRATION.md)
+связал настоящий BUY с registry/policy admission и штатным scheduler: до activation 0,
+на activation 1 attempt; подмена budget отвергнута до send, оригинал прошёл begin/publish.
+Повторный scan сохраняет artifact и одну job. RNG/Monthly/claims не исполнялись.
+Fork exit0, offline regression 1/1; full не запускался.
+
+24.09: [source integration](../../../FEE_SOURCE_INTEGRATION.md) проверила настоящий collect/claim
+с исходным recipient и bind rejection. После явно условной LOCAL impersonation
+policyController штатный transitionFeeSharingAtomic назначил FeeRouter: collect/harvest,
+rollover с pending fees/direct transfers, старые unpaid payouts и новая campaign прошли.
+Production contracts не менялись. Публичных полномочий над reference нет; только одна
+позиция TOKEN/USDG. Official RPC403 и signer harness issue сохранены, финал через
+Blockreq exit0. Следующий отдельный кусок — реальный venue TOKEN→USDG converter/guard;
+публичный launch/RNG/source bindings всё ещё не готовы.
+Адресная regression + failure/epoch/rollover neighbors: 4/4, 22.84 s с compile; не full.
+
+24.09: пользователь выбрал заменяемый adapter с notice, неизменными destination и
+price limits; burn отложен. Согласован ограниченный шаг: механизм и проверки сейчас,
+конкретный рынок/источник цены отдельно. [LocalScheduledPrizeConverter](../../../SCHEDULED_PRIZE_CONVERTER.md)
+добавляет announce/cancel/permissionless activate, stale version guard и immutable
+priceSource с freshness/slippage checks. Старый converter/worker не менялись.
+Локально 9/9 converter tests, 45.95 s с compile; реального oracle/DEX и нового fork нет.
+Следующий шаг — выбрать и проверить источник цены и затем соединить venue/new worker;
+не объявлять тестовую PriceFixture рыночной защитой или готовым deployment.
+
+24.09: [исследование цены](../../../PRICE_SOURCE_RESEARCH.md) выявило встроенный PAIR TWAP,
+но pre-swap sampling некорректно представляет post-swap интервалы в редких сделках.
+Read-only block 0x4412069: runtime/source hashes совпали с manifest, reference quote
+revert InsufficientHistory, последняя запись старше 11 дней. Не обобщать на все пулы.
+Локальная модель: 4 проверки; production code/full suite/fork не менялись/не запускались.
+Прямое подключение hook единственным priceSource не рекомендовано. Следующий шаг —
+replay post-swap истории и исполнимой котировки; oracle/trust model ещё не выбраны.
+
+24.09: принято запускать конвертацию по ожидаемому достаточному Short funding,
+но фиксировать бюджет только по фактическому USDG. GENERAL split сохраняется.
+[CONVERSION_TRIGGER](../../../CONVERSION_TRIGGER.md): чистый planner, адресные unit 4/4.
+Worker ещё не подключён, contracts не менялись, production oracle не выбран.
+Следующий ограниченный шаг — quote/snapshot и новый ABI в worker с receipt recovery;
+триггер не заменяет price guard. Полный suite/fork не запускались.
+
+Следующий шаг уточнён: перед подключением planner пользователь запросил review самой
+модели исполнения. [GPT_REVIEW_REQUEST](../../../GPT_REVIEW_REQUEST.md): нужна ли обязательная
+историческая цена, как ограничить adapter и избежать остановки из-за требования
+закрыть Short target одной порцией. Принятия spot-only защиты пока нет.
+
+
+25.09: пользователь согласовал простую конвертацию без исторического oracle, с доверенным
+executor/minOut. Short target больше не gate продажи. LocalMarketPrizeConverter
+ограничивает per-call и линейно восстанавливаемый TOKEN bucket, сохраняет notice/version
+replacement и immutable vault. Старые поколения не изменены. Существующий prize-flow
+получил opt-in market-v1 и getSwapQuote, прежний receipt/gas/pending путь сохранён.
+GENERAL накапливается порциями, quote outage не блокирует USDG forwarding.
+[CONVERSION_TRIGGER](../../../CONVERSION_TRIGGER.md) — актуальная модель. CLI/coordinator ещё
+не передают реальную quote; market-режим без callback ждёт. Исполнитель/venue в тестах
+локальные; не production. Следующий кусок — конкретный venue/quote и wiring automation,
+с проверкой impact/cost, без нового oracle framework. Потеря immutable executor остаётся
+deployment границей. Ранние заметки про обязательный oracle/Short gate исторические.
+
+Финально 25/25 prize-flow+forecast, 122.36 s с compile; старые converter 9/9 проверены
+отдельно в предыдущей адресной выборке этого шага. Каталог 1/1. Runtime 6797 bytes.
+Unknown receipt проверка выявила отсутствие from при estimate через runner wrapper:
+исправлено в worker, финальный повтор проходит. Full/fork/public sends отсутствуют.
+
+
+25.09: [V4 market execution](../../../V4_MARKET_EXECUTION.md) закрыла reference маршрут:
+LocalV4PrizeAdapter + eth_call того же convert возвращают исполнимый output;
+worker автоматически подбирает порцию по относительному impact и native gas cap.
+marketQuote в job работает через CLI/coordinator, без injected callback вручную.
+Fork block0x44b4d1d: 7.258891 USDG получено и распределено GENERAL, allowances zero.
+Капитал BUY искусственный USDG, fee source mock, draw authority inert; pool/router
+настоящие. Не публичный deployment. 24/24 prize-flow и 1/1 coordinator адресно.
+Следом launch bindings/параметры liquidity/cost/executor recovery; новый oracle не нужен.

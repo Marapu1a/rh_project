@@ -1,0 +1,26 @@
+{
+  "observedAt": "2026-10-02T05:57:12.241Z",
+  "block": {
+    "number": "0x4a62c5d",
+    "hash": "0x7e5f3414f128dd214de7e737af34fa9625a0f68e02d6c44ca3120d66ffaba736"
+  },
+  "accounts": [
+    {
+      "address": "0xccc88a9d1b4ed6b0eaba998850414b24f1c315be",
+      "hash": "0xa3b36a6aa3c2fb588b92336d88b0735b40dea0282c110d2034edf688ca661b5b",
+      "bytes": 7746,
+      "codePrefix": "0x6080604052600436101561001a575b3615610018575f80"
+    },
+    {
+      "address": "0xfd081c0c1dfed243cd81ad3c337a17fd99a050cf",
+      "hash": "0x1f49e0785375ef11625dde265acf539e0a78d5948539be94b04fa396b8dfd06d",
+      "bytes": 9710,
+      "codePrefix": "0x608080604052600436101561001c575b50361561001a57"
+    }
+  ],
+  "limits": [
+    "Current block observation only, not code at the sampled transaction execution",
+    "Ordinary runtime prefix is not proof of wallet or router identity",
+    "Blockscout smart-contract source endpoints returned HTTP 403; no ABI/source equivalence admitted"
+  ]
+}

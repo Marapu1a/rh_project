@@ -1,9 +1,16 @@
 const {hash}=require('./direct-buy.cjs');
 const uint=x=>typeof x==='string'&&/^\d+$/.test(x);
 function preparePublic(config,index,ledger,projected){
+ const projection=index.publicProjection;
+ if(projection){
+  if(config.publicStatus!==true||projection.head!==index.head||projection.blockHash!==ledger.head.hash||projection.manifestHash!==hash(index.manifest)||!['available','unavailable'].includes(projection.state))throw Error('Invalid public projection status');
+  if(projection.state==='unavailable'){if(index.publicObservation!==null||projection.reason!=='rpcUnavailable')throw Error('Invalid unavailable projection');return null;}
+  if(!index.publicObservation)throw Error('Missing public observation');
+ }
  const o=index.publicObservation;if(!o)return null;
+ const manifest=index.manifest.schema==='buy-policy-history-v1'?require('./direct-buy.cjs').buyPolicyHistory(index.manifest).at(index.head):index.manifest;
  const bad=()=>{throw Error('Invalid public observation');};
- if(config.publicStatus!==true||!projected||o.schema!=='promo-public-observation-v1'||BigInt(o.blockTag)!==BigInt(index.head)||o.blockHash!==ledger.head.hash||o.manifestHash!==hash(index.manifest)||o.vault!==config.lifecycle.vault.toLowerCase()||o.asset.address!==index.manifest.quote.toLowerCase()||o.asset.decimals!==index.manifest.quoteDecimals||o.asset.codeHash!==index.manifest.codeHashes.quote||o.asset.symbol!=='USDG')bad();
+ if(config.publicStatus!==true||!projected||o.schema!=='promo-public-observation-v1'||BigInt(o.blockTag)!==BigInt(index.head)||o.blockHash!==ledger.head.hash||o.manifestHash!==hash(index.manifest)||o.vault!==config.lifecycle.vault.toLowerCase()||o.asset.address!==manifest.quote.toLowerCase()||o.asset.decimals!==manifest.quoteDecimals||o.asset.codeHash!==manifest.codeHashes.quote||o.asset.symbol!=='USDG')bad();
  if(!Number.isInteger(o.asset.decimals)||o.asset.decimals<0||o.asset.decimals>36)bad();
  for(const k of ['freeShort','freeCurrent','freeNext','nextStartTarget','reserved','claimable','balance'])if(!uint(o.reserves?.[k]))bad();
  for(const kind of ['SHORT','MONTHLY'])if(!uint(o.timing?.[kind]?.earliestAt)||!uint(o.timing?.[kind]?.minimumRaw))bad();

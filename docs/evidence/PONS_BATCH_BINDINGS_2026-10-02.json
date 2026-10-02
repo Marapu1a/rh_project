@@ -1,0 +1,30 @@
+{
+  "admitted": false,
+  "anchor": {
+    "number": "0x4a72f6f",
+    "hash": "0x6cc5e063a580c67d06b3aa6d6ef7c14fd32d53dad55cbf4a4b9cc4f035dba338"
+  },
+  "bindings": "PASS",
+  "dependencies": [
+    {
+      "field": "batchExecutor",
+      "address": "0x63c0c19a282a1b52b07dd5a65b58948a07dae32b",
+      "codeHash": "0xa06befcb6f1d7b6c566a607d9d5d932f9b267f3470e55940225c6ee9c4c5e6b0"
+    },
+    {
+      "field": "weth",
+      "address": "0x0bd7d308f8e1639fab988df18a8011f41eacad73",
+      "codeHash": "0x5706be52f64875fee65a2cec0d80e47a23d8793cbe85d214b48445e2d05f5353"
+    },
+    {
+      "field": "fundingRouter",
+      "address": "0xcaf681a66d020601342297493863e78c959e5cb2",
+      "codeHash": "0x6f36c378e272c6324c48f045182bcb54bd8ad654cf9ebd42e8893d52c4cb25dc"
+    },
+    {
+      "field": "fundingPool",
+      "address": "0x52e65b17fb6e5ba00ed806f37afcd2daa50271ca",
+      "codeHash": "0x3298b5dd4e6f115074c526a55ad05a36fd73a0034ac22ec6cbaab32cc9c1e8d2"
+    }
+  ]
+}

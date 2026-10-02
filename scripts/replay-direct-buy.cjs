@@ -1,8 +1,7 @@
 const fs=require('node:fs');
 const {keccak256}=require('ethers');
 const AUTO=require('./pair-auto-buy.cjs');
-const PONS=require('./pons-curve-buy.cjs');
-const PONS_V4=require('./pons-v4-buy.cjs');
+const PONS_PROFILES=require('./pons-profiles.cjs');
 const {replay,canonical,hash,validateManifest,buyPolicyHistory,routeDependencies}=require('./direct-buy.cjs');
 
 // Independent reader: fetch whole blocks and every receipt, not an operator BUY list.
@@ -15,14 +14,16 @@ async function scan(input,rpcUrl,toBlock,lifecycle=null){
   }
   return scanWithRpc(input,rpc,toBlock,lifecycle);
 }
-async function scanWithRpc(input,rpc,toBlock,lifecycle=null){
+async function scanWithRpc(input,rpc,toBlock,lifecycle=null,{fromBlock}={}){
   const manifest=buyPolicyHistory(input).genesis;
-  const pons=manifest.schema===PONS.SCHEMA?PONS:manifest.schema===PONS_V4.SCHEMA?PONS_V4:null;
+  const pons=PONS_PROFILES.get(manifest.schema),batch=pons?.FIELDS.includes('batchExecutor');
   if(BigInt(await rpc('eth_chainId'))!==BigInt(manifest.chainId))throw Error('Wrong RPC chain');
   const tag=n=>'0x'+BigInt(n).toString(16);
   const anchor=await rpc('eth_getBlockByNumber',[tag(manifest.anchor.number),false]);
   if(anchor.hash.toLowerCase()!==manifest.anchor.hash.toLowerCase())throw Error('Anchor is not canonical');
   if(BigInt(toBlock)<=BigInt(manifest.anchor.number))throw Error('Empty range');
+  const first=fromBlock===undefined?BigInt(manifest.anchor.number)+1n:BigInt(fromBlock);
+  if(first<=BigInt(manifest.anchor.number)||first>BigInt(toBlock))throw Error('Invalid scan range');
   const head=await rpc('eth_getBlockByNumber',[tag(toBlock),false]);
   for(const dependency of routeDependencies(input,toBlock)){
     const code=await rpc('eth_getCode',[dependency.address,tag(toBlock)]);
@@ -41,9 +42,11 @@ async function scanWithRpc(input,rpc,toBlock,lifecycle=null){
     }
   }
   const blocks=[];
-  for(let n=BigInt(manifest.anchor.number)+1n;n<=BigInt(toBlock);n++){
+  // An incremental caller must join its canonical prefix and replay the result.
+  for(let n=first;n<=BigInt(toBlock);n++){
     const block=await rpc('eth_getBlockByNumber',[tag(n),true]);
-    const transactions=[];
+    const transactions=[],batchAccounts={};
+    if(batch){const code=await rpc('eth_getCode',[manifest.batchExecutor,tag(n-1n)]);if(keccak256(code)!==manifest.codeHashes.batchExecutor)throw Error('Unexpected parent executor runtime');}
     if(pons)await pons.validateBindings(manifest,rpc,tag(n));
     if(pons)for(const field of pons.FIELDS){
       const code=await rpc('eth_getCode',[manifest[field],tag(n)]);
@@ -58,9 +61,10 @@ async function scanWithRpc(input,rpc,toBlock,lifecycle=null){
         const code=await rpc('eth_getCode',[AUTO.ADDRESS,tag(n)]);
         if(code==='0x'||keccak256(code)!==AUTO.CODE_HASH)throw Error('Unexpected historical AUTO runtime');
       }
+      if(batch&&tx.to&&tx.from.toLowerCase()===tx.to.toLowerCase()){const payer=tx.from.toLowerCase();if(!batchAccounts[payer])batchAccounts[payer]={parentHash:block.parentHash,code:await rpc('eth_getCode',[payer,tag(n-1n)])};}
       transactions.push({tx,receipt:await rpc('eth_getTransactionReceipt',[tx.hash])});
     }
-    blocks.push({number:block.number,hash:block.hash,parentHash:block.parentHash,timestamp:block.timestamp,transactions});
+    blocks.push({number:block.number,hash:block.hash,parentHash:block.parentHash,timestamp:block.timestamp,transactions,...(batch?{batchAccounts}:{})});
   }
   if((await rpc('eth_getBlockByNumber',[tag(toBlock),false])).hash!==head.hash)throw Error('Chain changed during scan; retry canonical range');
   return {manifest:input,blocks};

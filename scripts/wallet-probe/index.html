@@ -1,0 +1,10 @@
+<!doctype html>
+<html lang="ru"><meta charset="utf-8"><title>QIANQI — проверка MetaMask</title>
+<style>body{max-width:820px;margin:60px auto;padding:24px;background:#f4f1e8;color:#20231e;font:18px system-ui}button,select,input{font:inherit;padding:12px;margin:8px 0}pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:13px}label{display:block}</style>
+<h1>Проверка MetaMask</h1>
+<p>Только подключение аккаунта и чтение возможностей Robinhood Chain. Без подписей, покупок и переключения сети. Отчёт сохраняется локально на этом компьютере.</p>
+<label>Кошелёк <select id="wallet"></select></label>
+<label>Версия MetaMask (из настроек, необязательно) <input id="version" maxlength="80"></label>
+<button id="run" disabled>Подключить и проверить</button>
+<p id="status">Ожидаем установленное расширение MetaMask…</p><pre id="result"></pre>
+<script src="/probe.js"></script></html>

@@ -15,9 +15,9 @@ async function guard(rpc, instanceId) {
 }
 async function prepare({ rpc, instanceId, manifest: m, account, amountRaw, slippageBps = 100 }) {
   await guard(rpc, instanceId);
-  V.validate(m);
+  const profile=require('./pons-profiles.cjs').pool(m.schema);check(profile,'Expected Pons pool-capable profile');profile.validate(m);
   check(Number(m.chainId) === 4663, 'Expected manifest chain 4663');
-  check(isAddress(account) && low(account) !== ZeroAddress && !V.FIELDS.some(k => low(m[k]) === low(account)), 'Invalid buyer');
+  check(isAddress(account) && low(account) !== ZeroAddress && !profile.FIELDS.some(k => low(m[k]) === low(account)), 'Invalid buyer');
   check(typeof amountRaw === 'string' && /^[1-9][0-9]*$/.test(amountRaw), 'Positive raw USDG amount required');
   const amount = BigInt(amountRaw);
   check(amount < 1n << 128n, 'Amount exceeds route limit');
@@ -25,10 +25,11 @@ async function prepare({ rpc, instanceId, manifest: m, account, amountRaw, slipp
   const block = await rpc('eth_getBlockByNumber', ['latest', false]), tag = block.number;
   const now = BigInt(block.timestamp), deadline = now + 1200n;
   const read = async (to, abi, name, args = []) => abi.decodeFunctionResult(name, await rpc('eth_call', [{ from: account, to, data: abi.encodeFunctionData(name, args) }, tag]));
-  for (const field of V.FIELDS) check(keccak256(await rpc('eth_getCode', [m[field], tag])) === m.codeHashes[field], 'Runtime mismatch: ' + field);
-  // Restrict this prototype to EOA execution; delegated/smart accounts need their own proof.
-  check(await rpc('eth_getCode', [account, tag]) === '0x', 'Smart/delegated account not admitted');
-  await V.validateBindings(m, rpc, tag);
+  for (const field of profile.FIELDS) check(keccak256(await rpc('eth_getCode', [m[field], tag])) === m.codeHashes[field], 'Runtime mismatch: ' + field);
+  // A batch-capable profile also pins the exact delegated account implementation.
+  const buyerCode=await rpc('eth_getCode',[account,tag]);
+  check(buyerCode==='0x'||profile.FIELDS.includes('batchExecutor')&&buyerCode.toLowerCase()==='0xef0100'+m.batchExecutor.toLowerCase().slice(2),'Smart/delegated account not admitted');
+  await profile.validateBindings(m, rpc, tag);
   const [record] = await read(m.factory, new Interface(FAB), 'getLaunchedToken', [m.token]);
   check(record.phase === 0n || record.phase === 2n, 'Market transitioning; refresh after graduation');
   check((await read(m.quote, ERC, 'balanceOf', [account]))[0] >= amount, 'Insufficient USDG');

@@ -15,13 +15,14 @@ const {resolveBuyPolicy}=require('./buy-policy-runtime.cjs');
 const wait=reason=>({status:'waiting',reason});
 async function history(o,manifest,cutoff){
  if(!o.config.indexer)return scan(manifest,o.rpcUrl,cutoff,o.config.lifecycle);
- return require('./persistent-buy-indexer.cjs').readSnapshot({config:o.config,statePath:o.config.indexer.statePath,manifest,cutoff,rpc:(m,p)=>o.provider.send(m,p)});
+ const config=o.indexConfig?require('./shared-index-config.cjs').validateIndexConfig(o.config,o.indexConfig):o.config;
+ return require('./persistent-buy-indexer.cjs').readSnapshot({config,statePath:config.indexer.statePath,manifest,cutoff,rpc:(m,p)=>o.provider.send(m,p)});
 }
 function validateConfig(c,rpcUrl){
   if(c.indexer)check(c.buyPolicy&&c.cutoffMode==='FINALIZED_CHECKPOINT'&&typeof c.indexer.statePath==='string'&&require('node:path').isAbsolute(c.indexer.statePath)&&Number.isInteger(c.indexer.maxAgeSeconds)&&c.indexer.maxAgeSeconds>0&&c.indexer.maxAgeSeconds<=3600,'Invalid indexer configuration');
   check(c.schema===network.schema('local-promo-scheduler-v1')&&['LOCAL_HEAD','FINALIZED_CHECKPOINT'].includes(c.cutoffMode),'Explicit local scheduler config required');
   if(c.cutoffMode==='FINALIZED_CHECKPOINT')check(c.buyPolicy,'Finalized checkpoint requires admitted BUY policy');
-  const ponsResearch=c.ponsRehearsal===true&&network.current().mode==='robinhood-rehearsal'&&c.manifest.schema==='direct-buy-pons-v2'&&c.buyPolicyMode==='unadmitted'&&!c.buyPolicy;
+  const ponsResearch=c.ponsRehearsal===true&&network.current().mode==='robinhood-rehearsal'&&!!require('./pons-profiles.cjs').pool(c.manifest.schema)&&c.buyPolicyMode==='unadmitted'&&!c.buyPolicy;
   if(c.ponsRehearsal!==undefined)check(ponsResearch,'Pons research mode requires an identified local rehearsal');
   validateManifest(c.manifest);network.checkChain(c.manifest.chainId);check(c.lifecycle.schema==='attempt-lifecycle-v4','Lifecycle v4 required');
   if(network.isRobinhood())check(c.cutoffMode==='FINALIZED_CHECKPOINT'||ponsResearch&&c.cutoffMode==='LOCAL_HEAD','Public checkpoint mode required');

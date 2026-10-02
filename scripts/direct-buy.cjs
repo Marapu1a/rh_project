@@ -2,8 +2,7 @@
 const {AbiCoder,Interface,keccak256,toUtf8Bytes,isAddress}=require('ethers');
 const AUTO=require('./pair-auto-buy.cjs');
 const INFINITY=require('./infinity-buy.cjs');
-const PONS=require('./pons-curve-buy.cjs');
-const PONS_V4=require('./pons-v4-buy.cjs');
+const PONS_PROFILES=require('./pons-profiles.cjs');
 const coder=AbiCoder.defaultAbiCoder();
 const SWAP_ABI=new Interface(['event Swap(bytes32 indexed id,address indexed sender,int128 amount0,int128 amount1,uint160 sqrtPriceX96,uint128 liquidity,int24 tick,uint24 fee)']);
 const TRANSFER_ABI=new Interface(['event Transfer(address indexed from,address indexed to,uint256 value)']);
@@ -25,8 +24,7 @@ const PERMIT_TYPE='((address,uint160,uint48,uint48),address,uint256)';
 const PERMIT2=Object.freeze({address:'0x000000000022d473030f116ddee9f6b43ac78ba3',codeHash:'0x5208783f52488f7d3493e5e38311ab707c1d75457fe472a19b0b4d57d66a7fca'});
 const ROUTER_HASH='0x2ce6aaaf9f4151f5e1cbf774668772f17f532ae11b15e9284fd0a072a8b0fbde';
 function routePolicy(m){
-  if(m.schema===PONS_V4.SCHEMA){PONS_V4.validate(m);return [{id:PONS_V4.ID,fromBlock:m.anchor.number}];}
-  if(m.schema===PONS.SCHEMA){PONS.validate(m);return [{id:PONS.ID,fromBlock:m.anchor.number}];}
+  const pons=PONS_PROFILES.get(m.schema);if(pons){pons.validate(m);return [{id:pons.ID,fromBlock:m.anchor.number}];}
   if(m.schema===INFINITY.SCHEMA){INFINITY.validate(m);return [{id:INFINITY.ID,fromBlock:m.anchor.number}];}
   if(m.schema==='direct-buy-v2'){
     ensure(m.routeVersion==='scheduled-routes-v1','Unsupported route policy');
@@ -53,8 +51,7 @@ function routeDependencies(input,height){
   return [...(active.some(r=>r.id===PERMIT_ROUTE||r.id===AUTO.ID)?[PERMIT2]:[]),...(active.some(r=>r.id===AUTO.ID)?[{address:AUTO.ADDRESS,codeHash:AUTO.CODE_HASH}]:[])];
 }
 function validateManifest(m){
-  if(m.schema===PONS_V4.SCHEMA){PONS_V4.validate(m);return;}
-  if(m.schema===PONS.SCHEMA){PONS.validate(m);return;}
+  const pons=PONS_PROFILES.get(m.schema);if(pons){pons.validate(m);return;}
   if(m.schema===INFINITY.SCHEMA){INFINITY.validate(m);return;}
   routePolicy(m);
   ensure(m.quoteDecimals===6&&m.entryThresholdRaw==='100000000','Expected 100 nominal USDG (6 decimals)');
@@ -116,9 +113,8 @@ function swapLogs(m,receipt){
   return receipt.logs.filter(l=>low(l.address)===low(m.manager)&&low(l.topics[0])===low(SWAP_ABI.getEvent('Swap').topicHash))
     .map(log=>({log,swap:SWAP_ABI.parseLog(log).args}));
 }
-function decodeTransaction(m,tx,receipt){
-  if(m.schema===PONS_V4.SCHEMA)return PONS_V4.decode(m,tx,receipt);
-  if(m.schema===PONS.SCHEMA)return PONS.decode(m,tx,receipt);
+function decodeTransaction(m,tx,receipt,block){
+  const pons=PONS_PROFILES.get(m.schema);if(pons)return pons.decode(m,tx,receipt,block);
   if(m.schema===INFINITY.SCHEMA)return INFINITY.decode(m,tx,receipt);
   const auto=m.routes?.find(r=>r.id===AUTO.ID);
   if(auto&&number(tx.blockNumber)>=auto.fromBlock&&tx.to&&low(tx.to)===AUTO.ADDRESS)
@@ -203,7 +199,7 @@ function replay(input,deliveredBlocks){
   for(const v of policy.versions.slice(1))ensure(headers.get(v.announcedAtBlock)===low(v.announcedBlockHash),'Policy notice not on supplied branch');
   let parent=low(m.anchor.hash),height=number(m.anchor.number);
   const registrations=new Map(),wallets=new Map(),decisions=[];
-  const automatic=m.schema===INFINITY.SCHEMA||m.schema===PONS.SCHEMA||m.schema===PONS_V4.SCHEMA;
+  const automatic=!!PONS_PROFILES.get(m.schema)||m.schema===INFINITY.SCHEMA;
   let registryDeployed=false;
   const txHashes=new Set();
   for(const b of blocks){
@@ -231,7 +227,7 @@ function replay(input,deliveredBlocks){
           events.push({kind:'register',index,participant:low(REGISTER_ABI.parseLog(l).args.participant),blockNumber:number(b.number),blockHash:low(b.hash),transactionHash:low(tx.hash),transactionIndex:i});
         }
       }
-      for(const d of decodeTransaction(policy.at(number(b.number)),tx,{...receipt,logs:[...unique.values()].sort((a,c)=>number(a.logIndex)-number(c.logIndex))}))events.push({kind:'swap',index:d.logIndex,decision:d});
+      for(const d of decodeTransaction(policy.at(number(b.number)),tx,{...receipt,logs:[...unique.values()].sort((a,c)=>number(a.logIndex)-number(c.logIndex))},b))events.push({kind:'swap',index:d.logIndex,decision:d});
     }
     ensure([...logIndexes].sort((a,b)=>a-b).every((index,i)=>index===i),'Missing receipt log index');
     for(const e of events.sort((a,b)=>a.index-b.index)){

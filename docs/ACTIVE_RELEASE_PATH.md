@@ -1,5 +1,7 @@
 # Активный путь Pons и резерв PAIR
 
+> Этап сейчас — тестовый. Этот документ разделяет Pons и PAIR planning records, не разрешает боевой перенос. Новейший тестовый profile — launch-v2 из [матрицы](PONS_CHANNEL_COVERAGE.md); существующий launch config не обновляется автоматически вслед за adapter. Deployment — этап B [roadmap](ROADMAP.md).
+
 01.10.2026. Первый выпуск — Pons V2 на Robinhood4663. Изменение отделяет планы
 и пользовательские тексты; не включает public sends и не меняет правила продукта.
 
@@ -7,7 +9,8 @@
 |---|---|
 | Единственный активный launch planning record | `config/robinhood-launch-plan.json`, integration=pons-v2 |
 | Read-only инспекция активного плана | `node scripts/public-launch-plan.cjs` |
-| Pons genesis BUY route | rh-pons-curve-ur-v1, `scripts/pons-v4-buy.cjs`; curve + узкий Universal Router path |
+| Сохранённый route planning record | rh-pons-curve-ur-v1; значение черновика не является новейшим тестовым охватом |
+| Новейший тестовый genesis | direct-buy-pons-launch-v2 / rh-pons-curve-pool-self-batch-v1; scripts/pons-profiles.cjs и pons-pool-batch-buy.cjs |
 | Pons локальный исполнитель | `scripts/run-pons-automation.cjs`; Hardhat/loopback ограничения сохранены |
 | Резерв PAIR/Infinity | `config/reserve/pair-launch-plan.json`, integration=pair-infinity |
 | Инспекция резервного плана | `node scripts/public-launch-plan.cjs config/reserve/pair-launch-plan.json` |

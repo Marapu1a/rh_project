@@ -3,6 +3,18 @@ const {ethers}=require('ethers'),P=require('../scripts/pons-curve-buy.cjs'),D=re
 const {indexOnce}=require('../scripts/persistent-buy-indexer.cjs');
 const {fixture}=require('./fixtures/pons-indexer.cjs');
 
+test('incremental scan processes only appended blocks; idle and engine upgrade remain explicit',async t=>{
+ const f=fixture(t);await f.run();
+ for(let n=13;n<=112;n++)f.blocks.push({number:n,hash:ethers.id('empty'+n),parentHash:f.blocks.at(-1).hash,timestamp:n,transactions:[]});
+ const catchup=await f.run();assert.equal(catchup.metrics.scannedBlocks,100);assert.equal(catchup.metrics.replayedBlocks,102);
+ f.calls.length=0;const idle=await f.run();assert.equal(idle.metrics.scannedBlocks,0);assert.equal(idle.metrics.replayedBlocks,0);assert(!f.calls.some(([m,p])=>m==='eth_getBlockByNumber'&&p[1]));
+ const n=113;f.blocks.push({number:n,hash:ethers.id('empty'+n),parentHash:f.blocks.at(-1).hash,timestamp:n,transactions:[]});
+ f.calls.length=0;const appended=await f.run();assert.equal(appended.metrics.scannedBlocks,1);assert.equal(f.calls.filter(([m,p])=>m==='eth_getBlockByNumber'&&p[1]).length,1);
+ const state=f.read();state.index.replayRevision='old-engine';delete state.checksum;state.checksum=D.hash(state);fs.writeFileSync(f.statePath,JSON.stringify(state));
+ const upgrade=await f.run();assert.equal(upgrade.metrics.scannedBlocks,0);assert.equal(upgrade.metrics.replayedBlocks,103);assert.equal((await f.run()).metrics.replayedBlocks,0);
+ assert.equal(f.read().index.ledgerHash,D.hash(D.replay(f.m,f.blocks)));
+});
+
 test('Pons60+40 persists in bounded batches; restart performs no historical bindings or receipts reads',async t=>{
  const f=fixture(t);assert.equal((await f.run({batchSize:1})).state,'catchingUp');assert.equal(f.read().index.ledger.wallets[0].carryRaw,'60000000');await f.run({batchSize:1});assert.equal(f.read().index.ledger.wallets[0].entriesMinted,'1');
  f.calls.length=0;await f.run();assert(!f.calls.some(([m])=>['eth_call','eth_getCode','eth_getTransactionReceipt'].includes(m)));assert.equal(f.read().index.ledgerHash,D.hash(D.replay(f.m,f.blocks)));

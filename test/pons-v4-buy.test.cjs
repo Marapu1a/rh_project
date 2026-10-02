@@ -66,3 +66,16 @@ test('Pons SELL, hook-originated conversion BUY and simple transfers do not mint
  Object.assign(f.receipt.logs[0],V.SWAP.encodeEventLog(V.SWAP.getEvent('Swap'),[f.m.poolId,f.m.hook,-1000000,101000000,2n**96n,1,0,0]));assert.equal(D.replay(f.m,f.blocks).decisions[0].reason,'SELL');
  f.receipt.logs=f.receipt.logs.slice(1);assert.deepEqual(V.decodePool(f.m,f.tx,f.receipt),[]);
 });
+
+
+test('combined genesis keeps v4 accounting and rejects unqualified v4 self-batches and changed pins',()=>{
+ const L=require('../scripts/pons-launch-buy.cjs'),B=require('../scripts/pons-batch-route.cjs');
+ const f=fixture({amount:60000000n});f.buy(40000000n);
+ Object.assign(f.m,{schema:L.SCHEMA,routeVersion:L.ID,batchExecutor:B.EXECUTOR});f.m.codeHashes.batchExecutor=B.EXECUTOR_HASH;
+ for(const [k,[a,h]] of Object.entries(B.PINS)){f.m[k]=a;f.m.codeHashes[k]=h;}
+ const ledger=D.replay(f.m,f.blocks);assert.equal(ledger.wallets[0].entriesMinted,'1');assert.equal(ledger.wallets[0].carryRaw,'0');
+ const policy=require('../scripts/buy-policy-format.cjs');assert.deepEqual(policy.initialAdapters(f.m),[ethers.id(L.ID)]);assert.equal(policy.extend(f.m,ethers.id(V.ID),100,20),null);
+ assert.throws(()=>D.validateManifest({...f.m,router:addr(999)}),/pin/);
+ assert.throws(()=>D.validateManifest({...f.m,batchExecutor:addr(999)}),/executor/);
+ f.tx.to=f.wallet;f.receipt.to=f.wallet;assert.equal(D.replay(f.m,f.blocks).decisions[0].status,'UNSUPPORTED_ROUTE');
+});

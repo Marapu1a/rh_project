@@ -1,0 +1,566 @@
+{
+  "schema": "pons-combined-profile-evidence-v1",
+  "date": "2026-10-02",
+  "status": "PONS_COMBINED_INDEX_API_PASSED",
+  "publicSends": false,
+  "anchor": {
+    "number": 78075403,
+    "hash": "0x6ab75b0fb470b15f9ff4e19383d9382c1e7040e980208900d234d941d3931571"
+  },
+  "report": {
+    "path": ".local/logs/pons-combined-20261002-c.json",
+    "sha256": "ced24e6ffcdb095c340d493c7b1c388f301ef36a6d8e96b611f998ac7e253c44"
+  },
+  "manifest": {
+    "schema": "direct-buy-pons-launch-v1",
+    "routeVersion": "rh-pons-curve-batch-ur-v1",
+    "eligibility": "automatic-buy-v1",
+    "quoteBasis": "wallet-net-debit-v1",
+    "chainId": 4663,
+    "quoteDecimals": 6,
+    "entryThresholdRaw": "100000000",
+    "anchor": {
+      "number": 78075411,
+      "hash": "0x2e0afd1271c2755ff2e8117604e36f2a3c725f3d678ac4d9da7d79e894cc9932"
+    },
+    "factory": "0x7eD598BcEf8bd9Edd8C97A195C6d13f40801EC7e",
+    "hook": "0xE5e702641Ea86F4ae6cC3cDaeD2B886f976Be044",
+    "curve": "0x60e626363E1b4BF0D4cD8C7FBFB23296B9Ea4709",
+    "token": "0xC8d05BB352eC4A3189cD6862E4575596eeF21bd7",
+    "quote": "0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168",
+    "registry": "0x9B574e9315F5F62cf24FBa5dDD5C40cb36c8cffD",
+    "codeHashes": {
+      "factory": "0x89a27da6f703e0a7cdd4f233e7cb57604ff75b164530962d3ff7cf8483a67d84",
+      "hook": "0xc21b1e6c1b45403e81a581f22ed6d9c747997af1cfdac1b1dc9f4b1d346a10db",
+      "curve": "0x2b3d67b97ae231d2a702dc6273f5cbb77ee325a3bcf8ac51c80532c2c0ae417e",
+      "token": "0x981c6dad5d690501ccc4e777faaad444b595b7b853448266611cf1cd34be97aa",
+      "quote": "0x864cc9ad53b338b82da1f7cab85ab0b3d5c8861acb422b6fec63cf36234f36a6",
+      "registry": "0xf9416c95d49ff972b9b3ddc93d74a7cc96890efbd413960689c9470866300bc6",
+      "router": "0x2ce6aaaf9f4151f5e1cbf774668772f17f532ae11b15e9284fd0a072a8b0fbde",
+      "manager": "0xbd3881180b547f5fe817545743cfb4343e96b1bc6640dcd70c106b0066e95626",
+      "permit2": "0x5208783f52488f7d3493e5e38311ab707c1d75457fe472a19b0b4d57d66a7fca",
+      "batchExecutor": "0xa06befcb6f1d7b6c566a607d9d5d932f9b267f3470e55940225c6ee9c4c5e6b0",
+      "weth": "0x5706be52f64875fee65a2cec0d80e47a23d8793cbe85d214b48445e2d05f5353",
+      "fundingRouter": "0x6f36c378e272c6324c48f045182bcb54bd8ad654cf9ebd42e8893d52c4cb25dc",
+      "fundingPool": "0x3298b5dd4e6f115074c526a55ad05a36fd73a0034ac22ec6cbaab32cc9c1e8d2"
+    },
+    "poolKey": [
+      "0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168",
+      "0xC8d05BB352eC4A3189cD6862E4575596eeF21bd7",
+      "0",
+      "200",
+      "0xE5e702641Ea86F4ae6cC3cDaeD2B886f976Be044"
+    ],
+    "hookFeeBps": 100,
+    "creatorTaxBps": 300,
+    "poolId": "0x605f1b778f1fb6ef79dd7ed63d629033c1878d69456736ad02085bf273de25be",
+    "router": "0x8876789976decbfcbbbe364623c63652db8c0904",
+    "manager": "0x8366a39cc670b4001a1121b8f6a443a643e40951",
+    "permit2": "0x000000000022d473030f116ddee9f6b43ac78ba3",
+    "batchExecutor": "0x63c0c19a282a1b52b07dd5a65b58948a07dae32b",
+    "weth": "0x0bd7d308f8e1639fab988df18a8011f41eacad73",
+    "fundingRouter": "0xcaf681a66d020601342297493863e78c959e5cb2",
+    "fundingPool": "0x52e65b17fb6e5ba00ed806f37afcd2daa50271ca"
+  },
+  "steps": [
+    {
+      "stage": "launch",
+      "hash": "0x6448a82017e08ac0d6bfa1f0481a400e17b1ef5cd1e62b9720e25b75dc808c39"
+    },
+    {
+      "stage": "bind promo",
+      "hash": "0xbc71ec15da2871d372cb93fc327440be6fc2ec35c078a5c6924a7dd96c665837"
+    },
+    {
+      "stage": "bind venue",
+      "hash": "0x23bdeaccf09be965bd2c7446eb2b0b2cfa9c9330ae1afa900968f4d468ec4f29"
+    },
+    {
+      "stage": "approve quote",
+      "hash": "0xa998a191dc8575eead4d18e6a7fde77a860bc44a84b616081776b1e242651649"
+    },
+    {
+      "stage": "signed type4 curve batch101",
+      "hash": "0x2fd667233b06d075ca76cae8b164011443c948a947d24bf3e16fe5969322c7fd"
+    },
+    {
+      "stage": "approve token",
+      "hash": "0x0776f85924d062efe21640b47b6dbf4dcbc8a8210c0e5f82c527c0a20e651ec1"
+    },
+    {
+      "stage": "sell half",
+      "hash": "0xf15c20c5144bfc174f3b4dde38d997dc8f244450f2d721684183860bfe1e741f"
+    },
+    {
+      "stage": "recipient sweep",
+      "hash": "0x82361c921dea83f4cfb898285549f438eafa535613a0ef42d47bde705d25779f"
+    },
+    {
+      "stage": "manual pull",
+      "action": "pull",
+      "hash": "0x63b334841a52c818ff6de9a64721d7d9ca029a67e65a497da57ab0ca737540fb",
+      "blockNumber": 78075416,
+      "instanceId": "0x4dcf392f9de11fc5645c9c78a228072c59dde82d436655c325ade161dc120d1d"
+    },
+    {
+      "stage": "manual pay-prizes",
+      "action": "pay-prizes",
+      "hash": "0x8aaebac58cc67b1f72f22b97218caef8ec7e22ebc8aaf22a9c1d392f3a5ba849",
+      "blockNumber": 78075417,
+      "instanceId": "0x4dcf392f9de11fc5645c9c78a228072c59dde82d436655c325ade161dc120d1d"
+    },
+    {
+      "stage": "manual pay-ops",
+      "action": "pay-ops",
+      "hash": "0xbef2f9fa9ce9e06c8db68cff7d543798396ce4aec4be343f9e70fecd59493a37",
+      "blockNumber": 78075418,
+      "instanceId": "0x4dcf392f9de11fc5645c9c78a228072c59dde82d436655c325ade161dc120d1d"
+    },
+    {
+      "stage": "manual pay-team",
+      "action": "pay-team",
+      "hash": "0x407265a753081ca33f08c317213911d9fa1819bf3d005e51220d1ef01ab459f2",
+      "blockNumber": 78075419,
+      "instanceId": "0x4dcf392f9de11fc5645c9c78a228072c59dde82d436655c325ade161dc120d1d"
+    },
+    {
+      "stage": "approve graduation fixture",
+      "hash": "0xf7b2174dfea7c88fc412956d2e81f2ad123313d1c847ebc0c83186176cf6facd"
+    },
+    {
+      "stage": "threshold buy (test-only zero minOut)",
+      "hash": "0xdd59fadcbf542c29ea2837a84d64ddbce7807a380ab9486a5b070f963c67ecfb"
+    },
+    {
+      "stage": "finish graduation",
+      "hash": "0x95c7fd15a3034cefc9d3da64facad6d5e648e385b04db449cc4a50a385aa07f2"
+    },
+    {
+      "stage": "approve Permit2 0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168",
+      "hash": "0x8acc6e256eed525741dd3e0d394adf5a470cba8a5b729c1e91c5fc2f02588dc9"
+    },
+    {
+      "stage": "approve Universal Router 0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168",
+      "hash": "0xd0cfa48f2a96870af360175aa37c8cc55dea68fa349c3d8cb185e65932d02d1b"
+    },
+    {
+      "stage": "approve Permit2 0xC8d05BB352eC4A3189cD6862E4575596eeF21bd7",
+      "hash": "0xdd99fe67d12f0c4d2f4f8b817f570fdedc3136e40737635b73ee7a3d70342cf4"
+    },
+    {
+      "stage": "approve Universal Router 0xC8d05BB352eC4A3189cD6862E4575596eeF21bd7",
+      "hash": "0x1a8d6dea522ad30b1ff591c1f222af9393283a17db7568cff83789d6129c703a"
+    },
+    {
+      "stage": "approve v4 quote",
+      "hash": "0x26a3aa050b7cd6f3b2845d4c68482a190cc00aeed755547a3fc1d15ba493c563"
+    },
+    {
+      "stage": "approve v4 token",
+      "hash": "0xeace24b018f1a8dca4ccd7f931c7f5d4431624584daa921eb760d432941e5379"
+    },
+    {
+      "stage": "v4 sell before buy (quote-only fees)",
+      "hash": "0xfbed2d08d270f644666e054fcdafde49b0c41acd1574d6a10a2921bc632ff9d3"
+    },
+    {
+      "stage": "manual sweep",
+      "action": "sweep",
+      "hash": "0xdde279a03142cea8d7c3e7ad6d3a5578098978b4736c2b755a4f8323f6462b68",
+      "blockNumber": 78075431,
+      "instanceId": "0x4dcf392f9de11fc5645c9c78a228072c59dde82d436655c325ade161dc120d1d"
+    },
+    {
+      "stage": "v4 buy101 (test-only minimum)",
+      "hash": "0xf81418d25ce7a633715396c9f172ca8c2d8b563cba957ceaef85b66587ab74d6"
+    },
+    {
+      "stage": "v4 accumulation 60000000",
+      "hash": "0x8547e4cb97c888628c6f707bae2bc2f53812b2dfc1b99dec8d4c6fe9dd837abb"
+    },
+    {
+      "stage": "v4 accumulation 40000000",
+      "hash": "0x92a6d9048d2b22717caa1db73b97f95feb92395172f9f3b6aebdb0067cfa01af"
+    },
+    {
+      "stage": "manual pull",
+      "action": "pull",
+      "hash": "0x75a8d0660c3eb6d06e5eda7b0d6a212e1c23ee4966fc5482396884ef5b65b14d",
+      "blockNumber": 78075435,
+      "instanceId": "0x4dcf392f9de11fc5645c9c78a228072c59dde82d436655c325ade161dc120d1d"
+    },
+    {
+      "stage": "manual pay-prizes",
+      "action": "pay-prizes",
+      "hash": "0xa898453e5d2b7f3f8f247f35a7fd64e50626792b2dd01e50de441eb4d1d73dc0",
+      "blockNumber": 78075436,
+      "instanceId": "0x4dcf392f9de11fc5645c9c78a228072c59dde82d436655c325ade161dc120d1d"
+    },
+    {
+      "stage": "v4 sell half",
+      "hash": "0x4d9b28db07520f315c07954b1502093a0ef42b1575554eed07096ba565624184"
+    },
+    {
+      "stage": "operator conversion (test-only 1 raw minOut)",
+      "hash": "0x87c83d2923540f7d6e24c157ef5dd86a99ab2e24415019779959d689c6e66ca1"
+    },
+    {
+      "stage": "manual pull",
+      "action": "pull",
+      "hash": "0x1a77266faed93e113b77ac4ce0f69cf35c3fc9d6306c8613d37b3c754c9856e8",
+      "blockNumber": 78075439,
+      "instanceId": "0x4dcf392f9de11fc5645c9c78a228072c59dde82d436655c325ade161dc120d1d"
+    },
+    {
+      "stage": "manual pay-prizes",
+      "action": "pay-prizes",
+      "hash": "0xb5c00c539c6d06cd8d87bce2b962ed706c2c4e53ca42499e7b7c8a6618972f85",
+      "blockNumber": 78075440,
+      "instanceId": "0x4dcf392f9de11fc5645c9c78a228072c59dde82d436655c325ade161dc120d1d"
+    },
+    {
+      "stage": "manual pay-ops",
+      "action": "pay-ops",
+      "hash": "0xa7c9fcd5a2ffacf3881bd9be91185b4ba2ea287038ab55a01377234a37650396",
+      "blockNumber": 78075441,
+      "instanceId": "0x4dcf392f9de11fc5645c9c78a228072c59dde82d436655c325ade161dc120d1d"
+    },
+    {
+      "stage": "manual pay-team",
+      "action": "pay-team",
+      "hash": "0x39e24cab04a190332c9cca322af1eb429bc5d728f87e6058bee4e809be70a93e",
+      "blockNumber": 78075442,
+      "instanceId": "0x4dcf392f9de11fc5645c9c78a228072c59dde82d436655c325ade161dc120d1d"
+    }
+  ],
+  "graduation": {
+    "phase": "2",
+    "record": [
+      "0xC8d05BB352eC4A3189cD6862E4575596eeF21bd7",
+      "0x60e626363E1b4BF0D4cD8C7FBFB23296B9Ea4709",
+      "0x443Eb9d0b7d185Bce904D14a98444BD12f00c8C5",
+      "0x847f495155DC7A366474f35A5a6f0aea14B5D0C7",
+      "0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168",
+      "8090000000",
+      "0",
+      "200",
+      "300",
+      false,
+      "2",
+      "0",
+      "0",
+      "0",
+      true
+    ]
+  },
+  "decisions": [
+    {
+      "candidateId": "4663:0x2ff70a9eee4a3b2282952be6a9dfcb660bbc1849f47289f0b36ed3e3da97530a:0x2fd667233b06d075ca76cae8b164011443c948a947d24bf3e16fe5969322c7fd:3",
+      "blockNumber": 78075412,
+      "blockHash": "0x2ff70a9eee4a3b2282952be6a9dfcb660bbc1849f47289f0b36ed3e3da97530a",
+      "transactionHash": "0x2fd667233b06d075ca76cae8b164011443c948a947d24bf3e16fe5969322c7fd",
+      "transactionIndex": 0,
+      "logIndex": 3,
+      "payer": "0x443eb9d0b7d185bce904d14a98444bd12f00c8c5",
+      "recipient": "0x443eb9d0b7d185bce904d14a98444bd12f00c8c5",
+      "grossQuoteRaw": "101000000",
+      "evidenceLogIndexes": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "status": "ELIGIBLE",
+      "reason": "SUPPORTED_SELF_BATCH_BUY",
+      "netQuoteDebitRaw": "101000000",
+      "refundQuoteRaw": "0",
+      "quoteBasis": "wallet-net-debit-v1",
+      "batchRoute": "rh-pons-curve-self-batch-v1",
+      "fundingQuoteRaw": "0",
+      "entriesMinted": "1"
+    },
+    {
+      "candidateId": "4663:0xd4354bfc4a1bb9b3bf16a106d5a2e9fe2f7a2cde44f81aa204835e338fb0a8a7:0xf15c20c5144bfc174f3b4dde38d997dc8f244450f2d721684183860bfe1e741f:2",
+      "blockNumber": 78075414,
+      "blockHash": "0xd4354bfc4a1bb9b3bf16a106d5a2e9fe2f7a2cde44f81aa204835e338fb0a8a7",
+      "transactionHash": "0xf15c20c5144bfc174f3b4dde38d997dc8f244450f2d721684183860bfe1e741f",
+      "transactionIndex": 0,
+      "logIndex": 2,
+      "payer": null,
+      "recipient": null,
+      "grossQuoteRaw": null,
+      "evidenceLogIndexes": [
+        2
+      ],
+      "status": "INELIGIBLE",
+      "reason": "SELL",
+      "entriesMinted": "0"
+    },
+    {
+      "candidateId": "4663:0x94917cf1fd676e9885a1d7ce76bf8032a9ed36f61d85bc352e27961acc5f292a:0xdd59fadcbf542c29ea2837a84d64ddbce7807a380ab9486a5b070f963c67ecfb:4",
+      "blockNumber": 78075421,
+      "blockHash": "0x94917cf1fd676e9885a1d7ce76bf8032a9ed36f61d85bc352e27961acc5f292a",
+      "transactionHash": "0xdd59fadcbf542c29ea2837a84d64ddbce7807a380ab9486a5b070f963c67ecfb",
+      "transactionIndex": 0,
+      "logIndex": 4,
+      "payer": "0x443eb9d0b7d185bce904d14a98444bd12f00c8c5",
+      "recipient": "0x443eb9d0b7d185bce904d14a98444bd12f00c8c5",
+      "grossQuoteRaw": "8377328733",
+      "evidenceLogIndexes": [
+        4,
+        0,
+        1,
+        3,
+        6,
+        9,
+        12,
+        13,
+        2
+      ],
+      "status": "ELIGIBLE",
+      "reason": "SUPPORTED_BUY",
+      "netQuoteDebitRaw": "8377328733",
+      "refundQuoteRaw": "6622671267",
+      "quoteBasis": "wallet-net-debit-v1",
+      "entriesMinted": "83"
+    },
+    {
+      "candidateId": "4663:0x4039982033d8e79dae12d8f25fd2fe3e6d99737ef0650406d57db1e73f94f8de:0xfbed2d08d270f644666e054fcdafde49b0c41acd1574d6a10a2921bc632ff9d3:0",
+      "blockNumber": 78075430,
+      "blockHash": "0x4039982033d8e79dae12d8f25fd2fe3e6d99737ef0650406d57db1e73f94f8de",
+      "transactionHash": "0xfbed2d08d270f644666e054fcdafde49b0c41acd1574d6a10a2921bc632ff9d3",
+      "transactionIndex": 0,
+      "logIndex": 0,
+      "poolId": "0x605f1b778f1fb6ef79dd7ed63d629033c1878d69456736ad02085bf273de25be",
+      "payer": null,
+      "recipient": null,
+      "grossQuoteRaw": null,
+      "evidenceLogIndexes": [
+        0
+      ],
+      "status": "INELIGIBLE",
+      "reason": "SELL",
+      "entriesMinted": "0"
+    },
+    {
+      "candidateId": "4663:0x3637715cfe0a74f7735d1876dfabd195288e3fd911d9628d62029c6e7d9510e8:0xf81418d25ce7a633715396c9f172ca8c2d8b563cba957ceaef85b66587ab74d6:0",
+      "blockNumber": 78075432,
+      "blockHash": "0x3637715cfe0a74f7735d1876dfabd195288e3fd911d9628d62029c6e7d9510e8",
+      "transactionHash": "0xf81418d25ce7a633715396c9f172ca8c2d8b563cba957ceaef85b66587ab74d6",
+      "transactionIndex": 0,
+      "logIndex": 0,
+      "poolId": "0x605f1b778f1fb6ef79dd7ed63d629033c1878d69456736ad02085bf273de25be",
+      "payer": "0x443eb9d0b7d185bce904d14a98444bd12f00c8c5",
+      "recipient": "0x443eb9d0b7d185bce904d14a98444bd12f00c8c5",
+      "grossQuoteRaw": "101000000",
+      "evidenceLogIndexes": [
+        0,
+        1,
+        3,
+        4,
+        2
+      ],
+      "status": "ELIGIBLE",
+      "reason": "SUPPORTED_BUY",
+      "netQuoteDebitRaw": "101000000",
+      "refundQuoteRaw": "0",
+      "poolTokenOutRaw": "2523585372579457971433697",
+      "netTokenOutRaw": "2422641957676279652576351",
+      "hookFeeTokenRaw": "100943414903178318857346",
+      "quoteBasis": "wallet-net-debit-v1",
+      "entriesMinted": "1"
+    },
+    {
+      "candidateId": "4663:0x7d719573f6c0648ce13bbda56807f44c6184063866eda38eb175013b3ba5eb50:0x8547e4cb97c888628c6f707bae2bc2f53812b2dfc1b99dec8d4c6fe9dd837abb:0",
+      "blockNumber": 78075433,
+      "blockHash": "0x7d719573f6c0648ce13bbda56807f44c6184063866eda38eb175013b3ba5eb50",
+      "transactionHash": "0x8547e4cb97c888628c6f707bae2bc2f53812b2dfc1b99dec8d4c6fe9dd837abb",
+      "transactionIndex": 0,
+      "logIndex": 0,
+      "poolId": "0x605f1b778f1fb6ef79dd7ed63d629033c1878d69456736ad02085bf273de25be",
+      "payer": "0x443eb9d0b7d185bce904d14a98444bd12f00c8c5",
+      "recipient": "0x443eb9d0b7d185bce904d14a98444bd12f00c8c5",
+      "grossQuoteRaw": "60000000",
+      "evidenceLogIndexes": [
+        0,
+        1,
+        3,
+        4,
+        2
+      ],
+      "status": "ELIGIBLE",
+      "reason": "SUPPORTED_BUY",
+      "netQuoteDebitRaw": "60000000",
+      "refundQuoteRaw": "0",
+      "poolTokenOutRaw": "1469865961603022527542776",
+      "netTokenOutRaw": "1411071323138901626441066",
+      "hookFeeTokenRaw": "58794638464120901101710",
+      "quoteBasis": "wallet-net-debit-v1",
+      "entriesMinted": "1"
+    },
+    {
+      "candidateId": "4663:0x5545ad2158f1555bf2506ee76b1479a06b191446e2f2f64f78047b8294e4c5cb:0x92a6d9048d2b22717caa1db73b97f95feb92395172f9f3b6aebdb0067cfa01af:0",
+      "blockNumber": 78075434,
+      "blockHash": "0x5545ad2158f1555bf2506ee76b1479a06b191446e2f2f64f78047b8294e4c5cb",
+      "transactionHash": "0x92a6d9048d2b22717caa1db73b97f95feb92395172f9f3b6aebdb0067cfa01af",
+      "transactionIndex": 0,
+      "logIndex": 0,
+      "poolId": "0x605f1b778f1fb6ef79dd7ed63d629033c1878d69456736ad02085bf273de25be",
+      "payer": "0x443eb9d0b7d185bce904d14a98444bd12f00c8c5",
+      "recipient": "0x443eb9d0b7d185bce904d14a98444bd12f00c8c5",
+      "grossQuoteRaw": "40000000",
+      "evidenceLogIndexes": [
+        0,
+        1,
+        3,
+        4,
+        2
+      ],
+      "status": "ELIGIBLE",
+      "reason": "SUPPORTED_BUY",
+      "netQuoteDebitRaw": "40000000",
+      "refundQuoteRaw": "0",
+      "poolTokenOutRaw": "968075234428540341838785",
+      "netTokenOutRaw": "929352225051398728165235",
+      "hookFeeTokenRaw": "38723009377141613673550",
+      "quoteBasis": "wallet-net-debit-v1",
+      "entriesMinted": "0"
+    },
+    {
+      "candidateId": "4663:0x30a07a1fa02784b35f07d5f7f637bf0eea17158bf9bd473055c4c28cd002cacd:0x4d9b28db07520f315c07954b1502093a0ef42b1575554eed07096ba565624184:0",
+      "blockNumber": 78075437,
+      "blockHash": "0x30a07a1fa02784b35f07d5f7f637bf0eea17158bf9bd473055c4c28cd002cacd",
+      "transactionHash": "0x4d9b28db07520f315c07954b1502093a0ef42b1575554eed07096ba565624184",
+      "transactionIndex": 0,
+      "logIndex": 0,
+      "poolId": "0x605f1b778f1fb6ef79dd7ed63d629033c1878d69456736ad02085bf273de25be",
+      "payer": null,
+      "recipient": null,
+      "grossQuoteRaw": null,
+      "evidenceLogIndexes": [
+        0
+      ],
+      "status": "INELIGIBLE",
+      "reason": "SELL",
+      "entriesMinted": "0"
+    },
+    {
+      "candidateId": "4663:0x487a5a9760edb5cf1027fb38f5b5b0c910d38605801bf6c8d2a1e597b0c2e073:0x87c83d2923540f7d6e24c157ef5dd86a99ab2e24415019779959d689c6e66ca1:0",
+      "blockNumber": 78075438,
+      "blockHash": "0x487a5a9760edb5cf1027fb38f5b5b0c910d38605801bf6c8d2a1e597b0c2e073",
+      "transactionHash": "0x87c83d2923540f7d6e24c157ef5dd86a99ab2e24415019779959d689c6e66ca1",
+      "transactionIndex": 0,
+      "logIndex": 0,
+      "poolId": "0x605f1b778f1fb6ef79dd7ed63d629033c1878d69456736ad02085bf273de25be",
+      "payer": null,
+      "recipient": null,
+      "grossQuoteRaw": null,
+      "evidenceLogIndexes": [
+        0
+      ],
+      "status": "INELIGIBLE",
+      "reason": "SELL",
+      "entriesMinted": "0"
+    }
+  ],
+  "combined": {
+    "status": "PONS_COMBINED_INDEX_API_PASSED",
+    "publicSends": false,
+    "eligibleBuys": 5,
+    "balances": {
+      "SHORT": {
+        "mintedTotal": "86",
+        "open": "86",
+        "frozenByDraw": {},
+        "consumedTotal": "0"
+      },
+      "MONTHLY": {
+        "mintedTotal": "86",
+        "open": "86",
+        "frozenByDraw": {},
+        "consumedTotal": "0"
+      },
+      "carryRaw": "79328733",
+      "entryThresholdRaw": "100000000",
+      "quoteDecimals": 6
+    },
+    "api": {
+      "status": "PONS_SAVED_CYCLE_HTTP_PASSED",
+      "publicSends": false,
+      "results": [
+        {
+          "status": "observed",
+          "head": {
+            "number": 78075443,
+            "hash": "0x3c880163852661090389792029c7f3a47ff76a389b768f53e16a4708106ddb82"
+          },
+          "balances": {
+            "SHORT": {
+              "mintedTotal": "86",
+              "open": "86",
+              "frozenByDraw": {},
+              "consumedTotal": "0"
+            },
+            "MONTHLY": {
+              "mintedTotal": "86",
+              "open": "86",
+              "frozenByDraw": {},
+              "consumedTotal": "0"
+            },
+            "carryRaw": "79328733",
+            "entryThresholdRaw": "100000000",
+            "quoteDecimals": 6
+          },
+          "purchases": 5,
+          "rewards": 0
+        },
+        {
+          "status": "observed",
+          "head": {
+            "number": 78075443,
+            "hash": "0x3c880163852661090389792029c7f3a47ff76a389b768f53e16a4708106ddb82"
+          },
+          "balances": {
+            "SHORT": {
+              "mintedTotal": "86",
+              "open": "86",
+              "frozenByDraw": {},
+              "consumedTotal": "0"
+            },
+            "MONTHLY": {
+              "mintedTotal": "86",
+              "open": "86",
+              "frozenByDraw": {},
+              "consumedTotal": "0"
+            },
+            "carryRaw": "79328733",
+            "entryThresholdRaw": "100000000",
+            "quoteDecimals": 6
+          },
+          "purchases": 5,
+          "rewards": 0
+        }
+      ],
+      "limits": [
+        "Saved local-fork cycle, not fresh public chain",
+        "Historical config retained; not new shared-config deployment validation",
+        "No browser or wallet batch admission test"
+      ]
+    },
+    "limits": [
+      "Fresh local fork; synthetic USDG/native funding",
+      "First BUY signed type4 with public test key; remaining transactions locally impersonated",
+      "Local latest mapped to finalized; no public finality proof",
+      "Open ticket lifecycle only; no draws in this run",
+      "v4 direct route only; v4 wallet batches not admitted"
+    ]
+  },
+  "assumptions": [
+    "Local impersonation and synthetic USDG funding only",
+    "LocalPonsCollector prototype and real PromoVault; controller is unused hook address, no draws tested",
+    "ABI from current Pons docs/repository, runtime source equivalence not yet proved",
+    "Direct curve BUY replay plus pinned UR route when --v4; open Short/Monthly accounting, no draw settlement or public admission",
+    "v4 uses pinned live Universal Router + Permit2; minOut=1 is test-only, no production trade protection claim",
+    "Pons sweep operator impersonated ONLY locally to prove conditional conversion; we do not control it on mainnet"
+  ]
+}

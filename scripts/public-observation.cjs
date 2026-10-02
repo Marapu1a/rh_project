@@ -10,6 +10,7 @@ const abi=new Interface([
  'function shortEpochPolicy(uint64) view returns(tuple(tuple(uint32 version,uint32 pNumerator,uint32 pDenominator,uint32 hNumerator,uint32 hDenominator) outcome,uint256[] weights,uint256 minimumUnit,bytes32 hash,uint256 firstBlock))'
 ]);
 async function observePublic({config,manifest,rpc,blockTag,blockHash}){
+ const manifestHash=hash(manifest);if(manifest.schema==='buy-policy-history-v1')manifest=require('./direct-buy.cjs').buyPolicyHistory(manifest).at(Number(BigInt(blockTag)));
  const l=config.lifecycle;
  if(!l?.monthlySource||!l.vault)throw Error('Public observation requires dual controllers');
  for(const [address,digest] of [[manifest.quote,manifest.codeHashes.quote],[l.vault,l.vaultCodeHash],[l.source,l.sourceCodeHash],[l.monthlySource,l.monthlySourceCodeHash]]){
@@ -26,6 +27,6 @@ async function observePublic({config,manifest,rpc,blockTag,blockHash}){
  const policy=await read(short,'shortEpochPolicy',[draining||epoch]);
  const minimumShort=policy.weights.reduce((n,w)=>n+w,0n)*policy.minimumUnit;
  const timing={SHORT:{earliestAt:String(await read(short,'lastShortTerminalAt')+await read(short,'SHORT_INTERVAL')),minimumRaw:String(minimumShort)},MONTHLY:{earliestAt:String(await read(monthly,'lastMonthAt')+await read(monthly,'monthlyInterval')),minimumRaw:String(await read(monthly,'minimumMonthlyBudget'))}};
- return {schema:'promo-public-observation-v1',blockTag,blockHash,manifestHash:hash(manifest),asset:{address:quote.toLowerCase(),decimals:Number(decimals),symbol:'USDG',codeHash:manifest.codeHashes.quote},vault:l.vault.toLowerCase(),reserves,timing};
+ return {schema:'promo-public-observation-v1',blockTag,blockHash,manifestHash,asset:{address:quote.toLowerCase(),decimals:Number(decimals),symbol:'USDG',codeHash:manifest.codeHashes.quote},vault:l.vault.toLowerCase(),reserves,timing};
 }
 module.exports={observePublic,abi};

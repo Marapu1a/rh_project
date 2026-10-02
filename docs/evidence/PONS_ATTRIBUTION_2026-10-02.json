@@ -1,0 +1,696 @@
+{
+  "schema": "pons-attribution-report-v1",
+  "admitted": false,
+  "observations": [
+    {
+      "schema": "pons-attribution-observation-v1",
+      "admitted": false,
+      "eligibility": null,
+      "transactionHash": "0x1261f8ce7cf3c82582a74dd9688002660c5514a1c6c6951c50d8d0e7b478ab31",
+      "transactionSender": "0x9fd81cafe93fa0c457d78ccfeb94cbefe08758f5",
+      "transactionTarget": "0x65050a9b7e5075a2ba5ced7b1b64ee66262c40dc",
+      "selector": "0x4d819a2a",
+      "events": [
+        {
+          "candidateId": "4663:0xed9285ee9b7422a8686eddae0637b8026c50bc64a049a2cb5d3b119364935d79:0x1261f8ce7cf3c82582a74dd9688002660c5514a1c6c6951c50d8d0e7b478ab31:19",
+          "logIndex": "19",
+          "curveCaller": "0x65050a9b7e5075a2ba5ced7b1b64ee66262c40dc",
+          "curveRecipient": "0x9fd81cafe93fa0c457d78ccfeb94cbefe08758f5",
+          "quoteInRaw": "203044008",
+          "tokensOutRaw": "21205787970082944295769646"
+        }
+      ],
+      "transfers": [
+        {
+          "asset": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+          "from": "0x52e65b17fb6e5ba00ed806f37afcd2daa50271ca",
+          "to": "0x65050a9b7e5075a2ba5ced7b1b64ee66262c40dc",
+          "amountRaw": "203044008",
+          "logIndex": "13"
+        },
+        {
+          "asset": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+          "from": "0x65050a9b7e5075a2ba5ced7b1b64ee66262c40dc",
+          "to": "0x50c6c92b55bffe2c345bf60011410061daf74889",
+          "amountRaw": "203044008",
+          "logIndex": "17"
+        },
+        {
+          "asset": "0xa84d0caa63d1a92fd0c5b237ee9bc322e38d1ddf",
+          "from": "0x50c6c92b55bffe2c345bf60011410061daf74889",
+          "to": "0x9fd81cafe93fa0c457d78ccfeb94cbefe08758f5",
+          "amountRaw": "21205787970082944295769646",
+          "logIndex": "18"
+        }
+      ],
+      "assetDeltas": [
+        {
+          "asset": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+          "address": "0x52e65b17fb6e5ba00ed806f37afcd2daa50271ca",
+          "delta": "-203044008"
+        },
+        {
+          "asset": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+          "address": "0x50c6c92b55bffe2c345bf60011410061daf74889",
+          "delta": "203044008"
+        },
+        {
+          "asset": "0xa84d0caa63d1a92fd0c5b237ee9bc322e38d1ddf",
+          "address": "0x50c6c92b55bffe2c345bf60011410061daf74889",
+          "delta": "-21205787970082944295769646"
+        },
+        {
+          "asset": "0xa84d0caa63d1a92fd0c5b237ee9bc322e38d1ddf",
+          "address": "0x9fd81cafe93fa0c457d78ccfeb94cbefe08758f5",
+          "delta": "21205787970082944295769646"
+        }
+      ],
+      "directDecoder": [
+        {
+          "candidateId": "4663:0xed9285ee9b7422a8686eddae0637b8026c50bc64a049a2cb5d3b119364935d79:0x1261f8ce7cf3c82582a74dd9688002660c5514a1c6c6951c50d8d0e7b478ab31:19",
+          "status": "UNSUPPORTED_ROUTE",
+          "reason": "NOT_DIRECT_CURVE_CALL"
+        }
+      ],
+      "limits": [
+        "No wallet ownership or batch classification inferred from transfers",
+        "Whole-transaction deltas are not per-BUY spending",
+        "No runtime, signature, call-boundary or deployment admission"
+      ]
+    },
+    {
+      "schema": "pons-attribution-observation-v1",
+      "admitted": false,
+      "eligibility": null,
+      "transactionHash": "0x7f1e977cd01e84c1bc548f50e78bbddf3ee1fce13ea4d873d0116480763dcef7",
+      "transactionSender": "0x1355375f10f4f44256fbef50c8bbefa75839d706",
+      "transactionTarget": "0x65050a9b7e5075a2ba5ced7b1b64ee66262c40dc",
+      "selector": "0x4d819a2a",
+      "events": [
+        {
+          "candidateId": "4663:0xed9285ee9b7422a8686eddae0637b8026c50bc64a049a2cb5d3b119364935d79:0x7f1e977cd01e84c1bc548f50e78bbddf3ee1fce13ea4d873d0116480763dcef7:8",
+          "logIndex": "8",
+          "curveCaller": "0x65050a9b7e5075a2ba5ced7b1b64ee66262c40dc",
+          "curveRecipient": "0x1355375f10f4f44256fbef50c8bbefa75839d706",
+          "quoteInRaw": "203044287",
+          "tokensOutRaw": "22833451241838944219264706"
+        }
+      ],
+      "transfers": [
+        {
+          "asset": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+          "from": "0x52e65b17fb6e5ba00ed806f37afcd2daa50271ca",
+          "to": "0x65050a9b7e5075a2ba5ced7b1b64ee66262c40dc",
+          "amountRaw": "203044287",
+          "logIndex": "2"
+        },
+        {
+          "asset": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+          "from": "0x65050a9b7e5075a2ba5ced7b1b64ee66262c40dc",
+          "to": "0x50c6c92b55bffe2c345bf60011410061daf74889",
+          "amountRaw": "203044287",
+          "logIndex": "6"
+        },
+        {
+          "asset": "0xa84d0caa63d1a92fd0c5b237ee9bc322e38d1ddf",
+          "from": "0x50c6c92b55bffe2c345bf60011410061daf74889",
+          "to": "0x1355375f10f4f44256fbef50c8bbefa75839d706",
+          "amountRaw": "22833451241838944219264706",
+          "logIndex": "7"
+        }
+      ],
+      "assetDeltas": [
+        {
+          "asset": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+          "address": "0x52e65b17fb6e5ba00ed806f37afcd2daa50271ca",
+          "delta": "-203044287"
+        },
+        {
+          "asset": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+          "address": "0x50c6c92b55bffe2c345bf60011410061daf74889",
+          "delta": "203044287"
+        },
+        {
+          "asset": "0xa84d0caa63d1a92fd0c5b237ee9bc322e38d1ddf",
+          "address": "0x50c6c92b55bffe2c345bf60011410061daf74889",
+          "delta": "-22833451241838944219264706"
+        },
+        {
+          "asset": "0xa84d0caa63d1a92fd0c5b237ee9bc322e38d1ddf",
+          "address": "0x1355375f10f4f44256fbef50c8bbefa75839d706",
+          "delta": "22833451241838944219264706"
+        }
+      ],
+      "directDecoder": [
+        {
+          "candidateId": "4663:0xed9285ee9b7422a8686eddae0637b8026c50bc64a049a2cb5d3b119364935d79:0x7f1e977cd01e84c1bc548f50e78bbddf3ee1fce13ea4d873d0116480763dcef7:8",
+          "status": "UNSUPPORTED_ROUTE",
+          "reason": "NOT_DIRECT_CURVE_CALL"
+        }
+      ],
+      "limits": [
+        "No wallet ownership or batch classification inferred from transfers",
+        "Whole-transaction deltas are not per-BUY spending",
+        "No runtime, signature, call-boundary or deployment admission"
+      ]
+    },
+    {
+      "schema": "pons-attribution-observation-v1",
+      "admitted": false,
+      "eligibility": null,
+      "transactionHash": "0x3a543a219f01a4d9110ee4ddb75445ecd1c99d42113c58b88e0345adb48f9db9",
+      "transactionSender": "0x8b216cc896f32bcabca3649ca918d532f72010ef",
+      "transactionTarget": "0x50c6c92b55bffe2c345bf60011410061daf74889",
+      "selector": "0x59a87bc1",
+      "events": [
+        {
+          "candidateId": "4663:0xb7551dc384dd2c1a8bec084e7fb1cf55a5ec7e42aa290faa4cbaca3a5305dc22:0x3a543a219f01a4d9110ee4ddb75445ecd1c99d42113c58b88e0345adb48f9db9:66",
+          "logIndex": "66",
+          "curveCaller": "0x8b216cc896f32bcabca3649ca918d532f72010ef",
+          "curveRecipient": "0x8b216cc896f32bcabca3649ca918d532f72010ef",
+          "quoteInRaw": "102723285",
+          "tokensOutRaw": "12232628651008077712934881"
+        }
+      ],
+      "transfers": [
+        {
+          "asset": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+          "from": "0x8b216cc896f32bcabca3649ca918d532f72010ef",
+          "to": "0x50c6c92b55bffe2c345bf60011410061daf74889",
+          "amountRaw": "102723285",
+          "logIndex": "64"
+        },
+        {
+          "asset": "0xa84d0caa63d1a92fd0c5b237ee9bc322e38d1ddf",
+          "from": "0x50c6c92b55bffe2c345bf60011410061daf74889",
+          "to": "0x8b216cc896f32bcabca3649ca918d532f72010ef",
+          "amountRaw": "12232628651008077712934881",
+          "logIndex": "65"
+        }
+      ],
+      "assetDeltas": [
+        {
+          "asset": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+          "address": "0x8b216cc896f32bcabca3649ca918d532f72010ef",
+          "delta": "-102723285"
+        },
+        {
+          "asset": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+          "address": "0x50c6c92b55bffe2c345bf60011410061daf74889",
+          "delta": "102723285"
+        },
+        {
+          "asset": "0xa84d0caa63d1a92fd0c5b237ee9bc322e38d1ddf",
+          "address": "0x50c6c92b55bffe2c345bf60011410061daf74889",
+          "delta": "-12232628651008077712934881"
+        },
+        {
+          "asset": "0xa84d0caa63d1a92fd0c5b237ee9bc322e38d1ddf",
+          "address": "0x8b216cc896f32bcabca3649ca918d532f72010ef",
+          "delta": "12232628651008077712934881"
+        }
+      ],
+      "directDecoder": [
+        {
+          "candidateId": "4663:0xb7551dc384dd2c1a8bec084e7fb1cf55a5ec7e42aa290faa4cbaca3a5305dc22:0x3a543a219f01a4d9110ee4ddb75445ecd1c99d42113c58b88e0345adb48f9db9:66",
+          "status": "ELIGIBLE",
+          "reason": "SUPPORTED_BUY"
+        }
+      ],
+      "limits": [
+        "No wallet ownership or batch classification inferred from transfers",
+        "Whole-transaction deltas are not per-BUY spending",
+        "No runtime, signature, call-boundary or deployment admission"
+      ]
+    },
+    {
+      "schema": "pons-attribution-observation-v1",
+      "admitted": false,
+      "eligibility": null,
+      "transactionHash": "0x7f9f97160037bb6fe740142b9ef65d27bb5060db06fc8a211524ec0cd51c4376",
+      "transactionSender": "0x0ec4e45f9ce3020024c0418a74cd31fbc487038f",
+      "transactionTarget": "0xccc88a9d1b4ed6b0eaba998850414b24f1c315be",
+      "selector": "0x0a2b8f36",
+      "events": [
+        {
+          "candidateId": "4663:0x842b2f770b94cea75ee5c5d911466954a23afeffae049d0549ada3ddcfb2124b:0x7f9f97160037bb6fe740142b9ef65d27bb5060db06fc8a211524ec0cd51c4376:61",
+          "logIndex": "61",
+          "curveCaller": "0x6aa80dbbed9ae5ab45fbf61f9644fada3b29326e",
+          "curveRecipient": "0x6aa80dbbed9ae5ab45fbf61f9644fada3b29326e",
+          "quoteInRaw": "49652856",
+          "tokensOutRaw": "6088167959147459689250263"
+        }
+      ],
+      "transfers": [
+        {
+          "asset": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+          "from": "0xf70da97812cb96acdf810712aa562db8dfa3dbef",
+          "to": "0xb92fe925dc43a0ecde6c8b1a2709c170ec4fff4f",
+          "amountRaw": "49652856",
+          "logIndex": "47"
+        },
+        {
+          "asset": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+          "from": "0xb92fe925dc43a0ecde6c8b1a2709c170ec4fff4f",
+          "to": "0x0da5899dbb36bd741885d4228f04cd9c6304fc56",
+          "amountRaw": "49652856",
+          "logIndex": "50"
+        },
+        {
+          "asset": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+          "from": "0x0da5899dbb36bd741885d4228f04cd9c6304fc56",
+          "to": "0x6aa80dbbed9ae5ab45fbf61f9644fada3b29326e",
+          "amountRaw": "49652856",
+          "logIndex": "58"
+        },
+        {
+          "asset": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+          "from": "0x6aa80dbbed9ae5ab45fbf61f9644fada3b29326e",
+          "to": "0x50c6c92b55bffe2c345bf60011410061daf74889",
+          "amountRaw": "49652856",
+          "logIndex": "59"
+        },
+        {
+          "asset": "0xa84d0caa63d1a92fd0c5b237ee9bc322e38d1ddf",
+          "from": "0x50c6c92b55bffe2c345bf60011410061daf74889",
+          "to": "0x6aa80dbbed9ae5ab45fbf61f9644fada3b29326e",
+          "amountRaw": "6088167959147459689250263",
+          "logIndex": "60"
+        },
+        {
+          "asset": "0xa84d0caa63d1a92fd0c5b237ee9bc322e38d1ddf",
+          "from": "0x6aa80dbbed9ae5ab45fbf61f9644fada3b29326e",
+          "to": "0x0da5899dbb36bd741885d4228f04cd9c6304fc56",
+          "amountRaw": "6088167959147459689250263",
+          "logIndex": "62"
+        },
+        {
+          "asset": "0xa84d0caa63d1a92fd0c5b237ee9bc322e38d1ddf",
+          "from": "0x0da5899dbb36bd741885d4228f04cd9c6304fc56",
+          "to": "0xb92fe925dc43a0ecde6c8b1a2709c170ec4fff4f",
+          "amountRaw": "6088167959147459689250263",
+          "logIndex": "64"
+        },
+        {
+          "asset": "0xa84d0caa63d1a92fd0c5b237ee9bc322e38d1ddf",
+          "from": "0xb92fe925dc43a0ecde6c8b1a2709c170ec4fff4f",
+          "to": "0xb62e8a1ceafc429bdf605b5072e16f8bc31d93df",
+          "amountRaw": "6088167959147459689250263",
+          "logIndex": "67"
+        }
+      ],
+      "assetDeltas": [
+        {
+          "asset": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+          "address": "0xf70da97812cb96acdf810712aa562db8dfa3dbef",
+          "delta": "-49652856"
+        },
+        {
+          "asset": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+          "address": "0x50c6c92b55bffe2c345bf60011410061daf74889",
+          "delta": "49652856"
+        },
+        {
+          "asset": "0xa84d0caa63d1a92fd0c5b237ee9bc322e38d1ddf",
+          "address": "0x50c6c92b55bffe2c345bf60011410061daf74889",
+          "delta": "-6088167959147459689250263"
+        },
+        {
+          "asset": "0xa84d0caa63d1a92fd0c5b237ee9bc322e38d1ddf",
+          "address": "0xb62e8a1ceafc429bdf605b5072e16f8bc31d93df",
+          "delta": "6088167959147459689250263"
+        }
+      ],
+      "directDecoder": [
+        {
+          "candidateId": "4663:0x842b2f770b94cea75ee5c5d911466954a23afeffae049d0549ada3ddcfb2124b:0x7f9f97160037bb6fe740142b9ef65d27bb5060db06fc8a211524ec0cd51c4376:61",
+          "status": "UNSUPPORTED_ROUTE",
+          "reason": "NOT_DIRECT_CURVE_CALL"
+        }
+      ],
+      "limits": [
+        "No wallet ownership or batch classification inferred from transfers",
+        "Whole-transaction deltas are not per-BUY spending",
+        "No runtime, signature, call-boundary or deployment admission"
+      ]
+    },
+    {
+      "schema": "pons-attribution-observation-v1",
+      "admitted": false,
+      "eligibility": null,
+      "transactionHash": "0x35a4b322394999e2664b6390c5c970cc5f61648f5fd6047030192f22e5aba5da",
+      "transactionSender": "0x47f9c2838c340434aa4c7263099a4c868f347ba0",
+      "transactionTarget": "0xfd081c0c1dfed243cd81ad3c337a17fd99a050cf",
+      "selector": "0x97c26e7a",
+      "events": [
+        {
+          "candidateId": "4663:0xbd78f9a88c21fa20f57d1d969c7769b6287e4f849705959967cd289ebea4e1f8:0x35a4b322394999e2664b6390c5c970cc5f61648f5fd6047030192f22e5aba5da:44",
+          "logIndex": "44",
+          "curveCaller": "0xfd081c0c1dfed243cd81ad3c337a17fd99a050cf",
+          "curveRecipient": "0xfd081c0c1dfed243cd81ad3c337a17fd99a050cf",
+          "quoteInRaw": "75188569",
+          "tokensOutRaw": "9446535379874987012615781"
+        }
+      ],
+      "transfers": [
+        {
+          "asset": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+          "from": "0x47f9c2838c340434aa4c7263099a4c868f347ba0",
+          "to": "0xfd081c0c1dfed243cd81ad3c337a17fd99a050cf",
+          "amountRaw": "75188569",
+          "logIndex": "40"
+        },
+        {
+          "asset": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+          "from": "0xfd081c0c1dfed243cd81ad3c337a17fd99a050cf",
+          "to": "0x50c6c92b55bffe2c345bf60011410061daf74889",
+          "amountRaw": "75188569",
+          "logIndex": "42"
+        },
+        {
+          "asset": "0xa84d0caa63d1a92fd0c5b237ee9bc322e38d1ddf",
+          "from": "0x50c6c92b55bffe2c345bf60011410061daf74889",
+          "to": "0xfd081c0c1dfed243cd81ad3c337a17fd99a050cf",
+          "amountRaw": "9446535379874987012615781",
+          "logIndex": "43"
+        },
+        {
+          "asset": "0xa84d0caa63d1a92fd0c5b237ee9bc322e38d1ddf",
+          "from": "0xfd081c0c1dfed243cd81ad3c337a17fd99a050cf",
+          "to": "0x47f9c2838c340434aa4c7263099a4c868f347ba0",
+          "amountRaw": "9446535379874987012615781",
+          "logIndex": "45"
+        }
+      ],
+      "assetDeltas": [
+        {
+          "asset": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+          "address": "0x47f9c2838c340434aa4c7263099a4c868f347ba0",
+          "delta": "-75188569"
+        },
+        {
+          "asset": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+          "address": "0x50c6c92b55bffe2c345bf60011410061daf74889",
+          "delta": "75188569"
+        },
+        {
+          "asset": "0xa84d0caa63d1a92fd0c5b237ee9bc322e38d1ddf",
+          "address": "0x50c6c92b55bffe2c345bf60011410061daf74889",
+          "delta": "-9446535379874987012615781"
+        },
+        {
+          "asset": "0xa84d0caa63d1a92fd0c5b237ee9bc322e38d1ddf",
+          "address": "0x47f9c2838c340434aa4c7263099a4c868f347ba0",
+          "delta": "9446535379874987012615781"
+        }
+      ],
+      "directDecoder": [
+        {
+          "candidateId": "4663:0xbd78f9a88c21fa20f57d1d969c7769b6287e4f849705959967cd289ebea4e1f8:0x35a4b322394999e2664b6390c5c970cc5f61648f5fd6047030192f22e5aba5da:44",
+          "status": "UNSUPPORTED_ROUTE",
+          "reason": "NOT_DIRECT_CURVE_CALL"
+        }
+      ],
+      "limits": [
+        "No wallet ownership or batch classification inferred from transfers",
+        "Whole-transaction deltas are not per-BUY spending",
+        "No runtime, signature, call-boundary or deployment admission"
+      ]
+    },
+    {
+      "schema": "pons-attribution-observation-v1",
+      "admitted": false,
+      "eligibility": null,
+      "transactionHash": "0xb3d3e92d6134e5ff43574c11bfa8ccfc6374933a575ca09a6e7d6ea7a448ec09",
+      "transactionSender": "0x2971ca5977df21740eca9fd44eabead075201435",
+      "transactionTarget": "0xf2251d75c172990385a03940640dac089faf0286",
+      "selector": "0x08c1284c",
+      "events": [
+        {
+          "candidateId": "4663:0xa7df9e14d37636aba2f5d77ea1283fb706cf63208f85cd6ffc51c343f0aabc5e:0xb3d3e92d6134e5ff43574c11bfa8ccfc6374933a575ca09a6e7d6ea7a448ec09:7",
+          "logIndex": "7",
+          "curveCaller": "0xf2251d75c172990385a03940640dac089faf0286",
+          "curveRecipient": "0x2971ca5977df21740eca9fd44eabead075201435",
+          "quoteInRaw": "54180414",
+          "tokensOutRaw": "6982923083167524285394757"
+        }
+      ],
+      "transfers": [
+        {
+          "asset": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+          "from": "0x9b050cb1f265094b0977160a2bd7da8c9e529c3c",
+          "to": "0xf2251d75c172990385a03940640dac089faf0286",
+          "amountRaw": "54180414",
+          "logIndex": "1"
+        },
+        {
+          "asset": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+          "from": "0xf2251d75c172990385a03940640dac089faf0286",
+          "to": "0x50c6c92b55bffe2c345bf60011410061daf74889",
+          "amountRaw": "54180414",
+          "logIndex": "5"
+        },
+        {
+          "asset": "0xa84d0caa63d1a92fd0c5b237ee9bc322e38d1ddf",
+          "from": "0x50c6c92b55bffe2c345bf60011410061daf74889",
+          "to": "0x2971ca5977df21740eca9fd44eabead075201435",
+          "amountRaw": "6982923083167524285394757",
+          "logIndex": "6"
+        }
+      ],
+      "assetDeltas": [
+        {
+          "asset": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+          "address": "0x9b050cb1f265094b0977160a2bd7da8c9e529c3c",
+          "delta": "-54180414"
+        },
+        {
+          "asset": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+          "address": "0x50c6c92b55bffe2c345bf60011410061daf74889",
+          "delta": "54180414"
+        },
+        {
+          "asset": "0xa84d0caa63d1a92fd0c5b237ee9bc322e38d1ddf",
+          "address": "0x50c6c92b55bffe2c345bf60011410061daf74889",
+          "delta": "-6982923083167524285394757"
+        },
+        {
+          "asset": "0xa84d0caa63d1a92fd0c5b237ee9bc322e38d1ddf",
+          "address": "0x2971ca5977df21740eca9fd44eabead075201435",
+          "delta": "6982923083167524285394757"
+        }
+      ],
+      "directDecoder": [
+        {
+          "candidateId": "4663:0xa7df9e14d37636aba2f5d77ea1283fb706cf63208f85cd6ffc51c343f0aabc5e:0xb3d3e92d6134e5ff43574c11bfa8ccfc6374933a575ca09a6e7d6ea7a448ec09:7",
+          "status": "UNSUPPORTED_ROUTE",
+          "reason": "NOT_DIRECT_CURVE_CALL"
+        }
+      ],
+      "limits": [
+        "No wallet ownership or batch classification inferred from transfers",
+        "Whole-transaction deltas are not per-BUY spending",
+        "No runtime, signature, call-boundary or deployment admission"
+      ]
+    },
+    {
+      "schema": "pons-attribution-observation-v1",
+      "admitted": false,
+      "eligibility": null,
+      "transactionHash": "0x6394b59e2c3792e4265ba3360f9c85b013faa7214d1c0ed325206191e4bb59ed",
+      "transactionSender": "0x6802233d74a9e508d1a46cbcb46ccf801585bd3a",
+      "transactionTarget": "0x65050a9b7e5075a2ba5ced7b1b64ee66262c40dc",
+      "selector": "0x4d819a2a",
+      "events": [
+        {
+          "candidateId": "4663:0x2f775f71ad385e858ec87f305d1904cd66a8d862409267bc1bb7f7cec95ebd3f:0x6394b59e2c3792e4265ba3360f9c85b013faa7214d1c0ed325206191e4bb59ed:8",
+          "logIndex": "8",
+          "curveCaller": "0x65050a9b7e5075a2ba5ced7b1b64ee66262c40dc",
+          "curveRecipient": "0x6802233d74a9e508d1a46cbcb46ccf801585bd3a",
+          "quoteInRaw": "10841042",
+          "tokensOutRaw": "1384089386030014863772751"
+        }
+      ],
+      "transfers": [
+        {
+          "asset": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+          "from": "0x52e65b17fb6e5ba00ed806f37afcd2daa50271ca",
+          "to": "0x65050a9b7e5075a2ba5ced7b1b64ee66262c40dc",
+          "amountRaw": "10841042",
+          "logIndex": "2"
+        },
+        {
+          "asset": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+          "from": "0x65050a9b7e5075a2ba5ced7b1b64ee66262c40dc",
+          "to": "0x50c6c92b55bffe2c345bf60011410061daf74889",
+          "amountRaw": "10841042",
+          "logIndex": "6"
+        },
+        {
+          "asset": "0xa84d0caa63d1a92fd0c5b237ee9bc322e38d1ddf",
+          "from": "0x50c6c92b55bffe2c345bf60011410061daf74889",
+          "to": "0x6802233d74a9e508d1a46cbcb46ccf801585bd3a",
+          "amountRaw": "1384089386030014863772751",
+          "logIndex": "7"
+        }
+      ],
+      "assetDeltas": [
+        {
+          "asset": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+          "address": "0x52e65b17fb6e5ba00ed806f37afcd2daa50271ca",
+          "delta": "-10841042"
+        },
+        {
+          "asset": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+          "address": "0x50c6c92b55bffe2c345bf60011410061daf74889",
+          "delta": "10841042"
+        },
+        {
+          "asset": "0xa84d0caa63d1a92fd0c5b237ee9bc322e38d1ddf",
+          "address": "0x50c6c92b55bffe2c345bf60011410061daf74889",
+          "delta": "-1384089386030014863772751"
+        },
+        {
+          "asset": "0xa84d0caa63d1a92fd0c5b237ee9bc322e38d1ddf",
+          "address": "0x6802233d74a9e508d1a46cbcb46ccf801585bd3a",
+          "delta": "1384089386030014863772751"
+        }
+      ],
+      "directDecoder": [
+        {
+          "candidateId": "4663:0x2f775f71ad385e858ec87f305d1904cd66a8d862409267bc1bb7f7cec95ebd3f:0x6394b59e2c3792e4265ba3360f9c85b013faa7214d1c0ed325206191e4bb59ed:8",
+          "status": "UNSUPPORTED_ROUTE",
+          "reason": "NOT_DIRECT_CURVE_CALL"
+        }
+      ],
+      "limits": [
+        "No wallet ownership or batch classification inferred from transfers",
+        "Whole-transaction deltas are not per-BUY spending",
+        "No runtime, signature, call-boundary or deployment admission"
+      ]
+    },
+    {
+      "schema": "pons-attribution-observation-v1",
+      "admitted": false,
+      "eligibility": null,
+      "transactionHash": "0xf144c2e547c4f6f516bf2ab9a317bad7b1950a81eff7a077506f69e99b8c6267",
+      "transactionSender": "0x56c262027e0de4aea31d2489529cb25d23e58a8b",
+      "transactionTarget": "0xccc88a9d1b4ed6b0eaba998850414b24f1c315be",
+      "selector": "0x0a2b8f36",
+      "events": [
+        {
+          "candidateId": "4663:0x9740823cb28a68576b57319b34084ebbf782a5e229c84d8e56131b24c9df755d:0xf144c2e547c4f6f516bf2ab9a317bad7b1950a81eff7a077506f69e99b8c6267:27",
+          "logIndex": "27",
+          "curveCaller": "0xc04ed89ad96130283fddd646575d6a48440c299f",
+          "curveRecipient": "0xc04ed89ad96130283fddd646575d6a48440c299f",
+          "quoteInRaw": "216944095",
+          "tokensOutRaw": "29001721705212726588347248"
+        }
+      ],
+      "transfers": [
+        {
+          "asset": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+          "from": "0xf70da97812cb96acdf810712aa562db8dfa3dbef",
+          "to": "0xb92fe925dc43a0ecde6c8b1a2709c170ec4fff4f",
+          "amountRaw": "217270000",
+          "logIndex": "10"
+        },
+        {
+          "asset": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+          "from": "0xb92fe925dc43a0ecde6c8b1a2709c170ec4fff4f",
+          "to": "0xb92fe925dc43a0ecde6c8b1a2709c170ec4fff4f",
+          "amountRaw": "217270000",
+          "logIndex": "13"
+        },
+        {
+          "asset": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+          "from": "0xb92fe925dc43a0ecde6c8b1a2709c170ec4fff4f",
+          "to": "0xd76f85e7e724f656ff26ba8ed6ae5923a6f934fc",
+          "amountRaw": "217270000",
+          "logIndex": "16"
+        },
+        {
+          "asset": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+          "from": "0xd76f85e7e724f656ff26ba8ed6ae5923a6f934fc",
+          "to": "0xc04ed89ad96130283fddd646575d6a48440c299f",
+          "amountRaw": "325905",
+          "logIndex": "21"
+        },
+        {
+          "asset": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+          "from": "0xc04ed89ad96130283fddd646575d6a48440c299f",
+          "to": "0x7e7df6f60581f13216c5e6fcfc5643b9f4261750",
+          "amountRaw": "325905",
+          "logIndex": "22"
+        },
+        {
+          "asset": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+          "from": "0xd76f85e7e724f656ff26ba8ed6ae5923a6f934fc",
+          "to": "0xc04ed89ad96130283fddd646575d6a48440c299f",
+          "amountRaw": "216944095",
+          "logIndex": "23"
+        },
+        {
+          "asset": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+          "from": "0xc04ed89ad96130283fddd646575d6a48440c299f",
+          "to": "0x50c6c92b55bffe2c345bf60011410061daf74889",
+          "amountRaw": "216944095",
+          "logIndex": "25"
+        },
+        {
+          "asset": "0xa84d0caa63d1a92fd0c5b237ee9bc322e38d1ddf",
+          "from": "0x50c6c92b55bffe2c345bf60011410061daf74889",
+          "to": "0xc04ed89ad96130283fddd646575d6a48440c299f",
+          "amountRaw": "29001721705212726588347248",
+          "logIndex": "26"
+        },
+        {
+          "asset": "0xa84d0caa63d1a92fd0c5b237ee9bc322e38d1ddf",
+          "from": "0xc04ed89ad96130283fddd646575d6a48440c299f",
+          "to": "0xd76f85e7e724f656ff26ba8ed6ae5923a6f934fc",
+          "amountRaw": "29001721705212726588347248",
+          "logIndex": "29"
+        }
+      ],
+      "assetDeltas": [
+        {
+          "asset": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+          "address": "0xf70da97812cb96acdf810712aa562db8dfa3dbef",
+          "delta": "-217270000"
+        },
+        {
+          "asset": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+          "address": "0x7e7df6f60581f13216c5e6fcfc5643b9f4261750",
+          "delta": "325905"
+        },
+        {
+          "asset": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+          "address": "0x50c6c92b55bffe2c345bf60011410061daf74889",
+          "delta": "216944095"
+        },
+        {
+          "asset": "0xa84d0caa63d1a92fd0c5b237ee9bc322e38d1ddf",
+          "address": "0x50c6c92b55bffe2c345bf60011410061daf74889",
+          "delta": "-29001721705212726588347248"
+        },
+        {
+          "asset": "0xa84d0caa63d1a92fd0c5b237ee9bc322e38d1ddf",
+          "address": "0xd76f85e7e724f656ff26ba8ed6ae5923a6f934fc",
+          "delta": "29001721705212726588347248"
+        }
+      ],
+      "directDecoder": [
+        {
+          "candidateId": "4663:0x9740823cb28a68576b57319b34084ebbf782a5e229c84d8e56131b24c9df755d:0xf144c2e547c4f6f516bf2ab9a317bad7b1950a81eff7a077506f69e99b8c6267:27",
+          "status": "UNSUPPORTED_ROUTE",
+          "reason": "NOT_DIRECT_CURVE_CALL"
+        }
+      ],
+      "limits": [
+        "No wallet ownership or batch classification inferred from transfers",
+        "Whole-transaction deltas are not per-BUY spending",
+        "No runtime, signature, call-boundary or deployment admission"
+      ]
+    }
+  ]
+}

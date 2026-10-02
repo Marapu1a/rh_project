@@ -1,0 +1,21 @@
+const {test}=require('node:test');
+const assert=require('node:assert/strict');
+const fixture=require('../docs/evidence/PONS_METAMASK_MODEL_2026-10-02.json');
+const {inspect}=require('../scripts/pons-channel-attribution.cjs');
+const manifest=require('../docs/evidence/PONS_CHANNEL_RECEIPTS_2026-10-02.json').manifest;
+for(const row of fixture.fork.steps)test(`${row.label}: mined runtime-model batch remains unsupported by direct adapter`,()=>{
+  const {tx,receipt}=row.steps[0];
+  const account=fixture.capture.out.account.toLowerCase();
+  assert.equal(receipt.status,'0x1');
+  assert.equal(tx.to.toLowerCase(),account);
+  const observation=inspect({...manifest,curve:fixture.capture.out.details.curve,token:fixture.capture.out.details.token},tx,receipt);
+  assert.equal(observation.events.length,1);
+  assert.equal(observation.events[0].curveCaller,account);
+  assert.equal(observation.events[0].curveRecipient,account);
+  assert.equal(observation.events[0].quoteInRaw,row.label==='USDG'?'101000000':fixture.capture.out.eth.funding.minOut);
+  assert.equal(observation.directDecoder[0].reason,'NOT_DIRECT_CURVE_CALL');
+  assert.equal(observation.admitted,false);
+  assert.equal(observation.eligibility,null);
+  const incoming=observation.transfers.filter(t=>t.asset===fixture.capture.out.details.quoteAsset.address.toLowerCase()&&t.to.toLowerCase()===account);
+  if(row.label==='ETH')assert(incoming.length>0,'Funding receipt must contain incoming quote');
+});
