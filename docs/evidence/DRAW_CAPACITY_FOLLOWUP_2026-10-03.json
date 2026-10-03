@@ -1,0 +1,485 @@
+{
+  "schema": "draw-capacity-followup-v1",
+  "baseHead": "702f22c34c32da4c319ce4ad6fa7886ac5bbeb20",
+  "node": "v24.21.0",
+  "solc": "0.8.37+commit.f401782d.Emscripten.clang",
+  "runs": [
+    {
+      "schema": "draw-capacity-v1",
+      "status": "PASSED",
+      "n": 50000,
+      "startedAt": "2026-10-03T07:59:42.470Z",
+      "scope": "LocalShortController/LocalMonthlyController, Cancun local EVM, synthetic attempts, mock RNG and USDG; no public-network timing, fee or admission qualification",
+      "shortRules": {
+        "version": 1,
+        "pNumerator": 2,
+        "pDenominator": 5,
+        "hNumerator": 1,
+        "hDenominator": 1
+      },
+      "monthlyRules": {
+        "version": 2,
+        "pNumerator": 3,
+        "pDenominator": 4,
+        "hNumerator": 1,
+        "hDenominator": 1
+      },
+      "weights": [
+        7,
+        5,
+        4,
+        3,
+        2,
+        2,
+        1,
+        1,
+        1,
+        1
+      ],
+      "results": [
+        {
+          "kind": "SHORT",
+          "resultHash": "0xc59f753cc4b62434e0711bd9f26b1f903c625588302cc2cf4a0b643b5a8abf80",
+          "winners": 10,
+          "awarded": "999",
+          "terminal": true
+        },
+        {
+          "kind": "MONTHLY",
+          "resultHash": "0x8151e12fb729dfd8116b6ba2cfd93e5b82e5095ceabd651fe199d149a9f79968",
+          "winners": 1,
+          "awarded": "1000",
+          "terminal": true
+        }
+      ],
+      "attempts": "525000",
+      "chunks": 782,
+      "runtimeHashes": {
+        "short": "0xe368df6872096a2ce29b4ae46632adc229f7cf5eb5002448c9502be87c544ba9",
+        "monthly": "0x9a7971ea45675bbfe5f35b24c391c17911cce9ba3baa95d6e840757c2abded34",
+        "vault": "0xf5b3f4b5deda6ca6cd2bb7d91e14f112359ed411f4250d198f2e2f820bd14497"
+      },
+      "seed": "0xcb3d84df26224c4d0b43f31d69d4f50737de206efa912833b43a1ae13a14d3d5",
+      "actions": {
+        "SHORT.begin": {
+          "count": 1,
+          "totalGas": "654934",
+          "maxGas": "654934",
+          "maxCalldataBytes": 356
+        },
+        "SHORT.publish": {
+          "count": 782,
+          "totalGas": "288055623",
+          "maxGas": "436169",
+          "maxCalldataBytes": 6244
+        },
+        "MONTHLY.beginMonth": {
+          "count": 1,
+          "totalGas": "295642",
+          "maxGas": "295642",
+          "maxCalldataBytes": 292
+        },
+        "MONTHLY.publishMonth": {
+          "count": 782,
+          "totalGas": "369890090",
+          "maxGas": "557990",
+          "maxCalldataBytes": 6244
+        },
+        "SHORT.seal": {
+          "count": 1,
+          "totalGas": "498520",
+          "maxGas": "498520",
+          "maxCalldataBytes": 36
+        },
+        "MONTHLY.sealMonth": {
+          "count": 1,
+          "totalGas": "466986",
+          "maxGas": "466986",
+          "maxCalldataBytes": 36
+        },
+        "SHORT.deliver": {
+          "count": 1,
+          "totalGas": "87784",
+          "maxGas": "87784",
+          "maxCalldataBytes": 68
+        },
+        "MONTHLY.deliver": {
+          "count": 1,
+          "totalGas": "87804",
+          "maxGas": "87804",
+          "maxCalldataBytes": 68
+        },
+        "SHORT.processShort": {
+          "count": 782,
+          "totalGas": "391847522",
+          "maxGas": "957274",
+          "maxCalldataBytes": 6276
+        },
+        "MONTHLY.processMonth": {
+          "count": 782,
+          "totalGas": "172049138",
+          "maxGas": "288308",
+          "maxCalldataBytes": 6276
+        },
+        "SHORT.finishShort": {
+          "count": 1,
+          "totalGas": "583499",
+          "maxGas": "583499",
+          "maxCalldataBytes": 36
+        },
+        "SHORT.claim": {
+          "count": 10,
+          "totalGas": "891440",
+          "maxGas": "105014",
+          "maxCalldataBytes": 68
+        },
+        "MONTHLY.finishMonth": {
+          "count": 1,
+          "totalGas": "246288",
+          "maxGas": "246288",
+          "maxCalldataBytes": 36
+        },
+        "MONTHLY.claim": {
+          "count": 1,
+          "totalGas": "100214",
+          "maxGas": "100214",
+          "maxCalldataBytes": 68
+        }
+      },
+      "finishedAt": "2026-10-03T08:04:10.953Z",
+      "rawReport": ".local/logs/draw-capacity/50000-JT7LeT/report.json",
+      "rawSha256": "0b6bc0b4447eac398be376fe6202a43816b5027d662bfe7b215a2ee2e0093c4f",
+      "totalTransactions": 3147,
+      "totalGas": "1225755484"
+    },
+    {
+      "schema": "draw-capacity-v1",
+      "status": "PASSED",
+      "n": 100000,
+      "startedAt": "2026-10-03T08:04:21.446Z",
+      "scope": "LocalShortController/LocalMonthlyController, Cancun local EVM, synthetic attempts, mock RNG and USDG; no public-network timing, fee or admission qualification",
+      "shortRules": {
+        "version": 1,
+        "pNumerator": 2,
+        "pDenominator": 5,
+        "hNumerator": 1,
+        "hDenominator": 1
+      },
+      "monthlyRules": {
+        "version": 2,
+        "pNumerator": 3,
+        "pDenominator": 4,
+        "hNumerator": 1,
+        "hDenominator": 1
+      },
+      "weights": [
+        7,
+        5,
+        4,
+        3,
+        2,
+        2,
+        1,
+        1,
+        1,
+        1
+      ],
+      "results": [
+        {
+          "kind": "SHORT",
+          "resultHash": "0x82608974402344ed87bbcb98250d78ad09708f9c9579c2ee034ef00fa0c32765",
+          "winners": 10,
+          "awarded": "999",
+          "terminal": true
+        },
+        {
+          "kind": "MONTHLY",
+          "resultHash": "0x8606c756c0794bc8b06facebbc3991ade7e8e0fc126bf0ac38ba44a3b25c656c",
+          "winners": 0,
+          "awarded": "0",
+          "terminal": true
+        }
+      ],
+      "attempts": "1050000",
+      "chunks": 1563,
+      "runtimeHashes": {
+        "short": "0x20a49761d1991d877a4c63dba34e6b307c71d0f09e75c884d47bd093dbeb3cc0",
+        "monthly": "0x34b2018f2ff2d6ac0d8170ea63d13c125ffa4562ff992fce65f1541a5a9c37f9",
+        "vault": "0xf5b3f4b5deda6ca6cd2bb7d91e14f112359ed411f4250d198f2e2f820bd14497"
+      },
+      "seed": "0xcb3d84df26224c4d0b43f31d69d4f50737de206efa912833b43a1ae13a14d3d5",
+      "actions": {
+        "SHORT.begin": {
+          "count": 1,
+          "totalGas": "654934",
+          "maxGas": "654934",
+          "maxCalldataBytes": 356
+        },
+        "SHORT.publish": {
+          "count": 1563,
+          "totalGas": "576363073",
+          "maxGas": "436169",
+          "maxCalldataBytes": 6244
+        },
+        "MONTHLY.beginMonth": {
+          "count": 1,
+          "totalGas": "295654",
+          "maxGas": "295654",
+          "maxCalldataBytes": 292
+        },
+        "MONTHLY.publishMonth": {
+          "count": 1563,
+          "totalGas": "740008689",
+          "maxGas": "557990",
+          "maxCalldataBytes": 6244
+        },
+        "SHORT.seal": {
+          "count": 1,
+          "totalGas": "498520",
+          "maxGas": "498520",
+          "maxCalldataBytes": 36
+        },
+        "MONTHLY.sealMonth": {
+          "count": 1,
+          "totalGas": "466986",
+          "maxGas": "466986",
+          "maxCalldataBytes": 36
+        },
+        "SHORT.deliver": {
+          "count": 1,
+          "totalGas": "87784",
+          "maxGas": "87784",
+          "maxCalldataBytes": 68
+        },
+        "MONTHLY.deliver": {
+          "count": 1,
+          "totalGas": "87804",
+          "maxGas": "87804",
+          "maxCalldataBytes": 68
+        },
+        "SHORT.processShort": {
+          "count": 1563,
+          "totalGas": "781397214",
+          "maxGas": "949591",
+          "maxCalldataBytes": 6276
+        },
+        "MONTHLY.processMonth": {
+          "count": 1563,
+          "totalGas": "327868950",
+          "maxGas": "260033",
+          "maxCalldataBytes": 6276
+        },
+        "SHORT.finishShort": {
+          "count": 1,
+          "totalGas": "593051",
+          "maxGas": "593051",
+          "maxCalldataBytes": 36
+        },
+        "SHORT.claim": {
+          "count": 10,
+          "totalGas": "891464",
+          "maxGas": "105026",
+          "maxCalldataBytes": 68
+        },
+        "MONTHLY.finishMonth": {
+          "count": 1,
+          "totalGas": "180272",
+          "maxGas": "180272",
+          "maxCalldataBytes": 36
+        }
+      },
+      "finishedAt": "2026-10-03T08:12:47.547Z",
+      "rawReport": ".local/logs/draw-capacity/100000-EEEQ8T/report.json",
+      "rawSha256": "1e1208edd5a606624ecd6c5c8502c6b5d3c51d383c3962120532ffc9376a422e",
+      "totalTransactions": 6270,
+      "totalGas": "2429394395"
+    },
+    {
+      "schema": "draw-worker-probe-v1",
+      "n": 1000,
+      "status": "PASSED",
+      "steps": [
+        {
+          "kind": "SHORT",
+          "pass": 0,
+          "ms": 3141.9570999999996,
+          "counts": {
+            "getTransaction": 33,
+            "getBlock": 3,
+            "getLogs": 2,
+            "call": 89,
+            "getCode": 7
+          },
+          "nextChunk": "1"
+        },
+        {
+          "kind": "MONTHLY",
+          "pass": 0,
+          "ms": 1934.438000000002,
+          "counts": {
+            "getTransaction": 18,
+            "getBlock": 2,
+            "getLogs": 1,
+            "call": 63,
+            "getCode": 6
+          },
+          "nextChunk": "1"
+        },
+        {
+          "kind": "SHORT",
+          "pass": 1,
+          "ms": 3106.2569000000003,
+          "counts": {
+            "getTransaction": 33,
+            "getBlock": 3,
+            "getLogs": 2,
+            "call": 89,
+            "getCode": 7
+          },
+          "nextChunk": "2"
+        },
+        {
+          "kind": "MONTHLY",
+          "pass": 1,
+          "ms": 1966.4848999999958,
+          "counts": {
+            "getTransaction": 18,
+            "getBlock": 2,
+            "getLogs": 1,
+            "call": 63,
+            "getCode": 6
+          },
+          "nextChunk": "2"
+        }
+      ],
+      "startedAt": "2026-10-03T08:13:04.938Z",
+      "chunks": 16,
+      "scope": "Two actual executor steps per kind; synthetic admitted dataset, no BUY proof, mock RNG, no Pons coordinator or restart/crash throughput claim. Draws intentionally unfinished on disposable in-process chain.",
+      "finishedAt": "2026-10-03T08:13:46.317Z",
+      "rawReport": ".local/logs/draw-worker/1000-mReUTS/report.json",
+      "rawSha256": "6cb7a704c076d7216dade812a9476639f2a861eb79bfb5420d5484734b6ac832"
+    },
+    {
+      "schema": "draw-worker-probe-v1",
+      "n": 10000,
+      "status": "PASSED",
+      "steps": [
+        {
+          "kind": "SHORT",
+          "pass": 0,
+          "ms": 18431.091700000004,
+          "counts": {
+            "getTransaction": 315,
+            "getBlock": 3,
+            "getLogs": 2,
+            "call": 371,
+            "getCode": 7
+          },
+          "nextChunk": "1"
+        },
+        {
+          "kind": "MONTHLY",
+          "pass": 0,
+          "ms": 9919.037599999996,
+          "counts": {
+            "getTransaction": 159,
+            "getBlock": 2,
+            "getLogs": 1,
+            "call": 204,
+            "getCode": 6
+          },
+          "nextChunk": "1"
+        },
+        {
+          "kind": "SHORT",
+          "pass": 1,
+          "ms": 18855.16919999999,
+          "counts": {
+            "getTransaction": 315,
+            "getBlock": 3,
+            "getLogs": 2,
+            "call": 371,
+            "getCode": 7
+          },
+          "nextChunk": "2"
+        },
+        {
+          "kind": "MONTHLY",
+          "pass": 1,
+          "ms": 9975.722600000008,
+          "counts": {
+            "getTransaction": 159,
+            "getBlock": 2,
+            "getLogs": 1,
+            "call": 204,
+            "getCode": 6
+          },
+          "nextChunk": "2"
+        }
+      ],
+      "startedAt": "2026-10-03T08:14:02.242Z",
+      "chunks": 157,
+      "scope": "Two actual executor steps per kind; synthetic admitted dataset, no BUY proof, mock RNG, no Pons coordinator or restart/crash throughput claim. Draws intentionally unfinished on disposable in-process chain.",
+      "finishedAt": "2026-10-03T08:16:17.654Z",
+      "rawReport": ".local/logs/draw-worker/10000-CXCuCe/report.json",
+      "rawSha256": "8b5393bb0e370e6b11efbf3e2490c881f9fa6c68cfa281339c3062de1976e614"
+    }
+  ],
+  "sourceSha256": {
+    "contracts/BuyPolicySource.sol": "da47b940e2ffa1199edcd35dadc1941f33a369a159bedff318148bafd1277db1",
+    "contracts/ChainBlocks.sol": "83883a3c0b6dbca40ba9dbbf2f985a0b85b56ac11b533144aa17e1ab0e9d605b",
+    "contracts/CutoffHistory.sol": "147281297f44d956159351bbb80fc3e4ec6970bff986eff9cb3fa041007f6008",
+    "contracts/DrandRandomAdapter.sol": "ffb6c2d4ff831c79380b68712f017909a290e1f4e5436aa978a2e46e723071b7",
+    "contracts/DualControllerPromoVault.sol": "31e66724289b458ed0d5852f1e6db6ac1b785b8aa14463545092548a827aefed",
+    "contracts/FeeRouter.sol": "f0cd29684d653d16ed52b4ee5ec2c78ac523940f5bfb67540c33591ba09caa5e",
+    "contracts/ILocalRandom.sol": "a7a3df13ba740143ec5d95cb95517a06c0c02f9383a139a574130261d5fb8a92",
+    "contracts/IPonsVenue.sol": "bfcaa5cf01e49bb6a73bfd780f008ed80b62ac8687409b7037d17b2b33330b43",
+    "contracts/IPrizePriceSource.sol": "4f02c261f5f326a70ddb65b45f9f03b76d73399edb12c000cb869cd0db285ccd",
+    "contracts/IPrizeSwapAdapter.sol": "911d2adc75432b15e69753949536b5d7408ec29932cc568bc040c0ae3cccbf0e",
+    "contracts/InfinityCollector.sol": "627d2d3adda36430f5f1d84cee467031133143d9070de89c5fcf16b8b3dc15eb",
+    "contracts/LocalMarketPrizeConverter.sol": "f37920eccc1a64dc777db88f746056788e3175130c8645d2d5b8e7513e533cf5",
+    "contracts/LocalMonthlyController.sol": "f5c1ddb275a52b536203d5e05ffe8a2e8bad0d0f91aea2a5dfdceeba6cab0340",
+    "contracts/LocalPonsCollector.sol": "fdcb60f73ad60cf6f4b5bcca32f40a25eb621f1ab2478127314aee9ed7fc4039",
+    "contracts/LocalPrizeConverter.sol": "aebd488f6074dc9f13636f8290b12ead1c67060894eb3d8213df1945e45c6cf8",
+    "contracts/LocalScheduledPrizeConverter.sol": "0a38fe7f7e8867e5da6a8f28221a801d75ec4084a5fef593756759d1cdd069d0",
+    "contracts/LocalShortController.sol": "980a99902beaed04b1ca9cdc2c4751e3c3d35c8ef01f12edbaa70334343b2132",
+    "contracts/LocalV4PrizeAdapter.sol": "643cf212d38df1ec06e0f1b50b070d7edbf92752b093617c38319dcd69dd2782",
+    "contracts/MonthlyControllerBase.sol": "1a5dd21156e269107499ce326d0fdf54a64cf5342a9e447d89e89a4ca2709cb0",
+    "contracts/MonthlyOutcome.sol": "edbfef546db35754e6b0f4436c5ced59e541a446023c5e0b1fb5f640bf6faa1e",
+    "contracts/MonthlySettlement.sol": "9b80569a25cf90064f8f5713fa814b9aefb81108eb7c883fa61404a883eb1920",
+    "contracts/ParticipantRegistry.sol": "7244a4ede035e46de118114e10edf2e3d96cf27caacedc9c9e540d345a6f0e49",
+    "contracts/PromoVault.sol": "7c813a1a35f4accbd67316450f8e87be0ea67a01686cd4e01dc90433bec12bcb",
+    "contracts/RobinhoodControllerChecks.sol": "7ebe29f805ee757f7b72a5d693bdf9da95f326da02926fc61b07307d5a8f5c89",
+    "contracts/RobinhoodMonthlyController.sol": "1997a119c64104ada6df5102880242fe4e1e86190f54c611b95593b3fac9db8d",
+    "contracts/RobinhoodShortController.sol": "35653d4312708bd8b5afb9f5dbf9d293c0a82ebec9e158e9211918d4aa1da3b8",
+    "contracts/ShortControllerBase.sol": "e95ab36234cb2f88ae13adb46f769ba6706aea9234a2a45e99af9414799d54cf",
+    "contracts/ShortDatasetPreparation.sol": "223420a1ccdd71ce818d8b8aabc7e7574abfc82b9b942f79c8228b49d235e6e5",
+    "contracts/ShortDrawCommitment.sol": "833762ca4d98443906f493ab2a81c262327cceb6df46e01827f52cd6ff1ba259",
+    "contracts/ShortOutcome.sol": "2c505e215dd642abbe9db6425c7e8c185b5e165f862cb8f41a1ee5336919c534",
+    "contracts/ShortPrizeBasket.sol": "f2f5ee7c033a4c686f6c3133b6d6fe10e9b25171cdaec5bf83a6e594017f9c00",
+    "contracts/ShortRulesEpochs.sol": "6dba85db54f1fbaff620c2844b560761b0e34b399a2e0e9f0844aacd93c17761",
+    "contracts/ShortSettlement.sol": "aa2ba3cb3c01e860ef887f6a129d250acebf0c0b04872aa8dc4704c1b98d3403",
+    "contracts/vendor/drand/BLS.sol": "887fd94553b9d6d0a247900bdb05523d3b9ef3b8ca049e2a0524a0b1a9d37e69",
+    "contracts/vendor/drand/ModExp.sol": "fd91ae9291511668914b05fece03fb9bf6e2b57f7784d2edddc82456af12b495",
+    "scripts/benchmark-draw-capacity.cjs": "b1d7be7cdc52e34451c1cbf29f4b733d2ade58071ee9c306886ba26d7f71baec",
+    "scripts/benchmark-draw-worker.cjs": "fe1c4f47e5f29dcfa023072a2ad04bec6101b6e49fcc133f70d0d379dea195b0",
+    "scripts/compile.cjs": "2bbeb3f69abafe6f38e0ec4b94fe46be33f7e6e73731fb5bda1caf517eb5c7d6",
+    "scripts/local-short-executor.cjs": "9c59852b2bb0338cb7fa51b0ec5a06513bebae060addc485c5c3e1e4e92eed2a",
+    "scripts/local-monthly-executor.cjs": "b7493d89c34d989b5e2585fda9ec600ebe5e8fee6bf31caed3ed4f21768c4ffb",
+    "scripts/short-dataset.cjs": "06fd7da16002ff5de3afff566dcb45039c4e5c72a9f631094a780b0995b7a467",
+    "scripts/monthly-dataset.cjs": "b09cd78404ae5ed15c5d015abc86ec13f6fa18ae5128c3f25a30bfd6de6be250",
+    "scripts/short-settlement.cjs": "5454137e55bb33cbc1afc15851f169e372335fac0b9c1d088569257a73c50549",
+    "scripts/short-outcome.cjs": "f7a81e0fd4a52b6e30b656f95c8523c69cb211ca3a0f0625b90741025de51572",
+    "scripts/monthly-outcome.cjs": "7aedcaabb0a592726d92151465ea7e1b339c6a439a28ddf22824db5e4664e711",
+    "scripts/dual-bindings.cjs": "ca87121d4d8b252193cfef399f9c65a46e7e47e53252949b0292d09330f48240",
+    "scripts/direct-buy.cjs": "4a52f6bfc1c54a4d25f1258afb14665692c0eeab8f0735cc343674accd50a5a4",
+    "scripts/draw-id.cjs": "c5e269844393fc6f4b5fb1092da0fb77aa63a5174f8bade036329d2a43488f16",
+    "scripts/local-promo-scheduler.cjs": "5fd7f60bd53554abefb79ebc6d3f2620b7d621d21c28ab111771dcf768ff815d",
+    "scripts/pons-automation.cjs": "55ef21e410198a8d86dba280dad8558b2105edab7643d0e8db454d9305c0e552",
+    "scripts/local-receipt.cjs": "a93df5a2036a476a8847c2e7fb2d14f5bdb693cb67b5f5f851c6f8441d73abc4",
+    "test/fixtures/local-controllers.cjs": "115dc194bf3fd1e060714a7673a01e41a0d8085b8365219569f4dcd558e59c22",
+    "test/fixtures/short-outcome.cjs": "6f4a74fa71e49e6f864c99c106c93cc847c4e75b6767350f70608d060b178939",
+    "test/fixtures/dual-controller.cjs": "a7180d98e47fb3893c4683d1b8267ca94671094ae108dc7e490d8fe5be356f01",
+    "test/contracts/LocalRandomFixture.sol": "9d7f670ace649af22669d15d53943454fd42df80cb237c0b7cab9ddad84bfb80"
+  }
+}

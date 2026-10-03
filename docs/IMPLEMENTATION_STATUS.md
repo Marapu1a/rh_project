@@ -37,4 +37,4 @@
 
 Все специальные legacy/API/исследовательские документы доступны в [каталоге](DOCUMENT_CATALOG.md).
 
-Исследование предела draw: scripts/benchmark-draw-capacity.cjs — отдельный локальный harness Short/Monthly, уникальные адреса, gas/calldata и независимая сверка результатов. [Результат и ограничения](DRAW_CAPACITY_2026-10-03.md). Runtime не менялся.
+Исследование предела draw: scripts/benchmark-draw-worker.cjs — измерение двух реальных шагов каждого исполнителя; [повторный обход dataset](DRAW_CAPACITY_FOLLOWUP_2026-10-03.md). scripts/benchmark-draw-capacity.cjs — отдельный локальный harness Short/Monthly, уникальные адреса, gas/calldata и независимая сверка результатов. [Результат и ограничения](DRAW_CAPACITY_2026-10-03.md). Runtime не менялся.
