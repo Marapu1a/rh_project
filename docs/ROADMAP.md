@@ -92,11 +92,13 @@ B2 [упаковка и config](RUNTIME_PACKAGE_2026-10-03.md) проверен�
 потом public execution и Linux service rehearsal. [Эксплуатационная обвязка](OPERATIONS_READINESS_2026-10-03.md)
 подготовлена локально (38 адресных tests, offline restore). [Серверный staging](SERVER_STAGING_2026-10-03.md)
 установлен и проверен отдельно: API/site only, старый сайт сохранён.
-Public execution остаётся закрыт; indexer/operator ещё не включены. Остальные обязательные части:
+На сервере public execution остаётся выключен; indexer/operator ещё не включены. Остальные обязательные части:
 
-G04/G01: [read-only Pons inspector](PONS_PUBLIC_PROFILE_2026-10-03.md) готов,
-5/5 модельных проверок. Публичный sender и его восстановление ещё не реализованы;
-следующий пакет — исполнение с сохранением границы new-freeze/drain.
+G04/G01: [read-only Pons inspector](PONS_PUBLIC_PROFILE_2026-10-03.md) и
+[отдельный public sender](PONS_PUBLIC_EXECUTION_2026-10-03.md) реализованы;
+36 адресных tests, EVM drain/restart и проверка перед intent PASS.
+Следующий пакет — полная release-репетиция HTTPS/keystore/funding/new-freeze;
+текущий EVM-прогон не подтверждает весь публичный цикл.
 
 1. G04/G01: production manifest, реальные роли/pins/custody/параметры и публичный
    исполнитель с собственными guards; тестовые обходы не переносить.

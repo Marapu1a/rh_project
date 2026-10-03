@@ -1,5 +1,8 @@
 # Pons: локальный постоянный исполнитель
 
+03.10 добавлен [отдельный публичный режим](PONS_PUBLIC_EXECUTION_2026-10-03.md)
+с тем же coordinator/journal. Описанный ниже старый CLI остаётся loopback-only.
+
 [Pons: допуск политики и чтение сохранённого индекса](PONS_INDEXED_COORDINATOR.md) — локальная связка; [indexed draw cycle](PONS_INDEXED_CYCLE.md) проверялся отдельно.
 
 Актуализация 02.10: [газ ближайшего действия и ожидание пополнения](PONS_EXECUTION_READINESS.md).

@@ -5,7 +5,7 @@ function write(file,value){
  try{fd=fs.openSync(tmp,'w',0o600);fs.writeFileSync(fd,bytes);fs.fsyncSync(fd);}finally{if(fd!==undefined)fs.closeSync(fd);}
  fs.renameSync(tmp,file);
 }
-async function withOpsSession(statePath,action){
+async function withOpsSession(statePath,action,{publicExecution=false}={}){
  const file=path.resolve(statePath),lock=file+'.service.lock';fs.mkdirSync(path.dirname(file),{recursive:true});
  const owner=JSON.stringify({pid:process.pid,token:randomUUID()}),fd=fs.openSync(lock,'wx',0o600);
  try{fs.writeFileSync(fd,owner);}finally{fs.closeSync(fd);}
@@ -13,7 +13,7 @@ async function withOpsSession(statePath,action){
  function publish(report){
   const explanation=require('./pons-delay-status.cjs').explain(report);
   const value={schema:'qianqi-operator-status-v1',pid:process.pid,startedAt,observedAt:new Date().toISOString(),pass,
-   state:explanation.state,reasons:explanation.reasons,publicExecution:false};
+   state:explanation.state,reasons:explanation.reasons,publicExecution};
   write(file+'.status.json',value);
   const key=JSON.stringify([value.state,value.reasons]);
   if(key!==lastKey){fs.appendFileSync(file+'.events.jsonl',JSON.stringify(value)+'\n',{mode:0o600});lastKey=key;}

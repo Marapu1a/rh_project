@@ -46,13 +46,17 @@ waiting/clear. Полного зелёного повторного baseline п�
 [Первый пакет подготовки фронта](FRONT_LAUNCH_READINESS_2026-10-03.md) завершён локально:
 точечная актуализация HK/transparency,19/19 browser tests и responsive/link check.
 Стиль сохранён. [Runtime-сборка и экспорт config](RUNTIME_PACKAGE_2026-10-03.md)
-проверены изолированно:8/8, API/site smoke, runtime audit0. Публичный исполнитель
-ещё отсутствует. [Обвязка эксплуатации](OPERATIONS_READINESS_2026-10-03.md)
+проверены изолированно:8/8, API/site smoke, runtime audit0.
+[Обвязка эксплуатации](OPERATIONS_READINESS_2026-10-03.md)
 подготовлена: ownership/status, integrity, offline backup/staging и unit templates;
 38 уникальных адресных tests. [Серверный staging](SERVER_STAGING_2026-10-03.md)
 подготовлен: отдельные API8788/site4175, Linux start/stop/crash recovery PASS.
 Публичный сайт/API не переключались. [Read-only Pons profile](PONS_PUBLIC_PROFILE_2026-10-03.md)
-реализован и проверен моделью RPC (5/5); это не допуск отправок. Public sender — следующий шаг;
+реализован и проверен моделью RPC (5/5); сам отчёт не разрешает отправки.
+[Публичный исполнитель](PONS_PUBLIC_EXECUTION_2026-10-03.md) добавлен отдельным режимом:
+36 адресных tests PASS, EVM drain/restart/газ/owner drift и защита перед intent.
+Следующий шаг — полная release-репетиция нового режима с HTTPS/keystore и новым freeze;
+публичный сервис ещё не включён,
 внешние уведомления не подключены, финансовый запуск не выполнен.
 
 Промежуточная уборка документации завершена: история отделена, основные документы

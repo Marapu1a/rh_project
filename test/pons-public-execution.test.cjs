@@ -1,0 +1,43 @@
+const {test}=require('node:test'),assert=require('node:assert/strict'),{ethers}=require('ethers');
+const {fixture}=require('./fixtures/pons-public-profile.cjs'),{createGuard}=require('../scripts/pons-public-execution.cjs');
+const {hash}=require('../scripts/direct-buy.cjs');
+const compiled={DualControllerPromoVault:{abi:['function claim(bytes32,address)']},DrandRandomAdapter:{abi:['function prove(uint256,bytes)','function deliver(uint256)']},RobinhoodShortController:{abi:['function begin(bytes32)','function finishShort(bytes32)']},RobinhoodMonthlyController:{abi:['function finishMonth(bytes32)']},LocalPonsCollector:{abi:['function pull()','function pay(address)']}};
+function setup(){const f=fixture();f.c.schema='pons-public-automation-v1';delete f.c.instanceId;f.p.configHash=hash(f.c);
+ const original=f.provider.getBlock;f.provider.getBlock=async n=>({...await original(n),timestamp:Math.floor(Date.now()/1000)});
+ const guard=createGuard({provider:f.provider,config:f.c,publicProfile:f.p,compiled});
+ const request=(kind,method,args=[])=>({to:kind==='vault'?f.c.vault:kind==='collector'?f.c.collector:f.c.lifecycle.source,chainId:4663,from:f.c.executor,data:new ethers.Interface(compiled[kind==='vault'?'DualControllerPromoVault':kind==='collector'?'LocalPonsCollector':'RobinhoodShortController'].abi).encodeFunctionData(method,args)});
+ return {...f,guard,request};}
+test('public guard allows matched funding; policy drift blocks it without stranding a claim',async()=>{
+ const f=setup();await f.guard(f.request('collector','pull'),'pull');
+ f.add('short','owner','address',ethers.ZeroAddress);
+ await assert.rejects(f.guard(f.request('collector','pull'),'pull'),/admission blocked/);
+ await f.guard(f.request('vault','claim',[ethers.id('draw'),f.c.executor]),'claim');
+});
+test('public guard checks target, selector, sender, chain, value and fee recipient',async()=>{
+ for(const mutate of [r=>r.to=ethers.ZeroAddress,r=>r.chainId=1,r=>r.from=ethers.ZeroAddress,r=>r.value=1,r=>r.authorizationList=[],r=>r.data='0x12345678']){
+  const f=setup(),r=f.request('collector','pull');mutate(r);await assert.rejects(f.guard(r,'pull'));
+ }
+ const f=setup();await assert.rejects(f.guard(f.request('collector','pay',[ethers.ZeroAddress]),'pay'),/recipient/);
+ await assert.rejects(f.guard(f.request('collector','pull'),'claim'),/not allowed/);
+});
+test('obligation runtime or anchor drift and unavailable RPC prohibit any claim',async()=>{
+ for(const change of [f=>f.provider.getCode=async()=> '0x',f=>f.provider.getBlock=async()=>null,f=>f.add('vault','quoteToken','address',ethers.ZeroAddress)]){
+  const f=setup();change(f);await assert.rejects(f.guard(f.request('vault','claim',[ethers.id('draw'),f.c.executor]),'claim'));
+ }
+});
+test('public config cannot reuse a rehearsal identity or omit index policy',()=>{
+ const f=setup(),validate=require('../scripts/pons-automation.cjs').validate;
+ validate(f.c,{publicMode:true});assert.throws(()=>validate(f.c));
+ f.c.instanceId=ethers.ZeroHash;assert.throws(()=>validate(f.c,{publicMode:true}));delete f.c.instanceId;delete f.c.indexer;assert.throws(()=>validate(f.c,{publicMode:true}));
+});
+test('public CLI rejects missing/unsafe inputs without echoing credential material',()=>{
+ const {spawnSync}=require('node:child_process');
+ const r=spawnSync(process.execPath,['scripts/run-pons-public.cjs','--config','missing','--profile','missing','--state','unused','--keystore','missing'],{encoding:'utf8',env:{...process.env,RH_RPC_URL:'http://example.invalid/secret-url',QIANQI_KEYSTORE_PASSWORD:'secret-password'}});
+ assert.equal(r.status,1);assert(!r.stderr.includes('secret-'));assert.match(r.stderr,/execution stopped/);
+});
+test('public network requires an explicit guard and HTTPS; legacy inspect cannot send',async()=>{
+ const network=require('../scripts/runtime-network.cjs');
+ await assert.rejects(network.withRobinhoodNetwork({mode:'robinhood-public',rpcUrl:'https://example.invalid'},()=>{}),/guard required/);
+ await assert.rejects(network.withRobinhoodNetwork({mode:'robinhood-public',rpcUrl:'http://127.0.0.1:8545',publicGuard:async()=>{}},()=>{}),/HTTPS/);
+ assert.equal(network.current().mode,'local');
+});

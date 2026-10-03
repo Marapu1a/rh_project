@@ -33,8 +33,9 @@ async function sendLocalTransaction(method,args,overrides,options={}){
   let stage='estimate',tx;
   const boundary=transactionBoundary.getStore();
   try{
-    const network=require('./runtime-network.cjs');await network.beforeSend();
+    const network=require('./runtime-network.cjs');await network.beforeSend({journaled:!!(boundary?.preflight&&boundary?.before&&boundary?.sent&&boundary?.confirmed)});
     if(network.isRobinhood())overrides={...overrides,chainId:4663};
+    if(network.current().publicGuard)await network.current().publicGuard(await method.populateTransaction(...args,overrides),method.fragment.name);
     if(boundary?.preflight)await boundary.preflight(await method.populateTransaction(...args,overrides),method.fragment.name);
     let estimate;
     try{estimate=await method.estimateGas(...args,overrides);}
@@ -43,6 +44,7 @@ async function sendLocalTransaction(method,args,overrides,options={}){
     if(options.signal?.aborted){const e=new Error('Stopped before broadcast');e.code='LOCAL_EXECUTION_STOPPED';throw e;}
     // A successful before hook commits the attempt: do not leave a prepared marker by
     // cancelling between persistence and broadcast. Later abort stops wait/subsequent sends.
+    if(network.current().publicGuard)await network.current().publicGuard(await method.populateTransaction(...args,{...overrides,gasLimit}),method.fragment.name);
     if(boundary)await boundary.before(await method.populateTransaction(...args,{...overrides,gasLimit}),method.fragment.name);
     stage='broadcast';tx=await method(...args,{...overrides,gasLimit});
     if(boundary)await boundary.sent(tx);

@@ -8,19 +8,25 @@ function check(ok,message){if(!ok)throw Error(message);}
 function checkChain(chain){check(BigInt(chain)===current().chainId,isRobinhood()?'Robinhood chain 4663 required':'Local chain 31337 only');}
 function checkRpc(url){
  const u=new URL(url),loopback=['localhost','127.0.0.1','[::1]'].includes(u.hostname);
- if(current().mode==='robinhood-inspect')check((u.protocol==='https:'||u.protocol==='http:'&&loopback)&&!u.username&&!u.password,'Public HTTPS RPC required');
+ if(current().mode==='robinhood-public')check(u.protocol==='https:'&&!u.username&&!u.password,'Public HTTPS RPC required');
+ else if(current().mode==='robinhood-inspect')check((u.protocol==='https:'||u.protocol==='http:'&&loopback)&&!u.username&&!u.password,'Public HTTPS RPC required');
  else check(u.protocol==='http:'&&loopback&&!u.username&&!u.password,'Loopback HTTP RPC only');
 }
-async function beforeSend(){
+async function beforeSend({journaled=false}={}){
  const c=current();if(c===LOCAL)return;
+ if(c.mode==='robinhood-public'){
+  check(journaled&&typeof c.publicGuard==='function','Public send requires a guarded journal');
+  checkChain((await c.provider.getNetwork()).chainId);return;
+ }
  check(c.mode==='robinhood-rehearsal','Public execution disabled pending release qualification');
  checkChain((await c.provider.getNetwork()).chainId);
  const metadata=await c.provider.send('hardhat_metadata',[]);
  check(metadata.instanceId===c.instanceId,'Rehearsal node instance changed');
 }
-async function withRobinhoodNetwork({provider,rpcUrl,mode='robinhood-inspect'},action){
- check(['robinhood-inspect','robinhood-rehearsal'].includes(mode),'Explicit Robinhood mode required');
- const context={mode,chainId:4663n,provider};
+async function withRobinhoodNetwork({provider,rpcUrl,mode='robinhood-inspect',publicGuard},action){
+ check(['robinhood-inspect','robinhood-rehearsal','robinhood-public'].includes(mode),'Explicit Robinhood mode required');
+ if(mode==='robinhood-public')check(typeof publicGuard==='function','Explicit Pons public guard required');
+ const context={mode,chainId:4663n,provider,publicGuard};
  return scope.run(context,async()=>{
   checkRpc(rpcUrl);checkChain((await provider.getNetwork()).chainId);
   const request=new ethers.FetchRequest(rpcUrl);request.timeout=20000;
