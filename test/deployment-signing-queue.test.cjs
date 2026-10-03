@@ -36,3 +36,13 @@ test('deployment runtime permits only compiler-marked creation time and checks r
 test('gas above configured ceiling does not create a wallet intent',async t=>{
  const f=fixture(t);f.options.provider.getFeeData=async()=>({gasPrice:10000000001n});await assert.rejects(f.queue.prepare(),/ceiling/);assert.equal(fs.existsSync(f.options.file),false);
 });
+test('fee and estimate drift within reviewed limits preserves the exact wallet request',async t=>{
+ const f=fixture(t);f.options.provider.getBalance=async()=>100000000n;f.options.provider.getFeeData=async()=>({gasPrice:100n});
+ const p=await f.queue.prepare();f.options.provider.getFeeData=async()=>({gasPrice:110n});f.options.provider.estimateGas=async()=>101n;
+ assert.deepEqual(await f.queue.arm(p.id),p.request);
+});
+test('fee increase outside reviewed headroom refuses before persisting intent',async t=>{
+ const f=fixture(t);f.options.provider.getBalance=async()=>100000000n;f.options.provider.getFeeData=async()=>({gasPrice:100n});
+ const p=await f.queue.prepare();f.options.provider.getFeeData=async()=>({gasPrice:122n});
+ await assert.rejects(f.queue.arm(p.id),/budget exceeded/);assert.equal(fs.existsSync(f.options.file),false);
+});

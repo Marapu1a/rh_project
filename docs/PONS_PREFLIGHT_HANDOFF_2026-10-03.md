@@ -134,3 +134,16 @@ package3-signing-journal-final.json. Старый read-only процесс то�
 новой сессии подтвердил allowSend=true, completed0, pending=null. Отправки остаются
 ручными через MetaMask; /intent инструментами не вызывался. Ссылка с новым ключом
 сессии передаётся владельцу отдельно, в git не хранится.
+
+## Исправление gas review при первом ручном шаге
+
+До первого intent проверка сравнивала hash всего повторно оценённого запроса, включая
+изменяющиеся gas/gasPrice, и возвращала общий409. На момент диагностики public journal
+отсутствует, nonce latest/pending14, preflight matched. Теперь prepare показывает
+фиксированную цену с20% headroom, ограниченную существующим maxGasPrice; arm сохраняет
+именно просмотренный запрос, проверяет неизменные поля и достаточность gas limit,
+цены и ETH. Рост сверх показанной границы требует нового review до intent.
+Добавлены понятные сообщения для истечения review/газа/nonce/preflight и безопасные
+reason codes в локальном логе без raw RPC errors.7 queue tests PASS, включая малый
+fee/estimate drift и отказ до записи intent при выходе за границу. Live prepare после
+перезапуска PASS; инструменты /intent не вызывали. Контракты и product rules не менялись.

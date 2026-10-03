@@ -42,16 +42,23 @@ function create({plan,file,provider,check,allowSend=false}){
   assert.equal(await provider.getTransactionCount(plan.governor,'pending'),nonce,'Pending transaction');
   assert.equal(await provider.getCode(step.predictedAddress),'0x','Predicted address occupied');
   const gas=await provider.estimateGas(step.request),fees=await provider.getFeeData();
-  const gasPrice=fees.gasPrice;assert(gasPrice>0n&&gasPrice<=BigInt(plan.maxGasPrice),'Gas price above ceiling');const gasLimit=gas*120n/100n+30000n;
+  const marketPrice=fees.gasPrice,ceiling=BigInt(plan.maxGasPrice);assert(marketPrice>0n&&marketPrice<=ceiling,'Gas price above ceiling');
+  // Review a fixed bounded price with headroom; never silently change it at signing.
+  const buffered=marketPrice*120n/100n+1n,gasPrice=buffered<ceiling?buffered:ceiling;const gasLimit=gas*120n/100n+30000n;
   assert(await provider.getBalance(plan.governor)>=gasLimit*gasPrice,'Insufficient ETH for this transaction');
-  return {index:state.completed.length,label:step.label,predictedAddress:step.predictedAddress,request:{...step.request,gas:E.toQuantity(gasLimit),gasPrice:E.toQuantity(gasPrice)},estimatedGas:String(gas),estimatedAtGasPriceWei:String(gasPrice),gasLimitCostWei:String(gasLimit*gasPrice)};
+  return {index:state.completed.length,label:step.label,predictedAddress:step.predictedAddress,request:{...step.request,gas:E.toQuantity(gasLimit),gasPrice:E.toQuantity(gasPrice)},estimatedGas:String(gas),marketGasPriceWei:String(marketPrice),estimatedAtGasPriceWei:String(gasPrice),gasLimitCostWei:String(gasLimit*gasPrice)};
  }
  return {
   view:()=>({planHash:plan.planHash,allowSend,governor:plan.governor,transactions:plan.transactions.map(({request,...s})=>({...s,nonce:Number(BigInt(request.nonce))})),completed:state.completed.length,pending:state.pending,next:plan.next}),
   prepare:()=>exclusive(async()=>{const p=await ready();prepared={...p,id:randomUUID(),expiresAt:Date.now()+60000};return prepared;}),
   arm:id=>exclusive(async()=>{
    assert(allowSend,'Signing disabled');assert(prepared&&prepared.id===id&&prepared.expiresAt>Date.now(),'Review expired');
-   const fresh=await ready();assert.equal(hash(fresh.request),hash(prepared.request),'Gas/request changed; review again');
+   const fresh=await ready();
+   const core=r=>{const {gas,gasPrice,...body}=r;return body;};
+   assert.equal(hash(core(fresh.request)),hash(core(prepared.request)),'Request changed; review again');
+   assert(prepared.expiresAt>Date.now(),'Review expired');
+   assert(BigInt(fresh.estimatedGas)<=BigInt(prepared.request.gas)&&BigInt(fresh.marketGasPriceWei)<=BigInt(prepared.request.gasPrice),'Reviewed gas budget exceeded');
+   assert(await provider.getBalance(plan.governor)>=BigInt(prepared.request.gas)*BigInt(prepared.request.gasPrice),'Insufficient ETH for reviewed transaction');
    const p=prepared;state.pending={index:p.index,id:p.id,request:p.request,hash:null};save();prepared=null;return p.request;
   }),
   submitted:txHash=>exclusive(async()=>{

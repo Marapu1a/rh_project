@@ -27,7 +27,18 @@ async function main(){
    let body='';for await(const chunk of req){body+=chunk;if(Buffer.byteLength(body)>4096)throw Error('Size');}const input=JSON.parse(body||'{}');
    let value;if(req.url==='/view')value=queue.view();else if(req.url==='/prepare')value=await queue.prepare();else if(req.url==='/intent')value=await queue.arm(input.id);else if(req.url==='/submitted')value=await queue.submitted(input.hash);else if(req.url==='/refresh')value=await queue.refresh();else{res.writeHead(404).end();return;}
    res.setHeader('Content-Type','application/json');res.end(JSON.stringify(value));
-  }catch{res.writeHead(409,{'Content-Type':'application/json'}).end(JSON.stringify({error:'Проверка не пройдена. Сохранённое состояние не сбрасывайте; сообщите разработчику.'}));}
+  }catch(e){
+   const messages={
+    'Review expired':'Проверка устарела. Нажмите «Проверить следующий шаг» ещё раз.',
+    'Reviewed gas budget exceeded':'Газ вышел за показанные лимиты. Нажмите «Проверить следующий шаг» для новой оценки. Запрос в кошелёк не отправлен.',
+    'Gas price above ceiling':'Цена газа выше установленного потолка. Подождите и проверьте шаг снова.',
+    'Preflight changed':'Предпусковая проверка сети изменилась. Сообщите разработчику; отправка остановлена.',
+    'Nonce drift':'Номер транзакции кошелька изменился. Остановитесь и сообщите разработчику.',
+    'Unresolved wallet request: reconcile before retry':'Есть незавершённый запрос. Сверьте его хеш; повторно не отправляйте.'
+   };
+   const message=messages[e.message];console.warn(JSON.stringify({event:'deploymentCheckRefused',route:req.url,reason:message?e.message:'verificationFailed'}));
+   res.writeHead(409,{'Content-Type':'application/json'}).end(JSON.stringify({error:message||'Проверка не пройдена. Сохранённое состояние не сбрасывайте; сообщите разработчику.'}));
+  }
  });
  let closing=false;const close=()=>{if(closing)return;closing=true;server.close();server.closeAllConnections();provider.destroy();if(fs.readFileSync(lock,'utf8')===String(process.pid))fs.unlinkSync(lock);};
  process.once('SIGINT',close);process.once('SIGTERM',close);

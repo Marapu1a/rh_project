@@ -113,6 +113,10 @@ hourly off-server pull на Windows, свежий preflight/deployment fork и s
 первых6 CREATE проверены. MetaMask review подтверждён владельцем, signing включён
 для этой очереди (при включении completed0/pending=null). Далее подписи, launch/policy/binds
 по реальным receipts; financial services включаются только после проверки manifest.
+При первом клике найден чрезмерно строгий gas/request equality: до intent/подписи
+отказывал при изменении fee. Исправлено сохранением просмотренных лимитов (20% fee headroom
+в пределах cap) и повторной проверкой достаточности;7 адресных tests PASS.
+Консоль перезапущена, nonce14/pending14, intent ещё не создан.
 
 
 1. G04/G01: production manifest, реальные роли/pins/custody/параметры и публичный
