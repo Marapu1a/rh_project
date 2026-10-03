@@ -15,3 +15,11 @@
 #wallet-options .button{display:block;text-align:left;overflow-wrap:anywhere;white-space:normal}#wallet-options .button[aria-pressed="true"]{border-width:2px;font-weight:700}
 .live-summary{padding-block:20px;border-bottom:1px solid}.live-summary details{margin-block:12px}.draw-result,.locked-ticket{overflow-wrap:anywhere;line-height:1.6}.draw-result{border-top:1px solid #ccc;padding-block:14px}.draw-result a{color:inherit}.rewards td a{color:inherit;font-size:12px}.locked-ticket{font-size:13px;border-top:1px solid;padding-top:10px}
 .draw-card{min-width:0}.draw-card p{overflow-wrap:anywhere}.draw-card .bank strong{font-size:clamp(25px,4vw,52px);overflow-wrap:anywhere}.live-summary{overflow-wrap:anywhere}
+
+/* Wallet activity must fit narrow screens, including transaction identifiers. */
+#dialog-copy, #purchase-status { overflow-wrap: anywhere; }
+#purchase-status { margin-top: 1.5rem; font-size: .875rem; }
+#purchase-status p { margin: .75rem 0; }
+#purchase-status details { margin-top: .35rem; }
+
+.local-test-notice { grid-column: 1 / -1; margin: 0; padding: 12px 32px; border-bottom: 1px solid currentColor; font-size: .75rem; }

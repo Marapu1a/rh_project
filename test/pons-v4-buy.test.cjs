@@ -31,6 +31,8 @@ test('Pons v4 both currency orders and settlement forms: net TOKEN after hook fe
 });
 test('Pons v460+40 carry, duplicate delivery, restart and branch rebuild',()=>{
  const f=fixture({amount:60000000n});f.buy(40000000n);const ledger=D.replay(f.m,f.blocks);assert.equal(ledger.wallets[0].entriesMinted,'1');
+ const checkpoint=D.replayWithCheckpoint(f.m,f.blocks.slice(0,1));
+ assert.deepEqual(D.replayWithCheckpoint(f.m,f.blocks.slice(1),checkpoint).ledger,ledger);
  assert.equal(D.hash(D.replay(f.m,[...f.blocks,...f.blocks])),D.hash(ledger));assert.equal(D.hash(D.replay(f.m,JSON.parse(JSON.stringify(f.blocks)))),D.hash(ledger));
  assert.equal(D.replay(f.m,f.blocks.slice(0,1)).wallets[0].carryRaw,'60000000');
  f.blocks.pop();f.buy(30000000n);const b=f.blocks[1];b.hash=ethers.id('replacement');for(const {tx,receipt} of b.transactions){tx.blockHash=b.hash;receipt.blockHash=b.hash;for(const log of receipt.logs)log.blockHash=b.hash;}

@@ -190,18 +190,27 @@ function decodeTransaction(m,tx,receipt,block){
 
 // Replay a complete branch from the anchor before registration deployment.
 // Branch replacement is full replay; stale committed draws are NOT repaired here.
-function replay(input,deliveredBlocks){
+function replayEngine(input,deliveredBlocks,previous=null,capture=false){
   const policy=buyPolicyHistory(input),m=policy.genesis;
+  const manifestHash=hash(input),checkpoint=previous?.checkpoint,prior=previous?.ledger;
+  if(previous){
+    ensure(checkpoint?.schema==='buy-replay-checkpoint-v1'&&checkpoint.manifestHash===manifestHash,'Replay checkpoint policy mismatch');
+    ensure(prior?.manifestHash===manifestHash&&checkpoint.ledgerHash===hash(prior),'Replay checkpoint ledger mismatch');
+    ensure(canonical(checkpoint.head)===canonical(prior.head)&&Number.isSafeInteger(prior.head.number)&&prior.head.number>=number(m.anchor.number),'Replay checkpoint head mismatch');
+    ensure(typeof checkpoint.registryDeployed==='boolean'&&Array.isArray(checkpoint.txHashes),'Invalid replay checkpoint');
+    ensure(checkpoint.txHashes.every(x=>/^0x[0-9a-f]{64}$/.test(x))&&new Set(checkpoint.txHashes).size===checkpoint.txHashes.length,'Invalid checkpoint transactions');
+  }
   const byNumber=new Map();
   for(const b of deliveredBlocks){const n=number(b.number);if(byNumber.has(n))ensure(canonical(byNumber.get(n))===canonical(b),'Conflicting block delivery');else byNumber.set(n,b);}
   const blocks=[...byNumber.values()].sort((a,b)=>number(a.number)-number(b.number));
   const headers=new Map([[number(m.anchor.number),low(m.anchor.hash)],...blocks.map(b=>[number(b.number),low(b.hash)])]);
-  for(const v of policy.versions.slice(1))ensure(headers.get(v.announcedAtBlock)===low(v.announcedBlockHash),'Policy notice not on supplied branch');
-  let parent=low(m.anchor.hash),height=number(m.anchor.number);
-  const registrations=new Map(),wallets=new Map(),decisions=[];
+  for(const v of policy.versions.slice(1))if(!previous||v.announcedAtBlock>prior.head.number)ensure(headers.get(v.announcedAtBlock)===low(v.announcedBlockHash),'Policy notice not on supplied branch');
+  let parent=previous?prior.head.hash:low(m.anchor.hash),height=previous?prior.head.number:number(m.anchor.number);
+  const registrations=new Map((prior?.registrations||[]).map(r=>[r.participant,r]));
+  const wallets=new Map((prior?.wallets||[]).map(w=>[w.wallet,{carryRaw:BigInt(w.carryRaw),entriesMinted:BigInt(w.entriesMinted)}])),decisions=[...(prior?.decisions||[])];
   const automatic=!!PONS_PROFILES.get(m.schema)||m.schema===INFINITY.SCHEMA;
-  let registryDeployed=false;
-  const txHashes=new Set();
+  let registryDeployed=checkpoint?.registryDeployed??false;
+  const txHashes=new Set(checkpoint?.txHashes||[]);
   for(const b of blocks){
     ensure(number(b.number)===height+1&&low(b.parentHash)===parent,'Non-contiguous canonical branch');
     const events=[],logIndexes=new Set();
@@ -248,9 +257,13 @@ function replay(input,deliveredBlocks){
     height=number(b.number);parent=low(b.hash);
   }
   ensure(automatic||registryDeployed,'Range must include registry deployment; imported carry is not supported');
-  return {schema:'direct-buy-ledger-v1',manifestHash:hash(input),head:{number:height,hash:parent},
+  const ledger={schema:'direct-buy-ledger-v1',manifestHash,head:{number:height,hash:parent},
     finality:'canonical-in-supplied-branch-not-eligible-for-commit',
     registrations:[...registrations.values()].sort((a,b)=>a.participant.localeCompare(b.participant)),decisions,
     wallets:[...wallets].sort(([a],[b])=>a.localeCompare(b)).map(([wallet,w])=>({wallet,carryRaw:String(w.carryRaw),entriesMinted:String(w.entriesMinted),shortAttemptsMinted:String(w.entriesMinted),monthlyAttemptsMinted:String(w.entriesMinted)}))};
+  return {ledger,checkpoint:capture?{schema:'buy-replay-checkpoint-v1',manifestHash,head:ledger.head,ledgerHash:hash(ledger),registryDeployed,txHashes:[...txHashes]}:null};
 }
-module.exports={buyPolicyHistory,validateRouteExtensionCandidate,replay,decodeTransaction,canonical,hash,validateManifest,routeDependencies,PERMIT_TYPE,SWAP_ABI,TRANSFER_ABI,REGISTER_ABI,EXECUTE_ABI,SWAP_TYPE};
+function replay(input,blocks){return replayEngine(input,blocks).ledger;}
+// Only for an integrity-checked local snapshot. Public consumers still replay evidence.
+function replayWithCheckpoint(input,blocks,previous=null){return replayEngine(input,blocks,previous,true);}
+module.exports={buyPolicyHistory,validateRouteExtensionCandidate,replay,replayWithCheckpoint,decodeTransaction,canonical,hash,validateManifest,routeDependencies,PERMIT_TYPE,SWAP_ABI,TRANSFER_ABI,REGISTER_ABI,EXECUTE_ABI,SWAP_TYPE};

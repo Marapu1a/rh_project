@@ -1,5 +1,5 @@
 // Research-only. All writes target in-process Hardhat; upstream proxy is read-only.
-process.env.HARDHAT_CONFIG=require.resolve(process.argv.includes('--combined-profile')?'../test/fixtures/pons-7702-hardhat.config.cjs':'../test/fixtures/public-hardhat.config.cjs');
+process.env.HARDHAT_CONFIG=require.resolve(process.argv.includes('--combined-profile')?'../test/fixtures/pons-7702-hardhat.config.cjs':process.argv.includes('--wallet-browser')?'../test/fixtures/pons-wallet-cycle-hardhat.config.cjs':'../test/fixtures/public-hardhat.config.cjs');
 if(process.argv.includes('--combined-profile')&&!process.argv.includes('--v4'))process.argv.push('--v4');
 if(process.argv.includes('--indexed-automation')&&!process.argv.includes('--automation'))process.argv.push('--automation');
 if(process.argv.includes('--policy-indexer')&&!process.argv.includes('--persistent-indexer'))process.argv.push('--persistent-indexer');

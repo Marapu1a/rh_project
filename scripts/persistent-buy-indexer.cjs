@@ -1,6 +1,7 @@
 // Durable evidence cache. The existing scanner and replay remain authoritative.
 const fs=require('node:fs');
-const {hash,replay}=require('./direct-buy.cjs');
+const {hash,replay,replayWithCheckpoint}=require('./direct-buy.cjs');
+const {validIndexerChecksum}=require('./indexer-checksum.cjs');
 const {scanWithRpc}=require('./replay-direct-buy.cjs');
 const {resolveBuyPolicy}=require('./buy-policy-runtime.cjs');
 const {withState}=require('./local-scheduler-state.cjs');
@@ -8,12 +9,12 @@ const tag=n=>'0x'+BigInt(n).toString(16);
 const check=(v,m)=>{if(!v)throw Error(m);};
 const nextDelay=status=>status?.state==='catchingUp'?0:10000;
 // Bump when replay semantics change; never reuse a ledger produced by an older engine.
-const REPLAY_REVISION='pons-pool-batch-range-v1';
+const REPLAY_REVISION='buy-replay-checkpoint-v1';
 async function readSnapshot({config,statePath,manifest,cutoff,rpc,now=Date.now()}){
  const waiting=reason=>{throw Object.assign(Error(reason),{code:'INDEXER_WAIT',reason});};
  let state;
  try{const {checksum,...stored}=JSON.parse(fs.readFileSync(statePath,'utf8'));
-  if(checksum!==hash(stored)||stored.configHash!==hash({kind:'persistent-buy-indexer-v1',config}))return waiting('indexerIdentity');state=stored;
+  if(!validIndexerChecksum(stored,checksum)||stored.configHash!==hash({kind:'persistent-buy-indexer-v1',config}))return waiting('indexerIdentity');state=stored;
  }catch(e){if(e.code==='INDEXER_WAIT')throw e;return waiting('indexerUnavailable');}
  const index=state.index,status=state.status,age=now-Date.parse(status?.updatedAt);
  if(!index||!['caughtUp','catchingUp'].includes(status?.state)||!Number.isFinite(age)||age<0||age>config.indexer.maxAgeSeconds*1000)return waiting('indexerStale');
@@ -50,7 +51,10 @@ async function indexOnce({config,rpc,statePath,batchSize=100,reorgLimit=128,full
    }
    const base=keep?Number(BigInt(prior.blocks[keep-1].number)):anchor;
    const end=Math.min(target,base+batchSize),cache={};
-   for(const [key,row] of Object.entries(prior.cache))if(row.height<=base)cache[key]=row;
+   // The canonical prefix lives in blocks. RPC cache is only an acceleration
+   // for the recent tail, not a second permanent copy of the full history.
+   const cacheFloor=Math.max(anchor,end-reorgLimit);
+   for(const [key,row] of Object.entries(prior.cache))if(row.height>=cacheFloor&&row.height<=base)cache[key]=row;
    let height=anchor,cacheHits=0;
    const read=async(method,params=[])=>{
     let cacheable=false;
@@ -66,7 +70,7 @@ async function indexOnce({config,rpc,statePath,batchSize=100,reorgLimit=128,full
     // A parent-state read can precede a receipt (delegated-account batches).
     // Bind receipt eviction to its own block, not the last RPC read's height.
     const cacheHeight=method==='eth_getTransactionReceipt'?Number(BigInt(value.blockNumber)):height;
-    if(cacheable)cache[key]={height:cacheHeight,value:structuredClone(value)};
+    if(cacheable&&cacheHeight>=cacheFloor)cache[key]={height:cacheHeight,value:structuredClone(value)};
     return value;
    };
    const resolved=await resolveBuyPolicy(config,rpc,end);
@@ -74,8 +78,13 @@ async function indexOnce({config,rpc,statePath,batchSize=100,reorgLimit=128,full
    const suffix=end>base?await scanWithRpc(resolved.manifest,read,end,config.lifecycle,{fromBlock:base+1}):{blocks:[]};
    const input={manifest:resolved.manifest,blocks:[...prior.blocks.slice(0,keep),...suffix.blocks]};
    const scanMs=performance.now()-scanStarted,replayStarted=performance.now();
-   const unchanged=!fullRewardAudit&&!removed&&end===base&&prior.replayRevision===REPLAY_REVISION&&prior.ledger&&hash(prior.manifest)===hash(input.manifest);
-   const ledger=end>anchor?(unchanged?prior.ledger:replay(input.manifest,input.blocks)):null;
+   const sameReplay=!fullRewardAudit&&!removed&&prior.replayRevision===REPLAY_REVISION&&prior.ledger&&hash(prior.manifest)===hash(input.manifest);
+   const unchanged=sameReplay&&end===base&&prior.replayCheckpoint?.schema==='buy-replay-checkpoint-v1';
+   const continued=sameReplay&&end>base&&prior.replayCheckpoint?.schema==='buy-replay-checkpoint-v1'
+    &&prior.replayCheckpoint.head?.number===base&&prior.replayCheckpoint.head.hash===prior.blocks[keep-1]?.hash;
+   const rebuilt=end>anchor&&!unchanged?replayWithCheckpoint(input.manifest,continued?suffix.blocks:input.blocks,continued?{ledger:prior.ledger,checkpoint:prior.replayCheckpoint}:null):null;
+   const ledger=end>anchor?(unchanged?prior.ledger:rebuilt.ledger):null;
+   const replayCheckpoint=unchanged?prior.replayCheckpoint:rebuilt?.checkpoint??null;
    const replayMs=performance.now()-replayStarted,rewardStarted=performance.now();
    const rewards=config.lifecycle&&end>anchor?(unchanged&&prior.rewards?prior.rewards:await require('./reward-observation.cjs').observeRewards({blocks:input.blocks,vault:config.lifecycle.vault,rpc,blockTag:tag(end),previous:removed?null:prior.rewards,fullAudit:fullRewardAudit})):null;
    let publicObservation=null,publicProjection=null;
@@ -86,9 +95,9 @@ async function indexOnce({config,rpc,statePath,batchSize=100,reorgLimit=128,full
    }
    check((await rpc('eth_getBlockByNumber',[finalized.number,false])).hash===finalized.hash,'Finalized branch changed during indexing');
    // Publish evidence and derived ledger together; failure leaves the last good snapshot intact.
-   state.index={head:end,observedAt:new Date().toISOString(),blocks:input.blocks,cache,manifest:input.manifest,ledger,ledgerHash:unchanged?prior.ledgerHash:ledger?hash(ledger):null,replayRevision:REPLAY_REVISION,rewards,publicObservation,publicProjection,policyStatus:resolved.policyStatus};
+   state.index={head:end,observedAt:new Date().toISOString(),blocks:input.blocks,cache,manifest:input.manifest,ledger,ledgerHash:unchanged?prior.ledgerHash:replayCheckpoint?.ledgerHash??null,replayCheckpoint,replayRevision:REPLAY_REVISION,rewards,publicObservation,publicProjection,policyStatus:resolved.policyStatus};
    state.status={state:end===target?'caughtUp':'catchingUp',processedBlock:end,targetBlock:target,removedBlocks:removed,cacheHits,updatedAt:new Date().toISOString()};
-   state.status.metrics={lagBlocks:target-end,historyBlocks:input.blocks.length,scannedBlocks:suffix.blocks.length,replayedBlocks:unchanged?0:input.blocks.length,scanMs,replayMs,rewardMs:performance.now()-rewardStarted,beforeSaveMs:performance.now()-started};
+   state.status.metrics={lagBlocks:target-end,historyBlocks:input.blocks.length,scannedBlocks:suffix.blocks.length,replayedBlocks:unchanged?0:continued?suffix.blocks.length:input.blocks.length,replayMode:unchanged?'reused':continued?'checkpoint':'full',scanMs,replayMs,rewardMs:performance.now()-rewardStarted,beforeSaveMs:performance.now()-started};
    const saveStarted=performance.now();save(state);
    // Final write timing is returned/logged, not followed by another state write.
    return {...state.status,observedAt:state.index.observedAt,policyMode:resolved.policyStatus.mode,processedTimestamp:input.blocks.at(-1)?.timestamp??null,metrics:{...state.status.metrics,saveMs:performance.now()-saveStarted,totalMs:performance.now()-started,stateBytes:fs.statSync(statePath).size}};
@@ -97,7 +106,7 @@ async function indexOnce({config,rpc,statePath,batchSize=100,reorgLimit=128,full
    state.status={state:'waiting',processedBlock:state.index?.head??Number(config.manifest.anchor.number),reason:e.code==='PUBLIC_PROJECTION_FAILURE'?'publicProjectionIntegrityOrReadFailure':'Read or validation failed; last good snapshot retained',updatedAt:new Date().toISOString()};
    save(state);throw e;
   }
- });
+ },{indexerFormat:true});
 }
 async function main(){
  const [configFile,statePath,mode='once']=process.argv.slice(2);

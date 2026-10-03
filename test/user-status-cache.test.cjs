@@ -2,6 +2,18 @@ const {test}=require('node:test'),assert=require('node:assert/strict'),fs=requir
 const {fixture}=require('./fixtures/status-snapshot.cjs');
 const {createReader,walletStatus,createServer}=require('../scripts/user-status-api.cjs');
 function setup(t){const dir=fs.mkdtempSync(path.join(os.tmpdir(),'status-cache-'));t.after(()=>fs.rmSync(dir,{recursive:true,force:true}));return fixture(dir);}
+
+test('compact indexer checksum preserves API results; corrupt/unknown formats fail closed',t=>{
+ const {indexerChecksum}=require('../scripts/indexer-checksum.cjs'),f=setup(t),query={wallet:f.wallet,now:Date.parse(f.state.index.observedAt)};
+ const before=walletStatus({config:f.config,...query});assert.equal(before.status,'observed');
+ const save=state=>fs.writeFileSync(f.config.indexer.statePath,JSON.stringify({...state,checksum:indexerChecksum(state)}));
+ save(f.state);assert.deepEqual(createReader(f.config).read(query),before);
+ const damaged=JSON.parse(fs.readFileSync(f.config.indexer.statePath));damaged.index.head++;
+ fs.writeFileSync(f.config.indexer.statePath,JSON.stringify(damaged));assert.equal(walletStatus({config:f.config,...query}).status,'unavailable');
+ damaged.checksum='sha256-v2:'+indexerChecksum(f.state).split(':')[1];fs.writeFileSync(f.config.indexer.statePath,JSON.stringify(damaged));
+ assert.equal(walletStatus({config:f.config,...query}).status,'unavailable');
+ f.write();assert.deepEqual(walletStatus({config:f.config,...query}),before);
+});
 test('prepared snapshot matches replay, isolates responses and ages without reload',t=>{
  const f=setup(t),reader=createReader(f.config),q={wallet:f.wallet,now:Date.parse(f.state.index.observedAt)};
  assert.deepEqual(reader.read(q),walletStatus({config:f.config,...q}));

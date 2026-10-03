@@ -1,0 +1,1394 @@
+{
+  "date": "2026-10-02",
+  "base": "2038a57 plus uncommitted bounded-cache package",
+  "before": {
+    "date": "2026-10-02T14:20:51.107Z",
+    "scope": "Synthetic unadmitted Pons curve; one BUY per 10 blocks; mocked RPC; fresh OS process per pass; no lifecycle/public projection",
+    "rows": [
+      {
+        "size": 100,
+        "mode": "seed",
+        "elapsedMs": 723.2413,
+        "peakRssKiB": 82188,
+        "rpc": {
+          "eth_chainId": 2,
+          "eth_getBlockByNumber": 106,
+          "eth_getCode": 600,
+          "eth_call": 700,
+          "eth_getTransactionReceipt": 10
+        },
+        "metrics": {
+          "lagBlocks": 0,
+          "historyBlocks": 100,
+          "scannedBlocks": 100,
+          "replayedBlocks": 100,
+          "scanMs": 370.4592,
+          "replayMs": 10.161999999999978,
+          "rewardMs": 1.206199999999967,
+          "beforeSaveMs": 383.6273,
+          "saveMs": 339.21719999999993,
+          "totalMs": 722.8515,
+          "stateBytes": 466233
+        },
+        "cacheRows": 1410,
+        "ledgerHash": "0x7b09179705aa27084363d964e915f99a55a0acf294e3cf55c2f7575cf7fc15bc",
+        "wallets": [
+          {
+            "wallet": "0x0000000000000000000000000000000000000064",
+            "carryRaw": "0",
+            "entriesMinted": "5",
+            "shortAttemptsMinted": "5",
+            "monthlyAttemptsMinted": "5"
+          }
+        ]
+      },
+      {
+        "size": 100,
+        "mode": "idle",
+        "elapsedMs": 170.31210000000002,
+        "peakRssKiB": 77124,
+        "rpc": {
+          "eth_chainId": 1,
+          "eth_getBlockByNumber": 4
+        },
+        "metrics": {
+          "lagBlocks": 0,
+          "historyBlocks": 100,
+          "scannedBlocks": 0,
+          "replayedBlocks": 0,
+          "scanMs": 0.016799999999989268,
+          "replayMs": 0.32970000000000255,
+          "rewardMs": 0.7726999999999862,
+          "beforeSaveMs": 78.8879,
+          "saveMs": 91.06039999999999,
+          "totalMs": 169.95569999999998,
+          "stateBytes": 466242
+        },
+        "cacheRows": 1410,
+        "ledgerHash": "0x7b09179705aa27084363d964e915f99a55a0acf294e3cf55c2f7575cf7fc15bc",
+        "wallets": [
+          {
+            "wallet": "0x0000000000000000000000000000000000000064",
+            "carryRaw": "0",
+            "entriesMinted": "5",
+            "shortAttemptsMinted": "5",
+            "monthlyAttemptsMinted": "5"
+          }
+        ]
+      },
+      {
+        "size": 100,
+        "mode": "append",
+        "elapsedMs": 191.171,
+        "peakRssKiB": 81148,
+        "rpc": {
+          "eth_chainId": 2,
+          "eth_getBlockByNumber": 8,
+          "eth_getCode": 6,
+          "eth_call": 7,
+          "eth_getTransactionReceipt": 1
+        },
+        "metrics": {
+          "lagBlocks": 0,
+          "historyBlocks": 101,
+          "scannedBlocks": 1,
+          "replayedBlocks": 101,
+          "scanMs": 8.761599999999987,
+          "replayMs": 12.721499999999992,
+          "rewardMs": 1.5992999999999995,
+          "beforeSaveMs": 54.1832,
+          "saveMs": 136.45599999999996,
+          "totalMs": 190.6458,
+          "stateBytes": 479008
+        },
+        "cacheRows": 1425,
+        "ledgerHash": "0xcec6b1d33490e51d579fdad5a0c4a560caaf215dfe2adb69bd1352b851cace7f",
+        "wallets": [
+          {
+            "wallet": "0x0000000000000000000000000000000000000064",
+            "carryRaw": "60000000",
+            "entriesMinted": "5",
+            "shortAttemptsMinted": "5",
+            "monthlyAttemptsMinted": "5"
+          }
+        ]
+      },
+      {
+        "size": 100,
+        "mode": "restart",
+        "elapsedMs": 198.528,
+        "peakRssKiB": 79584,
+        "rpc": {
+          "eth_chainId": 1,
+          "eth_getBlockByNumber": 4
+        },
+        "metrics": {
+          "lagBlocks": 0,
+          "historyBlocks": 101,
+          "scannedBlocks": 0,
+          "replayedBlocks": 0,
+          "scanMs": 0.01079999999998904,
+          "replayMs": 0.19239999999999213,
+          "rewardMs": 0.530699999999996,
+          "beforeSaveMs": 42.71599999999998,
+          "saveMs": 155.39050000000003,
+          "totalMs": 198.11149999999998,
+          "stateBytes": 479018
+        },
+        "cacheRows": 1425,
+        "ledgerHash": "0xcec6b1d33490e51d579fdad5a0c4a560caaf215dfe2adb69bd1352b851cace7f",
+        "wallets": [
+          {
+            "wallet": "0x0000000000000000000000000000000000000064",
+            "carryRaw": "60000000",
+            "entriesMinted": "5",
+            "shortAttemptsMinted": "5",
+            "monthlyAttemptsMinted": "5"
+          }
+        ]
+      },
+      {
+        "size": 1000,
+        "mode": "seed",
+        "elapsedMs": 3689.6205,
+        "peakRssKiB": 127988,
+        "rpc": {
+          "eth_chainId": 2,
+          "eth_getBlockByNumber": 1006,
+          "eth_getCode": 6000,
+          "eth_call": 7000,
+          "eth_getTransactionReceipt": 100
+        },
+        "metrics": {
+          "lagBlocks": 0,
+          "historyBlocks": 1000,
+          "scannedBlocks": 1000,
+          "replayedBlocks": 1000,
+          "scanMs": 3367.4311000000002,
+          "replayMs": 65.1814000000004,
+          "rewardMs": 5.265600000000177,
+          "beforeSaveMs": 3440.359,
+          "saveMs": 248.63390000000027,
+          "totalMs": 3688.9994,
+          "stateBytes": 1275748
+        },
+        "cacheRows": 1818,
+        "ledgerHash": "0xfa07d1d51b5122913068a7c1584fe92994ba17f01b9c5e43ad5ba742c82264d4",
+        "wallets": [
+          {
+            "wallet": "0x0000000000000000000000000000000000000064",
+            "carryRaw": "0",
+            "entriesMinted": "50",
+            "shortAttemptsMinted": "50",
+            "monthlyAttemptsMinted": "50"
+          }
+        ]
+      },
+      {
+        "size": 1000,
+        "mode": "idle",
+        "elapsedMs": 229.403,
+        "peakRssKiB": 133584,
+        "rpc": {
+          "eth_chainId": 1,
+          "eth_getBlockByNumber": 4
+        },
+        "metrics": {
+          "lagBlocks": 0,
+          "historyBlocks": 1000,
+          "scannedBlocks": 0,
+          "replayedBlocks": 0,
+          "scanMs": 0.015099999999989677,
+          "replayMs": 0.20359999999999445,
+          "rewardMs": 0.587299999999999,
+          "beforeSaveMs": 79.87180000000001,
+          "saveMs": 149.13170000000002,
+          "totalMs": 229.0103,
+          "stateBytes": 1275756
+        },
+        "cacheRows": 1818,
+        "ledgerHash": "0xfa07d1d51b5122913068a7c1584fe92994ba17f01b9c5e43ad5ba742c82264d4",
+        "wallets": [
+          {
+            "wallet": "0x0000000000000000000000000000000000000064",
+            "carryRaw": "0",
+            "entriesMinted": "50",
+            "shortAttemptsMinted": "50",
+            "monthlyAttemptsMinted": "50"
+          }
+        ]
+      },
+      {
+        "size": 1000,
+        "mode": "append",
+        "elapsedMs": 357.9117,
+        "peakRssKiB": 168480,
+        "rpc": {
+          "eth_chainId": 2,
+          "eth_getBlockByNumber": 8,
+          "eth_getCode": 6,
+          "eth_call": 7,
+          "eth_getTransactionReceipt": 1
+        },
+        "metrics": {
+          "lagBlocks": 0,
+          "historyBlocks": 1001,
+          "scannedBlocks": 1,
+          "replayedBlocks": 1001,
+          "scanMs": 8.083899999999971,
+          "replayMs": 88.5152,
+          "rewardMs": 5.0077,
+          "beforeSaveMs": 198.20280000000002,
+          "saveMs": 159.26600000000002,
+          "totalMs": 357.4749,
+          "stateBytes": 1285057
+        },
+        "cacheRows": 1819,
+        "ledgerHash": "0x9281b75c3326d68450be37af8f7f5d5c998b63083508f4abc6838964fca9f3fe",
+        "wallets": [
+          {
+            "wallet": "0x0000000000000000000000000000000000000064",
+            "carryRaw": "60000000",
+            "entriesMinted": "50",
+            "shortAttemptsMinted": "50",
+            "monthlyAttemptsMinted": "50"
+          }
+        ]
+      },
+      {
+        "size": 1000,
+        "mode": "restart",
+        "elapsedMs": 223.0724,
+        "peakRssKiB": 134520,
+        "rpc": {
+          "eth_chainId": 1,
+          "eth_getBlockByNumber": 4
+        },
+        "metrics": {
+          "lagBlocks": 0,
+          "historyBlocks": 1001,
+          "scannedBlocks": 0,
+          "replayedBlocks": 0,
+          "scanMs": 0.01290000000000191,
+          "replayMs": 0.1658999999999935,
+          "rewardMs": 0.5053999999999803,
+          "beforeSaveMs": 84.2038,
+          "saveMs": 138.46669999999997,
+          "totalMs": 222.6759,
+          "stateBytes": 1285068
+        },
+        "cacheRows": 1819,
+        "ledgerHash": "0x9281b75c3326d68450be37af8f7f5d5c998b63083508f4abc6838964fca9f3fe",
+        "wallets": [
+          {
+            "wallet": "0x0000000000000000000000000000000000000064",
+            "carryRaw": "60000000",
+            "entriesMinted": "50",
+            "shortAttemptsMinted": "50",
+            "monthlyAttemptsMinted": "50"
+          }
+        ]
+      },
+      {
+        "size": 5000,
+        "mode": "seed",
+        "elapsedMs": 18048.7891,
+        "peakRssKiB": 445988,
+        "rpc": {
+          "eth_chainId": 10,
+          "eth_getBlockByNumber": 5034,
+          "eth_getCode": 30000,
+          "eth_call": 35000,
+          "eth_getTransactionReceipt": 500
+        },
+        "metrics": {
+          "lagBlocks": 0,
+          "historyBlocks": 5000,
+          "scannedBlocks": 1000,
+          "replayedBlocks": 5000,
+          "scanMs": 2830.224900000001,
+          "replayMs": 242.55289999999877,
+          "rewardMs": 19.921599999997852,
+          "beforeSaveMs": 3263.7630999999983,
+          "saveMs": 391.5070000000014,
+          "totalMs": 3655.2722000000012,
+          "stateBytes": 4395317
+        },
+        "cacheRows": 1818,
+        "ledgerHash": "0x10ead388e7b10f9d240f3f3ecf67d3e6e358753ff6b1eb5cc8c056bb5c9ef3be",
+        "wallets": [
+          {
+            "wallet": "0x0000000000000000000000000000000000000064",
+            "carryRaw": "0",
+            "entriesMinted": "250",
+            "shortAttemptsMinted": "250",
+            "monthlyAttemptsMinted": "250"
+          }
+        ]
+      },
+      {
+        "size": 5000,
+        "mode": "idle",
+        "elapsedMs": 638.9029,
+        "peakRssKiB": 314664,
+        "rpc": {
+          "eth_chainId": 1,
+          "eth_getBlockByNumber": 4
+        },
+        "metrics": {
+          "lagBlocks": 0,
+          "historyBlocks": 5000,
+          "scannedBlocks": 0,
+          "replayedBlocks": 0,
+          "scanMs": 0.03300000000001546,
+          "replayMs": 0.32260000000002265,
+          "rewardMs": 0.6930999999999585,
+          "beforeSaveMs": 248.26350000000002,
+          "saveMs": 390.1747,
+          "totalMs": 638.4458999999999,
+          "stateBytes": 4395314
+        },
+        "cacheRows": 1818,
+        "ledgerHash": "0x10ead388e7b10f9d240f3f3ecf67d3e6e358753ff6b1eb5cc8c056bb5c9ef3be",
+        "wallets": [
+          {
+            "wallet": "0x0000000000000000000000000000000000000064",
+            "carryRaw": "0",
+            "entriesMinted": "250",
+            "shortAttemptsMinted": "250",
+            "monthlyAttemptsMinted": "250"
+          }
+        ]
+      },
+      {
+        "size": 5000,
+        "mode": "append",
+        "elapsedMs": 889.3502000000001,
+        "peakRssKiB": 379008,
+        "rpc": {
+          "eth_chainId": 2,
+          "eth_getBlockByNumber": 8,
+          "eth_getCode": 6,
+          "eth_call": 7,
+          "eth_getTransactionReceipt": 1
+        },
+        "metrics": {
+          "lagBlocks": 0,
+          "historyBlocks": 5001,
+          "scannedBlocks": 1,
+          "replayedBlocks": 5001,
+          "scanMs": 11.477100000000007,
+          "replayMs": 306.27049999999997,
+          "rewardMs": 23.28690000000006,
+          "beforeSaveMs": 577.1023,
+          "saveMs": 311.8373,
+          "totalMs": 888.9476999999999,
+          "stateBytes": 4404611
+        },
+        "cacheRows": 1819,
+        "ledgerHash": "0xc37cd802b2dcff1a00ee7ed4cb8a666deb544abf95e6e88d131426a564b24b26",
+        "wallets": [
+          {
+            "wallet": "0x0000000000000000000000000000000000000064",
+            "carryRaw": "60000000",
+            "entriesMinted": "250",
+            "shortAttemptsMinted": "250",
+            "monthlyAttemptsMinted": "250"
+          }
+        ]
+      },
+      {
+        "size": 5000,
+        "mode": "restart",
+        "elapsedMs": 594.7511999999999,
+        "peakRssKiB": 314656,
+        "rpc": {
+          "eth_chainId": 1,
+          "eth_getBlockByNumber": 4
+        },
+        "metrics": {
+          "lagBlocks": 0,
+          "historyBlocks": 5001,
+          "scannedBlocks": 0,
+          "replayedBlocks": 0,
+          "scanMs": 0.028700000000014825,
+          "replayMs": 0.21600000000000819,
+          "rewardMs": 0.5869000000000142,
+          "beforeSaveMs": 264.9639,
+          "saveMs": 329.4056,
+          "totalMs": 594.3808,
+          "stateBytes": 4404612
+        },
+        "cacheRows": 1819,
+        "ledgerHash": "0xc37cd802b2dcff1a00ee7ed4cb8a666deb544abf95e6e88d131426a564b24b26",
+        "wallets": [
+          {
+            "wallet": "0x0000000000000000000000000000000000000064",
+            "carryRaw": "60000000",
+            "entriesMinted": "250",
+            "shortAttemptsMinted": "250",
+            "monthlyAttemptsMinted": "250"
+          }
+        ]
+      }
+    ]
+  },
+  "after": {
+    "date": "2026-10-02T15:06:46.701Z",
+    "scope": "Synthetic unadmitted Pons curve; one BUY per 10 blocks; mocked RPC; fresh OS process per pass; no lifecycle/public projection",
+    "rows": [
+      {
+        "size": 100,
+        "mode": "seed",
+        "elapsedMs": 469.22920000000005,
+        "peakRssKiB": 75052,
+        "rpc": {
+          "eth_chainId": 2,
+          "eth_getBlockByNumber": 106,
+          "eth_getCode": 600,
+          "eth_call": 700,
+          "eth_getTransactionReceipt": 10
+        },
+        "metrics": {
+          "lagBlocks": 0,
+          "historyBlocks": 100,
+          "scannedBlocks": 100,
+          "replayedBlocks": 100,
+          "replayMode": "full",
+          "scanMs": 354.9683,
+          "replayMs": 9.75630000000001,
+          "rewardMs": 0.5043000000000006,
+          "beforeSaveMs": 367.2428,
+          "saveMs": 101.64389999999997,
+          "totalMs": 468.8926,
+          "stateBytes": 378750
+        },
+        "cacheRows": 1410,
+        "ledgerHash": "0x7b09179705aa27084363d964e915f99a55a0acf294e3cf55c2f7575cf7fc15bc",
+        "wallets": [
+          {
+            "wallet": "0x0000000000000000000000000000000000000064",
+            "carryRaw": "0",
+            "entriesMinted": "5",
+            "shortAttemptsMinted": "5",
+            "monthlyAttemptsMinted": "5"
+          }
+        ]
+      },
+      {
+        "size": 100,
+        "mode": "idle",
+        "elapsedMs": 76.4676,
+        "peakRssKiB": 68748,
+        "rpc": {
+          "eth_chainId": 1,
+          "eth_getBlockByNumber": 4
+        },
+        "metrics": {
+          "lagBlocks": 0,
+          "historyBlocks": 100,
+          "scannedBlocks": 0,
+          "replayedBlocks": 0,
+          "replayMode": "reused",
+          "scanMs": 0.009600000000006048,
+          "replayMs": 0.23419999999998709,
+          "rewardMs": 0.4445999999999799,
+          "beforeSaveMs": 8.42689999999999,
+          "saveMs": 67.6969,
+          "totalMs": 76.12809999999999,
+          "stateBytes": 378771
+        },
+        "cacheRows": 1410,
+        "ledgerHash": "0x7b09179705aa27084363d964e915f99a55a0acf294e3cf55c2f7575cf7fc15bc",
+        "wallets": [
+          {
+            "wallet": "0x0000000000000000000000000000000000000064",
+            "carryRaw": "0",
+            "entriesMinted": "5",
+            "shortAttemptsMinted": "5",
+            "monthlyAttemptsMinted": "5"
+          }
+        ]
+      },
+      {
+        "size": 100,
+        "mode": "append",
+        "elapsedMs": 115.76709999999999,
+        "peakRssKiB": 69284,
+        "rpc": {
+          "eth_chainId": 2,
+          "eth_getBlockByNumber": 8,
+          "eth_getCode": 6,
+          "eth_call": 7,
+          "eth_getTransactionReceipt": 1
+        },
+        "metrics": {
+          "lagBlocks": 0,
+          "historyBlocks": 101,
+          "scannedBlocks": 1,
+          "replayedBlocks": 1,
+          "replayMode": "checkpoint",
+          "scanMs": 7.472999999999985,
+          "replayMs": 4.607299999999981,
+          "rewardMs": 0.5518000000000143,
+          "beforeSaveMs": 20.5137,
+          "saveMs": 94.8862,
+          "totalMs": 115.40550000000002,
+          "stateBytes": 388415
+        },
+        "cacheRows": 1425,
+        "ledgerHash": "0xcec6b1d33490e51d579fdad5a0c4a560caaf215dfe2adb69bd1352b851cace7f",
+        "wallets": [
+          {
+            "wallet": "0x0000000000000000000000000000000000000064",
+            "carryRaw": "60000000",
+            "entriesMinted": "5",
+            "shortAttemptsMinted": "5",
+            "monthlyAttemptsMinted": "5"
+          }
+        ]
+      },
+      {
+        "size": 100,
+        "mode": "restart",
+        "elapsedMs": 64.39389999999999,
+        "peakRssKiB": 67992,
+        "rpc": {
+          "eth_chainId": 1,
+          "eth_getBlockByNumber": 4
+        },
+        "metrics": {
+          "lagBlocks": 0,
+          "historyBlocks": 101,
+          "scannedBlocks": 0,
+          "replayedBlocks": 0,
+          "replayMode": "reused",
+          "scanMs": 0.00929999999999609,
+          "replayMs": 0.2155999999999949,
+          "rewardMs": 0.4615000000000009,
+          "beforeSaveMs": 8.886399999999995,
+          "saveMs": 55.12270000000001,
+          "totalMs": 64.01619999999998,
+          "stateBytes": 388424
+        },
+        "cacheRows": 1425,
+        "ledgerHash": "0xcec6b1d33490e51d579fdad5a0c4a560caaf215dfe2adb69bd1352b851cace7f",
+        "wallets": [
+          {
+            "wallet": "0x0000000000000000000000000000000000000064",
+            "carryRaw": "60000000",
+            "entriesMinted": "5",
+            "shortAttemptsMinted": "5",
+            "monthlyAttemptsMinted": "5"
+          }
+        ]
+      },
+      {
+        "size": 1000,
+        "mode": "seed",
+        "elapsedMs": 3098.8126,
+        "peakRssKiB": 104236,
+        "rpc": {
+          "eth_chainId": 2,
+          "eth_getBlockByNumber": 1006,
+          "eth_getCode": 6000,
+          "eth_call": 7000,
+          "eth_getTransactionReceipt": 100
+        },
+        "metrics": {
+          "lagBlocks": 0,
+          "historyBlocks": 1000,
+          "scannedBlocks": 1000,
+          "replayedBlocks": 1000,
+          "replayMode": "full",
+          "scanMs": 2899.4984999999997,
+          "replayMs": 63.09019999999964,
+          "rewardMs": 0.5502000000001317,
+          "beforeSaveMs": 2964.951,
+          "saveMs": 133.4616000000001,
+          "totalMs": 3098.4194,
+          "stateBytes": 981788
+        },
+        "cacheRows": 1818,
+        "ledgerHash": "0xfa07d1d51b5122913068a7c1584fe92994ba17f01b9c5e43ad5ba742c82264d4",
+        "wallets": [
+          {
+            "wallet": "0x0000000000000000000000000000000000000064",
+            "carryRaw": "0",
+            "entriesMinted": "50",
+            "shortAttemptsMinted": "50",
+            "monthlyAttemptsMinted": "50"
+          }
+        ]
+      },
+      {
+        "size": 1000,
+        "mode": "idle",
+        "elapsedMs": 157.2733,
+        "peakRssKiB": 79380,
+        "rpc": {
+          "eth_chainId": 1,
+          "eth_getBlockByNumber": 4
+        },
+        "metrics": {
+          "lagBlocks": 0,
+          "historyBlocks": 1000,
+          "scannedBlocks": 0,
+          "replayedBlocks": 0,
+          "replayMode": "reused",
+          "scanMs": 0.01500000000001478,
+          "replayMs": 0.2627000000000237,
+          "rewardMs": 0.5167000000000144,
+          "beforeSaveMs": 15.791399999999982,
+          "saveMs": 141.0761,
+          "totalMs": 156.8727,
+          "stateBytes": 981796
+        },
+        "cacheRows": 1818,
+        "ledgerHash": "0xfa07d1d51b5122913068a7c1584fe92994ba17f01b9c5e43ad5ba742c82264d4",
+        "wallets": [
+          {
+            "wallet": "0x0000000000000000000000000000000000000064",
+            "carryRaw": "0",
+            "entriesMinted": "50",
+            "shortAttemptsMinted": "50",
+            "monthlyAttemptsMinted": "50"
+          }
+        ]
+      },
+      {
+        "size": 1000,
+        "mode": "append",
+        "elapsedMs": 139.7553,
+        "peakRssKiB": 80008,
+        "rpc": {
+          "eth_chainId": 2,
+          "eth_getBlockByNumber": 8,
+          "eth_getCode": 6,
+          "eth_call": 7,
+          "eth_getTransactionReceipt": 1
+        },
+        "metrics": {
+          "lagBlocks": 0,
+          "historyBlocks": 1001,
+          "scannedBlocks": 1,
+          "replayedBlocks": 1,
+          "replayMode": "checkpoint",
+          "scanMs": 9.098800000000011,
+          "replayMs": 11.166600000000017,
+          "rewardMs": 0.49519999999998277,
+          "beforeSaveMs": 38.960199999999986,
+          "saveMs": 100.38130000000001,
+          "totalMs": 139.3464,
+          "stateBytes": 988567
+        },
+        "cacheRows": 1819,
+        "ledgerHash": "0x9281b75c3326d68450be37af8f7f5d5c998b63083508f4abc6838964fca9f3fe",
+        "wallets": [
+          {
+            "wallet": "0x0000000000000000000000000000000000000064",
+            "carryRaw": "60000000",
+            "entriesMinted": "50",
+            "shortAttemptsMinted": "50",
+            "monthlyAttemptsMinted": "50"
+          }
+        ]
+      },
+      {
+        "size": 1000,
+        "mode": "restart",
+        "elapsedMs": 150.84430000000003,
+        "peakRssKiB": 80164,
+        "rpc": {
+          "eth_chainId": 1,
+          "eth_getBlockByNumber": 4
+        },
+        "metrics": {
+          "lagBlocks": 0,
+          "historyBlocks": 1001,
+          "scannedBlocks": 0,
+          "replayedBlocks": 0,
+          "replayMode": "reused",
+          "scanMs": 0.011699999999990496,
+          "replayMs": 0.25739999999998986,
+          "rewardMs": 0.53479999999999,
+          "beforeSaveMs": 15.40209999999999,
+          "saveMs": 135.05870000000002,
+          "totalMs": 150.46609999999998,
+          "stateBytes": 988563
+        },
+        "cacheRows": 1819,
+        "ledgerHash": "0x9281b75c3326d68450be37af8f7f5d5c998b63083508f4abc6838964fca9f3fe",
+        "wallets": [
+          {
+            "wallet": "0x0000000000000000000000000000000000000064",
+            "carryRaw": "60000000",
+            "entriesMinted": "50",
+            "shortAttemptsMinted": "50",
+            "monthlyAttemptsMinted": "50"
+          }
+        ]
+      },
+      {
+        "size": 5000,
+        "mode": "seed",
+        "elapsedMs": 15445.281400000002,
+        "peakRssKiB": 288356,
+        "rpc": {
+          "eth_chainId": 10,
+          "eth_getBlockByNumber": 5034,
+          "eth_getCode": 30000,
+          "eth_call": 35000,
+          "eth_getTransactionReceipt": 500
+        },
+        "metrics": {
+          "lagBlocks": 0,
+          "historyBlocks": 5000,
+          "scannedBlocks": 1000,
+          "replayedBlocks": 1000,
+          "replayMode": "checkpoint",
+          "scanMs": 2865.974,
+          "replayMs": 83.66179999999986,
+          "rewardMs": 0.020399999999426655,
+          "beforeSaveMs": 2975.304,
+          "saveMs": 157.53939999999966,
+          "totalMs": 3132.8454,
+          "stateBytes": 3264943
+        },
+        "cacheRows": 1818,
+        "ledgerHash": "0x10ead388e7b10f9d240f3f3ecf67d3e6e358753ff6b1eb5cc8c056bb5c9ef3be",
+        "wallets": [
+          {
+            "wallet": "0x0000000000000000000000000000000000000064",
+            "carryRaw": "0",
+            "entriesMinted": "250",
+            "shortAttemptsMinted": "250",
+            "monthlyAttemptsMinted": "250"
+          }
+        ]
+      },
+      {
+        "size": 5000,
+        "mode": "idle",
+        "elapsedMs": 217.3337,
+        "peakRssKiB": 171640,
+        "rpc": {
+          "eth_chainId": 1,
+          "eth_getBlockByNumber": 4
+        },
+        "metrics": {
+          "lagBlocks": 0,
+          "historyBlocks": 5000,
+          "scannedBlocks": 0,
+          "replayedBlocks": 0,
+          "replayMode": "reused",
+          "scanMs": 0.02600000000001046,
+          "replayMs": 0.2494000000000085,
+          "rewardMs": 0.542900000000003,
+          "beforeSaveMs": 57.590599999999995,
+          "saveMs": 159.3344,
+          "totalMs": 216.92999999999998,
+          "stateBytes": 3264952
+        },
+        "cacheRows": 1818,
+        "ledgerHash": "0x10ead388e7b10f9d240f3f3ecf67d3e6e358753ff6b1eb5cc8c056bb5c9ef3be",
+        "wallets": [
+          {
+            "wallet": "0x0000000000000000000000000000000000000064",
+            "carryRaw": "0",
+            "entriesMinted": "250",
+            "shortAttemptsMinted": "250",
+            "monthlyAttemptsMinted": "250"
+          }
+        ]
+      },
+      {
+        "size": 5000,
+        "mode": "append",
+        "elapsedMs": 271.5075,
+        "peakRssKiB": 174012,
+        "rpc": {
+          "eth_chainId": 2,
+          "eth_getBlockByNumber": 8,
+          "eth_getCode": 6,
+          "eth_call": 7,
+          "eth_getTransactionReceipt": 1
+        },
+        "metrics": {
+          "lagBlocks": 0,
+          "historyBlocks": 5001,
+          "scannedBlocks": 1,
+          "replayedBlocks": 1,
+          "replayMode": "checkpoint",
+          "scanMs": 9.365399999999994,
+          "replayMs": 46.958500000000015,
+          "rewardMs": 0.5289999999999964,
+          "beforeSaveMs": 109.29120000000003,
+          "saveMs": 161.80349999999999,
+          "totalMs": 271.10030000000006,
+          "stateBytes": 3271707
+        },
+        "cacheRows": 1819,
+        "ledgerHash": "0xc37cd802b2dcff1a00ee7ed4cb8a666deb544abf95e6e88d131426a564b24b26",
+        "wallets": [
+          {
+            "wallet": "0x0000000000000000000000000000000000000064",
+            "carryRaw": "60000000",
+            "entriesMinted": "250",
+            "shortAttemptsMinted": "250",
+            "monthlyAttemptsMinted": "250"
+          }
+        ]
+      },
+      {
+        "size": 5000,
+        "mode": "restart",
+        "elapsedMs": 183.47809999999998,
+        "peakRssKiB": 170620,
+        "rpc": {
+          "eth_chainId": 1,
+          "eth_getBlockByNumber": 4
+        },
+        "metrics": {
+          "lagBlocks": 0,
+          "historyBlocks": 5001,
+          "scannedBlocks": 0,
+          "replayedBlocks": 0,
+          "replayMode": "reused",
+          "scanMs": 0.03509999999999991,
+          "replayMs": 0.43070000000000164,
+          "rewardMs": 0.7549999999999955,
+          "beforeSaveMs": 49.67240000000001,
+          "saveMs": 133.3999,
+          "totalMs": 183.07870000000003,
+          "stateBytes": 3271705
+        },
+        "cacheRows": 1819,
+        "ledgerHash": "0xc37cd802b2dcff1a00ee7ed4cb8a666deb544abf95e6e88d131426a564b24b26",
+        "wallets": [
+          {
+            "wallet": "0x0000000000000000000000000000000000000064",
+            "carryRaw": "60000000",
+            "entriesMinted": "250",
+            "shortAttemptsMinted": "250",
+            "monthlyAttemptsMinted": "250"
+          }
+        ]
+      }
+    ]
+  },
+  "migration": {
+    "size": 5000,
+    "mode": "restart",
+    "elapsedMs": 746.2472,
+    "peakRssKiB": 297764,
+    "rpc": {
+      "eth_chainId": 1,
+      "eth_getBlockByNumber": 4
+    },
+    "metrics": {
+      "lagBlocks": 0,
+      "historyBlocks": 5001,
+      "scannedBlocks": 0,
+      "replayedBlocks": 5001,
+      "replayMode": "full",
+      "scanMs": 0.022999999999967713,
+      "replayMs": 348.4137,
+      "rewardMs": 0.7509999999999764,
+      "beforeSaveMs": 573.1914999999999,
+      "saveMs": 172.64729999999997,
+      "totalMs": 745.8469,
+      "stateBytes": 3271696
+    },
+    "cacheRows": 1819,
+    "ledgerHash": "0xc37cd802b2dcff1a00ee7ed4cb8a666deb544abf95e6e88d131426a564b24b26",
+    "wallets": [
+      {
+        "wallet": "0x0000000000000000000000000000000000000064",
+        "carryRaw": "60000000",
+        "entriesMinted": "250",
+        "shortAttemptsMinted": "250",
+        "monthlyAttemptsMinted": "250"
+      }
+    ]
+  },
+  "sourceHashes": {
+    "scripts/direct-buy.cjs": "4a52f6bfc1c54a4d25f1258afb14665692c0eeab8f0735cc343674accd50a5a4",
+    "scripts/persistent-buy-indexer.cjs": "cddbbb56bd9614e3a067422954656fced338ab60b54b50c82503574bb6fe0095",
+    "scripts/indexer-checksum.cjs": "64e613c24a335fd9b8294b53a447d74d825b51a67890660aaa37b1ed98983360",
+    "scripts/local-scheduler-state.cjs": "e10021ff0c42f77946779f85fe4448fb91c5e8c7cbaa548eab58e8d4b9648b68",
+    "scripts/user-status-api.cjs": "71ca5896e6c4a71c4fe5dc26efe0152b5e98b0faa72037da7647ba05caf59fc7",
+    "scripts/benchmark-indexer-history.cjs": "6d6e88156af66bb4ae59258bfecb80113f7d0a125968307e4fe2e5616561cfe8"
+  },
+  "checks": "All 12 before/after ledger hashes, wallets and RPC counters match; migration rebuilt replay and retained ledger",
+  "limits": "Synthetic unadmitted Pons curve; no lifecycle/network latency; single measurements; full JSON persists O(history)",
+  "validation": {
+    "logs": [
+      "indexer-checkpoint-first",
+      "indexer-checkpoint-neighbors",
+      "indexer-checkpoint-corrections",
+      "indexer-checkpoint-route-tests",
+      "indexer-checkpoint-missing"
+    ],
+    "uniqueTests": 112,
+    "results": {
+      "catch-up delay differs from idle and outage backoff": {
+        "passed": true,
+        "log": "indexer-checkpoint-first"
+      },
+      "restart reuses evidence without duplicate entries; new blocks catch up in bounded batches": {
+        "passed": true,
+        "log": "indexer-checkpoint-first"
+      },
+      "RPC outage preserves snapshot and resumes; configuration and checksum changes reject": {
+        "passed": true,
+        "log": "indexer-checkpoint-first"
+      },
+      "canonical branch replacement recomputes ledger and refuses excessive reorgs": {
+        "passed": true,
+        "log": "indexer-checkpoint-first"
+      },
+      "removed BUY rolls back its entries and carry using canonical replay": {
+        "passed": true,
+        "log": "indexer-checkpoint-first"
+      },
+      "snapshot consumer rejects unadmitted, stale, behind, wrong policy and changed branch": {
+        "passed": true,
+        "log": "indexer-checkpoint-first"
+      },
+      "batch BUY → durable index → Short/Monthly → HTTP; restart and reorg": {
+        "passed": true,
+        "log": "indexer-checkpoint-route-tests"
+      },
+      "100 unrelated self-calls need no parent code; target failure still closes indexing": {
+        "passed": true,
+        "log": "indexer-checkpoint-route-tests"
+      },
+      "wrong runtime/binding retains snapshot; same-block delegation activity is not guessed": {
+        "passed": true,
+        "log": "indexer-checkpoint-route-tests"
+      },
+      "unproven parent delegation cannot mint; authorization mutation cannot mint": {
+        "passed": true,
+        "log": "indexer-checkpoint-route-tests"
+      },
+      "combined genesis preserves curve batch decisions and never upgrades older profiles": {
+        "passed": true,
+        "log": "indexer-checkpoint-route-tests"
+      },
+      "incremental scan processes only appended blocks; idle and engine upgrade remain explicit": {
+        "passed": true,
+        "log": "indexer-checkpoint-missing"
+      },
+      "Pons60+40 persists in bounded batches; restart performs no historical bindings or receipts reads": {
+        "passed": true,
+        "log": "indexer-checkpoint-missing"
+      },
+      "reorg evicts Pons binding cache, rejects substituted curve and preserves prior ledger": {
+        "passed": true,
+        "log": "indexer-checkpoint-missing"
+      },
+      "Pons outage and excessive rollback retain state; consumer admission is not silently enabled": {
+        "passed": true,
+        "log": "indexer-checkpoint-missing"
+      },
+      "bounded RPC cache preserves all evidence and tickets across restart and cache-miss reorg": {
+        "passed": true,
+        "log": "indexer-checkpoint-missing"
+      },
+      "zero rollback window bounds catch-up cache and leaves the last good snapshot on failure": {
+        "passed": true,
+        "log": "indexer-checkpoint-missing"
+      },
+      "Pons genesis adapters admitted explicitly; upgrades never silently cross into other routes": {
+        "passed": true,
+        "log": "indexer-checkpoint-first"
+      },
+      "Pons admitted snapshot is consumed via verified policy; stale/behind/branch/identity fail closed": {
+        "passed": true,
+        "log": "indexer-checkpoint-first"
+      },
+      "source authority/runtime drift stops admission and index refresh, retaining last valid snapshot": {
+        "passed": true,
+        "log": "indexer-checkpoint-first"
+      },
+      "coordinator selects strict indexed config only with matching policy and snapshot config": {
+        "passed": true,
+        "log": "indexer-checkpoint-first"
+      },
+      "dual replay independently freezes and consumes both sources; new BUY remains open": {
+        "passed": true,
+        "log": "indexer-checkpoint-neighbors"
+      },
+      "dual replay rejects wrong capability, global identity reuse and monthly early restart": {
+        "passed": true,
+        "log": "indexer-checkpoint-neighbors"
+      },
+      "same payload across kinds survives both freeze orders and terminal replay; wrong prefix rejected": {
+        "passed": true,
+        "log": "indexer-checkpoint-neighbors"
+      },
+      "dual domain binds both deployments, immutable policy and vault; no silent v2 downgrade": {
+        "passed": true,
+        "log": "indexer-checkpoint-neighbors"
+      },
+      "actual local fixture emits freeze/terminal ABI accepted by raw receipt replay (empty attempts)": {
+        "passed": true,
+        "log": "indexer-checkpoint-neighbors"
+      },
+      "99+1 entry opens one attempt of each type; checkpoints alone do not consume": {
+        "passed": true,
+        "log": "indexer-checkpoint-neighbors"
+      },
+      "cutoff is inclusive; BUY between cutoff and freeze stays OPEN, monthly independent": {
+        "passed": true,
+        "log": "indexer-checkpoint-neighbors"
+      },
+      "one pending per kind; Monthly freeze while Short pending is independent": {
+        "passed": true,
+        "log": "indexer-checkpoint-neighbors"
+      },
+      "winner and no-winner consume the same frozen range; claims do not affect attempts": {
+        "passed": true,
+        "log": "indexer-checkpoint-neighbors"
+      },
+      "next Short uses ranges after consumption; monthly consumption never changes Short": {
+        "passed": true,
+        "log": "indexer-checkpoint-neighbors"
+      },
+      "duplicate delivery is idempotent; a second on-chain FREEZE or TERMINAL is an error": {
+        "passed": true,
+        "log": "indexer-checkpoint-neighbors"
+      },
+      "wrong draw, kind, snapshot, outcome or missing result marker fails closed": {
+        "passed": true,
+        "log": "indexer-checkpoint-neighbors"
+      },
+      "future/same-block, stale and noncanonical cutoffs are rejected": {
+        "passed": true,
+        "log": "indexer-checkpoint-neighbors"
+      },
+      "operator cannot omit/invent participants or reuse snapshots across domains": {
+        "passed": true,
+        "log": "indexer-checkpoint-neighbors"
+      },
+      "full branch replay rolls back orphan FREEZE/TERMINAL without restoring consumed attempts ad hoc": {
+        "passed": true,
+        "log": "indexer-checkpoint-neighbors"
+      },
+      "BUY removed by reorg changes snapshot; surviving stale commitment halts": {
+        "passed": true,
+        "log": "indexer-checkpoint-neighbors"
+      },
+      "empty snapshot is accounting-only, not proof of readiness; no invented attempts": {
+        "passed": true,
+        "log": "indexer-checkpoint-neighbors"
+      },
+      "large cumulative counts and many wallets conserve attempts, deterministically": {
+        "passed": true,
+        "log": "indexer-checkpoint-neighbors"
+      },
+      "documented example has old Short consumed, new Short frozen and Monthly independent": {
+        "passed": true,
+        "log": "indexer-checkpoint-neighbors"
+      },
+      "checkpoint continuation equals full legacy replay at every boundary": {
+        "passed": true,
+        "log": "indexer-checkpoint-corrections"
+      },
+      "Pons checkpoint carries 60+40 without mutation and rejects broken proof/duplicate tx": {
+        "passed": true,
+        "log": "indexer-checkpoint-corrections"
+      },
+      "saved Permit2 integration branch reproduces activation, single attempt and scheduler artifact": {
+        "passed": true,
+        "log": "indexer-checkpoint-corrections"
+      },
+      "Permit2 saved real fork BUY requires its own activated adapter; volume is actual spend": {
+        "passed": true,
+        "log": "indexer-checkpoint-corrections"
+      },
+      "Permit2 adapter rejects extra/reordered/flagged commands, wrong permit and noncanonical bytes": {
+        "passed": true,
+        "log": "indexer-checkpoint-corrections"
+      },
+      "Permit2 adapter retains strict payer, pool, action and transfer attribution": {
+        "passed": true,
+        "log": "indexer-checkpoint-corrections"
+      },
+      "Permit2 typed extension preserves old frozen commitments and carry at activation": {
+        "passed": true,
+        "log": "indexer-checkpoint-corrections"
+      },
+      "Permit2 active RPC dependency rejects missing or mismatched code before scanning receipts": {
+        "passed": true,
+        "log": "indexer-checkpoint-corrections"
+      },
+      "real fork router BUY 99 + 1 creates one entry; pre-registration BUY, SELL, gift and batch do not": {
+        "passed": true,
+        "log": "indexer-checkpoint-corrections"
+      },
+      "replay is deterministic; duplicate block/log delivery cannot mint extra entries": {
+        "passed": true,
+        "log": "indexer-checkpoint-corrections"
+      },
+      "bad provenance, chain, missing block and unanchored partial history fail closed": {
+        "passed": true,
+        "log": "indexer-checkpoint-corrections"
+      },
+      "fork of the branch removes orphaned BUY: replay restores 99 USDG carry": {
+        "passed": true,
+        "log": "indexer-checkpoint-corrections"
+      },
+      "an omitted operator decision or changed carry is detectable by full replay comparison": {
+        "passed": true,
+        "log": "indexer-checkpoint-corrections"
+      },
+      "calldata max/amount and pool sender alone never authorize a BUY": {
+        "passed": true,
+        "log": "indexer-checkpoint-corrections"
+      },
+      "missing payment, unrelated quote transfers and wrong transfer values cannot fabricate volume": {
+        "passed": true,
+        "log": "indexer-checkpoint-corrections"
+      },
+      "wrong pool, nonempty hookData and unsupported exact-out never silently count": {
+        "passed": true,
+        "log": "indexer-checkpoint-corrections"
+      },
+      "registration strictly precedes Swap even within one receipt (synthetic ordered-log fixture)": {
+        "passed": true,
+        "log": "indexer-checkpoint-corrections"
+      },
+      "independent RPC scan fetches all receipts and detects changed head or code": {
+        "passed": true,
+        "log": "indexer-checkpoint-corrections"
+      },
+      "scheduled routes decode three public BUY receipts, gated at exact activation block": {
+        "passed": true,
+        "log": "indexer-checkpoint-corrections"
+      },
+      "route policy rejects unknown, duplicate, invalid blocks and unpinned runtime; legacy replay unchanged": {
+        "passed": true,
+        "log": "indexer-checkpoint-corrections"
+      },
+      "public route rejects malformed settlement, limits, extra commands and inconsistent transfers": {
+        "passed": true,
+        "log": "indexer-checkpoint-corrections"
+      },
+      "route extension candidates are append-only; this is not lifecycle upgrade admission": {
+        "passed": true,
+        "log": "indexer-checkpoint-corrections"
+      },
+      "future route extension is NOT a lifecycle upgrade: old frozen and settled snapshots retain original manifest": {
+        "passed": true,
+        "log": "indexer-checkpoint-corrections"
+      },
+      "versioned BUY history preserves pending and settled snapshots, carry and inclusive route activation": {
+        "passed": true,
+        "log": "indexer-checkpoint-corrections"
+      },
+      "FREEZE after activation keeps policy of its earlier cutoff; future versions do not rewrite it": {
+        "passed": true,
+        "log": "indexer-checkpoint-corrections"
+      },
+      "policy admission loads only authorized finalized notices with typed commitments; preserves old snapshot": {
+        "passed": true,
+        "log": "indexer-checkpoint-corrections"
+      },
+      "BUY CLI rejects missing public trust and labels offline evidence unadmitted": {
+        "passed": true,
+        "log": "indexer-checkpoint-corrections"
+      },
+      "service catches up, reports honest health, resumes RPC and restarts without losing state": {
+        "passed": true,
+        "log": "indexer-checkpoint-neighbors"
+      },
+      "own crashed child lock is recovered only after exit; API survives": {
+        "passed": true,
+        "log": "indexer-checkpoint-neighbors"
+      },
+      "unknown lock and corrupted state require attention without resetting anything": {
+        "passed": true,
+        "log": "indexer-checkpoint-neighbors"
+      },
+      "stalled RPC pass times out and the next pass recovers": {
+        "passed": true,
+        "log": "indexer-checkpoint-neighbors"
+      },
+      "Infinity saved BUY counts wallet debit including fees without registration, repeat blocks idempotent": {
+        "passed": true,
+        "log": "indexer-checkpoint-neighbors"
+      },
+      "Infinity refunds reduce debit; inputMaximum is not ticket volume": {
+        "passed": true,
+        "log": "indexer-checkpoint-neighbors"
+      },
+      "Infinity rejects altered recipient, payment, refund, selector, route and multiple swaps": {
+        "passed": true,
+        "log": "indexer-checkpoint-neighbors"
+      },
+      "Infinity SELL and plain transfers mint nothing; foreign schema cannot enable automatic eligibility": {
+        "passed": true,
+        "log": "indexer-checkpoint-neighbors"
+      },
+      "async state save resolves without lock and permits child process handoff repeatedly": {
+        "passed": true,
+        "log": "indexer-checkpoint-corrections"
+      },
+      "occupied lock reports bounded metadata without deleting another owner": {
+        "passed": true,
+        "log": "indexer-checkpoint-corrections"
+      },
+      "action rejection releases lock before caller observes failure": {
+        "passed": true,
+        "log": "indexer-checkpoint-corrections"
+      },
+      "PID initialization writeFileSync failure releases owned fd and lock before rejection": {
+        "passed": true,
+        "log": "indexer-checkpoint-corrections"
+      },
+      "PID initialization closeSync failure releases owned fd and lock before rejection": {
+        "passed": true,
+        "log": "indexer-checkpoint-corrections"
+      },
+      "primary PID write and cleanup close failures both survive; unlink is still attempted": {
+        "passed": true,
+        "log": "indexer-checkpoint-corrections"
+      },
+      "release error preserves primary transaction classification and does not claim cleanup succeeded": {
+        "passed": true,
+        "log": "indexer-checkpoint-corrections"
+      },
+      "migration admission holds lock and rejected guard leaves bytes and history unchanged": {
+        "passed": true,
+        "log": "indexer-checkpoint-corrections"
+      },
+      "pending forbids migration before admission callback and persistence": {
+        "passed": true,
+        "log": "indexer-checkpoint-corrections"
+      },
+      "Pons scanner binding rejects a substituted curve even with supplied runtime hashes": {
+        "passed": true,
+        "log": "indexer-checkpoint-neighbors"
+      },
+      "Pons direct101 opens one Short and Monthly, carry1; duplicate delivery and restart are idempotent": {
+        "passed": true,
+        "log": "indexer-checkpoint-neighbors"
+      },
+      "Pons60+40 accumulates; canonical branch rebuild removes orphaned entries": {
+        "passed": true,
+        "log": "indexer-checkpoint-neighbors"
+      },
+      "Pons partial graduation counts net debit, not requested amount or fees twice": {
+        "passed": true,
+        "log": "indexer-checkpoint-neighbors"
+      },
+      "Pons rejects ambiguous payment, recipient, refund, minimum, ordering and non-direct routes": {
+        "passed": true,
+        "log": "indexer-checkpoint-neighbors"
+      },
+      "Pons transfers and SELL mint nothing; invalid policy and receipt provenance fail closed": {
+        "passed": true,
+        "log": "indexer-checkpoint-neighbors"
+      },
+      "checkpoint restart extends only suffix; explicit audit and old engine rebuild from evidence": {
+        "passed": true,
+        "log": "indexer-checkpoint-missing"
+      },
+      "Pons v4 both currency orders and settlement forms: net TOKEN after hook fee, USDG counted once": {
+        "passed": true,
+        "log": "indexer-checkpoint-route-tests"
+      },
+      "Pons v460+40 carry, duplicate delivery, restart and branch rebuild": {
+        "passed": true,
+        "log": "indexer-checkpoint-route-tests"
+      },
+      "Pons v4 rejects fee spoofing, extra transfers, wrong recipient, sender, value and malformed calls": {
+        "passed": true,
+        "log": "indexer-checkpoint-route-tests"
+      },
+      "Pons v4 allow-revert, inline permit, multicall, wrong commands/actions stay unsupported": {
+        "passed": true,
+        "log": "indexer-checkpoint-route-tests"
+      },
+      "Pons v4 rounding can produce zero fee; failed provenance and changed pins are rejected": {
+        "passed": true,
+        "log": "indexer-checkpoint-route-tests"
+      },
+      "Pons SELL, hook-originated conversion BUY and simple transfers do not mint entries": {
+        "passed": true,
+        "log": "indexer-checkpoint-route-tests"
+      },
+      "combined genesis keeps v4 accounting and rejects unqualified v4 self-batches and changed pins": {
+        "passed": true,
+        "log": "indexer-checkpoint-route-tests"
+      },
+      "one snapshot exposes locked tickets, reserves, history, asset and freshness": {
+        "passed": true,
+        "log": "indexer-checkpoint-neighbors"
+      },
+      "terminal no-winner, pagination and outage stay honest": {
+        "passed": true,
+        "log": "indexer-checkpoint-neighbors"
+      },
+      "standby server has no fake balances or ready health": {
+        "passed": true,
+        "log": "indexer-checkpoint-neighbors"
+      },
+      "compact indexer checksum preserves API results; corrupt/unknown formats fail closed": {
+        "passed": true,
+        "log": "indexer-checkpoint-neighbors"
+      },
+      "prepared snapshot matches replay, isolates responses and ages without reload": {
+        "passed": true,
+        "log": "indexer-checkpoint-neighbors"
+      },
+      "replacement, waiting, corruption, missing file and restart never serve a cached success": {
+        "passed": true,
+        "log": "indexer-checkpoint-neighbors"
+      },
+      "HTTP burst observes outage and replacement; pagination stays bounded": {
+        "passed": true,
+        "log": "indexer-checkpoint-neighbors"
+      },
+      "checksummed but inconsistent ledger, policy and reward state cannot enter cache": {
+        "passed": true,
+        "log": "indexer-checkpoint-neighbors"
+      },
+      "async reader keeps main thread responsive and bounds pending requests": {
+        "passed": true,
+        "log": "indexer-checkpoint-neighbors"
+      },
+      "async reader preserves freshness, replacement failure and automatic recovery": {
+        "passed": true,
+        "log": "indexer-checkpoint-neighbors"
+      },
+      "worker timeout resolves queued requests without leaving a hung reader": {
+        "passed": true,
+        "log": "indexer-checkpoint-neighbors"
+      },
+      "replacement while worker response is in transit is rejected": {
+        "passed": true,
+        "log": "indexer-checkpoint-neighbors"
+      },
+      "indexer format migrates legacy atomically, detects corruption and does not alter money journals": {
+        "passed": true,
+        "log": "indexer-checkpoint-corrections"
+      },
+      "admitted batch checkpoint continuation matches full evidence replay": {
+        "passed": true,
+        "log": "indexer-checkpoint-route-tests"
+      }
+    },
+    "finalSourceHashes": {
+      "scripts/direct-buy.cjs": "4a52f6bfc1c54a4d25f1258afb14665692c0eeab8f0735cc343674accd50a5a4",
+      "scripts/persistent-buy-indexer.cjs": "e4d7cff3f464da5efad439377a8fb1737cc8fa97edeb382eb1d5229faaa2d8a2",
+      "scripts/indexer-checksum.cjs": "64e613c24a335fd9b8294b53a447d74d825b51a67890660aaa37b1ed98983360",
+      "scripts/local-scheduler-state.cjs": "e10021ff0c42f77946779f85fe4448fb91c5e8c7cbaa548eab58e8d4b9648b68",
+      "scripts/user-status-api.cjs": "71ca5896e6c4a71c4fe5dc26efe0152b5e98b0faa72037da7647ba05caf59fc7",
+      "scripts/benchmark-indexer-history.cjs": "6d6e88156af66bb4ae59258bfecb80113f7d0a125968307e4fe2e5616561cfe8"
+    },
+    "postBenchmarkChange": "Missing checkpoint on idle forces full rebuild; optional head guard. Targeted Pons persistent tests rerun."
+  }
+}

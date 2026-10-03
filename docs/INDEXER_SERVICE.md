@@ -26,7 +26,9 @@ state. HTTP только loopback; внешний HTTPS/reverse proxy — зад
 Это эксплуатационные defaults, не обещание throughput. CatchingUp продолжает сразу;
 обычный idle/RPC failure ждёт poll. Timeout ограничивает один проход; после него свой
 child завершается и следующий проход повторяется с сохранённого state. Порция пока100
-новых blocks, полный scan/JSON остаётся линейным. Каждая попытка стартует новый Node
+новых blocks; scanner и normal replay читают suffix. Полный JSON и consumer replay
+остаются линейными; [checkpoint/формат снимка](INDEXER_CHECKPOINTS_2026-10-02.md).
+RPC cache ограничен недавними высотами; [первый замер](INDEXER_HISTORY_SCALING_2026-10-02.md). Каждая попытка стартует новый Node
 process — небольшая плата за простое ограничение зависаний и изоляцию HTTP.
 Не увеличивать freshness threshold только ради зелёного индикатора.
 

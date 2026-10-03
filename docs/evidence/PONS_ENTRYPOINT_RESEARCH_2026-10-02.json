@@ -1,0 +1,58 @@
+{
+  "schema": "pons-entrypoint-research-v1",
+  "assembledAt": "2026-10-02T16:14:08.401Z",
+  "publicSends": false,
+  "historicalSample": {
+    "transactionHash": "0x764d4c88d4ec43fb0dcea2105b8fffecfedb1bfd773558dd20d92b7e5873aad8",
+    "blockNumber": "0x4aa127d",
+    "entryPoint": "0x0000000071727de22e5e9d8baf0edac6f37da032",
+    "bundler": "0x0312f70169d6919a6e54c0c9b67ea554986e4980",
+    "userOperations": 1,
+    "sender": "0xdb16141aa55f8fc808885ba06d08cd068e394d35",
+    "accountSelector": "0xb61d27f6",
+    "holderTarget": "0x0000000000001fF3684f28c67538d4D072C22734",
+    "nativeValueRaw": "118022303934824258",
+    "holderSellToken": "0x0000000000000000000000000000000000000000",
+    "holderSellAmount": "118022303934824258",
+    "liveReceiptMatchesSaved": true,
+    "currentDelegationCode": "0xef010069007702764179f14f51cdce752f4f775d74e139",
+    "currentDelegate": "0x69007702764179f14f51cdce752f4f775d74e139",
+    "historicalDelegateProven": false,
+    "USDGBasisProven": false
+  },
+  "rpcChecks": {
+    "blockreqTrace": {
+      "error": {
+        "code": -32601,
+        "message": "method not supported on the public endpoint. Register at blockreq.com for full access."
+      },
+      "id": 1,
+      "jsonrpc": "2.0"
+    },
+    "blockreqHistoricalCode": {
+      "error": {
+        "code": -32601,
+        "message": "public endpoint only serves recent blocks (last 1024). Register at blockreq.com for historical / archive access."
+      },
+      "id": 1,
+      "jsonrpc": "2.0"
+    },
+    "officialTrace": {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "error": {
+        "code": -32601,
+        "message": "the method debug_traceTransaction does not exist/is not available"
+      }
+    },
+    "officialHistoricalCode": {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "error": {
+        "code": -32000,
+        "message": "historical state 53c16b2b17e0d4922fee9167826426be0192693e49fa32447c1dca59c0808980 is not available"
+      }
+    }
+  },
+  "conclusion": "Historic native trade is not admitted. Fresh signed USDG fork execution and pins are in PONS_ENTRYPOINT_POOL_BUY_2026-10-02.json."
+}

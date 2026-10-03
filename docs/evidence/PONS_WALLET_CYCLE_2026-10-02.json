@@ -1,0 +1,183 @@
+{
+  "schema": "pons-wallet-cycle-evidence-v1",
+  "verifiedAt": "2026-10-02T20:37:05.395Z",
+  "head": "5f3c4977f6f0211c15888c4d359558b025408806",
+  "dirtyTree": true,
+  "status": "PONS_INDEXED_AUTOMATION_PASSED",
+  "publicSends": false,
+  "anchor": {
+    "number": 78518737,
+    "hash": "0x630ddbff99d4c9081567b244dfa66c2bcb2334ce01be6b08b8f77c3ceea22c26"
+  },
+  "report": ".local/logs/pons-wallet-cycle-20261002-b.json",
+  "cycleDirectory": ".local/logs/pons-cycle-RMQVmH",
+  "before": {
+    "status": "PONS_WALLET_BROWSER_PASSED",
+    "stage": "before-draw",
+    "head": {
+      "number": 78518784,
+      "hash": "0xf281d444f63ae7ed35809681499a61428089d519f59aa31cf8e3f20888bdc2f1"
+    },
+    "balances": {
+      "SHORT": {
+        "mintedTotal": "86",
+        "open": "86",
+        "frozenByDraw": {},
+        "consumedTotal": "0",
+        "byEpoch": [
+          {
+            "epoch": "1",
+            "minted": "86",
+            "consumed": "0",
+            "frozen": "0",
+            "open": "86",
+            "firstOpenAttempt": "1",
+            "lastOpenAttempt": "86"
+          }
+        ]
+      },
+      "MONTHLY": {
+        "mintedTotal": "86",
+        "open": "86",
+        "frozenByDraw": {},
+        "consumedTotal": "0",
+        "byEpoch": [
+          {
+            "epoch": "1",
+            "minted": "86",
+            "consumed": "0",
+            "frozen": "0",
+            "open": "86",
+            "firstOpenAttempt": "1",
+            "lastOpenAttempt": "86"
+          }
+        ]
+      },
+      "carryRaw": "80328733",
+      "entryThresholdRaw": "100000000",
+      "quoteDecimals": 6
+    },
+    "purchases": 6,
+    "rewards": 0,
+    "paid": 0,
+    "outageRecovery": true,
+    "snapshotUnchanged": true,
+    "limits": [
+      "Browser wallet discovery is injected; installed MetaMask is a separate manual result",
+      "No browser transaction; cycle uses automatic payouts",
+      "Current bounded direct-route fork profile, not every admitted wrapper"
+    ]
+  },
+  "after": {
+    "status": "PONS_WALLET_BROWSER_PASSED",
+    "stage": "settled",
+    "head": {
+      "number": 78519056,
+      "hash": "0xf1698d19c7b0431027fc4d94921aa4f1448a72ee14d4c7042fe412de663426c5"
+    },
+    "balances": {
+      "SHORT": {
+        "mintedTotal": "87",
+        "open": "1",
+        "frozenByDraw": {},
+        "consumedTotal": "86",
+        "byEpoch": [
+          {
+            "epoch": "1",
+            "minted": "87",
+            "consumed": "86",
+            "frozen": "0",
+            "open": "1",
+            "firstOpenAttempt": "87",
+            "lastOpenAttempt": "87"
+          }
+        ]
+      },
+      "MONTHLY": {
+        "mintedTotal": "87",
+        "open": "1",
+        "frozenByDraw": {},
+        "consumedTotal": "86",
+        "byEpoch": [
+          {
+            "epoch": "1",
+            "minted": "87",
+            "consumed": "86",
+            "frozen": "0",
+            "open": "1",
+            "firstOpenAttempt": "87",
+            "lastOpenAttempt": "87"
+          }
+        ]
+      },
+      "carryRaw": "80328733",
+      "entryThresholdRaw": "100000000",
+      "quoteDecimals": 6
+    },
+    "purchases": 7,
+    "rewards": 2,
+    "paid": 2,
+    "outageRecovery": true,
+    "snapshotUnchanged": true,
+    "limits": [
+      "Browser wallet discovery is injected; installed MetaMask is a separate manual result",
+      "No browser transaction; cycle uses automatic payouts",
+      "Current bounded direct-route fork profile, not every admitted wrapper"
+    ]
+  },
+  "paidUSDGRaw": "107337115",
+  "fundingAtFreeze": {
+    "balance": "346425927",
+    "parts": [
+      "0",
+      "0",
+      "100000000",
+      "246425927",
+      "0",
+      "0"
+    ]
+  },
+  "reservesAfter": {
+    "balance": "239088812",
+    "parts": [
+      "139088812",
+      "100000000",
+      "0",
+      "0",
+      "0",
+      "0"
+    ]
+  },
+  "passes": 13,
+  "stoppedAfterProof": true,
+  "idleSteps": 0,
+  "http": "PONS_SAVED_CYCLE_HTTP_PASSED",
+  "clockFix": {
+    "firstRun": ".local/logs/pons-wallet-cycle-20261002-a.json",
+    "firstRunComplete": false,
+    "localAheadSeconds": 12,
+    "publicAheadSeconds": 0,
+    "config": "test/fixtures/pons-wallet-cycle-hardhat.config.cjs",
+    "productionTimingChanged": false
+  },
+  "assumptions": [
+    "Local impersonation and synthetic USDG funding only",
+    "ABI from current Pons docs/repository, runtime source equivalence not yet proved",
+    "RPC account proofs pin empty base storage for local owner CREATE addresses at the fixed fork block; EDR writes remain unchanged",
+    "Direct curve BUY replay plus pinned UR route when --v4; open Short/Monthly accounting, no draw settlement or public admission",
+    "v4 uses pinned live Universal Router + Permit2; minOut=1 is test-only, no production trade protection claim",
+    "Pons sweep operator impersonated ONLY locally to prove conditional conversion; we do not control it on mainnet",
+    "Constructor clocks backdated only in in-memory compiled ShortRulesEpochs/MonthlySettlement; repository contracts unchanged",
+    "Local ArbSys shim, not Nitro finality proof",
+    "Current launch-plan rules/weights/minimum, no changed odds or selected seeds",
+    "Live drand BLS proof; 60-second lead is test-only",
+    "Synthetic owner USDG may donate missing Monthly readiness reserves; never injected into prize vault storage",
+    "Local finalized pinned for initial snapshot admission; advances with local latest after proposals begin. Not mainnet finality proof",
+    "Automation fork mines a block every second while workers read; RNG freshness gates unchanged"
+  ],
+  "limits": [
+    "Not a full repository release baseline",
+    "Browser connection is injected, automatic payouts execute via coordinator; installed MetaMask verified separately",
+    "Only direct curve and pinned v4 route in this scenario; wrappers have separate tests"
+  ]
+}

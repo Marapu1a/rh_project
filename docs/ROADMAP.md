@@ -1,43 +1,59 @@
 # План работы: сначала тестовый контур, затем боевой
 
-Актуально 02.10.2026. Предыдущая хронология и незакрытые release-пункты сохранены
+Актуально 03.10.2026. Предыдущая хронология и незакрытые release-пункты сохранены
 в [снимке](archive/context-2026-10-02/docs/ROADMAP.md). Текущее состояние — [контекст](CURRENT_CONTEXT.md).
 Gxx — идентификаторы прежней gap-карты, Rxx — виды проверок; это не две конкурирующие очереди.
 
 ## Этап A — правильная работа в тестовом окружении (текущий)
 
+03.10 подготовлен [новый запрос GPT](GPT_REVIEW_REQUEST.md) по накопленному diff.
+Ответ ожидается; следующий рабочий пакет — устойчивость/восстановление, затем A5.
+
 | Порядок | Пакет | Статус и результат |
 |---|---|---|
 | A1 / G02 | Общий indexer/API/coordinator config | Выполнен локально; [описание](SHARED_INDEX_CONFIG.md) |
-| A2 / G10 | Каналы покупки Pons | В работе: direct/self-batch проверены; 0x execution исследован без нового допуска; graduation/реальные 0x → Pons receipts исследованы; далее точный admission и wallet UX |
-| A3 / G03 | Полный пользовательский путь | Довести тестовые Buy/Claim, account/network/reject/pending/recovery и честные статусы; bridge не равен extension proof |
-| A4 / G05–G07 | Реальные условия и длительная работа | Timing/finality, внешний источник/доступные funding actions, native budget, нагрузка, backup/restore на тестовом стенде |
+| A2 / G10 | Каналы покупки Pons | В работе: direct/self-batch, прямой 0x и узкий EntryPoint USDG pool BUY проверены до index/API; дальше wallet UX/статусы |
+| A3 / G03 | Полный пользовательский путь | [Кабинет/Claim](WEBSITE_WALLET_ACTIONS.md), ручной MetaMask и [общий цикл с UI/API](PONS_WALLET_CYCLE.md) проверены; ручная смена аккаунта и общий RC baseline отдельно |
+| A4 / G05–G07 | Реальные условия и длительная работа | Выполнены [bounded cache](INDEXER_HISTORY_SCALING_2026-10-02.md) и [replay checkpoints / формат снимка](INDEXER_CHECKPOINTS_2026-10-02.md); остаются рост хранения, admitted нагрузка, timing/finality, funding, backup/restore |
 | A5 / G08, R1–R8 | Закрепить тестовый кандидат | Review кода/инвариантов, согласованные happy/fault прогоны, полный baseline конкретной ревизии, закрытые findings |
 
 Адресные проверки идут вместе с каждым пакетом. Повторный full run без нового риска
 не нужен. Точные проверки — [план R0–R9](PRELAUNCH_VERIFICATION_PLAN.md),
 команды и пределы — [REVIEW_TESTING](REVIEW_TESTING.md).
 
-### Сейчас: A2 / G10
+### Сейчас: review накопленного A2/A3 и подготовка A4
 
-Review завершено, [замечания сверены](PONS_REVIEW_TRIAGE_2026-10-02.md).
+Предыдущее review завершено, [замечания сверены](PONS_REVIEW_TRIAGE_2026-10-02.md).
 Пакет до 0x выполнен в тестовом контуре: CLI verifier/shared config, parent-code reads
 только для кандидатов, schedule перед admission, газ ближайшего действия и ожидание
 пополнения. [Результат и адресные проверки](PONS_EXECUTION_READINESS.md).
-Замер роста всей истории остаётся в A4; новый полный fork-cycle этим пакетом не заявлен.
+Независимый [подпакет A4](INDEXER_HISTORY_SCALING_2026-10-02.md) выполнен во время ожидания GPT:
+рост истории измерен, RPC cache ограничен; [следующий пакет](INDEXER_CHECKPOINTS_2026-10-02.md)
+добавил replay checkpoints и компактный снимок. Полная запись/consumer replay ещё линейны.
+Новый полный fork-cycle этим пакетом не заявлен.
 
 1. **Выполнено частично по охвату:** [три исполнения 0x](PONS_ZEROEX_EXECUTION.md),
    payer/recipient, approvals и debit подтверждены. Graduated-пример покупает токен
    вне Pons pool; это не основание учитывать любой aggregator. Refund-ветка не воспроизведена.
 2. **Исследовано:** [graduation, hook fees и реальные маршруты](PONS_GRADUATION_REVIEW_2026-10-02.md).
    Целевые pool receipts найдены, включая 0x и EntryPoint; это ещё не admission.
-3. **Следующий пакет:** локально воспроизвести конкретный 0x → Pons pool BUY, проверить
-   payer/recipient, refund/fees и runtime/call boundaries → versioned adapter → policy/index/API.
-   ERC-4337 attribution — отдельная граница. Неизвестные покупки/внешние рынки получают
-   понятную причину; служебные swaps и простой Transfer не дают билетов.
-   Подготовлен [внешний research-запрос](GPT_REVIEW_REQUEST.md); его выводы сверить
-   с receipts и кодом перед расширением допуска.
-4. Завершить матрицу каналов и wallet behavior; неизвестное не объявлять поддержанным.
+3. **Выполнено в тестовом контуре:** [0x → один целевой USDG/Pons pool](PONS_ZEROEX_POOL_ADMISSION.md).
+   Fork BUY, pinned runtime/call/fee proof, genesis v3, policy/index/API, repeat/reorg.
+   Refund/partial и произвольный split не допускаются; sender-only отказ в API не
+   выдаётся за доказанного payer. 84 адресных теста PASS; полного RC baseline нет.
+   **Следующий подпакет выполнен:** [EntryPoint/Alchemy 7702](PONS_ENTRYPOINT_POOL_ADMISSION.md),
+   signed fork BUY и genesis v4 до index/API. 100 адресных tests; parent delegation,
+   UserOperation attribution, bundler isolation, restart/reorg. Native/multi-op/paymaster
+   остались вне допуска. **Далее:** wallet behavior и понятный пользовательский путь.
+4. **Кабинет/Claim реализован локально:** [описание и границы](WEBSITE_WALLET_ACTIONS.md).
+   Выбор provider не привязан к MetaMask. Стенд установленного расширения готов:
+   signed HTTP RPC/browser smoke PASS; ручной MetaMask Claim70/30, wrong network,
+   отказ/повтор и reload завершены (UI — скриншоты/сообщение пользователя;
+   выплаты проверены независимо). Смена аккаунта пока только автоматическая.
+   [Общий indexer/API/кабинет](PONS_WALLET_CYCLE.md) проверен на свежем fork,
+   включая оба draw, выплаты, API outage/restart и idle. Далее — review накопленного
+   пакета и оставшиеся A4 условия перед RC baseline. Неизвестные маршруты не объявлять
+   поддержанными; native/split/multi-op развивать отдельными доказанными пакетами.
 
 [Матрица охвата и критерии](PONS_CHANNEL_COVERAGE.md).
 

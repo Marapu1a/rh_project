@@ -8,6 +8,32 @@ const evidence=JSON.parse(fs.readFileSync('research/direct-buy/evidence.json','u
 const m=evidence.manifest,blocks=evidence.blocks;
 const copy=x=>structuredClone(x);
 const coder=AbiCoder.defaultAbiCoder();
+
+test('checkpoint continuation equals full legacy replay at every boundary',()=>{
+ const {replayWithCheckpoint}=require('../scripts/direct-buy.cjs');
+ let previous=null;
+ for(let i=0;i<blocks.length;i++){
+  previous=replayWithCheckpoint(m,[blocks[i]],previous);
+  assert.deepEqual(previous.ledger,replay(m,blocks.slice(0,i+1)));
+ }
+ assert.deepEqual(replayWithCheckpoint(m,[],previous).ledger,previous.ledger);
+});
+
+test('Pons checkpoint carries 60+40 without mutation and rejects broken proof/duplicate tx',t=>{
+ const f=require('./fixtures/pons-indexer.cjs').fixture(t),{replayWithCheckpoint}=require('../scripts/direct-buy.cjs');
+ const prior=replayWithCheckpoint(f.m,[f.blocks[0]]),saved=copy(prior);
+ const result=replayWithCheckpoint(f.m,[f.blocks[1]],prior);
+ assert.deepEqual(prior,saved);assert.deepEqual(result.ledger,replay(f.m,f.blocks));
+ assert.equal(result.ledger.wallets[0].entriesMinted,'1');
+ const bad=copy(prior);bad.ledger.wallets[0].carryRaw='999';
+ assert.throws(()=>replayWithCheckpoint(f.m,[f.blocks[1]],bad),/ledger mismatch/);
+ const changed=copy(f.m);changed.codeHashes.curve=id('different-runtime');
+ assert.throws(()=>replayWithCheckpoint(changed,[f.blocks[1]],prior),/policy mismatch/);
+ const wrong=copy(f.blocks[1]);wrong.parentHash=id('wrong');
+ assert.throws(()=>replayWithCheckpoint(f.m,[wrong],prior),/Non-contiguous/);
+ const duplicate=copy(f.blocks[1]);duplicate.transactions[0].tx.hash=f.blocks[0].transactions[0].tx.hash;
+ assert.throws(()=>replayWithCheckpoint(f.m,[duplicate],prior),/Duplicate canonical transaction/);
+});
 test('saved Permit2 integration branch reproduces activation, single attempt and scheduler artifact',()=>{
  const e=require('../research/permit-buy-integration-2026-09-24.json'),i=e.integration;
  const {buildFromHistory}=require('../scripts/short-dataset.cjs');

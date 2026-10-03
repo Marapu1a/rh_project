@@ -8,6 +8,13 @@ const {createServer}=require('../scripts/user-status-api.cjs');
 const source=require('../docs/evidence/PONS_STEADY_7702_2026-10-02.json');
 const runtimes=require('./fixtures/pons-batch-runtime.json').dependencies;
 const addr=n=>'0x'+BigInt(n).toString(16).padStart(40,'0');
+test('admitted batch checkpoint continuation matches full evidence replay',async t=>{
+ const f=setup(t);
+ const first=await indexOnce({config:f.config,rpc:f.rpc,statePath:f.statePath,batchSize:1});assert.equal(first.state,'catchingUp');
+ const second=await indexOnce({config:f.config,rpc:f.rpc,statePath:f.statePath,batchSize:1});assert.equal(second.metrics.replayMode,'checkpoint');assert.equal(second.metrics.replayedBlocks,1);
+ const saved=JSON.parse(fs.readFileSync(f.statePath));assert.equal(saved.index.policyStatus.mode,'admitted');
+ assert.deepEqual(saved.index.ledger,D.replay(saved.index.manifest,saved.index.blocks));
+});
 function setup(t){
  const m={...require('../docs/evidence/PONS_CHANNEL_RECEIPTS_2026-10-02.json').manifest,schema:R.SCHEMA,routeVersion:R.ID,eligibility:'automatic-buy-v1',quoteDecimals:6,entryThresholdRaw:'100000000',anchor:{number:10,hash:E.id('batch synthetic anchor')},batchExecutor:R.EXECUTOR,weth:source.capture.out.eth.calls[0].to,fundingRouter:source.capture.out.eth.funding.route.router,fundingPool:'0x52e65b17fb6e5ba00ed806f37afcd2daa50271ca',codeHashes:{}};
  for(const k of R.FIELDS)m.codeHashes[k]=k==='batchExecutor'?R.EXECUTOR_HASH:E.keccak256('0x01');

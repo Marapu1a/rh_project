@@ -74,7 +74,8 @@
     "service:indexer": "node scripts/run-indexer-service.cjs",
     "site": "node scripts/serve-site.cjs",
     "test:site": "node --test web/site.test.cjs",
-    "test:site:wallet": "node --test web/wallet.test.cjs"
+    "test:site:wallet": "node --test web/wallet.test.cjs",
+    "test:site:claim": "node --test web/claim.test.cjs"
   },
   "devDependencies": {
     "@openzeppelin/contracts": "5.6.1",

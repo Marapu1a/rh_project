@@ -2,10 +2,11 @@
 const fs=require('node:fs'),http=require('node:http');
 const {isAddress}=require('ethers');
 const {hash}=require('./direct-buy.cjs');
+const {validIndexerChecksum}=require('./indexer-checksum.cjs');
 const {replayAttempts}=require('./attempt-lifecycle.cjs');
 function prepare(config,raw){
   const {checksum,...state}=JSON.parse(raw);
-  if(checksum!==hash(state)||state.configHash!==hash({kind:'persistent-buy-indexer-v1',config})||state.index?.policyStatus?.mode!=='admitted'||!config.lifecycle)throw Error('Invalid snapshot');
+  if(!validIndexerChecksum(state,checksum)||state.configHash!==hash({kind:'persistent-buy-indexer-v1',config})||state.index?.policyStatus?.mode!=='admitted'||!config.lifecycle)throw Error('Invalid snapshot');
   const index=state.index,ledger=replayAttempts(index.manifest,config.lifecycle,index.blocks);
   if(ledger.head.number!==index.head||hash(ledger.buyLedger)!==index.ledgerHash)throw Error('Invalid snapshot');
  let projected=null;
@@ -15,7 +16,7 @@ function prepare(config,raw){
  }
  const publicView=require("./public-status.cjs").preparePublic(config,index,ledger,projected);
  const group=(rows,key)=>{const m=new Map();for(const row of rows){const k=key(row)?.toLowerCase();if(k){if(!m.has(k))m.set(k,[]);m.get(k).push(row);}}return m;};
- return {publicView,state:{status:state.status},index:{observedAt:index.observedAt,ledgerHash:index.ledgerHash,rewards:!!index.rewards},ledger:{head:ledger.head},manifestHash:hash(index.manifest),balances:new Map(ledger.wallets.map(w=>[w.wallet,w])),buys:new Map(ledger.buyLedger.wallets.map(w=>[w.wallet,w])),decisions:group(ledger.buyLedger.decisions,d=>d.payer),rewards:projected?group(projected.rewards,r=>r.winner):null};
+ return {publicView,state:{status:state.status},index:{observedAt:index.observedAt,ledgerHash:index.ledgerHash,rewards:!!index.rewards},ledger:{head:ledger.head},manifestHash:hash(index.manifest),balances:new Map(ledger.wallets.map(w=>[w.wallet,w])),buys:new Map(ledger.buyLedger.wallets.map(w=>[w.wallet,w])),decisions:group(ledger.buyLedger.decisions,d=>d.payer??d.observedSender??d.observedAccount),rewards:projected?group(projected.rewards,r=>r.winner):null};
 }
 function render(config,view,{wallet,offset=0,limit=25,now=Date.now()}){
  if(wallet===undefined)return require("./public-status.cjs").renderPublic(config,view,{offset,limit,now});
@@ -24,7 +25,7 @@ function render(config,view,{wallet,offset=0,limit=25,now=Date.now()}){
   const address=wallet.toLowerCase(),balance=view.balances.get(address),buy=view.buys.get(address);
   const empty=()=>({mintedTotal:'0',open:'0',frozenByDraw:{},consumedTotal:'0'});
   const decisions=(view.decisions.get(address)??[]);
-  const purchases=decisions.slice(offset,offset+limit).map(d=>Object.fromEntries(['transactionHash','blockNumber','blockHash','logIndex','status','reason','grossQuoteRaw','netQuoteDebitRaw','entriesMinted'].filter(k=>d[k]!==undefined).map(k=>[k,d[k]])));
+  const purchases=decisions.slice(offset,offset+limit).map(d=>Object.fromEntries(['transactionHash','blockNumber','blockHash','logIndex','status','reason','grossQuoteRaw','netQuoteDebitRaw','entriesMinted','poolQuoteRaw','routeFeeQuoteRaw','positiveSlippageTokenRaw','observedSender','observedAccount','attribution','userOpHash','entryPoint'].filter(k=>d[k]!==undefined).map(k=>[k,d[k]])));
   let rewards=null;
   if(index.rewards){
    const rows=view.rewards.get(address)??[];
@@ -33,7 +34,7 @@ function render(config,view,{wallet,offset=0,limit=25,now=Date.now()}){
   return {schema:'promo-wallet-status-v1',status:fresh?'observed':'stale',wallet:address,
    provenance:{chainId:String(config.manifest.chainId),anchor:config.manifest.anchor,head:ledger.head,manifestHash:view.manifestHash,ledgerHash:index.ledgerHash,observedAt:index.observedAt??null,ageSeconds:Number.isFinite(age)?Math.max(0,Math.floor(age/1000)):null,indexerState:state.status?.state??'unknown',targetBlock:state.status?.targetBlock??null,canonicality:'saved-observation-not-live-finality'},
    balances:{SHORT:balance?.SHORT??empty(),MONTHLY:balance?.MONTHLY??empty(),carryRaw:buy?.carryRaw??'0',entryThresholdRaw:config.manifest.entryThresholdRaw,quoteDecimals:config.manifest.quoteDecimals},
-   purchases:{items:purchases,offset,limit,total:decisions.length,nextOffset:offset+purchases.length<decisions.length?offset+purchases.length:null,coverage:'decoded-payer-attributed-candidates-only; absence-is-not-rejection'},rewards,asset:view.publicView?.asset??null};
+   purchases:{items:purchases,offset,limit,total:decisions.length,nextOffset:offset+purchases.length<decisions.length?offset+purchases.length:null,coverage:decisions.some(d=>d.observedAccount)?'decoded-payer-or-explicit-user-operation-sender-candidates-only; absence-is-not-rejection':decisions.some(d=>d.observedSender)?'decoded-payer-or-explicit-transaction-sender-candidates-only; absence-is-not-rejection':'decoded-payer-attributed-candidates-only; absence-is-not-rejection'},rewards,asset:view.publicView?.asset??null};
 }
 
 function validate({wallet,offset=0,limit=25}){

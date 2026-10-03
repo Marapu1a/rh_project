@@ -117,7 +117,11 @@
       "test/pons-funding-pass.test.cjs",
       "test/pons-gas-budget.test.cjs",
       "test/pons-wallet-verifier.test.cjs",
-      "test/pons-zeroex-evidence.test.cjs"
+      "test/pons-zeroex-evidence.test.cjs",
+      "test/pons-zeroex-buy.test.cjs",
+      "test/pons-zeroex-integration.test.cjs",
+      "test/pons-entrypoint-buy.test.cjs",
+      "test/pons-entrypoint-integration.test.cjs"
     ]
   },
   "accounting": {
@@ -513,7 +517,25 @@
       "test/pons-batch-integration.test.cjs",
       "test/pons-pool-terminal.test.cjs",
       "test/pons-pool-batch.test.cjs",
-      "test/pons-zeroex-evidence.test.cjs"
+      "test/pons-zeroex-evidence.test.cjs",
+      "test/pons-zeroex-buy.test.cjs",
+      "test/pons-zeroex-integration.test.cjs",
+      "test/pons-entrypoint-buy.test.cjs",
+      "test/pons-entrypoint-integration.test.cjs"
+    ]
+  },
+  "pons-zeroex": {
+    "compile": false,
+    "files": [
+      "test/pons-zeroex-buy.test.cjs",
+      "test/pons-zeroex-integration.test.cjs"
+    ]
+  },
+  "pons-entrypoint": {
+    "compile": false,
+    "files": [
+      "test/pons-entrypoint-buy.test.cjs",
+      "test/pons-entrypoint-integration.test.cjs"
     ]
   }
 }

@@ -1,6 +1,6 @@
 # QIANQI — текущий контекст
 
-Обновлено 02.10.2026. Это основной документ для продолжения работы, не журнал всех шагов.
+Обновлено 03.10.2026. Это основной документ для продолжения работы, не журнал всех шагов.
 
 ## Где мы и как работаем
 
@@ -18,7 +18,9 @@ Mainnet fork не является боевым deployment. Ранее разм�
 
 - Локальный путь BUY → policy/index → билеты → Short/Monthly → drand → выплаты
   проверен отдельными сквозными прогонами; [индексированный цикл](PONS_INDEXED_CYCLE.md).
-- Новый genesis v2 объединяет curve direct/self-batch и pool direct/self-batch.
+- Genesis v2 объединяет curve direct/self-batch и pool direct/self-batch; v3 добавляет
+  узкий прямой 0x USDG → целевой pool BUY; v4 — одну подписанную EntryPoint/Alchemy
+  операцию того же BUY с проверенным parent delegation.
   Подтверждённые терминальные покупки за USDG и ETH после конвертации проходят до API.
   Перезапуск не удваивает результат. [Текущий охват](PONS_CHANNEL_COVERAGE.md).
 - Общий config writer/API/coordinator реализован; восстановление, reorg и сохранение
@@ -40,22 +42,42 @@ parent code чужих self-calls, schedule проверяется до admissio
 сигнал в результате CLI и продолжение после пополнения. Внешний канал не подключён.
 [Проверки и границы пакета](PONS_EXECUTION_READINESS.md).
 
-**G10 / 0x:** три live quote исполнились на локальных fork. RDH curve проходит через
-Settler; graduated PRIORS куплен split-route через другие v3/v4 рынки, без целевого
-Pons pool/hook. Это доказательство исполнения, не новый допуск. [Разбор и receipts](PONS_ZEROEX_EXECUTION.md).
-[Исследование graduation](PONS_GRADUATION_REVIEW_2026-10-02.md) подтвердило также реальные
-0x → Pons pool сделки с hook fees: прежний split-пример не описывает все маршруты.
-Следующий ограниченный пакет — локальное воспроизведение и точный допуск такого BUY;
-неизвестные оболочки/внешние рынки должны получать понятную причину отсутствия допуска.
-Подготовлен [запрос GPT](GPT_REVIEW_REQUEST.md): proof покупателя/суммы, минимальный
-охват post-graduation и ограничения sweep. Ответ на этот новый запрос ещё не разобран.
-Для 0x admission ещё нужны точный versioned route proof и обработка refund/fees;
-реальный wallet UX также остаётся в G10. Полный охват Pons не объявлен.
+**G10 / EntryPoint:** [подключена узкая Alchemy 7702 USDG-ветка](PONS_ENTRYPOINT_POOL_ADMISSION.md).
+Реальная authorization и UserOperation подписаны тестовым ключом на local fork.
+Genesis v4 → policy/index/API: 101 USDG даёт account Short1/Monthly1/carry1,
+bundler — 0; restart/checkpoint/reorg проверены. Parent code/runtime и подпись
+обязательны; смена делегирования в блоке закрывает допуск. 100 адресных tests PASS.
+Это не полный baseline: policy/lifecycle интеграция смоделирована отдельно,
+исполнение относится к fork, не боевому запуску. [Прямой 0x proof](PONS_ZEROEX_POOL_ADMISSION.md) сохранён.
+Native/split/refund, multi-op/paymaster и другие account implementations не поддержаны.
+[Пакет кабинета/Claim](WEBSITE_WALLET_ACTIONS.md) реализован локально: внешний Buy,
+атрибутированные покупки и ручной Claim через выбранный EIP-1193 provider, journal
+и проверки deployment. Только loopback/31337; API browser fixture синтетический,
+Claim исполняется реальным локальным vault. Стенд ручного прогона запущен на
+loopback4174/RPC18545: signed HTTP RPC → browser Claim → reload/Paid PASS.
+Ручной MetaMask Claim70/30 завершён: два Paid на скриншоте, receipts block16/17,
+баланс100 тестовых USDG, оба reward=0, по одной выплате на приз. Смена сети
+подтверждена скриншотом; отказ/повтор и reload — сообщением пользователя.
+Смена аккаунта пока проверена автоматически, не вручную.
+[Общий цикл с кабинетом](PONS_WALLET_CYCLE.md) прошёл на свежем fork78518737:
+покупки → index/API → оба draw →107.337115 тестовых USDG выплат →2 Paid в UI.
+Stop/resume, API outage/restart, по1 OPEN после freeze и idle без транзакций проверены.
+Исправлена только конфигурация часов стенда; RNG guards сохранены. Далее —
+review накопленного пакета и оставшиеся A4 условия до общего RC baseline. [Матрица](PONS_CHANNEL_COVERAGE.md).
+Накопленный пакет подготовлен для [статического GPT review](GPT_REVIEW_REQUEST.md)03.10.
+Новый ответ ожидается; прежняя политика атрибуции сохранена в архиве. Следующий
+рабочий пакет — нагрузка и восстановление с учётом найденных замечаний.
+
+Параллельно внешнему research выполнены два подпакета A4: [ограничение cache](INDEXER_HISTORY_SCALING_2026-10-02.md)
+и [checkpoint replay / компактный снимок](INDEXER_CHECKPOINTS_2026-10-02.md). В последнем
+пакете112 уникальных адресных тестов PASS; synthetic5000-block append ~0.89s → ~0.27s.
+Полная evidence-история сохранена; API/координатор независимо пересчитывают её.
 
 ## Открытые границы тестового этапа
 
-- Нагрузка и рост истории: JSON/checksum/write и replay при новых блоках ещё зависят
-  от всей истории; нужен замер, затем обоснованное изменение хранения.
+- Нагрузка и рост истории: RPC cache ограничен, replay продолжает checkpoint по suffix.
+  Полный JSON, ledger/hash/tx-set и consumer replay ещё зависят от истории. Дальше —
+  целевой бюджет, admitted/lifecycle/API замер и решение о сегментированном хранении.
 - Реальный MetaMask UI, отказ/unknown outcome, Buy/Claim и пользовательские статусы
   не заменяются успехом harness или synthetic provider.
 - Timing/finality, внешние bindings/permissions и зависимость от Pons conversion

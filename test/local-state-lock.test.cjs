@@ -3,6 +3,22 @@ const {withState,inspectLock}=require('../scripts/local-scheduler-state.cjs');
 const execFile=require('node:util').promisify(require('node:child_process').execFile);
 function location(t){fs.mkdirSync('.local',{recursive:true});const dir=fs.mkdtempSync(path.resolve('.local','lock-unit-'));
  t.after(()=>{for(const n of fs.readdirSync(dir))fs.unlinkSync(path.join(dir,n));fs.rmdirSync(dir);});return path.join(dir,'state.json');}
+
+test('indexer format migrates legacy atomically, detects corruption and does not alter money journals',async t=>{
+ const file=location(t),config={kind:'persistent-buy-indexer-v1'},options={indexerFormat:true};
+ await withState(file,config,async(s,save)=>{s.marker='before';save(s);});
+ assert.match(JSON.parse(fs.readFileSync(file)).checksum,/^0x[0-9a-f]{64}$/);
+ await withState(file,config,async(s,save)=>{assert.equal(s.marker,'before');save(s);},options);
+ const before=fs.readFileSync(file,'utf8');assert.match(JSON.parse(before).checksum,/^sha256-v1:/);
+ const rename=fs.renameSync;fs.renameSync=(src,dst)=>{if(dst===file)throw Object.assign(Error('disk failure'),{code:'EIO'});return rename(src,dst);};
+ try{await assert.rejects(withState(file,config,async(s,save)=>{s.marker='after';save(s);},options),e=>e.code==='SCHEDULER_STORAGE_ERROR');}finally{fs.renameSync=rename;}
+ assert.equal(fs.readFileSync(file,'utf8'),before);assert.equal(inspectLock(file+'.lock').exists,false);
+ await withState(file,config,async(s)=>assert.equal(s.marker,'before'),options);
+ await assert.rejects(withState(file,{},async()=>{},options),/restricted/);
+ await assert.rejects(withState(file,config,async()=>{}),/checksum\/config/);
+ fs.writeFileSync(file,before.replace('before','broken'));
+ await assert.rejects(withState(file,config,async()=>assert.fail('corrupt snapshot accepted'),options),/checksum\/config/);
+});
 test('async state save resolves without lock and permits child process handoff repeatedly',async t=>{
  const file=location(t),child=`const {withState}=require('./scripts/local-scheduler-state.cjs');withState(process.argv[1],{},async(s,save)=>{await new Promise(r=>setTimeout(r,1));save(s)}).catch(e=>{console.error(e);process.exitCode=1});`;
  for(let i=0;i<5;i++){

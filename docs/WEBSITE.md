@@ -1,5 +1,8 @@
 # Одностраничный сайт QIANQI
 
+Текущий тестовый пакет: [кабинет, внешний Buy и безопасный Claim](WEBSITE_WALLET_ACTIONS.md).
+Ниже сохранены предыдущие этапы; они не означают публикацию нового пакета.
+
 01.10: scripts/pons-browser-bridge.cjs + pons-browser-rehearsal.cjs связывают экран с Hardhat через Playwright bindings. Exact request journal/canonical receipt; fork и18 tests PASS. [Границы](PONS_BROWSER_BRIDGE.md).
 
 01.10: web/purchase-demo/ — отдельный opt-in экран и simulated wallet; serve-site включает его только через RH_PURCHASE_DEMO=1. [Код, проверки и ограничения](PONS_PURCHASE_UI.md).

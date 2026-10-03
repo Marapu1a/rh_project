@@ -14,7 +14,10 @@ function traceLock(event,runId,lock,detail={}){
   try{process.stderr.write(JSON.stringify({event,runId,pid:process.pid,time:new Date().toISOString(),lock,...detail})+'\n');}catch{}
 }
 // One local process per state file. This is not a distributed lease or mempool journal.
-async function withState(file,config,action,{legacyConfigs=[],validateMigration}={}){
+async function withState(file,config,action,{legacyConfigs=[],validateMigration,indexerFormat=false}={}){
+  if(indexerFormat&&config.kind!=='persistent-buy-indexer-v1')throw Error('Compact format is restricted to indexer snapshots');
+  const checksumFor=indexerFormat?require('./indexer-checksum.cjs').indexerChecksum:hash;
+  const validChecksum=indexerFormat?require('./indexer-checksum.cjs').validIndexerChecksum:(s,c)=>c===hash(s);
   file=path.resolve(file);fs.mkdirSync(path.dirname(file),{recursive:true});
   const lock=file+'.lock',runId=randomUUID();let fd;
   traceLock('acquire',runId,lock);
@@ -25,7 +28,7 @@ async function withState(file,config,action,{legacyConfigs=[],validateMigration}
   const save=state=>{
     try{
     const payload={...state};delete payload.checksum;
-    const encoded=JSON.stringify({...payload,checksum:hash(payload)},null,2)+'\n';
+    const encoded=JSON.stringify({...payload,checksum:checksumFor(payload)},null,indexerFormat?undefined:2)+'\n';
     const temp=file+'.tmp';let out;
     try{out=fs.openSync(temp,'w');fs.writeFileSync(out,encoded);fs.fsyncSync(out);}
     finally{if(out!==undefined)fs.closeSync(out);}
@@ -38,7 +41,7 @@ async function withState(file,config,action,{legacyConfigs=[],validateMigration}
     let state={schema:'local-scheduler-state-v1',configHash:hash(config),jobs:{SHORT:[],MONTHLY:[]}};
     if(fs.existsSync(file)){
       const {checksum,...stored}=JSON.parse(fs.readFileSync(file,'utf8'));
-      if(checksum!==hash(stored)||stored.schema!==state.schema)
+      if(!validChecksum(stored,checksum)||stored.schema!==state.schema)
         throw Error('Scheduler state checksum/config mismatch');
       if(!Array.isArray(stored.jobs?.SHORT)||!Array.isArray(stored.jobs?.MONTHLY))throw Error('Invalid scheduler state');
       if(stored.configHash!==state.configHash){

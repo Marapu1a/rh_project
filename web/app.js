@@ -2,7 +2,10 @@
 const $=id=>document.getElementById(id),dialog=$('dialog'),providers=new Map();
 let provider=null,address=null,chain=null,version=0,busy=false;
 let currentWallet=null,accounts=[],session=0,detach=()=>{},dialogMode='',restoreTimer;
-const expectedChain=4663n,storageKey='qianqi.wallet.v1';
+let expectedChain=4663n,siteActions=null;
+const storageKey='qianqi.wallet.v1';
+const networkLabel=()=>siteActions?'Configured test chain':'Robinhood Chain';
+const actionsReady=(async()=>{try{if(!['localhost','127.0.0.1','[::1]'].includes(location.hostname))return;const response=await fetch('/site-actions.json',{cache:'no-store',signal:AbortSignal.timeout(5000)});const config=await response.json();if(config){siteActions=QianqiClaim.config(config);expectedChain=BigInt(config.chainId);const note=document.createElement('p');note.className='local-test-notice';note.textContent='LOCAL TEST · test prizes and test transactions only';note.setAttribute('role','status');$('account').prepend(note);}}catch{/* No checked deployment means no transaction controls. */}})();
 const cleanAccounts=value=>Array.isArray(value)?[...new Set(value.filter(a=>typeof a==='string'&&/^0x[\da-fA-F]{40}$/.test(a)).map(a=>a.toLowerCase()))]:[];
 function readSaved(){try{return JSON.parse(sessionStorage.getItem(storageKey));}catch{return null;}}
 let saved=readSaved(),restoreAllowed=true;
@@ -28,7 +31,7 @@ window.addEventListener('eip6963:announceProvider',e=>{
  scheduleRestore();
 });
 function emptyRewards(title,copy){const td=document.createElement('td');td.colSpan=3;const box=document.createElement('div');box.className='empty-state';const h=document.createElement('h3');h.textContent=title;const p=document.createElement('p');p.textContent=copy;box.append(h,p);td.append(box);const tr=document.createElement('tr');tr.append(td);$('rewards-body').replaceChildren(tr);}
-function resetData(message){if($('locked-tickets'))$('locked-tickets').replaceChildren();$('short-count').textContent='—';$('monthly-count').textContent='—';$('carry').textContent=message;$('provenance').textContent='We can’t confirm the numbers right now.';emptyRewards('PRIZES: WAITING FOR DATA',message);}
+function resetData(message){$('purchase-status')?.remove();if($('locked-tickets'))$('locked-tickets').replaceChildren();$('short-count').textContent='—';$('monthly-count').textContent='—';$('carry').textContent=message;$('provenance').textContent='We can’t confirm the numbers right now.';emptyRewards('PRIZES: WAITING FOR DATA',message);}
 function updateButtons(){for(const b of document.querySelectorAll('.connect')){const label=b.querySelector('.connect-label');const text=busy?'CONNECTING…':address?`${address.slice(0,6)}…${address.slice(-4)}`:'CONNECT WALLET';if(label)label.textContent=text;else b.textContent=text;b.disabled=busy;b.setAttribute('aria-label',address?`Manage wallet ${address}`:text);}$('disconnect').hidden=!provider;$('refresh').hidden=!address;}
 function disconnected(){restoreAllowed=false;clearTimeout(restoreTimer);session++;version++;detach();detach=()=>{};provider=null;currentWallet=null;address=null;accounts=[];chain=null;busy=false;forget();if(dialog.open)dialog.close();updateButtons();$('wallet-status').textContent='Wallet disconnected.';resetData('Connect and check your tickets.');}
 function applyAccounts(value,preferred=address){accounts=cleanAccounts(value);if(!accounts.length){disconnected();return false;}address=accounts.includes(preferred)?preferred:accounts[0];version++;remember();updateButtons();resetData('Getting this wallet’s numbers…');return true;}
@@ -62,9 +65,9 @@ async function connect(item,{silent=false,preferred=null}={}){
 function accountMenu(){
  if(!address)return;
  const choices=accounts.map(a=>({name:(a===address?'Selected: ':'')+a,selected:a===address,action:()=>{applyAccounts(accounts,a);void refresh();accountMenu();}}));
- if(chain!==expectedChain)choices.push({name:'Switch to Robinhood Chain',action:()=>walletAction('switch')});
+ if(chain!==expectedChain)choices.push({name:'Switch to '+networkLabel(),action:()=>walletAction('switch')});
  choices.push({name:'Manage accounts in wallet',action:()=>walletAction('accounts')},{name:'Change wallet',action:()=>{disconnected();chooseWallet(true);}},{name:'Disconnect this site',action:disconnected});
- show(currentWallet.name,`${chain===expectedChain?'Robinhood Chain': 'Wrong network'} · Pick an account your wallet has shared. Disconnect here to leave the site; remove access in the extension if you want it forgotten there too.`,{choices,mode:'account'});
+ show(currentWallet.name,`${chain===expectedChain?networkLabel(): 'Wrong network'} · Pick an account your wallet has shared. Disconnect here to leave the site; remove access in the extension if you want it forgotten there too.`,{choices,mode:'account'});
 }
 async function walletAction(kind){
  if(busy||!provider)return;const p=provider,token=session;busy=true;updateButtons();
@@ -72,7 +75,7 @@ async function walletAction(kind){
  let changed=0;const notice=()=>{changed++;};
  try{
   p.on?.('accountsChanged',notice);p.on?.('chainChanged',notice);
-  await rpc(p,kind==='switch'?'wallet_switchEthereumChain':'wallet_requestPermissions',kind==='switch'?[{chainId:'0x1237'}]:[{eth_accounts:{}}]);if(token!==session)return;
+  await rpc(p,kind==='switch'?'wallet_switchEthereumChain':'wallet_requestPermissions',kind==='switch'?[{chainId:'0x'+expectedChain.toString(16)}]:[{eth_accounts:{}}]);if(token!==session)return;
   const before=changed;const list=await rpc(p,'eth_accounts');const network=await rpc(p,'eth_chainId');if(token!==session)return;
   if(changed===before){chain=readChain(network);if(!applyAccounts(list))return;void refresh();}
   busy=false;updateButtons();accountMenu();
@@ -98,7 +101,8 @@ window.dispatchEvent(new Event('eip6963:requestProvider'));scheduleRestore();
 function units(raw,decimals){if(!/^\d+$/.test(String(raw))||!Number.isInteger(decimals)||decimals<0||decimals>36)throw Error('Invalid amount');const n=BigInt(raw),d=10n**BigInt(decimals),fraction=(n%d).toString().padStart(decimals,'0').replace(/0+$/,'');return (n/d).toLocaleString('en-US')+(fraction?'.'+fraction:'');}
 async function refresh(){
  const request=++version,wallet=address;if(!wallet)return;
- if(chain!==expectedChain){$('wallet-status').textContent='Wrong network. Tap your wallet address and choose Robinhood Chain.';resetData('Switch to Robinhood Chain to see your tickets and prizes.');return;}
+ await actionsReady;if(request!==version)return;
+ if(chain!==expectedChain){$('wallet-status').textContent=`Wrong network. Tap your wallet address and choose ${networkLabel()}.`;resetData(`Switch to ${networkLabel()} to see your tickets and prizes.`);return;}
  $('wallet-status').textContent='Fetching your tickets and prizes…';
  try{
   const res=await fetch(`/v1/wallets/${wallet}?limit=25`,{cache:'no-store',signal:AbortSignal.timeout(10000)});const data=await res.json();if(request!==version)return;
@@ -119,11 +123,61 @@ async function refresh(){
   else{
    // Reward asset/decimals must come from a verified deployment profile, never the quote decimals.
    $('rewards-body').replaceChildren();for(const reward of data.rewards.items){const tr=document.createElement('tr');for(const text of [String(reward.drawId).slice(0,10)+'…',data.asset&&reward.asset===data.asset.address?units(reward.amountRaw,data.asset.decimals)+' USDG':'Amount not loaded',reward.status==='paid'?'Paid':'Won · payment pending']){const td=document.createElement('td');td.textContent=text;tr.append(td);}tr.firstChild.title=String(reward.drawId);for(const [label,source] of [['Assignment',reward.assignment],['Payment',reward.payment]]){if(source&&/^0x[0-9a-f]{64}$/i.test(source.transactionHash)&&String(data.provenance.chainId)==='4663'){const a=document.createElement('a');a.href='https://robinhoodchain.blockscout.com/tx/'+source.transactionHash;a.textContent=label;a.target='_blank';a.rel='noopener noreferrer';tr.firstChild.append(document.createElement('br'),a);}}tr.lastChild.className=reward.status==='paid'?'status-paid':'status-assigned';$('rewards-body').append(tr);}
-   $('provenance').textContent+=` · Showing ${data.rewards.items.length} of ${data.rewards.total} rewards. Claim links aren’t connected yet.`;
+   $('provenance').textContent+=` · Showing ${data.rewards.items.length} of ${data.rewards.total} rewards.`;
+   attachClaims(data,request);
   }
+  renderPurchases(data);
  }catch{if(request!==version)return;resetData('We can’t load your tickets right now. That doesn’t mean you have none.');$('wallet-status').textContent='Data unavailable. Give Refresh a try in a moment.';}
 }
 for(const b of document.querySelectorAll('.connect'))b.addEventListener('click',()=>void chooseWallet());
 $('disconnect').addEventListener('click',disconnected);$('refresh').addEventListener('click',()=>void refresh());
-$('buy').addEventListener('click',()=>show('Buy link: coming soon','We haven’t added a checked buy link yet. Before you buy, make sure the token address and route match the ones we publish.'));
+$('buy').addEventListener('click',()=>{
+ const token=siteActions?.publishedMarketToken;
+ if(typeof token==='string'&&/^0x[\da-f]{40}$/i.test(token)){
+  show('Buy on Pons',`Pons opens the trading page for ${token}. Check the token and payment route there. Only supported purchases earn tickets.`,{choices:[{name:'Open Pons',action:()=>window.open('https://www.ponsfamily.com/launchpad/'+token,'_blank','noopener,noreferrer')}]});
+ }else show('Buy link: coming soon','We haven’t added a checked buy link yet. Before you buy, make sure the token address and route match the ones we publish.');
+});
+
+function claimEngine(reward,revision){
+ const selected=address,p=provider;
+ return QianqiClaim.create({deployment:siteActions,provider:p,storage:localStorage,
+  current:()=>provider===p&&address===selected&&version===revision&&chain===expectedChain,
+  lock:navigator.locks?((key,fn)=>navigator.locks.request(key,{ifAvailable:true},lock=>{if(!lock)throw Error('Another tab is checking this claim.');return fn();})):null});
+}
+function attachClaims(data,revision){
+ if(!siteActions||data.status!=='observed'||data.rewards.vault?.toLowerCase()!==siteActions.vault.toLowerCase()||data.asset?.address?.toLowerCase()!==siteActions.asset.toLowerCase()||data.asset.decimals!==siteActions.decimals)return;
+ for(const [i,reward] of data.rewards.items.entries()){
+  if(reward.status!=='assigned'||reward.winner?.toLowerCase()!==address)continue;
+  const r={...reward,winner:address},button=document.createElement('button');button.className='text-button';button.textContent='Claim / check payment';
+  button.onclick=async()=>{
+   button.disabled=true;
+   try{
+    const engine=claimEngine(r,revision),saved=await engine.check(r);if(revision!==version)return;
+    if(saved&&!['rejected','reverted'].includes(saved.state)){
+     const text=saved.state==='confirmed'?'Payment confirmed on the test chain. The indexed view may take a moment to catch up.':saved.hash?`Transaction pending: ${saved.hash}. Refresh and check again; no second transaction will be sent.`:'A wallet request is still open or its outcome is unknown. Check wallet activity before doing anything else. This site will not send it again.';
+     show('Claim status',text);return;
+    }
+    const review=await engine.prepare(r);if(revision!==version)return;
+    show('Claim your test prize',`${review.amount} USDG → ${r.winner}. Test chain ${siteActions.chainId}. Estimated gas: ${BigInt(review.gas)} units; your wallet shows the network fee. No token approval.`,{choices:[{name:'Confirm claim in wallet',action:async()=>{
+     if(revision!==version){show('Check the prize again','Your wallet or its data changed. Close this message and reopen Claim to review the current prize.');return;}
+     show('Check your wallet','Confirm or decline the claim there. Leave an unanswered request open only once.');
+     try{await engine.send(r);if(revision===version)show('Claim submitted','The transaction was sent. Use Claim / check payment to check its result.');}
+     catch(e){if(revision===version)show('Claim needs attention',e.message,{error:true});}
+    }}]});
+   }catch(e){if(revision===version)show('Claim needs attention',e.message,{error:true});}
+   finally{button.disabled=false;}
+  };
+  $('rewards-body').children[i]?.lastChild.append(document.createElement('br'),button);
+ }
+}
+function renderPurchases(data){
+ let box=$('purchase-status');if(!box){box=document.createElement('section');box.id='purchase-status';$('provenance').parentElement.after(box);}box.replaceChildren();
+ const heading=document.createElement('h3');heading.textContent='Your observed purchases';box.append(heading);
+ const info=document.createElement('p');info.textContent='Only supported routes earn tickets. This is the activity our indexer could attribute to your wallet, not your complete trading history.';box.append(info);
+ const labels={ELIGIBLE:'Counted toward tickets',INELIGIBLE:'Does not qualify',UNSUPPORTED_ROUTE:'This route is not supported yet',AMBIGUOUS:'Could not verify this purchase'};
+ for(const purchase of data.purchases?.items??[]){const p=document.createElement('p');p.textContent=`${String(purchase.transactionHash).slice(0,12)}… · ${labels[purchase.status]??'Still checking'}${purchase.status==='ELIGIBLE'?` · ${purchase.entriesMinted??'0'} ticket pairs added`:''}`;
+  if(purchase.reason&&purchase.status!=='ELIGIBLE'){const detail=document.createElement('details'),summary=document.createElement('summary'),code=document.createElement('code');summary.textContent='Check detail';code.textContent=purchase.reason;detail.append(summary,code);p.append(detail);}box.append(p);}
+ if(!data.purchases?.items?.length){const p=document.createElement('p');p.textContent='No attributed purchases in this snapshot. A missing purchase is not proof that it was rejected.';box.append(p);}
+ if(data.purchases){const p=document.createElement('p');p.textContent=`Showing ${data.purchases.items.length} of ${data.purchases.total} observed purchases.`;box.append(p);}
+}
 setInterval(()=>{if(address&&!document.hidden)void refresh();},30000);

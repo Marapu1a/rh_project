@@ -29,7 +29,8 @@ BUY policy runtime. Реальный deployment ещё отсутствует: �
 за любой нагрузкой: фактическую скорость ещё предстоит измерять.
 Программный API допускает batchSize1..1000 и reorgLimit0..10000 (по умолчанию128).
 Сеть, anchor и policy проверяются заново. Старые full blocks, receipts и code reads
-берутся из сохранённого cache только после проверки каноничности хвоста. Для новой
+сохраняются полностью в canonical blocks; вспомогательный RPC cache теперь ограничен
+последними reorgLimit+1 высотами. [Замер и корректировка02.10](INDEXER_HISTORY_SCALING_2026-10-02.md). Для новой
 ветки cache после общего предка отбрасывается. Существующие scanWithRpc и replay
 всё ещё выполняют проверку доказательств и единственную математику начисления.
 
@@ -46,10 +47,17 @@ identity. При EEXIST lock не удаляется автоматически.
 RPC outage не публикует частичный ledger. Anchor mismatch, уменьшившийся finalized
 или reorg глубже лимита требуют проверки, не автоматического сброса.
 
+## Checkpoint replay и формат снимка02.10
+
+[Второй пакет](INDEXER_CHECKPOINTS_2026-10-02.md): normal append декодирует только suffix,
+reorg/policy/engine changes и audit — полный replay. Indexer snapshot теперь compact JSON
+с sha256-v1 checksum; legacy reads поддержаны новым writer/API/coordinator. Старые readers
+обновляются вместе с writer. Денежные journals и протокольные hashes не менялись.
+
 ## Границы
 
-- Кеш сокращает сетевое чтение истории, но CPU replay и запись одного JSON пока
-  линейны по накопленной истории; не заявляем масштабируемую базу данных.
+- Scan/replay используют suffix, но полный JSON, ledger hashes/tx set и consumer
+  replay всё ещё линейны; не заявляем масштабируемую базу данных.
 - Подтверждение worker не контрактная финальность. Reorg здесь пересчитывает только
   read-only снимок; существующие frozen datasets/claims не редактируются.
 - [API покупок/билетов](USER_STATUS_API.md) добавлен локально; [supervisor/runbook](INDEXER_SERVICE.md) добавлен; установка на сервер ещё впереди. Без config.indexer scheduler сохраняет

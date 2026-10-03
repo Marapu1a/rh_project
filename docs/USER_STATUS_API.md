@@ -24,6 +24,14 @@ CONFIG — тот же полный scheduler/indexer config. Сервер сл�
 - carryRaw, entryThresholdRaw, quoteDecimals: целые raw units, не округлённые доллары.
 - purchases: постраничный список decoder-кандидатов с доказанным payer данного
   кошелька, hash/block/log, status/reason, учтённой суммой и начисленными attempts.
+  Для [узкого 0x-профиля](PONS_ZEROEX_POOL_ADMISSION.md) также включается отказ
+  прямого holder-вызова, явно помеченный `observedSender` и
+  `attribution: transaction-sender-only`; он не доказывает payer и не даёт билетов.
+  Подтверждённая 0x-покупка отдельно показывает `poolQuoteRaw`, `routeFeeQuoteRaw`
+  и `positiveSlippageTokenRaw`. Coverage отражает наличие sender-only наблюдений.
+  [EntryPoint-профиль](PONS_ENTRYPOINT_POOL_ADMISSION.md) добавляет `userOpHash` и
+  `entryPoint` для принятой покупки. Однозначно сопоставленный отказ показывается
+  account как `observedAccount`, `attribution: user-operation-sender-only`, не bundler.
   Не все неподдержанные операции имеют доказанный payer: отсутствие в списке НЕ
   означает «покупка проверена и отвергнута». Это не поиск произвольной транзакции
   в сети и не endpoint pending receipts.

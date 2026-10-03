@@ -47,7 +47,7 @@ async function scanWithRpc(input,rpc,toBlock,lifecycle=null,{fromBlock}={}){
   // An incremental caller must join its canonical prefix and replay the result.
   for(let n=first;n<=BigInt(toBlock);n++){
     const block=await rpc('eth_getBlockByNumber',[tag(n),true]);
-    const transactions=[],batchAccounts={};
+    const transactions=[],batchAccounts={},entrypointAccounts={};
     if(batch){const code=await rpc('eth_getCode',[manifest.batchExecutor,tag(n-1n)]);if(keccak256(code)!==manifest.codeHashes.batchExecutor)throw Error('Unexpected parent executor runtime');}
     if(pons)await pons.validateBindings(manifest,rpc,tag(n));
     if(pons)for(const field of pons.FIELDS){
@@ -70,9 +70,17 @@ async function scanWithRpc(input,rpc,toBlock,lifecycle=null,{fromBlock}={}){
         l.address.toLowerCase()===manifest.curve.toLowerCase()&&l.topics[0]===curveBuyTopic||
         manifest.manager&&l.address.toLowerCase()===manifest.manager.toLowerCase()&&l.topics[0]===poolSwapTopic&&l.topics[1]?.toLowerCase()===manifest.poolId.toLowerCase());
       if(candidate&&tx.to&&tx.from.toLowerCase()===tx.to.toLowerCase()){const payer=tx.from.toLowerCase();if(!batchAccounts[payer])batchAccounts[payer]={parentHash:block.parentHash,code:await rpc('eth_getCode',[payer,tag(n-1n)])};}
+      if(candidate&&pons.accountCandidate){
+        const account=pons.accountCandidate(manifest,tx);
+        if(account&&!entrypointAccounts[account]){
+          const implementation=await rpc('eth_getCode',[manifest.entryPointAccount,tag(n-1n)]);
+          if(keccak256(implementation)!==manifest.codeHashes.entryPointAccount)throw Error('Unexpected parent EntryPoint account runtime');
+          entrypointAccounts[account]={parentHash:block.parentHash,code:await rpc('eth_getCode',[account,tag(n-1n)])};
+        }
+      }
       transactions.push({tx,receipt});
     }
-    blocks.push({number:block.number,hash:block.hash,parentHash:block.parentHash,timestamp:block.timestamp,transactions,...(batch?{batchAccounts}:{})});
+    blocks.push({number:block.number,hash:block.hash,parentHash:block.parentHash,timestamp:block.timestamp,transactions,...(batch?{batchAccounts}:{}),...(pons?.accountCandidate?{entrypointAccounts}:{})});
   }
   if((await rpc('eth_getBlockByNumber',[tag(toBlock),false])).hash!==head.hash)throw Error('Chain changed during scan; retry canonical range');
   return {manifest:input,blocks};

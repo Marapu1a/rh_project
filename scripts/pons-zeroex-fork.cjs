@@ -14,7 +14,9 @@ async function main(){
  const rpc=(m,p=[])=>hre.network.provider.send(m,p);let proxy,remote;
  try{
   const taker=new E.Wallet(require('./pons-launch-rehearsal.cjs').KEY).address;
-  const targets=process.argv.includes('--pool')?['0xeDBf91223639800BCd5756815CAf908Df3b890bE']:[RDH,WETH];
+  const tokenArg=process.argv.indexOf('--token');const selected=tokenArg<0?null:process.argv[tokenArg+1];
+  assert(tokenArg<0||E.isAddress(selected),'Invalid --token');
+  const targets=selected?[selected]:process.argv.includes('--pool')?['0xeDBf91223639800BCd5756815CAf908Df3b890bE']:[RDH,WETH];
   for(const buyToken of targets){
    const row={status:'RUNNING',body:{sellToken:USDG,buyToken,sellAmountWei:'101000000',slippageBps:100,taker,intent:'quote'}};result.scenarios.push(row);
    const response=await fetch('https://www.ponsfamily.com/api/zeroex-swap',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(row.body),signal:AbortSignal.timeout(20000)});
@@ -24,12 +26,14 @@ async function main(){
    assert.equal(outer.args.token.toLowerCase(),USDG.toLowerCase());assert.equal(outer.args.amount,101000000n);assert.equal(outer.args.operator,outer.args.target);
    assert.equal(inner.args.slippage.recipient.toLowerCase(),taker.toLowerCase());assert.equal(inner.args.slippage.buyToken.toLowerCase(),buyToken.toLowerCase());assert(inner.args.slippage.minAmountOut>0n);
    row.decoded={operator:outer.args.operator,target:outer.args.target,sellAmount:String(outer.args.amount),recipient:inner.args.slippage.recipient,buyToken:inner.args.slippage.buyToken,minAmountOut:String(inner.args.slippage.minAmountOut),actions:Array.from(inner.args.actions),zid:inner.args.zid};
-   remote=new E.JsonRpcProvider('https://rpc.mainnet.chain.robinhood.com');const block=await remote.getBlock('latest');row.anchor={number:block.number,hash:block.hash};remote.destroy();remote=null;
+   remote=new E.JsonRpcProvider(process.env.RH_FORK_RPC_URL||'https://robinhood-mainnet-rpc.blockreq.com/v1/rpc/public',4663,{batchMaxCount:1});const block=await remote.getBlock('latest');row.anchor={number:block.number,hash:block.hash};remote.destroy();remote=null;
    proxy=await startReadProxy(process.env.RH_FORK_RPC_URL||'https://robinhood-mainnet-rpc.blockreq.com/v1/rpc/public');
    await rpc('hardhat_reset',[{forking:{jsonRpcUrl:proxy.url,blockNumber:block.number}}]);const meta=await rpc('hardhat_metadata');assert.equal(Number(meta.forkedNetwork.chainId),4663);assert.equal((await rpc('eth_getBlockByNumber',['latest',false])).hash,block.hash);
    await rpc('evm_mine'); // Execute on a local block with the configured Prague VM.
    const provider=new E.BrowserProvider(hre.network.provider,undefined,{cacheTimeout:-1});
-   if(buyToken!==WETH){const factory=new E.Contract('0x7eD598BcEf8bd9Edd8C97A195C6d13f40801EC7e',require('./integrations/pons-v2.cjs').FAB,provider);const launch=await factory.getLaunchedToken(buyToken);row.venue={factory:factory.target,token:launch.token,curve:launch.curve,quote:launch.pairToken,phase:String(launch.phase),poolFee:String(launch.poolFee),tickSpacing:String(launch.tickSpacing),hook:await factory.memeHook()};}
+   if(buyToken!==WETH){const factory=new E.Contract('0x7eD598BcEf8bd9Edd8C97A195C6d13f40801EC7e',require('./integrations/pons-v2.cjs').FAB,provider);const launch=await factory.getLaunchedToken(buyToken),policy=await factory.getLaunchFeePolicy(buyToken);row.venue={factory:factory.target,token:launch.token,curve:launch.curve,quote:launch.pairToken,phase:String(launch.phase),poolFee:String(launch.poolFee),tickSpacing:String(launch.tickSpacing),creatorTaxBps:String(launch.creatorTaxBps),hookFeeBps:String(policy[3]),hook:await factory.memeHook()};}
+   const batch=require('./pons-batch-route.cjs');
+   row.runtimes={};for(const address of new Set([HOLDER,outer.args.target,USDG,buyToken,batch.EXECUTOR,...Object.values(batch.PINS).map(p=>p[0]),...Object.values(require('./pons-v4-buy.cjs').PINS).map(p=>p[0]),row.venue?.factory,row.venue?.curve,row.venue?.hook].filter(Boolean))){const code=await rpc('eth_getCode',[address,'latest']);row.runtimes[address.toLowerCase()]={code,hash:E.keccak256(code)};}
    await rpc('hardhat_setBalance',[taker,E.toQuantity(E.parseEther('10'))]);await rpc('hardhat_impersonateAccount',[taker]);const owner=new E.JsonRpcSigner(provider,taker),quote=new E.Contract(USDG,erc,owner),token=new E.Contract(buyToken,erc,owner);
    row.runtimeHashes={};for(const address of [HOLDER,outer.args.target,USDG,buyToken]){const code=await provider.getCode(address);assert.notEqual(code,'0x');row.runtimeHashes[address]=E.keccak256(code);}
    const trace=await rpc('debug_traceCall',[{to:USDG,data:erc.encodeFunctionData('balanceOf',[taker])},'latest',{disableMemory:true,disableStorage:true}]);let funded=false;
@@ -43,7 +47,9 @@ async function main(){
    try{await owner.estimateGas(request);row.withoutApproval='UNEXPECTED_SUCCESS';}catch(e){row.withoutApproval={code:e.code,message:e.shortMessage||e.message};}assert.equal(row.withoutApproval.code,'CALL_EXCEPTION');
    row.approval=await capture(quote.approve(HOLDER,101000000n));
    row.before={sell:await quote.balanceOf(taker),buy:await token.balanceOf(taker)};
-   row.estimatedGas=await owner.estimateGas(request);row.execution=await capture(owner.sendTransaction({...request,gasLimit:row.estimatedGas*120n/100n}));
+   if(process.argv.includes('--entrypoint'))row.execution=await require('./pons-entrypoint-rehearsal.cjs').execute({rpc,provider,owner,request,capture,row});
+   else {row.estimatedGas=await owner.estimateGas(request);row.execution=await capture(owner.sendTransaction({...request,gasLimit:row.estimatedGas*120n/100n}));}
+   row.execution.block=await rpc('eth_getBlockByNumber',[row.execution.tx.blockNumber,false]);
    row.after={sell:await quote.balanceOf(taker),buy:await token.balanceOf(taker)};
    row.transfers=row.execution.receipt.logs.filter(l=>l.topics[0]===erc.getEvent('Transfer').topicHash&&l.topics.length===3).map(l=>{const e=erc.parseLog(l);return {token:l.address,from:e.args.from,to:e.args.to,value:String(e.args.value),logIndex:l.logIndex};});
    assert.equal(row.before.sell-row.after.sell,101000000n);assert(row.after.buy-row.before.buy>=inner.args.slippage.minAmountOut);

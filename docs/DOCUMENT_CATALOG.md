@@ -17,6 +17,12 @@
 | [REVIEW_TESTING](REVIEW_TESTING.md) | Каноническая локальная проверка |
 | [ROADMAP](ROADMAP.md) | План до первого публичного запуска |
 
+## Замеры индексатора
+
+- [Checkpoint replay и компактный снимок](INDEXER_CHECKPOINTS_2026-10-02.md) — второй пакет, совместимость readers и измерения.
+
+- [Рост истории: cache, restart, replay](INDEXER_HISTORY_SCALING_2026-10-02.md) — synthetic before/after и границы A4.
+
 ## Pons: модули и датированные доказательства
 
 | Документ | Назначение |
@@ -28,6 +34,7 @@
 | [PONS_BROWSER_BRIDGE](PONS_BROWSER_BRIDGE.md) | Browser → local fork purchase |
 | [PONS_BUY](PONS_BUY.md) | Pons: покупки на кривой |
 | [PONS_CHANNEL_COVERAGE](PONS_CHANNEL_COVERAGE.md) | G10 — охват торговых маршрутов Pons |
+| [PONS_GRADUATION_TRIAGE_2026-10-02](PONS_GRADUATION_TRIAGE_2026-10-02.md) | Сверка двух ответов GPT: границы proof и следующий EOA USDG BUY |
 | [PONS_GRADUATION_REVIEW_2026-10-02](PONS_GRADUATION_REVIEW_2026-10-02.md) | Graduation: реальные маршруты Harmonic/PRIORS, hook fees, claim и границы учёта |
 | [PONS_COLLECTOR](PONS_COLLECTOR.md) | Pons: локальный сбор комиссий и ручное исполнение |
 | [PONS_DIRECT_PURCHASE](PONS_DIRECT_PURCHASE.md) | Прямой USDG BUY — локальный прототип |
@@ -41,6 +48,8 @@
 | [PONS_PURCHASE_UI](PONS_PURCHASE_UI.md) | Локальный интерфейс покупки |
 | [PONS_UI_ROUTING](PONS_UI_ROUTING.md) | Pons UI routing — 01.10.2026 |
 | [PONS_V4_BUY](PONS_V4_BUY.md) | Pons: учёт curve и v4 BUY |
+| [PONS_ENTRYPOINT_POOL_ADMISSION](PONS_ENTRYPOINT_POOL_ADMISSION.md) | Signed Alchemy 7702/UserOperation, genesis v4, parent delegation и index/API |
+| [PONS_ZEROEX_POOL_ADMISSION](PONS_ZEROEX_POOL_ADMISSION.md) | Узкий 0x USDG pool BUY: fork proof, genesis v3, policy/index/API и ограничения |
 | [PONS_ZEROEX_EXECUTION](PONS_ZEROEX_EXECUTION.md) | Реальные 0x calldata на fork: атрибуция, комиссии и split вне Pons pool |
 | [SHARED_INDEX_CONFIG](SHARED_INDEX_CONFIG.md) | Общий индекс для Pons, координатора и API |
 
