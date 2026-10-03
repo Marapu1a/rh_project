@@ -1,0 +1,195 @@
+{
+  "schema": "draw-capacity-v1",
+  "status": "PASSED",
+  "n": 10000,
+  "startedAt": "2026-10-03T07:38:12.458Z",
+  "scope": "LocalShortController/LocalMonthlyController, Cancun local EVM, synthetic attempts, mock RNG and USDG; no public-network timing, fee or admission qualification",
+  "shortRules": {
+    "version": 1,
+    "pNumerator": 2,
+    "pDenominator": 5,
+    "hNumerator": 1,
+    "hDenominator": 1
+  },
+  "monthlyRules": {
+    "version": 2,
+    "pNumerator": 3,
+    "pDenominator": 4,
+    "hNumerator": 1,
+    "hDenominator": 1
+  },
+  "weights": [
+    7,
+    5,
+    4,
+    3,
+    2,
+    2,
+    1,
+    1,
+    1,
+    1
+  ],
+  "results": [
+    {
+      "kind": "SHORT",
+      "resultHash": "0x5b381848ad9da9291dfe6901acca02c3323ae173a9242dcc89d06fc658de188c",
+      "winners": 10,
+      "awarded": "999",
+      "terminal": true
+    },
+    {
+      "kind": "MONTHLY",
+      "resultHash": "0xbaba2e0075376b60ef6a719a18b7d42a520e60e15f7101e428a48f94a4278d45",
+      "winners": 1,
+      "awarded": "1000",
+      "terminal": true
+    }
+  ],
+  "attempts": "105000",
+  "chunks": 157,
+  "runtimeHashes": {
+    "short": "0xebc6044ba377ad1a17580c40d38b7c7c79d2210ca8213d9d78d25b5b34f78142",
+    "monthly": "0xace96663c19ff122b2484ecf171d51df69b220ebb21e05ca0d36f41899e08051",
+    "vault": "0xf5b3f4b5deda6ca6cd2bb7d91e14f112359ed411f4250d198f2e2f820bd14497"
+  },
+  "seed": "0xcb3d84df26224c4d0b43f31d69d4f50737de206efa912833b43a1ae13a14d3d5",
+  "actions": {
+    "SHORT.begin": {
+      "count": 1,
+      "totalGas": "654898",
+      "maxGas": "654898",
+      "maxCalldataBytes": 356
+    },
+    "SHORT.publish": {
+      "count": 157,
+      "totalGas": "57721870",
+      "maxGas": "436169",
+      "maxCalldataBytes": 6244
+    },
+    "MONTHLY.beginMonth": {
+      "count": 1,
+      "totalGas": "295630",
+      "maxGas": "295630",
+      "maxCalldataBytes": 292
+    },
+    "MONTHLY.publishMonth": {
+      "count": 157,
+      "totalGas": "74105712",
+      "maxGas": "557990",
+      "maxCalldataBytes": 6244
+    },
+    "SHORT.seal": {
+      "count": 1,
+      "totalGas": "498520",
+      "maxGas": "498520",
+      "maxCalldataBytes": 36
+    },
+    "MONTHLY.sealMonth": {
+      "count": 1,
+      "totalGas": "466986",
+      "maxGas": "466986",
+      "maxCalldataBytes": 36
+    },
+    "SHORT.deliver": {
+      "count": 1,
+      "totalGas": "87784",
+      "maxGas": "87784",
+      "maxCalldataBytes": 68
+    },
+    "MONTHLY.deliver": {
+      "count": 1,
+      "totalGas": "87804",
+      "maxGas": "87804",
+      "maxCalldataBytes": 68
+    },
+    "SHORT.processShort": {
+      "count": 157,
+      "totalGas": "80125046",
+      "maxGas": "957389",
+      "maxCalldataBytes": 6276
+    },
+    "MONTHLY.processMonth": {
+      "count": 157,
+      "totalGas": "34566306",
+      "maxGas": "288308",
+      "maxCalldataBytes": 6276
+    },
+    "SHORT.finishShort": {
+      "count": 1,
+      "totalGas": "587751",
+      "maxGas": "587751",
+      "maxCalldataBytes": 36
+    },
+    "SHORT.claim": {
+      "count": 10,
+      "totalGas": "891320",
+      "maxGas": "105002",
+      "maxCalldataBytes": 68
+    },
+    "MONTHLY.finishMonth": {
+      "count": 1,
+      "totalGas": "246288",
+      "maxGas": "246288",
+      "maxCalldataBytes": 36
+    },
+    "MONTHLY.claim": {
+      "count": 1,
+      "totalGas": "100214",
+      "maxGas": "100214",
+      "maxCalldataBytes": 68
+    }
+  },
+  "finishedAt": "2026-10-03T07:39:28.788Z",
+  "baseHead": "5c6f8901dfd164f083d30f7465d6072406325ad4",
+  "command": "node scripts/benchmark-draw-capacity.cjs 10000",
+  "node": "v24.21.0",
+  "solc": "0.8.37+commit.f401782d.Emscripten.clang",
+  "hardhat": "2.29.1",
+  "rawReport": ".local/logs/draw-capacity/10000-vmzh7y/report.json",
+  "rawSha256": "49bd76f5c2f30805cd3e0cf1a0cf78cb57308fd8d9f2cc8737385409bfd520d2",
+  "sourceSha256": {
+    "scripts/benchmark-draw-capacity.cjs": "b1d7be7cdc52e34451c1cbf29f4b733d2ade58071ee9c306886ba26d7f71baec",
+    "scripts/compile.cjs": "2bbeb3f69abafe6f38e0ec4b94fe46be33f7e6e73731fb5bda1caf517eb5c7d6",
+    "test/fixtures/local-controllers.cjs": "115dc194bf3fd1e060714a7673a01e41a0d8085b8365219569f4dcd558e59c22",
+    "test/fixtures/short-outcome.cjs": "6f4a74fa71e49e6f864c99c106c93cc847c4e75b6767350f70608d060b178939",
+    "scripts/short-settlement.cjs": "5454137e55bb33cbc1afc15851f169e372335fac0b9c1d088569257a73c50549",
+    "scripts/short-outcome.cjs": "f7a81e0fd4a52b6e30b656f95c8523c69cb211ca3a0f0625b90741025de51572",
+    "scripts/monthly-outcome.cjs": "7aedcaabb0a592726d92151465ea7e1b339c6a439a28ddf22824db5e4664e711",
+    "contracts/BuyPolicySource.sol": "da47b940e2ffa1199edcd35dadc1941f33a369a159bedff318148bafd1277db1",
+    "contracts/ChainBlocks.sol": "83883a3c0b6dbca40ba9dbbf2f985a0b85b56ac11b533144aa17e1ab0e9d605b",
+    "contracts/CutoffHistory.sol": "147281297f44d956159351bbb80fc3e4ec6970bff986eff9cb3fa041007f6008",
+    "contracts/DrandRandomAdapter.sol": "ffb6c2d4ff831c79380b68712f017909a290e1f4e5436aa978a2e46e723071b7",
+    "contracts/DualControllerPromoVault.sol": "31e66724289b458ed0d5852f1e6db6ac1b785b8aa14463545092548a827aefed",
+    "contracts/FeeRouter.sol": "f0cd29684d653d16ed52b4ee5ec2c78ac523940f5bfb67540c33591ba09caa5e",
+    "contracts/ILocalRandom.sol": "a7a3df13ba740143ec5d95cb95517a06c0c02f9383a139a574130261d5fb8a92",
+    "contracts/InfinityCollector.sol": "627d2d3adda36430f5f1d84cee467031133143d9070de89c5fcf16b8b3dc15eb",
+    "contracts/IPonsVenue.sol": "bfcaa5cf01e49bb6a73bfd780f008ed80b62ac8687409b7037d17b2b33330b43",
+    "contracts/IPrizePriceSource.sol": "4f02c261f5f326a70ddb65b45f9f03b76d73399edb12c000cb869cd0db285ccd",
+    "contracts/IPrizeSwapAdapter.sol": "911d2adc75432b15e69753949536b5d7408ec29932cc568bc040c0ae3cccbf0e",
+    "contracts/LocalMarketPrizeConverter.sol": "f37920eccc1a64dc777db88f746056788e3175130c8645d2d5b8e7513e533cf5",
+    "contracts/LocalMonthlyController.sol": "f5c1ddb275a52b536203d5e05ffe8a2e8bad0d0f91aea2a5dfdceeba6cab0340",
+    "contracts/LocalPonsCollector.sol": "fdcb60f73ad60cf6f4b5bcca32f40a25eb621f1ab2478127314aee9ed7fc4039",
+    "contracts/LocalPrizeConverter.sol": "aebd488f6074dc9f13636f8290b12ead1c67060894eb3d8213df1945e45c6cf8",
+    "contracts/LocalScheduledPrizeConverter.sol": "0a38fe7f7e8867e5da6a8f28221a801d75ec4084a5fef593756759d1cdd069d0",
+    "contracts/LocalShortController.sol": "980a99902beaed04b1ca9cdc2c4751e3c3d35c8ef01f12edbaa70334343b2132",
+    "contracts/LocalV4PrizeAdapter.sol": "643cf212d38df1ec06e0f1b50b070d7edbf92752b093617c38319dcd69dd2782",
+    "contracts/MonthlyControllerBase.sol": "1a5dd21156e269107499ce326d0fdf54a64cf5342a9e447d89e89a4ca2709cb0",
+    "contracts/MonthlyOutcome.sol": "edbfef546db35754e6b0f4436c5ced59e541a446023c5e0b1fb5f640bf6faa1e",
+    "contracts/MonthlySettlement.sol": "9b80569a25cf90064f8f5713fa814b9aefb81108eb7c883fa61404a883eb1920",
+    "contracts/ParticipantRegistry.sol": "7244a4ede035e46de118114e10edf2e3d96cf27caacedc9c9e540d345a6f0e49",
+    "contracts/PromoVault.sol": "7c813a1a35f4accbd67316450f8e87be0ea67a01686cd4e01dc90433bec12bcb",
+    "contracts/RobinhoodControllerChecks.sol": "7ebe29f805ee757f7b72a5d693bdf9da95f326da02926fc61b07307d5a8f5c89",
+    "contracts/RobinhoodMonthlyController.sol": "1997a119c64104ada6df5102880242fe4e1e86190f54c611b95593b3fac9db8d",
+    "contracts/RobinhoodShortController.sol": "35653d4312708bd8b5afb9f5dbf9d293c0a82ebec9e158e9211918d4aa1da3b8",
+    "contracts/ShortControllerBase.sol": "e95ab36234cb2f88ae13adb46f769ba6706aea9234a2a45e99af9414799d54cf",
+    "contracts/ShortDatasetPreparation.sol": "223420a1ccdd71ce818d8b8aabc7e7574abfc82b9b942f79c8228b49d235e6e5",
+    "contracts/ShortDrawCommitment.sol": "833762ca4d98443906f493ab2a81c262327cceb6df46e01827f52cd6ff1ba259",
+    "contracts/ShortOutcome.sol": "2c505e215dd642abbe9db6425c7e8c185b5e165f862cb8f41a1ee5336919c534",
+    "contracts/ShortPrizeBasket.sol": "f2f5ee7c033a4c686f6c3133b6d6fe10e9b25171cdaec5bf83a6e594017f9c00",
+    "contracts/ShortRulesEpochs.sol": "6dba85db54f1fbaff620c2844b560761b0e34b399a2e0e9f0844aacd93c17761",
+    "contracts/ShortSettlement.sol": "aa2ba3cb3c01e860ef887f6a129d250acebf0c0b04872aa8dc4704c1b98d3403"
+  },
+  "totalTransactions": 647,
+  "totalGas": "250436129"
+}
