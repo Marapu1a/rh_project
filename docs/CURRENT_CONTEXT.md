@@ -59,7 +59,9 @@ waiting/clear. Полного зелёного повторного baseline п�
 HTTPS/keystore, новые оба draw,22 signed tx,107.337115 тестовых USDG выплат,
 cold restart без повторных отправок;25 уникальных адресных tests PASS.
 Исправлен порядок budget/admission; тестовая finality явно отделена от production.
-Следующий шаг — production manifest, роли/pins/custody и параметры запуска;
+[Подготовка deployment](PONS_DEPLOYMENT_PREPARATION.md): принятые данные и порядок
+собраны; нужен отдельный executor/custody, затем квалификация collector и точный
+план контрактов. Public deployment ещё не выполнен.
 публичный сервис ещё не включён,
 внешние уведомления не подключены, финансовый запуск не выполнен.
 

@@ -99,7 +99,9 @@ G04/G01: [read-only Pons inspector](PONS_PUBLIC_PROFILE_2026-10-03.md) и
 36 адресных tests, EVM drain/restart и проверка перед intent PASS.
 [Release-репетиция](PONS_RELEASE_REHEARSAL_2026-10-03.md) PASS: локальный HTTPS/keystore,
 funding/new-freeze обоих draw,22 signed tx, выплаты и idle без повторов;25 адресных tests.
-Следующий пакет — production manifest/роли/pins/custody; public deployment ещё не выполнен.
+[Подготовка deployment](PONS_DEPLOYMENT_PREPARATION.md): принятые данные и порядок
+собраны; нужен отдельный executor/custody, затем квалификация collector и точный
+план контрактов. Public deployment ещё не выполнен.
 
 1. G04/G01: production manifest, реальные роли/pins/custody/параметры и публичный
    исполнитель с собственными guards; тестовые обходы не переносить.
