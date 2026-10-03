@@ -71,7 +71,11 @@ launch: ранний BUY101 даёт Short1/Monthly1. Source gaps Pons откр�
 подготовлен на сервере отдельно: credentials/RPC, gated units, backup/restore, PNG опубликованы.
 Telegram подключён: получатель подтверждён владельцем, тест доставки и dedup PASS.
 Monitor timer enabled; его service ждёт activation marker. Financial units/backup timer disabled.
-Далее свежие nonce/economics/anchors и контролируемый deployment.
+[Предпусковой пакет3A](PONS_PREFLIGHT_HANDOFF_2026-10-03.md) завершён: hourly Windows backup pull,
+свежий preflight, deployment fork10tx и отдельная signing-queue6tx PASS.
+Учтены timestamp immutables контроллеров; constructor bytecode не менялся.
+Локальная консоль4176 в review-only; далее первые6 CREATE с MetaMask, затем launch/policy
+из реальных receipts. Никаких public отправок пока нет.
 публичный сервис ещё не включён,
 канал уведомлений проверен; штатный мониторинг ждёт активации, финансовый запуск не выполнен.
 

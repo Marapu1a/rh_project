@@ -107,8 +107,9 @@ Catalog сначала выявил отсутствие новых tests в sco
 Linux: systemd-analyze verify новых units PASS (лишь предупреждения чужих xfs units),
 credential/RPC probe PASS, inactive gates PASS, backup/restore/hash PASS, bash -n PASS,
 HTTP assets PASS. Сам scheduled backup с действующими production writers ещё не
-проверен: таких writers нет. Telegram доставка проверена отдельным подключением выше. Автоматический off-server
-backup остаётся эксплуатационной задачей до включения публичной автоматики.
+проверен: таких writers нет. Telegram доставка проверена отдельным подключением выше. [Пакетом3A](PONS_PREFLIGHT_HANDOFF_2026-10-03.md)
+добавлен автоматический off-server pull на Windows; backup unit использует обновлённый
+root-owned /opt/qianqi/operations/backup-public.sh, сам production backup timer пока disabled.
 
 Следующий пакет: свежие nonce/anchors/fee checks → точные deployment транзакции →
 контракты/launch → manifest из receipts → profile/index/API проверка → осознанное

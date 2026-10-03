@@ -137,7 +137,10 @@
       "test/pons-public-execution.test.cjs",
       "test/pons-public-runtime.test.cjs",
       "test/service-credentials.test.cjs",
-      "test/ops-notify.test.cjs"
+      "test/ops-notify.test.cjs",
+      "test/pons-launch-preflight.test.cjs",
+      "test/deployment-signing-plan.test.cjs",
+      "test/deployment-signing-queue.test.cjs"
     ]
   },
   "accounting": {
@@ -608,7 +611,10 @@
       "test/local-transaction.test.cjs",
       "test/pons-storage-failure.test.cjs",
       "test/service-credentials.test.cjs",
-      "test/ops-notify.test.cjs"
+      "test/ops-notify.test.cjs",
+      "test/pons-launch-preflight.test.cjs",
+      "test/deployment-signing-plan.test.cjs",
+      "test/deployment-signing-queue.test.cjs"
     ]
   },
   "pons-public-profile": {

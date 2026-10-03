@@ -20,6 +20,11 @@ node /opt/qianqi/prepared/scripts/ops-backup.cjs backup /var/lib/qianqi-public "
 cp -a /etc/qianqi/public "$target/config"
 cp /opt/qianqi/prepared/release.json "$target/release.json"
 sha256sum "$target/release.json" > "$target/release.sha256"
+# Publish a complete immutable transfer archive; pullers ignore incomplete files.
+tar -czf "$target.tar.gz.tmp" -C "$(dirname "$target")" "$(basename "$target")"
+mv "$target.tar.gz.tmp" "$target.tar.gz"
+(cd "$(dirname "$target")"; sha256sum "$(basename "$target").tar.gz") > "$target.sha256.tmp"
+mv "$target.sha256.tmp" "$target.sha256"
 # Restart only previously active services after a successful snapshot.
 for ((i=${#active[@]}-1; i>=0; i--)); do systemctl start "${active[i]}"; done
 echo "Backup complete: $target. Export off-server separately."

@@ -1,0 +1,6 @@
+<!doctype html><html lang="ru"><meta charset="utf-8"><title>QIANQI — подготовка развёртывания</title>
+<style>body{background:#f5f2e9;color:#20231e;font:17px system-ui;max-width:950px;margin:45px auto;padding:20px}button,select,input{font:inherit;padding:10px;margin:8px 5px 8px 0}pre{white-space:pre-wrap;overflow-wrap:anywhere}#status{border-top:1px solid;padding-top:20px}</style>
+<h1>QIANQI · Развёртывание</h1><p>Сначала шесть контрактов проекта. Запуск токена и привязка правил — следующий этап, после проверки фактических адресов и блоков.</p>
+<select id="wallet" aria-label="Кошелёк"></select><button id="connect">Подключить кошелёк</button><button id="review">Проверить следующий шаг</button><button id="sign" disabled>Подписать в кошельке</button><button id="refresh">Проверить подтверждение</button>
+<p id="status">Загрузка…</p><pre id="details"></pre><p>Если окно прервалось после отправки, укажите хеш из кошелька. Не отправляйте транзакцию повторно.</p><input id="txhash" placeholder="0x… хеш транзакции"><button id="recover">Сверить хеш</button>
+<script src="/app.js"></script></html>
