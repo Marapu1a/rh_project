@@ -1,0 +1,140 @@
+{
+  "candidate": "1a29a137aa17e04f04d920c4d3a87599b0fb9be6",
+  "lockfileSha256LF": "963c6f2d4ba20cc92f18da4c215cb5fb9752c2d65e9a098977558ce4d51ac924",
+  "sizes": {
+    "RobinhoodShortController": {
+      "runtimeBytes": 22738,
+      "initBytes": 27683
+    },
+    "RobinhoodMonthlyController": {
+      "runtimeBytes": 19671,
+      "initBytes": 23703
+    },
+    "DualControllerPromoVault": {
+      "runtimeBytes": 8496,
+      "initBytes": 9409
+    },
+    "DrandRandomAdapter": {
+      "runtimeBytes": 10957,
+      "initBytes": 11719
+    },
+    "LocalPonsCollector": {
+      "runtimeBytes": 12983,
+      "initBytes": 13804
+    },
+    "BuyPolicySource": {
+      "runtimeBytes": 1313,
+      "initBytes": 2170
+    }
+  },
+  "python": {
+    "status": "PASS",
+    "cases": 39,
+    "perFile": {
+      "short-model": 6,
+      "short-economy": 5,
+      "short-sweep": 4,
+      "short-luck": 4,
+      "short-legacy": 11,
+      "farming-model": 9
+    },
+    "rawLog": false,
+    "evidence": "Observed separate OK in command stdout for all six suites; same isolated checkout"
+  },
+  "privateRpcScan": {
+    "matches": 0,
+    "scope": "Exact saved URL/key in tracked files, not general secret scanning"
+  },
+  "dependencyAudit": {
+    "status": "FINDINGS",
+    "info": 0,
+    "low": 10,
+    "moderate": 2,
+    "high": 8,
+    "critical": 0,
+    "total": 20
+  },
+  "schema": "test-candidate-v1",
+  "date": "2026-10-03",
+  "verdict": "FULL_RUN_ONE_CATALOG_FAILURE_FIXED_BY_TARGETED_TEST",
+  "fullRun": {
+    "head": "1a29a137aa17e04f04d920c4d3a87599b0fb9be6",
+    "sourceDirty": false,
+    "files": 128,
+    "counts": {
+      "tests": 894,
+      "failed": 1,
+      "passed": 893,
+      "cancelled": 0,
+      "skipped": 0,
+      "todo": 0,
+      "topLevel": 894,
+      "suites": 0
+    },
+    "exitCode": 1,
+    "cleanupError": null,
+    "totalMs": 3273735.7616000003,
+    "compilations": {
+      "ordinary": 1,
+      "overrides": 0,
+      "reuses": 45
+    },
+    "toolchain": {
+      "hardhat": "2.29.1",
+      "ethers": "6.17.0",
+      "solc": "0.8.37"
+    },
+    "node": "v24.21.0",
+    "npm": "11.19.0",
+    "failure": "test/test-launcher.test.cjs: profile catalog incorrectly required scoped browser files in canonical test/* suite"
+  },
+  "targetedFix": {
+    "command": "node --test test/test-launcher.test.cjs",
+    "passed": 5,
+    "failed": 0,
+    "exitCode": 0,
+    "scope": "Only catalog assertion changed; runtime and profile selection unchanged; no full rerun",
+    "sourceSha256LF": "88bec1847b79e231491dc7b34088b3d652992c7c0c5346501e6840163e24e505"
+  },
+  "browser": {
+    "passed": 35,
+    "failed": 0,
+    "exitCode": 0,
+    "head": "1a29a137aa17e04f04d920c4d3a87599b0fb9be6",
+    "files": [
+      "web/site.test.cjs",
+      "web/wallet.test.cjs",
+      "web/overview.test.cjs",
+      "web/claim.test.cjs",
+      "web/claim-journal.test.cjs",
+      "web/purchase-demo.test.cjs"
+    ]
+  },
+  "rawArtifacts": [
+    {
+      "file": ".local/logs/final-review-1a29a13.log",
+      "sha256": "6e768fac3cc5553d11d6bb476b13842d5842c34fd89177947a06884115e972e0",
+      "localOnly": true
+    },
+    {
+      "file": ".local/logs/final-web-1a29a13.log",
+      "sha256": "55c8673400bf215f8d31296839d005beb602cbe8928d0d2d5bbeaf732ec35ecc",
+      "localOnly": true
+    },
+    {
+      "file": ".local/logs/final-launcher-fix.log",
+      "sha256": "305f2eb8d9fea6907a80eb2c3d934ba4e10d28be4eedc7af8e8d18e9ca58553d",
+      "localOnly": true
+    },
+    {
+      "file": "C:\\Temp\\rh-review-tiyow2\\.local\\logs\\result.json",
+      "sha256": "fa3b03876d351ead4bb3ab5993d67c9739221bce5e0725d052bdfda221e91e81",
+      "localOnly": true
+    },
+    {
+      "file": "C:\\Temp\\rh-review-tiyow2\\.local\\logs\\test-run-OZslUk.json",
+      "sha256": "bc510fb2391d02a1213128dda9193b5c5fad5bcebf42b9a5c7d3032ed7c26b91",
+      "localOnly": true
+    }
+  ]
+}

@@ -16,7 +16,12 @@ test('profile catalog preserves full suite and explicit scoped coverage',()=>{
  const full=profiles.full.files;assert.equal(new Set(full).size,full.length);
  const known=fs.readdirSync('test').filter(f=>f.endsWith('.test.cjs')&&!['drand-binding-model.test.cjs','drand-feasibility.test.cjs'].includes(f)).map(f=>'test/'+f);
  assert.deepEqual([...full].sort(),known.sort());
- const covered=new Set();for(const [key,p] of Object.entries(profiles))if(key!=='full')for(const f of p.files){assert(full.includes(f));covered.add(f);}
+ // Scoped profiles may include browser suites; the canonical full profile is test/*.test.cjs.
+ const browser=fs.readdirSync('web').filter(f=>f.endsWith('.test.cjs')).map(f=>'web/'+f);
+ const covered=new Set();for(const [key,p] of Object.entries(profiles))if(key!=='full')for(const f of p.files){
+  assert(full.includes(f)||browser.includes(f),`Unknown test in profile ${key}: ${f}`);
+  if(full.includes(f))covered.add(f);
+ }
  assert.deepEqual([...covered].sort(),[...full].sort());
  assert.throws(()=>parseArgs(['--profile','typo']));assert.throws(()=>parseArgs(['--match','[']));assert.throws(()=>parseArgs(['--profile','full','--profile','math']));
 });
