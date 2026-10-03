@@ -2,7 +2,7 @@
 
 Актуальная контрольная точка03.10: [итог кандидата1a29a13](TEST_CANDIDATE_2026-10-03.md) —
 full893/894, catalog fix + launcher5/5, browser35/35, models39/39.
-GPT review ожидается; это не production gate.
+[GPT review разобрано](FINAL_REVIEW_TRIAGE_2026-10-03.md), status fix3/3; это не production gate.
 
 > Порядок уточнён пользователем02.10: сначала тестовый контур (R1–R8 с тестовыми конфигами/стендом), затем отдельный боевой перенос (R9, реальные manifest/custody/services). Это каталог критериев, не команда deployment. Начальная инвентаризация ниже датирована01.10; G02 и часть G10 уже закрыты локально, см. [контекст](CURRENT_CONTEXT.md) и [roadmap](ROADMAP.md).
 

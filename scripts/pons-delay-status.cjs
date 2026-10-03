@@ -36,7 +36,7 @@ function explain(report){
  if(report.results?.funding?.some(x=>['waiting','unavailable'].includes(x.status)))reasons.add('fundingWaiting');
  if(['unknownHash','SCHEDULER_STORAGE_ERROR'].some(x=>reasons.has(x)))attention=true;
  if(attention&&!reasons.size)reasons.add('operationFailed');
- return {state:report.status==='stopped'?'stopped':attention?'attention':reasons.size?'waiting':'clear',
+ return {state:report.status==='stopped'?'stopped':attention?'attention':report.status==='waiting'||reasons.size?'waiting':'clear',
   reasons:[...reasons].sort().map(code=>({code,message:messages[code]})),
   scope:'Explanation of this pass only; clear does not mean every draw is ready.'};
 }

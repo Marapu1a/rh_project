@@ -9,12 +9,15 @@ Gxx — идентификаторы прежней gap-карты, Rxx — ви
 [Итоговая проверка кандидата](TEST_CANDIDATE_2026-10-03.md) завершена:
 на чистом1a29a13 full893/894, единственная ошибка каталога тестов исправлена
 и launcher5/5 прошёл; отдельно browser35/35 и Python39/39 PASS.
-Runtime не менялся; полного зелёного повторного baseline после fix не заявляем.
+В итоговом baseline runtime не менялся; после review исправлена только проекция
+waiting/clear. Полного зелёного повторного baseline после fixes не заявляем.
 Открыто отдельное замечание по build/test dependencies (audit:8 high,2 moderate,10 low).
-**Сейчас — [статическое GPT review](GPT_REVIEW_REQUEST.md) результатов и границ.**
-После ответа разбираем конкретные findings и согласуем отдельный боевой этап;
-производственный перенос пока не начат. Новых больших нагрузочных прогонов без
-конкретного риска не планируем.
+[Итоговое GPT review разобрано](FINAL_REVIEW_TRIAGE_2026-10-03.md).
+Подтверждённая мелкая ошибка waiting/clear исправлена:3/3 адресных tests PASS.
+Новых блокирующих ошибок учёта/выплат review не выявило. Dependency triage
+остаётся обязательным для боевой упаковки: динамический solc fallback подтверждён.
+Следующий предлагаемый шаг — отдельный план боевого переноса/runtime-сборки;
+сам перенос не начат, guards не сняты. Новых больших прогонов без риска не планируем.
 
 Проверка перегруза перед финальным baseline завершена. [Замеры50k/100k](DRAW_CAPACITY_FOLLOWUP_2026-10-03.md), [cache исполнителей](VERIFIED_DRAW_EXECUTION_2026-10-03.md), [малый Pons coordinator и записи scheduler](COORDINATOR_CAPACITY_2026-10-03.md) завершены. [Общий scheduler10k + Pons journal/gas](SCHEDULER_LOAD_2026-10-03.md) PASS: оба draw, cold process resume, выплаты и stale-file restore. Внешний Pons loop/BUY/API под такой нагрузкой не проверен. [Паузы и лимит отправок](PONS_CADENCE_2026-10-03.md) завершены:21 адресный test, малый Pons fork, stop/resume2/8, одинаковые итоги и stale-file restore PASS. [Cold restart без publication history](PUBLICATION_HISTORY_RECOVERY_2026-10-03.md) завершён:10k в каждом draw,4 fail-closed сценария, восстановление и выплаты PASS; независимый RPC failover не реализован. [Совместный BUY/index/API/draw прогон](PONS_JOINT_REHEARSAL_2026-10-03.md) PASS через сохранённый Alchemy:396 BUY,129 участников в каждом draw,11 выплат, API и restore без повторных отправок. Исправлен только бюджет ожидания стенда; runtime не менялся. Режим задержки и адресная проверка отказов завершены; далее — сверка условий. Для этого решения повторный полный100k driver не требуется. Production не затрагиваем.
 
@@ -28,7 +31,7 @@ Runtime не менялся; полного зелёного повторног�
 | A2 / G10 | Каналы покупки Pons | В работе: direct/self-batch, прямой 0x и узкий EntryPoint USDG pool BUY проверены до index/API; дальше wallet UX/статусы |
 | A3 / G03 | Полный пользовательский путь | [Кабинет/Claim](WEBSITE_WALLET_ACTIONS.md), ручной MetaMask и [общий цикл с UI/API](PONS_WALLET_CYCLE.md) проверены; ручная смена аккаунта и общий RC baseline отдельно |
 | A4 / G05–G07 | Реальные условия и длительная работа | Выполнены [bounded cache](INDEXER_HISTORY_SCALING_2026-10-02.md) и [replay checkpoints / формат снимка](INDEXER_CHECKPOINTS_2026-10-02.md); [admitted curve load](PONS_ADMITTED_LOAD_2026-10-03.md) выполнен; план роста исследован отдельно без внедрения; [quiescent restore](PONS_RESTORE_CYCLE_2026-10-03.md) пройден; остаются all-route workload, реальные timing/finality/permissions/conversion и межузловой restore |
-| A5 / G08, R1–R8 | Закрепить тестовый кандидат | [Прогон завершён](TEST_CANDIDATE_2026-10-03.md), ошибка catalog исправлена адресно; GPT review и dependency triage ожидаются |
+| A5 / G08, R1–R8 | Закрепить тестовый кандидат | [Прогон завершён](TEST_CANDIDATE_2026-10-03.md), ошибка catalog исправлена адресно; [Review разобрано](FINAL_REVIEW_TRIAGE_2026-10-03.md), status fix3/3; dependency triage отнесён к боевой упаковке |
 
 Адресные проверки идут вместе с каждым пакетом. Повторный full run без нового риска
 не нужен. Точные проверки — [план R0–R9](PRELAUNCH_VERIFICATION_PLAN.md),
@@ -84,8 +87,10 @@ Runtime не менялся; полного зелёного повторног�
 
 1. G04/G01: production manifest, реальные роли/pins/custody/параметры и публичный
    исполнитель с собственными guards; тестовые обходы не переносить.
-2. G07: серверные сервисы, signer/RPC, наблюдаемость, backup/restore, эксплуатационные лимиты.
-3. R9: preflight, контролируемый запуск и наблюдение. Не менять frozen/claimable при переносе.
+2. Runtime-сборка: проверенные ABI/artifacts без динамической компиляции, отдельные
+   runtime dependencies, изолированный install/start smoke и advisory reachability.
+3. G07: серверные сервисы, signer/RPC, наблюдаемость, backup/restore, эксплуатационные лимиты.
+4. R9: preflight, контролируемый запуск и наблюдение. Не менять frozen/claimable при переносе.
 
 Технические материалы этого этапа сохранены в [каталоге](DOCUMENT_CATALOG.md),
 но наличие черновика или готового VPS не делает deployment следующим действием.

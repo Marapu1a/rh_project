@@ -2,7 +2,7 @@
 
 Актуальная контрольная точка03.10: [итог кандидата1a29a13](TEST_CANDIDATE_2026-10-03.md) —
 full893/894, catalog fix + launcher5/5, browser35/35, models39/39.
-GPT review ожидается; это не production gate.
+[GPT review разобрано](FINAL_REVIEW_TRIAGE_2026-10-03.md), status fix3/3; это не production gate.
 
 Начать с [CURRENT_CONTEXT](CURRENT_CONTEXT.md): текущее состояние и ближайшая задача.
 **Сейчас доводим тестовый контур. Боевой перенос — следующий самостоятельный этап.**
