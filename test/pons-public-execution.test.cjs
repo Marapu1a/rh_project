@@ -41,3 +41,11 @@ test('public network requires an explicit guard and HTTPS; legacy inspect cannot
  await assert.rejects(network.withRobinhoodNetwork({mode:'robinhood-public',rpcUrl:'http://127.0.0.1:8545',publicGuard:async()=>{}},()=>{}),/HTTPS/);
  assert.equal(network.current().mode,'local');
 });
+test('admission refusal survives receipt wrapping and CLI diagnostics omit raw provider errors',async()=>{
+ const {sendLocalTransaction,withTransactionBoundary}=require('../scripts/local-receipt.cjs');
+ const method=async()=>assert.fail('must not broadcast');method.fragment={name:'pull'};method.populateTransaction=async()=>({});
+ const boundary={preflight:async()=>{throw Object.assign(Error('Public admission blocked'),{code:'PONS_PUBLIC_ADMISSION',admissionReasons:['finalityLag']});}};
+ await assert.rejects(withTransactionBoundary(boundary,()=>sendLocalTransaction(method,[],{})),e=>e.stage==='estimate'&&e.code==='PONS_PUBLIC_ADMISSION'&&e.admissionReasons[0]==='finalityLag');
+ const d=require('../scripts/run-pons-public.cjs').diagnostics({results:{scheduler:{results:{SHORT:{status:'error',code:'PONS_PUBLIC_ADMISSION',admissionReasons:['finalityLag'],message:'https://private-rpc/secret'}}}}});
+ assert.deepEqual(d.failures,[{lane:'scheduler',kind:'SHORT',code:'PONS_PUBLIC_ADMISSION',admission:['finalityLag']}]);assert(!JSON.stringify(d).includes('secret'));
+});

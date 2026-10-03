@@ -97,8 +97,9 @@ B2 [упаковка и config](RUNTIME_PACKAGE_2026-10-03.md) проверен�
 G04/G01: [read-only Pons inspector](PONS_PUBLIC_PROFILE_2026-10-03.md) и
 [отдельный public sender](PONS_PUBLIC_EXECUTION_2026-10-03.md) реализованы;
 36 адресных tests, EVM drain/restart и проверка перед intent PASS.
-Следующий пакет — полная release-репетиция HTTPS/keystore/funding/new-freeze;
-текущий EVM-прогон не подтверждает весь публичный цикл.
+[Release-репетиция](PONS_RELEASE_REHEARSAL_2026-10-03.md) PASS: локальный HTTPS/keystore,
+funding/new-freeze обоих draw,22 signed tx, выплаты и idle без повторов;25 адресных tests.
+Следующий пакет — production manifest/роли/pins/custody; public deployment ещё не выполнен.
 
 1. G04/G01: production manifest, реальные роли/pins/custody/параметры и публичный
    исполнитель с собственными guards; тестовые обходы не переносить.

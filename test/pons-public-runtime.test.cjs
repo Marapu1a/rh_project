@@ -56,3 +56,13 @@ test('runtime drift after estimation is rejected before durable intent or broadc
  });
  assert.equal(sends,0);assert.equal(saves,0);assert.equal(state.pending,undefined);
 });
+test('exhausted pass budget stops before public admission reads or gas estimation',async t=>{
+ const f=await fixture(t);let admission=0,estimates=0;
+ const method=async()=>assert.fail('must not broadcast');method.fragment={name:'claim'};method.populateTransaction=async()=>({});method.estimateGas=async()=>{estimates++;return 1n;};
+ const boundary={preflight:async()=>{throw Object.assign(Error('transactionLimit'),{code:'LOCAL_BUDGET_WAIT',budget:{reason:'transactionLimit'}});},before:async()=>assert.fail('must not save intent')};
+ const {sendLocalTransaction,withTransactionBoundary}=require('../scripts/local-receipt.cjs');
+ await require('../scripts/runtime-network.cjs').withRobinhoodNetwork({provider:f.provider,rpcUrl:f.options.rpcUrl,mode:'robinhood-rehearsal',publicGuard:async()=>{admission++;throw Error('stale observation');}},async()=>{
+  await assert.rejects(withTransactionBoundary(boundary,()=>sendLocalTransaction(method,[],{})),e=>e.code==='LOCAL_BUDGET_WAIT'&&e.budget.reason==='transactionLimit');
+ });
+ assert.equal(admission,0);assert.equal(estimates,0);
+});

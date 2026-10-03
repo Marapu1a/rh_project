@@ -55,7 +55,11 @@ waiting/clear. Полного зелёного повторного baseline п�
 реализован и проверен моделью RPC (5/5); сам отчёт не разрешает отправки.
 [Публичный исполнитель](PONS_PUBLIC_EXECUTION_2026-10-03.md) добавлен отдельным режимом:
 36 адресных tests PASS, EVM drain/restart/газ/owner drift и защита перед intent.
-Следующий шаг — полная release-репетиция нового режима с HTTPS/keystore и новым freeze;
+[Release-репетиция](PONS_RELEASE_REHEARSAL_2026-10-03.md) завершена на локальном fork:
+HTTPS/keystore, новые оба draw,22 signed tx,107.337115 тестовых USDG выплат,
+cold restart без повторных отправок;25 уникальных адресных tests PASS.
+Исправлен порядок budget/admission; тестовая finality явно отделена от production.
+Следующий шаг — production manifest, роли/pins/custody и параметры запуска;
 публичный сервис ещё не включён,
 внешние уведомления не подключены, финансовый запуск не выполнен.
 

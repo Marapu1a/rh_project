@@ -1,5 +1,13 @@
 // Explicit public entrypoint. Encrypted keystore only; no private key argument.
 const fs=require('node:fs'),{ethers}=require('ethers');
+function diagnostics(r){
+ const failures=[];
+ for(const lane of ['scheduler','settlement','rng'])for(const kind of ['SHORT','MONTHLY']){
+  const row=r.results?.[lane]?.results?.[kind];if(row?.status!=='error')continue;
+  failures.push({lane,kind,code:['PONS_PUBLIC_ADMISSION','MODULE_NOT_FOUND','CALL_EXCEPTION','SCHEDULER_STORAGE_ERROR'].includes(row.code)?row.code:'runtimeError',admission:row.admissionReasons});
+ }
+ return {admission:r.admissionReasons||r.results?.fundingAdmission,failures};
+}
 async function main(){
  const args=process.argv.slice(2),o={},flags=new Set(['--watch','--drain']);
  for(let i=0;i<args.length;i++){const k=args[i];if(!['--config','--profile','--state','--keystore',...flags].includes(k)||o[k]!==undefined)throw Error('Invalid arguments');o[k]=flags.has(k)?true:args[++i];if(o[k]===undefined)throw Error('Missing value');}
@@ -19,7 +27,7 @@ async function main(){
    ops.beforePass();const r=await require('./pons-automation.cjs').runPonsAutomation({provider,executor,config:c,publicProfile:p,rpcUrl:url.href,statePath:o['--state'],signal:stop.signal,drain:!!o['--drain']});
    ops.publish(r);
    // Child modules may carry provider errors. Emit only the sanitized operational projection.
-   console.log(JSON.stringify({status:r.status,publicExecution:true,steps:r.steps.length,operational:require('./pons-delay-status.cjs').explain(r)}));
+   console.log(JSON.stringify({status:r.status,publicExecution:true,steps:r.steps.length,...diagnostics(r),operational:require('./pons-delay-status.cjs').explain(r)}));
    if(['blocked','error'].includes(r.status)){process.exitCode=1;break;}
    if(!o['--watch']||stop.signal.aborted)break;
    await require('./pons-cadence.cjs').pause(require('./pons-cadence.cjs').delayMs(r,c.pollSeconds),stop.signal);
@@ -27,4 +35,4 @@ async function main(){
  },{publicExecution:true});}finally{provider.destroy();process.removeListener('SIGINT',halt);process.removeListener('SIGTERM',halt);}
 }
 if(require.main===module)main().catch(()=>{console.error('Public Pons execution stopped. Check configuration, access and saved journals.');process.exitCode=1;});
-module.exports={main};
+module.exports={main,diagnostics};

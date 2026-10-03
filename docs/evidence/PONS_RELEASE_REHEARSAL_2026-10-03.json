@@ -1,0 +1,167 @@
+{
+  "date": "2026-10-03",
+  "status": "PONS_PUBLIC_RELEASE_REHEARSAL_PASSED",
+  "baseHead": "4fd47ee plus working changes in this commit",
+  "scope": "Isolated local fork; no public network sends",
+  "artifactSha256": "038d667c4018e6c811e8e16c69e2604077d0c34904461adaf2edb5496bd8b09f",
+  "sourceReportSha256": "26353948b3a6f8c2163001232748deb5e43c8e560770ce737cb3ab40d2c755c4",
+  "admission": "matched",
+  "untrustedTLSRejected": true,
+  "wrongPasswordNoSend": true,
+  "passes": [
+    {
+      "n": 1,
+      "drain": false,
+      "sends": 2
+    },
+    {
+      "n": 2,
+      "drain": false,
+      "sends": 2
+    },
+    {
+      "n": 3,
+      "drain": false,
+      "sends": 2
+    },
+    {
+      "n": 4,
+      "drain": false,
+      "sends": 2
+    },
+    {
+      "n": 5,
+      "drain": false,
+      "sends": 2
+    },
+    {
+      "n": 6,
+      "drain": false,
+      "sends": 2
+    },
+    {
+      "n": 7,
+      "drain": true,
+      "sends": 2
+    },
+    {
+      "n": 8,
+      "drain": true,
+      "sends": 2
+    },
+    {
+      "n": 9,
+      "drain": true,
+      "sends": 2
+    },
+    {
+      "n": 10,
+      "drain": true,
+      "sends": 2
+    },
+    {
+      "n": 11,
+      "drain": true,
+      "sends": 2
+    },
+    {
+      "n": 12,
+      "drain": true,
+      "sends": 0
+    }
+  ],
+  "signedTransactions": 22,
+  "uniqueNonces": 22,
+  "draws": {
+    "short": "0x39869bd908904f1dfa68c64ae881e30bd25d3f9fe9931526457df73952b72a33",
+    "monthly": "0xbeea92f75ec465211586c1daa502355aeaff370b847b54c78f4ca7362e1cb048"
+  },
+  "atFreeze": {
+    "balance": "346425927",
+    "parts": [
+      "0",
+      "0",
+      "100000000",
+      "246425927",
+      "0",
+      "0"
+    ]
+  },
+  "after": {
+    "balance": "239088812",
+    "parts": [
+      "139088812",
+      "100000000",
+      "0",
+      "0",
+      "0",
+      "0"
+    ]
+  },
+  "payments": [
+    {
+      "hash": "0xf872f1cba9388d85bf0a33fd47ddcf0ed0403eb3abdfba0a91487c9759b9e2cc",
+      "args": [
+        "0x39869bd908904f1dfa68c64ae881e30bd25d3f9fe9931526457df73952b72a33",
+        "0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168",
+        "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+        "7320463"
+      ]
+    },
+    {
+      "hash": "0x145c5c67fd2004b107271aff873ad663fd3c9af3c8bd0fcb0a23963ae759fd4e",
+      "args": [
+        "0xbeea92f75ec465211586c1daa502355aeaff370b847b54c78f4ca7362e1cb048",
+        "0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168",
+        "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+        "100016652"
+      ]
+    }
+  ],
+  "paidRaw": "107337115",
+  "wallet": {
+    "wallet": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
+    "SHORT": {
+      "mintedTotal": "87",
+      "open": "1",
+      "frozenByDraw": {},
+      "consumedTotal": "86",
+      "byEpoch": [
+        {
+          "epoch": "1",
+          "minted": "87",
+          "consumed": "86",
+          "frozen": "0",
+          "open": "1",
+          "firstOpenAttempt": "87",
+          "lastOpenAttempt": "87"
+        }
+      ]
+    },
+    "MONTHLY": {
+      "mintedTotal": "87",
+      "open": "1",
+      "frozenByDraw": {},
+      "consumedTotal": "86",
+      "byEpoch": [
+        {
+          "epoch": "1",
+          "minted": "87",
+          "consumed": "86",
+          "frozen": "0",
+          "open": "1",
+          "firstOpenAttempt": "87",
+          "lastOpenAttempt": "87"
+        }
+      ]
+    }
+  },
+  "idleNonce": 1844,
+  "assumptions": [
+    "Real Pons state on a local fork; upstream read-only",
+    "Known disposable Hardhat mnemonic, synthetic ETH/USDG",
+    "Backdated constructor clocks and 60-second drand lead from existing test harness; no RNG replacement",
+    "Local HTTPS CA trusted only by child environment; TLS verification remains enabled",
+    "Local finality pinned initially, follows latest after proposals begin (existing cycle harness convention); not Nitro finality proof"
+  ]
+}

@@ -35,8 +35,8 @@ async function sendLocalTransaction(method,args,overrides,options={}){
   try{
     const network=require('./runtime-network.cjs');await network.beforeSend({journaled:!!(boundary?.preflight&&boundary?.before&&boundary?.sent&&boundary?.confirmed)});
     if(network.isRobinhood())overrides={...overrides,chainId:4663};
-    if(network.current().publicGuard)await network.current().publicGuard(await method.populateTransaction(...args,overrides),method.fragment.name);
     if(boundary?.preflight)await boundary.preflight(await method.populateTransaction(...args,overrides),method.fragment.name);
+    if(network.current().publicGuard)await network.current().publicGuard(await method.populateTransaction(...args,overrides),method.fragment.name);
     let estimate;
     try{estimate=await method.estimateGas(...args,overrides);}
     catch(e){await boundary?.estimateFailed?.(e,await method.populateTransaction(...args,overrides),method.fragment.name);throw e;}
@@ -54,6 +54,7 @@ async function sendLocalTransaction(method,args,overrides,options={}){
   }catch(cause){
     const error=new Error(cause.shortMessage||cause.message,{cause});
     error.code=cause.code;error.stage=stage;
+    if(cause.code==='PONS_PUBLIC_ADMISSION')error.admissionReasons=cause.admissionReasons;
     if(cause.code==='LOCAL_BUDGET_WAIT')error.budget=cause.budget;
     error.transactionHash=tx?.hash||cause.transactionHash;
     error.definiteRejection=(stage==='estimate'&&cause.code==='CALL_EXCEPTION')||

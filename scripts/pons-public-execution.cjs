@@ -40,7 +40,7 @@ function createGuard({provider,config:c,publicProfile:p,compiled}){
   if(kind==='collector'&&action==='pay')check(c.recipients.some(a=>same(a,decoded.args[0])),'Unexpected fee recipient');
   if(OBLIGATIONS.has(action)){await inspectObligations(provider,p,c);return;}
   const report=await profile.inspect(provider,p,c);
-  if(report.status!=='matched')throw Object.assign(Error('Public admission blocked'),{code:'PONS_PUBLIC_ADMISSION',reasons:report.reasons});
+  if(report.status!=='matched')throw Object.assign(Error('Public admission blocked'),{code:'PONS_PUBLIC_ADMISSION',admissionReasons:report.reasons});
  };
 }
 module.exports={createGuard,inspectObligations,ACTIONS};

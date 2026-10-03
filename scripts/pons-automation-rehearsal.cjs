@@ -20,6 +20,10 @@ async function finish({out,save,provider,user,quote,cycle,manifest,rpc,buy,direc
   report.assumptions.push('Local finalized pinned for initial snapshot admission; advances with local latest after proposals begin. Not mainnet finality proof');
  }
  const options={provider,executor:user,config,rpcUrl:'http://127.0.0.1:'+server.address().port,statePath:directory+'/automation.json'};report.automation={config,runs:[]};fs.writeFileSync(directory+'/config.json',JSON.stringify(config,null,2));
+ if(process.argv.includes('--public-release')){
+  try{return await require('./pons-public-release-rehearsal.cjs').finish({out,save,provider,user,quote,cycle,manifest,rpc,buy,directory,report,invariant,config,setFinalized:value=>{finalized=value;liveFinality=false;}});}
+  finally{server.closeAllConnections();await new Promise(r=>server.close(r));}
+ }
  async function clock(){await new Promise(r=>setTimeout(r,1100));}
  async function tick(extra={},hooks={}){await clock();if(indexed){finalized=await rpc('eth_blockNumber');liveFinality=liveFinality||await short.activeProposal()!==ethers.ZeroHash||await monthly.activeMonth()!==ethers.ZeroHash;if(!extra.skipIndex)await require('./persistent-buy-indexer.cjs').indexOnce({config:require('./shared-index-config.cjs').buildIndexConfigs(require('./pons-automation.cjs').schedulerConfigFor(config)).indexConfig,statePath:config.indexer.statePath,rpc:(m,p)=>provider.send(m,p)});}const r=await runPonsAutomation({...options,...extra},hooks);report.automation.runs.push(r);save();assert(!['error','blocked'].includes(r.status),JSON.stringify(r));return r;}
  try{

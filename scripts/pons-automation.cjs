@@ -108,12 +108,12 @@ async function runPonsAutomation({provider,executor,config:c,rpcUrl,statePath,si
        check(policy.recipients.every((a,i)=>same(a,c.recipients[i]))&&policy.bps.every((n,i)=>n===BigInt([9000,500,500][i])),'Funding allocation changed');
        results.funding=[];
        await require('./pons-funding-pass.cjs').runFundingPass({loadPlan:()=>inspect(provider,c.collector,c.executor),send:(method,args)=>send(collector.connect(executor)[method],args),results:results.funding});
-      }catch(e){if(state.pending||['LOCAL_BUDGET_WAIT','SCHEDULER_STORAGE_ERROR'].includes(e.code))throw e;results.fundingError=publicMode?'Funding admission or execution unavailable':e.message;}
+      }catch(e){if(state.pending||['LOCAL_BUDGET_WAIT','SCHEDULER_STORAGE_ERROR'].includes(e.code))throw e;results.fundingError=publicMode?'Funding admission or execution unavailable':e.message;if(e.code==='PONS_PUBLIC_ADMISSION')results.fundingAdmission=e.admissionReasons;}
       if(!results.fundingError&&!gas.waiting().length){results.scheduler=await runScheduler(fairSchedule(),{maxTicks:16});if(state.pending)return result('blocked',state.pending.transactionHash?'pendingReceipt':'unknownHash');if(['error','blocked','stopped'].includes(results.scheduler.status))return result(results.scheduler.status,'scheduler');}
      }
      await claims();return result('waiting',drain?'draining':'poll');
     });
-   }catch(e){if(state.pending)return result('blocked',state.pending.transactionHash?'pendingReceipt':'unknownHash');if(e.code==='LOCAL_BUDGET_WAIT')return result(signal?.aborted?'stopped':'waiting',e.message);return {...result('error',e.code||'runtimeError'),error:publicMode?'Execution unavailable; retain journals for inspection':e.message};}
+   }catch(e){if(state.pending)return result('blocked',state.pending.transactionHash?'pendingReceipt':'unknownHash');if(e.code==='LOCAL_BUDGET_WAIT')return result(signal?.aborted?'stopped':'waiting',e.message);return {...result('error',e.code||'runtimeError'),...(e.code==='PONS_PUBLIC_ADMISSION'?{admissionReasons:e.admissionReasons}:{}),error:publicMode?'Execution unavailable; retain journals for inspection':e.message};}
   });
  });
 }

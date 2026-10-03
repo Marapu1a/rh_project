@@ -1,4 +1,5 @@
 // Research-only. All writes target in-process Hardhat; upstream proxy is read-only.
+if(process.argv.includes('--public-release')&&!process.argv.includes('--restore-drill'))process.argv.push('--restore-drill');
 if((process.argv.includes('--coordinator-benchmark')||process.argv.includes('--joint-load'))&&!process.argv.includes('--restore-drill'))process.argv.push('--restore-drill');
 process.env.HARDHAT_CONFIG=require.resolve(process.argv.includes('--combined-profile')?'../test/fixtures/pons-7702-hardhat.config.cjs':process.argv.includes('--wallet-browser')||process.argv.includes('--restore-drill')?'../test/fixtures/pons-wallet-cycle-hardhat.config.cjs':'../test/fixtures/public-hardhat.config.cjs');
 if(process.argv.includes('--restore-drill')&&!process.argv.includes('--indexed-automation'))process.argv.push('--indexed-automation');
@@ -12,7 +13,7 @@ if(process.argv.includes('--automation')&&!process.argv.includes('--cycle'))proc
 if(process.argv.includes('--cycle')&&!process.argv.includes('--v4'))process.argv.push('--v4');
 const fs=require('node:fs'),assert=require('node:assert/strict'),{ethers}=require('ethers'),hre=require('hardhat'),solc=require('solc');
 const {startReadProxy}=require('./read-only-fork-rpc.cjs');
-const FACTORY='0x7eD598BcEf8bd9Edd8C97A195C6d13f40801EC7e',USDG='0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168',OWNER=process.argv.includes('--combined-profile')?new ethers.Wallet(require('./pons-launch-rehearsal.cjs').KEY).address:'0x098afA6731239a00CE0aff669aaefD16b7C72114';
+const FACTORY='0x7eD598BcEf8bd9Edd8C97A195C6d13f40801EC7e',USDG='0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168',OWNER=process.argv.includes('--public-release')?ethers.Wallet.fromPhrase('test test test test test test test test test test test junk').address:process.argv.includes('--combined-profile')?new ethers.Wallet(require('./pons-launch-rehearsal.cjs').KEY).address:'0x098afA6731239a00CE0aff669aaefD16b7C72114';
 const { FAB, ERC, CUR } = require('./integrations/pons-v2.cjs');
 const {swapHelper}=require('./pons-fork-rehearsal.cjs');
 const cycleHarness=require('./pons-promo-cycle.cjs');
