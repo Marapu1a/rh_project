@@ -1,0 +1,208 @@
+{
+  "base": "384b2eb",
+  "script": "scripts/experiments/segmented-history.cjs",
+  "sha256": "7ff7b4f62c9e73d091465f39c876aab19fa76d348745c6b594e6bff888ef4359",
+  "environment": {
+    "cpu": "AMD Ryzen 5 5600 6-Core Processor              ",
+    "arch": "x64"
+  },
+  "report": {
+    "date": "2026-10-03T06:53:20.517Z",
+    "scope": "64-byte synthetic rows, immutable chunks and small manifest; no crypto project replay or throughput claim; single writer; warm OS cache",
+    "width": 64,
+    "chunkRows": 10000,
+    "node": "v24.21.0",
+    "platform": "win32",
+    "rows": [
+      {
+        "size": 100000,
+        "seed": {
+          "count": 100000,
+          "readBytes": 58,
+          "writtenBytes": 6401898,
+          "elapsedMs": 797.2081000000001,
+          "peakRssKiB": 56776
+        },
+        "tailRead": {
+          "count": 100000,
+          "rows": 100,
+          "sum": 14920,
+          "readBytes": 641898,
+          "manifestBytes": 1898,
+          "elapsedMs": 1.3048000000001139,
+          "peakRssKiB": 57492
+        },
+        "restart": {
+          "count": 100000,
+          "rows": 100,
+          "sum": 14920,
+          "readBytes": 641898,
+          "manifestBytes": 1898,
+          "elapsedMs": 1.465200000000003,
+          "peakRssKiB": 48872
+        },
+        "appendOne": {
+          "count": 100001,
+          "readBytes": 1898,
+          "writtenBytes": 2143,
+          "elapsedMs": 147.89699999999993,
+          "peakRssKiB": 57700
+        },
+        "rollbackTail": {
+          "count": 99963,
+          "readBytes": 642079,
+          "writtenBytes": 639528,
+          "elapsedMs": 130.519,
+          "peakRssKiB": 58272
+        },
+        "resume": {
+          "count": 100001,
+          "readBytes": 1896,
+          "writtenBytes": 4510,
+          "elapsedMs": 132.63530000000014,
+          "peakRssKiB": 58920
+        },
+        "fullAudit": {
+          "rows": 100000,
+          "readBytes": 6401898,
+          "elapsedMs": 12.619699999999966,
+          "peakRssKiB": 61616
+        },
+        "checks": {
+          "freshProcess": true,
+          "partialSegmentRollback": true,
+          "orphanIgnored": true,
+          "corruptTailRejected": true,
+          "oldManifestRestore": true
+        },
+        "retainedBytes": 7042474
+      },
+      {
+        "size": 1000000,
+        "seed": {
+          "count": 1000000,
+          "readBytes": 58,
+          "writtenBytes": 64018549,
+          "elapsedMs": 4678.0459,
+          "peakRssKiB": 103820
+        },
+        "tailRead": {
+          "count": 1000000,
+          "rows": 100,
+          "sum": 14731,
+          "readBytes": 658549,
+          "manifestBytes": 18549,
+          "elapsedMs": 1.2584999999999127,
+          "peakRssKiB": 103820
+        },
+        "restart": {
+          "count": 1000000,
+          "rows": 100,
+          "sum": 14731,
+          "readBytes": 658549,
+          "manifestBytes": 18549,
+          "elapsedMs": 1.909600000000001,
+          "peakRssKiB": 49652
+        },
+        "appendOne": {
+          "count": 1000001,
+          "readBytes": 18549,
+          "writtenBytes": 18795,
+          "elapsedMs": 49.51890000000003,
+          "peakRssKiB": 103820
+        },
+        "rollbackTail": {
+          "count": 999963,
+          "readBytes": 658731,
+          "writtenBytes": 656179,
+          "elapsedMs": 76.28240000000005,
+          "peakRssKiB": 103820
+        },
+        "resume": {
+          "count": 1000001,
+          "readBytes": 18547,
+          "writtenBytes": 21162,
+          "elapsedMs": 40.82430000000022,
+          "peakRssKiB": 103820
+        },
+        "fullAudit": {
+          "rows": 1000000,
+          "readBytes": 64018549,
+          "elapsedMs": 89.6234000000004,
+          "peakRssKiB": 108812
+        },
+        "checks": {
+          "freshProcess": true,
+          "partialSegmentRollback": true,
+          "orphanIgnored": true,
+          "corruptTailRejected": true,
+          "oldManifestRestore": true
+        },
+        "retainedBytes": 64659125
+      },
+      {
+        "size": 5000000,
+        "seed": {
+          "count": 5000000,
+          "readBytes": 58,
+          "writtenBytes": 320092949,
+          "elapsedMs": 14249.8664,
+          "peakRssKiB": 106776
+        },
+        "tailRead": {
+          "count": 5000000,
+          "rows": 100,
+          "sum": 14764,
+          "readBytes": 732949,
+          "manifestBytes": 92949,
+          "elapsedMs": 1.8251999999993131,
+          "peakRssKiB": 106776
+        },
+        "restart": {
+          "count": 5000000,
+          "rows": 100,
+          "sum": 14764,
+          "readBytes": 732949,
+          "manifestBytes": 92949,
+          "elapsedMs": 3.468,
+          "peakRssKiB": 50204
+        },
+        "appendOne": {
+          "count": 5000001,
+          "readBytes": 92949,
+          "writtenBytes": 93195,
+          "elapsedMs": 46.121500000001106,
+          "peakRssKiB": 106776
+        },
+        "rollbackTail": {
+          "count": 4999963,
+          "readBytes": 733131,
+          "writtenBytes": 730580,
+          "elapsedMs": 40.822299999999814,
+          "peakRssKiB": 106776
+        },
+        "resume": {
+          "count": 5000001,
+          "readBytes": 92948,
+          "writtenBytes": 95563,
+          "elapsedMs": 56.4333000000006,
+          "peakRssKiB": 106776
+        },
+        "fullAudit": {
+          "rows": 5000000,
+          "readBytes": 320092949,
+          "elapsedMs": 401.54929999999877,
+          "peakRssKiB": 122948
+        },
+        "checks": {
+          "freshProcess": true,
+          "partialSegmentRollback": true,
+          "orphanIgnored": true,
+          "corruptTailRejected": true,
+          "oldManifestRestore": true
+        },
+        "retainedBytes": 320733525
+      }
+    ]
+  }
+}
