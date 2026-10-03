@@ -6,7 +6,7 @@ Gxx — идентификаторы прежней gap-карты, Rxx — ви
 
 ## Этап A — правильная работа в тестовом окружении (текущий)
 
-Перед финальным baseline — проверка перегруза. [Замеры50k/100k](DRAW_CAPACITY_FOLLOWUP_2026-10-03.md), [cache исполнителей](VERIFIED_DRAW_EXECUTION_2026-10-03.md), [малый Pons coordinator и записи scheduler](COORDINATOR_CAPACITY_2026-10-03.md) завершены. [Общий scheduler10k + Pons journal/gas](SCHEDULER_LOAD_2026-10-03.md) PASS: оба draw, cold process resume, выплаты и stale-file restore. Внешний Pons loop/BUY/API под такой нагрузкой не проверен. Следующий пакет — паузы активного/ожидающего сервиса, изменение лимита без ручной правки journal identity, затем понятный режим задержки. Для этого решения повторный полный100k driver не требуется. Production не затрагиваем.
+Перед финальным baseline — проверка перегруза. [Замеры50k/100k](DRAW_CAPACITY_FOLLOWUP_2026-10-03.md), [cache исполнителей](VERIFIED_DRAW_EXECUTION_2026-10-03.md), [малый Pons coordinator и записи scheduler](COORDINATOR_CAPACITY_2026-10-03.md) завершены. [Общий scheduler10k + Pons journal/gas](SCHEDULER_LOAD_2026-10-03.md) PASS: оба draw, cold process resume, выплаты и stale-file restore. Внешний Pons loop/BUY/API под такой нагрузкой не проверен. [Паузы и лимит отправок](PONS_CADENCE_2026-10-03.md) завершены:21 адресный test, малый Pons fork, stop/resume2/8, одинаковые итоги и stale-file restore PASS. Далее — cold restart без исторических publication reads и восстановление доступа; затем репрезентативный совместный BUY/index/API/draw прогон и понятный режим задержки. Для этого решения повторный полный100k driver не требуется. Production не затрагиваем.
 
 
 03.10 подготовлен [новый запрос GPT](GPT_REVIEW_REQUEST.md) по накопленному diff.

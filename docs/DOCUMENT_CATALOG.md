@@ -17,6 +17,10 @@
 | [REVIEW_TESTING](REVIEW_TESTING.md) | Каноническая локальная проверка |
 | [ROADMAP](ROADMAP.md) | План до первого публичного запуска |
 
+## Исполнение Pons
+
+- [Паузы и лимиты отправок](PONS_CADENCE_2026-10-03.md) — operational override без миграции journal, очередь и адресные проверки.
+
 ## Замеры индексатора
 
 - [Checkpoint replay и компактный снимок](INDEXER_CHECKPOINTS_2026-10-02.md) — второй пакет, совместимость readers и измерения.

@@ -15,7 +15,7 @@
 node scripts/run-pons-automation.cjs --config CONFIG.json --state STATE.json --rpc http://127.0.0.1:8545
 ```
 
-`--watch` повторяет проходы с настроенной паузой. `--drain` обслуживает существующие обязательства без новых розыгрышей и сбора комиссий. Нужен отдельный unlocked signer локального fork; CLI не принимает приватный ключ. Публичный RPC отклоняется до доступа к signer.
+`--watch` повторяет проходы: после подтверждённой работы, ограниченной числом отправок/итераций, продолжает без pollSeconds; при ожидании сохраняет настроенную паузу. Подробнее: [cadence и лимиты](PONS_CADENCE_2026-10-03.md). `--drain` обслуживает существующие обязательства без новых розыгрышей и сбора комиссий. Нужен отдельный unlocked signer локального fork; CLI не принимает приватный ключ. Публичный RPC отклоняется до доступа к signer.
 
 Конфигурация `pons-rehearsal-automation-v1` фиксирует Hardhat instance, BUY manifest/lifecycle, адреса и runtime hashes collector/escrow/controllers/adapter, executor, campaign 1, получателей 90/5/5, газовые лимиты, максимум транзакций за проход и drand job. Рабочий пример генерирует rehearsal в `.local/logs/`; он действителен только пока жив соответствующий fork.
 

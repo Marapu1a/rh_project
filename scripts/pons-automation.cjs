@@ -30,7 +30,8 @@ function validate(c){
  check(c.campaignId==='1'&&Array.isArray(c.recipients)&&c.recipients.length===3&&same(c.recipients[0],c.vault)&&c.recipients.every(ethers.isAddress),'Funding policy required');
  schedulerConfigFor(c);
 }
-async function runPonsAutomation({provider,executor,config:c,rpcUrl,statePath,signal,drain=false,receiptTimeoutMs=30000},{onStep=()=>{},getBeacon}={}){
+async function runPonsAutomation({provider,executor,config:c,rpcUrl,statePath,signal,drain=false,receiptTimeoutMs=30000,maxTransactions},{onStep=()=>{},getBeacon}={}){
+ const limit=require('./pons-cadence.cjs').transactionLimit(c,maxTransactions);
  validate(c);check(same(await executor.getAddress(),c.executor)&&executor.provider===provider,'Executor/provider mismatch');
  return network.withRobinhoodNetwork({provider,rpcUrl,mode:'robinhood-rehearsal'},async()=>{
   const meta=await provider.send('hardhat_metadata',[]);check(meta.instanceId===c.instanceId&&Number(meta.forkedNetwork?.chainId)===4663,'Wrong local Robinhood fork');
@@ -39,13 +40,13 @@ async function runPonsAutomation({provider,executor,config:c,rpcUrl,statePath,si
   const schedulerConfig=schedulerConfigFor(c);
   const file=path.resolve(statePath),identity={config:c,rpcUrl,sender:c.executor};
   return withState(file,identity,async(state,save)=>{
-   const steps=[],results={notifications:[]};let sentCount=0;
+   const steps=[],results={notifications:[]};let sentCount=0;const waits=new Set();
    const gas=require('./pons-gas-budget.cjs').createGasBudget({provider,sender:c.executor,maxGasLimit:c.gasLimit,state,save,notifications:results.notifications});
-   const result=(status,reason)=>({status,reason:status==='waiting'&&gas.waiting().length?'nativeFunding':reason,steps,results:{...results,nativeFunding:gas.waiting()},publicSends:false});
-   const wait=reason=>{throw Object.assign(Error(reason),{code:'LOCAL_BUDGET_WAIT',budget:{reason},workerWait:reason});};
+   const result=(status,reason)=>({continueImmediately:require('./pons-cadence.cjs').continuation({status,pending:state.pending,confirmed:steps.filter(s=>s.transactionHash&&s.status!==0).length,waits:[...waits],results:{...results,nativeFunding:gas.waiting()}}),maxTransactions:limit,status,reason:status==='waiting'&&gas.waiting().length?'nativeFunding':reason,steps,results:{...results,nativeFunding:gas.waiting()},publicSends:false});
+   const wait=reason=>{waits.add(reason);throw Object.assign(Error(reason),{code:'LOCAL_BUDGET_WAIT',budget:{reason},workerWait:reason});};
    async function guard(request,action){
     check(!state.pending,'Unresolved intent');
-    if(signal?.aborted)wait('stopped');if(sentCount>=c.maxTransactions)wait('transactionLimit');
+    if(signal?.aborted)wait('stopped');if(sentCount>=limit)wait('transactionLimit');
     const m=await provider.send('hardhat_metadata',[]);check(m.instanceId===c.instanceId,'Fork instance changed');
     if(await provider.getTransactionCount(c.executor,'pending')>await provider.getTransactionCount(c.executor,'latest'))wait('pendingNonce');
     const price=(await provider.getFeeData()).gasPrice;if(price===null||price>BigInt(c.maxGasPrice))wait('gasPrice');
@@ -56,6 +57,7 @@ async function runPonsAutomation({provider,executor,config:c,rpcUrl,statePath,si
    const boundary={...createBoundary({state,save,provider,sender:c.executor,guard,onConfirmed:async s=>{steps.push(s);sentCount++;await onStep(s);}}),gasLimit:gas.gasLimit,estimateFailed:gas.estimateFailed};
    const deliver={provider,adapter,executor,job:c.deliveryJob,statePath:file+'.rng',signal,receiptTimeoutMs};
    const schedule={provider,short,monthly,publisher:executor,executor,config:schedulerConfig,...(schedulerConfig.indexer?{indexConfig:require('./shared-index-config.cjs').buildIndexConfigs(schedulerConfig).indexConfig}:{}),rpcUrl,statePath:file+'.scheduler',signal,receiptTimeoutMs};
+   function fairSchedule(){return {...schedule,kinds:require('./pons-cadence.cjs').laneOrder(state.lastResolved?.target,short.target)};}
    async function send(method,args=[]){const price=(await provider.getFeeData()).gasPrice;return sendLocalTransaction(method,args,{type:2,maxFeePerGas:price,maxPriorityFeePerGas:0},{signal,receiptTimeoutMs});}
    async function claims(){
     state.payouts??=[];
@@ -88,7 +90,7 @@ async function runPonsAutomation({provider,executor,config:c,rpcUrl,statePath,si
      await claims();
      results.rng=await runDrandDelivery({...deliver,transactionGasLimit:gas.gasLimit,transactionEstimateFailed:gas.estimateFailed,transactionGuard:async(request,action,before)=>{await guard(request,action);if(before)sentCount++;}},{...(getBeacon?{getBeacon}:{}),onStep:async s=>{steps.push(s);await onStep(s);}});
      if(['blocked','error','stopped'].includes(results.rng.status))return result(results.rng.status,results.rng.reason);
-     results.settlement=await runScheduler({...schedule,allowNewJobs:false,obligationsOnly:drain},{maxTicks:16});
+     results.settlement=await runScheduler({...fairSchedule(),allowNewJobs:false,obligationsOnly:drain},{maxTicks:16});
      if(state.pending)return result('blocked',state.pending.transactionHash?'pendingReceipt':'unknownHash');
      if(['error','blocked','stopped'].includes(results.settlement.status))return result(results.settlement.status,'settlement');
      await claims();
@@ -101,7 +103,7 @@ async function runPonsAutomation({provider,executor,config:c,rpcUrl,statePath,si
        results.funding=[];
        await require('./pons-funding-pass.cjs').runFundingPass({loadPlan:()=>inspect(provider,c.collector,c.executor),send:(method,args)=>send(collector.connect(executor)[method],args),results:results.funding});
       }catch(e){if(state.pending||['LOCAL_BUDGET_WAIT','SCHEDULER_STORAGE_ERROR'].includes(e.code))throw e;results.fundingError=e.message;}
-      if(!results.fundingError&&!gas.waiting().length){results.scheduler=await runScheduler(schedule,{maxTicks:16});if(state.pending)return result('blocked',state.pending.transactionHash?'pendingReceipt':'unknownHash');if(['error','blocked','stopped'].includes(results.scheduler.status))return result(results.scheduler.status,'scheduler');}
+      if(!results.fundingError&&!gas.waiting().length){results.scheduler=await runScheduler(fairSchedule(),{maxTicks:16});if(state.pending)return result('blocked',state.pending.transactionHash?'pendingReceipt':'unknownHash');if(['error','blocked','stopped'].includes(results.scheduler.status))return result(results.scheduler.status,'scheduler');}
      }
      await claims();return result('waiting',drain?'draining':'poll');
     });

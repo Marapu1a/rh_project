@@ -96,6 +96,8 @@
       "test/kt1-buy-rehearsal.test.cjs",
       "test/pons-collector.test.cjs",
       "test/pons-automation.test.cjs",
+      "test/pons-cadence.test.cjs",
+      "test/pons-cadence-orchestration.test.cjs",
       "test/fork-empty-storage.test.cjs",
       "test/pons-crash-recovery.test.cjs",
       "test/rehearsal-backup.test.cjs",
@@ -427,6 +429,8 @@
     "compile": true,
     "files": [
       "test/pons-automation.test.cjs",
+      "test/pons-cadence.test.cjs",
+      "test/pons-cadence-orchestration.test.cjs",
       "test/local-scheduler.test.cjs",
       "test/local-state-lock.test.cjs",
       "test/fork-empty-storage.test.cjs",
@@ -439,6 +443,8 @@
     "files": [
       "test/pons-collector.test.cjs",
       "test/pons-automation.test.cjs",
+      "test/pons-cadence.test.cjs",
+      "test/pons-cadence-orchestration.test.cjs",
       "test/pons-crash-recovery.test.cjs",
       "test/rehearsal-backup.test.cjs",
       "test/drand-delivery-worker.test.cjs"
@@ -482,6 +488,8 @@
       "test/pons-policy-indexer.test.cjs",
       "test/pons-persistent-indexer.test.cjs",
       "test/pons-automation.test.cjs",
+      "test/pons-cadence.test.cjs",
+      "test/pons-cadence-orchestration.test.cjs",
       "test/persistent-buy-indexer.test.cjs",
       "test/direct-buy.test.cjs"
     ]

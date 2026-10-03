@@ -1,0 +1,309 @@
+{
+  "forkHelperNote": "Fork used saved pons-cadence-fork-tested.cjs; final helper additionally disables fast continuation on nested claim/drand errors, tested by final-guard tests.",
+  "schema": "pons-cadence-evidence-v1",
+  "date": "2026-10-03",
+  "scope": "Local fork only; 21 unique targeted tests; mocked orchestration separate from real fork and process-kill tests. No throughput/SLA claim. CLI watch sleep not timed end-to-end.",
+  "sources": [
+    {
+      "file": "scripts/pons-automation.cjs",
+      "sha256": "c36a9209d4a1bd458d012cbae67e0a6ad164a261b590e460e2a9ef9d3ce02b42"
+    },
+    {
+      "file": "scripts/pons-cadence.cjs",
+      "sha256": "27caa170b0c29b8ab26b7640b92dabf909e5567eb9293e9535c2f580b393e51b"
+    },
+    {
+      "file": "scripts/run-pons-automation.cjs",
+      "sha256": "e0f33b1a0245d74565a54562301cc0f88f50054f7fb8afb5dfa89163bb43ff3d"
+    },
+    {
+      "file": "scripts/benchmark-pons-coordinator.cjs",
+      "sha256": "71f52124f529d09cb6d430bf4ea5861efa8d50129ae460f51163de7eb116b5ff"
+    },
+    {
+      "file": "test/pons-cadence.test.cjs",
+      "sha256": "e87990c6c87ee7c28e35de35bc08d806fc5d80c1cbc2457f178b81f25cec622c"
+    },
+    {
+      "file": "test/pons-cadence-orchestration.test.cjs",
+      "sha256": "b20d893e705982a3ea22eece2e3a689d0c26ce11caa894ad66b3f26150f38249"
+    }
+  ],
+  "raw": [
+    {
+      "file": ".local/logs/pons-cadence-final-guard.log",
+      "sha256": "ffa24dd41543219242eced0c3bf6501b7482c49d75b1f11ba2db0cae002ff5e8"
+    },
+    {
+      "file": ".local/logs/pons-cadence-fork-tested.cjs",
+      "sha256": "21209a1405bdffaac9a525a433029c986e1b3aa1e8c6aae989103271ec50afea"
+    },
+    {
+      "file": ".local/logs/pons-cadence-tests.log",
+      "sha256": "5b2d565ce2fbe560af07a9885c9ba11099a67f90d9dd1ef15c7072ef9c063910"
+    },
+    {
+      "file": ".local/logs/pons-cadence-final-controls.log",
+      "sha256": "ddfc4d686a94dd2de43425c1f2a9f6c216ab78b639ab756ba7fdf0d8dc752957"
+    },
+    {
+      "file": ".local/logs/pons-cadence-orchestration-final.log",
+      "sha256": "3a64f3c259d60a259c446a47ac8c89e7d8a5ee8ea252a0a84363e68d626c00c9"
+    },
+    {
+      "file": ".local/logs/pons-cadence-scheduler.log",
+      "sha256": "51330215a65104132159c0178b411daebdc34ddf32945b48c40856ea104b3f56"
+    },
+    {
+      "file": ".local/logs/pons-cadence-cycle-b.json",
+      "sha256": "052670828d0a9a73d9cc6dab391022153890f5de7d96de1ec750bc2dd2b68333"
+    },
+    {
+      "file": ".local/logs/pons-cadence-cycle-b.log",
+      "sha256": "54ee44fbabf34f6480a6fb4f3c6d781b2646f74c74b5426e955e999a682f9d16"
+    },
+    {
+      "file": ".local/logs/pons-cadence-cycle.log",
+      "sha256": "490964b6785d26bd774789bae6029a4b6da7545a48fd37a16efef7c922fe2ad7"
+    }
+  ],
+  "fork": {
+    "status": "PONS_INDEXED_AUTOMATION_PASSED",
+    "anchor": {
+      "number": 79029978,
+      "hash": "0x18d50287da535be96548192207ba734c742a437be58179a6d28b88f307c93baa"
+    },
+    "directory": ".local/logs/pons-cycle-3CVg8x",
+    "paid": "14640926",
+    "after": {
+      "balance": "331785001",
+      "parts": [
+        "131768349",
+        "100016652",
+        "100000000",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    "restore": {
+      "status": "RESTORED_WITHOUT_SENDS",
+      "nonce": 82,
+      "balances": {
+        "balance": "331785001",
+        "parts": [
+          "131768349",
+          "100016652",
+          "100000000",
+          "0",
+          "0",
+          "0"
+        ]
+      },
+      "draws": 2
+    },
+    "comparison": [
+      {
+        "initialLimit": 2,
+        "resumeLimits": [
+          2,
+          8
+        ],
+        "status": "PASSED",
+        "sends": 8,
+        "passes": [
+          {
+            "ms": 1322.0000999999465,
+            "status": "stopped",
+            "reason": "aborted",
+            "limit": 2,
+            "confirmed": 1,
+            "continueImmediately": false
+          },
+          {
+            "ms": 125.74890000000596,
+            "status": "stopped",
+            "reason": "aborted",
+            "limit": 2,
+            "confirmed": 0,
+            "continueImmediately": false
+          },
+          {
+            "ms": 5113.629799999995,
+            "status": "waiting",
+            "reason": "draining",
+            "limit": 2,
+            "confirmed": 2,
+            "continueImmediately": true
+          },
+          {
+            "ms": 10135.135100000014,
+            "status": "waiting",
+            "reason": "draining",
+            "limit": 8,
+            "confirmed": 5,
+            "continueImmediately": false
+          },
+          {
+            "ms": 1250.1349000000046,
+            "status": "waiting",
+            "reason": "draining",
+            "limit": 2,
+            "confirmed": 0,
+            "continueImmediately": false
+          }
+        ],
+        "final": {
+          "accounting": {
+            "balance": "331785001",
+            "parts": [
+              "131768349",
+              "100016652",
+              "100000000",
+              "0",
+              "0",
+              "0"
+            ]
+          },
+          "shortHash": "0x5c74a8508b45975fce14ae5926845e91b83094a6032fd0a657580e25e32ccaa3",
+          "monthlyHash": "0x500d059cb58ea6b7aa82344b3e8f14f8f1a2ac9df67b83b0df7055b3cbb9741d",
+          "nonce": 82
+        }
+      },
+      {
+        "initialLimit": 8,
+        "resumeLimits": [
+          2,
+          8
+        ],
+        "status": "PASSED",
+        "sends": 8,
+        "passes": [
+          {
+            "ms": 1300.3898000000045,
+            "status": "stopped",
+            "reason": "aborted",
+            "limit": 8,
+            "confirmed": 1,
+            "continueImmediately": false
+          },
+          {
+            "ms": 127.39410000003409,
+            "status": "stopped",
+            "reason": "aborted",
+            "limit": 8,
+            "confirmed": 0,
+            "continueImmediately": false
+          },
+          {
+            "ms": 5916.562199999986,
+            "status": "waiting",
+            "reason": "draining",
+            "limit": 2,
+            "confirmed": 2,
+            "continueImmediately": true
+          },
+          {
+            "ms": 7503.59639999998,
+            "status": "waiting",
+            "reason": "draining",
+            "limit": 8,
+            "confirmed": 5,
+            "continueImmediately": false
+          },
+          {
+            "ms": 1288.9722000000183,
+            "status": "waiting",
+            "reason": "draining",
+            "limit": 8,
+            "confirmed": 0,
+            "continueImmediately": false
+          }
+        ],
+        "final": {
+          "accounting": {
+            "balance": "331785001",
+            "parts": [
+              "131768349",
+              "100016652",
+              "100000000",
+              "0",
+              "0",
+              "0"
+            ]
+          },
+          "shortHash": "0x5c74a8508b45975fce14ae5926845e91b83094a6032fd0a657580e25e32ccaa3",
+          "monthlyHash": "0x500d059cb58ea6b7aa82344b3e8f14f8f1a2ac9df67b83b0df7055b3cbb9741d",
+          "nonce": 82
+        }
+      },
+      {
+        "initialLimit": 32,
+        "resumeLimits": [
+          2,
+          8
+        ],
+        "status": "PASSED",
+        "sends": 8,
+        "passes": [
+          {
+            "ms": 1305.7762999999686,
+            "status": "stopped",
+            "reason": "aborted",
+            "limit": 32,
+            "confirmed": 1,
+            "continueImmediately": false
+          },
+          {
+            "ms": 111.1877000000095,
+            "status": "stopped",
+            "reason": "aborted",
+            "limit": 32,
+            "confirmed": 0,
+            "continueImmediately": false
+          },
+          {
+            "ms": 5816.157300000021,
+            "status": "waiting",
+            "reason": "draining",
+            "limit": 2,
+            "confirmed": 2,
+            "continueImmediately": true
+          },
+          {
+            "ms": 7561.612800000003,
+            "status": "waiting",
+            "reason": "draining",
+            "limit": 8,
+            "confirmed": 5,
+            "continueImmediately": false
+          },
+          {
+            "ms": 1434.3334000000032,
+            "status": "waiting",
+            "reason": "draining",
+            "limit": 32,
+            "confirmed": 0,
+            "continueImmediately": false
+          }
+        ],
+        "final": {
+          "accounting": {
+            "balance": "331785001",
+            "parts": [
+              "131768349",
+              "100016652",
+              "100000000",
+              "0",
+              "0",
+              "0"
+            ]
+          },
+          "shortHash": "0x5c74a8508b45975fce14ae5926845e91b83094a6032fd0a657580e25e32ccaa3",
+          "monthlyHash": "0x500d059cb58ea6b7aa82344b3e8f14f8f1a2ac9df67b83b0df7055b3cbb9741d",
+          "nonce": 82
+        }
+      }
+    ]
+  }
+}
