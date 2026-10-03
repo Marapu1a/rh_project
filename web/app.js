@@ -120,7 +120,7 @@ async function refresh(){
   }
   const remaining=BigInt(b.entryThresholdRaw)-BigInt(b.carryRaw);if(remaining<=0n)throw Error();
   $('carry').textContent=`${units(String(remaining),b.quoteDecimals)} USDG to your next Short + Monthly ticket pair. Tickets shown here are waiting for a draw.`;
-  $('wallet-status').textContent=data.status==='stale'?'Updates delayed. You’re seeing the last numbers we could confirm.':'These tickets are waiting for a draw. Tickets already locked into one stay with that draw.';
+  $('wallet-status').textContent=data.status==='stale'?'Updates delayed. You’re seeing the last numbers we could confirm.':data.provenance.indexerState==='catchingUp'?'Catching up with the chain. Recent buys may not appear yet. Your confirmed tickets stay recorded.':'These tickets are waiting for a draw. Tickets already locked into one stay with that draw.';
   $('provenance').textContent=`As of block ${data.provenance.head.number} · ${data.provenance.observedAt??'time unavailable'}`;
   if(data.rewards===null)emptyRewards('PRIZES: STILL CHECKING','We don’t have confirmed prize data for this wallet yet.');
   else if(!data.rewards.items.length)emptyRewards('NO PRIZES TO SHOW YET','No prizes assigned to this wallet in the latest data we have.');

@@ -34,6 +34,7 @@ async function late(runtime,save){
  save();
 }
 async function verify({out,config,ledger,provider,vault}){
+ const completeness=require('./verify-wallet-reward-completeness.cjs').verify(out);
  const {createReader,createServer}=require('./user-status-api.cjs'),D=require('./direct-buy.cjs');
  const state=JSON.parse(fs.readFileSync(config.indexer.statePath));
  assert.equal(D.hash(D.replay(state.index.manifest,state.index.blocks)),state.index.ledgerHash);
@@ -54,7 +55,7 @@ async function verify({out,config,ledger,provider,vault}){
   const bytes=fs.readFileSync(config.indexer.statePath);fs.renameSync(config.indexer.statePath,config.indexer.statePath+'.joint-offline');
   try{const r=await fetch(url+out.jointLoad.wallets[0].wallet);assert.equal(r.status,503);assert.equal((await r.json()).balances,null);}finally{fs.renameSync(config.indexer.statePath+'.joint-offline',config.indexer.statePath);}
   assert.deepEqual(fs.readFileSync(config.indexer.statePath),bytes);
-  return {status:'PASSED',wallets:out.jointLoad.n,eligibleBuys:ledger.buyLedger.decisions.filter(d=>d.status==='ELIGIBLE').length,ledgerHash:state.index.ledgerHash,walletMs,parallelHTTP:rows.length,stalePreservesBalances:true,unavailableIsNotZero:true,head:ledger.head};
+  return {status:'PASSED',completeness,wallets:out.jointLoad.n,eligibleBuys:ledger.buyLedger.decisions.filter(d=>d.status==='ELIGIBLE').length,ledgerHash:state.index.ledgerHash,walletMs,parallelHTTP:rows.length,stalePreservesBalances:true,unavailableIsNotZero:true,head:ledger.head};
  }finally{server.closeAllConnections();await new Promise(r=>server.close(r));}
 }
 module.exports={prepare,late,verify};

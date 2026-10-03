@@ -12,10 +12,12 @@ test('desktop/mobile layout, rules, honest pre-launch and no-wallet dialog',asyn
  for(const width of [1440,768,390,320]){await page.setViewportSize({width,height:900});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,`overflow at ${width}`);}
 });
 test('wallet reads real API schema, marks stale and clears data on failure/account change',async t=>{
- const {page,url}=await open(t);await inject(page);let fail=false;
- await page.route('**/v1/wallets/**',r=>r.fulfill({status:fail?503:200,contentType:'application/json',body:JSON.stringify(fail?{error:'unavailable'}:{schema:'promo-wallet-status-v1',status:'stale',wallet,provenance:{chainId:'4663',head:{number:100},observedAt:'2026-09-29T00:00:00Z'},balances:{SHORT:{open:'2'},MONTHLY:{open:'5'},carryRaw:'20000000',entryThresholdRaw:'100000000',quoteDecimals:6},rewards:{items:[],total:0}})}));
+ const {page,url}=await open(t);await inject(page);let fail=false,catchingUp=false;
+ await page.route('**/v1/wallets/**',r=>r.fulfill({status:fail?503:200,contentType:'application/json',body:JSON.stringify(fail?{error:'unavailable'}:{schema:'promo-wallet-status-v1',status:catchingUp?'observed':'stale',wallet,provenance:{indexerState:catchingUp?'catchingUp':'caughtUp',chainId:'4663',head:{number:100},observedAt:'2026-09-29T00:00:00Z'},balances:{SHORT:{open:'2'},MONTHLY:{open:'5'},carryRaw:'20000000',entryThresholdRaw:'100000000',quoteDecimals:6},rewards:{items:[],total:0}})}));
  await page.goto(url);await page.locator('header .connect').click();await page.waitForFunction(()=>document.getElementById('short-count').textContent==='2');assert.match(await page.locator('#wallet-status').textContent(),/Updates delayed/);assert.match(await page.locator('#carry').textContent(),/80 USDG/);
+ catchingUp=true;await page.locator('#refresh').click();await page.waitForFunction(()=>document.getElementById('wallet-status').textContent.includes('Catching up'));assert.equal(await page.locator('#short-count').textContent(),'2');
  fail=true;await page.locator('#refresh').click();await page.waitForFunction(()=>document.getElementById('wallet-status').textContent.includes('Data unavailable'));assert.equal(await page.locator('#short-count').textContent(),'—');
+ fail=false;catchingUp=false;await page.locator('#refresh').click();await page.waitForFunction(()=>document.getElementById('short-count').textContent==='2');
  await page.evaluate(()=>window.walletEvents.accountsChanged([]));assert.equal(await page.locator('#disconnect').isVisible(),false);
 });
 test('wrong chain and rejected connection never present wallet balances',async t=>{

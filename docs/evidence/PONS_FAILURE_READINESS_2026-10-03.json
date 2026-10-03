@@ -1,0 +1,42 @@
+{
+  "date": "2026-10-03",
+  "base": "f660b5f",
+  "status": "TARGETED_PASS",
+  "uniqueTests": 57,
+  "fullBaseline": false,
+  "artifacts": [
+    {
+      "file": ".local/logs/pons-failure-package.log",
+      "sha256": "964ef79958ff6bdb0f101b9ca4953220a1a7fd609785e5b50be25d65d9bf7e04"
+    },
+    {
+      "file": ".local/logs/pons-storage-status.log",
+      "sha256": "87de4d3cf435c41e04de2f50b5a925429211693fba10d4a231163c21f10ce0cc"
+    },
+    {
+      "file": ".local/logs/pons-delay-final.log",
+      "sha256": "6a8a82f7c0bdacfe820f56eee477c37b045520aabf061d558bc0bee48e8323ce"
+    },
+    {
+      "file": ".local/logs/pons-reward-completeness.json",
+      "sha256": "bba6eb2a8f8ea83064478cb6db3c534089616d1c5d6a4bf292ffacefdbfff20d"
+    }
+  ],
+  "sourceHashesLF": {
+    "scripts/pons-delay-status.cjs": "fe64a87ba2d351b78b4a23331f4a7ff4ec8c3ce16e4f60fb31cee4e0cdb14708",
+    "scripts/verify-wallet-reward-completeness.cjs": "0e72b2e78988e2538a6474471a8373d200d469782f1841cfeadd04b45c9a95aa",
+    "scripts/run-pons-automation.cjs": "fb1ab244d244828c26570127eb3e5096439702326223fcd989777c2888581b86",
+    "scripts/pons-joint-load.cjs": "ab0586149054fab434f05bcd464f11ad725bf90152b0199de91c6d54ef7a015a",
+    "web/app.js": "507478853557e742a12c8c0d217723bbe056c89534104abb835a22bfe65b9cba",
+    "test/pons-delay-status.test.cjs": "bef997cfa9b4b22bd9052d894c851b8b9990e636da9a5af09f107a479c137e91",
+    "test/pons-storage-failure.test.cjs": "8313da98d3bf67a8ef8925a6a97042ec97274d1fcc3abd62ac3d6c3a2603a222",
+    "test/wallet-reward-completeness.test.cjs": "34d7e947c247fa388f2077abc8353813c68ed09934ed758961e9c96057f65173",
+    "web/site.test.cjs": "ab34ef8c8a0379ebb8c604c260dc4caea20f9c454a368ba793b6dacf5583c446"
+  },
+  "savedRewardCheck": {
+    "status": "PASSED",
+    "wallets": 129,
+    "rewards": 11,
+    "source": "raw RewardAssigned/RewardPaid events; not an independent draw-math audit"
+  }
+}

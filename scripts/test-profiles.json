@@ -126,7 +126,10 @@
       "test/pons-zeroex-integration.test.cjs",
       "test/pons-entrypoint-buy.test.cjs",
       "test/pons-entrypoint-integration.test.cjs",
-      "test/verified-draw-cache.test.cjs"
+      "test/verified-draw-cache.test.cjs",
+      "test/pons-delay-status.test.cjs",
+      "test/pons-storage-failure.test.cjs",
+      "test/wallet-reward-completeness.test.cjs"
     ]
   },
   "accounting": {
@@ -435,7 +438,10 @@
       "test/local-state-lock.test.cjs",
       "test/fork-empty-storage.test.cjs",
       "test/pons-funding-pass.test.cjs",
-      "test/pons-gas-budget.test.cjs"
+      "test/pons-gas-budget.test.cjs",
+      "test/pons-delay-status.test.cjs",
+      "test/pons-storage-failure.test.cjs",
+      "test/wallet-reward-completeness.test.cjs"
     ]
   },
   "pons-recovery": {
@@ -447,7 +453,10 @@
       "test/pons-cadence-orchestration.test.cjs",
       "test/pons-crash-recovery.test.cjs",
       "test/rehearsal-backup.test.cjs",
-      "test/drand-delivery-worker.test.cjs"
+      "test/drand-delivery-worker.test.cjs",
+      "test/pons-delay-status.test.cjs",
+      "test/pons-storage-failure.test.cjs",
+      "test/wallet-reward-completeness.test.cjs"
     ]
   },
   "pons-direct-purchase": {
@@ -553,6 +562,23 @@
     "files": [
       "test/pons-entrypoint-buy.test.cjs",
       "test/pons-entrypoint-integration.test.cjs"
+    ]
+  },
+  "pons-failures": {
+    "compile": true,
+    "files": [
+      "test/pons-delay-status.test.cjs",
+      "test/pons-storage-failure.test.cjs",
+      "test/wallet-reward-completeness.test.cjs",
+      "test/pons-automation.test.cjs",
+      "test/pons-gas-budget.test.cjs",
+      "test/pons-funding-pass.test.cjs",
+      "test/local-state-lock.test.cjs",
+      "test/indexer-service.test.cjs",
+      "test/user-status-cache.test.cjs",
+      "web/site.test.cjs",
+      "web/claim.test.cjs",
+      "web/claim-journal.test.cjs"
     ]
   }
 }

@@ -7,12 +7,13 @@ Gxx — идентификаторы прежней gap-карты, Rxx — ви
 ## Этап A — правильная работа в тестовом окружении (текущий)
 
 [Последнее review разобрано](PONS_JOINT_REVIEW_TRIAGE_2026-10-03.md): исправлены пути
-артефактов, хеши подтверждены. Следом — адресная полнота наград API и минимальный
-режим задержки, затем оставшиеся обязательные проверки/A5. По решению пользователя
+артефактов, хеши подтверждены. [Пакет отказов и задержек](PONS_FAILURE_READINESS_2026-10-03.md) выполнен:
+57 адресных tests, полнота11 наград/129 кошельков, CLI-причины и кабинет catchingUp.
+Далее — оставшиеся обязательные условия и A5; нового большого нагрузочного прогона нет. По решению пользователя
 не расширяем этот этап в архитектуру под мировой масштаб или новые большие прогоны
 без конкретной ошибки/риска.
 
-Перед финальным baseline — проверка перегруза. [Замеры50k/100k](DRAW_CAPACITY_FOLLOWUP_2026-10-03.md), [cache исполнителей](VERIFIED_DRAW_EXECUTION_2026-10-03.md), [малый Pons coordinator и записи scheduler](COORDINATOR_CAPACITY_2026-10-03.md) завершены. [Общий scheduler10k + Pons journal/gas](SCHEDULER_LOAD_2026-10-03.md) PASS: оба draw, cold process resume, выплаты и stale-file restore. Внешний Pons loop/BUY/API под такой нагрузкой не проверен. [Паузы и лимит отправок](PONS_CADENCE_2026-10-03.md) завершены:21 адресный test, малый Pons fork, stop/resume2/8, одинаковые итоги и stale-file restore PASS. [Cold restart без publication history](PUBLICATION_HISTORY_RECOVERY_2026-10-03.md) завершён:10k в каждом draw,4 fail-closed сценария, восстановление и выплаты PASS; независимый RPC failover не реализован. [Совместный BUY/index/API/draw прогон](PONS_JOINT_REHEARSAL_2026-10-03.md) PASS через сохранённый Alchemy:396 BUY,129 участников в каждом draw,11 выплат, API и restore без повторных отправок. Исправлен только бюджет ожидания стенда; runtime не менялся. Далее — понятный режим задержки. Для этого решения повторный полный100k driver не требуется. Production не затрагиваем.
+Перед финальным baseline — проверка перегруза. [Замеры50k/100k](DRAW_CAPACITY_FOLLOWUP_2026-10-03.md), [cache исполнителей](VERIFIED_DRAW_EXECUTION_2026-10-03.md), [малый Pons coordinator и записи scheduler](COORDINATOR_CAPACITY_2026-10-03.md) завершены. [Общий scheduler10k + Pons journal/gas](SCHEDULER_LOAD_2026-10-03.md) PASS: оба draw, cold process resume, выплаты и stale-file restore. Внешний Pons loop/BUY/API под такой нагрузкой не проверен. [Паузы и лимит отправок](PONS_CADENCE_2026-10-03.md) завершены:21 адресный test, малый Pons fork, stop/resume2/8, одинаковые итоги и stale-file restore PASS. [Cold restart без publication history](PUBLICATION_HISTORY_RECOVERY_2026-10-03.md) завершён:10k в каждом draw,4 fail-closed сценария, восстановление и выплаты PASS; независимый RPC failover не реализован. [Совместный BUY/index/API/draw прогон](PONS_JOINT_REHEARSAL_2026-10-03.md) PASS через сохранённый Alchemy:396 BUY,129 участников в каждом draw,11 выплат, API и restore без повторных отправок. Исправлен только бюджет ожидания стенда; runtime не менялся. Режим задержки и адресная проверка отказов завершены; далее — сверка условий. Для этого решения повторный полный100k driver не требуется. Production не затрагиваем.
 
 
 03.10 подготовлен [новый запрос GPT](GPT_REVIEW_REQUEST.md) по накопленному diff.
