@@ -110,17 +110,13 @@ funding/new-freeze обоих draw,22 signed tx, выплаты и idle без �
 Финансовые units disabled; Telegram delivery/dedup PASS, monitor timer enabled,
 штатные проверки ждут activation marker. [Пакет3A](PONS_PREFLIGHT_HANDOFF_2026-10-03.md):
 hourly off-server pull на Windows, свежий preflight/deployment fork и signing queue
-первых6 CREATE проверены. MetaMask review подтверждён владельцем, signing включён
-для этой очереди (при включении completed0/pending=null). Далее подписи, launch/policy/binds
-по реальным receipts; financial services включаются только после проверки manifest.
-Первый public CREATE ParticipantRegistry подтверждён (block79339893), очередь1/6,
-pending=null; следующий collector готов к ручной подписи.
-При первом клике найден чрезмерно строгий gas/request equality: до intent/подписи
-отказывал при изменении fee. Исправлено сохранением просмотренных лимитов (20% fee headroom
-в пределах cap) и повторной проверкой достаточности;7 адресных tests PASS.
-Консоль перезапущена, nonce14/pending14, intent ещё не создан.
-Затем исправлен UI reconnect/refresh: кнопки вычисляются из актуального состояния,
-истечение review и смена аккаунта отключают подпись явно;2 UI tests + catalog PASS.
+первых6 CREATE проверены и подписаны: completed6/pending=null.
+[Продолжение deployment](PONS_DEPLOYMENT_CONTINUATION_2026-10-03.md): реальные receipts,
+сохранение salt/адресов и fork четырёх оставшихся вызовов PASS; ранние билеты/funding
+проверены. Anchor — фактический предшественник launch receipt. Далее — ручная очередь
+launch/policy/binds со свежим preflight; сервисы только после проверки manifest.
+Токен пока не запущен.
+
 
 
 1. G04/G01: production manifest, реальные роли/pins/custody/параметры и публичный

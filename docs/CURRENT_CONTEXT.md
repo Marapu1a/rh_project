@@ -74,21 +74,14 @@ Monitor timer enabled; его service ждёт activation marker. Financial unit
 [Предпусковой пакет3A](PONS_PREFLIGHT_HANDOFF_2026-10-03.md) завершён: hourly Windows backup pull,
 свежий preflight, deployment fork10tx и отдельная signing-queue6tx PASS.
 Учтены timestamp immutables контроллеров; constructor bytecode не менялся.
-Владелец проверил первый шаг через MetaMask; после повторного live preflight консоль4176
-перезапущена с --enable-signing для проверенных6 CREATE. На момент включения
-completed0/pending=null, публичных отправок0; далее подписи владельца и сверка receipts.
-Первый public CREATE подтверждён: ParticipantRegistry, nonce14, block79339893,
-[receipt/evidence](evidence/PONS_FIRST_CREATE_2026-10-03.json). Хеш вручную предоставлен
-владельцем и сверён через /submitted: completed1/pending=null. Следующий collector
-(nonce15) прошёл live prepare. Launch/policy готовятся отдельно из реальных receipts.
-При первом клике найден чрезмерно строгий gas/request equality: до intent/подписи
-отказывал при изменении fee. Исправлено сохранением просмотренных лимитов (20% fee headroom
-в пределах cap) и повторной проверкой достаточности;7 адресных tests PASS.
-Консоль перезапущена, nonce14/pending14, intent ещё не создан.
-Затем исправлен UI reconnect/refresh: кнопки вычисляются из актуального состояния,
-истечение review и смена аккаунта отключают подпись явно;2 UI tests + catalog PASS.
-публичный сервис ещё не включён,
-канал уведомлений проверен; штатный мониторинг ждёт активации, финансовый запуск не выполнен.
+Все **6 public CREATE** подписаны владельцем; completed6/pending=null.
+[Продолжение deployment](PONS_DEPLOYMENT_CONTINUATION_2026-10-03.md): сверка реальных
+receipts/runtime и репетиция четырёх оставшихся вызовов **PASS**: ранний BUY101USDG
+→ Short1/Monthly1, funding90/5/5;11 адресных tests. Anchor политики формируется
+после launch из его фактического предыдущего блока. Сохраняем исходный salt
+и predicted TOKEN, уже записанный в collector/vault. Токен ещё не запущен.
+Следующий шаг после репетиции — ручная очередь launch/policy/binds со свежим preflight.
+Финансовые сервисы выключены, штатный мониторинг ждёт активации.
 
 Промежуточная уборка документации завершена: история отделена, основные документы
 обновляются по состоянию, а не дописыванием очередного журнала в начало каждого файла.

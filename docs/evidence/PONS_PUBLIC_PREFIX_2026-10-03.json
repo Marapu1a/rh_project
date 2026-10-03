@@ -1,0 +1,88 @@
+{
+  "schema": "qianqi-public-prefix-evidence-v1",
+  "observedAt": "2026-10-03T20:04:51.582Z",
+  "chainId": 4663,
+  "planHash": "0x04c265e8bc8b4b7a63545c80c26153ad58898f43df7430b4f48089f417cd5c16",
+  "publicSends": false,
+  "transactions": [
+    {
+      "index": 0,
+      "label": "deploy ParticipantRegistry",
+      "hash": "0x8aafedd557d68ff0b820df5ac0bfda6db37bbf27d6f88be943b132d03d573fc7",
+      "address": "0xF55755a2433cFdDdcc3949824Fae6C951B138f20",
+      "nonce": 14,
+      "blockNumber": 79339893,
+      "blockHash": "0xdcef15cb270919ed3a6238bc712ed5de49e1792813fa2a08c9468dee8adfd3a6",
+      "timestamp": 1791056439,
+      "runtimeHash": "0xf9416c95d49ff972b9b3ddc93d74a7cc96890efbd413960689c9470866300bc6",
+      "gasUsed": "125107"
+    },
+    {
+      "index": 1,
+      "label": "deploy LocalPonsCollector",
+      "hash": "0x1b9c5708c5a3fe3f7c2522dc142f94cc65ad1bde97e2132148f286bd0606abd4",
+      "address": "0x9FbAAb62DB88123fdB61217D244003a201A0CD9b",
+      "nonce": 15,
+      "blockNumber": 79341964,
+      "blockHash": "0x7749d48a9bd9c96b21ed7718cd7b5a4489efbec35aa271e358e92a87ae37c1c7",
+      "timestamp": 1791056647,
+      "runtimeHash": "0x6b2dd3fae15a9281264738bdd753a114441ecca11a3a825ab83446b7217f77ad",
+      "gasUsed": "2913452"
+    },
+    {
+      "index": 2,
+      "label": "deploy DrandRandomAdapter",
+      "hash": "0x13b7134df3834fbad29c8e5a25d3c97d89d7f1ebdf14a73c5b02c7f64eb6e373",
+      "address": "0x53c0D6F3E22fa34CE59daaBC6327ad10732B14CF",
+      "nonce": 16,
+      "blockNumber": 79343511,
+      "blockHash": "0x42c3bc4d5af9798b2963523f6ee8de3e418b8b1e29eb11d68d74475b97867839",
+      "timestamp": 1791056804,
+      "runtimeHash": "0x9897667969118f30e7a8c467eba39bbc7239240ef8cf26982b7f66f0ce98e6fe",
+      "gasUsed": "2455697"
+    },
+    {
+      "index": 3,
+      "label": "deploy RobinhoodShortController",
+      "hash": "0xfd09c72588c77b3ac704df13591dd2bdec08163858b10be1f164e7c885233653",
+      "address": "0xa631f7845af257daEe0b9f6Ff744334294cE6846",
+      "nonce": 17,
+      "blockNumber": 79343876,
+      "blockHash": "0xca80fdbb5cf316cb46a3d92aacb4070a33d1f0110cdfd269521b8f70f6c85424",
+      "timestamp": 1791056841,
+      "runtimeHash": "0x2a53cad423c3317f7986fa2da40734288995bfbf8d8bf0cf0d06cac9a7f89ae7",
+      "gasUsed": "5521140"
+    },
+    {
+      "index": 4,
+      "label": "deploy RobinhoodMonthlyController",
+      "hash": "0x66be8a5d2cf7a7e2214be5c5768b5aebed11978df40d8f60283354700770f7f8",
+      "address": "0x3EE0c608815Ec5a621F330Fb8899ED31Fe682393",
+      "nonce": 18,
+      "blockNumber": 79344267,
+      "blockHash": "0x7061484340129edf45ee8ea40d4d25ded5956b7a14f6494736f01fe1158ada87",
+      "timestamp": 1791056879,
+      "runtimeHash": "0x59fb1c79d463b1c723dc2e62a0f31874b9c2baa12b4eaf7ae4bcaefe7f7a66ee",
+      "gasUsed": "4560476"
+    },
+    {
+      "index": 5,
+      "label": "deploy DualControllerPromoVault",
+      "hash": "0xcb850a2d12ac8a755b809de961e8aa1ec1ec2b22643c16bbdf93536d9d7fd2aa",
+      "address": "0x2E9e7412e19497b60f25D05b68717067A6B743D4",
+      "nonce": 19,
+      "blockNumber": 79344660,
+      "blockHash": "0x59e1c1d62a953bde74aa9a0f234f216596bb498b198872cb63bca3245fd2bbdd",
+      "timestamp": 1791056919,
+      "runtimeHash": "0x570d005af266186a86531fbe9b8303e575e165f5a731afaa900c2b732909d658",
+      "gasUsed": "1949924"
+    }
+  ],
+  "anchor": {
+    "number": 79344660,
+    "hash": "0x59e1c1d62a953bde74aa9a0f234f216596bb498b198872cb63bca3245fd2bbdd"
+  },
+  "limits": [
+    "Canonical receipts and runtime at observation; not a finality guarantee"
+  ]
+}

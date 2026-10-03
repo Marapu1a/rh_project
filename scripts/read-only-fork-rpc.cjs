@@ -1,7 +1,7 @@
 // Research transport only: rate-limit EDR's concurrent reads without changing state/results.
 const http=require('node:http');
 const {keccak256,toQuantity,isAddress}=require('ethers');
-const allowed=new Set(['eth_chainId','net_version','eth_blockNumber','eth_getBlockByNumber','eth_getBlockByHash','eth_getCode','eth_getStorageAt','eth_getBalance','eth_getTransactionCount','eth_getTransactionByHash','eth_getTransactionReceipt','eth_gasPrice','eth_call']);
+const allowed=new Set(['eth_chainId','net_version','eth_blockNumber','eth_getBlockByNumber','eth_getBlockByHash','eth_getCode','eth_getStorageAt','eth_getBalance','eth_getTransactionCount','eth_getTransactionByHash','eth_getTransactionReceipt','eth_gasPrice','eth_call','eth_getLogs']);
 async function startReadProxy(upstream) {
   let tail=Promise.resolve();
   const stats={requests:0,retries:0,errors:0};

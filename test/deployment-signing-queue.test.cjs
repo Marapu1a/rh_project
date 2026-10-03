@@ -46,3 +46,16 @@ test('fee increase outside reviewed headroom refuses before persisting intent',a
  const p=await f.queue.prepare();f.options.provider.getFeeData=async()=>({gasPrice:122n});
  await assert.rejects(f.queue.arm(p.id),/budget exceeded/);assert.equal(fs.existsSync(f.options.file),false);
 });
+
+test('completed prefix evidence rejects missing rows, wrong transaction, runtime drift and reorg',async()=>{
+ const inspect=require('../scripts/deployment-prefix-evidence.cjs').inspect;
+ const governor='0x0000000000000000000000000000000000000011';
+ const body={schema:'qianqi-construction-prefix-v1',authorizationToSend:false,governor,chainId:4663,startNonce:0,maxGasPrice:'100',transactions:Array.from({length:6},(_,i)=>({label:'deploy',predictedAddress:E.getCreateAddress({from:governor,nonce:i}),expectedRuntimeHash:E.keccak256('0x01'),request:{from:governor,chainId:'0x1237',nonce:E.toQuantity(i),value:'0x0',data:'0x1234'}}))};
+ const plan={...body,planHash:hash(body)},journal={planHash:plan.planHash,pending:null,completed:body.transactions.map((_,i)=>({index:i,hash:String(i)}))};
+ const p={getNetwork:async()=>({chainId:4663n}),getTransaction:async i=>({from:governor,to:null,chainId:4663n,nonce:Number(i),data:'0x1234',value:0n}),getTransactionReceipt:async i=>({status:1,hash:String(i),contractAddress:body.transactions[i].predictedAddress,blockNumber:Number(i)+1,blockHash:E.id('block'+(Number(i)+1)),gasUsed:1n}),getBlock:async n=>({hash:E.id('block'+n),timestamp:n}),getCode:async()=> '0x01'};
+ assert.equal((await inspect(p,plan,journal)).anchor.number,6);
+ await assert.rejects(inspect(p,plan,{...journal,completed:journal.completed.slice(1)}));
+ await assert.rejects(inspect({...p,getTransaction:async i=>({...await p.getTransaction(i),to:governor})},plan,journal));
+ await assert.rejects(inspect({...p,getCode:async()=> '0x02'},plan,journal));
+ await assert.rejects(inspect({...p,getBlock:async()=>({hash:E.id('reorg'),timestamp:1})},plan,journal));
+});
