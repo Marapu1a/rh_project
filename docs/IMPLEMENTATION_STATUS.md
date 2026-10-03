@@ -6,7 +6,7 @@
 
 | Модуль | Основной код | Что есть / граница |
 |---|---|---|
-| Scheduler state / capacity probe | scripts/local-promo-scheduler.cjs, benchmark-pons-coordinator.cjs, benchmark-scheduler-storage.cjs | Job сохраняется при изменении, прогресс chunks читается из контрактов; отдельные small fork / synthetic storage замеры. [Отчёт](COORDINATOR_CAPACITY_2026-10-03.md) |
+| Scheduler state / capacity probe | scripts/local-promo-scheduler.cjs, benchmark-pons-coordinator.cjs, benchmark-scheduler-storage.cjs, benchmark-scheduler-load.cjs | Запись job только при изменении; [общий scheduler10k с Pons journal/gas](SCHEDULER_LOAD_2026-10-03.md): synthetic31337, отдельный process resume, stale-file restore; внешний Pons loop — [малый fork](COORDINATOR_CAPACITY_2026-10-03.md) |
 | Pons BUY profiles | scripts/pons-profiles.cjs, pons-curve-buy.cjs, pons-v4-buy.cjs, pons-batch-route.cjs, pons-launch-buy.cjs, pons-pool-batch-buy.cjs, pons-zeroex-buy.cjs, pons-entrypoint-buy.cjs | Отдельные genesis-профили; launch-v4 включает v3 и узкую EntryPoint/Alchemy USDG покупку. [Матрица](PONS_CHANNEL_COVERAGE.md) |
 | Replay и policy | scripts/direct-buy.cjs, replay-direct-buy.cjs, buy-policy-*.cjs; contracts/BuyPolicySource.sol | Полный provenance, versioned admission; неизвестные маршруты не допускаются. [Policy](BUY_POLICY_ADMISSION.md) |
 | Постоянный индекс | scripts/persistent-buy-indexer.cjs, local-scheduler-state.cjs | Suffix scan/replay checkpoints, полный rollback/audit, bounded cache, компактный SHA-256 snapshot с legacy read; запись/consumer replay ещё O(history). [Пакет](INDEXER_CHECKPOINTS_2026-10-02.md), scripts/benchmark-indexer-history.cjs, indexer-checksum.cjs; scripts/benchmark-pons-admitted.cjs — [admitted load/API/restore](PONS_ADMITTED_LOAD_2026-10-03.md) |

@@ -17,7 +17,7 @@
 
 | Задача | Документы |
 |---|---|
-| Coordinator: лимиты и сохранение jobs | [Проверка и измерения03.10](COORDINATOR_CAPACITY_2026-10-03.md) |
+| Scheduler/coordinator: нагрузка | [Большой общий scheduler10k](SCHEDULER_LOAD_2026-10-03.md), [малый Pons и сохранение jobs](COORDINATOR_CAPACITY_2026-10-03.md) |
 | Pons маршруты и текущий допуск | [Матрица G10](PONS_CHANNEL_COVERAGE.md), [EntryPoint admission](PONS_ENTRYPOINT_POOL_ADMISSION.md), [0x pool admission](PONS_ZEROEX_POOL_ADMISSION.md), [0x execution](PONS_ZEROEX_EXECUTION.md), [graduation/fees](PONS_GRADUATION_REVIEW_2026-10-02.md), [pool batch и аудит](PONS_AUDIT_2026-10-02.md), [policy](BUY_POLICY_ADMISSION.md) |
 | Индекс/API/coordinator | [Shared config](SHARED_INDEX_CONFIG.md), [индекс](PERSISTENT_INDEXER.md), [API](USER_STATUS_API.md), [public projection](PUBLIC_STATUS_API.md) |
 | Сбор и распределение | [Pons collector](PONS_COLLECTOR.md), [автоматика](PONS_AUTOMATION.md), [газ/ожидание](PONS_EXECUTION_READINESS.md), [индексированный цикл](PONS_INDEXED_CYCLE.md) |

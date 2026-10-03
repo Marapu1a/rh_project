@@ -1,0 +1,474 @@
+{
+  "schema": "scheduler-load-evidence-v1",
+  "date": "2026-10-03",
+  "base": "cc8510f",
+  "node": "v24.21.0",
+  "platform": "win32",
+  "scope": "Synthetic local chain31337, common scheduler and Pons journal/gas modules; mock RNG/USDG; not the outer Pons coordinator or BUY pipeline.",
+  "status": "PASSED",
+  "n": 10000,
+  "attempts": "105000",
+  "chunks": 157,
+  "schedulerBytes": 4409178,
+  "preparationMs": 52882.8698,
+  "coldProfiles": [
+    {
+      "limit": 2,
+      "ms": 25355.588300000003,
+      "steps": 2,
+      "counts": {
+        "call": 525,
+        "getTransaction": 316,
+        "getLogs": 2,
+        "getCode": 22,
+        "getBlock": 14
+      },
+      "progress": {
+        "SHORT": "1",
+        "MONTHLY": "1"
+      }
+    },
+    {
+      "limit": 8,
+      "ms": 33525.134399999995,
+      "steps": 8,
+      "counts": {
+        "call": 729,
+        "getTransaction": 322,
+        "getLogs": 2,
+        "getCode": 40,
+        "getBlock": 38
+      },
+      "progress": {
+        "SHORT": "4",
+        "MONTHLY": "4"
+      }
+    },
+    {
+      "limit": 32,
+      "ms": 61543.797900000005,
+      "steps": 32,
+      "counts": {
+        "call": 1477,
+        "getTransaction": 346,
+        "getLogs": 2,
+        "getCode": 106,
+        "getBlock": 128
+      },
+      "progress": {
+        "SHORT": "16",
+        "MONTHLY": "16"
+      }
+    }
+  ],
+  "execution": {
+    "passes": 42,
+    "transactions": 327,
+    "activeMs": 520193.5047000003,
+    "warmProcessing": {
+      "samples": 36,
+      "minMs": 10813.608100000012,
+      "medianMs": 11095.70464999997,
+      "maxMs": 14110.495300000068
+    },
+    "actions": {
+      "processShort": 157,
+      "processMonth": 157,
+      "finishShort": 1,
+      "finishMonth": 1,
+      "claim": 11
+    },
+    "schedulerWrites": 2,
+    "transactionJournalWrites": 981,
+    "rssSamples": {
+      "parentMin": 2845921280,
+      "parentMax": 2989920256
+    }
+  },
+  "stop": {
+    "ms": 1728.6982000000135,
+    "counts": {
+      "call": 56,
+      "getTransaction": 1,
+      "getLogs": 0,
+      "getCode": 6,
+      "getBlock": 5
+    },
+    "writes": {
+      "automation.json": 3
+    },
+    "result": {
+      "status": "stopped",
+      "steps": [
+        {
+          "action": "processShort",
+          "transactionHash": "0x1f94f73d4827d312ab456bc7c3fb96b29472c4e05744d898dcdb79add727a859",
+          "nonce": 363,
+          "blockNumber": 366
+        }
+      ],
+      "scheduler": {
+        "status": "stopped",
+        "results": {
+          "SHORT": {
+            "status": "progress",
+            "action": "processShort",
+            "drawId": "0x4b0e8663ef33353769c621169da239e6bb468161410e41f16390dab3826a890d",
+            "transactionHash": "0x1f94f73d4827d312ab456bc7c3fb96b29472c4e05744d898dcdb79add727a859"
+          },
+          "MONTHLY": {
+            "status": "stopped"
+          }
+        }
+      }
+    },
+    "rss": 2928795648,
+    "progress": {
+      "SHORT": "13",
+      "MONTHLY": "12"
+    },
+    "stage": "stop"
+  },
+  "pause": {
+    "ms": 589.7709000000032,
+    "counts": {
+      "call": 20,
+      "getTransaction": 0,
+      "getLogs": 0,
+      "getCode": 3,
+      "getBlock": 1
+    },
+    "writes": {},
+    "result": {
+      "status": "stopped",
+      "steps": [],
+      "scheduler": {
+        "status": "stopped",
+        "results": {
+          "SHORT": {
+            "status": "stopped"
+          }
+        }
+      }
+    },
+    "rss": 2979635200,
+    "progress": {
+      "SHORT": "13",
+      "MONTHLY": "12"
+    },
+    "accounting": {
+      "balance": "2100",
+      "parts": [
+        "0",
+        "0",
+        "100",
+        "2000",
+        "0",
+        "0"
+      ]
+    }
+  },
+  "freshProcess": {
+    "ms": 40013.1933,
+    "counts": {
+      "call": 729,
+      "getTransaction": 322,
+      "getLogs": 2,
+      "getCode": 40,
+      "getBlock": 39
+    },
+    "writes": {
+      "automation.json": 24
+    },
+    "result": {
+      "status": "waiting",
+      "steps": [
+        {
+          "action": "processShort",
+          "transactionHash": "0x87573f75128824fbd832403ded096949756a878e7243029d5dcadb96fa4a2add",
+          "nonce": 364,
+          "blockNumber": 367
+        },
+        {
+          "action": "processMonth",
+          "transactionHash": "0xdd8c3e3cd0fee50d83e16c2a0bf33ee7ab82b496bc31cba390e1f85637b2ce94",
+          "nonce": 365,
+          "blockNumber": 368
+        },
+        {
+          "action": "processShort",
+          "transactionHash": "0x2b9c990208f6e37010095ef41fb6c2fab5e4d27bb6db220e5e5601c21975b9ac",
+          "nonce": 366,
+          "blockNumber": 369
+        },
+        {
+          "action": "processMonth",
+          "transactionHash": "0xb12dff11a328bdbf39f2ec41c5bbabe81cf485a30207a0f7f8788657e958dcbb",
+          "nonce": 367,
+          "blockNumber": 370
+        },
+        {
+          "action": "processShort",
+          "transactionHash": "0x9175c94e7f6a33ae32d1b078e8cfd8dbcdf553f17940ac5a04640ccba7f1eab7",
+          "nonce": 368,
+          "blockNumber": 371
+        },
+        {
+          "action": "processMonth",
+          "transactionHash": "0x1d044816edcc1bbcd4f8b6949926e7b51e23418b48bb865c28ab66c3cca26356",
+          "nonce": 369,
+          "blockNumber": 372
+        },
+        {
+          "action": "processShort",
+          "transactionHash": "0x692284c2ba5a0a594a133aa096f096975fdb97e09e7f155c3420b5fbc5b24908",
+          "nonce": 370,
+          "blockNumber": 373
+        },
+        {
+          "action": "processMonth",
+          "transactionHash": "0xe5ceacff72581908ac00ad5b76e00b685f4fac8f4e8e5d13eb017c1094004837",
+          "nonce": 371,
+          "blockNumber": 374
+        }
+      ],
+      "scheduler": {
+        "status": "waiting",
+        "results": {
+          "SHORT": {
+            "status": "waiting",
+            "reason": "executionBudget",
+            "budget": {
+              "reason": "transactionLimit"
+            }
+          },
+          "MONTHLY": {
+            "status": "waiting",
+            "reason": "executionBudget",
+            "budget": {
+              "reason": "transactionLimit"
+            }
+          }
+        }
+      }
+    },
+    "rss": 275812352,
+    "childWallMs": 40183.6452,
+    "stage": "fresh-process",
+    "progress": {
+      "SHORT": "17",
+      "MONTHLY": "16"
+    }
+  },
+  "idle": {
+    "ms": 991.3750999999465,
+    "counts": {
+      "call": 47,
+      "getTransaction": 0,
+      "getLogs": 0,
+      "getCode": 3,
+      "getBlock": 5
+    },
+    "writes": {},
+    "result": {
+      "status": "waiting",
+      "steps": [],
+      "scheduler": {
+        "status": "waiting",
+        "results": {
+          "SHORT": {
+            "status": "waiting",
+            "reason": "obligationsOnly"
+          },
+          "MONTHLY": {
+            "status": "waiting",
+            "reason": "obligationsOnly"
+          }
+        }
+      }
+    },
+    "rss": 2932252672
+  },
+  "restore": [
+    {
+      "ms": 27333.74650000001,
+      "counts": {
+        "call": 469,
+        "getTransaction": 314,
+        "getLogs": 2,
+        "getCode": 16,
+        "getBlock": 9
+      },
+      "writes": {
+        "automation.json.scheduler": 2
+      },
+      "result": {
+        "status": "waiting",
+        "steps": [],
+        "scheduler": {
+          "status": "waiting",
+          "results": {
+            "SHORT": {
+              "status": "terminal",
+              "drawId": "0x4b0e8663ef33353769c621169da239e6bb468161410e41f16390dab3826a890d",
+              "resultHash": "0x7f671dabcf0c2b1acd16d24f1f7a714ade7b1e181929685701f02111e8406409"
+            },
+            "MONTHLY": {
+              "status": "terminal",
+              "drawId": "0xb9c81ec6106f16bd0b494973564eb99f1f1b56177dbeb44f73029dbc77a8b4df",
+              "winner": "0x214b9cb0240e494dc83f18916e9a232d39531d6e",
+              "resultHash": "0xef4199c208415b49eabe6a9d5d570d7d38d881be2f19358056381ee21b96d29b",
+              "admittedCount": "10000",
+              "totalWeight": "2952739208503599807563275599105598018269000"
+            }
+          }
+        }
+      },
+      "rss": 3020193792
+    },
+    {
+      "ms": 1055.9010000000708,
+      "counts": {
+        "call": 47,
+        "getTransaction": 0,
+        "getLogs": 0,
+        "getCode": 3,
+        "getBlock": 5
+      },
+      "writes": {},
+      "result": {
+        "status": "waiting",
+        "steps": [],
+        "scheduler": {
+          "status": "waiting",
+          "results": {
+            "SHORT": {
+              "status": "waiting",
+              "reason": "obligationsOnly"
+            },
+            "MONTHLY": {
+              "status": "waiting",
+              "reason": "obligationsOnly"
+            }
+          }
+        }
+      },
+      "rss": 3079536640
+    }
+  ],
+  "resultHashes": {
+    "short": "0x7f671dabcf0c2b1acd16d24f1f7a714ade7b1e181929685701f02111e8406409",
+    "monthly": "0xef4199c208415b49eabe6a9d5d570d7d38d881be2f19358056381ee21b96d29b"
+  },
+  "payouts": [
+    {
+      "wallet": "0xf91521486400baec3dd7b1c4d2a4168c254d4bc7",
+      "amount": "37",
+      "balance": "37"
+    },
+    {
+      "wallet": "0xf894cc135c67770d271d56bc6b4a41e00197b773",
+      "amount": "259",
+      "balance": "259"
+    },
+    {
+      "wallet": "0x5f762695c4b7a1070fb418695cfc6fbe598991a9",
+      "amount": "111",
+      "balance": "111"
+    },
+    {
+      "wallet": "0x8298e858f662efde8f486c2ec9c9af76342f4ede",
+      "amount": "185",
+      "balance": "185"
+    },
+    {
+      "wallet": "0xb7aa47d196e54ae3de062db1ca3798c917a90dc7",
+      "amount": "148",
+      "balance": "148"
+    },
+    {
+      "wallet": "0x77fd519fb1427a3c8098b32683d86ddb37cd7033",
+      "amount": "74",
+      "balance": "74"
+    },
+    {
+      "wallet": "0x97865e17a300348cf19b3b7aae6067a8a461f992",
+      "amount": "37",
+      "balance": "37"
+    },
+    {
+      "wallet": "0xcfb3a5bf520b8ae8a4c7e939fccb31e9af343fb0",
+      "amount": "74",
+      "balance": "74"
+    },
+    {
+      "wallet": "0xe2e40882a46275b8b10f1d820104fac6ea743c6a",
+      "amount": "37",
+      "balance": "37"
+    },
+    {
+      "wallet": "0xa44e30205fd34a19d54bd7e655749ab9fedb9fbc",
+      "amount": "37",
+      "balance": "37"
+    },
+    {
+      "wallet": "0x214b9cb0240e494dc83f18916e9a232d39531d6e",
+      "amount": "1000",
+      "balance": "1000"
+    }
+  ],
+  "before": {
+    "balance": "2100",
+    "parts": [
+      "0",
+      "0",
+      "100",
+      "2000",
+      "0",
+      "0"
+    ]
+  },
+  "after": {
+    "balance": "101",
+    "parts": [
+      "1",
+      "100",
+      "0",
+      "0",
+      "0",
+      "0"
+    ]
+  },
+  "watchModel": {
+    "transactionLimit": 8,
+    "pollSeconds": 10,
+    "minimumPasses": 41,
+    "minimumBetweenPassSleepSeconds": 400,
+    "note": "Lower bound from send budget only, excludes deliberate pause and verification-only idle. Not measured sleep or mainnet time."
+  },
+  "checks": {
+    "smoke": "100-wallet rehearsal passed before final winner-balance assertion was added",
+    "large": "10000 final script passed, independent results and winner ERC20 balances, nonce/hash uniqueness, cold process resume and stale-file restore",
+    "fullSuite": false,
+    "command": "node scripts/benchmark-scheduler-load.cjs 10000",
+    "fixtureCorrection": "First 100-wallet run failed an incorrect harness expectation that omitted claims from send counts; not a product failure"
+  },
+  "files": {
+    ".local/logs/scheduler-load-10000-fF6YPH/report.json": "99c9a13f9b48c7f2bc9b1d7ee2b2f9910a8d45479d7975c846fe4fc4901ddd0b",
+    ".local/logs/scheduler-load-100-8h5YGf/report.json": "021cbd9f93cb00369c6ca25929d55b39ca61f2f52884b51c5d27a631bc222f85",
+    ".local/logs/scheduler-load-100.log": "6320caef3acd36d4cc015a5a88b3fa7ebb0a91941f6ec94110f7fa83a585b3e8",
+    ".local/logs/scheduler-load-100-b.log": "1650c14c3db84eab1b91d318e791548831eb4b903df8e8653089ce55b7a42740",
+    ".local/logs/scheduler-load-10000.log": "8803fbe0f270bac2652c75cba78f0ac105ce659fa9fb4d0196b4b6e11abcbe2e",
+    ".local/logs/verified-draw-compiled.json": "038d667c4018e6c811e8e16c69e2604077d0c34904461adaf2edb5496bd8b09f"
+  },
+  "sourceHashes": {
+    "scripts/benchmark-scheduler-load.cjs": "c0661efeeeade616e2ca410ca07b265b8f7909313b252709396a3ba1167119dc",
+    "scripts/local-promo-scheduler.cjs": "1fb6e761afc127e265c4d25ac1b52941a1afbaaa786cf56796c5c480dc45167b",
+    "scripts/local-scheduler-state.cjs": "e10021ff0c42f77946779f85fe4448fb91c5e8c7cbaa548eab58e8d4b9648b68",
+    "scripts/verified-draw-cache.cjs": "da30571e5bece551907c9d2ad91895fd0b911d63fbd3f7b4579fee001b536d79",
+    "scripts/local-short-executor.cjs": "150f17baa8529f77e7f3d1e05d48246f004b57d4775cd549e96dfda1d731073f",
+    "scripts/local-monthly-executor.cjs": "e9ea670207f2fc7c18a6a4571ed2407f8ab912b72c91dc320593b87d8a643d6c",
+    "scripts/pons-transaction-journal.cjs": "f5581d9a6605e7d035c22f16f09bb9945ed5aa156e377cb49b3dd9d98d8902bb",
+    "scripts/pons-gas-budget.cjs": "1f625fadbb9fcc7e027dfccb6aa572a596a66c6e391e39654337fe5ff8b56825"
+  }
+}

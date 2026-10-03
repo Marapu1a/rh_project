@@ -26,6 +26,7 @@
 ## Pons: модули и датированные доказательства
 
 - [Coordinator: лимиты и сохранение dataset](COORDINATOR_CAPACITY_2026-10-03.md) — ограниченный fork-прогон, storage probe и исправление повторных записей.
+- [Большой общий scheduler10k](SCHEDULER_LOAD_2026-10-03.md) — synthetic local execution, Pons journal/gas, независимые результаты и cold process/restore.
 
 | Документ | Назначение |
 |---|---|
