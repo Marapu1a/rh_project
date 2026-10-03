@@ -68,6 +68,17 @@ function ordered(a,b){return a.blockNumber-b.blockNumber||a.transactionIndex-b.t
 function lex(a,b){return a<b?-1:a>b?1:0;}
 
 function replayAttempts(input,config,deliveredBlocks){
+  return replayAttemptsWith(input,config,deliveredBlocks,replayBuys);
+}
+// No caller-supplied ledger/checkpoint: this closure independently verifies BUY
+// evidence and only reuses its own proven prefix. Lifecycle always replays fully.
+function createReplayAttempts(){
+  const verifier=require('./verified-buy-replay.cjs').createVerifiedBuyReplay();
+  const replay=(input,config,blocks)=>replayAttemptsWith(input,config,blocks,verifier.replay);
+  replay.metrics=verifier.metrics;
+  return replay;
+}
+function replayAttemptsWith(input,config,deliveredBlocks,replayBuys){
   // Validate full chain/tx/receipt/log provenance and recompute BUYs ourselves.
   // No caller-supplied eligible/minted list is accepted.
   const buyLedger=replayBuys(input,deliveredBlocks);
@@ -286,4 +297,4 @@ function replayAttempts(input,config,deliveredBlocks){
     ...(epochMode?{shortRules:{currentEpoch,drainingEpoch,announced,epochs,lastTerminalAt:lastShortTime}}:{}),
     ...(monthEpochMode?{monthlyRules:{currentEpoch:currentMonthEpoch,drainingEpoch:drainingMonthEpoch,announced:announcedMonth,epochs:monthEpochs,lastTerminalAt:lastMonthlyTime}}:{})};
 }
-module.exports={replayAttempts,domainFor,snapshotFor,emptyEpochHash,emptyMonthlyEpochHash,ABI};
+module.exports={replayAttempts,createReplayAttempts,domainFor,snapshotFor,emptyEpochHash,emptyMonthlyEpochHash,ABI};

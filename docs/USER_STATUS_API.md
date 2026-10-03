@@ -42,7 +42,7 @@ CONFIG — тот же полный scheduler/indexer config. Сервер сл�
 ## Свежесть и доверие
 
 Checksum и config identity обязательны, policy должна быть admitted. Исходные blocks
-заново проходят replayAttempts; head и buyLedgerHash сверяются с сохранёнными.
+проходят независимую проверку BUY и полный lifecycle; живой reader переиспользует только собственный проверенный BUY-prefix, сверив полное evidence прежних блоков. Head и buyLedgerHash сверяются с сохранёнными. [Изменение03.10 и проверки](API_VERIFIED_REPLAY_2026-10-03.md).
 observed означает достаточно свежий успешный локальный снимок, НЕ свежую RPC-проверку
 каноничности, контрактную финальность или разрешение freeze.
 

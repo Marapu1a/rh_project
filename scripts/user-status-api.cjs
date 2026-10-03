@@ -3,11 +3,11 @@ const fs=require('node:fs'),http=require('node:http');
 const {isAddress}=require('ethers');
 const {hash}=require('./direct-buy.cjs');
 const {validIndexerChecksum}=require('./indexer-checksum.cjs');
-const {replayAttempts}=require('./attempt-lifecycle.cjs');
-function prepare(config,raw){
+const {replayAttempts,createReplayAttempts}=require('./attempt-lifecycle.cjs');
+function prepare(config,raw,replay=replayAttempts){
   const {checksum,...state}=JSON.parse(raw);
   if(!validIndexerChecksum(state,checksum)||state.configHash!==hash({kind:'persistent-buy-indexer-v1',config})||state.index?.policyStatus?.mode!=='admitted'||!config.lifecycle)throw Error('Invalid snapshot');
-  const index=state.index,ledger=replayAttempts(index.manifest,config.lifecycle,index.blocks);
+  const index=state.index,ledger=replay(index.manifest,config.lifecycle,index.blocks);
   if(ledger.head.number!==index.head||hash(ledger.buyLedger)!==index.ledgerHash)throw Error('Invalid snapshot');
  let projected=null;
  if(index.rewards){
@@ -49,7 +49,7 @@ function walletStatus({config,...query}){
 const generation=s=>[s.dev,s.ino,s.size,s.mtimeNs,s.ctimeNs].join(':');
 function createReader(input){
  const config=structuredClone(input),file=config.indexer.statePath;
- let cached=null,key=null;
+ let cached=null,key=null,attempts=createReplayAttempts();
  const metrics={loads:0,hits:0,failures:0,loadMs:0,stateBytes:0};
  function read(query){
   validate(query);
@@ -62,15 +62,15 @@ function createReader(input){
      before=fs.fstatSync(fd,{bigint:true});raw=fs.readFileSync(fd,'utf8');
      if(generation(before)!==generation(fs.fstatSync(fd,{bigint:true})))throw Error('Snapshot changed');
     }finally{fs.closeSync(fd);}
-    const next=prepare(config,raw);
+    const next=prepare(config,raw,attempts);
     if(current!==generation(before)||current!==generation(fs.statSync(file,{bigint:true})))throw Error('Snapshot replaced');
     cached=next;key=current;metrics.loads++;metrics.loadMs=performance.now()-started;metrics.stateBytes=Number(before.size);
    }else metrics.hits++;
    // Callers cannot mutate the prepared snapshot through returned objects.
    return structuredClone(render(config,cached,query));
-  }catch{cached=null;key=null;metrics.failures++;return unavailable(query.wallet);}
+  }catch{cached=null;key=null;attempts=createReplayAttempts();metrics.failures++;return unavailable(query.wallet);}
  }
- return {read,metrics:()=>({...metrics}),generation:()=>key};
+ return {read,metrics:()=>({...metrics,buyReplay:attempts.metrics()}),generation:()=>key};
 }
 // Keep history parsing/replay and the prepared view in one dedicated thread.
 // Bound outstanding requests; overload/failure is unavailable, never a stale success.

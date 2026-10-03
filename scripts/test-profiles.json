@@ -86,6 +86,7 @@
       "test/persistent-buy-indexer.test.cjs",
       "test/reward-observation.test.cjs",
       "test/user-status-cache.test.cjs",
+      "test/verified-buy-replay.test.cjs",
       "test/indexer-service.test.cjs",
       "test/public-status.test.cjs",
       "test/public-observation.test.cjs",
@@ -196,6 +197,7 @@
       "test/persistent-buy-indexer.test.cjs",
       "test/reward-observation.test.cjs",
       "test/user-status-cache.test.cjs",
+      "test/verified-buy-replay.test.cjs",
       "test/indexer-service.test.cjs",
       "test/public-status.test.cjs",
       "test/public-observation.test.cjs"
@@ -496,6 +498,7 @@
       "test/public-status.test.cjs",
       "test/public-observation.test.cjs",
       "test/user-status-cache.test.cjs",
+      "test/verified-buy-replay.test.cjs",
       "test/indexer-service.test.cjs",
       "test/pons-policy-indexer.test.cjs",
       "test/public-rpc-qualification.test.cjs",

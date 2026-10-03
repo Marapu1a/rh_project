@@ -3,6 +3,14 @@ const {fixture}=require('./fixtures/status-snapshot.cjs');
 const {createReader,walletStatus,createServer}=require('../scripts/user-status-api.cjs');
 function setup(t){const dir=fs.mkdtempSync(path.join(os.tmpdir(),'status-cache-'));t.after(()=>fs.rmSync(dir,{recursive:true,force:true}));return fixture(dir);}
 
+test('reader independently reuses evidence across publication and clears proof after inconsistent snapshot',t=>{
+ const f=setup(t),r=createReader(f.config),q={wallet:f.wallet};
+ assert.deepEqual(r.read(q),walletStatus({config:f.config,...q}));assert.equal(r.metrics().buyReplay.mode,'full');
+ f.write();assert.deepEqual(r.read(q),walletStatus({config:f.config,...q}));assert.equal(r.metrics().buyReplay.mode,'reused');
+ const original=structuredClone(f.state);f.state.index.ledgerHash='0xdead';f.write();assert.equal(r.read(q).status,'unavailable');
+ Object.assign(f.state,original);f.write();assert.deepEqual(r.read(q),walletStatus({config:f.config,...q}));assert.equal(r.metrics().buyReplay.mode,'full');
+});
+
 test('compact indexer checksum preserves API results; corrupt/unknown formats fail closed',t=>{
  const {indexerChecksum}=require('../scripts/indexer-checksum.cjs'),f=setup(t),query={wallet:f.wallet,now:Date.parse(f.state.index.observedAt)};
  const before=walletStatus({config:f.config,...query});assert.equal(before.status,'observed');

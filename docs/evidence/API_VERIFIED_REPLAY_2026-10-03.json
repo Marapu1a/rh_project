@@ -1,0 +1,317 @@
+{
+  "date": "2026-10-03T06:47:03.760Z",
+  "base": "da558c8",
+  "environment": {
+    "node": "v24.21.0",
+    "platform": "win32",
+    "cpu": "AMD Ryzen 5 5600 6-Core Processor              "
+  },
+  "scope": "before baseline da558c8 runtime, after working tree; benchmark source identical; no production deployment",
+  "sources": {
+    "scripts/verified-buy-replay.cjs": "d643c6e8ed6b5025e89ecf4669481ddeb1ef3f491281e3fdf2a4bad5ffcbe571",
+    "scripts/attempt-lifecycle.cjs": "3e1b0f5b61c1705e01e2b047691cc8e584b6010ffa7fd7e574f929f94fa761cc",
+    "scripts/user-status-api.cjs": "d8920107edef4b4b0ac44d7dca3a25683a7a980907ebd525e8e93185f955afc0",
+    "scripts/benchmark-api-refresh.cjs": "0fd74758eae36e9f6fc8ea016df8ed0ef24fba4601fb430382cdb308586982e0",
+    "scripts/benchmark-pons-admitted.cjs": "3b25487277a9c1526ecc059fe5b36cf3601339d83c73acd4fa577c0ba606681b"
+  },
+  "before": {
+    "date": "2026-10-03T06:40:12.693Z",
+    "scope": "Synthetic admitted curve, 100 wallets; same API reader across idle and append snapshots; no HTTP, public reserves or draw events",
+    "results": [
+      {
+        "size": 1000,
+        "stateBytes": 4587939,
+        "rows": [
+          {
+            "mode": "cold",
+            "elapsedMs": 592.8829999999998,
+            "metrics": {
+              "loads": 1,
+              "hits": 99,
+              "failures": 0,
+              "loadMs": 582.7161999999998,
+              "stateBytes": 4583964
+            },
+            "peakRssKiB": 192600
+          },
+          {
+            "mode": "idle-refresh",
+            "elapsedMs": 599.9705999999996,
+            "metrics": {
+              "loads": 2,
+              "hits": 198,
+              "failures": 0,
+              "loadMs": 591.3993999999993,
+              "stateBytes": 4583983
+            },
+            "peakRssKiB": 288832
+          },
+          {
+            "mode": "append-refresh",
+            "elapsedMs": 610.0005999999994,
+            "metrics": {
+              "loads": 3,
+              "hits": 297,
+              "failures": 0,
+              "loadMs": 600.7755999999999,
+              "stateBytes": 4587939
+            },
+            "peakRssKiB": 337904
+          }
+        ]
+      },
+      {
+        "size": 5000,
+        "stateBytes": 19878814,
+        "rows": [
+          {
+            "mode": "cold",
+            "elapsedMs": 2876.6371,
+            "metrics": {
+              "loads": 1,
+              "hits": 99,
+              "failures": 0,
+              "loadMs": 2862.5528999999988,
+              "stateBytes": 19874891
+            },
+            "peakRssKiB": 695620
+          },
+          {
+            "mode": "idle-refresh",
+            "elapsedMs": 3309.1421999999984,
+            "metrics": {
+              "loads": 2,
+              "hits": 198,
+              "failures": 0,
+              "loadMs": 3296.648400000002,
+              "stateBytes": 19874887
+            },
+            "peakRssKiB": 747408
+          },
+          {
+            "mode": "append-refresh",
+            "elapsedMs": 2933.1587999999974,
+            "metrics": {
+              "loads": 3,
+              "hits": 297,
+              "failures": 0,
+              "loadMs": 2920.0738999999994,
+              "stateBytes": 19878814
+            },
+            "peakRssKiB": 927348
+          }
+        ]
+      },
+      {
+        "size": 10000,
+        "stateBytes": 38989183,
+        "rows": [
+          {
+            "mode": "cold",
+            "elapsedMs": 5538.047299999998,
+            "metrics": {
+              "loads": 1,
+              "hits": 99,
+              "failures": 0,
+              "loadMs": 5522.847399999999,
+              "stateBytes": 38985222
+            },
+            "peakRssKiB": 1188428
+          },
+          {
+            "mode": "idle-refresh",
+            "elapsedMs": 5537.0611999999965,
+            "metrics": {
+              "loads": 2,
+              "hits": 198,
+              "failures": 0,
+              "loadMs": 5522.014000000003,
+              "stateBytes": 38985226
+            },
+            "peakRssKiB": 1188428
+          },
+          {
+            "mode": "append-refresh",
+            "elapsedMs": 5612.260600000001,
+            "metrics": {
+              "loads": 3,
+              "hits": 297,
+              "failures": 0,
+              "loadMs": 5597.653800000007,
+              "stateBytes": 38989183
+            },
+            "peakRssKiB": 1508700
+          }
+        ]
+      }
+    ]
+  },
+  "after": {
+    "date": "2026-10-03T06:43:16.169Z",
+    "scope": "Synthetic admitted curve, 100 wallets; same API reader across idle and append snapshots; no HTTP, public reserves or draw events",
+    "results": [
+      {
+        "size": 1000,
+        "stateBytes": 4587939,
+        "rows": [
+          {
+            "mode": "cold",
+            "elapsedMs": 739.6695,
+            "metrics": {
+              "loads": 1,
+              "hits": 99,
+              "failures": 0,
+              "loadMs": 730.1138999999994,
+              "stateBytes": 4583964,
+              "buyReplay": {
+                "mode": "full",
+                "replayedBlocks": 1000
+              }
+            },
+            "peakRssKiB": 302520
+          },
+          {
+            "mode": "idle-refresh",
+            "elapsedMs": 115.16879999999946,
+            "metrics": {
+              "loads": 2,
+              "hits": 198,
+              "failures": 0,
+              "loadMs": 106.29050000000007,
+              "stateBytes": 4583980,
+              "buyReplay": {
+                "mode": "reused",
+                "replayedBlocks": 0
+              }
+            },
+            "peakRssKiB": 311548
+          },
+          {
+            "mode": "append-refresh",
+            "elapsedMs": 199.1941999999999,
+            "metrics": {
+              "loads": 3,
+              "hits": 297,
+              "failures": 0,
+              "loadMs": 191.07830000000013,
+              "stateBytes": 4587939,
+              "buyReplay": {
+                "mode": "checkpoint",
+                "replayedBlocks": 1
+              }
+            },
+            "peakRssKiB": 317760
+          }
+        ]
+      },
+      {
+        "size": 5000,
+        "stateBytes": 19878813,
+        "rows": [
+          {
+            "mode": "cold",
+            "elapsedMs": 3069.0528000000013,
+            "metrics": {
+              "loads": 1,
+              "hits": 99,
+              "failures": 0,
+              "loadMs": 3055.187700000002,
+              "stateBytes": 19874891,
+              "buyReplay": {
+                "mode": "full",
+                "replayedBlocks": 5000
+              }
+            },
+            "peakRssKiB": 665136
+          },
+          {
+            "mode": "idle-refresh",
+            "elapsedMs": 487.85789999999906,
+            "metrics": {
+              "loads": 2,
+              "hits": 198,
+              "failures": 0,
+              "loadMs": 475.6820000000007,
+              "stateBytes": 19874888,
+              "buyReplay": {
+                "mode": "reused",
+                "replayedBlocks": 0
+              }
+            },
+            "peakRssKiB": 772536
+          },
+          {
+            "mode": "append-refresh",
+            "elapsedMs": 938.4556999999986,
+            "metrics": {
+              "loads": 3,
+              "hits": 297,
+              "failures": 0,
+              "loadMs": 925.2639999999992,
+              "stateBytes": 19878813,
+              "buyReplay": {
+                "mode": "checkpoint",
+                "replayedBlocks": 1
+              }
+            },
+            "peakRssKiB": 1033776
+          }
+        ]
+      },
+      {
+        "size": 10000,
+        "stateBytes": 38989185,
+        "rows": [
+          {
+            "mode": "cold",
+            "elapsedMs": 6286.838199999998,
+            "metrics": {
+              "loads": 1,
+              "hits": 99,
+              "failures": 0,
+              "loadMs": 6273.476799999997,
+              "stateBytes": 38985230,
+              "buyReplay": {
+                "mode": "full",
+                "replayedBlocks": 10000
+              }
+            },
+            "peakRssKiB": 1188208
+          },
+          {
+            "mode": "idle-refresh",
+            "elapsedMs": 988.0224000000017,
+            "metrics": {
+              "loads": 2,
+              "hits": 198,
+              "failures": 0,
+              "loadMs": 975.5378999999957,
+              "stateBytes": 38985225,
+              "buyReplay": {
+                "mode": "reused",
+                "replayedBlocks": 0
+              }
+            },
+            "peakRssKiB": 1188208
+          },
+          {
+            "mode": "append-refresh",
+            "elapsedMs": 1885.2690999999977,
+            "metrics": {
+              "loads": 3,
+              "hits": 297,
+              "failures": 0,
+              "loadMs": 1872.553899999999,
+              "stateBytes": 38989185,
+              "buyReplay": {
+                "mode": "checkpoint",
+                "replayedBlocks": 1
+              }
+            },
+            "peakRssKiB": 1535724
+          }
+        ]
+      }
+    ]
+  }
+}
