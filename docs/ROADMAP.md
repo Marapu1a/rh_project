@@ -110,7 +110,8 @@ funding/new-freeze обоих draw,22 signed tx, выплаты и idle без �
 Финансовые units disabled; Telegram delivery/dedup PASS, monitor timer enabled,
 штатные проверки ждут activation marker. [Пакет3A](PONS_PREFLIGHT_HANDOFF_2026-10-03.md):
 hourly off-server pull на Windows, свежий preflight/deployment fork и signing queue
-первых6 CREATE проверены. Далее конкретные подписи MetaMask, оставшиеся launch/policy/binds
+первых6 CREATE проверены. MetaMask review подтверждён владельцем, signing включён
+для этой очереди (при включении completed0/pending=null). Далее подписи, launch/policy/binds
 по реальным receipts; financial services включаются только после проверки manifest.
 
 

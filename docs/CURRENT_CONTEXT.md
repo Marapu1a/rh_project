@@ -74,8 +74,10 @@ Monitor timer enabled; его service ждёт activation marker. Financial unit
 [Предпусковой пакет3A](PONS_PREFLIGHT_HANDOFF_2026-10-03.md) завершён: hourly Windows backup pull,
 свежий preflight, deployment fork10tx и отдельная signing-queue6tx PASS.
 Учтены timestamp immutables контроллеров; constructor bytecode не менялся.
-Локальная консоль4176 в review-only; далее первые6 CREATE с MetaMask, затем launch/policy
-из реальных receipts. Никаких public отправок пока нет.
+Владелец проверил первый шаг через MetaMask; после повторного live preflight консоль4176
+перезапущена с --enable-signing для проверенных6 CREATE. На момент включения
+completed0/pending=null, публичных отправок0; далее подписи владельца и сверка receipts.
+Launch/policy готовятся отдельно из реальных receipts.
 публичный сервис ещё не включён,
 канал уведомлений проверен; штатный мониторинг ждёт активации, финансовый запуск не выполнен.
 

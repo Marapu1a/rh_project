@@ -123,3 +123,14 @@ Fork signing journal отдельный от public review journal. Старые
 Дальше: сверка владельцем конкретных первых CREATE → включение signing для этого
 плана → реальные receipts → свежая подготовка оставшихся launch/policy/bind вызовов.
 Финансовая автоматика/индексатор пока выключены; только monitor timer и Windows pull активны.
+
+## Переход к ручным подписям
+
+03.10 владелец показал успешный MetaMask review первого CREATE. Повторный live prepare
+подтвердил nonce14, completed0/pending=null и готовность первого шага. Консоль
+перезапущена с --enable-signing для package3-signing-prefix-final.json; journal тот же
+package3-signing-journal-final.json. Старый read-only процесс точно идентифицирован
+и остановлен, его lock архивирован после проверки отсутствия intent. GET/POST view
+новой сессии подтвердил allowSend=true, completed0, pending=null. Отправки остаются
+ручными через MetaMask; /intent инструментами не вызывался. Ссылка с новым ключом
+сессии передаётся владельцу отдельно, в git не хранится.
