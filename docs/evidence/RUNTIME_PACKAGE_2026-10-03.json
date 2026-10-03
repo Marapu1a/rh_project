@@ -1,0 +1,47 @@
+{
+  "date": "2026-10-03",
+  "publicExecution": false,
+  "tests": {
+    "passed": 8,
+    "failed": 0
+  },
+  "smoke": {
+    "status": "PASS",
+    "config": "single-source validated",
+    "publicExecution": false,
+    "apiStatus": "stale",
+    "rewards": 1,
+    "compileFallback": false,
+    "loadedPackages": [
+      "ethers",
+      "tslib",
+      "@noble",
+      "@adraffy",
+      "ws",
+      "aes-js"
+    ]
+  },
+  "runtimeAudit": {
+    "info": 0,
+    "low": 0,
+    "moderate": 0,
+    "high": 0,
+    "critical": 0,
+    "total": 0
+  },
+  "releaseManifestSha256": "23d6b85dba90e87ced9698e45e1c1386257b788a14737d4fcb3c55b751359eeb",
+  "artifactSha256": "038d667c4018e6c811e8e16c69e2604077d0c34904461adaf2edb5496bd8b09f",
+  "faultChecks": {
+    "missing": "PASS",
+    "corrupt": "PASS",
+    "testEnvIgnored": "PASS",
+    "allReleaseHashes": "PASS",
+    "rawLog": false
+  },
+  "limits": [
+    "No public executor",
+    "No RPC or new coordinator cycle",
+    "Saved local snapshot",
+    "All scripts shipped; only specified entrypoints checked"
+  ]
+}

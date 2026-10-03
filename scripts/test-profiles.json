@@ -129,7 +129,8 @@
       "test/verified-draw-cache.test.cjs",
       "test/pons-delay-status.test.cjs",
       "test/pons-storage-failure.test.cjs",
-      "test/wallet-reward-completeness.test.cjs"
+      "test/wallet-reward-completeness.test.cjs",
+      "test/runtime-artifact.test.cjs"
     ]
   },
   "accounting": {
@@ -579,6 +580,14 @@
       "web/site.test.cjs",
       "web/claim.test.cjs",
       "web/claim-journal.test.cjs"
+    ]
+  },
+  "runtime-package": {
+    "compile": false,
+    "files": [
+      "test/runtime-artifact.test.cjs",
+      "test/shared-index-config.test.cjs",
+      "test/test-launcher.test.cjs"
     ]
   }
 }

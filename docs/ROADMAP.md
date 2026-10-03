@@ -16,8 +16,8 @@ waiting/clear. Полного зелёного повторного baseline п�
 Подтверждённая мелкая ошибка waiting/clear исправлена:3/3 адресных tests PASS.
 Новых блокирующих ошибок учёта/выплат review не выявило. Dependency triage
 остаётся обязательным для боевой упаковки: динамический solc fallback подтверждён.
-Первый пакет подготовки фронта завершён локально; следующий — runtime-сборка
-и deployment-конфигурация. Сам перенос не начат, guards не сняты.
+Фронт и изолированная runtime-сборка завершены; следующий — публичный профиль
+исполнения и deployment-конфигурация. Сам перенос не начат, guards не сняты.
 
 Проверка перегруза перед финальным baseline завершена. [Замеры50k/100k](DRAW_CAPACITY_FOLLOWUP_2026-10-03.md), [cache исполнителей](VERIFIED_DRAW_EXECUTION_2026-10-03.md), [малый Pons coordinator и записи scheduler](COORDINATOR_CAPACITY_2026-10-03.md) завершены. [Общий scheduler10k + Pons journal/gas](SCHEDULER_LOAD_2026-10-03.md) PASS: оба draw, cold process resume, выплаты и stale-file restore. Внешний Pons loop/BUY/API под такой нагрузкой не проверен. [Паузы и лимит отправок](PONS_CADENCE_2026-10-03.md) завершены:21 адресный test, малый Pons fork, stop/resume2/8, одинаковые итоги и stale-file restore PASS. [Cold restart без publication history](PUBLICATION_HISTORY_RECOVERY_2026-10-03.md) завершён:10k в каждом draw,4 fail-closed сценария, восстановление и выплаты PASS; независимый RPC failover не реализован. [Совместный BUY/index/API/draw прогон](PONS_JOINT_REHEARSAL_2026-10-03.md) PASS через сохранённый Alchemy:396 BUY,129 участников в каждом draw,11 выплат, API и restore без повторных отправок. Исправлен только бюджет ожидания стенда; runtime не менялся. Режим задержки и адресная проверка отказов завершены; далее — сверка условий. Для этого решения повторный полный100k driver не требуется. Production не затрагиваем.
 
@@ -87,7 +87,9 @@ waiting/clear. Полного зелёного повторного baseline п�
 
 B1 [фронт](FRONT_LAUNCH_READINESS_2026-10-03.md) завершён локально:19/19 browser,
 адаптивность/ссылки/404; тексты сохранены, поправлены устаревшие факты.
-B2 следующий: runtime-сборка и единый config. Остальные обязательные части:
+B2 [упаковка и config](RUNTIME_PACKAGE_2026-10-03.md) проверены изолированно;
+публичный manifest/executor/site-actions ещё не готовы. Следующий стык — G04/G01,
+потом эксплуатация. Остальные обязательные части:
 
 1. G04/G01: production manifest, реальные роли/pins/custody/параметры и публичный
    исполнитель с собственными guards; тестовые обходы не переносить.
