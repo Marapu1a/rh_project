@@ -5,7 +5,7 @@ const {createRequire}=require('node:module'),{ethers}=require('ethers');
 function setup(){
  const address=n=>ethers.getAddress('0x'+n.toString(16).padStart(40,'0'));
  const [sender,short,monthly,vault,adapter,collector,escrow]=[1,2,3,4,5,6,7].map(address),blockHash=ethers.id('block'),instanceId=ethers.id('instance');
- const config={schema:'pons-rehearsal-automation-v1',manifest:{anchor:{number:0},quote:address(8)},lifecycle:{schema:'attempt-lifecycle-v4',source:short,monthlySource:monthly,vault},collector,escrow,vault,executor:sender,codeHashes:{},maxGasPrice:'10',nativeFloor:'0',gasLimit:'3000000',maxTransactions:2,pollSeconds:10,instanceId,deliveryJob:{adapter,short,monthly},campaignId:'1',recipients:[vault,address(9),address(10)]};
+ const config={schema:'pons-rehearsal-automation-v1',manifest:{anchor:{number:0,hash:blockHash},quote:address(8)},lifecycle:{schema:'attempt-lifecycle-v4',source:short,monthlySource:monthly,vault},collector,escrow,vault,executor:sender,codeHashes:{},maxGasPrice:'10',nativeFloor:'0',gasLimit:'3000000',maxTransactions:2,pollSeconds:10,instanceId,deliveryJob:{adapter,short,monthly},campaignId:'1',recipients:[vault,address(9),address(10)]};
  const codeHash=ethers.keccak256('0x00');for(const k of ['collector','escrow'])config.codeHashes[k]=codeHash;
  for(const k of ['vaultCodeHash','sourceCodeHash','monthlySourceCodeHash'])config.lifecycle[k]=codeHash;config.deliveryJob.adapterCodeHash=codeHash;
  let nonce=0,boundary,unknown=false,remaining=100,price=1n,reward=1n;const sent=[],orders=[],receipts=new Map(),transactions=new Map();

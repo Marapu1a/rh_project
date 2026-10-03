@@ -33,7 +33,14 @@ async function fixture(t){
  return {...f,c,options,collector};
 }
 test('public guard rehearsal drains both real frozen draws despite owner drift; restart does not repay',async t=>{
- const f=await fixture(t);await prepare(f);await sent(f.short.transferOwnership(f.other.address));
+ const f=await fixture(t),getLogs=f.provider.getLogs.bind(f.provider),payoutWindows=[];
+ const topic=f.short.interface.getEvent('AttemptsConsumed').topicHash;
+ f.provider.getLogs=async filter=>{
+  if(filter.topics?.[0]===topic){assert(BigInt(filter.toBlock)-BigInt(filter.fromBlock)<10n);payoutWindows.push([filter.fromBlock,filter.toBlock]);}
+  return getLogs(filter);
+ };
+ await rpc('hardhat_mine',['0x19']);
+ await prepare(f);await sent(f.short.transferOwnership(f.other.address));
  const nonce=await f.provider.getTransactionCount(f.owner),balance=await f.provider.getBalance(f.owner);
  await rpc('hardhat_setBalance',[f.owner,'0x0']);const low=await run(f.options,{getBeacon:beacon});
  assert.equal(low.reason,'nativeFunding',JSON.stringify(low));assert.equal(await f.provider.getTransactionCount(f.owner),nonce);
@@ -43,6 +50,7 @@ test('public guard rehearsal drains both real frozen draws despite owner drift; 
  assert.equal(r.publicSends,false);assert.equal(await f.vault.reserved(f.quote.target),0n);assert.equal(await f.vault.claimable(f.quote.target),0n);
  const after=await f.provider.getTransactionCount(f.owner),again=await run(f.options,{getBeacon:beacon});
  assert.equal(again.status,'waiting',JSON.stringify(again));assert.equal(await f.provider.getTransactionCount(f.owner),after);
+ assert(payoutWindows.length>=6,'real payout discovery crosses multiple bounded pages');
  const stored=fs.readFileSync(f.options.statePath,'utf8');assert(!stored.includes(f.options.rpcUrl));
  // Restoring an earlier chain cannot silently authorize continuation of paid jobs.
  await rpc('hardhat_reset');await assert.rejects(run(f.options,{getBeacon:beacon}),/Wrong local Robinhood fork|instance/);

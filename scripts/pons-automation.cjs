@@ -67,18 +67,7 @@ async function runPonsAutomation({provider,executor,config:c,rpcUrl,statePath,si
    async function send(method,args=[]){const price=(await provider.getFeeData()).gasPrice;return sendLocalTransaction(method,args,{type:2,maxFeePerGas:price,maxPriorityFeePerGas:0},{signal,receiptTimeoutMs});}
    async function claims(){
     state.payouts??=[];
-    const head=await provider.getBlock('latest');
-    if(state.cursor)check(same((await provider.getBlock(state.cursor.number))?.hash,state.cursor.hash),'Payout cursor reorg; explicit recovery required');
-    const from=state.cursor?state.cursor.number+1:c.manifest.anchor.number+1,to=Math.min(head.number,from+999);
-    if(from<=to){const end=await provider.getBlock(to);
-     for(const [source,kind]of [[short,0],[monthly,1]])for(const e of await source.queryFilter(source.filters.AttemptsConsumed(null,kind),from,to)){
-      check(same((await provider.getBlock(e.blockNumber))?.hash,e.blockHash),'Payout event reorg');
-      const r=kind===0?await short.shortResult(e.args.drawId):await monthly.month(e.args.drawId);check(same(r.resultHash,e.args.resultHash),'Payout result mismatch');
-      const winners=kind===0?Array.from(r.winners):[r.winner];
-      for(const winner of new Set(winners.filter(w=>w!==ethers.ZeroAddress).map(w=>w.toLowerCase())))if(!state.payouts.some(p=>same(p.draw,e.args.drawId)&&same(p.winner,winner)))state.payouts.push({draw:e.args.drawId,winner,blockNumber:e.blockNumber,blockHash:e.blockHash});
-     }
-     check(same((await provider.getBlock(to))?.hash,end.hash),'Payout scan changed');state.cursor={number:to,hash:end.hash};save(state);
-    }
+    await require('./pons-payout-scan.cjs').scanPayouts({provider,short,monthly,state,save,anchor:c.manifest.anchor,signal});
     for(const p of [...state.payouts]){
      check(same((await provider.getBlock(p.blockNumber))?.hash,p.blockHash),'Payout origin reorg');
      try{if(await vault.reward(p.draw,p.winner)>0n)await send(vault.connect(executor).claim,[p.draw,p.winner]);}

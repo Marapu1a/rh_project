@@ -57,3 +57,7 @@ vault events. [Проверки и границы](PONS_FAILURE_READINESS_2026-1
 Legacy RPC transaction evidence: scripts/transaction-chain.cjs проверяет подпись/hash/from
 при отсутствующем chainId type0/v27-28; direct-buy использует его до admission.
 [Проверки04.10](PONS_LEGACY_INDEXER_FIX_2026-10-04.md).
+
+Pons payout discovery: `scripts/pons-payout-scan.cjs` — окна10 блоков,
+проверка границ/результата, курсор после полного окна; используется pons-automation.
+[Локальная проверка и открытые RPC-пути](PONS_PAYOUT_RPC_2026-10-04.md).
