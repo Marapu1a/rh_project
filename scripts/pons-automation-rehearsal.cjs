@@ -2,6 +2,8 @@ const http=require('node:http'),fs=require('node:fs'),assert=require('node:asser
 const {runPonsAutomation}=require('./pons-automation.cjs'),{replayAttempts}=require('./attempt-lifecycle.cjs'),{scanWithRpc}=require('./replay-direct-buy.cjs');
 async function finish({out,save,provider,user,quote,cycle,manifest,rpc,buy,directory,report,invariant}){
  const {short,monthly,vault,random,lifecycle}=cycle,owner=(await user.getAddress()).toLowerCase();
+ // Joint setup has >800 blocks; bounded catch-up plus publication needs more than the small fixture's 16 passes.
+ const maxCyclePasses=process.argv.includes('--joint-load')?48:16;
  const indexed=process.argv.includes('--indexed-automation'),originalSend=provider.send.bind(provider);let finalized,liveFinality=false;
  if(indexed){provider.send=(m,p=[])=>originalSend(m,m==='eth_getBlockByNumber'&&p[0]==='finalized'?[liveFinality?'latest':finalized||'latest',...p.slice(1)]:p);}
  const server=http.createServer(async(req,res)=>{let b='';for await(const x of req)b+=x;const handle=async q=>{try{return {jsonrpc:'2.0',id:q.id,result:await rpc(q.method,q.params)};}catch(e){return {jsonrpc:'2.0',id:q.id,error:{code:-32000,message:e.message}};}};try{const q=JSON.parse(b);res.setHeader('content-type','application/json');res.end(JSON.stringify(Array.isArray(q)?await Promise.all(q.map(handle)):await handle(q)));}catch{res.writeHead(400);res.end();}});
@@ -41,7 +43,7 @@ async function finish({out,save,provider,user,quote,cycle,manifest,rpc,buy,direc
    await rpc('evm_mine');let lagged;for(let n=0;n<8;n++){lagged=await tick({skipIndex:true});if(JSON.stringify(lagged).includes('indexerBehind'))break;}assert(JSON.stringify(lagged).includes('indexerBehind'),'Expected indexerBehind wait');assert.equal(await short.pendingDatasetDraw(),ethers.ZeroHash);assert.equal(await monthly.pendingMonth(),ethers.ZeroHash);report.automation.indexerBehindVerified=true;
   }
   let shortId,monthId;
-  for(let n=0;n<16;n++){await tick();shortId=await short.pendingDatasetDraw();monthId=await monthly.pendingMonth();if(shortId!==ethers.ZeroHash&&monthId!==ethers.ZeroHash)break;}
+  for(let n=0;n<maxCyclePasses;n++){await tick();shortId=await short.pendingDatasetDraw();monthId=await monthly.pendingMonth();if(shortId!==ethers.ZeroHash&&monthId!==ethers.ZeroHash)break;}
   assert.notEqual(shortId,ethers.ZeroHash,'Short not frozen');assert.notEqual(monthId,ethers.ZeroHash,'Monthly not frozen');
   report.fundingAtFreeze=await invariant();assert(report.automation.runs.flatMap(r=>r.steps).some(s=>s.action==='pull'),'Coordinator did not collect fresh escrow');assert(report.automation.runs.flatMap(r=>r.steps).some(s=>s.action==='pay'),'Coordinator did not distribute credit');
   const restoreDrill=process.argv.includes('--restore-drill');let frozenBackup;
@@ -58,7 +60,7 @@ async function finish({out,save,provider,user,quote,cycle,manifest,rpc,buy,direc
   while(Date.now()/1000<target+2){console.log('automation: waiting fixed drand rounds');await new Promise(r=>setTimeout(r,Math.min(10000,Math.max(1,(target+2)*1000-Date.now()))));}
   const stop=new AbortController();const stopped=await tick({signal:stop.signal},{onStep:s=>{if(s.action==='prove')stop.abort();}});assert.equal(stopped.status,'stopped');
   if(process.argv.includes('--coordinator-benchmark')){report.coordinatorBenchmark=await require('./benchmark-pons-coordinator.cjs').compare({options,cycle,shortId,monthId,rpc,directory,invariant});save();}
-  for(let n=0;n<16;n++){await tick();if(await short.pendingDatasetDraw()===ethers.ZeroHash&&await monthly.pendingMonth()===ethers.ZeroHash&&await vault.claimable(quote.target)===0n)break;}
+  for(let n=0;n<maxCyclePasses;n++){await tick();if(await short.pendingDatasetDraw()===ethers.ZeroHash&&await monthly.pendingMonth()===ethers.ZeroHash&&await vault.claimable(quote.target)===0n)break;}
   assert.equal((await short.settlements(shortId)).phase,3n);assert.equal((await monthly.month(monthId)).phase,5n);assert.equal(await vault.reserved(quote.target),0n);assert.equal(await vault.claimable(quote.target),0n);
   report.after=await invariant();report.paid=report.fundingAtFreeze.balance-report.after.balance;assert(report.paid>=0n);
   report.finalReplay=await scanWithRpc(manifest,rpc,await rpc('eth_blockNumber'),lifecycle);report.finalReplay.lifecycle=lifecycle;report.finalLedger=replayAttempts(manifest,lifecycle,report.finalReplay.blocks);
@@ -68,7 +70,8 @@ async function finish({out,save,provider,user,quote,cycle,manifest,rpc,buy,direc
    assert(!report.finalLedger.buyLedger.decisions.some(d=>d.transactionHash===report.restoreDrill.nonBuyTransfer&&d.status==='ELIGIBLE'));
    const before=await invariant(),indexConfig=require('./shared-index-config.cjs').buildIndexConfigs(require('./pons-automation.cjs').schedulerConfigFor(config)).indexConfig;
    report.restoreDrill.restored=require('./rehearsal-backup.cjs').restore(frozenBackup);
-   for(let i=0;i<2;i++){const resumed=await tick();assert.equal(resumed.steps.length,0,'Restored journal sent another transaction');}
+   for(let i=0;i<(process.argv.includes('--joint-load')?48:2);i++){const resumed=await tick();assert.equal(resumed.steps.length,0,'Restored journal sent another transaction');if(i>=1&&JSON.parse(fs.readFileSync(config.indexer.statePath)).status.state==='caughtUp')break;}
+   assert.equal(JSON.parse(fs.readFileSync(config.indexer.statePath)).status.state,'caughtUp','Restored index did not catch up within rehearsal budget');
    assert.equal(await provider.getTransactionCount(owner),nonce);assert.deepEqual(await invariant(),before);
    const restored=JSON.parse(fs.readFileSync(config.indexer.statePath)),ledger=replayAttempts(restored.index.manifest,lifecycle,restored.index.blocks);
    assert.deepEqual(ledger.wallets,report.finalLedger.wallets);assert.deepEqual(ledger.draws,report.finalLedger.draws);

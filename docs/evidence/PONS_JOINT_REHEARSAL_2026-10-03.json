@@ -1,0 +1,234 @@
+{
+  "schema": "pons-joint-rehearsal-evidence-v1",
+  "date": "2026-10-03",
+  "baseRevision": "751563f",
+  "status": "PONS_INDEXED_AUTOMATION_PASSED",
+  "publicSends": false,
+  "anchor": {
+    "number": 79076335,
+    "hash": "0xe4eb53429a01b871d5e5b33b694b530d33fb114f75e044e7e13ae3d132d6d050"
+  },
+  "sourceHashesLF": {
+    "scripts/pons-joint-load.cjs": "aba959150c4479c86cf1b582e01572e2ff41fc695f9739a51cf02e949589e343",
+    "scripts/pons-automation-rehearsal.cjs": "6c556cd582a085b11ad60ef7becf486b6b54ec4f4f122f09d6cf67904d32646b",
+    "scripts/pons-collector-fork.cjs": "3b50f66c6cdcf1be8fd2c1be08a963a40368cccf028bcbb59e4355ecaa7bbb8a",
+    "scripts/pons-promo-cycle.cjs": "fa7ab4761502e894c87cad205701ccbc5ee75a6fdb25306c89319d0102286e9d",
+    "scripts/pons-automation.cjs": "c36a9209d4a1bd458d012cbae67e0a6ad164a261b590e460e2a9ef9d3ce02b42",
+    "scripts/persistent-buy-indexer.cjs": "ab3215d10d906be6faa4f5f6859a6f13694e5bfe368827710234f27f88626ec9",
+    "scripts/user-status-api.cjs": "d8920107edef4b4b0ac44d7dca3a25683a7a980907ebd525e8e93185f955afc0",
+    "scripts/attempt-lifecycle.cjs": "a6e2b46cd992d618713a06946cc1a6498727c2f0556074efa66bb2f4876b343b",
+    "scripts/direct-buy.cjs": "c591c8f2eaeb0de6c751bf7629c5e5509d7d03201f2650ce71a2c85ece7a1139"
+  },
+  "rawArtifacts": [
+    {
+      "file": ".local/logs/pons-joint-128-alchemy-b.json",
+      "sha256": "c291baf4a6cb1f2ac6c32fa3ba3fc06818b82aae156b3ea1ac7a9b21e8931254"
+    },
+    {
+      "file": ".local/logs/pons-joint-128-alchemy-b.json",
+      "sha256": "6cd13b561d03a581382a34b1a17f862c95958c7d39abf84dcbc2a74b376de732"
+    },
+    {
+      "file": ".local/logs/pons-joint-128-alchemy-b.json",
+      "sha256": "bc702b0834304bb265320f72208dd92121f70cdee1b98a48c1e3d6ceab3e3383"
+    }
+  ],
+  "joint": {
+    "status": "PASSED",
+    "wallets": 128,
+    "eligibleBuys": 396,
+    "ledgerHash": "0xd025d7e7093e61b38d959cbf77e500f584cbdc373da4699e3cdb312d04615fe9",
+    "walletMs": 1196.0346999999601,
+    "parallelHTTP": 16,
+    "stalePreservesBalances": true,
+    "unavailableIsNotZero": true,
+    "head": {
+      "number": 79077987,
+      "hash": "0xc34ea6f2e3e32072b0071754dbef2743751a3e6e0db8692ee87dc9ad8b126749"
+    }
+  },
+  "preparationMs": 262652.4269,
+  "actions": {
+    "pull": 1,
+    "pay": 3,
+    "checkpointCutoff": 2,
+    "begin": 1,
+    "beginMonth": 1,
+    "publish": 3,
+    "publishMonth": 3,
+    "seal": 1,
+    "sealMonth": 1,
+    "prove": 2,
+    "deliver": 2,
+    "processShort": 3,
+    "processMonth": 3,
+    "finishShort": 1,
+    "claim": 11,
+    "finishMonth": 1
+  },
+  "runs": 37,
+  "totals": {
+    "SHORT": {
+      "consumed": "214",
+      "open": "5"
+    },
+    "MONTHLY": {
+      "consumed": "214",
+      "open": "5"
+    }
+  },
+  "draws": [
+    {
+      "kind": "SHORT",
+      "drawId": "0x53a49a8acaa06539ffbb80b061e53fbca092491e4fcd1a48155d3ff14617f2a2",
+      "participants": 129,
+      "totalAttempts": "214",
+      "terminal": {
+        "outcome": "WINNER",
+        "resultHash": "0x7c137a5bed76ab18aaa839b0eb35cc3b9bcafb18a47c24ed49558f71ff41e9e1",
+        "source": {
+          "occurrenceId": "4663:0x304d1febc353a1d6dcbff1dbdcf607c520d64b468254e81b0d2f5d444738d83e:0x7673e713dcc44f4ecd810833a7d1b5d2720ffb2a3b4ee97307c8f464b067e56c:11",
+          "blockNumber": 79077924,
+          "blockHash": "0x304d1febc353a1d6dcbff1dbdcf607c520d64b468254e81b0d2f5d444738d83e",
+          "transactionHash": "0x7673e713dcc44f4ecd810833a7d1b5d2720ffb2a3b4ee97307c8f464b067e56c",
+          "transactionIndex": 0,
+          "logIndex": 11,
+          "emitter": "0x3ee0c608815ec5a621f330fb8899ed31fe682393"
+        }
+      }
+    },
+    {
+      "kind": "MONTHLY",
+      "drawId": "0xb98318da95a8c3e8183b0359fbafef019817ac9dc4056bd04b21878515b92409",
+      "participants": 129,
+      "totalAttempts": "214",
+      "terminal": {
+        "outcome": "WINNER",
+        "resultHash": "0x7d0bbf1c0c371bbba6079604cbb9521148fcb98daa4891a4ed886fe239358e85",
+        "source": {
+          "occurrenceId": "4663:0x8d2fa91552c1d8d6ae1ca1ab4d7bfc525d66de1432e5dfe82390d12adf8030bd:0x80734c16da06c2a7a53a71cd43be2555321d852b0ca363d4c6df9b918ed31da5:3",
+          "blockNumber": 79077983,
+          "blockHash": "0x8d2fa91552c1d8d6ae1ca1ab4d7bfc525d66de1432e5dfe82390d12adf8030bd",
+          "transactionHash": "0x80734c16da06c2a7a53a71cd43be2555321d852b0ca363d4c6df9b918ed31da5",
+          "transactionIndex": 0,
+          "logIndex": 3,
+          "emitter": "0x2e9e7412e19497b60f25d05b68717067a6b743d4"
+        }
+      }
+    }
+  ],
+  "paidRaw": "774622900",
+  "rewards": [
+    {
+      "drawId": "0x53a49a8acaa06539ffbb80b061e53fbca092491e4fcd1a48155d3ff14617f2a2",
+      "winner": "0xfabb3e9c74fe885335ce0f3ce3d913cd24aa34ca",
+      "amountRaw": "143677716",
+      "status": "paid"
+    },
+    {
+      "drawId": "0x53a49a8acaa06539ffbb80b061e53fbca092491e4fcd1a48155d3ff14617f2a2",
+      "winner": "0x3243d07f46c956e7ba85355530bbac21ec68474f",
+      "amountRaw": "20525388",
+      "status": "paid"
+    },
+    {
+      "drawId": "0x53a49a8acaa06539ffbb80b061e53fbca092491e4fcd1a48155d3ff14617f2a2",
+      "winner": "0xbe4e443b643d34ac2df96ebf5337325e3e637aae",
+      "amountRaw": "20525388",
+      "status": "paid"
+    },
+    {
+      "drawId": "0x53a49a8acaa06539ffbb80b061e53fbca092491e4fcd1a48155d3ff14617f2a2",
+      "winner": "0x098afa6731239a00ce0aff669aaefd16b7c72114",
+      "amountRaw": "20525388",
+      "status": "paid"
+    },
+    {
+      "drawId": "0x53a49a8acaa06539ffbb80b061e53fbca092491e4fcd1a48155d3ff14617f2a2",
+      "winner": "0xc4bb6fb83093f4746c9343dac34e34168cd5c2c1",
+      "amountRaw": "41050776",
+      "status": "paid"
+    },
+    {
+      "drawId": "0x53a49a8acaa06539ffbb80b061e53fbca092491e4fcd1a48155d3ff14617f2a2",
+      "winner": "0xd02aecc15a36420250b0cf2b4100b1b8677b83ff",
+      "amountRaw": "20525388",
+      "status": "paid"
+    },
+    {
+      "drawId": "0x53a49a8acaa06539ffbb80b061e53fbca092491e4fcd1a48155d3ff14617f2a2",
+      "winner": "0x01cb9be1ee19c177e5923af66d29b11c5ce0925a",
+      "amountRaw": "20525388",
+      "status": "paid"
+    },
+    {
+      "drawId": "0x53a49a8acaa06539ffbb80b061e53fbca092491e4fcd1a48155d3ff14617f2a2",
+      "winner": "0x18e817a4814121dcdf88407afe08d726fb86a767",
+      "amountRaw": "82101552",
+      "status": "paid"
+    },
+    {
+      "drawId": "0x53a49a8acaa06539ffbb80b061e53fbca092491e4fcd1a48155d3ff14617f2a2",
+      "winner": "0xc23dd9c09922186f6ce26dca76734cc39571b705",
+      "amountRaw": "20525388",
+      "status": "paid"
+    },
+    {
+      "drawId": "0x53a49a8acaa06539ffbb80b061e53fbca092491e4fcd1a48155d3ff14617f2a2",
+      "winner": "0x88e0b2f5df9e25f9ca6f3f39848a685a44c9b995",
+      "amountRaw": "20525388",
+      "status": "paid"
+    },
+    {
+      "drawId": "0xb98318da95a8c3e8183b0359fbafef019817ac9dc4056bd04b21878515b92409",
+      "winner": "0x61752cadaacd11569d5735e99b55485b584343f4",
+      "amountRaw": "364115140",
+      "status": "paid"
+    }
+  ],
+  "vaultBefore": {
+    "balance": "874622903",
+    "parts": [
+      "0",
+      "0",
+      "100000000",
+      "774622903",
+      "0",
+      "0"
+    ]
+  },
+  "vaultAfter": {
+    "balance": "100000003",
+    "parts": [
+      "3",
+      "100000000",
+      "0",
+      "0",
+      "0",
+      "0"
+    ]
+  },
+  "restore": {
+    "status": "RESTORED_WITHOUT_SENDS",
+    "nonce": 228,
+    "balances": {
+      "balance": "100000003",
+      "parts": [
+        "3",
+        "100000000",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    "draws": 2
+  },
+  "restorePasses": 5,
+  "proxyStats": {
+    "requests": 1783,
+    "retries": 0,
+    "errors": 0
+  },
+  "limits": "Local fork, real direct curve/pool routes; synthetic balances/accounts. No batch/0x/EntryPoint coverage."
+}
