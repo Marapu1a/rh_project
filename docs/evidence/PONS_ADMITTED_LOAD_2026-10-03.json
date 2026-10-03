@@ -1,0 +1,743 @@
+{
+  "date": "2026-10-03T06:36:17.626Z",
+  "base": "f0d26f0e0ee81db63c10367ec662582021a2f7f9",
+  "workingTree": "new benchmark and documentation only; runtime code unchanged",
+  "environment": {
+    "node": "v24.21.0",
+    "platform": "win32",
+    "arch": "x64",
+    "cpu": "AMD Ryzen 5 5600 6-Core Processor              "
+  },
+  "sources": {
+    "scripts/benchmark-pons-admitted.cjs": "3b25487277a9c1526ecc059fe5b36cf3601339d83c73acd4fa577c0ba606681b",
+    "scripts/persistent-buy-indexer.cjs": "e4d7cff3f464da5efad439377a8fb1737cc8fa97edeb382eb1d5229faaa2d8a2",
+    "scripts/direct-buy.cjs": "4a52f6bfc1c54a4d25f1258afb14665692c0eeab8f0735cc343674accd50a5a4",
+    "scripts/attempt-lifecycle.cjs": "c41d85b710acfbea8d76553d5be9dd561391febec44b992044fd1174923dac71",
+    "scripts/user-status-api.cjs": "53102df534780b50af91ebc44c6205afe4dbc0f4ddc19bed21707e1704506cf2",
+    "scripts/user-status-worker.cjs": "e2233847fd01d196dcf4870ad4b84591285829c02350473c86960dec3b4ed2ee",
+    "scripts/buy-policy-admission.cjs": "243dc3da72c5a2a50b28c56a44ef8f99f0cc892b7848bb8262e567f075e5c4b0",
+    "test/fixtures/pons-indexer.cjs": "5fe58387691b2f4a0318f86c944f1b9f4f6c087c1a85935884f19e504eb34198"
+  },
+  "inputs": [
+    ".local/logs/pons-admitted-load-20261003/report.json",
+    ".local/logs/pons-admitted-load-10000-20261003/report.json"
+  ],
+  "reports": [
+    {
+      "date": "2026-10-03T06:31:57.973Z",
+      "scope": "Synthetic admitted Pons curve: one BUY/block, 100 wallets; mock policy/runtime/RPC; lifecycle v1 open balances, no freezes/payouts/public reserves; fresh OS process per pass",
+      "rows": [
+        {
+          "size": 100,
+          "mode": "seed",
+          "elapsedMs": 544.2698,
+          "consumerMs": 74.92589999999996,
+          "peakRssKiB": 103244,
+          "stateBytes": 980594,
+          "rpc": {
+            "eth_chainId": 3,
+            "eth_getBlockByNumber": 111,
+            "eth_getCode": 602,
+            "eth_call": 709,
+            "eth_getLogs": 1,
+            "eth_getTransactionReceipt": 100
+          },
+          "metrics": {
+            "lagBlocks": 0,
+            "historyBlocks": 100,
+            "scannedBlocks": 100,
+            "replayedBlocks": 100,
+            "replayMode": "full",
+            "scanMs": 305.8297,
+            "replayMs": 86.6275,
+            "rewardMs": 1.631900000000087,
+            "beforeSaveMs": 402.0322,
+            "saveMs": 141.84090000000003,
+            "totalMs": 543.8795,
+            "stateBytes": 980594
+          },
+          "ledgerHash": "0xc53b593d2fd7a4b0d60483f94be5fe10686da690810db91c37b2749d3db2beff"
+        },
+        {
+          "size": 100,
+          "mode": "idle",
+          "elapsedMs": 114.27940000000001,
+          "consumerMs": 86.15160000000003,
+          "peakRssKiB": 95604,
+          "stateBytes": 980625,
+          "rpc": {
+            "eth_chainId": 2,
+            "eth_getBlockByNumber": 9,
+            "eth_getCode": 1,
+            "eth_call": 9,
+            "eth_getLogs": 1
+          },
+          "metrics": {
+            "lagBlocks": 0,
+            "historyBlocks": 100,
+            "scannedBlocks": 0,
+            "replayedBlocks": 0,
+            "replayMode": "reused",
+            "scanMs": 0.009500000000002728,
+            "replayMs": 0.1606000000000165,
+            "rewardMs": 0.4825000000000159,
+            "beforeSaveMs": 19.40119999999999,
+            "saveMs": 94.41239999999999,
+            "totalMs": 113.81880000000001,
+            "stateBytes": 980625
+          },
+          "ledgerHash": "0xc53b593d2fd7a4b0d60483f94be5fe10686da690810db91c37b2749d3db2beff"
+        },
+        {
+          "size": 100,
+          "mode": "append",
+          "elapsedMs": 116.6113,
+          "consumerMs": 83.07650000000001,
+          "peakRssKiB": 101824,
+          "stateBytes": 990363,
+          "rpc": {
+            "eth_chainId": 3,
+            "eth_getBlockByNumber": 13,
+            "eth_getCode": 8,
+            "eth_call": 16,
+            "eth_getLogs": 1,
+            "eth_getTransactionReceipt": 1
+          },
+          "metrics": {
+            "lagBlocks": 0,
+            "historyBlocks": 101,
+            "scannedBlocks": 1,
+            "replayedBlocks": 1,
+            "replayMode": "checkpoint",
+            "scanMs": 5.2975999999999885,
+            "replayMs": 20.5317,
+            "rewardMs": 1.6156000000000006,
+            "beforeSaveMs": 47.355199999999996,
+            "saveMs": 68.78640000000001,
+            "totalMs": 116.14690000000002,
+            "stateBytes": 990363
+          },
+          "ledgerHash": "0x189ec5f06c963ac981663db1de50c1fdf4a4ba61dfb2b606196284f297c4c805"
+        },
+        {
+          "size": 100,
+          "mode": "restart",
+          "elapsedMs": 339.8108,
+          "consumerMs": 85.78219999999999,
+          "peakRssKiB": 96632,
+          "stateBytes": 990373,
+          "rpc": {
+            "eth_chainId": 2,
+            "eth_getBlockByNumber": 9,
+            "eth_getCode": 1,
+            "eth_call": 9,
+            "eth_getLogs": 1
+          },
+          "metrics": {
+            "lagBlocks": 0,
+            "historyBlocks": 101,
+            "scannedBlocks": 0,
+            "replayedBlocks": 0,
+            "replayMode": "reused",
+            "scanMs": 0.009500000000002728,
+            "replayMs": 0.15720000000001733,
+            "rewardMs": 0.4649000000000001,
+            "beforeSaveMs": 20.376299999999986,
+            "saveMs": 319.0106,
+            "totalMs": 339.3912,
+            "stateBytes": 990373
+          },
+          "ledgerHash": "0x189ec5f06c963ac981663db1de50c1fdf4a4ba61dfb2b606196284f297c4c805"
+        },
+        {
+          "size": 100,
+          "mode": "api",
+          "elapsedMs": 372.0622,
+          "consumerMs": 65.40949999999998,
+          "peakRssKiB": 123048,
+          "stateBytes": 990373,
+          "rpc": {
+            "eth_getBlockByNumber": 1
+          },
+          "ledgerHash": "0x189ec5f06c963ac981663db1de50c1fdf4a4ba61dfb2b606196284f297c4c805",
+          "api": {
+            "coldAndWalletsMs": 100.74870000000004,
+            "warmP95Ms": 0.06779999999997699,
+            "parallel32Ms": 212.67330000000004,
+            "cache": {
+              "loads": 1,
+              "hits": 1099,
+              "failures": 0,
+              "loadMs": 93.5248,
+              "stateBytes": 990373
+            }
+          }
+        },
+        {
+          "size": 100,
+          "mode": "restore",
+          "elapsedMs": 102.7114,
+          "consumerMs": 85.19710000000003,
+          "peakRssKiB": 103036,
+          "stateBytes": 990371,
+          "rpc": {
+            "eth_chainId": 2,
+            "eth_getBlockByNumber": 9,
+            "eth_getCode": 1,
+            "eth_call": 9,
+            "eth_getLogs": 1
+          },
+          "metrics": {
+            "lagBlocks": 0,
+            "historyBlocks": 101,
+            "scannedBlocks": 0,
+            "replayedBlocks": 0,
+            "replayMode": "reused",
+            "scanMs": 0.011599999999987176,
+            "replayMs": 0.195699999999988,
+            "rewardMs": 0.5243999999999858,
+            "beforeSaveMs": 20.634900000000016,
+            "saveMs": 79.44250000000002,
+            "totalMs": 100.0812,
+            "stateBytes": 990371
+          },
+          "ledgerHash": "0x189ec5f06c963ac981663db1de50c1fdf4a4ba61dfb2b606196284f297c4c805"
+        },
+        {
+          "size": 1000,
+          "mode": "seed",
+          "elapsedMs": 3522.9449,
+          "consumerMs": 516.1692000000003,
+          "peakRssKiB": 257884,
+          "stateBytes": 4583963,
+          "rpc": {
+            "eth_chainId": 3,
+            "eth_getBlockByNumber": 1011,
+            "eth_getCode": 6002,
+            "eth_call": 7009,
+            "eth_getLogs": 1,
+            "eth_getTransactionReceipt": 1000
+          },
+          "metrics": {
+            "lagBlocks": 0,
+            "historyBlocks": 1000,
+            "scannedBlocks": 1000,
+            "replayedBlocks": 1000,
+            "replayMode": "full",
+            "scanMs": 2802.9332,
+            "replayMs": 537.9075000000003,
+            "rewardMs": 2.490600000000086,
+            "beforeSaveMs": 3351.7486,
+            "saveMs": 170.77429999999958,
+            "totalMs": 3522.5285,
+            "stateBytes": 4583963
+          },
+          "ledgerHash": "0xaac44156d1fd735a6dbe49ef4d19c13bc6269b10e4317923b4835e0eed302812"
+        },
+        {
+          "size": 1000,
+          "mode": "idle",
+          "elapsedMs": 262.46049999999997,
+          "consumerMs": 595.8213,
+          "peakRssKiB": 251292,
+          "stateBytes": 4583971,
+          "rpc": {
+            "eth_chainId": 2,
+            "eth_getBlockByNumber": 9,
+            "eth_getCode": 1,
+            "eth_call": 9,
+            "eth_getLogs": 1
+          },
+          "metrics": {
+            "lagBlocks": 0,
+            "historyBlocks": 1000,
+            "scannedBlocks": 0,
+            "replayedBlocks": 0,
+            "replayMode": "reused",
+            "scanMs": 0.009900000000016007,
+            "replayMs": 0.16049999999995634,
+            "rewardMs": 0.4861999999999398,
+            "beforeSaveMs": 53.7989,
+            "saveMs": 208.1794,
+            "totalMs": 261.9828,
+            "stateBytes": 4583971
+          },
+          "ledgerHash": "0xaac44156d1fd735a6dbe49ef4d19c13bc6269b10e4317923b4835e0eed302812"
+        },
+        {
+          "size": 1000,
+          "mode": "append",
+          "elapsedMs": 360.69079999999997,
+          "consumerMs": 570.5116,
+          "peakRssKiB": 245932,
+          "stateBytes": 4587940,
+          "rpc": {
+            "eth_chainId": 3,
+            "eth_getBlockByNumber": 13,
+            "eth_getCode": 8,
+            "eth_call": 16,
+            "eth_getLogs": 1,
+            "eth_getTransactionReceipt": 1
+          },
+          "metrics": {
+            "lagBlocks": 0,
+            "historyBlocks": 1001,
+            "scannedBlocks": 1,
+            "replayedBlocks": 1,
+            "replayMode": "checkpoint",
+            "scanMs": 7.1189999999999145,
+            "replayMs": 97.49149999999997,
+            "rewardMs": 2.0836000000000467,
+            "beforeSaveMs": 175.88879999999995,
+            "saveMs": 184.12149999999997,
+            "totalMs": 360.0153,
+            "stateBytes": 4587940
+          },
+          "ledgerHash": "0x90f307b7637aae546ba3ce1c127e1cee863f815cb6de570415c505f5d06b7d95"
+        },
+        {
+          "size": 1000,
+          "mode": "restart",
+          "elapsedMs": 236.98680000000002,
+          "consumerMs": 587.0768999999999,
+          "peakRssKiB": 251132,
+          "stateBytes": 4587930,
+          "rpc": {
+            "eth_chainId": 2,
+            "eth_getBlockByNumber": 9,
+            "eth_getCode": 1,
+            "eth_call": 9,
+            "eth_getLogs": 1
+          },
+          "metrics": {
+            "lagBlocks": 0,
+            "historyBlocks": 1001,
+            "scannedBlocks": 0,
+            "replayedBlocks": 0,
+            "replayMode": "reused",
+            "scanMs": 0.010200000000054388,
+            "replayMs": 0.16620000000000346,
+            "rewardMs": 0.48339999999996053,
+            "beforeSaveMs": 55.8177,
+            "saveMs": 180.67039999999997,
+            "totalMs": 236.49330000000003,
+            "stateBytes": 4587930
+          },
+          "ledgerHash": "0x90f307b7637aae546ba3ce1c127e1cee863f815cb6de570415c505f5d06b7d95"
+        },
+        {
+          "size": 1000,
+          "mode": "api",
+          "elapsedMs": 1496.5555,
+          "consumerMs": 531.1462999999999,
+          "peakRssKiB": 293768,
+          "stateBytes": 4587930,
+          "rpc": {
+            "eth_getBlockByNumber": 1
+          },
+          "ledgerHash": "0x90f307b7637aae546ba3ce1c127e1cee863f815cb6de570415c505f5d06b7d95",
+          "api": {
+            "coldAndWalletsMs": 633.7706999999999,
+            "warmP95Ms": 0.134900000000016,
+            "parallel32Ms": 764.8968,
+            "cache": {
+              "loads": 1,
+              "hits": 1099,
+              "failures": 0,
+              "loadMs": 624.0718,
+              "stateBytes": 4587930
+            }
+          }
+        },
+        {
+          "size": 1000,
+          "mode": "restore",
+          "elapsedMs": 269.57770000000005,
+          "consumerMs": 590.1060000000001,
+          "peakRssKiB": 259968,
+          "stateBytes": 4587938,
+          "rpc": {
+            "eth_chainId": 2,
+            "eth_getBlockByNumber": 9,
+            "eth_getCode": 1,
+            "eth_call": 9,
+            "eth_getLogs": 1
+          },
+          "metrics": {
+            "lagBlocks": 0,
+            "historyBlocks": 1001,
+            "scannedBlocks": 0,
+            "replayedBlocks": 0,
+            "replayMode": "reused",
+            "scanMs": 0.01850000000001728,
+            "replayMs": 0.1714999999999236,
+            "rewardMs": 0.4736000000000331,
+            "beforeSaveMs": 57.183400000000006,
+            "saveMs": 206.16150000000005,
+            "totalMs": 263.3493000000001,
+            "stateBytes": 4587938
+          },
+          "ledgerHash": "0x90f307b7637aae546ba3ce1c127e1cee863f815cb6de570415c505f5d06b7d95"
+        },
+        {
+          "size": 5000,
+          "mode": "seed",
+          "elapsedMs": 19817.3244,
+          "consumerMs": 2543.5747999999985,
+          "peakRssKiB": 640952,
+          "stateBytes": 19874890,
+          "rpc": {
+            "eth_chainId": 15,
+            "eth_getBlockByNumber": 5055,
+            "eth_getCode": 30010,
+            "eth_call": 35045,
+            "eth_getLogs": 5,
+            "eth_getTransactionReceipt": 5000
+          },
+          "metrics": {
+            "lagBlocks": 0,
+            "historyBlocks": 5000,
+            "scannedBlocks": 1000,
+            "replayedBlocks": 1000,
+            "replayMode": "checkpoint",
+            "scanMs": 2820.995500000001,
+            "replayMs": 890.4272999999994,
+            "rewardMs": 1.4605000000010477,
+            "beforeSaveMs": 3884.518500000002,
+            "saveMs": 340.7688999999991,
+            "totalMs": 4225.2894000000015,
+            "stateBytes": 19874890
+          },
+          "ledgerHash": "0x0b6b7008d105897c3e4381ad617620022b163856ed99010b134a817f5190c7ad"
+        },
+        {
+          "size": 5000,
+          "mode": "idle",
+          "elapsedMs": 618.8246000000001,
+          "consumerMs": 2620.6623999999997,
+          "peakRssKiB": 643264,
+          "stateBytes": 19874886,
+          "rpc": {
+            "eth_chainId": 2,
+            "eth_getBlockByNumber": 9,
+            "eth_getCode": 1,
+            "eth_call": 9,
+            "eth_getLogs": 1
+          },
+          "metrics": {
+            "lagBlocks": 0,
+            "historyBlocks": 5000,
+            "scannedBlocks": 0,
+            "replayedBlocks": 0,
+            "replayMode": "reused",
+            "scanMs": 0.015100000000074942,
+            "replayMs": 0.15690000000040527,
+            "rewardMs": 0.5025000000000546,
+            "beforeSaveMs": 210.10660000000007,
+            "saveMs": 408.2066999999997,
+            "totalMs": 618.3179,
+            "stateBytes": 19874886
+          },
+          "ledgerHash": "0x0b6b7008d105897c3e4381ad617620022b163856ed99010b134a817f5190c7ad"
+        },
+        {
+          "size": 5000,
+          "mode": "append",
+          "elapsedMs": 1233.99,
+          "consumerMs": 2620.6467999999995,
+          "peakRssKiB": 773224,
+          "stateBytes": 19878814,
+          "rpc": {
+            "eth_chainId": 3,
+            "eth_getBlockByNumber": 13,
+            "eth_getCode": 8,
+            "eth_call": 16,
+            "eth_getLogs": 1,
+            "eth_getTransactionReceipt": 1
+          },
+          "metrics": {
+            "lagBlocks": 0,
+            "historyBlocks": 5001,
+            "scannedBlocks": 1,
+            "replayedBlocks": 1,
+            "replayMode": "checkpoint",
+            "scanMs": 5.345399999999927,
+            "replayMs": 487.07249999999976,
+            "rewardMs": 3.0480999999999767,
+            "beforeSaveMs": 698.2546999999997,
+            "saveMs": 535.2828,
+            "totalMs": 1233.5424999999998,
+            "stateBytes": 19878814
+          },
+          "ledgerHash": "0x8b654545013a3d97d814cee1dd73c13e6428d76a03fc4121dc63421f017ddfc8"
+        },
+        {
+          "size": 5000,
+          "mode": "restart",
+          "elapsedMs": 563.0981999999999,
+          "consumerMs": 2545.6202,
+          "peakRssKiB": 643388,
+          "stateBytes": 19878812,
+          "rpc": {
+            "eth_chainId": 2,
+            "eth_getBlockByNumber": 9,
+            "eth_getCode": 1,
+            "eth_call": 9,
+            "eth_getLogs": 1
+          },
+          "metrics": {
+            "lagBlocks": 0,
+            "historyBlocks": 5001,
+            "scannedBlocks": 0,
+            "replayedBlocks": 0,
+            "replayMode": "reused",
+            "scanMs": 0.0158000000001266,
+            "replayMs": 0.15620000000012624,
+            "rewardMs": 0.5131000000001222,
+            "beforeSaveMs": 205.0247999999999,
+            "saveMs": 357.5932,
+            "totalMs": 562.6226999999999,
+            "stateBytes": 19878812
+          },
+          "ledgerHash": "0x8b654545013a3d97d814cee1dd73c13e6428d76a03fc4121dc63421f017ddfc8"
+        },
+        {
+          "size": 5000,
+          "mode": "api",
+          "elapsedMs": 5932.4236,
+          "consumerMs": 2528.5209999999997,
+          "peakRssKiB": 809904,
+          "stateBytes": 19878812,
+          "rpc": {
+            "eth_getBlockByNumber": 1
+          },
+          "ledgerHash": "0x8b654545013a3d97d814cee1dd73c13e6428d76a03fc4121dc63421f017ddfc8",
+          "api": {
+            "coldAndWalletsMs": 2846.3073999999997,
+            "warmP95Ms": 0.1566000000002532,
+            "parallel32Ms": 2970.0448000000006,
+            "cache": {
+              "loads": 1,
+              "hits": 1099,
+              "failures": 0,
+              "loadMs": 2832.1727,
+              "stateBytes": 19878812
+            }
+          }
+        },
+        {
+          "size": 5000,
+          "mode": "restore",
+          "elapsedMs": 659.0683999999999,
+          "consumerMs": 2717.9789,
+          "peakRssKiB": 680312,
+          "stateBytes": 19878815,
+          "rpc": {
+            "eth_chainId": 2,
+            "eth_getBlockByNumber": 9,
+            "eth_getCode": 1,
+            "eth_call": 9,
+            "eth_getLogs": 1
+          },
+          "metrics": {
+            "lagBlocks": 0,
+            "historyBlocks": 5001,
+            "scannedBlocks": 0,
+            "replayedBlocks": 0,
+            "replayMode": "reused",
+            "scanMs": 0.014799999999922875,
+            "replayMs": 0.15729999999985012,
+            "rewardMs": 0.5906999999997424,
+            "beforeSaveMs": 227.75469999999996,
+            "saveMs": 355.5527000000002,
+            "totalMs": 583.3119000000002,
+            "stateBytes": 19878815
+          },
+          "ledgerHash": "0x8b654545013a3d97d814cee1dd73c13e6428d76a03fc4121dc63421f017ddfc8"
+        }
+      ]
+    },
+    {
+      "date": "2026-10-03T06:33:16.383Z",
+      "scope": "Synthetic admitted Pons curve: one BUY/block, 100 wallets; mock policy/runtime/RPC; lifecycle v1 open balances, no freezes/payouts/public reserves; fresh OS process per pass",
+      "rows": [
+        {
+          "size": 10000,
+          "mode": "seed",
+          "elapsedMs": 43016.9729,
+          "consumerMs": 5087.322099999998,
+          "peakRssKiB": 1188416,
+          "stateBytes": 38985231,
+          "rpc": {
+            "eth_chainId": 30,
+            "eth_getBlockByNumber": 10110,
+            "eth_getCode": 60020,
+            "eth_call": 70090,
+            "eth_getLogs": 10,
+            "eth_getTransactionReceipt": 10000
+          },
+          "metrics": {
+            "lagBlocks": 0,
+            "historyBlocks": 10000,
+            "scannedBlocks": 1000,
+            "replayedBlocks": 1000,
+            "replayMode": "checkpoint",
+            "scanMs": 2821.3264000000054,
+            "replayMs": 1345.8320999999996,
+            "rewardMs": 2.4660000000003492,
+            "beforeSaveMs": 4519.560799999999,
+            "saveMs": 639.038999999997,
+            "totalMs": 5158.601600000002,
+            "stateBytes": 38985231
+          },
+          "ledgerHash": "0x59f5ce3098af46fd18677bf74642518371db2b09c7030d10f761c1e45e115bf8"
+        },
+        {
+          "size": 10000,
+          "mode": "idle",
+          "elapsedMs": 1000.3490999999999,
+          "consumerMs": 5186.4308,
+          "peakRssKiB": 797872,
+          "stateBytes": 38985224,
+          "rpc": {
+            "eth_chainId": 2,
+            "eth_getBlockByNumber": 9,
+            "eth_getCode": 1,
+            "eth_call": 9,
+            "eth_getLogs": 1
+          },
+          "metrics": {
+            "lagBlocks": 0,
+            "historyBlocks": 10000,
+            "scannedBlocks": 0,
+            "replayedBlocks": 0,
+            "replayMode": "reused",
+            "scanMs": 0.02690000000029613,
+            "replayMs": 0.19279999999980646,
+            "rewardMs": 0.4861000000000786,
+            "beforeSaveMs": 347.36389999999983,
+            "saveMs": 652.5039000000002,
+            "totalMs": 999.8723999999997,
+            "stateBytes": 38985224
+          },
+          "ledgerHash": "0x59f5ce3098af46fd18677bf74642518371db2b09c7030d10f761c1e45e115bf8"
+        },
+        {
+          "size": 10000,
+          "mode": "append",
+          "elapsedMs": 2118.2003000000004,
+          "consumerMs": 5115.266299999999,
+          "peakRssKiB": 825760,
+          "stateBytes": 38989183,
+          "rpc": {
+            "eth_chainId": 3,
+            "eth_getBlockByNumber": 13,
+            "eth_getCode": 8,
+            "eth_call": 16,
+            "eth_getLogs": 1,
+            "eth_getTransactionReceipt": 1
+          },
+          "metrics": {
+            "lagBlocks": 0,
+            "historyBlocks": 10001,
+            "scannedBlocks": 1,
+            "replayedBlocks": 1,
+            "replayMode": "checkpoint",
+            "scanMs": 5.264999999999873,
+            "replayMs": 964.1192000000001,
+            "rewardMs": 3.449800000000323,
+            "beforeSaveMs": 1337.4620999999997,
+            "saveMs": 780.2334000000001,
+            "totalMs": 2117.7014,
+            "stateBytes": 38989183
+          },
+          "ledgerHash": "0x25887b995a00e575a2bfbb590de003f36023762a64f263f675010ae8875c4141"
+        },
+        {
+          "size": 10000,
+          "mode": "restart",
+          "elapsedMs": 1046.6646000000005,
+          "consumerMs": 4954.428199999999,
+          "peakRssKiB": 798116,
+          "stateBytes": 38989185,
+          "rpc": {
+            "eth_chainId": 2,
+            "eth_getBlockByNumber": 9,
+            "eth_getCode": 1,
+            "eth_call": 9,
+            "eth_getLogs": 1
+          },
+          "metrics": {
+            "lagBlocks": 0,
+            "historyBlocks": 10001,
+            "scannedBlocks": 0,
+            "replayedBlocks": 0,
+            "replayMode": "reused",
+            "scanMs": 0.020799999999780994,
+            "replayMs": 0.15779999999995198,
+            "rewardMs": 0.48880000000008295,
+            "beforeSaveMs": 385.8033999999998,
+            "saveMs": 660.3817999999997,
+            "totalMs": 1046.1896000000002,
+            "stateBytes": 38989185
+          },
+          "ledgerHash": "0x25887b995a00e575a2bfbb590de003f36023762a64f263f675010ae8875c4141"
+        },
+        {
+          "size": 10000,
+          "mode": "api",
+          "elapsedMs": 11304.715400000001,
+          "consumerMs": 4932.9966,
+          "peakRssKiB": 1034876,
+          "stateBytes": 38989185,
+          "rpc": {
+            "eth_getBlockByNumber": 1
+          },
+          "ledgerHash": "0x25887b995a00e575a2bfbb590de003f36023762a64f263f675010ae8875c4141",
+          "api": {
+            "coldAndWalletsMs": 5543.7654,
+            "warmP95Ms": 0.131600000000617,
+            "parallel32Ms": 5646.131599999999,
+            "cache": {
+              "loads": 1,
+              "hits": 1099,
+              "failures": 0,
+              "loadMs": 5529.850200000001,
+              "stateBytes": 38989185
+            }
+          }
+        },
+        {
+          "size": 10000,
+          "mode": "restore",
+          "elapsedMs": 1501.5157000000004,
+          "consumerMs": 5252.412300000001,
+          "peakRssKiB": 758476,
+          "stateBytes": 38989173,
+          "rpc": {
+            "eth_chainId": 2,
+            "eth_getBlockByNumber": 9,
+            "eth_getCode": 1,
+            "eth_call": 9,
+            "eth_getLogs": 1
+          },
+          "metrics": {
+            "lagBlocks": 0,
+            "historyBlocks": 10001,
+            "scannedBlocks": 0,
+            "replayedBlocks": 0,
+            "replayMode": "reused",
+            "scanMs": 0.10209999999915453,
+            "replayMs": 0.2750999999998385,
+            "rewardMs": 0.6971999999996115,
+            "beforeSaveMs": 387.1014,
+            "saveMs": 843.3723,
+            "totalMs": 1230.4796000000001,
+            "stateBytes": 38989173
+          },
+          "ledgerHash": "0x25887b995a00e575a2bfbb590de003f36023762a64f263f675010ae8875c4141"
+        }
+      ]
+    }
+  ]
+}

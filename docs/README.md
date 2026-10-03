@@ -23,7 +23,7 @@
 | Билеты/резервы/draws | [Lifecycle](ATTEMPT_LIFECYCLE.md), [trust](INDEXER_TRUST_MODEL.md), [dual controllers](DUAL_CONTROLLER_ARCHITECTURE.md), [Short](SHORT_SETTLEMENT.md), [Monthly](MONTHLY_RULES_EPOCHS.md) |
 | RNG/finality/recovery | [Drand](DRAND_ADAPTER.md), [delivery](DRAND_DELIVERY_WORKER.md), [cutoff](CUTOFF_HISTORY.md), [recovery](RECOVERY_ADMISSION.md) |
 | Пользовательский путь | [Общий цикл с UI/API](PONS_WALLET_CYCLE.md), [Кабинет/Claim](WEBSITE_WALLET_ACTIONS.md), [Сайт](WEBSITE.md), [purchase review](PONS_PURCHASE_UI.md), [bridge](PONS_BROWSER_BRIDGE.md), [правила](USER_RULES.md), [статусы](USER_STATUS_MODEL.md) |
-| Нагрузка/длительная работа | [Замер истории](INDEXER_HISTORY_SCALING_2026-10-02.md), [checkpoint/снимок](INDEXER_CHECKPOINTS_2026-10-02.md), [Indexer service](INDEXER_SERVICE.md), [ограничения последнего аудита](PONS_AUDIT_2026-10-02.md) |
+| Нагрузка/длительная работа | [Admitted curve/API/restore](PONS_ADMITTED_LOAD_2026-10-03.md), [Замер истории](INDEXER_HISTORY_SCALING_2026-10-02.md), [checkpoint/снимок](INDEXER_CHECKPOINTS_2026-10-02.md), [Indexer service](INDEXER_SERVICE.md), [ограничения последнего аудита](PONS_AUDIT_2026-10-02.md) |
 
 ## Остальные материалы
 

@@ -7,14 +7,14 @@ Gxx — идентификаторы прежней gap-карты, Rxx — ви
 ## Этап A — правильная работа в тестовом окружении (текущий)
 
 03.10 подготовлен [новый запрос GPT](GPT_REVIEW_REQUEST.md) по накопленному diff.
-Ответ разобран: [исправления Claim](CLAIM_REVIEW_FIXES_2026-10-03.md). Следующий пакет — A4: нагрузка на принятой истории и восстановление, затем A5.
+Ответ разобран: [исправления Claim](CLAIM_REVIEW_FIXES_2026-10-03.md). A4: [admitted curve load/локальный restore](PONS_ADMITTED_LOAD_2026-10-03.md) проверены до10000 покупок. Далее — стоимость обновления потребителей/хранения, смешанный lifecycle и полный restore; затем A5.
 
 | Порядок | Пакет | Статус и результат |
 |---|---|---|
 | A1 / G02 | Общий indexer/API/coordinator config | Выполнен локально; [описание](SHARED_INDEX_CONFIG.md) |
 | A2 / G10 | Каналы покупки Pons | В работе: direct/self-batch, прямой 0x и узкий EntryPoint USDG pool BUY проверены до index/API; дальше wallet UX/статусы |
 | A3 / G03 | Полный пользовательский путь | [Кабинет/Claim](WEBSITE_WALLET_ACTIONS.md), ручной MetaMask и [общий цикл с UI/API](PONS_WALLET_CYCLE.md) проверены; ручная смена аккаунта и общий RC baseline отдельно |
-| A4 / G05–G07 | Реальные условия и длительная работа | Выполнены [bounded cache](INDEXER_HISTORY_SCALING_2026-10-02.md) и [replay checkpoints / формат снимка](INDEXER_CHECKPOINTS_2026-10-02.md); остаются рост хранения, admitted нагрузка, timing/finality, funding, backup/restore |
+| A4 / G05–G07 | Реальные условия и длительная работа | Выполнены [bounded cache](INDEXER_HISTORY_SCALING_2026-10-02.md) и [replay checkpoints / формат снимка](INDEXER_CHECKPOINTS_2026-10-02.md); [admitted curve load](PONS_ADMITTED_LOAD_2026-10-03.md) выполнен; остаются стоимость хранения/consumer replay, mixed workload, timing/finality, funding, полный backup/restore |
 | A5 / G08, R1–R8 | Закрепить тестовый кандидат | Review кода/инвариантов, согласованные happy/fault прогоны, полный baseline конкретной ревизии, закрытые findings |
 
 Адресные проверки идут вместе с каждым пакетом. Повторный full run без нового риска

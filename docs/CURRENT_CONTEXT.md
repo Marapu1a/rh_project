@@ -66,7 +66,7 @@ Stop/resume, API outage/restart, по1 OPEN после freeze и idle без т�
 review накопленного пакета и оставшиеся A4 условия до общего RC baseline. [Матрица](PONS_CHANNEL_COVERAGE.md).
 Накопленный пакет подготовлен для [статического GPT review](GPT_REVIEW_REQUEST.md)03.10.
 Ответ получен: гонка Claim и отмена review при refresh исправлены, добавлена безопасная сверка hash. [Разбор и проверки](CLAIM_REVIEW_FIXES_2026-10-03.md). Следующий
-рабочий пакет — нагрузка и восстановление с учётом найденных замечаний.
+пакет — оптимизация обновления потребителей/хранения по [замеру admitted-нагрузки](PONS_ADMITTED_LOAD_2026-10-03.md): 24 прохода до10000 покупок, учёт/restart/локальный restore PASS; cold API5.53s, append2.12s. Смешанный lifecycle и полный disaster recovery остаются открыты.
 
 Параллельно внешнему research выполнены два подпакета A4: [ограничение cache](INDEXER_HISTORY_SCALING_2026-10-02.md)
 и [checkpoint replay / компактный снимок](INDEXER_CHECKPOINTS_2026-10-02.md). В последнем
@@ -77,7 +77,7 @@ review накопленного пакета и оставшиеся A4 усло
 
 - Нагрузка и рост истории: RPC cache ограничен, replay продолжает checkpoint по suffix.
   Полный JSON, ledger/hash/tx-set и consumer replay ещё зависят от истории. Дальше —
-  целевой бюджет, admitted/lifecycle/API замер и решение о сегментированном хранении.
+  снижение стоимости API update и записи; mixed lifecycle/маршруты и полный restore ещё не проверены нагрузкой.
 - Реальный MetaMask UI, отказ/unknown outcome, Buy/Claim и пользовательские статусы
   не заменяются успехом harness или synthetic provider.
 - Timing/finality, внешние bindings/permissions и зависимость от Pons conversion
