@@ -132,7 +132,8 @@
       "test/wallet-reward-completeness.test.cjs",
       "test/runtime-artifact.test.cjs",
       "test/ops-session.test.cjs",
-      "test/ops-backup.test.cjs"
+      "test/ops-backup.test.cjs",
+      "test/pons-public-profile.test.cjs"
     ]
   },
   "accounting": {
@@ -602,6 +603,12 @@
       "test/local-state-lock.test.cjs",
       "test/local-transaction.test.cjs",
       "test/pons-storage-failure.test.cjs"
+    ]
+  },
+  "pons-public-profile": {
+    "compile": false,
+    "files": [
+      "test/pons-public-profile.test.cjs"
     ]
   }
 }
