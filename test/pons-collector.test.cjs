@@ -122,3 +122,19 @@ test('Pons manual: failing sweep simulation does not hide ready escrow claim',as
  const plan=await inspect(p,c.target,await owner.getAddress());assert.equal(plan.actions.sweep.status,'blocked');assert.equal(plan.actions.pull.status,'ready');
  await send(c.pull());await send(venue.setState(1,false,false));const wait=await inspect(p,c.target,await owner.getAddress());assert.equal(wait.actions.sweep.reason,'graduation-incomplete');
 });
+
+test('Pons: shared operations/team recipient receives combined credit once',async()=>{
+ const {c,policy,owner,ops,quote,promo,fund,p}=await fixture();
+ const address=owner.address;policy[1][1]=address;policy[1][2]=address;
+ await send(c.bindPromo(policy));await fund(101000000);await send(c.connect(ops).pull());
+ assert.equal(await c.credit(address),10100000n);
+ assert.equal(await c.credit(promo.target),90900000n);
+ const plan=await inspect(p,c.target,ops.address);
+ assert.equal(plan.payouts.filter(x=>x.recipient.toLowerCase()===address.toLowerCase()).length,1);
+ const before=await quote.balanceOf(address);
+ await send(c.connect(ops).pay(address));await send(c.connect(ops).pay(address));
+ assert.equal(await quote.balanceOf(address)-before,10100000n);
+ assert.equal(await c.credit(address),0n);
+ assert.equal(await c.accounted(),90900000n);
+ await send(c.connect(ops).pay(promo.target));assert.equal(await c.accounted(),0n);
+});

@@ -1,0 +1,29 @@
+{
+  "observedAt": "2026-10-03T17:47:02.525Z",
+  "chainId": "4663",
+  "block": {
+    "number": 79272432,
+    "hash": "0xc80db113bd7decb7db2149a4978ec3f417c8ab10e92badc1761de645c594beff"
+  },
+  "addresses": {
+    "factory": "0x7eD598BcEf8bd9Edd8C97A195C6d13f40801EC7e",
+    "escrow": "0xd3AFEB2a57f70eF218Aa82451c51B2fb0416Ac9e",
+    "hook": "0xE5e702641Ea86F4ae6cC3cDaeD2B886f976Be044",
+    "quote": "0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168"
+  },
+  "hashes": {
+    "factory": "0x89a27da6f703e0a7cdd4f233e7cb57604ff75b164530962d3ff7cf8483a67d84",
+    "escrow": "0xf25f75cfbc1637ba068dc34f69098fa4e8a80f8ee8fe7bf7820594e0b3fed2f1",
+    "hook": "0xc21b1e6c1b45403e81a581f22ed6d9c747997af1cfdac1b1dc9f4b1d346a10db",
+    "quote": "0x864cc9ad53b338b82da1f7cab85ab0b3d5c8861acb422b6fec63cf36234f36a6"
+  },
+  "launchFeeWei": "500000000000000",
+  "creatorCanLaunch": true,
+  "quoteApproved": true,
+  "finalized": {
+    "number": 79263955,
+    "hash": "0x8df6fc1b664fa08a476d145666aef5f4fad7c8a427327ae80c9b539da218da90",
+    "lagSeconds": 855
+  },
+  "publicSends": false
+}

@@ -61,7 +61,10 @@ cold restart без повторных отправок;25 уникальных 
 Исправлен порядок budget/admission; тестовая finality явно отделена от production.
 [Подготовка deployment](PONS_DEPLOYMENT_PREPARATION.md): принятые данные и порядок
 собраны; [executor создан, off-server recovery проверен](PONS_EXECUTOR_CUSTODY.md).
-Роли согласованы; далее квалификация collector и точный план контрактов. Public deployment ещё не выполнен.
+[Collector/deployment review](PONS_COLLECTOR_DEPLOYMENT_REVIEW.md):10/10 tests,
+разделены policy/dataset publisher, порядок зависимостей и свежий RPC snapshot.
+Далее source/proxy qualification и точные initcode/params с симуляцией;
+подписываемый план пока не готов. Public deployment не выполнен.
 публичный сервис ещё не включён,
 внешние уведомления не подключены, финансовый запуск не выполнен.
 
