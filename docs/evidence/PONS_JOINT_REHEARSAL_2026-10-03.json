@@ -22,15 +22,18 @@
   "rawArtifacts": [
     {
       "file": ".local/logs/pons-joint-128-alchemy-b.json",
-      "sha256": "c291baf4a6cb1f2ac6c32fa3ba3fc06818b82aae156b3ea1ac7a9b21e8931254"
+      "sha256": "c291baf4a6cb1f2ac6c32fa3ba3fc06818b82aae156b3ea1ac7a9b21e8931254",
+      "description": "Final successful rehearsal report"
     },
     {
-      "file": ".local/logs/pons-joint-128-alchemy-b.json",
-      "sha256": "6cd13b561d03a581382a34b1a17f862c95958c7d39abf84dcbc2a74b376de732"
+      "file": ".local/logs/pons-joint-128-alchemy-b.log",
+      "sha256": "6cd13b561d03a581382a34b1a17f862c95958c7d39abf84dcbc2a74b376de732",
+      "description": "Console log of final successful rehearsal"
     },
     {
-      "file": ".local/logs/pons-joint-128-alchemy-b.json",
-      "sha256": "bc702b0834304bb265320f72208dd92121f70cdee1b98a48c1e3d6ceab3e3383"
+      "file": ".local/logs/pons-joint-128-alchemy.json",
+      "sha256": "bc702b0834304bb265320f72208dd92121f70cdee1b98a48c1e3d6ceab3e3383",
+      "description": "First Alchemy attempt: harness pass budget exhausted"
     }
   ],
   "joint": {
