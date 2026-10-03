@@ -1,5 +1,8 @@
 # Pons: подготовка боевого deployment
 
+Актуализация: [единый deployment-пакет](PONS_DEPLOYMENT_PACKAGE_2026-10-03.md) завершил
+USDG pin и симуляцию; прежний порядок ниже заменён — controllers/vault теперь до launch.
+
 Статус03.10.2026: подготовка, не executable manifest и не разрешение отправок.
 Основа:18eee32 и [release-репетиция](PONS_RELEASE_REHEARSAL_2026-10-03.md).
 

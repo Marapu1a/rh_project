@@ -103,10 +103,10 @@ funding/new-freeze обоих draw,22 signed tx, выплаты и idle без �
 собраны; [executor создан, off-server recovery проверен](PONS_EXECUTOR_CUSTODY.md).
 [Collector/deployment review](PONS_COLLECTOR_DEPLOYMENT_REVIEW.md):10/10 tests,
 разделены policy/dataset publisher, порядок зависимостей и свежий RPC snapshot.
-[Внешние зависимости проверены](PONS_EXTERNAL_DEPENDENCIES.md): runtime Pons прежний,
-source gaps остаются; найден незакреплённый USDG implementation. Следующий patch —
-implementation pin в public admission, затем точные initcode/params с симуляцией;
-подписываемый план пока не готов. Public deployment не выполнен.
+[Первый deployment-пакет](PONS_DEPLOYMENT_PACKAGE_2026-10-03.md): USDG pin закрыт,
+27 tests и10tx fork PASS, early BUY сохранён. Далее пакет эксплуатации/metadata,
+ответ по внешним source gaps и актуализация nonce/anchors перед signing.
+
 
 1. G04/G01: production manifest, реальные роли/pins/custody/параметры и публичный
    исполнитель с собственными guards; тестовые обходы не переносить.

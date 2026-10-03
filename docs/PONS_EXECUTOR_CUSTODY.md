@@ -5,7 +5,8 @@
 - Executor: `0x7170c2d8Abd99C471B89ffcAaC765d5aD94D1Bf3`.
 - Governor / BUY policy publisher / operations5% / team5%: согласованный личный
   `0x098afA6731239a00CE0aff669aaefD16b7C72114`.
-- Executor не назначен владельцем или publisher; deployments пока отсутствуют.
+- Executor не владелец/BUY policy publisher; в deployment-кандидате он publisher
+  списков Short/Monthly. Публичные deployments пока отсутствуют.
 - Ключ сгенерирован CSPRNG на сервере, без mnemonic; encrypted JSON keystore.
 - Сервер: `/etc/qianqi/executor-custody`, root0700; executor.json/password.txt/public.json root0600.
   Пароль пока root-only файл; подключение через systemd credentials — следующий

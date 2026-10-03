@@ -46,3 +46,16 @@ test('dependency inventory rejects wrong chain and changing snapshot',async()=>{
  await assert.rejects(inspect({getNetwork:async()=>({chainId:1n})},{addresses:{}}),/Wrong chain/);
  let reads=0;await assert.rejects(inspect({getNetwork:async()=>({chainId:4663n}),getBlock:async()=>({number:1,hash:String(++reads)})},{addresses:{},hashes:{}}),/Snapshot reorg/);
 });
+
+test('USDG implementation slot/runtime drift and unavailable storage refuse full and obligation admission',async()=>{
+ const {inspectObligations}=require('../scripts/pons-public-execution.cjs');
+ for(const mode of ['slot','runtime','unavailable']){
+  const f=fixture(),original=f.provider.getCode;
+  if(mode==='slot')f.provider.getStorage=async()=>ethers.ZeroHash;
+  if(mode==='runtime')f.provider.getCode=async a=>a===f.p.quoteImplementation.address?'0x6002':original(a);
+  if(mode==='unavailable')f.provider.getStorage=async()=>{throw Error('secret URL');};
+  const r=await f.run();assert.equal(r.status,'blocked');assert(r.reasons.includes('quoteImplementation'));
+  await assert.rejects(inspectObligations(f.provider,f.p,f.c));
+ }
+ const f=fixture();delete f.p.quoteImplementation;assert.throws(()=>validate(f.p,f.c),/implementation pin/);
+});

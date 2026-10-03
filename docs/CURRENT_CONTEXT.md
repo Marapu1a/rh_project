@@ -63,10 +63,12 @@ cold restart без повторных отправок;25 уникальных 
 собраны; [executor создан, off-server recovery проверен](PONS_EXECUTOR_CUSTODY.md).
 [Collector/deployment review](PONS_COLLECTOR_DEPLOYMENT_REVIEW.md):10/10 tests,
 разделены policy/dataset publisher, порядок зависимостей и свежий RPC snapshot.
-[Внешние зависимости проверены](PONS_EXTERNAL_DEPENDENCIES.md): runtime Pons прежний,
-source gaps остаются; найден незакреплённый USDG implementation. Следующий patch —
-implementation pin в public admission, затем точные initcode/params с симуляцией;
-подписываемый план пока не готов. Public deployment не выполнен.
+[Первый deployment-пакет](PONS_DEPLOYMENT_PACKAGE_2026-10-03.md) технически завершён:
+USDG implementation pin для новых задач/drain,27 адресных tests;10tx fork PASS
+с обычными конструкторами и раздельными ролями. Контроллеры теперь создаются до
+launch: ранний BUY101 даёт Short1/Monthly1. Source gaps Pons открыто описаны;
+вопрос владельцу об их принятии пока ожидает ответа. До публичного signing —
+публикация metadata и пакет эксплуатации; свежие nonce/economics/anchors обязательны.
 публичный сервис ещё не включён,
 внешние уведомления не подключены, финансовый запуск не выполнен.
 

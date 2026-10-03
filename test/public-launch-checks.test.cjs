@@ -18,7 +18,7 @@ test('missing historical state or finalized never falls back to latest',async()=
  assert.equal(no.calls.filter(([m])=>m==='eth_call').length,0);
 });
 test('launch plan names unresolved settings and cannot authorize deployment',()=>{
- const p=require('../config/robinhood-launch-plan.json'),r=inspectPlan(p);assert(r.missing.includes('contracts.token'));assert(r.missing.includes('unresolved.timingApproval'));assert.equal(r.executable,false);assert.equal(r.publicLaunchReady,false);
+ const p=structuredClone(require('../config/robinhood-launch-plan.json'));p.unresolved.timingApproval=null;const r=inspectPlan(p);assert(r.missing.includes('contracts.token'));assert(r.missing.includes('unresolved.timingApproval'));assert.equal(r.executable,false);assert.equal(r.publicLaunchReady,false);
  assert.throws(()=>inspectPlan({...p,publicExecutionEnabled:true}));
 });
 test('launch report retains deleted requirements and flags changes to accepted economics',()=>{

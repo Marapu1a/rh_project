@@ -8,10 +8,23 @@ function pins(c){return {...Object.fromEntries(Object.entries(c.manifest.codeHas
  registry:[c.manifest.registry,c.manifest.codeHashes.registry],collector:[c.collector,c.codeHashes.collector],escrow:[c.escrow,c.codeHashes.escrow],
  vault:[c.vault,c.lifecycle.vaultCodeHash],short:[c.lifecycle.source,c.lifecycle.sourceCodeHash],monthly:[c.lifecycle.monthlySource,c.lifecycle.monthlySourceCodeHash],
  adapter:[c.deliveryJob.adapter,c.deliveryJob.adapterCodeHash],buyPolicy:[c.buyPolicy.source,c.buyPolicy.sourceCodeHash]};}
+const IMPLEMENTATION_SLOT=ethers.toBeHex(BigInt(ethers.id('eip1967.proxy.implementation'))-1n,32);
+function validateQuote(profile,c){
+ const q=profile.quoteImplementation;
+ check(q?.kind==='eip1967'&&ethers.isAddress(q.address)&&q.address!==ethers.ZeroAddress&&!same(q.address,c.manifest.quote)&&ethers.isHexString(q.codeHash,32),'Explicit USDG implementation pin required');
+}
+async function inspectQuote(provider,profile,c,blockTag){
+ validateQuote(profile,c);const q=profile.quoteImplementation;
+ const stored=await provider.getStorage(c.manifest.quote,IMPLEMENTATION_SLOT,blockTag);
+ check(same(stored,ethers.zeroPadValue(q.address,32)),'USDG implementation slot mismatch');
+ const code=await provider.getCode(q.address,blockTag);
+ check(code!=='0x'&&same(ethers.keccak256(code),q.codeHash),'USDG implementation runtime mismatch');
+}
 function validate(profile,c){
  check(profile?.schema==='pons-public-profile-v1'&&profile.configHash===hash(c),'Pons profile/config mismatch');
  check(String(c.manifest.chainId)==='4663'&&String(c.deliveryJob.chainId)==='4663','Robinhood chain required');
  check(c.buyPolicy&&c.indexer&&String(c.manifest.entryThresholdRaw)==='100000000'&&c.manifest.quoteDecimals===6,'Admitted USDG policy required');
+ validateQuote(profile,c);
  const route=require('./pons-profiles.cjs').pool(c.manifest.schema);check(route,'Pons route required');route.validate(c.manifest);
  const scheduler=require('./pons-automation.cjs').schedulerConfigFor(c);check(scheduler.cutoffMode==='FINALIZED_CHECKPOINT','Finalized index required');
  require('./operational-profile.cjs').validate(profile.operational);
@@ -41,6 +54,7 @@ async function inspect(provider,profile,c,{now=Math.floor(Date.now()/1000)}={}){
   const at={blockTag:head.number},map=pins(c),address=k=>map[k][0];
   for(const [k,[a,h]] of Object.entries(map)){const code=await provider.getCode(a,head.number);record(code!=='0x'&&same(ethers.keccak256(code),h),'runtime:'+k);}
   if(reasons.length)return result();
+  try{await inspectQuote(provider,profile,c,head.number);record(true,'quoteImplementation');}catch{record(false,'quoteImplementation');return result();}
   const read=(k,method,type='address',args=[],inputs='')=>new ethers.Contract(address(k),[`function ${method}(${inputs}) view returns(${type})`],provider)[method](...args,at);
   const match=async(k,method,value,type='address')=>record(same(await read(k,method,type),value),'binding:'+k+'.'+method);
   for(const [k,method,target]of [['vault','shortController','short'],['vault','monthlyController','monthly'],['vault','projectToken','token'],['vault','quoteToken','quote'],['collector','promoVault','vault'],['collector','projectToken','token'],['collector','quoteToken','quote'],['collector','escrow','escrow'],['short','datasetVault','vault'],['monthly','monthlyVault','vault'],['short','datasetRegistry','registry'],['monthly','monthlyRegistry','registry'],['short','randomProvider','adapter'],['monthly','randomProvider','adapter'],['adapter','shortConsumer','short'],['adapter','monthlyConsumer','monthly']])await match(k,method,address(target));
@@ -67,4 +81,4 @@ async function inspect(provider,profile,c,{now=Math.floor(Date.now()/1000)}={}){
   return {...result(),observedBlock:{number:head.number,hash:head.hash}};
  }catch(e){return {...result(),status:'blocked',reasons:[...reasons,'observationUnavailable'],retryable:require('./local-rpc-watch.cjs').retryableRead(e)};}
 }
-module.exports={validate,inspect,pins};
+module.exports={validate,inspect,pins,inspectQuote,IMPLEMENTATION_SLOT};

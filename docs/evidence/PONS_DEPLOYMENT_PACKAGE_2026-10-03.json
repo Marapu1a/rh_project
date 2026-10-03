@@ -1,0 +1,855 @@
+{
+  "schema": "pons-deployment-package-evidence-v1",
+  "date": "2026-10-03",
+  "status": "EXACT_DEPLOYMENT_FORK_PASSED",
+  "publicSends": false,
+  "baseRevision": "e4d6887 plus working changes in this commit",
+  "settingsHash": "0x66430a70813b947aae0192fce015d610aaced22f75e30a95362ec6d7e4e26e9e",
+  "artifactHash": "0x0ad6d513709738e74595134ad7a7ee77ea01a48e892183fbe3c7f11c456bdccd",
+  "sourceReportSha256": "519a05466185fe4cef4cde0c5c1baefe10ac50f1df6eb54a87e43754783a9be8",
+  "forkAnchor": {
+    "number": 79288627,
+    "hash": "0x93854c6781a6ed2e6b2f3987072a21b8527277ef55aaa641f74cd031dba546e4"
+  },
+  "startNonce": 14,
+  "settings": {
+    "schema": "pons-deployment-candidate-v1",
+    "status": "simulation-only-pending-review",
+    "chainId": 4663,
+    "roles": {
+      "governor": "0x098afA6731239a00CE0aff669aaefD16b7C72114",
+      "buyPolicyPublisher": "0x098afA6731239a00CE0aff669aaefD16b7C72114",
+      "executor": "0x7170c2d8Abd99C471B89ffcAaC765d5aD94D1Bf3",
+      "operations": "0x098afA6731239a00CE0aff669aaefD16b7C72114",
+      "project": "0x098afA6731239a00CE0aff669aaefD16b7C72114"
+    },
+    "timing": {
+      "leadSeconds": "1800",
+      "maxClockLag": "30",
+      "maxClockAhead": "5",
+      "maxFinalizedLag": "1200",
+      "maxBeaconLag": "15",
+      "cutoffDelayBlocks": "1",
+      "shortInterval": "21600",
+      "monthlyInterval": "2592000"
+    },
+    "rulesNoticeSeconds": "86400",
+    "buyPolicyNoticeBlocks": 864000,
+    "maxGasPrice": "10000000000",
+    "nativeFloor": "0",
+    "campaignDurationSeconds": 31536000,
+    "quoteImplementation": {
+      "kind": "eip1967",
+      "address": "0x68184C449E1a8f34fA18d289737129FD27B66f8F",
+      "codeHash": "0x3a551ac5c744af57e68a1d1431ac403c0f516ffd7d224a75746aee11fc4f3baf"
+    },
+    "metadata": {
+      "name": "QIANQI",
+      "symbol": "QIANQI",
+      "logo": "https://qianqi.site/assets/qianqi-logo.png",
+      "description": "A token to trade. A chance to win. Eligible buys earn automatic entries into USDG prize draws. Prizes come from trading fees and donations. No staking, no extra tasks. Trading can lose money; winning is never guaranteed.",
+      "socials": [
+        "",
+        "",
+        "",
+        "https://qianqi.site",
+        ""
+      ],
+      "assets": [
+        {
+          "file": "web/assets/qianqi-logo.png",
+          "sha256": "0dda43f9203331976380a69717fd1ae106ae1c163041aae902c2bfe54181e099"
+        },
+        {
+          "file": "web/assets/qianqi-preview.png",
+          "sha256": "c6b5ad7e44270f02e93add831a235e769b7d55accfcea6644c238710bb61ab20"
+        }
+      ],
+      "publicationVerified": false
+    },
+    "publicExecutionEnabled": false,
+    "approvals": {
+      "timingAndRulesNotice": "owner-approved-2026-10-03",
+      "externalSourceLimitations": "awaiting-owner-reply",
+      "publicTransactions": false
+    },
+    "buyPolicyNoticeBasis": "Block-based technical notice for future route announcements; about 24h at observed 0.1s blocks, not a wall-clock guarantee. Controller rule notice is exactly 86400 seconds."
+  },
+  "transactions": [
+    {
+      "label": "deploy ParticipantRegistry",
+      "nonce": 14,
+      "to": null,
+      "contractAddress": "0xF55755a2433cFdDdcc3949824Fae6C951B138f20",
+      "calldataHash": "0x985d89b45644f25736e730cf4934819921a4e2688e6610e57a7e3f05bd1ace14",
+      "constructor": {
+        "name": "ParticipantRegistry",
+        "args": [],
+        "initcodeHash": "0x985d89b45644f25736e730cf4934819921a4e2688e6610e57a7e3f05bd1ace14"
+      },
+      "gasLimit": "180128",
+      "estimatedGas": "125107",
+      "gasUsed": "125107",
+      "value": "0",
+      "receipt": "0x90901f27403ab322d34e8ce13dd7d1c49455bcab0dafc4f57a03a01b8084ffc7",
+      "blockNumber": 79288629
+    },
+    {
+      "label": "deploy LocalPonsCollector",
+      "nonce": 15,
+      "to": null,
+      "contractAddress": "0x9FbAAb62DB88123fdB61217D244003a201A0CD9b",
+      "calldataHash": "0x9574b6c0b22814bd63f0bafbb777d921ed317517a3c2a8641fe65f0746a705e0",
+      "constructor": {
+        "name": "LocalPonsCollector",
+        "args": [
+          "0x098afA6731239a00CE0aff669aaefD16b7C72114",
+          "0x60e81D262db6f9F648e45Dd5A23dDaB902Ff5032",
+          "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+          "0xd3AFEB2a57f70eF218Aa82451c51B2fb0416Ac9e"
+        ],
+        "initcodeHash": "0x9574b6c0b22814bd63f0bafbb777d921ed317517a3c2a8641fe65f0746a705e0"
+      },
+      "gasLimit": "3526142",
+      "estimatedGas": "2913452",
+      "gasUsed": "2913452",
+      "value": "0",
+      "receipt": "0xe922ec58f4a1584b4f05aa0d8127ba88f4fafe146c34e1ffd942d1f799cb73fa",
+      "blockNumber": 79288630
+    },
+    {
+      "label": "deploy DrandRandomAdapter",
+      "nonce": 16,
+      "to": null,
+      "contractAddress": "0x53c0D6F3E22fa34CE59daaBC6327ad10732B14CF",
+      "calldataHash": "0xeec3639c78314979e478554db643e4ff83a396001a2b4fbe557ddfd555158436",
+      "constructor": {
+        "name": "DrandRandomAdapter",
+        "args": [
+          "0xa631f7845af257daEe0b9f6Ff744334294cE6846",
+          "0x3EE0c608815Ec5a621F330Fb8899ED31Fe682393",
+          [
+            "1800",
+            "30",
+            "5",
+            "1200",
+            "15"
+          ]
+        ],
+        "initcodeHash": "0xeec3639c78314979e478554db643e4ff83a396001a2b4fbe557ddfd555158436"
+      },
+      "gasLimit": "2976836",
+      "estimatedGas": "2455697",
+      "gasUsed": "2455697",
+      "value": "0",
+      "receipt": "0x304a20bc0efd76b1005ab027e006016b49b4b545bdcbc0ce997c377430c2d37b",
+      "blockNumber": 79288631
+    },
+    {
+      "label": "deploy RobinhoodShortController",
+      "nonce": 17,
+      "to": null,
+      "contractAddress": "0xa631f7845af257daEe0b9f6Ff744334294cE6846",
+      "calldataHash": "0x72d39a1516cb863a0a868eb07e0bd624cdf5540e87ff43671d5e89c755b84f13",
+      "constructor": {
+        "name": "RobinhoodShortController",
+        "args": [
+          {
+            "vault": "0x2E9e7412e19497b60f25D05b68717067A6B743D4",
+            "registry": "0xF55755a2433cFdDdcc3949824Fae6C951B138f20",
+            "governor": "0x098afA6731239a00CE0aff669aaefD16b7C72114",
+            "publisher": "0x7170c2d8Abd99C471B89ffcAaC765d5aD94D1Bf3",
+            "provider": "0x53c0D6F3E22fa34CE59daaBC6327ad10732B14CF",
+            "notice": "86400",
+            "cutoffDelayBlocks": 1,
+            "maxGasPrice": "10000000000",
+            "nativeFloor": "0",
+            "instance": "0x03a65950bdc8bc7394b46c0816e555e0c64e1394849fb4a992989757b404aa60",
+            "maxBudget": "115792089237316195423570985008687907853269984665640564039457584007913129639935"
+          },
+          {
+            "version": 1,
+            "pNumerator": 4,
+            "pDenominator": 5,
+            "hNumerator": 1,
+            "hDenominator": 1
+          },
+          [
+            7,
+            4,
+            2,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "5000000"
+        ],
+        "initcodeHash": "0x72d39a1516cb863a0a868eb07e0bd624cdf5540e87ff43671d5e89c755b84f13"
+      },
+      "gasLimit": "6657618",
+      "estimatedGas": "5523015",
+      "gasUsed": "5523015",
+      "value": "0",
+      "receipt": "0x899b1cd4afe635c219a5890c4519d2d6bbeaf3b4bb4c46a4c62ae880bb192cf6",
+      "blockNumber": 79288632
+    },
+    {
+      "label": "deploy RobinhoodMonthlyController",
+      "nonce": 18,
+      "to": null,
+      "contractAddress": "0x3EE0c608815Ec5a621F330Fb8899ED31Fe682393",
+      "calldataHash": "0x4c1793d90c023a0a8eac5149a5bd162a16dc3d69f0e11a852407e9c7ad10c688",
+      "constructor": {
+        "name": "RobinhoodMonthlyController",
+        "args": [
+          {
+            "vault": "0x2E9e7412e19497b60f25D05b68717067A6B743D4",
+            "registry": "0xF55755a2433cFdDdcc3949824Fae6C951B138f20",
+            "governor": "0x098afA6731239a00CE0aff669aaefD16b7C72114",
+            "publisher": "0x7170c2d8Abd99C471B89ffcAaC765d5aD94D1Bf3",
+            "provider": "0x53c0D6F3E22fa34CE59daaBC6327ad10732B14CF",
+            "notice": "86400",
+            "cutoffDelayBlocks": 1,
+            "maxGasPrice": "10000000000",
+            "nativeFloor": "0",
+            "instance": "0x162af7b2362f6af37da2fd233abac9d40f4f8612e41b0ad9ab7c1fb96f88b60a",
+            "interval": 2592000
+          },
+          {
+            "version": 2,
+            "pNumerator": 3,
+            "pDenominator": 4,
+            "hNumerator": 1,
+            "hDenominator": 1
+          }
+        ],
+        "initcodeHash": "0x4c1793d90c023a0a8eac5149a5bd162a16dc3d69f0e11a852407e9c7ad10c688"
+      },
+      "gasLimit": "5504821",
+      "estimatedGas": "4562351",
+      "gasUsed": "4562351",
+      "value": "0",
+      "receipt": "0x57e2b6ce35771d268ea2cf92fcc2c648a3a36b30cfab0bb7796c0727b6f1301d",
+      "blockNumber": 79288633
+    },
+    {
+      "label": "deploy DualControllerPromoVault",
+      "nonce": 19,
+      "to": null,
+      "contractAddress": "0x2E9e7412e19497b60f25D05b68717067A6B743D4",
+      "calldataHash": "0x17aa97947ceee075d1322176e6826f147c9e208d6faff21015a907e9ddfbef1b",
+      "constructor": {
+        "name": "DualControllerPromoVault",
+        "args": [
+          "0x60e81D262db6f9F648e45Dd5A23dDaB902Ff5032",
+          "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+          "0xa631f7845af257daEe0b9f6Ff744334294cE6846",
+          "0x3EE0c608815Ec5a621F330Fb8899ED31Fe682393",
+          100000000
+        ],
+        "initcodeHash": "0x17aa97947ceee075d1322176e6826f147c9e208d6faff21015a907e9ddfbef1b"
+      },
+      "gasLimit": "2369908",
+      "estimatedGas": "1949924",
+      "gasUsed": "1949924",
+      "value": "0",
+      "receipt": "0xbd998e37075b882f7f6ac0add1575bc7e7f8c52663f6b98f13e93b357cfedae9",
+      "blockNumber": 79288634
+    },
+    {
+      "label": "Pons launch",
+      "nonce": 20,
+      "to": "0x7eD598BcEf8bd9Edd8C97A195C6d13f40801EC7e",
+      "contractAddress": null,
+      "calldataHash": "0x3bb4b1b997e920e0a1cf951189f350166b1bd6748274a7bed6d85a8dd3cc85a3",
+      "gasLimit": "4592517",
+      "estimatedGas": "3802098",
+      "gasUsed": "3794687",
+      "value": "500000000000000",
+      "receipt": "0x5b281e4ff10b2e1b837b91b845a9ad1e62e3ad23df87d40690ace8c8104b9d23",
+      "blockNumber": 79288635
+    },
+    {
+      "label": "deploy BuyPolicySource",
+      "nonce": 21,
+      "to": null,
+      "contractAddress": "0x4C6fCD1645f15E6eCFc02E74A68ac81e3eD02738",
+      "calldataHash": "0xf59c5403eefaf97d97745aa4f6e077e59a79e4f7769d5b5b57563dc4365f367d",
+      "constructor": {
+        "name": "BuyPolicySource",
+        "args": [
+          "0x03a65950bdc8bc7394b46c0816e555e0c64e1394849fb4a992989757b404aa60",
+          "0xab0b5d9348e7c9953914c25ddb3892860e5f6d00d7c2a5e36c64ec6e09d3bc0c",
+          "0x098afA6731239a00CE0aff669aaefD16b7C72114",
+          864000,
+          [
+            "0x9eef5ca5f61d0036d7ea81221fb1836423b06561db9950e522634e50d2e9f34c"
+          ]
+        ],
+        "initcodeHash": "0xf59c5403eefaf97d97745aa4f6e077e59a79e4f7769d5b5b57563dc4365f367d"
+      },
+      "gasLimit": "504958",
+      "estimatedGas": "395799",
+      "gasUsed": "395799",
+      "value": "0",
+      "receipt": "0x56059526d2f3dd56998cd338333f45779b1d0fec9d1f8010281d21dff1ce6e32",
+      "blockNumber": 79288638
+    },
+    {
+      "label": "bindPromo",
+      "nonce": 22,
+      "to": "0x9FbAAb62DB88123fdB61217D244003a201A0CD9b",
+      "contractAddress": null,
+      "calldataHash": "0xb84028c75f9f68f4b7c63992d25172e0cc71834e2c20a9337ab3b9e1489b8068",
+      "gasLimit": "275520",
+      "estimatedGas": "204600",
+      "gasUsed": "199155",
+      "value": "0",
+      "receipt": "0xacd06b5625dfc27883a308133746aaf72d4dc061f6a4825a6df83555cb441fef",
+      "blockNumber": 79288639
+    },
+    {
+      "label": "bindVenue",
+      "nonce": 23,
+      "to": "0x9FbAAb62DB88123fdB61217D244003a201A0CD9b",
+      "contractAddress": null,
+      "calldataHash": "0xb4f22a347b981900b7d72a32d9a48dadaf48c4563beb28b26916e6412a924542",
+      "gasLimit": "291621",
+      "estimatedGas": "218018",
+      "gasUsed": "212216",
+      "value": "0",
+      "receipt": "0xbad6afd412b664124b9644fed0ddad4b17f30bb22f9306c0d866094c6399df2c",
+      "blockNumber": 79288640
+    }
+  ],
+  "addresses": {
+    "token": "0x60e81D262db6f9F648e45Dd5A23dDaB902Ff5032",
+    "curve": "0x674b74192E78B75038f18042ff8f63cb4F25722C",
+    "collector": "0x9FbAAb62DB88123fdB61217D244003a201A0CD9b",
+    "vault": "0x2E9e7412e19497b60f25D05b68717067A6B743D4",
+    "short": "0xa631f7845af257daEe0b9f6Ff744334294cE6846",
+    "monthly": "0x3EE0c608815Ec5a621F330Fb8899ED31Fe682393",
+    "adapter": "0x53c0D6F3E22fa34CE59daaBC6327ad10732B14CF",
+    "registry": "0xF55755a2433cFdDdcc3949824Fae6C951B138f20",
+    "policy": "0x4C6fCD1645f15E6eCFc02E74A68ac81e3eD02738"
+  },
+  "admission": {
+    "schema": "pons-public-admission-v1",
+    "status": "matched",
+    "profileHash": "0x47d985135d547c395b3a23bab583d33cbbfb4e01cf850eb2787ef65ea220b022",
+    "checks": [
+      {
+        "check": "chain",
+        "ok": true
+      },
+      {
+        "check": "clock",
+        "ok": true
+      },
+      {
+        "check": "finalityLag",
+        "ok": true
+      },
+      {
+        "check": "finalityBranch",
+        "ok": true
+      },
+      {
+        "check": "runtime:batchExecutor",
+        "ok": true
+      },
+      {
+        "check": "runtime:router",
+        "ok": true
+      },
+      {
+        "check": "runtime:manager",
+        "ok": true
+      },
+      {
+        "check": "runtime:permit2",
+        "ok": true
+      },
+      {
+        "check": "runtime:weth",
+        "ok": true
+      },
+      {
+        "check": "runtime:fundingRouter",
+        "ok": true
+      },
+      {
+        "check": "runtime:fundingPool",
+        "ok": true
+      },
+      {
+        "check": "runtime:allowanceHolder",
+        "ok": true
+      },
+      {
+        "check": "runtime:zeroexSettler",
+        "ok": true
+      },
+      {
+        "check": "runtime:entryPoint",
+        "ok": true
+      },
+      {
+        "check": "runtime:entryPointAccount",
+        "ok": true
+      },
+      {
+        "check": "runtime:factory",
+        "ok": true
+      },
+      {
+        "check": "runtime:hook",
+        "ok": true
+      },
+      {
+        "check": "runtime:curve",
+        "ok": true
+      },
+      {
+        "check": "runtime:token",
+        "ok": true
+      },
+      {
+        "check": "runtime:quote",
+        "ok": true
+      },
+      {
+        "check": "runtime:registry",
+        "ok": true
+      },
+      {
+        "check": "runtime:collector",
+        "ok": true
+      },
+      {
+        "check": "runtime:escrow",
+        "ok": true
+      },
+      {
+        "check": "runtime:vault",
+        "ok": true
+      },
+      {
+        "check": "runtime:short",
+        "ok": true
+      },
+      {
+        "check": "runtime:monthly",
+        "ok": true
+      },
+      {
+        "check": "runtime:adapter",
+        "ok": true
+      },
+      {
+        "check": "runtime:buyPolicy",
+        "ok": true
+      },
+      {
+        "check": "quoteImplementation",
+        "ok": true
+      },
+      {
+        "check": "binding:vault.shortController",
+        "ok": true
+      },
+      {
+        "check": "binding:vault.monthlyController",
+        "ok": true
+      },
+      {
+        "check": "binding:vault.projectToken",
+        "ok": true
+      },
+      {
+        "check": "binding:vault.quoteToken",
+        "ok": true
+      },
+      {
+        "check": "binding:collector.promoVault",
+        "ok": true
+      },
+      {
+        "check": "binding:collector.projectToken",
+        "ok": true
+      },
+      {
+        "check": "binding:collector.quoteToken",
+        "ok": true
+      },
+      {
+        "check": "binding:collector.escrow",
+        "ok": true
+      },
+      {
+        "check": "binding:short.datasetVault",
+        "ok": true
+      },
+      {
+        "check": "binding:monthly.monthlyVault",
+        "ok": true
+      },
+      {
+        "check": "binding:short.datasetRegistry",
+        "ok": true
+      },
+      {
+        "check": "binding:monthly.monthlyRegistry",
+        "ok": true
+      },
+      {
+        "check": "binding:short.randomProvider",
+        "ok": true
+      },
+      {
+        "check": "binding:monthly.randomProvider",
+        "ok": true
+      },
+      {
+        "check": "binding:adapter.shortConsumer",
+        "ok": true
+      },
+      {
+        "check": "binding:adapter.monthlyConsumer",
+        "ok": true
+      },
+      {
+        "check": "binding:short.publisher",
+        "ok": true
+      },
+      {
+        "check": "binding:short.CONTROLLER_PROFILE",
+        "ok": true
+      },
+      {
+        "check": "binding:monthly.publisher",
+        "ok": true
+      },
+      {
+        "check": "binding:monthly.CONTROLLER_PROFILE",
+        "ok": true
+      },
+      {
+        "check": "binding:short.datasetInstance",
+        "ok": true
+      },
+      {
+        "check": "binding:monthly.monthlyInstance",
+        "ok": true
+      },
+      {
+        "check": "binding:quote.decimals",
+        "ok": true
+      },
+      {
+        "check": "binding:monthly.minimumMonthlyBudget",
+        "ok": true
+      },
+      {
+        "check": "binding:adapter.PROFILE",
+        "ok": true
+      },
+      {
+        "check": "binding:adapter.CHAIN_HASH",
+        "ok": true
+      },
+      {
+        "check": "binding:adapter.leadSeconds",
+        "ok": true
+      },
+      {
+        "check": "binding:adapter.maxClockLag",
+        "ok": true
+      },
+      {
+        "check": "binding:adapter.maxClockAhead",
+        "ok": true
+      },
+      {
+        "check": "binding:adapter.maxFinalizedLag",
+        "ok": true
+      },
+      {
+        "check": "binding:adapter.maxBeaconLag",
+        "ok": true
+      },
+      {
+        "check": "binding:short.SHORT_INTERVAL",
+        "ok": true
+      },
+      {
+        "check": "binding:monthly.monthlyInterval",
+        "ok": true
+      },
+      {
+        "check": "binding:short.cutoffDelayBlocks",
+        "ok": true
+      },
+      {
+        "check": "binding:monthly.cutoffDelayBlocks",
+        "ok": true
+      },
+      {
+        "check": "binding:collector.campaignId",
+        "ok": true
+      },
+      {
+        "check": "binding:collector.factory",
+        "ok": true
+      },
+      {
+        "check": "binding:collector.curve",
+        "ok": true
+      },
+      {
+        "check": "binding:collector.hook",
+        "ok": true
+      },
+      {
+        "check": "binding:collector.poolId",
+        "ok": true
+      },
+      {
+        "check": "binding:collector.escrowCodeHash",
+        "ok": true
+      },
+      {
+        "check": "binding:collector.venueCodeHash",
+        "ok": true
+      },
+      {
+        "check": "creatorAllocation",
+        "ok": true
+      },
+      {
+        "check": "binding:buyPolicy.instanceId",
+        "ok": true
+      },
+      {
+        "check": "operational:short.owner",
+        "ok": true
+      },
+      {
+        "check": "operational:short.pendingOwner",
+        "ok": true
+      },
+      {
+        "check": "operational:monthly.owner",
+        "ok": true
+      },
+      {
+        "check": "operational:monthly.pendingOwner",
+        "ok": true
+      },
+      {
+        "check": "operational:collector.owner",
+        "ok": true
+      },
+      {
+        "check": "operational:collector.pendingOwner",
+        "ok": true
+      },
+      {
+        "check": "operational:short.shortRulesNotice",
+        "ok": true
+      },
+      {
+        "check": "operational:short.maxGasPrice",
+        "ok": true
+      },
+      {
+        "check": "operational:short.nativeFloor",
+        "ok": true
+      },
+      {
+        "check": "operational:monthly.monthlyRulesNotice",
+        "ok": true
+      },
+      {
+        "check": "operational:monthly.maxGasPrice",
+        "ok": true
+      },
+      {
+        "check": "operational:monthly.nativeFloor",
+        "ok": true
+      },
+      {
+        "check": "operational:short.maxBudget",
+        "ok": true
+      },
+      {
+        "check": "operational:vault.nextStartTarget",
+        "ok": true
+      },
+      {
+        "check": "operational:shortGenesis",
+        "ok": true
+      },
+      {
+        "check": "operational:monthlyGenesis",
+        "ok": true
+      },
+      {
+        "check": "operational:recipientRoles",
+        "ok": true
+      },
+      {
+        "check": "operational:entryAndBudget",
+        "ok": true
+      },
+      {
+        "check": "operational:buyPolicyConfig",
+        "ok": true
+      },
+      {
+        "check": "operational:buyPolicyRuntime",
+        "ok": true
+      },
+      {
+        "check": "operational:buyPolicyPublisher",
+        "ok": true
+      },
+      {
+        "check": "operational:buyPolicyNotice",
+        "ok": true
+      },
+      {
+        "check": "operational:buyPolicyGenesis",
+        "ok": true
+      },
+      {
+        "check": "operational:workerGasBounds",
+        "ok": true
+      },
+      {
+        "check": "anchor",
+        "ok": true
+      },
+      {
+        "check": "anchor",
+        "ok": true
+      },
+      {
+        "check": "stableObservation",
+        "ok": true
+      }
+    ],
+    "reasons": [],
+    "publicExecution": false,
+    "authorizationToFreeze": false,
+    "observedBlock": {
+      "number": 79288640,
+      "hash": "0x05344d139d374a15563095d23ee97fe1242f181197bdb76a4b2da04cdccfd04e"
+    }
+  },
+  "earlyBuy": {
+    "hash": "0x51ab1d3e9d4fac953db493b66ef09343d5e399ddd83e08ae8d303c958dc89fb2",
+    "block": 79288637,
+    "netDebitRaw": "101000000",
+    "buyer": "0x7170c2d8Abd99C471B89ffcAaC765d5aD94D1Bf3",
+    "wallet": {
+      "wallet": "0x7170c2d8abd99c471b89ffcaac765d5ad94d1bf3",
+      "SHORT": {
+        "mintedTotal": "1",
+        "open": "1",
+        "frozenByDraw": {},
+        "consumedTotal": "0",
+        "byEpoch": [
+          {
+            "epoch": "1",
+            "minted": "1",
+            "consumed": "0",
+            "frozen": "0",
+            "open": "1",
+            "firstOpenAttempt": "1",
+            "lastOpenAttempt": "1"
+          }
+        ]
+      },
+      "MONTHLY": {
+        "mintedTotal": "1",
+        "open": "1",
+        "frozenByDraw": {},
+        "consumedTotal": "0",
+        "byEpoch": [
+          {
+            "epoch": "1",
+            "minted": "1",
+            "consumed": "0",
+            "frozen": "0",
+            "open": "1",
+            "firstOpenAttempt": "1",
+            "lastOpenAttempt": "1"
+          }
+        ]
+      }
+    }
+  },
+  "funding": {
+    "governorReceived": "373700",
+    "vaultBalance": "3363300"
+  },
+  "baseFeePerGas": "23514000",
+  "totalGasUsed": "22131403",
+  "launchFeeWei": "500000000000000",
+  "illustrativeBaseFeePlusLaunchETH": "0.001020397810142",
+  "configuredCeilingPlusLaunchETH": "0.26930069",
+  "compile": {
+    "freshHash": "0x0ad6d513709738e74595134ad7a7ee77ea01a48e892183fbe3c7f11c456bdccd",
+    "testedHash": "0x0ad6d513709738e74595134ad7a7ee77ea01a48e892183fbe3c7f11c456bdccd",
+    "match": true,
+    "compiler": "0.8.37+commit.f401782d.Emscripten.clang"
+  },
+  "timingObservations": [
+    {
+      "at": "2026-10-03T18:08:22.297Z",
+      "head": 79285106,
+      "finalized": 79275221,
+      "lagSeconds": 997,
+      "baseFeePerGas": "23382000"
+    },
+    {
+      "at": "2026-10-03T18:08:37.749Z",
+      "head": 79285258,
+      "finalized": 79275221,
+      "lagSeconds": 1013,
+      "baseFeePerGas": "23276000"
+    },
+    {
+      "at": "2026-10-03T18:08:53.187Z",
+      "head": 79285411,
+      "finalized": 79275221,
+      "lagSeconds": 1028,
+      "baseFeePerGas": "23378000"
+    },
+    {
+      "at": "2026-10-03T18:09:08.674Z",
+      "head": 79285564,
+      "finalized": 79275221,
+      "lagSeconds": 1044,
+      "baseFeePerGas": "23466000"
+    },
+    {
+      "at": "2026-10-03T18:09:24.093Z",
+      "head": 79285717,
+      "finalized": 79275221,
+      "lagSeconds": 1059,
+      "baseFeePerGas": "23504000"
+    }
+  ],
+  "assumptions": [
+    "Local fork only, impersonated governor/executor and synthetic ETH/USDG",
+    "Unmodified contract constructors and clock; local ArbSys shim",
+    "Latest mapped to finalized ONLY for local admission/index proof",
+    "Unsigned requests are fork evidence, not authorized broadcast; anchors and economics must be refreshed"
+  ]
+}

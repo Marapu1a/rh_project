@@ -26,6 +26,9 @@ async function fixture(t){
  f.options.schedulerConfig=schedulerConfigFor(c);
  const operational={schema:'promo-operational-profile-v1',roles:{governor:f.owner,operations:c.recipients[1],project:c.recipients[2],buyPolicyPublisher:f.owner},controllers:Object.fromEntries(['short','monthly'].map(k=>[k,{noticeSeconds:'3600',maxGasPrice:'1000000000000',nativeFloor:'0'}])),buyPolicy:{source:bp.target,codeHash:c.buyPolicy.sourceCodeHash,noticeBlocks:'2'},genesis:require('../scripts/operational-profile.cjs').genesis()};
  const publicProfile={schema:'pons-public-profile-v1',configHash:hash(c),operational,timing:f.options.deploymentProfile.timing};
+ const implementation=await f.deploy('MockToken');
+ publicProfile.quoteImplementation={kind:'eip1967',address:implementation.target,codeHash:await code(implementation.target)};
+ await rpc('hardhat_setStorageAt',[f.quote.target,require('../scripts/pons-public-profile.cjs').IMPLEMENTATION_SLOT,ethers.zeroPadValue(implementation.target,32)]);
  const options={provider:f.provider,executor:f.admin,config:c,publicProfile,schedulerConfig:f.options.schedulerConfig,rehearsalInstance:(await rpc('hardhat_metadata')).instanceId,rpcUrl:f.options.rpcUrl,statePath:f.options.statePath,drain:true};
  return {...f,c,options,collector};
 }
@@ -65,4 +68,17 @@ test('exhausted pass budget stops before public admission reads or gas estimatio
   await assert.rejects(withTransactionBoundary(boundary,()=>sendLocalTransaction(method,[],{})),e=>e.code==='LOCAL_BUDGET_WAIT'&&e.budget.reason==='transactionLimit');
  });
  assert.equal(admission,0);assert.equal(estimates,0);
+});
+
+test('USDG implementation drift after estimation is rejected before intent and send',async t=>{
+ const f=await fixture(t),state={},guard=require('../scripts/pons-public-execution.cjs').createGuard({provider:f.provider,config:f.c,publicProfile:f.options.publicProfile,compiled});
+ let sends=0,saves=0;const method=async()=>{sends++;throw Error('Must not send');};
+ method.fragment={name:'claim'};method.populateTransaction=async(...args)=>({to:f.c.vault,data:f.vault.interface.encodeFunctionData('claim',[ethers.id('draw'),f.owner]),...args.at(-1)});
+ method.estimateGas=async()=>{await rpc('hardhat_setStorageAt',[f.c.manifest.quote,require('../scripts/pons-public-profile.cjs').IMPLEMENTATION_SLOT,ethers.ZeroHash]);return 21000n;};
+ const boundary=require('../scripts/pons-transaction-journal.cjs').createBoundary({state,save:()=>saves++,provider:f.provider,sender:f.owner,guard:async()=>{},onConfirmed:async()=>{}});
+ const {sendLocalTransaction,withTransactionBoundary}=require('../scripts/local-receipt.cjs');
+ await require('../scripts/runtime-network.cjs').withRobinhoodNetwork({provider:f.provider,rpcUrl:f.options.rpcUrl,mode:'robinhood-rehearsal',publicGuard:guard},async()=>{
+  await assert.rejects(withTransactionBoundary(boundary,()=>sendLocalTransaction(method,[],{})),/USDG implementation slot mismatch/);
+ });
+ assert.equal(sends,0);assert.equal(saves,0);assert.equal(state.pending,undefined);
 });

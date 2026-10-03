@@ -39,9 +39,10 @@
   },
   "roles": {
     "governor": "0x098afA6731239a00CE0aff669aaefD16b7C72114",
-    "publisherExecutor": null,
-    "operations": null,
-    "project": "0x098afA6731239a00CE0aff669aaefD16b7C72114"
+    "publisherExecutor": "0x7170c2d8Abd99C471B89ffcAaC765d5aD94D1Bf3",
+    "operations": "0x098afA6731239a00CE0aff669aaefD16b7C72114",
+    "project": "0x098afA6731239a00CE0aff669aaefD16b7C72114",
+    "buyPolicyPublisher": "0x098afA6731239a00CE0aff669aaefD16b7C72114"
   },
   "product": {
     "creatorFeeBps": 300,
@@ -68,7 +69,12 @@
     "cutoffDelayBlocks": "1"
   },
   "unresolved": {
-    "timingApproval": null,
+    "timingApproval": {
+      "date": "2026-10-03",
+      "source": "Explicit owner approval in conversation",
+      "leadSeconds": "1800",
+      "maxFinalizedLag": "1200"
+    },
     "shortRules": {
       "version": 1,
       "pNumerator": 4,
@@ -97,7 +103,7 @@
     ],
     "minimumUnitRaw": "5000000",
     "maxShortBudgetRaw": "115792089237316195423570985008687907853269984665640564039457584007913129639935",
-    "rulesNoticeSeconds": null,
+    "rulesNoticeSeconds": "86400",
     "maxGasPrice": null,
     "controllerNativeFloor": null,
     "archiveRpc": null,
@@ -108,10 +114,14 @@
       "status": "readonly-standby",
       "domain": "qianqi.site",
       "stateDirectory": "/var/lib/qianqi",
-      "signerCustody": null,
+      "signerCustody": {
+        "executor": "0x7170c2d8Abd99C471B89ffcAaC765d5aD94D1Bf3",
+        "status": "created-off-server-restore-verified-owner-backup-confirmed",
+        "executionEnabled": false
+      },
       "executionEnabled": false
     },
-    "nativeRefill": null,
+    "nativeRefill": "Manual ETH top-up to executor; per-transaction gas wait, no fixed 0.6 ETH gate",
     "monthlyWinnerWeight": "ENTRIES_OVER_ENTRIES_PLUS_ONE_Q128"
   },
   "publicExecutionEnabled": false,

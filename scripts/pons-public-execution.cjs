@@ -19,6 +19,7 @@ async function inspectObligations(provider,p,c){
  for(const k of ['vault','short','monthly','adapter','quote','token','registry']){
   const code=await provider.getCode(map[k][0],head.number);check(code!=='0x'&&same(ethers.keccak256(code),map[k][1]),'Obligation runtime mismatch');
  }
+ await profile.inspectQuote(provider,p,c,head.number);
  for(const [k,name,target]of [['vault','shortController','short'],['vault','monthlyController','monthly'],['vault','quoteToken','quote'],['vault','projectToken','token'],['short','datasetVault','vault'],['monthly','monthlyVault','vault'],['short','datasetRegistry','registry'],['monthly','monthlyRegistry','registry'],['short','randomProvider','adapter'],['monthly','randomProvider','adapter'],['adapter','shortConsumer','short'],['adapter','monthlyConsumer','monthly']])check(same(await read(k,name),map[target][0]),'Obligation binding mismatch');
  check(same(await read('short','datasetInstance','bytes32'),c.lifecycle.instanceId)&&same(await read('monthly','monthlyInstance','bytes32'),c.lifecycle.monthlyInstanceId),'Obligation instance mismatch');
  check(same(await read('adapter','PROFILE','bytes32'),require('./drand-preflight.cjs').PROFILE),'Obligation RNG mismatch');

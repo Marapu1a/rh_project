@@ -1,0 +1,63 @@
+{
+  "schema": "pons-deployment-candidate-v1",
+  "status": "simulation-only-pending-review",
+  "chainId": 4663,
+  "roles": {
+    "governor": "0x098afA6731239a00CE0aff669aaefD16b7C72114",
+    "buyPolicyPublisher": "0x098afA6731239a00CE0aff669aaefD16b7C72114",
+    "executor": "0x7170c2d8Abd99C471B89ffcAaC765d5aD94D1Bf3",
+    "operations": "0x098afA6731239a00CE0aff669aaefD16b7C72114",
+    "project": "0x098afA6731239a00CE0aff669aaefD16b7C72114"
+  },
+  "timing": {
+    "leadSeconds": "1800",
+    "maxClockLag": "30",
+    "maxClockAhead": "5",
+    "maxFinalizedLag": "1200",
+    "maxBeaconLag": "15",
+    "cutoffDelayBlocks": "1",
+    "shortInterval": "21600",
+    "monthlyInterval": "2592000"
+  },
+  "rulesNoticeSeconds": "86400",
+  "buyPolicyNoticeBlocks": 864000,
+  "maxGasPrice": "10000000000",
+  "nativeFloor": "0",
+  "campaignDurationSeconds": 31536000,
+  "quoteImplementation": {
+    "kind": "eip1967",
+    "address": "0x68184C449E1a8f34fA18d289737129FD27B66f8F",
+    "codeHash": "0x3a551ac5c744af57e68a1d1431ac403c0f516ffd7d224a75746aee11fc4f3baf"
+  },
+  "metadata": {
+    "name": "QIANQI",
+    "symbol": "QIANQI",
+    "logo": "https://qianqi.site/assets/qianqi-logo.png",
+    "description": "A token to trade. A chance to win. Eligible buys earn automatic entries into USDG prize draws. Prizes come from trading fees and donations. No staking, no extra tasks. Trading can lose money; winning is never guaranteed.",
+    "socials": [
+      "",
+      "",
+      "",
+      "https://qianqi.site",
+      ""
+    ],
+    "assets": [
+      {
+        "file": "web/assets/qianqi-logo.png",
+        "sha256": "0dda43f9203331976380a69717fd1ae106ae1c163041aae902c2bfe54181e099"
+      },
+      {
+        "file": "web/assets/qianqi-preview.png",
+        "sha256": "c6b5ad7e44270f02e93add831a235e769b7d55accfcea6644c238710bb61ab20"
+      }
+    ],
+    "publicationVerified": false
+  },
+  "publicExecutionEnabled": false,
+  "approvals": {
+    "timingAndRulesNotice": "owner-approved-2026-10-03",
+    "externalSourceLimitations": "awaiting-owner-reply",
+    "publicTransactions": false
+  },
+  "buyPolicyNoticeBasis": "Block-based technical notice for future route announcements; about 24h at observed 0.1s blocks, not a wall-clock guarantee. Controller rule notice is exactly 86400 seconds."
+}
