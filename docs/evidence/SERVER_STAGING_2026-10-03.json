@@ -1,0 +1,55 @@
+{
+  "date": "2026-10-03",
+  "server": "201.51.22.244",
+  "sourceRevision": "b900078",
+  "node": "22.22.1",
+  "publicExecution": false,
+  "publicSiteUnchanged": true,
+  "oldApiPidUnchanged": true,
+  "stageServices": [
+    "qianqi-stage-api",
+    "qianqi-stage-site"
+  ],
+  "bindings": [
+    "127.0.0.1:8788",
+    "127.0.0.1:4175"
+  ],
+  "tests": {
+    "systemdVerify": "PASS",
+    "releaseFiles": 269,
+    "http": "PASS",
+    "stopStart": "PASS",
+    "crashRestart": "PASS",
+    "readOnlyRelease": "PASS",
+    "syntheticBackupStaging": "PASS"
+  },
+  "archiveSha256": "0de49e1544787e48252a7a05c93e332ce061f84f214bf002400fd13592d40bff",
+  "units": {
+    "qianqi-stage-api.service": "79f320caa58deb2845b07457597a5c2e94de7467fa031c95b7ced77877106f3d",
+    "qianqi-stage-site.service": "895fadd155f3933193b594c53e5d31252066b5ce155e8712d7d42d90c518ad7b"
+  },
+  "rawArtifacts": [
+    {
+      "file": ".local/logs/server-runtime-build.log",
+      "sha256": "ccb09eb3d1170e78e3dbb3e553a66fd4f8bc5aa6694f49407a76110f31d11d58"
+    },
+    {
+      "file": ".local/logs/server-stage-install.log",
+      "sha256": "f540f2ee3e25b3ace65c1e390532c7d73f3696373fb4b358cc800c1cc2b3c5c8"
+    },
+    {
+      "file": ".local/logs/server-stage-smoke.log",
+      "sha256": "9d9f64c2931b1e675ef4efed95cd9e84f6c6f32840dcc3aef39b40fc7b62443c"
+    },
+    {
+      "file": ".local/logs/server-stage-final.log",
+      "sha256": "c99d6623c3968a66cab12f827878ac1a136b8d43e9c16d560f7f5cfb8eb137d4"
+    }
+  ],
+  "limits": [
+    "No Linux draw cycle",
+    "No public sender or signer",
+    "No renewal dry run",
+    "No off-server backup"
+  ]
+}

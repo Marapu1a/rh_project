@@ -90,8 +90,9 @@ B1 [фронт](FRONT_LAUNCH_READINESS_2026-10-03.md) завершён лока�
 B2 [упаковка и config](RUNTIME_PACKAGE_2026-10-03.md) проверены изолированно;
 публичный manifest/executor/site-actions ещё не готовы. Следующий стык — G04/G01,
 потом public execution и Linux service rehearsal. [Эксплуатационная обвязка](OPERATIONS_READINESS_2026-10-03.md)
-подготовлена локально (38 адресных tests, offline restore); systemd не установлен,
-public execution остаётся закрыт. Остальные обязательные части:
+подготовлена локально (38 адресных tests, offline restore). [Серверный staging](SERVER_STAGING_2026-10-03.md)
+установлен и проверен отдельно: API/site only, старый сайт сохранён.
+Public execution остаётся закрыт; indexer/operator ещё не включены. Остальные обязательные части:
 
 1. G04/G01: production manifest, реальные роли/pins/custody/параметры и публичный
    исполнитель с собственными guards; тестовые обходы не переносить.

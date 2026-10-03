@@ -1,0 +1,34 @@
+[Unit]
+Description=QIANQI staged loopback website
+After=qianqi-stage-api.service
+StartLimitIntervalSec=300
+StartLimitBurst=3
+
+[Service]
+Type=simple
+User=qianqi
+Group=qianqi
+WorkingDirectory=/opt/qianqi/staged
+Environment=PORT=4175
+Environment=RH_STATUS_API_ORIGIN=http://127.0.0.1:8788
+ExecStartPre=/usr/bin/node scripts/verify-runtime-release.cjs /opt/qianqi/staged
+ExecStart=/usr/bin/node scripts/serve-site.cjs
+Restart=on-failure
+RestartSec=10
+RestartPreventExitStatus=78
+TimeoutStopSec=35
+KillMode=control-group
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/qianqi-stage
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+MemoryMax=256M
+LimitNOFILE=1024
+LogRateLimitIntervalSec=30s
+LogRateLimitBurst=100
+
+[Install]
+WantedBy=multi-user.target

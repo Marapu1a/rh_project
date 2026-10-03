@@ -1,0 +1,32 @@
+[Unit]
+Description=QIANQI staged read-only API (no deployment)
+After=network-online.target
+StartLimitIntervalSec=300
+StartLimitBurst=3
+
+[Service]
+Type=simple
+User=qianqi
+Group=qianqi
+WorkingDirectory=/opt/qianqi/staged
+ExecStartPre=/usr/bin/node scripts/verify-runtime-release.cjs /opt/qianqi/staged
+ExecStart=/usr/bin/node scripts/user-status-api.cjs --standby 8788
+Restart=on-failure
+RestartSec=10
+RestartPreventExitStatus=78
+TimeoutStopSec=35
+KillMode=control-group
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/qianqi-stage
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+MemoryMax=512M
+LimitNOFILE=4096
+LogRateLimitIntervalSec=30s
+LogRateLimitBurst=100
+
+[Install]
+WantedBy=multi-user.target
