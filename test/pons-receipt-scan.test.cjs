@@ -110,3 +110,16 @@ test('hash-bound negative bloom omits unrelated block; positive bloom keeps all 
  // Independent consumers must reject omission of their own event addresses too.
  assert.throws(()=>require('../scripts/pons-bloom-evidence.cjs').validateOmission(positive,null,[f.m.token]),/potential project event/);
 });
+test('legacy no-chainId traffic is signature-bound; malformed and wrong-chain traffic fail',async t=>{
+ const f=setup(t),row=f.blocks[0].transactions[0];row.receipt.logs=[];
+ const wallet=ethers.Wallet.createRandom();
+ const raw=await wallet.signTransaction({type:0,chainId:0,nonce:0,gasLimit:21000,gasPrice:1,to:wallet.address,value:0});
+ const signed=ethers.Transaction.from(raw);
+ Object.assign(row.tx,{type:'0x0',nonce:'0x0',gas:'0x5208',gasPrice:'0x1',value:'0x0',input:'0x',from:wallet.address,to:wallet.address,hash:signed.hash,v:ethers.toQuantity(signed.signature.v),r:signed.signature.r,s:signed.signature.s});delete row.tx.chainId;
+ Object.assign(row.receipt,{from:wallet.address,to:wallet.address,transactionHash:signed.hash});
+ assert.doesNotThrow(()=>replay(f.m,f.blocks));
+ for(const patch of [{type:'0x2'},{v:'0x25'},{chainId:'0x1'},{hash:ethers.ZeroHash},{from:ethers.ZeroAddress}]){
+  assert.equal(require('../scripts/transaction-chain.cjs').matchesChain({...row.tx,...patch},4663),false);
+ }
+ assert.equal(require('../scripts/transaction-chain.cjs').matchesChain({...row.tx,chainId:'0x0'},4663),true);
+});

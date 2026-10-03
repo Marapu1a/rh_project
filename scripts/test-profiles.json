@@ -640,7 +640,7 @@
     ]
   },
   "pons-receipt-scan": {
-    "compile": false,
+    "compile": true,
     "files": [
       "test/pons-receipt-scan.test.cjs",
       "test/persistent-buy-indexer.test.cjs",

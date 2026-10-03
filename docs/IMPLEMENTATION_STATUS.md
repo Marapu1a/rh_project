@@ -53,3 +53,7 @@
 Отказы/задержки: `scripts/pons-delay-status.cjs` объясняет CLI result без изменения
 исполнения; `verify-wallet-reward-completeness.cjs` сверяет все награды API с raw
 vault events. [Проверки и границы](PONS_FAILURE_READINESS_2026-10-03.md).
+
+Legacy RPC transaction evidence: scripts/transaction-chain.cjs проверяет подпись/hash/from
+при отсутствующем chainId type0/v27-28; direct-buy использует его до admission.
+[Проверки04.10](PONS_LEGACY_INDEXER_FIX_2026-10-04.md).

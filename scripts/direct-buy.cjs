@@ -223,7 +223,7 @@ function replayEngine(input,deliveredBlocks,previous=null,capture=false){
       ensure(low(tx.blockHash)===low(b.hash)&&number(tx.blockNumber)===number(b.number),'Transaction block mismatch');
       ensure(low(receipt.transactionHash)===low(tx.hash)&&low(receipt.blockHash)===low(b.hash)&&number(receipt.blockNumber)===number(b.number)&&number(receipt.transactionIndex)===i,'Receipt mismatch');
       ensure(low(receipt.from)===low(tx.from)&&low(receipt.to||'0x')===low(tx.to||'0x'),'Receipt sender/target mismatch');
-      ensure(BigInt(tx.chainId)===BigInt(m.chainId),'Transaction chain mismatch');
+      ensure(require('./transaction-chain.cjs').matchesChain(tx,m.chainId),'Transaction chain mismatch');
       ensure(BigInt(receipt.status)===1n||receipt.logs.length===0,'Failed transaction has logs');
       if(receipt.contractAddress&&low(receipt.contractAddress)===low(m.registry)&&BigInt(receipt.status)===1n)registryDeployed=true;
       const unique=new Map();
