@@ -147,3 +147,13 @@ package3-signing-journal-final.json. Старый read-only процесс то�
 reason codes в локальном логе без raw RPC errors.7 queue tests PASS, включая малый
 fee/estimate drift и отказ до записи intent при выходе за границу. Live prepare после
 перезапуска PASS; инструменты /intent не вызывали. Контракты и product rules не менялись.
+
+## Исправление кнопок локальной консоли
+
+Повторное connect после prepare оставляло sign disabled из-за общего action wrapper.
+Теперь render вычисляет состояние кнопок после любого действия; reconnect/refresh
+сохраняют ещё действующий review, ошибки/смена аккаунта/expiry отключают подпись.
+Повторное подключение не добавляет дубли listeners. Review доступен после подключения,
+подсказка указывает следующий клик.2 VM UI scenarios и catalog1 PASS; eth_sendTransaction
+и /intent в проверках не вызывались. На момент диагностики public journal отсутствовал.
+Статические файлы обновлены без перезапуска сервера, ссылка сессии сохранена.

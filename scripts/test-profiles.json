@@ -140,7 +140,8 @@
       "test/ops-notify.test.cjs",
       "test/pons-launch-preflight.test.cjs",
       "test/deployment-signing-plan.test.cjs",
-      "test/deployment-signing-queue.test.cjs"
+      "test/deployment-signing-queue.test.cjs",
+      "test/deployment-console-ui.test.cjs"
     ]
   },
   "accounting": {
@@ -614,7 +615,8 @@
       "test/ops-notify.test.cjs",
       "test/pons-launch-preflight.test.cjs",
       "test/deployment-signing-plan.test.cjs",
-      "test/deployment-signing-queue.test.cjs"
+      "test/deployment-signing-queue.test.cjs",
+      "test/deployment-console-ui.test.cjs"
     ]
   },
   "pons-public-profile": {

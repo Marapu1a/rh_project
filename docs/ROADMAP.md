@@ -117,6 +117,8 @@ hourly off-server pull на Windows, свежий preflight/deployment fork и s
 отказывал при изменении fee. Исправлено сохранением просмотренных лимитов (20% fee headroom
 в пределах cap) и повторной проверкой достаточности;7 адресных tests PASS.
 Консоль перезапущена, nonce14/pending14, intent ещё не создан.
+Затем исправлен UI reconnect/refresh: кнопки вычисляются из актуального состояния,
+истечение review и смена аккаунта отключают подпись явно;2 UI tests + catalog PASS.
 
 
 1. G04/G01: production manifest, реальные роли/pins/custody/параметры и публичный
