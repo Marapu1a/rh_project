@@ -8,7 +8,11 @@ async function main(){
  const req=new E.FetchRequest(rpcUrl);req.timeout=20000;const provider=new E.JsonRpcProvider(req,undefined,{cacheTimeout:-1});
  const lock=journal+'.service.lock';fs.writeFileSync(lock,String(process.pid),{flag:'wx'});
  const key=randomBytes(24).toString('hex'),port=4176,origin=`http://127.0.0.1:${port}`;
- const queue=require('./deployment-signing-queue.cjs').create({plan,file:journal,provider,allowSend:flags.includes('--enable-signing'),check:async()=>{
+ const continuation=plan.schema==='qianqi-launch-continuation-v1';
+ const inspect=()=>require('./pons-launch-preflight.cjs').inspect(provider,settings,require('../docs/evidence/PONS_DEPENDENCIES_2026-10-03.json'));
+ let strategy;
+ if(continuation){const compiled=require('./test-artifact.cjs').readArtifact();if(!compiled)throw Error('Pinned artifact required');strategy=require('./deployment-continuation.cjs').createStrategy({plan,provider,compiled,settings,preflight:inspect});}
+ const queue=require('./deployment-signing-queue.cjs').create({plan,file:journal,provider,allowSend:flags.includes('--enable-signing'),strategy,check:strategy?strategy.check:async()=>{
   const report=await require('./pons-launch-preflight.cjs').inspect(provider,settings,require('../docs/evidence/PONS_DEPENDENCIES_2026-10-03.json'));
   if(report.status!=='snapshotMatched'||report.launch.economics!==plan.economics||report.launch.feeWei!==plan.launchFeeWei)throw Error('Preflight changed');
   const factory=new E.Contract(report.contracts.factory.address,require('./integrations/pons-v2.cjs').FAB,provider);
@@ -21,7 +25,7 @@ async function main(){
   res.setHeader('Cache-Control','no-store');res.setHeader('X-Content-Type-Options','nosniff');
   res.setHeader('Content-Security-Policy',"default-src 'self'; script-src 'self'; style-src 'unsafe-inline'; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'");
   if(req.headers.host!==`127.0.0.1:${port}`){res.writeHead(403).end();return;}
-  if(req.method==='GET'&&['/','/app.js'].includes(req.url)){res.setHeader('Content-Type',req.url==='/'?'text/html; charset=utf-8':'text/javascript');res.end(fs.readFileSync(path.join(assets,req.url==='/'?'index.html':'app.js')));return;}
+  if(req.method==='GET'&&['/','/app.js'].includes(req.url)){res.setHeader('Content-Type',req.url==='/'?'text/html; charset=utf-8':'text/javascript');let asset=fs.readFileSync(path.join(assets,req.url==='/'?'index.html':'app.js'),'utf8');if(req.url==='/'&&continuation)asset=asset.replace('Сначала шесть контрактов проекта. Запуск токена и привязка правил — следующий этап, после проверки фактических адресов и блоков.','Четыре подписи: запуск QIANQI через Pons → правила билетов → распределение 90/5/5 → привязка Pons. Покупка101USDG и включение автоматики — отдельно.');res.end(asset);return;}
   if(req.method!=='POST'||req.headers.origin!==origin||req.headers['x-qianqi-session']!==key){res.writeHead(403).end();return;}
   try{
    let body='';for await(const chunk of req){body+=chunk;if(Buffer.byteLength(body)>4096)throw Error('Size');}const input=JSON.parse(body||'{}');
@@ -29,6 +33,7 @@ async function main(){
    res.setHeader('Content-Type','application/json');res.end(JSON.stringify(value));
   }catch(e){
    const messages={
+    'Prefix complete; prepare next phase from actual receipts':'Эта очередь завершена. Больше подписей здесь не требуется.',
     'Review expired':'Проверка устарела. Нажмите «Проверить следующий шаг» ещё раз.',
     'Reviewed gas budget exceeded':'Газ вышел за показанные лимиты. Нажмите «Проверить следующий шаг» для новой оценки. Запрос в кошелёк не отправлен.',
     'Gas price above ceiling':'Цена газа выше установленного потолка. Подождите и проверьте шаг снова.',

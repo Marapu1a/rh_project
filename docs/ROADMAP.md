@@ -113,8 +113,10 @@ hourly off-server pull на Windows, свежий preflight/deployment fork и s
 первых6 CREATE проверены и подписаны: completed6/pending=null.
 [Продолжение deployment](PONS_DEPLOYMENT_CONTINUATION_2026-10-03.md): реальные receipts,
 сохранение salt/адресов и fork четырёх оставшихся вызовов PASS; ранние билеты/funding
-проверены. Anchor — фактический предшественник launch receipt. Далее — ручная очередь
-launch/policy/binds со свежим preflight; сервисы только после проверки manifest.
+проверены. Anchor — фактический предшественник launch receipt.
+[Ручная очередь](PONS_CONTINUATION_QUEUE_2026-10-03.md) готова:4tx/8restart fork PASS,
+14 адресных tests и live prepare. Далее подписи владельца launch/policy/binds;
+сервисы только после проверки manifest.
 Токен пока не запущен.
 
 

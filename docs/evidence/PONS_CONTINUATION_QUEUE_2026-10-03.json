@@ -1,0 +1,71 @@
+{
+  "publicSends": 0,
+  "status": "PASSED",
+  "transactions": [
+    {
+      "label": "Pons: запуск QIANQI / USDG, creator fees 3%",
+      "nonce": 20,
+      "summary": {
+        "token": "0x6EA39A23AA46E51CA6CD2d1cbc0B5bfb29ECB216",
+        "curve": "0x12ba58B5455fDBc15165e0E8B2096498D2c684f1",
+        "pair": "USDG",
+        "creatorTax": "3%",
+        "creatorFeeRecipient": "0x9FbAAb62DB88123fdB61217D244003a201A0CD9b",
+        "launchFeeETH": "0.0005",
+        "developerBuy": "0; покупка101USDG отдельно"
+      },
+      "hash": "0x0022c9925aa671b1b02c251329e3122c06a9d2510a742ccdae829a85b751ffb8"
+    },
+    {
+      "label": "Правила начисления билетов",
+      "nonce": 21,
+      "summary": {
+        "policyAddress": "0x4C6fCD1645f15E6eCFc02E74A68ac81e3eD02738",
+        "genesisHash": "0x892331bff77319ea8ebd04f8823049a3ddab35586a589de44795f7056d95817b",
+        "anchor": {
+          "number": 79361578,
+          "hash": "0x8c67e7673de554910b248168648af7b227d4c686c64f475649cf4a83a9c6d096"
+        },
+        "threshold": "100 USDG",
+        "publisher": "0x098afA6731239a00CE0aff669aaefD16b7C72114"
+      },
+      "hash": "0x9137e0993bfdb5ae806e814a8c355d4edfbfbf9ac07a9a49a69ab06e6988d0d0"
+    },
+    {
+      "label": "Распределение комиссий 90 / 5 / 5",
+      "nonce": 22,
+      "summary": {
+        "endsAt": 1822594655,
+        "recipients": [
+          "0x2E9e7412e19497b60f25D05b68717067A6B743D4",
+          "0x098afA6731239a00CE0aff669aaefD16b7C72114",
+          "0x098afA6731239a00CE0aff669aaefD16b7C72114"
+        ],
+        "bps": [
+          9000,
+          500,
+          500
+        ]
+      },
+      "hash": "0x38e28e8275e45c39bb57d944b92582adffda2f7d36482ce79e95a7d9663db1e8"
+    },
+    {
+      "label": "Привязка collector к Pons",
+      "nonce": 23,
+      "summary": {
+        "factory": "0x7eD598BcEf8bd9Edd8C97A195C6d13f40801EC7e",
+        "curve": "0x12ba58B5455fDBc15165e0E8B2096498D2c684f1",
+        "hook": "0xE5e702641Ea86F4ae6cC3cDaeD2B886f976Be044"
+      },
+      "hash": "0xb433fb1e7921bb77f9d30ee80dc50c5e7fa7a2416709b43554486f75a9c590e1"
+    }
+  ],
+  "assumptions": [
+    "Local fork, impersonated governor, synthetic ETH, ArbSys shim",
+    "Preflight callback mocked; live preflight is a separate check",
+    "No real wallet signatures; launch anchor/runtime/receipts verified by production queue"
+  ],
+  "forkBlock": 79361577,
+  "restartAfterIntent": 4,
+  "restartAfterReceipt": 4
+}

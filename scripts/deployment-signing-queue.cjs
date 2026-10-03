@@ -8,45 +8,45 @@ function runtimeMatches(code,step,timestamp){
  for(const r of layout.references){assert.equal(r.length,32);assert(Number.isInteger(r.start)&&r.start>=0&&r.start+32<=bytes.length);assert.equal(bytes.subarray(r.start,r.start+32).toString('hex'),actual,'Deployment timestamp mismatch');baseline.copy(bytes,r.start);}
  return E.keccak256(bytes)===step.expectedRuntimeHash;
 }
-function create({plan,file,provider,check,allowSend=false}){
- require('./deployment-signing-plan.cjs').validate(plan);
+function create({plan,file,provider,check,allowSend=false,strategy=null}){
+ if(strategy)strategy.validate(plan);else require('./deployment-signing-plan.cjs').validate(plan);
  let state=fs.existsSync(file)?JSON.parse(fs.readFileSync(file,'utf8')):{planHash:plan.planHash,completed:[],pending:null};
  assert.equal(state.planHash,plan.planHash);let busy=false,prepared=null;
  const save=()=>{fs.writeFileSync(file+'.tmp',JSON.stringify(state),{mode:0o600});fs.renameSync(file+'.tmp',file);};
  async function exclusive(fn){assert(!busy,'Busy');busy=true;try{return await fn();}finally{busy=false;}}
  async function verifyTransaction(tx,expected){
-  assert(tx);assert.equal(tx.from.toLowerCase(),expected.from.toLowerCase());assert.equal(tx.to,null);
+  assert(tx);assert.equal(tx.from.toLowerCase(),expected.from.toLowerCase());assert.equal(tx.to?.toLowerCase()??null,expected.to?.toLowerCase()??null);
   assert.equal(Number(tx.chainId),4663);assert.equal(tx.nonce,Number(BigInt(expected.nonce)));
-  assert.equal(tx.data.toLowerCase(),expected.data.toLowerCase());assert.equal(tx.value,0n);
+  assert.equal(tx.data.toLowerCase(),expected.data.toLowerCase());assert.equal(tx.value,BigInt(expected.value));
  }
  async function receipt(row){
   const r=await provider.getTransactionReceipt(row.hash);if(!r)return null;
   assert.equal(r.status,1,'Transaction reverted: manual review required');
-  const step=plan.transactions[row.index],block=await provider.getBlock(r.blockNumber);
+  const step=strategy?await strategy.step(row.index,state):plan.transactions[row.index],block=await provider.getBlock(r.blockNumber);
   assert.equal(block.hash,r.blockHash,'Receipt reorg');
-  assert.equal(r.contractAddress?.toLowerCase(),step.predictedAddress.toLowerCase());
+  if(step.predictedAddress)assert.equal(r.contractAddress?.toLowerCase(),step.predictedAddress.toLowerCase());else assert.equal(r.contractAddress,null);
   await verifyTransaction(await provider.getTransaction(row.hash),step.request);
-  assert(runtimeMatches(await provider.getCode(step.predictedAddress,r.blockNumber),step,block.timestamp),'Deployment runtime mismatch');
+  if(strategy)await strategy.verifyReceipt(step,r,block,state);else assert(runtimeMatches(await provider.getCode(step.predictedAddress,r.blockNumber),step,block.timestamp),'Deployment runtime mismatch');
   return r;
  }
  async function refresh(){
   assert.equal((await provider.getNetwork()).chainId,4663n);
-  for(const row of state.completed)assert(await receipt(row),'Previously confirmed deployment unavailable');
+  assert(state.completed.length<=plan.transactions.length);for(const [i,row]of state.completed.entries()){assert.equal(row.index,i);assert(await receipt(row),'Previously confirmed deployment unavailable');}if(state.pending)assert.equal(state.pending.index,state.completed.length);
   if(state.pending?.hash){const r=await receipt(state.pending);if(r){state.completed.push(state.pending);state.pending=null;save();}}
  }
  async function ready(){
   await refresh();assert(!state.pending,'Unresolved wallet request: reconcile before retry');
-  const step=plan.transactions[state.completed.length];assert(step,'Prefix complete; prepare next phase from actual receipts');
-  await check();const nonce=Number(BigInt(step.request.nonce));
+  const step=strategy?await strategy.step(state.completed.length,state):plan.transactions[state.completed.length];assert(step,'Prefix complete; prepare next phase from actual receipts');
+  await check(step,state);const nonce=Number(BigInt(step.request.nonce));
   assert.equal(await provider.getTransactionCount(plan.governor,'latest'),nonce,'Nonce drift');
   assert.equal(await provider.getTransactionCount(plan.governor,'pending'),nonce,'Pending transaction');
-  assert.equal(await provider.getCode(step.predictedAddress),'0x','Predicted address occupied');
+  if(step.predictedAddress)assert.equal(await provider.getCode(step.predictedAddress),'0x','Predicted address occupied');
   const gas=await provider.estimateGas(step.request),fees=await provider.getFeeData();
   const marketPrice=fees.gasPrice,ceiling=BigInt(plan.maxGasPrice);assert(marketPrice>0n&&marketPrice<=ceiling,'Gas price above ceiling');
   // Review a fixed bounded price with headroom; never silently change it at signing.
   const buffered=marketPrice*120n/100n+1n,gasPrice=buffered<ceiling?buffered:ceiling;const gasLimit=gas*120n/100n+30000n;
-  assert(await provider.getBalance(plan.governor)>=gasLimit*gasPrice,'Insufficient ETH for this transaction');
-  return {index:state.completed.length,label:step.label,predictedAddress:step.predictedAddress,request:{...step.request,gas:E.toQuantity(gasLimit),gasPrice:E.toQuantity(gasPrice)},estimatedGas:String(gas),marketGasPriceWei:String(marketPrice),estimatedAtGasPriceWei:String(gasPrice),gasLimitCostWei:String(gasLimit*gasPrice)};
+  assert(await provider.getBalance(plan.governor)>=gasLimit*gasPrice+BigInt(step.request.value),'Insufficient ETH for this transaction');
+  return {index:state.completed.length,label:step.label,predictedAddress:step.predictedAddress,request:{...step.request,gas:E.toQuantity(gasLimit),gasPrice:E.toQuantity(gasPrice)},estimatedGas:String(gas),marketGasPriceWei:String(marketPrice),estimatedAtGasPriceWei:String(gasPrice),gasLimitCostWei:String(gasLimit*gasPrice),totalLimitCostWei:String(gasLimit*gasPrice+BigInt(step.request.value)),...(step.summary?{summary:step.summary}:{})};
  }
  return {
   view:()=>({planHash:plan.planHash,allowSend,governor:plan.governor,transactions:plan.transactions.map(({request,...s})=>({...s,nonce:Number(BigInt(request.nonce))})),completed:state.completed.length,pending:state.pending,next:plan.next}),
@@ -58,14 +58,15 @@ function create({plan,file,provider,check,allowSend=false}){
    assert.equal(hash(core(fresh.request)),hash(core(prepared.request)),'Request changed; review again');
    assert(prepared.expiresAt>Date.now(),'Review expired');
    assert(BigInt(fresh.estimatedGas)<=BigInt(prepared.request.gas)&&BigInt(fresh.marketGasPriceWei)<=BigInt(prepared.request.gasPrice),'Reviewed gas budget exceeded');
-   assert(await provider.getBalance(plan.governor)>=BigInt(prepared.request.gas)*BigInt(prepared.request.gasPrice),'Insufficient ETH for reviewed transaction');
+   assert(await provider.getBalance(plan.governor)>=BigInt(prepared.request.gas)*BigInt(prepared.request.gasPrice)+BigInt(prepared.request.value),'Insufficient ETH for reviewed transaction');
    const p=prepared;state.pending={index:p.index,id:p.id,request:p.request,hash:null};save();prepared=null;return p.request;
   }),
   submitted:txHash=>exclusive(async()=>{
    assert(state.pending,'No pending request');assert.match(txHash,/^0x[0-9a-f]{64}$/i);
    if(state.pending.hash)assert.equal(state.pending.hash,txHash);
    // An unavailable hash remains unresolved; never invent success or resubmit.
-   await verifyTransaction(await provider.getTransaction(txHash),plan.transactions[state.pending.index].request);
+   const step=strategy?await strategy.step(state.pending.index,state):plan.transactions[state.pending.index];
+   await verifyTransaction(await provider.getTransaction(txHash),step.request);
    state.pending.hash=txHash;save();await refresh();return {pending:state.pending,completed:state.completed.length};
   }),
   refresh:()=>exclusive(async()=>{await refresh();return {pending:state.pending,completed:state.completed.length};})

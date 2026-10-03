@@ -59,3 +59,17 @@ test('completed prefix evidence rejects missing rows, wrong transaction, runtime
  await assert.rejects(inspect({...p,getCode:async()=> '0x02'},plan,journal));
  await assert.rejects(inspect({...p,getBlock:async()=>({hash:E.id('reorg'),timestamp:1})},plan,journal));
 });
+
+test('continuation calls include ETH value in balance checks and reject wrong recipient or value',async t=>{
+ const f=fixture(t),target='0x0000000000000000000000000000000000000022';
+ const request={...f.options.plan.transactions[0].request,to:target,value:'0x100000'};
+ const strategy={validate(){},step:async()=>({label:'launch',request}),verifyReceipt:async()=>{}};
+ const options={...f.options,strategy};const q=create(options);
+ f.options.provider.getBalance=async()=>1048576n;await assert.rejects(q.prepare(),/Insufficient/);
+ f.options.provider.getBalance=async()=>10000000n;const review=await q.prepare();assert.equal(BigInt(review.totalLimitCostWei),BigInt(review.gasLimitCostWei)+1048576n);await q.arm(review.id);
+ f.options.provider.getTransaction=async()=>({from:request.from,to:target,nonce:0,chainId:4663n,data:request.data,value:0n});
+ await assert.rejects(q.submitted(f.txHash));assert.equal(JSON.parse(fs.readFileSync(options.file)).pending.hash,null);
+ f.options.provider.getTransaction=async()=>({from:request.from,to:request.from,nonce:0,chainId:4663n,data:request.data,value:1048576n});await assert.rejects(q.submitted(f.txHash));
+ f.options.provider.getTransaction=async()=>({from:request.from,to:target,nonce:0,chainId:4663n,data:request.data,value:1048576n});
+ assert.equal((await q.submitted(f.txHash)).completed,0);assert.equal(JSON.parse(fs.readFileSync(options.file)).pending.hash,f.txHash);
+});
