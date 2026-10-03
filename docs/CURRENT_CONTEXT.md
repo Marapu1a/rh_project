@@ -85,7 +85,11 @@ receipts/runtime и репетиция четырёх оставшихся вы�
 Владелец завершил все4 подписи: completed4/pending=null, повторный /refresh200.
 [Публичный запуск](PONS_PUBLIC_LAUNCH_2026-10-03.md) подтверждён: launch block79377860,
 TOKEN0x6EA39A23AA46E51CA6CD2d1cbc0B5bfb29ECB216, policy/90-5-5/venue сверены.
-Governor nonce24. Receipts пока выше finalized на момент проверки; executor ETH0.
+Governor nonce24. На новой проверке04.10 finalized79378127 уже выше launch;
+[фактический profile matched, сбор fees симулирован](PONS_ACTIVATION_2026-10-04.md).
+Executor ETH0. Первый RPC отказ исправлен адресно; launch block прочитан с admitted,
+но один блок занял7.14s. До сервиса нужно проверить/исправить throughput реальных
+RPC-чтений и догон истории. Серверные indexer/API не активированы.
 Далее: публичная source verification (GoPlus пока open_source0), production config/
 profile из фактических receipts, пополнение executor и проверка допуска до включения.
 Контрольный BUY101USDG и финансовая автоматика пока не выполнены.

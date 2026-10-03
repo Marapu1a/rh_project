@@ -1,0 +1,457 @@
+{
+  "schema": "pons-activation-preflight-v1",
+  "admission": {
+    "schema": "pons-public-admission-v1",
+    "status": "matched",
+    "profileHash": "0xf8a77c4e4af90fe6eec9db74acaff159620ae8b96e94f9d790add0fb03668f67",
+    "checks": [
+      {
+        "check": "chain",
+        "ok": true
+      },
+      {
+        "check": "clock",
+        "ok": true
+      },
+      {
+        "check": "finalityLag",
+        "ok": true
+      },
+      {
+        "check": "finalityBranch",
+        "ok": true
+      },
+      {
+        "check": "runtime:batchExecutor",
+        "ok": true
+      },
+      {
+        "check": "runtime:router",
+        "ok": true
+      },
+      {
+        "check": "runtime:manager",
+        "ok": true
+      },
+      {
+        "check": "runtime:permit2",
+        "ok": true
+      },
+      {
+        "check": "runtime:weth",
+        "ok": true
+      },
+      {
+        "check": "runtime:fundingRouter",
+        "ok": true
+      },
+      {
+        "check": "runtime:fundingPool",
+        "ok": true
+      },
+      {
+        "check": "runtime:allowanceHolder",
+        "ok": true
+      },
+      {
+        "check": "runtime:zeroexSettler",
+        "ok": true
+      },
+      {
+        "check": "runtime:entryPoint",
+        "ok": true
+      },
+      {
+        "check": "runtime:entryPointAccount",
+        "ok": true
+      },
+      {
+        "check": "runtime:factory",
+        "ok": true
+      },
+      {
+        "check": "runtime:hook",
+        "ok": true
+      },
+      {
+        "check": "runtime:curve",
+        "ok": true
+      },
+      {
+        "check": "runtime:token",
+        "ok": true
+      },
+      {
+        "check": "runtime:quote",
+        "ok": true
+      },
+      {
+        "check": "runtime:registry",
+        "ok": true
+      },
+      {
+        "check": "runtime:collector",
+        "ok": true
+      },
+      {
+        "check": "runtime:escrow",
+        "ok": true
+      },
+      {
+        "check": "runtime:vault",
+        "ok": true
+      },
+      {
+        "check": "runtime:short",
+        "ok": true
+      },
+      {
+        "check": "runtime:monthly",
+        "ok": true
+      },
+      {
+        "check": "runtime:adapter",
+        "ok": true
+      },
+      {
+        "check": "runtime:buyPolicy",
+        "ok": true
+      },
+      {
+        "check": "quoteImplementation",
+        "ok": true
+      },
+      {
+        "check": "binding:vault.shortController",
+        "ok": true
+      },
+      {
+        "check": "binding:vault.monthlyController",
+        "ok": true
+      },
+      {
+        "check": "binding:vault.projectToken",
+        "ok": true
+      },
+      {
+        "check": "binding:vault.quoteToken",
+        "ok": true
+      },
+      {
+        "check": "binding:collector.promoVault",
+        "ok": true
+      },
+      {
+        "check": "binding:collector.projectToken",
+        "ok": true
+      },
+      {
+        "check": "binding:collector.quoteToken",
+        "ok": true
+      },
+      {
+        "check": "binding:collector.escrow",
+        "ok": true
+      },
+      {
+        "check": "binding:short.datasetVault",
+        "ok": true
+      },
+      {
+        "check": "binding:monthly.monthlyVault",
+        "ok": true
+      },
+      {
+        "check": "binding:short.datasetRegistry",
+        "ok": true
+      },
+      {
+        "check": "binding:monthly.monthlyRegistry",
+        "ok": true
+      },
+      {
+        "check": "binding:short.randomProvider",
+        "ok": true
+      },
+      {
+        "check": "binding:monthly.randomProvider",
+        "ok": true
+      },
+      {
+        "check": "binding:adapter.shortConsumer",
+        "ok": true
+      },
+      {
+        "check": "binding:adapter.monthlyConsumer",
+        "ok": true
+      },
+      {
+        "check": "binding:short.publisher",
+        "ok": true
+      },
+      {
+        "check": "binding:short.CONTROLLER_PROFILE",
+        "ok": true
+      },
+      {
+        "check": "binding:monthly.publisher",
+        "ok": true
+      },
+      {
+        "check": "binding:monthly.CONTROLLER_PROFILE",
+        "ok": true
+      },
+      {
+        "check": "binding:short.datasetInstance",
+        "ok": true
+      },
+      {
+        "check": "binding:monthly.monthlyInstance",
+        "ok": true
+      },
+      {
+        "check": "binding:quote.decimals",
+        "ok": true
+      },
+      {
+        "check": "binding:monthly.minimumMonthlyBudget",
+        "ok": true
+      },
+      {
+        "check": "binding:adapter.PROFILE",
+        "ok": true
+      },
+      {
+        "check": "binding:adapter.CHAIN_HASH",
+        "ok": true
+      },
+      {
+        "check": "binding:adapter.leadSeconds",
+        "ok": true
+      },
+      {
+        "check": "binding:adapter.maxClockLag",
+        "ok": true
+      },
+      {
+        "check": "binding:adapter.maxClockAhead",
+        "ok": true
+      },
+      {
+        "check": "binding:adapter.maxFinalizedLag",
+        "ok": true
+      },
+      {
+        "check": "binding:adapter.maxBeaconLag",
+        "ok": true
+      },
+      {
+        "check": "binding:short.SHORT_INTERVAL",
+        "ok": true
+      },
+      {
+        "check": "binding:monthly.monthlyInterval",
+        "ok": true
+      },
+      {
+        "check": "binding:short.cutoffDelayBlocks",
+        "ok": true
+      },
+      {
+        "check": "binding:monthly.cutoffDelayBlocks",
+        "ok": true
+      },
+      {
+        "check": "binding:collector.campaignId",
+        "ok": true
+      },
+      {
+        "check": "binding:collector.factory",
+        "ok": true
+      },
+      {
+        "check": "binding:collector.curve",
+        "ok": true
+      },
+      {
+        "check": "binding:collector.hook",
+        "ok": true
+      },
+      {
+        "check": "binding:collector.poolId",
+        "ok": true
+      },
+      {
+        "check": "binding:collector.escrowCodeHash",
+        "ok": true
+      },
+      {
+        "check": "binding:collector.venueCodeHash",
+        "ok": true
+      },
+      {
+        "check": "creatorAllocation",
+        "ok": true
+      },
+      {
+        "check": "binding:buyPolicy.instanceId",
+        "ok": true
+      },
+      {
+        "check": "operational:short.owner",
+        "ok": true
+      },
+      {
+        "check": "operational:short.pendingOwner",
+        "ok": true
+      },
+      {
+        "check": "operational:monthly.owner",
+        "ok": true
+      },
+      {
+        "check": "operational:monthly.pendingOwner",
+        "ok": true
+      },
+      {
+        "check": "operational:collector.owner",
+        "ok": true
+      },
+      {
+        "check": "operational:collector.pendingOwner",
+        "ok": true
+      },
+      {
+        "check": "operational:short.shortRulesNotice",
+        "ok": true
+      },
+      {
+        "check": "operational:short.maxGasPrice",
+        "ok": true
+      },
+      {
+        "check": "operational:short.nativeFloor",
+        "ok": true
+      },
+      {
+        "check": "operational:monthly.monthlyRulesNotice",
+        "ok": true
+      },
+      {
+        "check": "operational:monthly.maxGasPrice",
+        "ok": true
+      },
+      {
+        "check": "operational:monthly.nativeFloor",
+        "ok": true
+      },
+      {
+        "check": "operational:short.maxBudget",
+        "ok": true
+      },
+      {
+        "check": "operational:vault.nextStartTarget",
+        "ok": true
+      },
+      {
+        "check": "operational:shortGenesis",
+        "ok": true
+      },
+      {
+        "check": "operational:monthlyGenesis",
+        "ok": true
+      },
+      {
+        "check": "operational:recipientRoles",
+        "ok": true
+      },
+      {
+        "check": "operational:entryAndBudget",
+        "ok": true
+      },
+      {
+        "check": "operational:buyPolicyConfig",
+        "ok": true
+      },
+      {
+        "check": "operational:buyPolicyRuntime",
+        "ok": true
+      },
+      {
+        "check": "operational:buyPolicyPublisher",
+        "ok": true
+      },
+      {
+        "check": "operational:buyPolicyNotice",
+        "ok": true
+      },
+      {
+        "check": "operational:buyPolicyGenesis",
+        "ok": true
+      },
+      {
+        "check": "operational:workerGasBounds",
+        "ok": true
+      },
+      {
+        "check": "anchor",
+        "ok": true
+      },
+      {
+        "check": "anchor",
+        "ok": true
+      },
+      {
+        "check": "stableObservation",
+        "ok": true
+      }
+    ],
+    "reasons": [],
+    "publicExecution": false,
+    "authorizationToFreeze": false,
+    "observedBlock": {
+      "number": 79389574,
+      "hash": "0x819b7d4bc2cb6b3ca2882654a00040d7cf3818029ba7c42a7193585c8135bcdb"
+    }
+  },
+  "fees": {
+    "observedAt": "2026-10-03T21:09:07.982Z",
+    "collector": "0x9FbAAb62DB88123fdB61217D244003a201A0CD9b",
+    "dueUSDG": "281.311122",
+    "simulatedPullUSDG": "281.311122",
+    "estimatedPullGas": "215026",
+    "sentTransactions": 0
+  },
+  "servicesActivated": false,
+  "firstIndexPass": {
+    "status": {
+      "state": "catchingUp",
+      "processedBlock": 79377860,
+      "targetBlock": 79385701,
+      "removedBlocks": 0,
+      "cacheHits": 17,
+      "updatedAt": "2026-10-03T21:11:16.868Z",
+      "metrics": {
+        "lagBlocks": 7841,
+        "historyBlocks": 1,
+        "scannedBlocks": 1,
+        "replayedBlocks": 1,
+        "replayMode": "full",
+        "scanMs": 3415.9191,
+        "replayMs": 3.4470000000001164,
+        "rewardMs": 1784.4091000000008,
+        "beforeSaveMs": 7046.546799999999
+      }
+    },
+    "policyStatus": {
+      "mode": "admitted",
+      "trustHash": "0x96d2b94bb2c3d3965408a116b766480b73f077cac1228beb2beed920106683fe",
+      "checkpoint": {
+        "number": 79385701,
+        "hash": "0x9f29edaa2e150044ebe65782be3fc3651b5ca48dd7e7a3ea55d68ef5d958f5eb"
+      },
+      "pendingAdapters": []
+    },
+    "scope": "one actual launch block; not throughput qualification"
+  }
+}

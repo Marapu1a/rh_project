@@ -116,7 +116,10 @@ hourly off-server pull на Windows, свежий preflight/deployment fork и s
 проверены. Anchor — фактический предшественник launch receipt.
 [Ручная очередь](PONS_CONTINUATION_QUEUE_2026-10-03.md) готова:4tx/8restart fork PASS,
 14 адресных tests и live prepare. Владелец подписал4/4, [публичные receipts](PONS_PUBLIC_LAUNCH_2026-10-03.md)
-сверены, launch block79377860. Далее source verification, actual config/profile,
+сверены, launch block79377860. [Activation preflight04.10](PONS_ACTIVATION_2026-10-04.md):
+actual config/profile matched; исправлен лишний запрос пустой policy history.
+Launch block admitted, но throughput ещё не годится для активации: сначала
+ускорить RPC-чтение и подтвердить догон истории. Далее source verification,
 finality и gas executor; сервисы только после проверки manifest.
 Токен запущен, автоматика и контрольная покупка пока нет. [Token security check](PONS_TOKEN_SECURITY_2026-10-03.md) PASS
 в обозначенных границах: исходники/исполняемый код и полный обратный SELL на fork.

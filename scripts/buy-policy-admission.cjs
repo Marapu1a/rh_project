@@ -27,7 +27,10 @@ async function loadBuyPolicy({trust,genesis,rpc,cutoff}){
  check(low(await read('publisher'))===low(trust.publisher)&&num(await read('noticeBlocks'))===trust.noticeBlocks,'Source authority/notice mismatch');
  check(num(await read('SCHEMA_VERSION'))===1&&low(await read('genesisAdaptersHash'))===genesisAdaptersHash(genesis),'Source schema/genesis adapters mismatch');
  const count=num(await read('publishedCount')),currentHash=low(await read('currentHash')),lastFrom=num(await read('lastFromBlock'));
- const logs=await rpc('eth_getLogs',[{address:trust.source,fromBlock:tag(genesis.anchor.number),toBlock:tag(height),topics:[ABI.getEvent('BuyPolicyAnnounced').topicHash,trust.instanceId]}]);
+ // The pinned source increments publishedCount for every announcement. With zero
+ // announcements the finalized getters prove an empty history; avoid rescanning
+ // the entire lifetime on every pass. Commitment and lastFrom checks still apply.
+ const logs=count===0?[]:await rpc('eth_getLogs',[{address:trust.source,fromBlock:tag(genesis.anchor.number),toBlock:tag(height),topics:[ABI.getEvent('BuyPolicyAnnounced').topicHash,trust.instanceId]}]);
  check(Array.isArray(logs),'Missing notices');
  const history={schema:'buy-policy-history-v1',versions:[{fromBlock:num(genesis.anchor.number),manifest:genesis}]};
  const evidence=[],seen=new Set(),adapters=new Set(initialAdapters(genesis)),pendingAdapters=[];

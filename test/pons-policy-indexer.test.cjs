@@ -39,6 +39,17 @@ test('source authority/runtime drift stops admission and index refresh, retainin
  f.flags.badPublisher=true;await assert.rejects(resolveBuyPolicy(f.config,f.rpc,12),/authority/);await assert.rejects(indexOnce({config:f.config,rpc:f.rpc,statePath:f.statePath}),/authority/);assert.deepEqual(f.read().index,before);
  f.flags.badPublisher=false;f.flags.badRuntime=true;await assert.rejects(loadBuyPolicy({trust:f.trust,genesis:f.m,rpc:f.rpc}),/runtime/);
 });
+test('zero-announcement policy needs no historical logs but still validates finalized commitments',async t=>{
+ const f=admitted(t);let logs=0;
+ const rpc=async(method,params)=>{if(method==='eth_getLogs'){logs++;throw Error('Provider log range limit');}return f.rpc(method,params);};
+ assert.equal((await loadBuyPolicy({trust:f.trust,genesis:f.m,rpc})).history.versions.length,1);
+ assert.equal(logs,0);
+ for(const [name,value] of [['currentHash',ethers.ZeroHash],['lastFromBlock',1],['publishedCount',1]]){
+  const changed=async(method,params)=>method==='eth_call'&&params[0].to===f.trust.source&&ABI.parseTransaction({data:params[0].data}).name===name?ABI.encodeFunctionResult(name,[value]):rpc(method,params);
+  await assert.rejects(loadBuyPolicy({trust:f.trust,genesis:f.m,rpc:changed}),name==='publishedCount'?/Provider log range limit/:/Incomplete policy history/);
+ }
+ assert.equal(logs,1);
+});
 test('coordinator selects strict indexed config only with matching policy and snapshot config',async t=>{
  const f=admitted(t),c={manifest:f.m,lifecycle:{instanceId:f.trust.instanceId},buyPolicy:f.trust,indexer:f.config.indexer};
  const s=schedulerConfigFor(c);assert.equal(s.cutoffMode,'FINALIZED_CHECKPOINT');assert.equal(s.buyPolicyMode,'admitted');assert.equal(s.ponsRehearsal,undefined);assert.equal(s.indexer.statePath,c.indexer.statePath);
