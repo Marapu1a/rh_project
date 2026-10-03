@@ -107,7 +107,8 @@ funding/new-freeze обоих draw,22 signed tx, выплаты и idle без �
 27 tests и10tx fork PASS, early BUY сохранён. Source gaps приняты владельцем.
 [Пакет2 эксплуатации](PONS_OPERATIONS_PACKAGE_2026-10-03.md) подготовлен отдельно на сервере;
 23 адресных checks, credentials/RPC и перенос backup PASS, metadata опубликованы.
-Новые units disabled; Telegram бот отложен. Далее актуализация nonce/anchors и
+Финансовые units disabled; Telegram delivery/dedup PASS, monitor timer enabled,
+штатные проверки ждут activation marker. Далее актуализация nonce/anchors и
 контролируемый deployment; активация financial services только после проверки manifest.
 
 

@@ -41,11 +41,15 @@ Linux transient unit под qianqi успешно прочёл credentials, ра
 
 ## Telegram и резервные копии
 
-Владелец выбрал личный Telegram, затем попросил добавить бота позже.
-`ops-notify.cjs` и `qianqi-public-monitor.service/.timer` готовы, но disabled:
-ожидаются root0600 `telegram-token` и `telegram-chat` в public-secrets.
-Chat должен быть личным (положительный id); id нужно подтвердить с владельцем,
-не выбирать произвольного отправителя из getUpdates. Реальных уведомлений не отправляли.
+Владелец подключил @qianqi_tokenbot и явно подтвердил получателя после сверки
+личного /start. В public-secrets установлены root0600 `telegram-token` и `telegram-chat`;
+ни token, ни chat id в git не добавлены. `qianqi-public-monitor.timer` enabled/active.
+Сам service пока пропускается по отсутствующему activation-approved: ложных тревог
+о намеренно выключенных финансовых службах до запуска нет.
+Linux transient unit под qianqi через LoadCredential отправил одно согласованное
+тестовое сообщение: Telegram ok=true/message_id=2. Второй вызов deliver suppressed.
+Это подтверждение принятия Telegram, не доказательство прочтения пользователем.
+Тестовый dedup journal отдельный, production notification state не подменялся.
 Используется [Telegram sendMessage](https://core.telegram.org/bots/api#sendmessage).
 
 Monitor раз в минуту проверяет API health и операторский status (возраст до15мин).
@@ -103,8 +107,8 @@ Catalog сначала выявил отсутствие новых tests в sco
 Linux: systemd-analyze verify новых units PASS (лишь предупреждения чужих xfs units),
 credential/RPC probe PASS, inactive gates PASS, backup/restore/hash PASS, bash -n PASS,
 HTTP assets PASS. Сам scheduled backup с действующими production writers ещё не
-проверен: таких writers нет. Автоматический off-server backup и реальная Telegram
-доставка остаются эксплуатационными задачами до включения публичной автоматики.
+проверен: таких writers нет. Telegram доставка проверена отдельным подключением выше. Автоматический off-server
+backup остаётся эксплуатационной задачей до включения публичной автоматики.
 
 Следующий пакет: свежие nonce/anchors/fee checks → точные deployment транзакции →
 контракты/launch → manifest из receipts → profile/index/API проверка → осознанное
