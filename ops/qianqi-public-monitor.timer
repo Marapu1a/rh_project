@@ -1,0 +1,9 @@
+[Unit]
+Description=QIANQI status check every minute
+
+[Timer]
+OnBootSec=120
+OnUnitInactiveSec=60
+
+[Install]
+WantedBy=timers.target

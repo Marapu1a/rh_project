@@ -12,6 +12,19 @@ test('deployment config refuses incomplete or non-rehearsal sources instead of e
  const {derive}=require('../scripts/pons-deployment-config.cjs');
  for(const c of [{},{schema:'production'},{schema:'pons-rehearsal-automation-v1',manifest:{}}])assert.throws(()=>derive(c));
 });
+
+test('public export requires matching profile and keeps website actions disabled',()=>{
+ const {derive}=require('../scripts/pons-deployment-config.cjs');
+ const {c,p}=require('./fixtures/pons-public-profile.cjs').fixture();
+ c.schema='pons-public-automation-v1';delete c.instanceId;
+ p.configHash=require('../scripts/direct-buy.cjs').hash(c);
+ assert.throws(()=>derive(c));
+ const result=derive(c,{publicProfile:p});
+ assert.equal(result.publicExecution,false);assert.equal(result.site.actions,null);
+ assert.equal(result.indexConfig.indexer.statePath,c.indexer.statePath);
+ c.executor='0x0000000000000000000000000000000000000001';
+ assert.throws(()=>derive(c,{publicProfile:p}));
+});
 test('release verification refuses missing or modified files and escaping paths',t=>{
  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'qianqi-release-')),file=path.join(dir,'entry.cjs'),manifest=path.join(dir,'release.json');
  t.after(()=>{for(const f of fs.readdirSync(dir))fs.unlinkSync(path.join(dir,f));fs.rmdirSync(dir);});

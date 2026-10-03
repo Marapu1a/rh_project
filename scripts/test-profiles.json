@@ -135,7 +135,9 @@
       "test/ops-backup.test.cjs",
       "test/pons-public-profile.test.cjs",
       "test/pons-public-execution.test.cjs",
-      "test/pons-public-runtime.test.cjs"
+      "test/pons-public-runtime.test.cjs",
+      "test/service-credentials.test.cjs",
+      "test/ops-notify.test.cjs"
     ]
   },
   "accounting": {
@@ -604,7 +606,9 @@
       "test/pons-delay-status.test.cjs",
       "test/local-state-lock.test.cjs",
       "test/local-transaction.test.cjs",
-      "test/pons-storage-failure.test.cjs"
+      "test/pons-storage-failure.test.cjs",
+      "test/service-credentials.test.cjs",
+      "test/ops-notify.test.cjs"
     ]
   },
   "pons-public-profile": {

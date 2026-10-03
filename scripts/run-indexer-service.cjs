@@ -62,7 +62,8 @@ async function startService({config:input,rpcUrl,port=8787,pollMs=10000,passTime
 async function main(){
  const [file,port='8787']=process.argv.slice(2);
  const config=JSON.parse(fs.readFileSync(file,'utf8'));
- const service=await startService({config,rpcUrl:process.env.RH_RPC_URL,port:Number(port),pollMs:Number(process.env.RH_INDEXER_POLL_MS??10000),passTimeoutMs:Number(process.env.RH_INDEXER_PASS_TIMEOUT_MS??120000),onStatus:s=>console.log(JSON.stringify(s))});
+ const rpcUrl=process.env.CREDENTIALS_DIRECTORY?require('./service-credentials.cjs').rpc():process.env.RH_RPC_URL;
+ const service=await startService({config,rpcUrl,port:Number(port),pollMs:Number(process.env.RH_INDEXER_POLL_MS??10000),passTimeoutMs:Number(process.env.RH_INDEXER_PASS_TIMEOUT_MS??120000),onStatus:s=>console.log(JSON.stringify(s))});
  for(const signal of ['SIGINT','SIGTERM'])process.once(signal,()=>void service.close());
 }
 if(require.main===module)main().catch(()=>{console.error('Service startup refused: check configuration, RPC environment, port and service lock');process.exitCode=78;});

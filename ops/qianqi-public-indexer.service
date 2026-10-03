@@ -1,0 +1,35 @@
+[Unit]
+Description=QIANQI public read-only indexer and API (deployment required)
+After=network-online.target
+Wants=network-online.target
+ConditionPathExists=/etc/qianqi/public/indexer.json
+ConditionPathExists=/etc/qianqi/public/activation-approved
+StartLimitIntervalSec=300
+StartLimitBurst=3
+
+[Service]
+User=qianqi
+Group=qianqi
+WorkingDirectory=/opt/qianqi/prepared
+LoadCredential=rpc-url:/etc/qianqi/public-secrets/rpc-url
+ExecStartPre=/usr/bin/node scripts/verify-runtime-release.cjs /opt/qianqi/prepared
+ExecStart=/usr/bin/node scripts/run-indexer-service.cjs /etc/qianqi/public/indexer.json 8789
+Restart=on-failure
+RestartPreventExitStatus=78
+RestartSec=15
+TimeoutStopSec=150
+KillMode=control-group
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/qianqi-public
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+MemoryMax=2G
+LimitNOFILE=4096
+LogRateLimitIntervalSec=30s
+LogRateLimitBurst=100
+
+[Install]
+WantedBy=multi-user.target

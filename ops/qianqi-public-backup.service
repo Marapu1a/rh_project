@@ -1,0 +1,9 @@
+[Unit]
+Description=QIANQI offline state backup (briefly stops writers)
+ConditionPathExists=/etc/qianqi/public/activation-approved
+
+[Service]
+Type=oneshot
+ExecStart=/bin/bash /opt/qianqi/prepared/ops/backup-public.sh
+UMask=0077
+TimeoutStartSec=15min

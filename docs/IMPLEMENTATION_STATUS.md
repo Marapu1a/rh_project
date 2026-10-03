@@ -6,7 +6,7 @@
 
 | Модуль | Основной код | Что есть / граница |
 |---|---|---|
-| Operations wrapper | scripts/ops-session.cjs, ops-backup.cjs, verify-runtime-release.cjs, ops/*.service | [Ownership/status/offline staging](OPERATIONS_READINESS_2026-10-03.md); local Pons only, public sender и Linux start не готовы |
+| Operations wrapper | scripts/ops-session.cjs, ops-backup.cjs, service-credentials.cjs, ops-notify.cjs, verify-runtime-release.cjs, ops/*.service | [Public preparation](PONS_OPERATIONS_PACKAGE_2026-10-03.md): credentials, disabled/gated units, Telegram adapter, offline restore; financial activation и реальная доставка отдельно |
 | Exact deployment rehearsal | scripts/pons-exact-deployment-rehearsal.cjs, config/pons-deployment-candidate.json | [Пакет10tx](PONS_DEPLOYMENT_PACKAGE_2026-10-03.md), обычные конструкторы, раздельные роли, early BUY/index/funding; unsigned fork evidence, не broadcaster |
 | Pons public execution | scripts/pons-public-execution.cjs, run-pons-public.cjs, pons-automation.cjs | [Отдельный режим](PONS_PUBLIC_EXECUTION_2026-10-03.md), общий journal/gas, раздельный new-work/drain; [release-репетиция](PONS_RELEASE_REHEARSAL_2026-10-03.md) PASS на local fork; scripts/pons-public-release-rehearsal.cjs; production deployment отдельно |
 | Dependency inventory | scripts/inspect-pons-dependencies.cjs | [Read-only slots/runtime/roles](PONS_EXTERNAL_DEPENDENCIES.md); USDG implementation закреплён в public profile и obligations guard |

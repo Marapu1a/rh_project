@@ -1,0 +1,22 @@
+[Unit]
+Description=QIANQI Telegram status observer
+ConditionPathExists=/etc/qianqi/public/activation-approved
+ConditionPathExists=/etc/qianqi/public-secrets/telegram-token
+ConditionPathExists=/etc/qianqi/public-secrets/telegram-chat
+
+[Service]
+Type=oneshot
+User=qianqi
+Group=qianqi
+WorkingDirectory=/opt/qianqi/prepared
+LoadCredential=telegram-token:/etc/qianqi/public-secrets/telegram-token
+LoadCredential=telegram-chat:/etc/qianqi/public-secrets/telegram-chat
+ExecStart=/usr/bin/node scripts/ops-notify.cjs
+UMask=0077
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths=/var/lib/qianqi-monitor
+MemoryMax=128M
+TimeoutStartSec=25

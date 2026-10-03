@@ -51,12 +51,12 @@
         "sha256": "c6b5ad7e44270f02e93add831a235e769b7d55accfcea6644c238710bb61ab20"
       }
     ],
-    "publicationVerified": false
+    "publicationVerified": true
   },
   "publicExecutionEnabled": false,
   "approvals": {
     "timingAndRulesNotice": "owner-approved-2026-10-03",
-    "externalSourceLimitations": "awaiting-owner-reply",
+    "externalSourceLimitations": "owner-accepted-2026-10-03",
     "publicTransactions": false
   },
   "buyPolicyNoticeBasis": "Block-based technical notice for future route announcements; about 24h at observed 0.1s blocks, not a wall-clock guarantee. Controller rule notice is exactly 86400 seconds."

@@ -1,0 +1,35 @@
+[Unit]
+Description=QIANQI public financial worker (explicit activation required)
+After=network-online.target qianqi-public-indexer.service
+Wants=network-online.target
+ConditionPathExists=/etc/qianqi/public/automation.json
+ConditionPathExists=/etc/qianqi/public/profile.json
+ConditionPathExists=/etc/qianqi/public/activation-approved
+
+[Service]
+User=qianqi
+Group=qianqi
+WorkingDirectory=/opt/qianqi/prepared
+LoadCredential=rpc-url:/etc/qianqi/public-secrets/rpc-url
+LoadCredential=executor-password:/etc/qianqi/executor-custody/password.txt
+LoadCredential=executor-keystore:/etc/qianqi/executor-custody/executor.json
+ExecStartPre=/usr/bin/node scripts/verify-runtime-release.cjs /opt/qianqi/prepared
+ExecStart=/usr/bin/node scripts/run-pons-public.cjs --config /etc/qianqi/public/automation.json --profile /etc/qianqi/public/profile.json --state /var/lib/qianqi-public/automation.json --keystore %d/executor-keystore --watch
+# Unknown send/crash requires journal inspection, never automatic reset.
+Restart=no
+TimeoutStopSec=150
+KillMode=control-group
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/qianqi-public
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+MemoryMax=1G
+LimitNOFILE=4096
+LogRateLimitIntervalSec=30s
+LogRateLimitBurst=100
+
+[Install]
+WantedBy=multi-user.target

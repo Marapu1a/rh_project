@@ -12,12 +12,14 @@ async function main(){
  const args=process.argv.slice(2),o={},flags=new Set(['--watch','--drain']);
  for(let i=0;i<args.length;i++){const k=args[i];if(!['--config','--profile','--state','--keystore',...flags].includes(k)||o[k]!==undefined)throw Error('Invalid arguments');o[k]=flags.has(k)?true:args[++i];if(o[k]===undefined)throw Error('Missing value');}
  for(const k of ['--config','--profile','--state','--keystore'])if(typeof o[k]!=='string')throw Error('Required config, profile, state and encrypted keystore');
- const url=new URL(process.env.RH_RPC_URL);if(url.protocol!=='https:'||url.username||url.password)throw Error('Public HTTPS required');
+ const credentials=require('./service-credentials.cjs');
+ const url=new URL(process.env.CREDENTIALS_DIRECTORY?credentials.rpc():process.env.RH_RPC_URL);if(url.protocol!=='https:'||url.username||url.password)throw Error('Public HTTPS required');
  const c=JSON.parse(fs.readFileSync(o['--config'],'utf8')),p=JSON.parse(fs.readFileSync(o['--profile'],'utf8'));
  require('./pons-automation.cjs').validate(c,{publicMode:true});require('./pons-public-profile.cjs').validate(p,c);
- if(!process.env.QIANQI_KEYSTORE_PASSWORD)throw Error('Keystore password required');
- const wallet=await ethers.Wallet.fromEncryptedJson(fs.readFileSync(o['--keystore'],'utf8'),process.env.QIANQI_KEYSTORE_PASSWORD);
+ const password=process.env.CREDENTIALS_DIRECTORY?credentials.readCredential('executor-password'):process.env.QIANQI_KEYSTORE_PASSWORD;
+ if(!password)throw Error('Keystore password required');
  delete process.env.QIANQI_KEYSTORE_PASSWORD;
+ const wallet=await ethers.Wallet.fromEncryptedJson(fs.readFileSync(o['--keystore'],'utf8'),password);
  if(wallet.address.toLowerCase()!==c.executor.toLowerCase())throw Error('Wrong executor');
  const request=new ethers.FetchRequest(url.href);request.timeout=20000;
  const provider=new ethers.JsonRpcProvider(request,undefined,{cacheTimeout:-1}),executor=wallet.connect(provider),stop=new AbortController();
