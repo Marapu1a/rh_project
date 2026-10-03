@@ -6,6 +6,7 @@
 
 | Модуль | Основной код | Что есть / граница |
 |---|---|---|
+| Operations wrapper | scripts/ops-session.cjs, ops-backup.cjs, verify-runtime-release.cjs, ops/*.service | [Ownership/status/offline staging](OPERATIONS_READINESS_2026-10-03.md); local Pons only, public sender и Linux start не готовы |
 | Runtime package | scripts/build-runtime.cjs, runtime-artifact.cjs, pons-deployment-config.cjs, check-runtime.cjs | [Изолированная сборка](RUNTIME_PACKAGE_2026-10-03.md), strict artifact loader, единый rehearsal export; публичный executor не включён |
 | Scheduler state / capacity probe | scripts/local-promo-scheduler.cjs, benchmark-pons-coordinator.cjs, benchmark-scheduler-storage.cjs, benchmark-scheduler-load.cjs | Запись job только при изменении; [общий scheduler10k с Pons journal/gas](SCHEDULER_LOAD_2026-10-03.md): synthetic31337, отдельный process resume, stale-file restore; внешний Pons loop — [малый fork](COORDINATOR_CAPACITY_2026-10-03.md); [cold restart без истории](PUBLICATION_HISTORY_RECOVERY_2026-10-03.md) — fault-режим того же стенда |
 | Pons BUY profiles | scripts/pons-profiles.cjs, pons-curve-buy.cjs, pons-v4-buy.cjs, pons-batch-route.cjs, pons-launch-buy.cjs, pons-pool-batch-buy.cjs, pons-zeroex-buy.cjs, pons-entrypoint-buy.cjs | Отдельные genesis-профили; launch-v4 включает v3 и узкую EntryPoint/Alchemy USDG покупку. [Матрица](PONS_CHANNEL_COVERAGE.md) |

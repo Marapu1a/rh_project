@@ -10,6 +10,7 @@ function build(output){
  fs.mkdirSync(out,{recursive:true});
  // Ship source scripts for existing dynamic workers. No configs, state, keys or test fixtures.
  fs.cpSync(path.join(root,'scripts'),path.join(out,'scripts'),{recursive:true});
+ fs.cpSync(path.join(root,'ops'),path.join(out,'ops'),{recursive:true});
  fs.cpSync(path.join(root,'web'),path.join(out,'web'),{recursive:true,filter:src=>!src.endsWith('.test.cjs')&&!src.includes(path.sep+'purchase-demo')});
  fs.copyFileSync(path.join(root,'web/concepts/hk/index.html'),path.join(out,'web/index.html'));
  fs.mkdirSync(path.join(out,'artifacts'));

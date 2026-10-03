@@ -46,7 +46,10 @@ waiting/clear. Полного зелёного повторного baseline п�
 точечная актуализация HK/transparency,19/19 browser tests и responsive/link check.
 Стиль сохранён. [Runtime-сборка и экспорт config](RUNTIME_PACKAGE_2026-10-03.md)
 проверены изолированно:8/8, API/site smoke, runtime audit0. Публичный исполнитель
-ещё отсутствует: следующим нужен public profile/guards/config перед сервисами.
+ещё отсутствует. [Обвязка эксплуатации](OPERATIONS_READINESS_2026-10-03.md)
+подготовлена: ownership/status, integrity, offline backup/staging и unit templates;
+38 уникальных адресных tests. Public Pons profile/sender и Linux service smoke
+остаются следующим обязательным шагом; внешние уведомления не подключены.
 Сам перенос не начат, guards не сняты.
 
 Промежуточная уборка документации завершена: история отделена, основные документы

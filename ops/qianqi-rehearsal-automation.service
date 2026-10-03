@@ -1,0 +1,29 @@
+# LOCAL REHEARSAL ONLY. This is deliberately not a public operator unit.
+[Unit]
+Description=QIANQI local-fork automation rehearsal
+After=network-online.target
+StartLimitIntervalSec=300
+StartLimitBurst=3
+
+[Service]
+Type=simple
+User=qianqi
+Group=qianqi
+WorkingDirectory=/opt/qianqi/current
+ExecStartPre=/usr/bin/node /opt/qianqi/current/scripts/verify-runtime-release.cjs /opt/qianqi/current
+ExecStart=/usr/bin/node /opt/qianqi/current/scripts/run-pons-automation.cjs --config /etc/qianqi/rehearsal.json --state /var/lib/qianqi/automation.json --rpc http://127.0.0.1:18545 --watch
+# Errors/unknown intent require inspection, not an automatic restart loop.
+Restart=no
+TimeoutStopSec=150
+KillMode=control-group
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/qianqi
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

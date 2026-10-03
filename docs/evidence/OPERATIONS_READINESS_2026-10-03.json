@@ -1,0 +1,59 @@
+{
+  "date": "2026-10-03",
+  "publicExecution": false,
+  "uniqueTestCases": 38,
+  "mainProfile": {
+    "passed": 33,
+    "failed": 0
+  },
+  "additionalRuns": {
+    "process": 3,
+    "release": 3,
+    "catalog": 1,
+    "overlap": 2
+  },
+  "releaseFilesVerified": 269,
+  "backupFiles": 4,
+  "backupActivated": false,
+  "linuxServiceStart": "NOT_RUN: WSL node unavailable",
+  "rawArtifacts": [
+    {
+      "file": ".local/logs/ops-readiness-tests.log",
+      "sha256": "5ccebc600dd51be0f5cd5af3b7e5afb5ddb55c2446e05451db18c226e3495136"
+    },
+    {
+      "file": ".local/logs/ops-process-tests.log",
+      "sha256": "74c66bdcae26b94f89d912cb78cf9a06766692ead174b7a5f58c19b5fbe99b38"
+    },
+    {
+      "file": ".local/logs/ops-release-tests.log",
+      "sha256": "57f7a3eb28ed45edefa606cec6ffc4c877085de3f38fc92d18e0b3e023d2a176"
+    },
+    {
+      "file": ".local/logs/ops-catalog-test.log",
+      "sha256": "44985e611d2e0d5d9a037e17cd1fe5050687d129f31ad5aaa7c1fbff83dcd13a"
+    },
+    {
+      "file": ".local/logs/ops-runtime-smoke.log",
+      "sha256": "80939d02140475e44c2885f5ea7b057eb0289dcbe412a7100041f3fe45ad3e81"
+    },
+    {
+      "file": ".local/logs/ops-backup-result.json",
+      "sha256": "f083ebca0e6f1901f5c6b996e1fdded1f47c3fc0bef707bf3488a8f64b65e152"
+    },
+    {
+      "file": ".local/logs/ops-backup-final-test.log",
+      "sha256": "950fd9fa8ec9e49ea7e14bac8010fec9e8125e6fb9e5caedfa981e4bf4876fcb"
+    }
+  ],
+  "limits": [
+    "No public Pons execution",
+    "No new on-chain recovery cycle",
+    "No external notifications"
+  ],
+  "finalBackupInventoryFix": {
+    "passed": 1,
+    "repeated": true,
+    "isolatedBuildBeforeThisFix": true
+  }
+}

@@ -130,7 +130,9 @@
       "test/pons-delay-status.test.cjs",
       "test/pons-storage-failure.test.cjs",
       "test/wallet-reward-completeness.test.cjs",
-      "test/runtime-artifact.test.cjs"
+      "test/runtime-artifact.test.cjs",
+      "test/ops-session.test.cjs",
+      "test/ops-backup.test.cjs"
     ]
   },
   "accounting": {
@@ -588,6 +590,18 @@
       "test/runtime-artifact.test.cjs",
       "test/shared-index-config.test.cjs",
       "test/test-launcher.test.cjs"
+    ]
+  },
+  "ops-readiness": {
+    "compile": false,
+    "files": [
+      "test/ops-session.test.cjs",
+      "test/ops-backup.test.cjs",
+      "test/indexer-service.test.cjs",
+      "test/pons-delay-status.test.cjs",
+      "test/local-state-lock.test.cjs",
+      "test/local-transaction.test.cjs",
+      "test/pons-storage-failure.test.cjs"
     ]
   }
 }

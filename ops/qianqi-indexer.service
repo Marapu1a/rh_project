@@ -1,0 +1,31 @@
+[Unit]
+Description=QIANQI read-only indexer and API
+After=network-online.target
+Wants=network-online.target
+StartLimitIntervalSec=300
+StartLimitBurst=3
+
+[Service]
+Type=simple
+User=qianqi
+Group=qianqi
+WorkingDirectory=/opt/qianqi/current
+EnvironmentFile=/etc/qianqi/indexer.env
+ExecStartPre=/usr/bin/node /opt/qianqi/current/scripts/verify-runtime-release.cjs /opt/qianqi/current
+ExecStart=/usr/bin/node /opt/qianqi/current/scripts/run-indexer-service.cjs /etc/qianqi/indexer.json 8787
+Restart=on-failure
+RestartSec=15
+RestartPreventExitStatus=78
+TimeoutStopSec=150
+KillMode=control-group
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/qianqi
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
