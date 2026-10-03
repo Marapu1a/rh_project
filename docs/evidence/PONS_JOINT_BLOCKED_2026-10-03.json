@@ -1,0 +1,45 @@
+{
+  "date": "2026-10-03",
+  "base": "e798db1",
+  "publicSends": false,
+  "status": "NOT_VERIFIED",
+  "runs": [
+    {
+      "log": ".local/logs/pons-joint-128.log",
+      "sha256": "cb33244f6650d15843a8c519282faa6a08c8fd9eed46867a68c0d6310990b434",
+      "anchor": {
+        "number": 79050087,
+        "hash": "0x68e89b8a4965733b5af887c96c8c5b8dbc767168743742429e57310fe18efc44"
+      },
+      "status": "FAILED_BEFORE_JOINT_SCENARIO",
+      "errorLines": [
+        "    \"message\": \"Empty storage snapshot unavailable: historical state 561e45248874b249e34b40ee80df276171bb661aff72dd9009e4cf2ac3effae9 is not available\",",
+        "    \"stack\": \"Error: Empty storage snapshot unavailable: historical state 561e45248874b249e34b40ee80df276171bb661aff72dd9009e4cf2ac3effae9 is not available\\n    at Object.pinEmptyStorage (D:\\\\sites\\\\rh_project\\\\scripts\\\\read-only-fork-rpc.cjs:47:26)\\n    at async main (D:\\\\sites\\\\rh_project\\\\scripts\\\\pons-collector-fork.cjs:34:49)\""
+      ]
+    },
+    {
+      "log": ".local/logs/pons-joint-128-b.log",
+      "sha256": "dbdf357c502f5a11c3b2bf29302a5aaa909d451ace1ab52ae53c36ae792dfe52",
+      "anchor": {
+        "number": 79052653,
+        "hash": "0xeca5d7c86404a8110cbb3524f1348e96224cef2dbd47be9ebe0d8ab46a9d1992"
+      },
+      "status": "FAILED_BEFORE_JOINT_SCENARIO",
+      "errorLines": [
+        "Fatal external error: Err(Db(State(Remote(JsonRpcError { error: Error { code: -32601, message: \"public endpoint only serves recent blocks (last 1024). Register at blockreq.com for historical / archive access.\", data: None }, request: \"{\\\"jsonrpc\\\":\\\"2.0\\\",\\\"method\\\":\\\"eth_getStorageAt\\\",\\\"params\\\":[\\\"0x5fc5360d0400a0fd4f2af552add042d716f1d168\\\",\\\"0xd4114f0c0984cc8ffd32c0c7235ce324f3d3e49c5c89e6db9683dc9f48e9d06d\\\",\\\"0x4b63f6d\\\"],\\\"id\\\":621}\" }))))"
+      ]
+    },
+    {
+      "log": ".local/logs/pons-joint-128-c.log",
+      "sha256": "e68b1af15eeacde93d52310b4610cd6c53acde207ea9d99c2e1fbf0f35ab35a7",
+      "anchor": {
+        "number": 79054476,
+        "hash": "0x27ca7d8483d999ffa67397e43e00b7d3bb7a95bdac8fc4aa912c807e960eb6db"
+      },
+      "status": "FAILED_BEFORE_JOINT_SCENARIO",
+      "errorLines": [
+        "Fatal external error: Err(Db(State(Remote(JsonRpcError { error: Error { code: -32000, message: \"historical state 10c968c8d0e582c5c074ad1a65863a9669ea151e7e72b0b2b12cc70d8fad4250 is not available\", data: None }, request: \"{\\\"jsonrpc\\\":\\\"2.0\\\",\\\"method\\\":\\\"eth_getStorageAt\\\",\\\"params\\\":[\\\"0x8366a39cc670b4001a1121b8f6a443a643e40951\\\",\\\"0xb2b877ca697af8132e198149b3c9b5b219fd75ad919fcc8c18d19aaee0d2b3ee\\\",\\\"0x4b6468c\\\"],\\\"id\\\":704}\" }))))"
+      ]
+    }
+  ]
+}

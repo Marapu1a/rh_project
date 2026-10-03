@@ -1,5 +1,5 @@
 // Research-only. All writes target in-process Hardhat; upstream proxy is read-only.
-if(process.argv.includes('--coordinator-benchmark')&&!process.argv.includes('--restore-drill'))process.argv.push('--restore-drill');
+if((process.argv.includes('--coordinator-benchmark')||process.argv.includes('--joint-load'))&&!process.argv.includes('--restore-drill'))process.argv.push('--restore-drill');
 process.env.HARDHAT_CONFIG=require.resolve(process.argv.includes('--combined-profile')?'../test/fixtures/pons-7702-hardhat.config.cjs':process.argv.includes('--wallet-browser')||process.argv.includes('--restore-drill')?'../test/fixtures/pons-wallet-cycle-hardhat.config.cjs':'../test/fixtures/public-hardhat.config.cjs');
 if(process.argv.includes('--restore-drill')&&!process.argv.includes('--indexed-automation'))process.argv.push('--indexed-automation');
 if(process.argv.includes('--combined-profile')&&!process.argv.includes('--v4'))process.argv.push('--v4');
@@ -37,7 +37,7 @@ async function main(){
  console.log('fork at',block.number);await rpc('hardhat_reset',[{forking:{jsonRpcUrl:proxy.url,blockNumber:block.number}}]);
  assert.equal((await rpc('eth_getBlockByNumber',['latest',false])).hash,block.hash);await rpc('evm_mine');
  const p=new ethers.BrowserProvider(hre.network.provider,undefined,{cacheTimeout:-1});await rpc('hardhat_impersonateAccount',[OWNER]);await rpc('hardhat_setBalance',[OWNER,ethers.toQuantity(ethers.parseEther('10'))]);const owner=new ethers.JsonRpcSigner(p,OWNER),factory=new ethers.Contract(FACTORY,FAB,owner),quote=new ethers.Contract(USDG,ERC,owner);
- if(process.argv.includes('--coordinator-benchmark')){
+ if(process.argv.includes('--coordinator-benchmark')||process.argv.includes('--joint-load')){
   // Public RPC retains little historical state. Cache real precompile account reads
   // before the long setup/RNG wait; EDR may first ask for these during BLS verification.
   out.precompileReads=[];
@@ -162,6 +162,7 @@ async function main(){
   out.persistentIndexer=await require('./pons-indexer-rehearsal.cjs').run({rpc,manifest:buyManifest,prefix:file,buyPolicy,buy:amount=>send(trade(currencies[0]===USDG,amount),'indexer reorg fixture BUY')});out.status=out.persistentIndexer.status;
  }
  if(process.argv.includes('--combined-profile')){out.combined=await require('./pons-launch-rehearsal.cjs').finish({rpc,manifest:buyManifest,owner,provider:p,compiled,promo,prefix:file});out.status=out.combined.status;}
+ if(process.argv.includes('--joint-load')){await fund(100000_000000n);cycle.jointRuntime=await require('./pons-joint-load.cjs').prepare({out,save,provider:p,user:owner,quote,manifest:buyManifest,rpc});}
  if(cycle){console.log('Pons full Promo cycle');await cycleHarness.finish({out,save,provider:p,user:owner,quote,cycle,manifest:buyManifest,rpc,buy:amount=>send(trade(currencies[0]===USDG,amount),'v4 BUY after freeze')});out.status=out.cycle.status;}
  }catch(e){out.status='FAILED';out.error={message:e.shortMessage||e.message,data:e.data,info:e.info,stack:e.stack};process.exitCode=1;}
  finally{try{await browserPurchase?.close();}catch(e){out.status='FAILED';out.error={message:e.message};process.exitCode=1;}out.proxyStats=proxy?.stats;save();proxy?.close();remote?.destroy();console.log(JSON.stringify({status:out.status,error:out.error,economics:out.economics,rates:out.rates,policy:out.policy,split:out.split,graduation:out.graduation},(_,v)=>typeof v==='bigint'?v.toString():v,2));}
