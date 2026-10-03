@@ -84,6 +84,11 @@ receipts/runtime и репетиция четырёх оставшихся вы�
 4tx/8restart на fork PASS,14 адресных tests, live preflight/prepare и PNG hashes PASS.
 Консоль4176 переключена на новую очередь с подписями владельца; completed0/pending=null
 при проверке, публичных отправок в этом пакете0. Далее — четыре подписи и реальные receipts.
+[Проверка признаков риска токена](PONS_TOKEN_SECURITY_2026-10-03.md) выполнена:
+исполняемый runtime воспроизведён из Pons/Sourcify source, без owner/mint/blacklist/pause;
+BUY→transfer→полный SELL двух обычных адресов на fork PASS. CBOR metadata отличается,
+публичные verification/GoPlus QIANQI проверить после launch. До включения фронта
+явно указать базовую1% + creator3% на curve и opening snipe3s.
 Финансовые сервисы выключены, штатный мониторинг ждёт активации.
 
 Промежуточная уборка документации завершена: история отделена, основные документы

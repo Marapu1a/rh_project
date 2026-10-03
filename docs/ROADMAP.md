@@ -117,7 +117,10 @@ hourly off-server pull на Windows, свежий preflight/deployment fork и s
 [Ручная очередь](PONS_CONTINUATION_QUEUE_2026-10-03.md) готова:4tx/8restart fork PASS,
 14 адресных tests и live prepare. Далее подписи владельца launch/policy/binds;
 сервисы только после проверки manifest.
-Токен пока не запущен.
+Токен пока не запущен. [Token security check](PONS_TOKEN_SECURITY_2026-10-03.md) PASS
+в обозначенных границах: исходники/исполняемый код и полный обратный SELL на fork.
+После launch — source verification/GoPlus именно QIANQI; до фронта — пояснение
+base1% + creator3% и snipe3s, без изменения продуктовых правил.
 
 
 

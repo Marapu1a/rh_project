@@ -1,0 +1,165 @@
+{
+  "observedAt": "2026-10-03T20:40:16.929Z",
+  "probe": {
+    "schema": "pons-token-security-probe-v1",
+    "publicSends": 0,
+    "status": "PASSED",
+    "limits": [
+      "Local fork with synthetic ETH/USDG, not a GoPlus verdict",
+      "Curve trading only; graduated pool behavior not re-proven here",
+      "Finite method probes do not prove absence of other privileged selectors"
+    ],
+    "forkBlock": 79372562,
+    "runtimeHash": "0x68375920a0acc51f0038b37aeaf86dbb35b44cefd95d1b62ea770baa6b41d8be",
+    "runtimeBytes": 3248,
+    "metadataTail": "445260645ffdfea2646970667358221220f8f8df1aef409554acec1774e66d855cbdc94f6a3e199a378f5ba9fe2a08326664736f6c63430008230033",
+    "references": {
+      "deployer": "0x098afA6731239a00CE0aff669aaefD16b7C72114",
+      "launchFactory": "0x7eD598BcEf8bd9Edd8C97A195C6d13f40801EC7e",
+      "curve": "0x12ba58B5455fDBc15165e0E8B2096498D2c684f1"
+    },
+    "totalSupply": "1000000000000000000000000000",
+    "fees": {
+      "baseBps": "100",
+      "creatorTaxBps": "300",
+      "openingBuyerSnipeBps": "9900",
+      "openingGovernorSnipeBps": "0",
+      "after10SecondsSnipeBps": "0"
+    },
+    "trades": [
+      {
+        "buyer": "0x0000000000000000000000000000000000001234",
+        "seller": "0x0000000000000000000000000000000000005678",
+        "quoteIn": "1000000",
+        "tokensBought": "296574563788245761455192",
+        "transferTaxRaw": "0",
+        "allTokensSold": true,
+        "quoteOut": "921601"
+      },
+      {
+        "buyer": "0x0000000000000000000000000000000000005678",
+        "seller": "0x0000000000000000000000000000000000001234",
+        "quoteIn": "101000000",
+        "tokensBought": "29091258212192388083807670",
+        "transferTaxRaw": "0",
+        "allTokensSold": true,
+        "quoteOut": "93081601"
+      }
+    ],
+    "methodProbes": [
+      {
+        "signature": "owner()",
+        "reverted": true
+      },
+      {
+        "signature": "mint(address,uint256)",
+        "reverted": true
+      },
+      {
+        "signature": "setBlacklist(address,bool)",
+        "reverted": true
+      },
+      {
+        "signature": "pause()",
+        "reverted": true
+      },
+      {
+        "signature": "setTax(uint256)",
+        "reverted": true
+      },
+      {
+        "signature": "setMaxWallet(uint256)",
+        "reverted": true
+      }
+    ]
+  },
+  "sourceMatch": {
+    "status": "EXECUTABLE_RUNTIME_MATCH",
+    "compiler": "0.8.35+commit.47b9dedd.Emscripten.clang",
+    "runtimeHash": "0x68375920a0acc51f0038b37aeaf86dbb35b44cefd95d1b62ea770baa6b41d8be",
+    "executableHash": "0x1e1eb058f94175f54df2fd4ddcf4831d32757be89a18d948068a94ac2d4d139e",
+    "fullMetadataMatch": false,
+    "immutableValues": {
+      "deployer": "0x098afA6731239a00CE0aff669aaefD16b7C72114",
+      "launchFactory": "0x7eD598BcEf8bd9Edd8C97A195C6d13f40801EC7e",
+      "curve": "0x12ba58B5455fDBc15165e0E8B2096498D2c684f1"
+    },
+    "functions": [
+      "allowance",
+      "approve",
+      "balanceOf",
+      "burn",
+      "burnFrom",
+      "curve",
+      "decimals",
+      "deployer",
+      "description",
+      "getTokenInfo",
+      "launchFactory",
+      "logo",
+      "name",
+      "socials",
+      "symbol",
+      "totalSupply",
+      "transfer",
+      "transferFrom"
+    ],
+    "sourceMatch": "match",
+    "sourcePeer": "0xdEe52F2ab639b6942B0d0F0565400b93b7a0fbe5",
+    "sourceUrl": "https://sourcify.dev/server/v2/contract/4663/0xdEe52F2ab639b6942B0d0F0565400b93b7a0fbe5?fields=all",
+    "limits": [
+      "CBOR metadata differs from local recompilation; not an exact full-bytecode verification",
+      "This verifies token logic only, not the whole Pons factory/curve/hook graph",
+      "Public QIANQI source verification must be checked after launch"
+    ]
+  },
+  "peerGoPlus": {
+    "address": "0xdee52f2ab639b6942b0d0f0565400b93b7a0fbe5",
+    "url": "https://api.gopluslabs.io/api/v1/token_security/4663?contract_addresses=0xdee52f2ab639b6942b0d0f0565400b93b7a0fbe5",
+    "flags": {
+      "anti_whale_modifiable": "0",
+      "buy_tax": "0",
+      "can_take_back_ownership": "0",
+      "cannot_buy": "0",
+      "creator_address": "0x3711ceA4feaDE896C913C68F01Eda97Cb06D1A42",
+      "creator_balance": "0",
+      "creator_percent": "0.000000",
+      "external_call": "0",
+      "hidden_owner": "0",
+      "holder_count": "2831",
+      "honeypot_with_same_creator": "0",
+      "is_anti_whale": "0",
+      "is_blacklisted": "0",
+      "is_honeypot": "0",
+      "is_in_dex": "1",
+      "is_mintable": "0",
+      "is_open_source": "1",
+      "is_proxy": "0",
+      "is_whitelisted": "0",
+      "lp_holder_count": "15",
+      "owner_balance": "0",
+      "owner_change_balance": "0",
+      "owner_percent": "0",
+      "personal_slippage_modifiable": "0",
+      "selfdestruct": "0",
+      "sell_tax": "0",
+      "slippage_modifiable": "0",
+      "token_name": "Harmonic Agent",
+      "token_symbol": "HARMONIC",
+      "total_supply": "1000000000",
+      "trading_cooldown": "0",
+      "transfer_pausable": "0",
+      "transfer_tax": "0"
+    }
+  },
+  "liveFactorySnipeSeconds": 3,
+  "ourPublicTokenStillAbsent": true,
+  "next": [
+    "Verify public token source and request its own GoPlus report after launch",
+    "Disclose 1% base plus 3% creator fee and 3-second opening snipe window before public site activation"
+  ],
+  "limits": [
+    "No scanner score or green labels promised",
+    "Other Pons contracts retain previously accepted source gaps"
+  ]
+}
