@@ -34,14 +34,29 @@ test('HK browser, non-MetaMask EIP-6963 provider: review -> real claim -> receip
  t.after(async()=>{await browser.close();server.closeAllConnections();await new Promise(r=>server.close(r));});
  const page=await browser.newPage({viewport:{width:390,height:900}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
  await page.exposeFunction('testWalletRequest',async({method,params})=>method==='eth_requestAccounts'?[x.winner]:x.provider.request({method,params}));
- await page.addInitScript(()=>{const listeners=new Map();const provider={request:arg=>window.testWalletRequest(arg),on:(n,fn)=>listeners.set(n,fn),removeListener:n=>listeners.delete(n)};addEventListener('eip6963:requestProvider',()=>dispatchEvent(new CustomEvent('eip6963:announceProvider',{detail:{info:{uuid:'test-other',name:'Other wallet',rdns:'test.other'},provider}})));});
- let stale=false;
- await page.route('**/v1/wallets/**',r=>r.fulfill({json:{schema:'promo-wallet-status-v1',status:stale?'stale':'observed',wallet:x.winner,provenance:{chainId:31337,head:{number:100}},balances:{SHORT:{open:'1'},MONTHLY:{open:'1'},carryRaw:'1',entryThresholdRaw:'100',quoteDecimals:0},asset:{address:x.deployment.asset.toLowerCase(),decimals:18},rewards:{vault:x.deployment.vault,items:[x.reward],total:1},purchases:{items:[{transactionHash:E.id('eligible'),status:'ELIGIBLE',entriesMinted:'1'},{transactionHash:E.id('unsupported'),status:'UNSUPPORTED_ROUTE',reason:'UNSUPPORTED_TEST_ROUTE'}],total:2}}}));
+ await page.addInitScript(()=>{const listeners=new Map();window.testWalletEvents=listeners;const provider={request:arg=>window.testWalletRequest(arg),on:(n,fn)=>listeners.set(n,fn),removeListener:n=>listeners.delete(n)};addEventListener('eip6963:requestProvider',()=>dispatchEvent(new CustomEvent('eip6963:announceProvider',{detail:{info:{uuid:'test-other',name:'Other wallet',rdns:'test.other'},provider}})));});
+ let stale=false,changedAmount=false;
+ await page.route('**/v1/wallets/**',r=>r.fulfill({json:{schema:'promo-wallet-status-v1',status:stale?'stale':'observed',wallet:x.winner,provenance:{chainId:31337,head:{number:100}},balances:{SHORT:{open:'1'},MONTHLY:{open:'1'},carryRaw:'1',entryThresholdRaw:'100',quoteDecimals:0},asset:{address:x.deployment.asset.toLowerCase(),decimals:18},rewards:{vault:x.deployment.vault,items:[{...x.reward,amountRaw:changedAmount?'71':x.reward.amountRaw}],total:1},purchases:{items:[{transactionHash:E.id('eligible'),status:'ELIGIBLE',entriesMinted:'1'},{transactionHash:E.id('unsupported'),status:'UNSUPPORTED_ROUTE',reason:'UNSUPPORTED_TEST_ROUTE'}],total:2}}}));
  await page.goto(`http://127.0.0.1:${server.address().port}/concepts/hk/`);
  await page.evaluate(()=>{window.open=(...args)=>{window.opened=args;};});await page.waitForFunction(()=>document.querySelector('#account > [role="status"]'));
  await page.locator('#buy').click();await page.getByRole('button',{name:'Open Pons',exact:true}).click();assert.equal(await page.evaluate(()=>opened[0]),'https://www.ponsfamily.com/launchpad/'+x.f.token.target);
  await page.locator('header .connect').click();
- const claim=page.getByRole('button',{name:'Claim / check payment'});await claim.click();await page.getByRole('button',{name:'Confirm claim in wallet'}).click();await page.waitForFunction(()=>document.getElementById('dialog-title').textContent==='Claim submitted');
+ const claim=page.getByRole('button',{name:'Claim / check payment'});await claim.click();
+ await page.getByRole('button',{name:'Confirm claim in wallet'}).waitFor();
+ // Identical background responses must not invalidate the reviewed transaction.
+ await page.getByRole('button',{name:'Confirm claim in wallet'}).waitFor();await page.evaluate(async()=>{await refresh();await refresh();});
+ assert.equal(await page.getByRole('button',{name:'Confirm claim in wallet'}).count(),1);
+ // A genuinely changed prize must invalidate the old review without a send.
+ changedAmount=true;await page.evaluate(()=>refresh());await page.getByRole('button',{name:'Confirm claim in wallet'}).click();
+ assert.equal(await page.locator('#dialog-title').textContent(),'Check the prize again');assert.equal(x.sends,0);
+ await page.keyboard.press('Escape');changedAmount=false;await page.evaluate(()=>refresh());await claim.click();
+ await page.getByRole('button',{name:'Confirm claim in wallet'}).waitFor();await page.evaluate(()=>testWalletEvents.get('chainChanged')('0x1'));await page.getByRole('button',{name:'Confirm claim in wallet'}).click();assert.equal(await page.locator('#dialog-title').textContent(),'Check the prize again');assert.equal(x.sends,0);
+ await page.keyboard.press('Escape');await page.evaluate(()=>testWalletEvents.get('chainChanged')('0x7a69'));await claim.click();
+ await page.getByRole('button',{name:'Confirm claim in wallet'}).waitFor();await page.evaluate(()=>testWalletEvents.get('accountsChanged')(['0x'+'4'.repeat(40)]));await page.getByRole('button',{name:'Confirm claim in wallet'}).click();assert.equal(await page.locator('#dialog-title').textContent(),'Check the prize again');assert.equal(x.sends,0);
+ await page.keyboard.press('Escape');await page.evaluate(w=>testWalletEvents.get('accountsChanged')([w]),x.winner);await claim.click();
+ await page.getByRole('button',{name:'Confirm claim in wallet'}).waitFor();await page.evaluate(async()=>{await refresh();await refresh();});
+ const priorRefresh=await page.evaluate(()=>version);await page.waitForTimeout(31000);assert((await page.evaluate(()=>version))>priorRefresh,'actual 30-second refresh fired during review');
+ await page.getByRole('button',{name:'Confirm claim in wallet'}).click();await page.waitForFunction(()=>document.getElementById('dialog-title').textContent==='Claim submitted');
  await page.keyboard.press('Escape');await claim.click();await page.waitForFunction(()=>document.getElementById('dialog-copy').textContent.includes('Payment confirmed'));assert.equal(x.sends,1);
  await page.reload();await claim.click();await page.waitForFunction(()=>document.getElementById('dialog-copy').textContent.includes('Payment confirmed'));assert.equal(x.sends,1);
  await page.keyboard.press('Escape');stale=true;await page.locator('#refresh').click();await page.waitForFunction(()=>document.getElementById('wallet-status').textContent.includes('Updates delayed'));assert.equal(await claim.count(),0);

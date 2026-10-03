@@ -1,6 +1,8 @@
 'use strict';
 const $=id=>document.getElementById(id),dialog=$('dialog'),providers=new Map();
 let provider=null,address=null,chain=null,version=0,busy=false;
+let claimVersion=0,claimFingerprint=null;
+function invalidateClaims(){claimVersion++;claimFingerprint=null;}
 let currentWallet=null,accounts=[],session=0,detach=()=>{},dialogMode='',restoreTimer;
 let expectedChain=4663n,siteActions=null;
 const storageKey='qianqi.wallet.v1';
@@ -31,7 +33,7 @@ window.addEventListener('eip6963:announceProvider',e=>{
  scheduleRestore();
 });
 function emptyRewards(title,copy){const td=document.createElement('td');td.colSpan=3;const box=document.createElement('div');box.className='empty-state';const h=document.createElement('h3');h.textContent=title;const p=document.createElement('p');p.textContent=copy;box.append(h,p);td.append(box);const tr=document.createElement('tr');tr.append(td);$('rewards-body').replaceChildren(tr);}
-function resetData(message){$('purchase-status')?.remove();if($('locked-tickets'))$('locked-tickets').replaceChildren();$('short-count').textContent='—';$('monthly-count').textContent='—';$('carry').textContent=message;$('provenance').textContent='We can’t confirm the numbers right now.';emptyRewards('PRIZES: WAITING FOR DATA',message);}
+function resetData(message){invalidateClaims();$('purchase-status')?.remove();if($('locked-tickets'))$('locked-tickets').replaceChildren();$('short-count').textContent='—';$('monthly-count').textContent='—';$('carry').textContent=message;$('provenance').textContent='We can’t confirm the numbers right now.';emptyRewards('PRIZES: WAITING FOR DATA',message);}
 function updateButtons(){for(const b of document.querySelectorAll('.connect')){const label=b.querySelector('.connect-label');const text=busy?'CONNECTING…':address?`${address.slice(0,6)}…${address.slice(-4)}`:'CONNECT WALLET';if(label)label.textContent=text;else b.textContent=text;b.disabled=busy;b.setAttribute('aria-label',address?`Manage wallet ${address}`:text);}$('disconnect').hidden=!provider;$('refresh').hidden=!address;}
 function disconnected(){restoreAllowed=false;clearTimeout(restoreTimer);session++;version++;detach();detach=()=>{};provider=null;currentWallet=null;address=null;accounts=[];chain=null;busy=false;forget();if(dialog.open)dialog.close();updateButtons();$('wallet-status').textContent='Wallet disconnected.';resetData('Connect and check your tickets.');}
 function applyAccounts(value,preferred=address){accounts=cleanAccounts(value);if(!accounts.length){disconnected();return false;}address=accounts.includes(preferred)?preferred:accounts[0];version++;remember();updateButtons();resetData('Getting this wallet’s numbers…');return true;}
@@ -107,6 +109,8 @@ async function refresh(){
  try{
   const res=await fetch(`/v1/wallets/${wallet}?limit=25`,{cache:'no-store',signal:AbortSignal.timeout(10000)});const data=await res.json();if(request!==version)return;
   if(!res.ok||data.schema!=='promo-wallet-status-v1'||!['observed','stale'].includes(data.status)||data.wallet!==wallet||String(data.provenance?.chainId)!==String(expectedChain)||!data.balances)throw Error();
+  const fingerprint=JSON.stringify([wallet,String(chain),data.status,data.rewards?.vault,data.asset,(data.rewards?.items??[]).map(r=>[r.drawId,r.winner,r.asset,r.amountRaw,r.status]).sort((a,b)=>String(a[0]).localeCompare(String(b[0])))]);
+  if(fingerprint!==claimFingerprint){claimVersion++;claimFingerprint=fingerprint;}
   const b=data.balances;$('short-count').textContent=units(b.SHORT.open,0);$('monthly-count').textContent=units(b.MONTHLY.open,0);
   if($('locked-tickets')){
    const box=$('locked-tickets');box.replaceChildren();
@@ -124,7 +128,7 @@ async function refresh(){
    // Reward asset/decimals must come from a verified deployment profile, never the quote decimals.
    $('rewards-body').replaceChildren();for(const reward of data.rewards.items){const tr=document.createElement('tr');for(const text of [String(reward.drawId).slice(0,10)+'…',data.asset&&reward.asset===data.asset.address?units(reward.amountRaw,data.asset.decimals)+' USDG':'Amount not loaded',reward.status==='paid'?'Paid':'Won · payment pending']){const td=document.createElement('td');td.textContent=text;tr.append(td);}tr.firstChild.title=String(reward.drawId);for(const [label,source] of [['Assignment',reward.assignment],['Payment',reward.payment]]){if(source&&/^0x[0-9a-f]{64}$/i.test(source.transactionHash)&&String(data.provenance.chainId)==='4663'){const a=document.createElement('a');a.href='https://robinhoodchain.blockscout.com/tx/'+source.transactionHash;a.textContent=label;a.target='_blank';a.rel='noopener noreferrer';tr.firstChild.append(document.createElement('br'),a);}}tr.lastChild.className=reward.status==='paid'?'status-paid':'status-assigned';$('rewards-body').append(tr);}
    $('provenance').textContent+=` · Showing ${data.rewards.items.length} of ${data.rewards.total} rewards.`;
-   attachClaims(data,request);
+   attachClaims(data,claimVersion);
   }
   renderPurchases(data);
  }catch{if(request!==version)return;resetData('We can’t load your tickets right now. That doesn’t mean you have none.');$('wallet-status').textContent='Data unavailable. Give Refresh a try in a moment.';}
@@ -141,7 +145,7 @@ $('buy').addEventListener('click',()=>{
 function claimEngine(reward,revision){
  const selected=address,p=provider;
  return QianqiClaim.create({deployment:siteActions,provider:p,storage:localStorage,
-  current:()=>provider===p&&address===selected&&version===revision&&chain===expectedChain,
+  current:()=>provider===p&&address===selected&&claimVersion===revision&&chain===expectedChain,
   lock:navigator.locks?((key,fn)=>navigator.locks.request(key,{ifAvailable:true},lock=>{if(!lock)throw Error('Another tab is checking this claim.');return fn();})):null});
 }
 function attachClaims(data,revision){
@@ -152,19 +156,19 @@ function attachClaims(data,revision){
   button.onclick=async()=>{
    button.disabled=true;
    try{
-    const engine=claimEngine(r,revision),saved=await engine.check(r);if(revision!==version)return;
+    const engine=claimEngine(r,revision),saved=await engine.check(r);if(revision!==claimVersion)return;
     if(saved&&!['rejected','reverted'].includes(saved.state)){
      const text=saved.state==='confirmed'?'Payment confirmed on the test chain. The indexed view may take a moment to catch up.':saved.hash?`Transaction pending: ${saved.hash}. Refresh and check again; no second transaction will be sent.`:'A wallet request is still open or its outcome is unknown. Check wallet activity before doing anything else. This site will not send it again.';
-     show('Claim status',text);return;
+     show('Claim status',text,{choices:saved.state==='confirmed'?[]:[{name:'Check a transaction hash',action:()=>recoverClaim(engine,r,revision)}]});return;
     }
-    const review=await engine.prepare(r);if(revision!==version)return;
+    const review=await engine.prepare(r);if(revision!==claimVersion)return;
     show('Claim your test prize',`${review.amount} USDG → ${r.winner}. Test chain ${siteActions.chainId}. Estimated gas: ${BigInt(review.gas)} units; your wallet shows the network fee. No token approval.`,{choices:[{name:'Confirm claim in wallet',action:async()=>{
-     if(revision!==version){show('Check the prize again','Your wallet or its data changed. Close this message and reopen Claim to review the current prize.');return;}
+     if(revision!==claimVersion){show('Check the prize again','Your wallet or its data changed. Close this message and reopen Claim to review the current prize.');return;}
      show('Check your wallet','Confirm or decline the claim there. Leave an unanswered request open only once.');
-     try{await engine.send(r);if(revision===version)show('Claim submitted','The transaction was sent. Use Claim / check payment to check its result.');}
-     catch(e){if(revision===version)show('Claim needs attention',e.message,{error:true});}
+     try{await engine.send(r);if(revision===claimVersion)show('Claim submitted','The transaction was sent. Use Claim / check payment to check its result.');}
+     catch(e){if(revision===claimVersion)show('Claim needs attention',e.message,{error:true});}
     }}]});
-   }catch(e){if(revision===version)show('Claim needs attention',e.message,{error:true});}
+   }catch(e){if(revision===claimVersion)show('Claim needs attention',e.message,{error:true});}
    finally{button.disabled=false;}
   };
   $('rewards-body').children[i]?.lastChild.append(document.createElement('br'),button);
@@ -181,3 +185,11 @@ function renderPurchases(data){
  if(data.purchases){const p=document.createElement('p');p.textContent=`Showing ${data.purchases.items.length} of ${data.purchases.total} observed purchases.`;box.append(p);}
 }
 setInterval(()=>{if(address&&!document.hidden)void refresh();},30000);
+
+function recoverClaim(engine,reward,revision){
+ show('Find your claim payment','Paste the transaction hash from your wallet activity. We only accept a completed payment for this exact prize; this does not send a transaction.');
+ const input=document.createElement('input');input.type='text';input.placeholder='0x…';input.setAttribute('aria-label','Claim transaction hash');input.autocomplete='off';input.style.maxWidth='100%';
+ const button=document.createElement('button');button.className='button outline';button.textContent='Verify payment';
+ button.onclick=async()=>{button.disabled=true;try{if(revision!==claimVersion)throw Error('Wallet or prize changed. Reopen Claim.');await engine.recover(reward,input.value.trim());if(revision===claimVersion)show('Payment verified','This exact prize was paid on the test chain. Refresh the cabinet to load its latest status.');}catch(e){if(revision===claimVersion){const error=document.createElement('p');error.textContent=e.message;error.setAttribute('role','alert');$('wallet-options').querySelector('[role="alert"]')?.remove();$('wallet-options').append(error);}}finally{button.disabled=false;}};
+ $('wallet-options').append(input,button);input.focus();
+}

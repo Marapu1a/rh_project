@@ -18,6 +18,7 @@
   const key=r=>`qianqi.claim.v1:${c.chainId}:${c.anchor.hash}:${c.vault.toLowerCase()}:${r.drawId.toLowerCase()}:${r.winner.toLowerCase()}`;
   function read(r){const raw=storage.getItem(key(r));return raw?JSON.parse(raw):null;}
   function write(r,v){storage.setItem(key(r),JSON.stringify(v));}
+  function exclusive(r,fn){if(!lock)throw Error('This browser cannot safely track claims across tabs.');return lock(key(r),fn);}
   async function context(r){
    if(!addr(r.winner)||!hash(r.drawId)||!same(r.asset,c.asset)||!/^\d+$/.test(r.amountRaw)||BigInt(r.amountRaw)<=0n)throw Error('Invalid prize.');
    const network=await call('eth_chainId'),accounts=await call('eth_accounts');
@@ -54,18 +55,34 @@
     }catch(e){write(r,{state:Number(e?.code)===4001?'rejected':'unknown',tx:prepared.tx});throw Error(Number(e?.code)===4001?'Claim declined. No claim was submitted by this request.':'The outcome is unknown. Check your wallet activity; do not send another claim.');}
    });
   }
-  async function check(r){
-   const saved=read(r);if(!saved?.hash)return saved;
+  async function inspect(r,saved){
    await context(r);
    const receipt=await call('eth_getTransactionReceipt',[saved.hash]);
+   if(!current())throw Error('Wallet changed. Check the prize again.');
    if(!receipt)return {...saved,state:'pending'};
    const tx=await call('eth_getTransactionByHash',[saved.hash]),block=await call('eth_getBlockByNumber',[receipt.blockNumber,false]);
    if(!same(receipt.transactionHash,saved.hash)||!same(tx?.hash,saved.hash)||!same(tx?.blockHash,receipt.blockHash)||!same(block?.hash,receipt.blockHash)||!same(tx?.from,r.winner)||!same(tx?.to,c.vault)||!same(tx?.input??tx?.data,abi.encodeFunctionData('claim',[r.drawId,r.winner]))||BigInt(tx?.value??-1)!==0n||!['0x0','0x1'].includes(receipt.status))throw Error('Transaction confirmation does not match.');
    const success=BigInt(receipt.status)===1n;
    if(success&&(await value('reward',[r.drawId,r.winner]))[0]!==0n)throw Error('Payment is not confirmed yet.');
-   const result={...saved,state:success?'confirmed':'reverted'};write(r,result);return result;
+   if(!current())throw Error('Wallet changed. Check the prize again.');
+   return {...saved,state:success?'confirmed':'reverted'};
   }
-  return {prepare,send,check,read};
+  async function check(r){return exclusive(r,async()=>{
+   const saved=read(r);if(!saved?.hash)return saved;
+   const result=await inspect(r,saved);
+   if(JSON.stringify(read(r))!==JSON.stringify(saved))return read(r);
+   write(r,result);return result;
+  });}
+  async function recover(r,txHash){return exclusive(r,async()=>{
+   if(!hash(txHash))throw Error('Enter a complete transaction hash (0x and 64 hex characters).');
+   const saved=read(r),result=await inspect(r,{...saved,hash:txHash});
+   // A mined successful exact claim proves the prize is spent. An arbitrary failed
+   // or pending hash proves nothing about a lost request and must never unlock retry.
+   if(result.state!=='confirmed')throw Error('This hash does not prove a completed payment. The previous request remains blocked.');
+   if(JSON.stringify(read(r))!==JSON.stringify(saved))throw Error('Claim status changed. Check it again.');
+   write(r,result);return result;
+  });}
+  return {prepare,send,check,recover,read};
  }
  return {config,create};
 });

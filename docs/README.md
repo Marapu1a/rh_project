@@ -30,7 +30,7 @@
 - [Полный каталог документов](DOCUMENT_CATALOG.md): модули, будущий deployment, резерв, отчёты.
 - [Артефакты и логи](ARTIFACTS.md): docs/evidence, research, fixtures, .local/logs.
 - [Архив](archive/README.md) и [снимок перед уборкой02.10](archive/context-2026-10-02/README.md).
-- [Текущий запрос GPT](GPT_REVIEW_REQUEST.md): статическое review admission/indexer/Claim/общего цикла; ответ ожидается.
+- [Текущий запрос GPT](GPT_REVIEW_REQUEST.md): статическое review admission/indexer/Claim/общего цикла; [ответ разобран и Claim исправлен](CLAIM_REVIEW_FIXES_2026-10-03.md).
 - [Прежний разбор graduation](PONS_GRADUATION_TRIAGE_2026-10-02.md): история исследований маршрутов.
 - [Разбор GPT review](PONS_REVIEW_TRIAGE_2026-10-02.md): замечания и статус исправлений.
 
