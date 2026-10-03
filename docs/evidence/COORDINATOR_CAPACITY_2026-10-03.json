@@ -1,0 +1,373 @@
+{
+  "schema": "coordinator-capacity-evidence-v1",
+  "date": "2026-10-03",
+  "base": "4094adf",
+  "node": "v24.21.0",
+  "scope": "Local test-only; small real Pons frozen-draw coordinator comparison plus synthetic 1k/10k storage probe, not joint 10k/100k throughput.",
+  "fork": {
+    "number": 78980252,
+    "hash": "0x199d5152475d0a4c9ae70dc36d937ffe8dd2f3fbfce5061d1c6a3a398ab795dd"
+  },
+  "upstream": "https://robinhood-mainnet-rpc.blockreq.com/v1/rpc/public",
+  "precompileReads": [
+    {
+      "address": "0x0000000000000000000000000000000000000001",
+      "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+      "balance": "4611062044573073971",
+      "nonce": 0
+    },
+    {
+      "address": "0x0000000000000000000000000000000000000002",
+      "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+      "balance": "1287025008426524",
+      "nonce": 0
+    },
+    {
+      "address": "0x0000000000000000000000000000000000000003",
+      "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+      "balance": "0",
+      "nonce": 0
+    },
+    {
+      "address": "0x0000000000000000000000000000000000000004",
+      "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+      "balance": "0",
+      "nonce": 0
+    },
+    {
+      "address": "0x0000000000000000000000000000000000000005",
+      "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+      "balance": "0",
+      "nonce": 0
+    },
+    {
+      "address": "0x0000000000000000000000000000000000000006",
+      "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+      "balance": "0",
+      "nonce": 0
+    },
+    {
+      "address": "0x0000000000000000000000000000000000000007",
+      "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+      "balance": "0",
+      "nonce": 0
+    },
+    {
+      "address": "0x0000000000000000000000000000000000000008",
+      "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+      "balance": "0",
+      "nonce": 0
+    },
+    {
+      "address": "0x0000000000000000000000000000000000000009",
+      "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+      "balance": "0",
+      "nonce": 0
+    },
+    {
+      "address": "0x000000000000000000000000000000000000000a",
+      "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+      "balance": "0",
+      "nonce": 0
+    }
+  ],
+  "coordinator": {
+    "status": "PASSED",
+    "participants": {
+      "SHORT": [
+        1
+      ],
+      "MONTHLY": [
+        1
+      ]
+    },
+    "runs": [
+      {
+        "limit": 2,
+        "status": "PASSED",
+        "passes": 7,
+        "resumePasses": 4,
+        "sends": 9,
+        "activeMs": 20186.85599999997,
+        "counts": {
+          "call": 610,
+          "getTransaction": 11,
+          "getLogs": 22,
+          "getBlock": 144,
+          "getCode": 94
+        },
+        "writesByFile": {
+          "automation.json.tmp": 30,
+          "automation.json.rng.tmp": 9,
+          "automation.json.scheduler.tmp": 2
+        },
+        "bytes": 67792,
+        "final": {
+          "accounting": {
+            "balance": "239088812",
+            "parts": [
+              "139088812",
+              "100000000",
+              "0",
+              "0",
+              "0",
+              "0"
+            ]
+          },
+          "shortHash": "0xb621abf157a05c6076a9279770e39f4a9620fc44153dc448d429b4d23ac06087",
+          "monthlyHash": "0x76ac5ceb2459de1f870812b4ae7973f97ee19db4664b03a3e1908c147c070e41",
+          "nonce": 83
+        }
+      },
+      {
+        "limit": 8,
+        "status": "PASSED",
+        "passes": 4,
+        "resumePasses": 1,
+        "sends": 9,
+        "activeMs": 15296.59699999995,
+        "counts": {
+          "call": 358,
+          "getTransaction": 11,
+          "getLogs": 14,
+          "getBlock": 88,
+          "getCode": 52
+        },
+        "writesByFile": {
+          "automation.json.tmp": 26,
+          "automation.json.rng.tmp": 9,
+          "automation.json.scheduler.tmp": 2
+        },
+        "bytes": 62814,
+        "final": {
+          "accounting": {
+            "balance": "239088812",
+            "parts": [
+              "139088812",
+              "100000000",
+              "0",
+              "0",
+              "0",
+              "0"
+            ]
+          },
+          "shortHash": "0xb621abf157a05c6076a9279770e39f4a9620fc44153dc448d429b4d23ac06087",
+          "monthlyHash": "0x76ac5ceb2459de1f870812b4ae7973f97ee19db4664b03a3e1908c147c070e41",
+          "nonce": 83
+        }
+      },
+      {
+        "limit": 32,
+        "status": "PASSED",
+        "passes": 4,
+        "resumePasses": 1,
+        "sends": 9,
+        "activeMs": 13354.829300000041,
+        "counts": {
+          "call": 358,
+          "getTransaction": 11,
+          "getLogs": 12,
+          "getBlock": 86,
+          "getCode": 52
+        },
+        "writesByFile": {
+          "automation.json.tmp": 25,
+          "automation.json.rng.tmp": 9,
+          "automation.json.scheduler.tmp": 2
+        },
+        "bytes": 61828,
+        "final": {
+          "accounting": {
+            "balance": "239088812",
+            "parts": [
+              "139088812",
+              "100000000",
+              "0",
+              "0",
+              "0",
+              "0"
+            ]
+          },
+          "shortHash": "0xb621abf157a05c6076a9279770e39f4a9620fc44153dc448d429b4d23ac06087",
+          "monthlyHash": "0x76ac5ceb2459de1f870812b4ae7973f97ee19db4664b03a3e1908c147c070e41",
+          "nonce": 83
+        }
+      }
+    ]
+  },
+  "cycle": {
+    "status": "PONS_INDEXED_AUTOMATION_PASSED",
+    "restore": {
+      "status": "RESTORED_WITHOUT_SENDS",
+      "nonce": 83,
+      "balances": {
+        "balance": "239088812",
+        "parts": [
+          "139088812",
+          "100000000",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      },
+      "draws": 2
+    },
+    "paid": "107337115",
+    "finalWallets": [
+      {
+        "wallet": "0x098afa6731239a00ce0aff669aaefd16b7c72114",
+        "SHORT": {
+          "mintedTotal": "87",
+          "open": "1",
+          "frozenByDraw": {},
+          "consumedTotal": "86",
+          "byEpoch": [
+            {
+              "epoch": "1",
+              "minted": "87",
+              "consumed": "86",
+              "frozen": "0",
+              "open": "1",
+              "firstOpenAttempt": "87",
+              "lastOpenAttempt": "87"
+            }
+          ]
+        },
+        "MONTHLY": {
+          "mintedTotal": "87",
+          "open": "1",
+          "frozenByDraw": {},
+          "consumedTotal": "86",
+          "byEpoch": [
+            {
+              "epoch": "1",
+              "minted": "87",
+              "consumed": "86",
+              "frozen": "0",
+              "open": "1",
+              "firstOpenAttempt": "87",
+              "lastOpenAttempt": "87"
+            }
+          ]
+        }
+      }
+    ],
+    "assumptions": [
+      "Constructor clocks backdated only in in-memory compiled ShortRulesEpochs/MonthlySettlement; repository contracts unchanged",
+      "Local ArbSys shim, not Nitro finality proof",
+      "Current launch-plan rules/weights/minimum, no changed odds or selected seeds",
+      "Live drand BLS proof; 60-second lead is test-only",
+      "Synthetic owner USDG may donate missing Monthly readiness reserves; never injected into prize vault storage",
+      "Local finalized pinned for initial snapshot admission; advances with local latest after proposals begin. Not mainnet finality proof",
+      "Restore drill aligns local fork timestamp to wall time once before draws; no public clock/finality claim and no RNG guard changes",
+      "Automation fork mines a block every second while workers read; RNG freshness gates unchanged"
+    ]
+  },
+  "storage": {
+    "schema": "scheduler-storage-probe-v1",
+    "source": ".local/logs/pons-cycle-2dnO0F/automation.json.scheduler",
+    "status": "PASSED",
+    "cases": [
+      {
+        "participantsPerKind": 1000,
+        "bytes": 445233,
+        "samples": [
+          {
+            "loadMs": 16.110400000000027,
+            "validationMs": 2.4976000000001477,
+            "saveMs": 46.94719999999984
+          },
+          {
+            "loadMs": 14.805299999999988,
+            "validationMs": 7.997699999999895,
+            "saveMs": 41.49160000000006
+          },
+          {
+            "loadMs": 17.201699999999846,
+            "validationMs": 2.421000000000049,
+            "saveMs": 46.97610000000009
+          },
+          {
+            "loadMs": 14.974500000000035,
+            "validationMs": 2.8890000000001237,
+            "saveMs": 34.671100000000024
+          },
+          {
+            "loadMs": 14.53449999999998,
+            "validationMs": 2.0882000000001426,
+            "saveMs": 37.1686000000002
+          }
+        ]
+      },
+      {
+        "participantsPerKind": 10000,
+        "bytes": 4387237,
+        "samples": [
+          {
+            "loadMs": 153.66359999999986,
+            "validationMs": 22.97069999999985,
+            "saveMs": 198.58660000000054
+          },
+          {
+            "loadMs": 166.5049999999992,
+            "validationMs": 24.285499999999956,
+            "saveMs": 225.64080000000104
+          },
+          {
+            "loadMs": 173.71129999999903,
+            "validationMs": 24.636899999999514,
+            "saveMs": 209.88889999999992
+          },
+          {
+            "loadMs": 149.53260000000046,
+            "validationMs": 24.16229999999996,
+            "saveMs": 218.0048999999999
+          },
+          {
+            "loadMs": 157.72099999999955,
+            "validationMs": 24.12459999999919,
+            "saveMs": 218.04390000000058
+          }
+        ]
+      }
+    ],
+    "scope": "Synthetic two-job files, real withState and cached validation; no chain, BUY admission or coordinator throughput claim."
+  },
+  "tests": {
+    "uniquePassed": 9,
+    "command": "node --test --test-concurrency=1 --test-name-pattern=\"started jobs do not rewrite|previously frozen job|scheduler persists before|corrupt/config|scheduler isolates|unknown Monthly send|independent pre-begin replay\" test/local-scheduler.test.cjs",
+    "before": "New regression failed with 2 redundant writes; after all 9 selected cases passed",
+    "fullSuite": false
+  },
+  "interrupted": [
+    {
+      "run": "a",
+      "exitCode": 1,
+      "stage": "EDR precompile state read before benchmark"
+    },
+    {
+      "run": "b",
+      "exitCode": 1,
+      "stage": "Empty base proof before fork setup"
+    }
+  ],
+  "files": {
+    ".local/logs/pons-coordinator-20261003-c.json": "39939a5d2258586e71804c77eb13576715b48ed80a4d84f655dd0db4e2d2267b",
+    ".local/logs/scheduler-storage-nDiCSu/report.json": "40f2f5478ac283a97824f38150fea8d9e1a2ad61107d2fb023ad2ce9693ee317",
+    ".local/logs/pons-coordinator-20261003-a.log": "3ab8ea5f168450a679ce0112febe60ddbe5c3ba1d55cc3ee41cf6a415f0f20bf",
+    ".local/logs/pons-coordinator-20261003-b.json": "19d3b5bf864cc71d9bdaa3b12ff892d7333a4201a79fa248eb0d14cfd86615b6",
+    ".local/logs/pons-coordinator-20261003-c.log": "3bfe4fdb2f16f7d77e0ed360f6b99ec9bda51f39f7a97f0ebe7ae32f1f86d865",
+    ".local/logs/scheduler-writes-before.log": "af834ecc48dbd89beeae87fea7381d8f65ba1391e7c40387565f872692efe2fe",
+    ".local/logs/scheduler-writes-after.log": "155edff67fe599b0334e65c76c3ddb968e329c3f1b2037a7419878f02d61d25e",
+    ".local/logs/verified-draw-compiled.json": "038d667c4018e6c811e8e16c69e2604077d0c34904461adaf2edb5496bd8b09f"
+  },
+  "sources": {
+    "scripts/local-promo-scheduler.cjs": "1fb6e761afc127e265c4d25ac1b52941a1afbaaa786cf56796c5c480dc45167b",
+    "scripts/pons-collector-fork.cjs": "112c7221feac2cc0a232f499be956ce373b268c6ee6a24dc0c599dde957c7fc9",
+    "scripts/pons-automation-rehearsal.cjs": "206de1105c41c938189714828c1ff52ee8c2f4ea6c478b98746be91427f0b6e0",
+    "scripts/benchmark-pons-coordinator.cjs": "89b2ecc81911c71199ba48a29351175bc92b94d9f2acd4c92bec2f1927fc3c62",
+    "scripts/benchmark-scheduler-storage.cjs": "f2b0cdf30521cec6c9419b4d3db35714f3933242b475c5f3b08472f1835d34a4",
+    "test/local-scheduler.test.cjs": "00025b4be86faa8b6350950ddad6127778a74b08b63e2407b0fa24e44d01b29c"
+  }
+}

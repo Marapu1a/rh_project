@@ -25,6 +25,8 @@
 
 ## Pons: модули и датированные доказательства
 
+- [Coordinator: лимиты и сохранение dataset](COORDINATOR_CAPACITY_2026-10-03.md) — ограниченный fork-прогон, storage probe и исправление повторных записей.
+
 | Документ | Назначение |
 |---|---|
 | [ACTIVE_RELEASE_PATH](ACTIVE_RELEASE_PATH.md) | Активный путь Pons и резерв PAIR |

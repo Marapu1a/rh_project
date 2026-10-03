@@ -34,6 +34,22 @@ test('previously frozen job cannot silently begin again after reorg with survivi
 });
 async function run(f,limit=32){const r=await runScheduler(f.options,{maxTicks:limit});assert.notEqual(r.status,'error',JSON.stringify(r));assertUnlocked(f.statePath);return r;}
 async function registeredBuy(f){await sent(f.registry.register());await f.buy(f.admin,100);}
+test('started jobs do not rewrite full datasets on seed waits or chunk progress',async t=>{
+ const f=await setup(t,compiled);await registeredBuy(f);await advance(30*86400+1);await run(f);
+ const before=fs.readFileSync(f.statePath,'utf8'),rename=fs.renameSync;let writes=0;
+ fs.renameSync=function(from,to){if(to===path.resolve(f.statePath))writes++;return rename.apply(this,arguments);};
+ t.after(()=>{fs.renameSync=rename;});
+ const waiting=await run(f,1);assert.equal(waiting.results.SHORT.reason,'seed');assert.equal(waiting.results.MONTHLY.reason,'seed');
+ assert.equal(writes,0,'Unchanged started jobs must not rewrite the journal');assert.equal(fs.readFileSync(f.statePath,'utf8'),before);
+ const state=f.readState();for(const kind of ['SHORT','MONTHLY']){
+  const c=kind==='SHORT'?f.short:f.monthly,id=state.jobs[kind][0].job.artifact.request.drawId;
+  await sent(f.random.deliver(await c.drawRequest(id),ethers.id('storage progress')));
+ }
+ const progress=await run(f,1);assert.equal(progress.results.SHORT.status,'progress');assert.equal(progress.results.MONTHLY.status,'progress');
+ assert.equal(writes,0,'Chain progress alone does not change the dataset journal');assert.equal(fs.readFileSync(f.statePath,'utf8'),before);
+ await run(f);assert(writes>0,'Terminal canonical anchors must still be saved');
+ for(const kind of ['SHORT','MONTHLY'])assert(f.readState().jobs[kind][0].terminalChecked);
+});
 test('scheduler persists before sending, resumes both kinds, handles terminal reorg and makes two cycles from BUY',async t=>{
   const f=await setup(t,compiled);await registeredBuy(f);
   let r=await run(f);assert.equal(r.results.SHORT.reason,'schedule');assert.equal(r.results.MONTHLY.reason,'schedule');

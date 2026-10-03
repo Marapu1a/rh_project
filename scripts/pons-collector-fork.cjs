@@ -1,4 +1,5 @@
 // Research-only. All writes target in-process Hardhat; upstream proxy is read-only.
+if(process.argv.includes('--coordinator-benchmark')&&!process.argv.includes('--restore-drill'))process.argv.push('--restore-drill');
 process.env.HARDHAT_CONFIG=require.resolve(process.argv.includes('--combined-profile')?'../test/fixtures/pons-7702-hardhat.config.cjs':process.argv.includes('--wallet-browser')||process.argv.includes('--restore-drill')?'../test/fixtures/pons-wallet-cycle-hardhat.config.cjs':'../test/fixtures/public-hardhat.config.cjs');
 if(process.argv.includes('--restore-drill')&&!process.argv.includes('--indexed-automation'))process.argv.push('--indexed-automation');
 if(process.argv.includes('--combined-profile')&&!process.argv.includes('--v4'))process.argv.push('--v4');
@@ -36,6 +37,13 @@ async function main(){
  console.log('fork at',block.number);await rpc('hardhat_reset',[{forking:{jsonRpcUrl:proxy.url,blockNumber:block.number}}]);
  assert.equal((await rpc('eth_getBlockByNumber',['latest',false])).hash,block.hash);await rpc('evm_mine');
  const p=new ethers.BrowserProvider(hre.network.provider,undefined,{cacheTimeout:-1});await rpc('hardhat_impersonateAccount',[OWNER]);await rpc('hardhat_setBalance',[OWNER,ethers.toQuantity(ethers.parseEther('10'))]);const owner=new ethers.JsonRpcSigner(p,OWNER),factory=new ethers.Contract(FACTORY,FAB,owner),quote=new ethers.Contract(USDG,ERC,owner);
+ if(process.argv.includes('--coordinator-benchmark')){
+  // Public RPC retains little historical state. Cache real precompile account reads
+  // before the long setup/RNG wait; EDR may first ask for these during BLS verification.
+  out.precompileReads=[];
+  for(let i=1;i<=10;i++){const address=ethers.toBeHex(i,20);out.precompileReads.push({address,codeHash:ethers.keccak256(await p.getCode(address)),balance:String(await p.getBalance(address)),nonce:await p.getTransactionCount(address)});}
+  save();
+ }
  assert(await factory.canLaunch(OWNER));assert(await factory.approvedPairTokens(USDG));assert.equal(await quote.decimals(),6n);
  const hook=await factory.memeHook(),escrow=await factory.feeEscrow();out.graph={factory:FACTORY,hook,escrow};out.codeHashes={};for(const a of [FACTORY,hook,escrow,USDG])out.codeHashes[a]=ethers.keccak256(await p.getCode(a));
  out.economics={pair:Array.from(await factory.pairTokenEconomics(USDG)),snipeSeconds:await factory.snipeTaxSeconds(),pin:await factory.previewLaunchEconomics(0,USDG),launchFee:await factory.launchFee()};save();

@@ -102,8 +102,10 @@ async function tickKind(kind,o,state,save){
       if(checked?.hash===entry.terminalChecked.hash)continue;
     }
     if(phase===(isShort?3n:6n))continue;
+    const clearedTerminal=!terminal&&entry.terminalChecked!==undefined;
     if(!terminal)delete entry.terminalChecked;
-    if(phase!==0n){entry.started=true;save(state);}
+    // Progress lives on chain. Persist transitions, not the unchanged large artifact.
+    if(phase!==0n&&(!entry.started||clearedTerminal)){entry.started=true;save(state);}
     selected=entry;break;
   }
   if(selected){
@@ -168,7 +170,7 @@ async function tickKind(kind,o,state,save){
       return {status:'progress',action:'checkpointCutoff',transactionHash:receipt.hash};
     }
     const result=await (isShort?sw.stepShort:mw.stepMonthly)({provider,source,publisher,executor,job:selected.job,signal,receiptTimeoutMs:o.receiptTimeoutMs});
-    if(result.status==='progress'){selected.started=true;save(state);}
+    if(result.status==='progress'&&!selected.started){selected.started=true;save(state);}
     if(result.status==='terminal'){
       const checked=await provider.getBlock('latest');selected.terminalChecked={number:checked.number,hash:checked.hash};save(state);
     }

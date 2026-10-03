@@ -56,6 +56,7 @@ async function finish({out,save,provider,user,quote,cycle,manifest,rpc,buy,direc
   const target=Math.max(...requests.map(r=>1727521075+(Number(r.round)-1)*3));assert(target-Date.now()/1000<90);
   while(Date.now()/1000<target+2){console.log('automation: waiting fixed drand rounds');await new Promise(r=>setTimeout(r,Math.min(10000,Math.max(1,(target+2)*1000-Date.now()))));}
   const stop=new AbortController();const stopped=await tick({signal:stop.signal},{onStep:s=>{if(s.action==='prove')stop.abort();}});assert.equal(stopped.status,'stopped');
+  if(process.argv.includes('--coordinator-benchmark')){report.coordinatorBenchmark=await require('./benchmark-pons-coordinator.cjs').compare({options,cycle,shortId,monthId,rpc,directory,invariant});save();}
   for(let n=0;n<16;n++){await tick();if(await short.pendingDatasetDraw()===ethers.ZeroHash&&await monthly.pendingMonth()===ethers.ZeroHash&&await vault.claimable(quote.target)===0n)break;}
   assert.equal((await short.settlements(shortId)).phase,3n);assert.equal((await monthly.month(monthId)).phase,5n);assert.equal(await vault.reserved(quote.target),0n);assert.equal(await vault.claimable(quote.target),0n);
   report.after=await invariant();report.paid=report.fundingAtFreeze.balance-report.after.balance;assert(report.paid>=0n);

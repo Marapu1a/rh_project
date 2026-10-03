@@ -6,7 +6,7 @@ Gxx — идентификаторы прежней gap-карты, Rxx — ви
 
 ## Этап A — правильная работа в тестовом окружении (текущий)
 
-Перед финальным baseline — обязательная проверка перегруза. [Замеры50k/100k](DRAW_CAPACITY_FOLLOWUP_2026-10-03.md) завершены. [Повторный обход dataset устранён в исполнителях](VERIFIED_DRAW_EXECUTION_2026-10-03.md): private cache с каноническим anchor, холодная перепроверка после потери кеша; 15 уникальных адресных tests PASS. Далее — совместный coordinator throughput, лимиты отправок, pause/resume и режим задержки. Production не затрагиваем.
+Перед финальным baseline — проверка перегруза. [Замеры50k/100k](DRAW_CAPACITY_FOLLOWUP_2026-10-03.md), [cache исполнителей](VERIFIED_DRAW_EXECUTION_2026-10-03.md) и [удаление лишних записей scheduler](COORDINATOR_CAPACITY_2026-10-03.md) завершены. Малый Pons coordinator drain с лимитами2/8/32, pause/resume и storage probe1k/10k проверены; это не совместный нагрузочный прогон10k/100k. Следующий пакет — большой набор через scheduler/coordinator, затем cadence занятого/ожидающего сервиса и режим задержки. Production не затрагиваем.
 
 
 03.10 подготовлен [новый запрос GPT](GPT_REVIEW_REQUEST.md) по накопленному diff.
