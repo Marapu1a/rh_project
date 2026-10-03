@@ -9,7 +9,7 @@ const tag=n=>'0x'+BigInt(n).toString(16);
 const check=(v,m)=>{if(!v)throw Error(m);};
 const nextDelay=status=>status?.state==='catchingUp'?0:10000;
 // Bump when replay semantics change; never reuse a ledger produced by an older engine.
-const REPLAY_REVISION='buy-replay-checkpoint-v1';
+const REPLAY_REVISION='buy-replay-checkpoint-v2-bloom';
 async function readSnapshot({config,statePath,manifest,cutoff,rpc,now=Date.now()}){
  const waiting=reason=>{throw Object.assign(Error(reason),{code:'INDEXER_WAIT',reason});};
  let state;
@@ -29,9 +29,10 @@ async function readSnapshot({config,statePath,manifest,cutoff,rpc,now=Date.now()
  replay(manifest,blocks);
  return {manifest,blocks};
 }
-async function indexOnce({config,rpc,statePath,batchSize=100,reorgLimit=128,fullRewardAudit=false}){
+async function indexOnce({config,rpc,statePath,batchSize=config.indexer?.batchSize??100,reorgLimit=128,fullRewardAudit=false}){
  check(Number.isInteger(batchSize)&&batchSize>0&&batchSize<=1000,'Invalid index batch');
  check(Number.isInteger(reorgLimit)&&reorgLimit>=0&&reorgLimit<=10000,'Invalid reorg limit');
+ if(config.indexer?.scanMode)rpc=require('./index-read-rpc.cjs').pacedReads(rpc);
  const started=performance.now();
  return withState(statePath,{kind:'persistent-buy-indexer-v1',config},async(state,save)=>{
   try{
@@ -55,12 +56,13 @@ async function indexOnce({config,rpc,statePath,batchSize=100,reorgLimit=128,full
    // for the recent tail, not a second permanent copy of the full history.
    const cacheFloor=Math.max(anchor,end-reorgLimit);
    for(const [key,row] of Object.entries(prior.cache))if(row.height>=cacheFloor&&row.height<=base)cache[key]=row;
-   let height=anchor,cacheHits=0;
+   let cacheHits=0;
    const read=async(method,params=[])=>{
+    let height=anchor;
     let cacheable=false;
     if(method==='eth_getBlockByNumber'&&params[1]===true){height=Number(BigInt(params[0]));cacheable=true;}
     else if(method==='eth_getCode'){height=Number(BigInt(params[1]));cacheable=true;}
-    // Pons bindings are checked at each scanned block. Cache only fixed-height
+    // Pons bindings are checked at evidence-bearing blocks. Cache only fixed-height
     // calls, never latest/finalized or state overrides. Tail rollback evicts them.
     else if(method==='eth_call'&&params.length===2&&/^0x[0-9a-f]+$/i.test(params[1])){height=Number(BigInt(params[1]));cacheable=true;}
     else if(method==='eth_getTransactionReceipt')cacheable=true;
@@ -75,7 +77,7 @@ async function indexOnce({config,rpc,statePath,batchSize=100,reorgLimit=128,full
    };
    const resolved=await resolveBuyPolicy(config,rpc,end);
    const scanStarted=performance.now();
-   const suffix=end>base?await scanWithRpc(resolved.manifest,read,end,config.lifecycle,{fromBlock:base+1}):{blocks:[]};
+   const suffix=end>base?await scanWithRpc(resolved.manifest,read,end,config.lifecycle,{fromBlock:base+1,mode:config.indexer?.scanMode}):{blocks:[]};
    const input={manifest:resolved.manifest,blocks:[...prior.blocks.slice(0,keep),...suffix.blocks]};
    const scanMs=performance.now()-scanStarted,replayStarted=performance.now();
    const sameReplay=!fullRewardAudit&&!removed&&prior.replayRevision===REPLAY_REVISION&&prior.ledger&&hash(prior.manifest)===hash(input.manifest);

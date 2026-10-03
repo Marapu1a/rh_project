@@ -4,7 +4,8 @@ const AUTO=require('./pair-auto-buy.cjs');
 const PONS_PROFILES=require('./pons-profiles.cjs');
 const {replay,canonical,hash,validateManifest,buyPolicyHistory,routeDependencies}=require('./direct-buy.cjs');
 
-// Independent reader: fetch whole blocks and every receipt, not an operator BUY list.
+// Independent reader, never an operator BUY list. Optional Pons mode proves
+// event absence with hash-bound headers; candidate blocks keep every receipt.
 async function scan(input,rpcUrl,toBlock,lifecycle=null){
   let sequence=0;
   async function rpc(method,params=[]){
@@ -14,9 +15,12 @@ async function scan(input,rpcUrl,toBlock,lifecycle=null){
   }
   return scanWithRpc(input,rpc,toBlock,lifecycle);
 }
-async function scanWithRpc(input,rpc,toBlock,lifecycle=null,{fromBlock}={}){
+async function scanWithRpc(input,rpc,toBlock,lifecycle=null,{fromBlock,mode}={}){
   const manifest=buyPolicyHistory(input).genesis;
   const pons=PONS_PROFILES.get(manifest.schema),batch=pons?.FIELDS.includes('batchExecutor');
+  if(mode!==undefined&&!['pons-block-receipts-v1','pons-bloom-receipts-v1'].includes(mode))throw Error('Unknown scan mode');
+  const sparse=mode==='pons-bloom-receipts-v1',fast=mode!==undefined;
+  if(fast&&!pons)throw Error('Pons receipt scan requires Pons manifest');
   const curveBuyTopic=batch?require('./pons-curve-buy.cjs').EVENTS.getEvent('CurveBuy').topicHash:null;
   const poolSwapTopic=batch&&manifest.manager?require('./pons-v4-buy.cjs').SWAP.getEvent('Swap').topicHash:null;
   if(BigInt(await rpc('eth_chainId'))!==BigInt(manifest.chainId))throw Error('Wrong RPC chain');
@@ -43,17 +47,49 @@ async function scanWithRpc(input,rpc,toBlock,lifecycle=null,{fromBlock}={}){
       if(code==='0x'||keccak256(code)!==digest.toLowerCase())throw Error('Unexpected dual lifecycle runtime');
     }
   }
-  const blocks=[];
+  if(fast)await pons.validateBindings(manifest,rpc,tag(toBlock));
+  const {mapLimit}=require('./bounded-map.cjs');
   // An incremental caller must join its canonical prefix and replay the result.
-  for(let n=first;n<=BigInt(toBlock);n++){
-    const block=await rpc('eth_getBlockByNumber',[tag(n),true]);
+  async function readBlock(n){
+    let block=await rpc('eth_getBlockByNumber',[tag(n),!sparse]);
+    if(!block||BigInt(block.number)!==n||!Array.isArray(block.transactions))throw Error('Invalid scan block');
+    if(sparse){
+      const bloom=require('./pons-bloom-evidence.cjs'),ponsOmission=bloom.encodeHeader(block);
+      if(!bloom.relevant(block.logsBloom,manifest,[lifecycle?.source,lifecycle?.monthlySource,lifecycle?.vault])){
+        return {number:block.number,hash:block.hash,parentHash:block.parentHash,timestamp:block.timestamp,transactions:[],ponsOmission};
+      }
+      const full=await rpc('eth_getBlockByNumber',[tag(n),true]);
+      if(full?.hash!==block.hash||full.number!==block.number||!Array.isArray(full.transactions))throw Error('Candidate block changed');
+      block=full;
+    }
+    let receipts;
+    if(fast){
+      // On this RPC a block-receipt call costs 500 throughput units, versus
+      // 20 for one receipt. Small candidate blocks are cheaper individually.
+      receipts=sparse&&block.transactions.length<25
+        ?await mapLimit(block.transactions,4,tx=>rpc('eth_getTransactionReceipt',[tx.hash]))
+        :await rpc('eth_getBlockReceipts',[tag(n)]);
+      if(!Array.isArray(receipts)||receipts.length!==block.transactions.length)throw Error('Incomplete block receipts');
+      receipts=[...receipts].sort((a,b)=>Number(BigInt(a.transactionIndex)-BigInt(b.transactionIndex)));
+      for(let i=0;i<receipts.length;i++){
+        const r=receipts[i],tx=block.transactions[i];
+        if(BigInt(tx.transactionIndex)!==BigInt(i)||BigInt(r.transactionIndex)!==BigInt(i)||
+          r.transactionHash.toLowerCase()!==tx.hash.toLowerCase()||r.blockHash.toLowerCase()!==block.hash.toLowerCase()||
+          BigInt(r.blockNumber)!==n||!Array.isArray(r.logs))throw Error('Block receipt provenance mismatch');
+      }
+    }
+    // All receipts remain in evidence, including unrelated traffic. Only omit
+    // historical venue calls when no event can affect this project's replay.
+    const watched=new Set([manifest.token,manifest.curve,manifest.registry].filter(Boolean).map(a=>a.toLowerCase()));
+    const relevant=!fast||receipts.some(r=>r.logs.some(l=>watched.has(l.address.toLowerCase())||
+      manifest.manager&&l.address.toLowerCase()===manifest.manager.toLowerCase()&&l.topics[1]?.toLowerCase()===manifest.poolId.toLowerCase()));
     const transactions=[],batchAccounts={},entrypointAccounts={};
-    if(batch){const code=await rpc('eth_getCode',[manifest.batchExecutor,tag(n-1n)]);if(keccak256(code)!==manifest.codeHashes.batchExecutor)throw Error('Unexpected parent executor runtime');}
-    if(pons)await pons.validateBindings(manifest,rpc,tag(n));
-    if(pons)for(const field of pons.FIELDS){
+    if(batch&&relevant){const code=await rpc('eth_getCode',[manifest.batchExecutor,tag(n-1n)]);if(keccak256(code)!==manifest.codeHashes.batchExecutor)throw Error('Unexpected parent executor runtime');}
+    if(pons&&relevant)await pons.validateBindings(manifest,rpc,tag(n));
+    if(pons&&relevant)await mapLimit(pons.FIELDS,fast?4:1,async field=>{
       const code=await rpc('eth_getCode',[manifest[field],tag(n)]);
       if(code==='0x'||keccak256(code)!==manifest.codeHashes[field])throw Error('Unexpected historical Pons '+field+' runtime');
-    }
+    });
     if(manifest.schema==='direct-buy-infinity-v1')for(const field of ['router','manager','hook','token','quote','settlement']){
       const code=await rpc('eth_getCode',[manifest[field],tag(n)]);
       if(code==='0x'||keccak256(code)!==manifest.codeHashes[field])throw Error('Unexpected historical Infinity '+field+' runtime');
@@ -63,7 +99,7 @@ async function scanWithRpc(input,rpc,toBlock,lifecycle=null,{fromBlock}={}){
         const code=await rpc('eth_getCode',[AUTO.ADDRESS,tag(n)]);
         if(code==='0x'||keccak256(code)!==AUTO.CODE_HASH)throw Error('Unexpected historical AUTO runtime');
       }
-      const receipt=await rpc('eth_getTransactionReceipt',[tx.hash]);
+      const receipt=fast?receipts[transactions.length]:await rpc('eth_getTransactionReceipt',[tx.hash]);
       // Keep all receipts. Only a target venue candidate needs account delegation
       // evidence; unrelated self-calls must not require historical account state.
       const candidate=batch&&receipt.logs.some(l=>
@@ -80,8 +116,10 @@ async function scanWithRpc(input,rpc,toBlock,lifecycle=null,{fromBlock}={}){
       }
       transactions.push({tx,receipt});
     }
-    blocks.push({number:block.number,hash:block.hash,parentHash:block.parentHash,timestamp:block.timestamp,transactions,...(batch?{batchAccounts}:{}),...(pons?.accountCandidate?{entrypointAccounts}:{})});
+    return {number:block.number,hash:block.hash,parentHash:block.parentHash,timestamp:block.timestamp,transactions,...(batch?{batchAccounts}:{}),...(pons?.accountCandidate?{entrypointAccounts}:{})};
   }
+  const heights=[];for(let n=first;n<=BigInt(toBlock);n++)heights.push(n);
+  const blocks=await mapLimit(heights,sparse?8:fast?4:1,readBlock);
   if((await rpc('eth_getBlockByNumber',[tag(toBlock),false])).hash!==head.hash)throw Error('Chain changed during scan; retry canonical range');
   return {manifest:input,blocks};
 }

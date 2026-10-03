@@ -1,0 +1,206 @@
+{
+  "schema": "pons-indexer-hotfix-v1",
+  "localPasses": [
+    {
+      "state": "catchingUp",
+      "processedBlock": 79377959,
+      "targetBlock": 79396848,
+      "removedBlocks": 0,
+      "cacheHits": 1,
+      "updatedAt": "2026-10-03T21:31:52.466Z",
+      "metrics": {
+        "lagBlocks": 18889,
+        "historyBlocks": 100,
+        "scannedBlocks": 100,
+        "replayedBlocks": 100,
+        "replayMode": "full",
+        "scanMs": 19591.685,
+        "replayMs": 31.7374000000018,
+        "rewardMs": 2030.905999999999,
+        "beforeSaveMs": 23628.1355,
+        "saveMs": 149.01729999999952,
+        "totalMs": 23777.1663,
+        "stateBytes": 4500269
+      },
+      "observedAt": "2026-10-03T21:31:52.465Z",
+      "policyMode": "admitted",
+      "processedTimestamp": "0x6ac16939",
+      "requests": {
+        "eth_chainId": 3,
+        "eth_getBlockByNumber": 117,
+        "eth_getCode": 150,
+        "eth_call": 148,
+        "eth_getBlockReceipts": 7
+      },
+      "omitted": 93,
+      "decisions": 4,
+      "walletCount": 1
+    },
+    {
+      "state": "catchingUp",
+      "processedBlock": 79378959,
+      "targetBlock": 79400668,
+      "removedBlocks": 0,
+      "cacheHits": 0,
+      "updatedAt": "2026-10-03T21:40:36.944Z",
+      "metrics": {
+        "lagBlocks": 21709,
+        "historyBlocks": 1100,
+        "scannedBlocks": 1000,
+        "replayedBlocks": 1000,
+        "replayMode": "checkpoint",
+        "scanMs": 202179.2885,
+        "replayMs": 248.1380000000063,
+        "rewardMs": 2064.8696000000054,
+        "beforeSaveMs": 206476.3461,
+        "saveMs": 238.57000000000698,
+        "totalMs": 206714.9246,
+        "stateBytes": 8485746
+      },
+      "observedAt": "2026-10-03T21:40:36.943Z",
+      "policyMode": "admitted",
+      "processedTimestamp": "0x6ac1699e",
+      "requests": {
+        "eth_chainId": 3,
+        "eth_getBlockByNumber": 1064,
+        "eth_getCode": 944,
+        "eth_call": 808,
+        "eth_getBlockReceipts": 53
+      },
+      "omitted": 1040,
+      "decisions": 61,
+      "walletCount": 2
+    },
+    {
+      "state": "catchingUp",
+      "processedBlock": 79379959,
+      "targetBlock": 79400668,
+      "removedBlocks": 0,
+      "cacheHits": 0,
+      "updatedAt": "2026-10-03T21:43:51.946Z",
+      "metrics": {
+        "lagBlocks": 20709,
+        "historyBlocks": 2100,
+        "scannedBlocks": 1000,
+        "replayedBlocks": 1000,
+        "replayMode": "checkpoint",
+        "scanMs": 96690.35059999999,
+        "replayMs": 266.96220000000903,
+        "rewardMs": 1958.1700999999885,
+        "beforeSaveMs": 100960.63399999999,
+        "saveMs": 341.7630999999965,
+        "totalMs": 101302.4051,
+        "stateBytes": 13036914
+      },
+      "observedAt": "2026-10-03T21:43:51.945Z",
+      "policyMode": "admitted",
+      "processedTimestamp": "0x6ac16a03",
+      "requests": {
+        "eth_chainId": 3,
+        "eth_getBlockByNumber": 1032,
+        "eth_getCode": 349,
+        "eth_call": 313,
+        "eth_getTransactionReceipt": 114,
+        "eth_getBlockReceipts": 8
+      },
+      "omitted": 2019,
+      "decisions": 78,
+      "walletCount": 2
+    }
+  ],
+  "tailBenchmark": {
+    "scope": "throughput-only suffix; not a complete index or ticket award",
+    "first": 79403542,
+    "last": 79404541,
+    "blocks": 1000,
+    "omitted": 997,
+    "elapsedMs": 50548,
+    "blocksPerSecond": 19.783176386800665,
+    "chainSpanSeconds": 103,
+    "requests": {
+      "eth_getBlockByNumber": 1007,
+      "eth_chainId": 1,
+      "eth_getCode": 20,
+      "eth_call": 15,
+      "eth_getTransactionReceipt": 15
+    }
+  },
+  "admission": {
+    "status": "matched",
+    "reasons": [],
+    "observedBlock": {
+      "number": 79414955,
+      "hash": "0x4d1b7e0dc50af61e0c4fff46682ac6a2963a4881f6f63895e118533fb3646865"
+    },
+    "profileHash": "0x222523d3faa7058086d57df195614de0677857d5c9a5bfe133ca7b2e5695afb0"
+  },
+  "liveComparison": {
+    "blocks": 10,
+    "ledgerHash": "0x573b5006fb302851fe42de78443a2cb06decf5adf2d78447ce8d2d4fc8f08e70",
+    "matched": true
+  },
+  "tests": {
+    "affectedAndNeighbours": 129,
+    "addedLargeReceiptCase": 1,
+    "indexerService": 4,
+    "catalog": 1,
+    "scope": "135 unique targeted tests; not full suite"
+  },
+  "financialSends": 0,
+  "publicCabinetSwitched": false,
+  "serverHealthAfterRestart": {
+    "schema": "promo-service-health-v1",
+    "status": "catchingUp",
+    "ready": false,
+    "reason": null,
+    "activePass": true,
+    "indexerPid": 105216,
+    "passStartedAt": "2026-10-03T21:54:36.302Z",
+    "attempts": 5,
+    "successes": 4,
+    "failures": 0,
+    "snapshotFresh": true,
+    "policyMode": "admitted",
+    "observedAt": "2026-10-03T21:54:35.625Z",
+    "ageSeconds": 37,
+    "processedBlock": 79385959,
+    "targetBlock": 79408300,
+    "lagBlocks": 22341,
+    "processedTimestamp": "0x6ac16c61",
+    "metrics": {
+      "lagBlocks": 22341,
+      "historyBlocks": 8100,
+      "scannedBlocks": 1000,
+      "replayedBlocks": 1000,
+      "replayMode": "checkpoint",
+      "scanMs": 38455.16906,
+      "replayMs": 507.6110820000031,
+      "rewardMs": 1760.5248649999994,
+      "beforeSaveMs": 42500.402731999995,
+      "saveMs": 652.6432480000003,
+      "totalMs": 43153.073112,
+      "stateBytes": 24826783
+    },
+    "scope": "last-index-pass; not-live-finality-or-wallet-readiness"
+  },
+  "serverIndependentReplay": {
+    "head": 79381959,
+    "blocks": 4100,
+    "omitted": 3999,
+    "ledgerHash": "0x12f6276cd18d4ef9b3e81b92a5101633b4a76b7726c576a244ea8be1dc61387b",
+    "checksumMatched": true,
+    "configMatched": true,
+    "buyReplayMatched": true,
+    "lifecycleReplayPassed": true
+  },
+  "loopbackWalletApi": {
+    "status": "observed",
+    "head": {
+      "number": 79386959,
+      "hash": "0x8764889348b62d5bf0faf2278cfe66690670e9d2e47ebda729659efe7481d0d3"
+    },
+    "indexerState": "catchingUp",
+    "wallet": "0x098afa6731239a00ce0aff669aaefd16b7c72114",
+    "publicApi8787": "awaitingDeployment"
+  }
+}

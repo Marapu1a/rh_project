@@ -141,7 +141,8 @@
       "test/pons-launch-preflight.test.cjs",
       "test/deployment-signing-plan.test.cjs",
       "test/deployment-signing-queue.test.cjs",
-      "test/deployment-console-ui.test.cjs"
+      "test/deployment-console-ui.test.cjs",
+      "test/pons-receipt-scan.test.cjs"
     ]
   },
   "accounting": {
@@ -636,6 +637,31 @@
       "test/pons-crash-recovery.test.cjs",
       "test/robinhood-runtime.test.cjs",
       "test/ops-session.test.cjs"
+    ]
+  },
+  "pons-receipt-scan": {
+    "compile": false,
+    "files": [
+      "test/pons-receipt-scan.test.cjs",
+      "test/persistent-buy-indexer.test.cjs",
+      "test/pons-persistent-indexer.test.cjs",
+      "test/pons-policy-indexer.test.cjs",
+      "test/direct-buy.test.cjs",
+      "test/pons-batch-integration.test.cjs",
+      "test/pons-pool-batch.test.cjs",
+      "test/pons-entrypoint-buy.test.cjs",
+      "test/pons-zeroex-buy.test.cjs",
+      "test/shared-index-config.test.cjs",
+      "test/attempt-lifecycle.test.cjs",
+      "test/attempt-lifecycle-events.test.cjs",
+      "test/attempt-lifecycle-dual.test.cjs",
+      "test/reward-observation.test.cjs",
+      "test/verified-buy-replay.test.cjs",
+      "test/user-status-cache.test.cjs",
+      "test/public-status.test.cjs",
+      "test/wallet-reward-completeness.test.cjs",
+      "test/public-rpc-qualification.test.cjs",
+      "test/indexer-service.test.cjs"
     ]
   }
 }

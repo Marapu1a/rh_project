@@ -87,9 +87,13 @@ receipts/runtime и репетиция четырёх оставшихся вы�
 TOKEN0x6EA39A23AA46E51CA6CD2d1cbc0B5bfb29ECB216, policy/90-5-5/venue сверены.
 Governor nonce24. На новой проверке04.10 finalized79378127 уже выше launch;
 [фактический profile matched, сбор fees симулирован](PONS_ACTIVATION_2026-10-04.md).
-Executor ETH0. Первый RPC отказ исправлен адресно; launch block прочитан с admitted,
-но один блок занял7.14s. До сервиса нужно проверить/исправить throughput реальных
-RPC-чтений и догон истории. Серверные indexer/API не активированы.
+Executor ETH0. [Ремонт индексатора04.10](PONS_INDEXER_HOTFIX_2026-10-04.md): hash-bound
+bloom omissions, полные receipts кандидатов, pacing/retry;135 адресных tests PASS.
+Read-only indexer8789 запущен отдельно на сервере, snapshot4100 blocks проверен полным
+replay и сохранён при restart; после него8100 blocks,4 passes/0 failures, wallet API smoke PASS.
+Статус catchingUp, публичный API/кабинет ещё не переключён.
+Перед финансовой активацией остаются getLogs range limits и проверка долгосрочного
+роста headers/RPC/cold replay. [Текущий запрос GPT](GPT_REVIEW_REQUEST.md).
 Далее: публичная source verification (GoPlus пока open_source0), production config/
 profile из фактических receipts, пополнение executor и проверка допуска до включения.
 Контрольный BUY101USDG и финансовая автоматика пока не выполнены.

@@ -213,6 +213,7 @@ function replayEngine(input,deliveredBlocks,previous=null,capture=false){
   const txHashes=new Set(checkpoint?.txHashes||[]);
   for(const b of blocks){
     ensure(number(b.number)===height+1&&low(b.parentHash)===parent,'Non-contiguous canonical branch');
+    if(b.ponsOmission!==undefined){ensure(!!PONS_PROFILES.get(m.schema),'Pons omission on other venue');require('./pons-bloom-evidence.cjs').validateOmission(b,policy.at(number(b.number)));}
     const events=[],logIndexes=new Set();
     const txs=[...b.transactions].sort((a,c)=>number(a.tx.transactionIndex)-number(c.tx.transactionIndex));
     for(let i=0;i<txs.length;i++){

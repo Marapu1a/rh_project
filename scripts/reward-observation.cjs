@@ -9,6 +9,7 @@ const abi=new Interface([
 ]);
 const check=(v,m)=>{if(!v)throw Error('Reward observation: '+m);};
 function projectRewards(blocks,vault,previous=null,touched={draws:new Set(),rewards:new Set()}){
+ for(const b of blocks)require('./pons-bloom-evidence.cjs').validateOmission(b,null,[vault]);
  const draws=new Map((previous?.draws||[]).map(d=>[d.drawId,structuredClone(d)])),rewards=new Map((previous?.rewards||[]).map(r=>[r.drawId+r.winner,structuredClone(r)]));
  for(const b of blocks)for(const {receipt} of b.transactions)for(const log of receipt.logs){
   if(log.address.toLowerCase()!==vault.toLowerCase())continue;

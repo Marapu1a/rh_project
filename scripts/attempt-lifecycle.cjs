@@ -86,6 +86,7 @@ function replayAttemptsWith(input,config,deliveredBlocks,replayBuys){
   const domainAt=height=>domainFor(policies.at(height),config);
   const domain=domainAt(buyLedger.head.number);
   const blocks=[...new Map(deliveredBlocks.map(b=>[integer(b.number),b])).values()].sort((a,b)=>integer(a.number)-integer(b.number));
+  for(const b of blocks)require('./pons-bloom-evidence.cjs').validateOmission(b,null,[config.source,config.monthlySource,config.vault]);
   const headers=new Map([[integer(manifest.anchor.number),lower(manifest.anchor.hash)],...blocks.map(b=>[integer(b.number),lower(b.hash)])]);
   const times=new Map(blocks.map(b=>[integer(b.number),integer(b.timestamp)]));
   const monthEpochMode=config.schema==='attempt-lifecycle-v4',dualMode=monthEpochMode||config.schema==='attempt-lifecycle-v3',epochMode=config.schema!=='attempt-lifecycle-v1';
