@@ -1,0 +1,278 @@
+{
+  "schema": "dwellir-qualification-evidence-v1",
+  "capabilities": {
+    "schema": "dwellir-project-probe-v1",
+    "observedAt": "2026-10-03T22:45:56.038Z",
+    "endpointHost": "api-robinhood-mainnet-archive.n.dwellir.com",
+    "switched": false,
+    "history": {
+      "schema": "public-rpc-capabilities-v1",
+      "observedAt": "2026-10-03T22:45:56.040Z",
+      "quote": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+      "observations": [
+        {
+          "number": "0x4bc22f8",
+          "depthBlocks": 0,
+          "hash": "0x1145a4b500cd5d6080eeca25bb3d7d86f4a0ae3078d8203a01eb3cce957cca63",
+          "codeHash": "0x864cc9ad53b338b82da1f7cab85ab0b3d5c8861acb422b6fec63cf36234f36a6",
+          "decimals": "6",
+          "totalSupply": "699764516146219",
+          "storageSlot0": "0x0000000000000000000000000000000000000000000000000000000000000001",
+          "ok": true
+        },
+        {
+          "number": "0x4bbfbe8",
+          "depthBlocks": 10000,
+          "hash": "0x0ce441d633d7b8321dadfc2cb3e376cae1fe6547d0d4f5cdda340f7909e31e53",
+          "codeHash": "0x864cc9ad53b338b82da1f7cab85ab0b3d5c8861acb422b6fec63cf36234f36a6",
+          "decimals": "6",
+          "totalSupply": "699761516146219",
+          "storageSlot0": "0x0000000000000000000000000000000000000000000000000000000000000001",
+          "ok": true
+        },
+        {
+          "number": "0x4aef3f8",
+          "depthBlocks": 864000,
+          "hash": "0x7e6b083feb08dfd924ac1a8a2ea686aec76027f9f5e33ef12c94e0406aca407c",
+          "codeHash": "0x864cc9ad53b338b82da1f7cab85ab0b3d5c8861acb422b6fec63cf36234f36a6",
+          "decimals": "6",
+          "totalSupply": "700444412455663",
+          "storageSlot0": "0x0000000000000000000000000000000000000000000000000000000000000001",
+          "ok": true
+        }
+      ],
+      "historicalReadsAvailable": true,
+      "publicLaunchReady": false,
+      "chainId": "4663",
+      "latest": {
+        "number": "0x4bc4f5b",
+        "hash": "0x5dbcdcddfb6ff5501198b2a2987b49d6e8cd98bb8e1d93586608bf8e86c407bb",
+        "timestamp": "0x6ac185a8"
+      },
+      "finalized": {
+        "number": "0x4bc22f8",
+        "hash": "0x1145a4b500cd5d6080eeca25bb3d7d86f4a0ae3078d8203a01eb3cce957cca63",
+        "timestamp": "0x6ac1812a"
+      },
+      "finalizedLagBlocks": "11363",
+      "limitation": "Sampled USDG code/call/storage availability, not a full archive SLA or a read of our not-yet-deployed checkpoint storage. No signing/deployment/finality proof."
+    },
+    "probes": [
+      {
+        "name": "launchHeader",
+        "ok": true,
+        "hash": "0x000fc74b62d1e6f26533117cbb84085fc799c0855d694e6f8c59ed2588725bc1"
+      },
+      {
+        "name": "launchReceipts",
+        "ok": true,
+        "count": 5
+      },
+      {
+        "name": "tokenCodeAtLaunch",
+        "ok": true,
+        "codeHash": "0x68375920a0acc51f0038b37aeaf86dbb35b44cefd95d1b62ea770baa6b41d8be"
+      },
+      {
+        "name": "logs1",
+        "ok": false,
+        "error": "RPC HTTP 403"
+      },
+      {
+        "name": "logs10",
+        "ok": false,
+        "error": "RPC HTTP 403"
+      },
+      {
+        "name": "logs500",
+        "ok": false,
+        "error": "RPC HTTP 403"
+      },
+      {
+        "name": "logs501",
+        "ok": false,
+        "error": "RPC HTTP 403"
+      }
+    ],
+    "requests": {
+      "eth_chainId": 1,
+      "eth_getBlockByNumber": 10,
+      "eth_getCode": 4,
+      "eth_call": 6,
+      "eth_getStorageAt": 3,
+      "eth_getBlockReceipts": 1,
+      "eth_getLogs": 4
+    }
+  },
+  "projectSample": {
+    "schema": "dwellir-index-probe-v1",
+    "observedAt": "2026-10-03T22:47:05.213Z",
+    "first": {
+      "state": "catchingUp",
+      "processedBlock": 79377869,
+      "targetBlock": 79419788,
+      "removedBlocks": 0,
+      "cacheHits": 0,
+      "updatedAt": "2026-10-03T22:46:50.400Z",
+      "metrics": {
+        "lagBlocks": 41919,
+        "historyBlocks": 10,
+        "scannedBlocks": 10,
+        "replayedBlocks": 10,
+        "replayMode": "full",
+        "scanMs": 9609.749099999999,
+        "replayMs": 8.571700000000419,
+        "rewardMs": 2540.6247999999996,
+        "beforeSaveMs": 14403.0121,
+        "saveMs": 121.47719999999936,
+        "totalMs": 14524.498,
+        "stateBytes": 1673904
+      },
+      "observedAt": "2026-10-03T22:46:50.399Z",
+      "policyMode": "admitted",
+      "processedTimestamp": "0x6ac16930"
+    },
+    "second": {
+      "state": "catchingUp",
+      "processedBlock": 79377879,
+      "targetBlock": 79419788,
+      "removedBlocks": 0,
+      "cacheHits": 0,
+      "updatedAt": "2026-10-03T22:47:05.062Z",
+      "metrics": {
+        "lagBlocks": 41909,
+        "historyBlocks": 20,
+        "scannedBlocks": 10,
+        "replayedBlocks": 10,
+        "replayMode": "checkpoint",
+        "scanMs": 9775.9951,
+        "replayMs": 6.955900000000838,
+        "rewardMs": 2661.7585,
+        "beforeSaveMs": 14534.3467,
+        "saveMs": 148.50310000000172,
+        "totalMs": 14682.853399999998,
+        "stateBytes": 3418623
+      },
+      "observedAt": "2026-10-03T22:47:05.062Z",
+      "policyMode": "admitted",
+      "processedTimestamp": "0x6ac16931"
+    },
+    "compare": {
+      "head": 79377869,
+      "referenceHead": 79377869,
+      "ledgerHash": "0x573b5006fb302851fe42de78443a2cb06decf5adf2d78447ce8d2d4fc8f08e70",
+      "referenceLedgerHash": "0x573b5006fb302851fe42de78443a2cb06decf5adf2d78447ce8d2d4fc8f08e70"
+    },
+    "requests": {
+      "eth_chainId": 6,
+      "eth_getBlockByNumber": 45,
+      "eth_getCode": 122,
+      "eth_call": 146,
+      "eth_getTransactionReceipt": 24
+    },
+    "decisions": 3,
+    "switched": false
+  },
+  "finalityComparison": [
+    {
+      "provider": "dwellir",
+      "observedAt": "2026-10-03T22:47:49.087Z",
+      "latest": 79451068,
+      "finalized": 79442624,
+      "finalizedHash": "0xf12dc4b943b07378a3a6eb999a457b706e6230b54062b7ffe18c29469f796d68",
+      "lagSeconds": 854
+    },
+    {
+      "provider": "alchemy",
+      "observedAt": "2026-10-03T22:47:49.759Z",
+      "latest": 79451076,
+      "finalized": 79442624,
+      "finalizedHash": "0xf12dc4b943b07378a3a6eb999a457b706e6230b54062b7ffe18c29469f796d68",
+      "lagSeconds": 854
+    },
+    {
+      "provider": "dwellir",
+      "observedAt": "2026-10-03T22:47:50.282Z",
+      "latest": 79451080,
+      "finalized": 79442624,
+      "finalizedHash": "0xf12dc4b943b07378a3a6eb999a457b706e6230b54062b7ffe18c29469f796d68",
+      "lagSeconds": 855
+    },
+    {
+      "provider": "alchemy",
+      "observedAt": "2026-10-03T22:47:50.730Z",
+      "latest": 79451086,
+      "finalized": 79442624,
+      "finalizedHash": "0xf12dc4b943b07378a3a6eb999a457b706e6230b54062b7ffe18c29469f796d68",
+      "lagSeconds": 855
+    },
+    {
+      "provider": "dwellir",
+      "observedAt": "2026-10-03T22:47:51.193Z",
+      "latest": 79451090,
+      "finalized": 79419788,
+      "finalizedHash": "0x743bae4328afb87476c2de925d524c435ae148bd900a8fd89a70b6b60d21ddd6",
+      "lagSeconds": 3162
+    },
+    {
+      "provider": "alchemy",
+      "observedAt": "2026-10-03T22:47:51.638Z",
+      "latest": 79451095,
+      "finalized": 79442624,
+      "finalizedHash": "0xf12dc4b943b07378a3a6eb999a457b706e6230b54062b7ffe18c29469f796d68",
+      "lagSeconds": 856
+    }
+  ],
+  "finalityRepeat": [
+    {
+      "observedAt": "2026-10-03T22:48:13.894Z",
+      "number": 79419788,
+      "hash": "0x743bae4328afb87476c2de925d524c435ae148bd900a8fd89a70b6b60d21ddd6",
+      "timestamp": 1791064513
+    },
+    {
+      "observedAt": "2026-10-03T22:48:14.322Z",
+      "number": 79442624,
+      "hash": "0xf12dc4b943b07378a3a6eb999a457b706e6230b54062b7ffe18c29469f796d68",
+      "timestamp": 1791066819
+    },
+    {
+      "observedAt": "2026-10-03T22:48:14.751Z",
+      "number": 79419788,
+      "hash": "0x743bae4328afb87476c2de925d524c435ae148bd900a8fd89a70b6b60d21ddd6",
+      "timestamp": 1791064513
+    },
+    {
+      "observedAt": "2026-10-03T22:48:15.180Z",
+      "number": 79419788,
+      "hash": "0x743bae4328afb87476c2de925d524c435ae148bd900a8fd89a70b6b60d21ddd6",
+      "timestamp": 1791064513
+    },
+    {
+      "observedAt": "2026-10-03T22:48:15.609Z",
+      "number": 79442624,
+      "hash": "0xf12dc4b943b07378a3a6eb999a457b706e6230b54062b7ffe18c29469f796d68",
+      "timestamp": 1791066819
+    },
+    {
+      "observedAt": "2026-10-03T22:48:16.039Z",
+      "number": 79419788,
+      "hash": "0x743bae4328afb87476c2de925d524c435ae148bd900a8fd89a70b6b60d21ddd6",
+      "timestamp": 1791064513
+    },
+    {
+      "observedAt": "2026-10-03T22:48:16.468Z",
+      "number": 79442624,
+      "hash": "0xf12dc4b943b07378a3a6eb999a457b706e6230b54062b7ffe18c29469f796d68",
+      "timestamp": 1791066819
+    },
+    {
+      "observedAt": "2026-10-03T22:48:16.901Z",
+      "number": 79419788,
+      "hash": "0x743bae4328afb87476c2de925d524c435ae148bd900a8fd89a70b6b60d21ddd6",
+      "timestamp": 1791064513
+    }
+  ],
+  "migrationApproved": false,
+  "limits": "Small read-only samples. No SLA, long-run throughput, paid plan, migration or financial sends verified."
+}
