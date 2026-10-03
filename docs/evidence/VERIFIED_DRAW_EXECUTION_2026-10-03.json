@@ -1,0 +1,258 @@
+{
+  "schema": "verified-draw-execution-v1",
+  "date": "2026-10-03",
+  "baseHead": "7c42ee3d7860f44dfd955d6cd7adc4a8cb63434f",
+  "node": "v24.21.0",
+  "artifact": {
+    "path": ".local/logs/verified-draw-compiled.json",
+    "sha256": "038d667c4018e6c811e8e16c69e2604077d0c34904461adaf2edb5496bd8b09f"
+  },
+  "before": {
+    "path": ".local/logs/draw-worker/10000-CXCuCe/report.json",
+    "sha256": "8b5393bb0e370e6b11efbf3e2490c881f9fa6c68cfa281339c3062de1976e614",
+    "result": {
+      "schema": "draw-worker-probe-v1",
+      "n": 10000,
+      "status": "PASSED",
+      "steps": [
+        {
+          "kind": "SHORT",
+          "pass": 0,
+          "ms": 18431.091700000004,
+          "counts": {
+            "getTransaction": 315,
+            "getBlock": 3,
+            "getLogs": 2,
+            "call": 371,
+            "getCode": 7
+          },
+          "nextChunk": "1"
+        },
+        {
+          "kind": "MONTHLY",
+          "pass": 0,
+          "ms": 9919.037599999996,
+          "counts": {
+            "getTransaction": 159,
+            "getBlock": 2,
+            "getLogs": 1,
+            "call": 204,
+            "getCode": 6
+          },
+          "nextChunk": "1"
+        },
+        {
+          "kind": "SHORT",
+          "pass": 1,
+          "ms": 18855.16919999999,
+          "counts": {
+            "getTransaction": 315,
+            "getBlock": 3,
+            "getLogs": 2,
+            "call": 371,
+            "getCode": 7
+          },
+          "nextChunk": "2"
+        },
+        {
+          "kind": "MONTHLY",
+          "pass": 1,
+          "ms": 9975.722600000008,
+          "counts": {
+            "getTransaction": 159,
+            "getBlock": 2,
+            "getLogs": 1,
+            "call": 204,
+            "getCode": 6
+          },
+          "nextChunk": "2"
+        }
+      ],
+      "startedAt": "2026-10-03T08:14:02.242Z",
+      "chunks": 157,
+      "scope": "Two actual executor steps per kind; synthetic admitted dataset, no BUY proof, mock RNG, no Pons coordinator or restart/crash throughput claim. Draws intentionally unfinished on disposable in-process chain.",
+      "finishedAt": "2026-10-03T08:16:17.654Z"
+    }
+  },
+  "after": {
+    "path": ".local/logs/draw-worker/10000-734SAr/report.json",
+    "sha256": "c962185d9167d5b4fc91c969c1a974119e83537d0f303527042e739861d7f36e",
+    "result": {
+      "schema": "draw-worker-probe-v1",
+      "n": 10000,
+      "status": "PASSED",
+      "steps": [
+        {
+          "kind": "SHORT",
+          "pass": 0,
+          "ms": 9574.115599999997,
+          "counts": {
+            "getTransaction": 158,
+            "getBlock": 1,
+            "getLogs": 1,
+            "call": 213,
+            "getCode": 7
+          },
+          "nextChunk": "1"
+        },
+        {
+          "kind": "MONTHLY",
+          "pass": 0,
+          "ms": 9277.037999999993,
+          "counts": {
+            "getTransaction": 158,
+            "getBlock": 1,
+            "getLogs": 1,
+            "call": 207,
+            "getCode": 6
+          },
+          "nextChunk": "1"
+        },
+        {
+          "kind": "SHORT",
+          "pass": 1,
+          "ms": 740.0192999999999,
+          "counts": {
+            "getTransaction": 1,
+            "getBlock": 1,
+            "getLogs": 0,
+            "call": 27,
+            "getCode": 3
+          },
+          "nextChunk": "2"
+        },
+        {
+          "kind": "MONTHLY",
+          "pass": 1,
+          "ms": 651.8555000000051,
+          "counts": {
+            "getTransaction": 1,
+            "getBlock": 1,
+            "getLogs": 0,
+            "call": 26,
+            "getCode": 3
+          },
+          "nextChunk": "2"
+        }
+      ],
+      "startedAt": "2026-10-03T08:42:08.540Z",
+      "chunks": 157,
+      "scope": "Two actual executor steps per kind; synthetic admitted dataset, no BUY proof, mock RNG, no Pons coordinator or restart/crash throughput claim. Draws intentionally unfinished on disposable in-process chain.",
+      "finishedAt": "2026-10-03T08:43:21.943Z"
+    }
+  },
+  "tests": {
+    "uniquePassed": 15,
+    "finalBindingRepeatedPassed": 3,
+    "fullSuite": false,
+    "logs": [
+      {
+        "path": ".local/logs/verified-draw-targeted.log",
+        "sha256": "94451bd046711bdfb54dc5d100c52f9c5aaaec91315691f61dd914a55ff744c2"
+      },
+      {
+        "path": ".local/logs/verified-draw-neighbors.log",
+        "sha256": "4a061b774cf8a30a0fe3b256060dcf0de8eba9830480af1718a2a662990edc2b"
+      },
+      {
+        "path": ".local/logs/verified-draw-final-binding.log",
+        "sha256": "d1435d3cab7de227e694c1158634d145cc94ea0e2374888dc829e3d7316e1419"
+      },
+      {
+        "path": ".local/logs/verified-draw-budget-yield.log",
+        "sha256": "cb8102834b983a62df4123dbb12f6483d9ee77709a1e331d9e2fce907cb383a2"
+      }
+    ],
+    "budgetYieldRepeatedPassed": 1
+  },
+  "limits": [
+    "Local EVM, synthetic attempts and mock RNG; not public-network capacity",
+    "Two executor steps per kind; coordinator throughput and process crash not measured",
+    "No contract, prize math, journal format, transaction limit or production change"
+  ],
+  "measurementSourceHashes": [
+    {
+      "path": "scripts/verified-draw-cache.cjs",
+      "sha256": "5bb7ddcf9e2160d0a291e06dfaf2d541a93e9e18d5a62cb59c8a108feb2dbf92"
+    },
+    {
+      "path": "scripts/local-short-executor.cjs",
+      "sha256": "150f17baa8529f77e7f3d1e05d48246f004b57d4775cd549e96dfda1d731073f"
+    },
+    {
+      "path": "scripts/local-monthly-executor.cjs",
+      "sha256": "e9ea670207f2fc7c18a6a4571ed2407f8ab912b72c91dc320593b87d8a643d6c"
+    },
+    {
+      "path": "scripts/local-promo-scheduler.cjs",
+      "sha256": "c65b5118118d89ea9dcf18957df0d6f6647534895ec7eab27a95d141ab836a11"
+    },
+    {
+      "path": "scripts/short-dataset.cjs",
+      "sha256": "82f725b87610ff832dd6560721771a8a86262ea7593cfad8416d7803e4ba1f6a"
+    },
+    {
+      "path": "scripts/monthly-dataset.cjs",
+      "sha256": "a0df536c5c84eefe4afceffb5cfce6653210a07122cd487cde9ba9565c9bfd4e"
+    },
+    {
+      "path": "scripts/short-settlement.cjs",
+      "sha256": "5454137e55bb33cbc1afc15851f169e372335fac0b9c1d088569257a73c50549"
+    },
+    {
+      "path": "scripts/benchmark-draw-worker.cjs",
+      "sha256": "fe1c4f47e5f29dcfa023072a2ad04bec6101b6e49fcc133f70d0d379dea195b0"
+    },
+    {
+      "path": "test/verified-draw-cache.test.cjs",
+      "sha256": "362f98ab7e8965433c11bd769b7d0acd5e3a1cc9015245fcccee7d42a520f71d"
+    },
+    {
+      "path": "scripts/test-profiles.json",
+      "sha256": "24675aad23eeb1fd89acda31a25af163c66c3f59079664f6e759bf2a8ddb001b"
+    }
+  ],
+  "finalSourceHashes": [
+    {
+      "path": "scripts/verified-draw-cache.cjs",
+      "sha256": "da30571e5bece551907c9d2ad91895fd0b911d63fbd3f7b4579fee001b536d79"
+    },
+    {
+      "path": "scripts/local-short-executor.cjs",
+      "sha256": "150f17baa8529f77e7f3d1e05d48246f004b57d4775cd549e96dfda1d731073f"
+    },
+    {
+      "path": "scripts/local-monthly-executor.cjs",
+      "sha256": "e9ea670207f2fc7c18a6a4571ed2407f8ab912b72c91dc320593b87d8a643d6c"
+    },
+    {
+      "path": "scripts/local-promo-scheduler.cjs",
+      "sha256": "c65b5118118d89ea9dcf18957df0d6f6647534895ec7eab27a95d141ab836a11"
+    },
+    {
+      "path": "scripts/short-dataset.cjs",
+      "sha256": "82f725b87610ff832dd6560721771a8a86262ea7593cfad8416d7803e4ba1f6a"
+    },
+    {
+      "path": "scripts/monthly-dataset.cjs",
+      "sha256": "a0df536c5c84eefe4afceffb5cfce6653210a07122cd487cde9ba9565c9bfd4e"
+    },
+    {
+      "path": "scripts/short-settlement.cjs",
+      "sha256": "5454137e55bb33cbc1afc15851f169e372335fac0b9c1d088569257a73c50549"
+    },
+    {
+      "path": "scripts/benchmark-draw-worker.cjs",
+      "sha256": "fe1c4f47e5f29dcfa023072a2ad04bec6101b6e49fcc133f70d0d379dea195b0"
+    },
+    {
+      "path": "test/verified-draw-cache.test.cjs",
+      "sha256": "83077a1322d059826cde7def513a5a5572a261d034e10b205d534a2a08c34420"
+    },
+    {
+      "path": "scripts/test-profiles.json",
+      "sha256": "24675aad23eeb1fd89acda31a25af163c66c3f59079664f6e759bf2a8ddb001b"
+    }
+  ],
+  "measurementNote": "After the timing run only pre-broadcast LOCAL_BUDGET_WAIT retention was added; successful benchmark path unchanged, separate budget-yield test passed."
+}

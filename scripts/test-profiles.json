@@ -123,7 +123,8 @@
       "test/pons-zeroex-buy.test.cjs",
       "test/pons-zeroex-integration.test.cjs",
       "test/pons-entrypoint-buy.test.cjs",
-      "test/pons-entrypoint-integration.test.cjs"
+      "test/pons-entrypoint-integration.test.cjs",
+      "test/verified-draw-cache.test.cjs"
     ]
   },
   "accounting": {
@@ -225,7 +226,8 @@
       "test/local-native-refill-inspector.test.cjs",
       "test/local-transaction.test.cjs",
       "test/local-state-lock.test.cjs",
-      "test/local-rpc-watch.test.cjs"
+      "test/local-rpc-watch.test.cjs",
+      "test/verified-draw-cache.test.cjs"
     ]
   },
   "refill": {
@@ -506,7 +508,8 @@
       "test/public-rpc-qualification.test.cjs",
       "test/pons-crash-recovery.test.cjs",
       "test/rehearsal-backup.test.cjs",
-      "test/pons-wallet-verifier.test.cjs"
+      "test/pons-wallet-verifier.test.cjs",
+      "test/verified-draw-cache.test.cjs"
     ]
   },
   "pons-channels": {

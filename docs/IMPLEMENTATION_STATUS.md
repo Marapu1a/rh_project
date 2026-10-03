@@ -1,6 +1,6 @@
 # Карта реализации
 
-Состояние 02.10.2026. Карта тестового контура; не перечень публично развёрнутых сервисов.
+Состояние 03.10.2026. Карта тестового контура; не перечень публично развёрнутых сервисов.
 История реализаций/замеров сохранена [целиком](archive/context-2026-10-02/docs/IMPLEMENTATION_STATUS.md).
 Последовательность работ — [ROADMAP](ROADMAP.md), продукт — [PRODUCT_SPEC](PRODUCT_SPEC.md).
 
@@ -11,6 +11,7 @@
 | Постоянный индекс | scripts/persistent-buy-indexer.cjs, local-scheduler-state.cjs | Suffix scan/replay checkpoints, полный rollback/audit, bounded cache, компактный SHA-256 snapshot с legacy read; запись/consumer replay ещё O(history). [Пакет](INDEXER_CHECKPOINTS_2026-10-02.md), scripts/benchmark-indexer-history.cjs, indexer-checksum.cjs; scripts/benchmark-pons-admitted.cjs — [admitted load/API/restore](PONS_ADMITTED_LOAD_2026-10-03.md) |
 | Shared config | scripts/shared-index-config.cjs | Один writer и согласованные API/coordinator identities. [Модуль](SHARED_INDEX_CONFIG.md) |
 | Билеты и snapshots | scripts/attempt-lifecycle.cjs, builders/verifiers; contracts/ParticipantRegistry.sol для legacy | Независимые Short/Monthly open/frozen/consumed; registry не требование нового Pons genesis. [Lifecycle](ATTEMPT_LIFECYCLE.md), [trust](INDEXER_TRUST_MODEL.md) |
+| Проверка набора draw | scripts/verified-draw-cache.cjs, local-short-executor.cjs, local-monthly-executor.cjs | Private proof на provider/kind, pinned publication, live progress/chunk hash, independent finish; scheduler сохраняет active proof при обходе старых jobs. [Границы и проверки](VERIFIED_DRAW_EXECUTION_2026-10-03.md) |
 | Pons funding | contracts/LocalPonsCollector.sol, IPonsVenue.sol; scripts/pons-collector-manual.cjs, pons-funding-pass.cjs | Доступный USDG → credits 90/5/5 → vault; ожидание источника отдельно от существующих выплат. [Коллектор](PONS_COLLECTOR.md) |
 | Казна и draws | contracts/DualControllerPromoVault.sol, RobinhoodShortController.sol, RobinhoodMonthlyController.sol и bases | Резервы, settlement/claims; интегрированы локально. [Архитектура](DUAL_CONTROLLER_ARCHITECTURE.md), [цикл](PONS_INDEXED_CYCLE.md) |
 | RNG и cutoff | contracts/DrandRandomAdapter.sol; scripts/drand-delivery-worker.cjs; CutoffHistory | Один round/result, journal, checkpoint; реальные timing/finality отдельно. [Worker](DRAND_DELIVERY_WORKER.md), [cutoff](CUTOFF_HISTORY.md) |

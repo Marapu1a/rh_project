@@ -4,6 +4,8 @@ const {sendLocalTransaction,receiptOptions}=require('./local-receipt.cjs');
 const {ethers}=require('ethers');
 const dataset=require('./monthly-dataset.cjs'),shortDataset=require('./short-dataset.cjs'),outcome=require('./monthly-outcome.cjs');
 const {hash}=require('./direct-buy.cjs'),{verifyDualBindings}=require('./dual-bindings.cjs');
+const cache=require('./verified-draw-cache.cjs');
+const validateCachedJob=(provider,job)=>cache.validate(provider,'MONTHLY',job,validateMonthlyJob);
 const check=(ok,message)=>{if(!ok)throw Error(message);},same=(a,b)=>String(a).toLowerCase()===String(b).toLowerCase();
 function makeMonthlyJob(artifact,chunkSize=64){
   const job={schema:'local-monthly-job-v1',chunkSize,artifact};job.commitment=hash(job);validateMonthlyJob(job);return job;
@@ -23,9 +25,11 @@ function validateMonthlyJob(job){
   check(outcome.rulesHash(a.rules)===s.rulesHash,'Monthly rules mismatch');return a;
 }
 const expectedResult=outcome.expectedResult;
-async function stepMonthly({provider,source,job,publisher,executor,gasPrice,signal,receiptTimeoutMs=30000}){
+async function stepMonthly(options){return cache.guarded(options.provider,'MONTHLY',()=>stepVerified(options));}
+async function stepVerified({provider,source,job,publisher,executor,gasPrice,signal,receiptTimeoutMs=30000}){
   receiptOptions(receiptTimeoutMs);
-  const a=validateMonthlyJob(job),r=a.request,d=a.snapshot.domain;
+  const verified=cache.get(provider,'MONTHLY',job,validateMonthlyJob);job=verified.job;
+  const a=job.artifact,r=a.request,d=a.snapshot.domain;
   network.checkChain((await provider.getNetwork()).chainId);network.checkChain(d.chainId);
   check(same(source.target,d.monthlySource),'Wrong Monthly controller');
   await verifyDualBindings(provider,d);await shortDataset.verifyEpochGenesis(provider,d.source,d);
@@ -47,7 +51,7 @@ async function stepMonthly({provider,source,job,publisher,executor,gasPrice,sign
   }
   check(m.phase!==6n,'Monthly proposal superseded; explicit new job required');
   if(m.phase!==0n)for(const key of Object.keys(r))check(same(m.input[key],r[key]),'Monthly existing input differs: '+key);
-  const ps=a.snapshot.participants.map(({wallet,firstAttempt,lastAttempt})=>({wallet,firstAttempt,lastAttempt}));
+  const ps=a.snapshot.participants;
   if(m.phase===0n||m.phase===1n){
     if(!publisher||!same(await publisher.getAddress(),await source.publisher()))return wait('publisher');
     if(m.phase===0n){
@@ -59,11 +63,14 @@ async function stepMonthly({provider,source,job,publisher,executor,gasPrice,sign
       return send(publisher,'beginMonth',[r]);
     }
     const count=Number(m.count);
-    check(count<ps.length&&m.root===dataset.rootFor(ps.slice(0,count)),'Monthly published prefix differs');
-    check(m.attempts===a.snapshot.participants.slice(0,count).reduce((n,p)=>n+BigInt(p.count),0n),'Monthly published attempts differ');
+    const prefix=verified.prefix(count);
+    check(count<ps.length&&m.root===prefix.root,'Monthly published prefix differs');
+    check(m.attempts===prefix.attempts,'Monthly attempts differ');
     return send(publisher,'publishMonth',[r.drawId,ps.slice(count,count+job.chunkSize)]);
   }
-  const publication=await dataset.verifyPublication(provider,source,a);
+  const binding=m=>({input:Array.from(m.input),root:m.root,count:m.count,attempts:m.attempts,totalWeight:m.totalWeight,budget:m.budget,context:m.context,ready:m.phase===2n});
+  const publication=await verified.publication(binding(m),async blockTag=>binding(await source.month(r.drawId,{blockTag})),
+    blockTag=>dataset.verifyPublication(provider,source,a,{blockTag}));
   if(m.phase===2n){
     if(!executor)return wait('executor');
     if(!await source.executionReady({gasPrice:price}))return wait('executionReadiness');
@@ -83,17 +90,15 @@ async function stepMonthly({provider,source,job,publisher,executor,gasPrice,sign
   }
   if(m.phase===3n)return wait('seed');
   check(m.phase===4n||m.phase===5n,'Unknown Monthly phase');
+  check(await source.monthChunkCount(r.drawId)===BigInt(publication.publications.length),'Monthly chunk count changed');
   if(m.nextChunk<BigInt(publication.publications.length)){
-    const entry=publication.publications[Number(m.nextChunk)],tx=await provider.getTransaction(entry.transactionHash);
-    check(tx&&same(tx.to,source.target),'Monthly publication unavailable');
-    const block=await provider.getBlock(tx.blockNumber);check(block&&block.hash===tx.blockHash,'Monthly publication reorg');
-    const decoded=source.interface.parseTransaction({data:tx.data});
-    check(decoded?.name==='publishMonth'&&decoded.args[0]===r.drawId,'Monthly publication transport');
-    const chunk=Array.from(decoded.args[1],p=>({wallet:p.wallet,firstAttempt:p.firstAttempt,lastAttempt:p.lastAttempt}));
-    check(ethers.keccak256(ethers.AbiCoder.defaultAbiCoder().encode([require('./short-outcome.cjs').PARTICIPANTS],[chunk]))===entry.hash,'Monthly chunk changed');
+    const entry=publication.publications[Number(m.nextChunk)],chunk=ps.slice(entry.offset,entry.offset+entry.count);
+    check(m.phase===4n&&m.processed===BigInt(entry.offset),'Monthly progress mismatch');
+    check(await source.monthChunkHash(r.drawId,m.nextChunk)===entry.hash,'Monthly chunk changed');
     return send(executor,'processMonth',[r.drawId,m.nextChunk,chunk]);
   }
-  const expected=expectedResult(m,a);
+  check(m.nextChunk===BigInt(publication.publications.length),'Monthly progress mismatch');
+  const expected=verified.expected({context:m.context,seed:m.seed,root:m.root,budget:m.budget},()=>expectedResult(m,a));
   if(Number(a.rules.version)===2)check(m.totalWeight===BigInt(expected.totalWeight)&&m.processedWeight===m.totalWeight,'Monthly weight mismatch');
   check(same(m.winner,expected.winner)&&m.admitted===BigInt(expected.admittedCount)
     &&m.processed===BigInt(r.count),'Monthly independent result mismatch');
@@ -114,4 +119,4 @@ async function runMonthly(options,{maxSteps=128,onStep=()=>{},signal}={}){
   }
   return {status:'yielded',reason:'stepLimit'};
 }
-module.exports={makeMonthlyJob,validateMonthlyJob,stepMonthly,runMonthly,expectedResult};
+module.exports={makeMonthlyJob,validateMonthlyJob,validateCachedJob,stepMonthly,runMonthly,expectedResult};

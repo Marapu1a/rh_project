@@ -64,8 +64,8 @@ async function verifyEpochGenesis(provider,address,domain){
     startedAt:String(await source.shortRulesStartedAt()),firstBlock:String(genesis.firstBlock)})===domain.shortRulesGenesisHash,'Epoch genesis mismatch');
   return source;
 }
-async function verifyPublication(provider,source,id,artifact){
-  const p=await source.datasetProposal(id),r=artifact.request,domain=artifact.snapshot.domain;
+async function verifyPublication(provider,source,id,artifact,{blockTag='latest'}={}){
+  const at={blockTag},p=await source.datasetProposal(id,at),r=artifact.request,domain=artifact.snapshot.domain;
   if(['attempt-lifecycle-v3','attempt-lifecycle-v4'].includes(domain.schema))require('./draw-id.cjs').validateDrawId(r.drawId,'SHORT');
   await require('./dual-bindings.cjs').verifyDualBindings(provider,domain);
   const network=await provider.getNetwork();
@@ -87,27 +87,27 @@ async function verifyPublication(provider,source,id,artifact){
   }
   check(snapshot.participants.every(x=>BigInt(x.count)===BigInt(x.lastAttempt)-BigInt(x.firstAttempt)+1n)
     &&snapshot.participants.reduce((sum,x)=>sum+BigInt(x.count),0n)===BigInt(r.expectedAttempts),'Snapshot attempts mismatch');
-  const prizes=Array.from(await source.datasetBasket(id));
+  const prizes=Array.from(await source.datasetBasket(id,at));
   const expectedPrizes=basketFor(r.budget,artifact.weights,artifact.minimumUnit);
   check(prizes.length===expectedPrizes.length&&prizes.every((v,i)=>v===expectedPrizes[i]),'Basket mismatch');
   const basketHash=ethers.keccak256(coder.encode(['uint256[]'],[prizes]));
   check(p.basketHash===basketHash,'Basket hash mismatch');
-  const events=await source.queryFilter(source.filters.DatasetChunk(id),Number(r.cutoffBlockNumber)+1),participants=[],publications=[];
+  const events=await source.queryFilter(source.filters.DatasetChunk(id),Number(r.cutoffBlockNumber)+1,blockTag),participants=[],publications=[];
   for(const event of events){
     check(event.args.index===BigInt(publications.length),'Publication index mismatch');
     const tx=await provider.getTransaction(event.transactionHash);
-    check(tx&&tx.to?.toLowerCase()===source.target.toLowerCase(),'Publication transaction unavailable');
+    check(tx&&tx.to?.toLowerCase()===source.target.toLowerCase()&&tx.blockHash===event.blockHash&&tx.blockNumber===event.blockNumber,'Publication transaction unavailable');
     const decoded=source.interface.parseTransaction({data:tx.data});
     check(decoded?.name==='publish'&&decoded.args[0]===id,'Unsupported publication transport');
     const chunk=Array.from(decoded.args[1],x=>({wallet:x.wallet.toLowerCase(),firstAttempt:String(x.firstAttempt),lastAttempt:String(x.lastAttempt)}));
     const digest=ethers.keccak256(coder.encode([outcome.PARTICIPANTS],[chunk]));
-    check(digest===event.args.chunkHash&&digest===await source.datasetChunkHash(id,event.args.index)
+    check(digest===event.args.chunkHash&&digest===await source.datasetChunkHash(id,event.args.index,at)
       &&BigInt(chunk.length)===event.args.count,'Publication hash/count mismatch');
     participants.push(...chunk);publications.push({transactionHash:event.transactionHash,index:String(event.args.index),hash:digest,count:chunk.length});
   }
   const expected=artifact.snapshot.participants.map(({wallet,firstAttempt,lastAttempt})=>({wallet:wallet.toLowerCase(),firstAttempt:String(firstAttempt),lastAttempt:String(lastAttempt)}));
   check(canonical(participants)===canonical(expected),'Published participants differ from replay');
-  check(BigInt(publications.length)===await source.datasetChunkCount(id)&&p.count===BigInt(expected.length)
+  check(BigInt(publications.length)===await source.datasetChunkCount(id,at)&&p.count===BigInt(expected.length)
     &&p.totalAttempts===BigInt(r.expectedAttempts)&&p.root===rootFor(participants),'Actual dataset mismatch');
   check(p.status===2n||p.status===4n,'Dataset is not READY or SEALED');
   const vault=await source.datasetVault(),quote=await new ethers.Contract(vault,['function quoteToken() view returns(address)'],provider).quoteToken();

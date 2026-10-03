@@ -91,7 +91,7 @@ async function tickKind(kind,o,state,save){
       if(BigInt(entry.empty.epoch)===draining){selected=entry;break;}
       continue;
     }
-    const job=entry.job;(isShort?sw.validateJob:mw.validateMonthlyJob)(job);
+    const job=entry.job;(isShort?sw.validateCachedJob:mw.validateCachedJob)(provider,job);
     const p=isShort?await source.datasetProposal(job.proposalId,at):await source.month(job.artifact.request.drawId,at);
     const phase=isShort?p.status:p.phase;
     // A surviving cutoff does not authorize replaying a previously observed begin/freeze.

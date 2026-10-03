@@ -5,6 +5,8 @@ const {ethers}=require('ethers');
 const dataset=require('./short-dataset.cjs'),settlement=require('./short-settlement.cjs');
 const {hash}=require('./direct-buy.cjs');
 const {verifyDualBindings}=require('./dual-bindings.cjs');
+const cache=require('./verified-draw-cache.cjs');
+const validateCachedJob=(provider,job)=>cache.validate(provider,'SHORT',job,validateJob);
 const check=(ok,message)=>{if(!ok)throw Error(message);};
 const same=(a,b)=>String(a).toLowerCase()===String(b).toLowerCase();
 function makeJob(artifact,proposalId,chunkSize=64){
@@ -29,9 +31,11 @@ function validateJob(job){
   return a;
 }
 
-async function stepShort({provider,source,job,publisher,executor,gasPrice,signal,receiptTimeoutMs=30000}){
+async function stepShort(options){return cache.guarded(options.provider,'SHORT',()=>stepVerified(options));}
+async function stepVerified({provider,source,job,publisher,executor,gasPrice,signal,receiptTimeoutMs=30000}){
   receiptOptions(receiptTimeoutMs);
-  const a=validateJob(job),r=a.request,domain=a.snapshot.domain;
+  const verified=cache.get(provider,'SHORT',job,validateJob);job=verified.job;
+  const a=job.artifact,r=a.request,domain=a.snapshot.domain;
   network.checkChain((await provider.getNetwork()).chainId);network.checkChain(domain.chainId);
   check(same(source.target,domain.source),'Wrong controller');
   await verifyDualBindings(provider,domain);
@@ -58,7 +62,7 @@ async function stepShort({provider,source,job,publisher,executor,gasPrice,signal
   }
   const price=gasPrice==null?(await provider.getFeeData()).gasPrice:BigInt(gasPrice);
   check(price!=null&&price>=0n,'Missing gas price');
-  const ps=a.snapshot.participants.map(({wallet,firstAttempt,lastAttempt})=>({wallet,firstAttempt,lastAttempt}));
+  const ps=a.snapshot.participants;
   if(p.status===3n)throw Error('Proposal superseded; explicit new job required');
   if(p.status!==0n){
     for(const key of Object.keys(r))check(same(p.request[key],r[key]),'Existing proposal differs: '+key);
@@ -75,11 +79,14 @@ async function stepShort({provider,source,job,publisher,executor,gasPrice,signal
       return send(publisher,'begin',[job.proposalId,r]);
     }
     const count=Number(p.count);
-    check(count<ps.length&&p.root===dataset.rootFor(ps.slice(0,count)),'Published prefix differs');
-    check(p.totalAttempts===a.snapshot.participants.slice(0,count).reduce((n,x)=>n+BigInt(x.count),0n),'Published attempts differ');
+    const prefix=verified.prefix(count);
+    check(count<ps.length&&p.root===prefix.root,'Published prefix differs');
+    check(p.totalAttempts===prefix.attempts,'Published attempts differ');
     return send(publisher,'publish',[job.proposalId,ps.slice(count,count+job.chunkSize)]);
   }
-  await dataset.verifyPublication(provider,source,job.proposalId,a);
+  const binding=p=>({request:Array.from(p.request),root:p.root,count:p.count,totalAttempts:p.totalAttempts,rulesHash:p.rulesHash,basketHash:p.basketHash,context:p.context,status:p.status});
+  const publication=await verified.publication(binding(p),async blockTag=>binding(await source.datasetProposal(job.proposalId,{blockTag})),
+    blockTag=>dataset.verifyPublication(provider,source,job.proposalId,a,{blockTag}));
   if(p.status===2n){
     if(!executor)return wait('executor');
     if(!await source.executionReady({gasPrice:price}))return wait('executionReadiness');
@@ -94,14 +101,22 @@ async function stepShort({provider,source,job,publisher,executor,gasPrice,signal
     return send(executor,'seal',[job.proposalId]);
   }
   check(p.status===4n,'Unknown proposal phase');
-  const recovered=await settlement.recover(provider,source,r.drawId);
-  if(recovered.nextAction==='waitSeed')return wait('seed');
-  if(recovered.nextAction==='terminal'){
-    check((await source.shortResult(r.drawId)).resultHash===recovered.expected.resultHash,'Independent result mismatch');
-    return {status:'terminal',drawId:r.drawId,resultHash:recovered.expected.resultHash};
+  const state=await source.settlements(r.drawId);
+  check(state.proposalId===job.proposalId,'Settlement proposal mismatch');
+  if(state.phase===1n)return wait('seed');
+  check(state.phase===2n||state.phase===3n,'Unknown settlement phase');
+  check(await source.datasetChunkCount(job.proposalId)===BigInt(publication.publications.length),'Dataset chunk count changed');
+  if(state.nextChunk<BigInt(publication.publications.length)){
+    const part=publication.publications[Number(state.nextChunk)],chunk=ps.slice(part.offset,part.offset+part.count);
+    check(state.phase===2n&&state.processed===BigInt(part.offset),'Short progress mismatch');
+    check(await source.datasetChunkHash(job.proposalId,state.nextChunk)===part.hash,'Short chunk changed');
+    return send(executor,'processShort',[r.drawId,state.nextChunk,chunk]);
   }
-  if(recovered.nextAction==='processShort')return send(executor,'processShort',[r.drawId,recovered.state.nextChunk,recovered.chunks[Number(recovered.state.nextChunk)]]);
-  check((await source.shortResult(r.drawId)).resultHash===recovered.expected.resultHash,'Independent result mismatch');
+  check(state.nextChunk===BigInt(publication.publications.length)&&state.processed===p.count,'Incomplete settlement');
+  const prizes=Array.from(await source.datasetBasket(job.proposalId));
+  const expected=verified.expected({context:p.context,seed:state.seed,prizes},()=>settlement.compute(p.context,state.seed,ps,a.rules,prizes));
+  check((await source.shortResult(r.drawId)).resultHash===expected.resultHash,'Independent result mismatch');
+  if(state.phase===3n)return {status:'terminal',drawId:r.drawId,resultHash:expected.resultHash};
   return send(executor,'finishShort',[r.drawId]);
 }
 
@@ -120,4 +135,4 @@ async function runShort(options,{maxSteps=128,onStep=()=>{},signal}={}){
   }
   return {status:'yielded',reason:'stepLimit'};
 }
-module.exports={makeJob,validateJob,stepShort,runShort};
+module.exports={makeJob,validateJob,validateCachedJob,stepShort,runShort};

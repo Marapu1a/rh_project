@@ -30,14 +30,14 @@ function buildFromHistory(input){
   coder.encode([INPUT],[request]);check(BigInt(r.campaign)>0,'Invalid campaign');
   return {schema:'monthly-dataset-artifact-v1',snapshot,request,rules:input.rules};
 }
-async function verifyPublication(provider,source,artifact){
+async function verifyPublication(provider,source,artifact,{blockTag='latest'}={}){
   const {snapshot,request:r}=artifact,domain=snapshot.domain;
   check(domain.schema==='attempt-lifecycle-v4'&&snapshot.schema==='attempt-snapshot-v4','Monthly publication requires v4');
   validateDrawId(r.drawId,'MONTHLY');
   check(source.target.toLowerCase()===domain.monthlySource.toLowerCase(),'Monthly source mismatch');
   await require('./dual-bindings.cjs').verifyDualBindings(provider,domain);
   await require('./short-dataset.cjs').verifyEpochGenesis(provider,domain.source,domain);
-  const m=await source.month(r.drawId),policy=await source.monthlyEpochPolicy(r.rulesEpoch);
+  const at={blockTag},m=await source.month(r.drawId,at),policy=await source.monthlyEpochPolicy(r.rulesEpoch,at);
   for(const key of Object.keys(r))check(String(m.input[key]).toLowerCase()===String(r[key]).toLowerCase(),'Monthly request mismatch: '+key);
   check(snapshot.kind==='MONTHLY'&&snapshot.drawId===r.drawId&&BigInt(snapshot.rulesEpoch)===BigInt(r.rulesEpoch)
     &&BigInt(snapshot.cutoff.blockNumber)===BigInt(r.cutoff)&&snapshot.cutoff.blockHash===r.cutoffHash,'Monthly snapshot metadata mismatch');
@@ -45,19 +45,19 @@ async function verifyPublication(provider,source,artifact){
   check(monthlyOutcome.rulesHash(artifact.rules)===policy.hash&&snapshot.rulesHash===policy.hash,'Monthly rules mismatch');
   check(snapshot.participants.every(p=>BigInt(p.count)===BigInt(p.lastAttempt)-BigInt(p.firstAttempt)+1n)
     &&snapshot.participants.reduce((s,p)=>s+BigInt(p.count),0n)===BigInt(r.attempts),'Monthly attempts mismatch');
-  const events=await source.queryFilter(source.filters.MonthChunk(r.drawId),Number(r.cutoff)+1),participants=[],publications=[];
+  const events=await source.queryFilter(source.filters.MonthChunk(r.drawId),Number(r.cutoff)+1,blockTag),participants=[],publications=[];
   for(const event of events){
     check(event.args.index===BigInt(publications.length),'Monthly publication index mismatch');
-    const tx=await provider.getTransaction(event.transactionHash);check(tx&&tx.to?.toLowerCase()===source.target.toLowerCase(),'Monthly publication unavailable');
+    const tx=await provider.getTransaction(event.transactionHash);check(tx&&tx.to?.toLowerCase()===source.target.toLowerCase()&&tx.blockHash===event.blockHash&&tx.blockNumber===event.blockNumber,'Monthly publication unavailable');
     const decoded=source.interface.parseTransaction({data:tx.data});check(decoded?.name==='publishMonth'&&decoded.args[0]===r.drawId,'Unsupported monthly publication transport');
     const chunk=Array.from(decoded.args[1],p=>({wallet:p.wallet.toLowerCase(),firstAttempt:String(p.firstAttempt),lastAttempt:String(p.lastAttempt)}));
     const digest=ethers.keccak256(coder.encode([outcome.PARTICIPANTS],[chunk]));
-    check(digest===event.args.hash&&digest===await source.monthChunkHash(r.drawId,event.args.index),'Monthly chunk hash mismatch');
-    participants.push(...chunk);publications.push({index:String(event.args.index),transactionHash:event.transactionHash,hash:digest});
+    check(digest===event.args.hash&&digest===await source.monthChunkHash(r.drawId,event.args.index,at),'Monthly chunk hash mismatch');
+    participants.push(...chunk);publications.push({index:String(event.args.index),transactionHash:event.transactionHash,hash:digest,count:chunk.length});
   }
   const expected=snapshot.participants.map(p=>({wallet:p.wallet.toLowerCase(),firstAttempt:String(p.firstAttempt),lastAttempt:String(p.lastAttempt)}));
   check(canonical(participants)===canonical(expected)&&m.count===BigInt(participants.length)&&m.attempts===BigInt(r.attempts)
-    &&m.root===rootFor(participants)&&BigInt(publications.length)===await source.monthChunkCount(r.drawId),'Monthly dataset mismatch');
+    &&m.root===rootFor(participants)&&BigInt(publications.length)===await source.monthChunkCount(r.drawId,at),'Monthly dataset mismatch');
   check([2n,3n,4n,5n].includes(m.phase),'Monthly dataset not ready/sealed');
   if(Number(artifact.rules.version)===2)check(m.totalWeight===snapshot.participants.reduce((n,p)=>n+monthlyOutcome.weight(BigInt(p.count)),0n),'Monthly total weight mismatch');
   let context=null;
