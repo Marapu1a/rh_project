@@ -1,0 +1,485 @@
+{
+  "schema": "publication-history-recovery-v1",
+  "date": "2026-10-03",
+  "status": "PASSED",
+  "scope": "Synthetic local chain31337, common scheduler and Pons journal/gas modules; mock RNG/USDG; not the outer Pons coordinator or BUY pipeline.",
+  "limits": [
+    "Fault injected at ethers read methods in new processes; one local EVM node, not independent archive failover",
+    "Synthetic frozen participants and RNG; not BUY/index/API or outer Pons loop",
+    "Active times exclude sleeps and failure intervals; no production SLA"
+  ],
+  "sourceHashEncoding": "UTF-8 with LF line endings",
+  "sources": [
+    {
+      "file": "scripts/benchmark-scheduler-load.cjs",
+      "sha256": "c4b0e74eb482296634e58f6ed8d9465f55174d53a71e9fffeb9828602371b3af"
+    },
+    {
+      "file": "scripts/verified-draw-cache.cjs",
+      "sha256": "da30571e5bece551907c9d2ad91895fd0b911d63fbd3f7b4579fee001b536d79"
+    },
+    {
+      "file": "scripts/local-short-executor.cjs",
+      "sha256": "0671c7214fd957fe9eb98efe517b6933f32ccb39bcecb5d4072d8b35631658af"
+    },
+    {
+      "file": "scripts/local-monthly-executor.cjs",
+      "sha256": "bd1ce593511f37502d0d81945ca2a3761f187986271492c027baecc001834e4d"
+    },
+    {
+      "file": "scripts/local-promo-scheduler.cjs",
+      "sha256": "ab8655517c3c2006c0f5639e6cde6cf0560ceea55d5ccaa24ffad7fcf7fe408c"
+    },
+    {
+      "file": "scripts/pons-transaction-journal.cjs",
+      "sha256": "f5581d9a6605e7d035c22f16f09bb9945ed5aa156e377cb49b3dd9d98d8902bb"
+    },
+    {
+      "file": "scripts/short-dataset.cjs",
+      "sha256": "82f725b87610ff832dd6560721771a8a86262ea7593cfad8416d7803e4ba1f6a"
+    },
+    {
+      "file": "scripts/monthly-dataset.cjs",
+      "sha256": "557a79dbeb44f4ba66607bc2361937ce5dc3e6f7e9a60d8e469505aaef2c26ea"
+    }
+  ],
+  "raw": [
+    {
+      "file": ".local/logs/scheduler-load-10000-G1B5Uc/report.json",
+      "sha256": "d3cea71a7f18fac67b0a6e2817370e137dc0e4213764df0b98067ee0fb1f58f3"
+    },
+    {
+      "file": ".local/logs/history-outage-10000.log",
+      "sha256": "5a9a950cb0d3b63acac49030052e4546216011528f03ab100ccc8690a9d8a187"
+    },
+    {
+      "file": ".local/logs/scheduler-load-100-Bs8nog/report.json",
+      "sha256": "7fcc8198f7e6ba83fc83622250d4cad0874bae734c9ddf32690178a70efa8e55"
+    },
+    {
+      "file": ".local/logs/history-outage-100-b.log",
+      "sha256": "ab98b40e9024ffb2eecafc3bb2c726a805fe8622d2f47f542d3b5b497b3c9233"
+    },
+    {
+      "file": ".local/logs/history-outage-100.log",
+      "sha256": "450efe2a1dad01e9004feaca238d6458824e81d774a831d2dbf15f38857450b9"
+    },
+    {
+      "file": ".local/logs/verified-draw-compiled.json",
+      "sha256": "038d667c4018e6c811e8e16c69e2604077d0c34904461adaf2edb5496bd8b09f"
+    }
+  ],
+  "n": 10000,
+  "attempts": "105000",
+  "chunks": 157,
+  "preparationMs": 53744.6248,
+  "historyOutage": [
+    {
+      "mode": "tx-error",
+      "transactionReads": 1,
+      "ms": 6708.927000000001,
+      "hits": [
+        {
+          "method": "getTransaction",
+          "hash": "0xae00c7d93c73ad7c0f84a96282d65c9b34b548dd043c8bb2e918308c86ff7bd7"
+        }
+      ],
+      "sends": [],
+      "error": "{\n  \"status\": \"error\",\n  \"results\": {\n    \"SHORT\": {\n      \"status\": \"error\",\n      \"message\": \"Injected historical transaction unavailable\",\n      \"code\": \"SERVER_ERROR\",\n      \"transientRpc\": false,\n      \"retryableRpcRead\": false\n    }\n  },\n  \"haltedKind\": \"SHORT\",\n  \"requiresReconciliation\": false\n}\n",
+      "nonce": 364,
+      "progress": {
+        "SHORT": "13",
+        "MONTHLY": "12"
+      },
+      "accounting": {
+        "balance": "2100",
+        "parts": [
+          "0",
+          "0",
+          "100",
+          "2000",
+          "0",
+          "0"
+        ]
+      },
+      "journalsUnchanged": true
+    },
+    {
+      "mode": "tx-null",
+      "transactionReads": 314,
+      "ms": 27490.3117,
+      "hits": [
+        {
+          "method": "getTransaction",
+          "hash": "0xdd36426af6bd9b69bbd9a583c8f542f8fd6603b049809535d650dcdf96bcfd42"
+        },
+        {
+          "method": "getTransaction",
+          "hash": "0x7cc0d406246d2c32efe263e5f76a479bea47c8c8a4175b02d29eb8f0ae50cd2b"
+        }
+      ],
+      "sends": [],
+      "error": "{\n  \"status\": \"error\",\n  \"results\": {\n    \"SHORT\": {\n      \"status\": \"error\",\n      \"message\": \"Publication transaction unavailable\",\n      \"transientRpc\": false,\n      \"retryableRpcRead\": false\n    },\n    \"MONTHLY\": {\n      \"status\": \"error\",\n      \"message\": \"Monthly publication unavailable\",\n      \"transientRpc\": false,\n      \"retryableRpcRead\": false\n    }\n  }\n}\n",
+      "nonce": 364,
+      "progress": {
+        "SHORT": "13",
+        "MONTHLY": "12"
+      },
+      "accounting": {
+        "balance": "2100",
+        "parts": [
+          "0",
+          "0",
+          "100",
+          "2000",
+          "0",
+          "0"
+        ]
+      },
+      "journalsUnchanged": true
+    },
+    {
+      "mode": "logs-empty",
+      "transactionReads": 0,
+      "ms": 12000.9958,
+      "hits": [
+        {
+          "method": "getLogs"
+        },
+        {
+          "method": "getLogs"
+        }
+      ],
+      "sends": [],
+      "error": "{\n  \"status\": \"error\",\n  \"results\": {\n    \"SHORT\": {\n      \"status\": \"error\",\n      \"message\": \"Published participants differ from replay\",\n      \"transientRpc\": false,\n      \"retryableRpcRead\": false\n    },\n    \"MONTHLY\": {\n      \"status\": \"error\",\n      \"message\": \"Monthly dataset mismatch\",\n      \"transientRpc\": false,\n      \"retryableRpcRead\": false\n    }\n  }\n}\n",
+      "nonce": 364,
+      "progress": {
+        "SHORT": "13",
+        "MONTHLY": "12"
+      },
+      "accounting": {
+        "balance": "2100",
+        "parts": [
+          "0",
+          "0",
+          "100",
+          "2000",
+          "0",
+          "0"
+        ]
+      },
+      "journalsUnchanged": true
+    },
+    {
+      "mode": "tx-corrupt",
+      "transactionReads": 2,
+      "ms": 12284.936099999999,
+      "hits": [
+        {
+          "method": "getTransaction",
+          "hash": "0xae00c7d93c73ad7c0f84a96282d65c9b34b548dd043c8bb2e918308c86ff7bd7"
+        },
+        {
+          "method": "getTransaction",
+          "hash": "0xd584459b842ad39c469fb8172b918f1f6a6b95b994dddf3db560c2bd18a30b8d"
+        }
+      ],
+      "sends": [],
+      "error": "{\n  \"status\": \"error\",\n  \"results\": {\n    \"SHORT\": {\n      \"status\": \"error\",\n      \"message\": \"Unsupported publication transport\",\n      \"transientRpc\": false,\n      \"retryableRpcRead\": false\n    },\n    \"MONTHLY\": {\n      \"status\": \"error\",\n      \"message\": \"Unsupported monthly publication transport\",\n      \"transientRpc\": false,\n      \"retryableRpcRead\": false\n    }\n  }\n}\n",
+      "nonce": 364,
+      "progress": {
+        "SHORT": "13",
+        "MONTHLY": "12"
+      },
+      "accounting": {
+        "balance": "2100",
+        "parts": [
+          "0",
+          "0",
+          "100",
+          "2000",
+          "0",
+          "0"
+        ]
+      },
+      "journalsUnchanged": true
+    }
+  ],
+  "restart": {
+    "ms": 40397.4223,
+    "counts": {
+      "call": 729,
+      "getTransaction": 322,
+      "getLogs": 2,
+      "getCode": 40,
+      "getBlock": 39
+    },
+    "writes": {
+      "automation.json": 24
+    },
+    "result": {
+      "status": "waiting",
+      "steps": [
+        {
+          "action": "processShort",
+          "transactionHash": "0xdcf3d18723cafe3d7c5df924fda5f20a6c201d5d4e88761b5607e551025f99cd",
+          "nonce": 364,
+          "blockNumber": 367
+        },
+        {
+          "action": "processMonth",
+          "transactionHash": "0xdd8c3e3cd0fee50d83e16c2a0bf33ee7ab82b496bc31cba390e1f85637b2ce94",
+          "nonce": 365,
+          "blockNumber": 368
+        },
+        {
+          "action": "processShort",
+          "transactionHash": "0x76c6630f4f8ef1bc3f70177de344842e34fc1ead05ecc49eb9a66af9c12ebb52",
+          "nonce": 366,
+          "blockNumber": 369
+        },
+        {
+          "action": "processMonth",
+          "transactionHash": "0xb12dff11a328bdbf39f2ec41c5bbabe81cf485a30207a0f7f8788657e958dcbb",
+          "nonce": 367,
+          "blockNumber": 370
+        },
+        {
+          "action": "processShort",
+          "transactionHash": "0x9c2b07bf15abb7a75d9eaacdefb895623c66deb4a1a760b72c8b83ab45908dd1",
+          "nonce": 368,
+          "blockNumber": 371
+        },
+        {
+          "action": "processMonth",
+          "transactionHash": "0x1d044816edcc1bbcd4f8b6949926e7b51e23418b48bb865c28ab66c3cca26356",
+          "nonce": 369,
+          "blockNumber": 372
+        },
+        {
+          "action": "processShort",
+          "transactionHash": "0xd45ad8b1f9b76317e48b4ba69091bffc31223a8e1fe03668e7d383dfcf5e3e4d",
+          "nonce": 370,
+          "blockNumber": 373
+        },
+        {
+          "action": "processMonth",
+          "transactionHash": "0xe5ceacff72581908ac00ad5b76e00b685f4fac8f4e8e5d13eb017c1094004837",
+          "nonce": 371,
+          "blockNumber": 374
+        }
+      ],
+      "scheduler": {
+        "status": "waiting",
+        "results": {
+          "SHORT": {
+            "status": "waiting",
+            "reason": "executionBudget",
+            "budget": {
+              "reason": "transactionLimit"
+            }
+          },
+          "MONTHLY": {
+            "status": "waiting",
+            "reason": "executionBudget",
+            "budget": {
+              "reason": "transactionLimit"
+            }
+          }
+        }
+      }
+    },
+    "rss": 276312064,
+    "childWallMs": 40560.544399999984,
+    "restartSequenceMs": 100058.7327,
+    "stage": "fresh-process",
+    "progress": {
+      "SHORT": "17",
+      "MONTHLY": "16"
+    }
+  },
+  "transactions": 327,
+  "passes": 42,
+  "executionMs": 521806.80639999977,
+  "before": {
+    "balance": "2100",
+    "parts": [
+      "0",
+      "0",
+      "100",
+      "2000",
+      "0",
+      "0"
+    ]
+  },
+  "after": {
+    "balance": "101",
+    "parts": [
+      "1",
+      "100",
+      "0",
+      "0",
+      "0",
+      "0"
+    ]
+  },
+  "payouts": [
+    {
+      "wallet": "0xc5360b37bce03e43962a3c7be6d1166732e90c1f",
+      "amount": "74",
+      "balance": "74"
+    },
+    {
+      "wallet": "0x233f603af2627530faa4a93eed807df7bea47f56",
+      "amount": "37",
+      "balance": "37"
+    },
+    {
+      "wallet": "0x65f63a5609680308cd788dc735830fc2cfe5a344",
+      "amount": "185",
+      "balance": "185"
+    },
+    {
+      "wallet": "0x36a25eac057babd61ec6d5a01e821d2db371160c",
+      "amount": "111",
+      "balance": "111"
+    },
+    {
+      "wallet": "0x2f7b6f077e168f1212c86ae9b8ff327868dff1c0",
+      "amount": "74",
+      "balance": "74"
+    },
+    {
+      "wallet": "0x9498ebccc1fe17a3734de03e5c2b52cf888804db",
+      "amount": "148",
+      "balance": "148"
+    },
+    {
+      "wallet": "0x8731b91a1d539ec57a0f1bc9519dd5dd14fdc16e",
+      "amount": "37",
+      "balance": "37"
+    },
+    {
+      "wallet": "0x1dee57ff4ff9fdc361a80f7ed35738113dce6184",
+      "amount": "259",
+      "balance": "259"
+    },
+    {
+      "wallet": "0x4c3af0c8e69472dc82587010b731f91557b28a96",
+      "amount": "37",
+      "balance": "37"
+    },
+    {
+      "wallet": "0xb7bccf678da98e88742bc62a313a0000bc4e647b",
+      "amount": "37",
+      "balance": "37"
+    },
+    {
+      "wallet": "0xe5aa617405fa930a9296939ee668a0ff036a6c6c",
+      "amount": "1000",
+      "balance": "1000"
+    }
+  ],
+  "results": {
+    "short": "0x1e728c42766042367147aefb7e723ff3ca3772a763ca647ccfe3a96a587c2ecf",
+    "monthly": "0x761c74257b4ffca6f307cc159dbc9cbc178cb058f95cd1ce44fb00f6fec0f356"
+  },
+  "idle": {
+    "ms": 1010.7796000000089,
+    "counts": {
+      "call": 47,
+      "getTransaction": 0,
+      "getLogs": 0,
+      "getCode": 3,
+      "getBlock": 5
+    },
+    "writes": {},
+    "result": {
+      "status": "waiting",
+      "steps": [],
+      "scheduler": {
+        "status": "waiting",
+        "results": {
+          "SHORT": {
+            "status": "waiting",
+            "reason": "obligationsOnly"
+          },
+          "MONTHLY": {
+            "status": "waiting",
+            "reason": "obligationsOnly"
+          }
+        }
+      }
+    },
+    "rss": 2804080640
+  },
+  "restore": [
+    {
+      "ms": 29243.17749999999,
+      "counts": {
+        "call": 469,
+        "getTransaction": 314,
+        "getLogs": 2,
+        "getCode": 16,
+        "getBlock": 9
+      },
+      "writes": {
+        "automation.json.scheduler": 2
+      },
+      "result": {
+        "status": "waiting",
+        "steps": [],
+        "scheduler": {
+          "status": "waiting",
+          "results": {
+            "SHORT": {
+              "status": "terminal",
+              "drawId": "0x4b0e8663ef33353769c621169da239e6bb468161410e41f16390dab3826a890d",
+              "resultHash": "0x1e728c42766042367147aefb7e723ff3ca3772a763ca647ccfe3a96a587c2ecf"
+            },
+            "MONTHLY": {
+              "status": "terminal",
+              "drawId": "0xb9c81ec6106f16bd0b494973564eb99f1f1b56177dbeb44f73029dbc77a8b4df",
+              "winner": "0xe5aa617405fa930a9296939ee668a0ff036a6c6c",
+              "resultHash": "0x761c74257b4ffca6f307cc159dbc9cbc178cb058f95cd1ce44fb00f6fec0f356",
+              "admittedCount": "10000",
+              "totalWeight": "2952739208503599807563275599105598018269000"
+            }
+          }
+        }
+      },
+      "rss": 2936774656
+    },
+    {
+      "ms": 1073.04720000003,
+      "counts": {
+        "call": 47,
+        "getTransaction": 0,
+        "getLogs": 0,
+        "getCode": 3,
+        "getBlock": 5
+      },
+      "writes": {},
+      "result": {
+        "status": "waiting",
+        "steps": [],
+        "scheduler": {
+          "status": "waiting",
+          "results": {
+            "SHORT": {
+              "status": "waiting",
+              "reason": "obligationsOnly"
+            },
+            "MONTHLY": {
+              "status": "waiting",
+              "reason": "obligationsOnly"
+            }
+          }
+        }
+      },
+      "rss": 2998030336
+    }
+  ],
+  "startedAt": "2026-10-03T11:14:54.384Z",
+  "finishedAt": "2026-10-03T11:26:10.972Z"
+}

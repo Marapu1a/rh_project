@@ -55,17 +55,44 @@ async function measured(options){
  return {ms:performance.now()-start,counts,writes,result,rss:process.memoryUsage().rss};
 }
 async function child(file){
- const {config,statePath}=JSON.parse(fs.readFileSync(file)),provider=new ethers.JsonRpcProvider(config.rpcUrl,undefined,{cacheTimeout:-1});
+ const {config,statePath,historyFault}=JSON.parse(fs.readFileSync(file)),provider=new ethers.JsonRpcProvider(config.rpcUrl,undefined,{cacheTimeout:-1});
  try{
   const c=require('./compile.cjs').compile(),contract=(name,a)=>new ethers.Contract(a,c[name].abi,provider),l=config.scheduler.lifecycle;
   const contracts={short:contract('LocalShortController',l.source),monthly:contract('LocalMonthlyController',l.monthlySource),vault:contract('DualControllerPromoVault',l.vault)};
-  console.log(json(await measured({provider,signer:new ethers.JsonRpcSigner(provider,config.sender),contracts,config,statePath})));
+  const options={provider,signer:new ethers.JsonRpcSigner(provider,config.sender),contracts,config,statePath};
+  if(historyFault){
+   let transactionReads=0;const hits=[],sends=[],originalTx=provider.getTransaction.bind(provider),originalLogs=provider.getLogs.bind(provider),originalSend=provider.send.bind(provider);
+   const hashes=new Set(historyFault.hashes.map(h=>h.toLowerCase())),addresses=new Set([l.source,l.monthlySource].map(a=>a.toLowerCase()));
+   provider.send=async(method,params)=>{if(['eth_sendTransaction','eth_sendRawTransaction'].includes(method))sends.push(method);return originalSend(method,params);};
+   provider.getTransaction=async h=>{
+    transactionReads++;
+    if(historyFault.mode!=='logs-empty'&&hashes.has(h.toLowerCase())){
+     hits.push({method:'getTransaction',hash:h});
+     if(historyFault.mode==='tx-null')return null;
+     if(historyFault.mode==='tx-error')throw Object.assign(Error('Injected historical transaction unavailable'),{code:'SERVER_ERROR'});
+     if(historyFault.mode==='tx-corrupt'){const tx=await originalTx(h);return {...tx,data:'0xdeadbeef'};}
+     throw Error('Unknown history fault');
+    }
+    return originalTx(h);
+   };
+   provider.getLogs=async filter=>{
+    if(historyFault.mode==='logs-empty'&&addresses.has(String(filter.address).toLowerCase())){hits.push({method:'getLogs'});return [];}
+    return originalLogs(filter);
+   };
+   const start=performance.now();let error;
+   try{await measured(options);}catch(e){error=e.message;}
+   assert(error,'Unavailable history must prevent successful pass');assert(hits.length,'Fault was not exercised');assert.equal(sends.length,0,'No broadcast during history outage');
+   const expectedErrors={'tx-error':/Injected historical transaction unavailable/,'tx-null':/Publication transaction unavailable/,'logs-empty':/Published participants differ from replay/,'tx-corrupt':/Unsupported publication transport/};
+   assert.match(error,expectedErrors[historyFault.mode]);
+   console.log(json({mode:historyFault.mode,transactionReads,ms:performance.now()-start,hits,sends,error:error.slice(0,2000)}));
+  }else console.log(json(await measured(options)));
  }finally{provider.destroy();}
 }
 async function main(){
+ const historyOutage=process.argv.includes('--history-outage');
  const n=Number(process.argv[2]||10000);assert([100,10000].includes(n));
  const root=path.resolve('.local/logs');fs.mkdirSync(root,{recursive:true});const out=fs.mkdtempSync(path.join(root,'scheduler-load-'+n+'-'));
- const report={schema:'joint-scheduler-load-v1',n,status:'RUNNING',startedAt:new Date().toISOString(),scope:'Synthetic local chain31337, common scheduler and Pons journal/gas modules; mock RNG/USDG; not the outer Pons coordinator or BUY pipeline.',profiles:[],passes:[]};
+ const report={schema:'joint-scheduler-load-v1',n,status:'RUNNING',startedAt:new Date().toISOString(),scope:'Synthetic local chain31337, common scheduler and Pons journal/gas modules; mock RNG/USDG; not the outer Pons coordinator or BUY pipeline.',profiles:[],passes:[],historyOutage:historyOutage?[]:undefined};
  const save=()=>fs.writeFileSync(path.join(out,'report.json'),json(report));save();console.log('REPORT '+out);
  const cleanups=[];let f;
  try{
@@ -75,7 +102,7 @@ async function main(){
   const {provider,admin:signer,short,monthly,vault,quote}=f,contracts={short,monthly,vault};
   const scheduler={...f.config,chunkSize:64,shortBudget:'1000'},domain=require('./attempt-lifecycle.cjs').domainFor(scheduler.manifest,scheduler.lifecycle);
   const ps=Array.from({length:n},(_,i)=>({wallet:ethers.id('scheduler load participant '+i).slice(0,42),firstAttempt:'1',lastAttempt:String(i%20+1),count:String(i%20+1)})).sort((a,b)=>a.wallet.localeCompare(b.wallet));
-  const attempts=ps.reduce((a,p)=>a+BigInt(p.count),0n),jobs={},draws={};report.attempts=attempts;report.chunks=Math.ceil(n/64);
+  const attempts=ps.reduce((a,p)=>a+BigInt(p.count),0n),jobs={},draws={},publications={SHORT:[],MONTHLY:[]};report.attempts=attempts;report.chunks=Math.ceil(n/64);
   await advance(30*86400+1);const setupStart=performance.now();
   for(const kind of ['SHORT','MONTHLY']){
    const s=kind==='SHORT',c=s?short:monthly,b=await provider.getBlock('latest'),id=require('./draw-id.cjs').drawIdFor(kind,ethers.id('scheduler load '+n+kind)),pid=ethers.id('load proposal '+kind);
@@ -86,7 +113,7 @@ async function main(){
    const artifact={schema:s?'short-dataset-artifact-v1':'monthly-dataset-artifact-v1',snapshot,request,rules:s?normalRules:mo.RULES,...(s?{weights:[7,5,4,3,2,2,1,1,1,1],minimumUnit:1}:{})};
    const job=s?sw.makeJob(artifact,pid):mw.makeMonthlyJob(artifact);jobs[kind]=[{started:true,job}];draws[kind]=id;
    await sent(s?c.begin(pid,request):c.beginMonth(request));
-   for(let i=0;i<n;i+=64)await sent(s?c.publish(pid,ps.slice(i,i+64)):c.publishMonth(id,ps.slice(i,i+64)));
+   for(let i=0;i<n;i+=64){const receipt=await sent(s?c.publish(pid,ps.slice(i,i+64)):c.publishMonth(id,ps.slice(i,i+64)));publications[kind].push(receipt.hash);}
    await sent(s?c.seal(pid):c.sealMonth(id));
    await sent(f.random.deliver(await c.drawRequest(id),ethers.id('fixed scheduler load seed')));console.log('PREPARED '+kind);
   }
@@ -97,7 +124,7 @@ async function main(){
   const init=async(prefix)=>withState(prefix+'.scheduler',scheduler,async(state,write)=>{state.jobs=structuredClone(jobs);write(state);});
   report.before=await accounting();
   // Cold, one-pass limit probes on identical chain state; no conclusion about steady-state speed.
-  for(const limit of [2,8,32]){
+  for(const limit of (historyOutage?[]:[2,8,32])){
    const snapshot=await rpc('evm_snapshot'),statePath=path.join(out,'probe-'+limit+'.json');await init(statePath);clear(provider);
    try{const row=await measured({provider,signer,contracts,config:{...base,limit},statePath});report.profiles.push({limit,...row,progress:await progress()});assert(row.result.steps.length>0&&row.result.steps.length<=limit);if(n===10000)assert.equal(row.result.steps.length,limit);save();}
    finally{assert(await rpc('evm_revert',[snapshot]));clear(provider);}
@@ -108,7 +135,7 @@ async function main(){
   let stopped=false;const backup={main:null,scheduler:null};
   for(let i=0;i<Math.ceil(n/64)*2+20;i++){
    let row;
-   if(!stopped&&i===(n===100?1:3)){
+   if(!stopped&&i===(n===100?(historyOutage?0:1):3)){
     const stop=new AbortController();row=await measured({...options,signal:stop.signal,onStep:()=>stop.abort()});
     assert.equal(row.result.status,'stopped');assert.equal(row.result.steps.length,1);report.passes.push({...row,progress:await progress(),stage:'stop'});
     const nonce=await provider.getTransactionCount(config.sender),at=await progress(),funds=await accounting();
@@ -118,8 +145,23 @@ async function main(){
     backup.main=fs.readFileSync(statePath);backup.scheduler=fs.readFileSync(statePath+'.scheduler');
     fs.writeFileSync(path.join(out,'early-main.json'),backup.main);fs.writeFileSync(path.join(out,'early-scheduler.json'),backup.scheduler);
     const exec=require('node:util').promisify(require('node:child_process').execFile),start=performance.now();
+    if(historyOutage){
+     assert.notEqual((await short.settlements(draws.SHORT)).phase,3n);assert.notEqual((await monthly.month(draws.MONTHLY)).phase,5n);
+     for(const mode of ['tx-error','tx-null','logs-empty','tx-corrupt']){
+      const faultFile=path.join(out,'fault-'+mode+'.json');
+      // Missing last calldata exercises a partially read prefix; other faults fail early.
+      const hashes=Object.values(publications).map(xs=>mode==='tx-null'?xs.at(-1):xs[0]);
+      fs.writeFileSync(faultFile,json({config,statePath,historyFault:{mode,hashes}}));
+      const failure=await exec(process.execPath,[__filename,'--pass',faultFile],{timeout:180000,maxBuffer:4*1024*1024});
+      const evidence=JSON.parse(failure.stdout);assert.equal(evidence.sends.length,0);
+      assert.equal(await provider.getTransactionCount(config.sender),nonce);assert.deepEqual(await progress(),at);assert.deepEqual(await accounting(),funds);
+      assert.deepEqual(fs.readFileSync(statePath),backup.main);assert.deepEqual(fs.readFileSync(statePath+'.scheduler'),backup.scheduler);
+      report.historyOutage.push({...evidence,nonce,progress:at,accounting:funds,journalsUnchanged:true});save();console.log('HISTORY BLOCKED '+mode);
+     }
+    }
+    const healthyStart=performance.now();
     const childResult=await exec(process.execPath,[__filename,'--pass',configFile],{timeout:180000,maxBuffer:4*1024*1024});
-    row=JSON.parse(childResult.stdout);row.childWallMs=performance.now()-start;row.stage='fresh-process';stopped=true;
+    row=JSON.parse(childResult.stdout);row.childWallMs=performance.now()-healthyStart;row.restartSequenceMs=performance.now()-start;row.stage='fresh-process';stopped=true;
    }else row=await measured(options);
    assert(row.result.steps.length>0,'No progress before completion');report.passes.push({...row,progress:await progress()});save();
    console.log('PASS '+report.passes.length+' '+JSON.stringify(report.passes.at(-1).progress)+' '+Math.round(row.ms)+'ms');
