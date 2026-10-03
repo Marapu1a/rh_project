@@ -79,11 +79,16 @@ Monitor timer enabled; его service ждёт activation marker. Financial unit
 receipts/runtime и репетиция четырёх оставшихся вызовов **PASS**: ранний BUY101USDG
 → Short1/Monthly1, funding90/5/5;11 адресных tests. Anchor политики формируется
 после launch из его фактического предыдущего блока. Сохраняем исходный salt
-и predicted TOKEN, уже записанный в collector/vault. Токен ещё не запущен.
+и predicted TOKEN, уже записанный в collector/vault.
 [Ручная очередь launch/policy/binds](PONS_CONTINUATION_QUEUE_2026-10-03.md) подготовлена:
 4tx/8restart на fork PASS,14 адресных tests, live preflight/prepare и PNG hashes PASS.
-Консоль4176 переключена на новую очередь с подписями владельца; completed0/pending=null
-при проверке, публичных отправок в этом пакете0. Далее — четыре подписи и реальные receipts.
+Владелец завершил все4 подписи: completed4/pending=null, повторный /refresh200.
+[Публичный запуск](PONS_PUBLIC_LAUNCH_2026-10-03.md) подтверждён: launch block79377860,
+TOKEN0x6EA39A23AA46E51CA6CD2d1cbc0B5bfb29ECB216, policy/90-5-5/venue сверены.
+Governor nonce24. Receipts пока выше finalized на момент проверки; executor ETH0.
+Далее: публичная source verification (GoPlus пока open_source0), production config/
+profile из фактических receipts, пополнение executor и проверка допуска до включения.
+Контрольный BUY101USDG и финансовая автоматика пока не выполнены.
 [Проверка признаков риска токена](PONS_TOKEN_SECURITY_2026-10-03.md) выполнена:
 исполняемый runtime воспроизведён из Pons/Sourcify source, без owner/mint/blacklist/pause;
 BUY→transfer→полный SELL двух обычных адресов на fork PASS. CBOR metadata отличается,

@@ -1,0 +1,122 @@
+{
+  "schema": "qianqi-public-launch-evidence-v1",
+  "observedAt": "2026-10-03T20:50:45.981Z",
+  "chainId": 4663,
+  "planHash": "0xd5aeb3314b36975627d66cf95816c5d4718ae38f7cb072f294083b4d25ae08df",
+  "token": "0x6EA39A23AA46E51CA6CD2d1cbc0B5bfb29ECB216",
+  "curve": "0x12ba58B5455fDBc15165e0E8B2096498D2c684f1",
+  "collector": "0x9FbAAb62DB88123fdB61217D244003a201A0CD9b",
+  "vault": "0x2E9e7412e19497b60f25D05b68717067A6B743D4",
+  "policy": "0x4C6fCD1645f15E6eCFc02E74A68ac81e3eD02738",
+  "launchBlock": 79377860,
+  "manifest": {
+    "schema": "direct-buy-pons-launch-v4",
+    "routeVersion": "rh-pons-curve-pool-batch-zeroex-entrypoint-v1",
+    "eligibility": "automatic-buy-v1",
+    "quoteBasis": "wallet-net-debit-v1",
+    "chainId": 4663,
+    "quoteDecimals": 6,
+    "entryThresholdRaw": "100000000",
+    "anchor": {
+      "number": 79377859,
+      "hash": "0xfa6872fc31c8a7cb329ca96586107cc7a9659ced22f21eb903ab47ec8a11af49"
+    },
+    "factory": "0x7eD598BcEf8bd9Edd8C97A195C6d13f40801EC7e",
+    "hook": "0xE5e702641Ea86F4ae6cC3cDaeD2B886f976Be044",
+    "curve": "0x12ba58B5455fDBc15165e0E8B2096498D2c684f1",
+    "token": "0x6EA39A23AA46E51CA6CD2d1cbc0B5bfb29ECB216",
+    "quote": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+    "registry": "0xF55755a2433cFdDdcc3949824Fae6C951B138f20",
+    "codeHashes": {
+      "batchExecutor": "0xa06befcb6f1d7b6c566a607d9d5d932f9b267f3470e55940225c6ee9c4c5e6b0",
+      "router": "0x2ce6aaaf9f4151f5e1cbf774668772f17f532ae11b15e9284fd0a072a8b0fbde",
+      "manager": "0xbd3881180b547f5fe817545743cfb4343e96b1bc6640dcd70c106b0066e95626",
+      "permit2": "0x5208783f52488f7d3493e5e38311ab707c1d75457fe472a19b0b4d57d66a7fca",
+      "weth": "0x5706be52f64875fee65a2cec0d80e47a23d8793cbe85d214b48445e2d05f5353",
+      "fundingRouter": "0x6f36c378e272c6324c48f045182bcb54bd8ad654cf9ebd42e8893d52c4cb25dc",
+      "fundingPool": "0x3298b5dd4e6f115074c526a55ad05a36fd73a0034ac22ec6cbaab32cc9c1e8d2",
+      "allowanceHolder": "0x99f5e8edaceacfdd183eb5f1da8a7757b322495b80cf7928db289a1b1a09f799",
+      "zeroexSettler": "0xa1a2a85048dd0f8cccc5f2012ff175b88d928c87c84e66691357842ec34e572f",
+      "entryPoint": "0x8db5ff695839d655407cc8490bb7a5d82337a86a6b39c3f0258aa6c3b582fc58",
+      "entryPointAccount": "0xecfc0328ce4d953a4d452e11f54b578fa2d7f2f8126246d1120ca24d11845081",
+      "factory": "0x89a27da6f703e0a7cdd4f233e7cb57604ff75b164530962d3ff7cf8483a67d84",
+      "hook": "0xc21b1e6c1b45403e81a581f22ed6d9c747997af1cfdac1b1dc9f4b1d346a10db",
+      "curve": "0xec57ee6aa542f9bb900ef09706c94098dd1b29c893ab121f20a48c3f6d3fc437",
+      "token": "0x68375920a0acc51f0038b37aeaf86dbb35b44cefd95d1b62ea770baa6b41d8be",
+      "quote": "0x864cc9ad53b338b82da1f7cab85ab0b3d5c8861acb422b6fec63cf36234f36a6",
+      "registry": "0xf9416c95d49ff972b9b3ddc93d74a7cc96890efbd413960689c9470866300bc6"
+    },
+    "creatorTaxBps": 300,
+    "hookFeeBps": 100,
+    "batchExecutor": "0x63c0c19a282a1b52b07dd5a65b58948a07dae32b",
+    "router": "0x8876789976decbfcbbbe364623c63652db8c0904",
+    "manager": "0x8366a39cc670b4001a1121b8f6a443a643e40951",
+    "permit2": "0x000000000022d473030f116ddee9f6b43ac78ba3",
+    "weth": "0x0bd7d308f8e1639fab988df18a8011f41eacad73",
+    "fundingRouter": "0xcaf681a66d020601342297493863e78c959e5cb2",
+    "fundingPool": "0x52e65b17fb6e5ba00ed806f37afcd2daa50271ca",
+    "allowanceHolder": "0x0000000000001ff3684f28c67538d4d072c22734",
+    "zeroexSettler": "0x6aa80dbbed9ae5ab45fbf61f9644fada3b29326e",
+    "entryPoint": "0x0000000071727de22e5e9d8baf0edac6f37da032",
+    "entryPointAccount": "0x69007702764179f14f51cdce752f4f775d74e139",
+    "poolKey": [
+      "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+      "0x6EA39A23AA46E51CA6CD2d1cbc0B5bfb29ECB216",
+      "0",
+      "200",
+      "0xE5e702641Ea86F4ae6cC3cDaeD2B886f976Be044"
+    ],
+    "poolId": "0xc15325795b03b8de253913f9c643acf374e8c2f12c6ee0b7cfd26c9ea83ee271"
+  },
+  "transactions": [
+    {
+      "index": 0,
+      "label": "Pons: запуск QIANQI / USDG, creator fees 3%",
+      "hash": "0x907be9938fd330402fcadad21bde8061476579210d7854716461573c81345ca8",
+      "blockNumber": 79377860,
+      "blockHash": "0x000fc74b62d1e6f26533117cbb84085fc799c0855d694e6f8c59ed2588725bc1",
+      "status": 1,
+      "contractAddress": null,
+      "gasUsed": "3794687"
+    },
+    {
+      "index": 1,
+      "label": "Правила начисления билетов",
+      "hash": "0xf0b00cadc4022fe8ef25f51f868bd146fc48e433237f1f5ed577858b9444237b",
+      "blockNumber": 79379503,
+      "blockHash": "0xa15267572a2461e360c5967f97cc3965ce0d2b454feea5ce26020922a4c43c50",
+      "status": 1,
+      "contractAddress": "0x4C6fCD1645f15E6eCFc02E74A68ac81e3eD02738",
+      "gasUsed": "395811"
+    },
+    {
+      "index": 2,
+      "label": "Распределение комиссий 90 / 5 / 5",
+      "hash": "0x75a6b35989a05face378d3bf0715e91aeea293e162dc26fec61661a678ed3580",
+      "blockNumber": 79379973,
+      "blockHash": "0x5c8a0adc6406465bcb711d0e120f81badd5157db5998314d6fa0eda7242396d0",
+      "status": 1,
+      "contractAddress": null,
+      "gasUsed": "199155"
+    },
+    {
+      "index": 3,
+      "label": "Привязка collector к Pons",
+      "hash": "0x520fc0cbc82a6d6bf6fad527bc3533cf07abe5ce4415861e33c4d2554b5e48d0",
+      "blockNumber": 79380771,
+      "blockHash": "0x290b52e74042759973ed0392575038bfe2ec3897728e4b6d25b5cd3b02e95833",
+      "status": 1,
+      "contractAddress": null,
+      "gasUsed": "212216"
+    }
+  ],
+  "finalizedAtObservation": {
+    "number": 79370453,
+    "hash": "0x51bb037aa8f0bab59317eacaf1e6b1676b2ecf72c30d85b636830d5721577604",
+    "allReceiptsAtOrBelow": false
+  },
+  "governorNonce": 24,
+  "executorNativeWei": "0",
+  "financialServicesActivated": false,
+  "controlledBuyPerformed": false
+}
