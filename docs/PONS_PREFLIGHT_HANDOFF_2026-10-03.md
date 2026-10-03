@@ -157,3 +157,18 @@ fee/estimate drift и отказ до записи intent при выходе з
 подсказка указывает следующий клик.2 VM UI scenarios и catalog1 PASS; eth_sendTransaction
 и /intent в проверках не вызывались. На момент диагностики public journal отсутствовал.
 Статические файлы обновлены без перезапуска сервера, ссылка сессии сохранена.
+
+## Первая публичная транзакция
+
+Владелец подписал ParticipantRegistry, hash
+`0x8aafedd557d68ff0b820df5ac0bfda6db37bbf27d6f88be943b132d03d573fc7`,
+nonce14, block79339893, status1, адрес0xF55755a2433cFdDdcc3949824Fae6C951B138f20.
+[Полная краткая квитанция](evidence/PONS_FIRST_CREATE_2026-10-03.json).
+Первая browser /submitted вернула verificationFailed и hash не записался; причина
+того первого RPC-ответа точно не установлена (raw ошибка не сохранялась).
+Предоставленный владельцем hash повторно проверен через тот же /submitted: receipt,
+canonical block, sender/nonce/calldata/value и runtime совпали; completed1/pending=null.
+Это сверка уже отправленной транзакции, не повторная отправка. Газ125107,
+receipt fee0.00000288371635ETH, value0; финализированность этим отчётом не заявляется.
+Live prepare следующего LocalPonsCollector (nonce15) PASS. Остальные5 CREATE ещё
+не подписаны на момент записи; launch и financial activation не выполнены.

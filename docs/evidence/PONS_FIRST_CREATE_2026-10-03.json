@@ -1,0 +1,20 @@
+{
+  "schema": "qianqi-public-construction-receipt-v1",
+  "observedAt": "2026-10-03T19:42:44.606Z",
+  "index": 0,
+  "label": "ParticipantRegistry",
+  "hash": "0x8aafedd557d68ff0b820df5ac0bfda6db37bbf27d6f88be943b132d03d573fc7",
+  "blockNumber": 79339893,
+  "blockHash": "0xdcef15cb270919ed3a6238bc712ed5de49e1792813fa2a08c9468dee8adfd3a6",
+  "canonical": true,
+  "status": 1,
+  "contractAddress": "0xF55755a2433cFdDdcc3949824Fae6C951B138f20",
+  "from": "0x098afA6731239a00CE0aff669aaefD16b7C72114",
+  "nonce": 14,
+  "gasUsed": "125107",
+  "gasPrice": "23050000",
+  "feeWei": "2883716350000",
+  "valueWei": "0",
+  "runtimeHash": "0xf9416c95d49ff972b9b3ddc93d74a7cc96890efbd413960689c9470866300bc6",
+  "queueCompleted": 1
+}

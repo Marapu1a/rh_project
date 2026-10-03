@@ -113,6 +113,8 @@ hourly off-server pull на Windows, свежий preflight/deployment fork и s
 первых6 CREATE проверены. MetaMask review подтверждён владельцем, signing включён
 для этой очереди (при включении completed0/pending=null). Далее подписи, launch/policy/binds
 по реальным receipts; financial services включаются только после проверки manifest.
+Первый public CREATE ParticipantRegistry подтверждён (block79339893), очередь1/6,
+pending=null; следующий collector готов к ручной подписи.
 При первом клике найден чрезмерно строгий gas/request equality: до intent/подписи
 отказывал при изменении fee. Исправлено сохранением просмотренных лимитов (20% fee headroom
 в пределах cap) и повторной проверкой достаточности;7 адресных tests PASS.

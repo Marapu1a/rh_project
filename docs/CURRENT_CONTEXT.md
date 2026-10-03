@@ -77,7 +77,10 @@ Monitor timer enabled; его service ждёт activation marker. Financial unit
 Владелец проверил первый шаг через MetaMask; после повторного live preflight консоль4176
 перезапущена с --enable-signing для проверенных6 CREATE. На момент включения
 completed0/pending=null, публичных отправок0; далее подписи владельца и сверка receipts.
-Launch/policy готовятся отдельно из реальных receipts.
+Первый public CREATE подтверждён: ParticipantRegistry, nonce14, block79339893,
+[receipt/evidence](evidence/PONS_FIRST_CREATE_2026-10-03.json). Хеш вручную предоставлен
+владельцем и сверён через /submitted: completed1/pending=null. Следующий collector
+(nonce15) прошёл live prepare. Launch/policy готовятся отдельно из реальных receipts.
 При первом клике найден чрезмерно строгий gas/request equality: до intent/подписи
 отказывал при изменении fee. Исправлено сохранением просмотренных лимитов (20% fee headroom
 в пределах cap) и повторной проверкой достаточности;7 адресных tests PASS.
