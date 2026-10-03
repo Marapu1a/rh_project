@@ -63,7 +63,9 @@ cold restart без повторных отправок;25 уникальных 
 собраны; [executor создан, off-server recovery проверен](PONS_EXECUTOR_CUSTODY.md).
 [Collector/deployment review](PONS_COLLECTOR_DEPLOYMENT_REVIEW.md):10/10 tests,
 разделены policy/dataset publisher, порядок зависимостей и свежий RPC snapshot.
-Далее source/proxy qualification и точные initcode/params с симуляцией;
+[Внешние зависимости проверены](PONS_EXTERNAL_DEPENDENCIES.md): runtime Pons прежний,
+source gaps остаются; найден незакреплённый USDG implementation. Следующий patch —
+implementation pin в public admission, затем точные initcode/params с симуляцией;
 подписываемый план пока не готов. Public deployment не выполнен.
 публичный сервис ещё не включён,
 внешние уведомления не подключены, финансовый запуск не выполнен.

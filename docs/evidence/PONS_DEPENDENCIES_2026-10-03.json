@@ -1,0 +1,128 @@
+{
+  "schema": "pons-dependency-inventory-v1",
+  "observedAt": "2026-10-03T17:53:25.947Z",
+  "chainId": 4663,
+  "block": {
+    "number": 79276225,
+    "hash": "0x315c41a0a7d2bcc0b29be48b35cfbb976c1804bce9006614185a0db18bdf90c5"
+  },
+  "publicSends": false,
+  "sourceVerification": false,
+  "contracts": {
+    "factory": {
+      "address": "0x7eD598BcEf8bd9Edd8C97A195C6d13f40801EC7e",
+      "runtimeHash": "0x89a27da6f703e0a7cdd4f233e7cb57604ff75b164530962d3ff7cf8483a67d84",
+      "bytes": 24177,
+      "previousHashMatches": true,
+      "slots": {
+        "implementation": "0x0000000000000000000000000000000000000000000000000000000000000000",
+        "admin": "0x0000000000000000000000000000000000000000000000000000000000000000",
+        "beacon": "0x0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "getters": {
+        "owner": "0x263ed295dAFaE1d9AAdD6E56c4B6F9f38eE019Dd",
+        "pendingOwner": "0x0000000000000000000000000000000000000000",
+        "admin": null,
+        "implementation": null,
+        "factory": null,
+        "feeEscrow": "0xd3AFEB2a57f70eF218Aa82451c51B2fb0416Ac9e",
+        "feeSweepOperator": null,
+        "poolManager": "0x8366a39CC670B4001A1121B8F6A443A643e40951"
+      }
+    },
+    "escrow": {
+      "address": "0xd3AFEB2a57f70eF218Aa82451c51B2fb0416Ac9e",
+      "runtimeHash": "0xf25f75cfbc1637ba068dc34f69098fa4e8a80f8ee8fe7bf7820594e0b3fed2f1",
+      "bytes": 1932,
+      "previousHashMatches": true,
+      "slots": {
+        "implementation": "0x0000000000000000000000000000000000000000000000000000000000000000",
+        "admin": "0x0000000000000000000000000000000000000000000000000000000000000000",
+        "beacon": "0x0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "getters": {
+        "owner": null,
+        "pendingOwner": null,
+        "admin": null,
+        "implementation": null,
+        "factory": null,
+        "feeEscrow": null,
+        "feeSweepOperator": null,
+        "poolManager": null
+      }
+    },
+    "hook": {
+      "address": "0xE5e702641Ea86F4ae6cC3cDaeD2B886f976Be044",
+      "runtimeHash": "0xc21b1e6c1b45403e81a581f22ed6d9c747997af1cfdac1b1dc9f4b1d346a10db",
+      "bytes": 15167,
+      "previousHashMatches": true,
+      "slots": {
+        "implementation": "0x0000000000000000000000000000000000000000000000000000000000000000",
+        "admin": "0x0000000000000000000000000000000000000000000000000000000000000000",
+        "beacon": "0x0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "getters": {
+        "owner": "0x263ed295dAFaE1d9AAdD6E56c4B6F9f38eE019Dd",
+        "pendingOwner": "0x0000000000000000000000000000000000000000",
+        "admin": null,
+        "implementation": null,
+        "factory": "0x7eD598BcEf8bd9Edd8C97A195C6d13f40801EC7e",
+        "feeEscrow": "0xd3AFEB2a57f70eF218Aa82451c51B2fb0416Ac9e",
+        "feeSweepOperator": "0xa1018c1D9655292A2dE0F7dEa9a0F848EaA8cA83",
+        "poolManager": "0x8366a39CC670B4001A1121B8F6A443A643e40951"
+      }
+    },
+    "quote": {
+      "address": "0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168",
+      "runtimeHash": "0x864cc9ad53b338b82da1f7cab85ab0b3d5c8861acb422b6fec63cf36234f36a6",
+      "bytes": 170,
+      "previousHashMatches": true,
+      "slots": {
+        "implementation": "0x00000000000000000000000068184c449e1a8f34fa18d289737129fd27b66f8f",
+        "admin": "0x0000000000000000000000000000000000000000000000000000000000000000",
+        "beacon": "0x0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "getters": {
+        "owner": "0xcFA0388f5ddf905FdC08c45c716C15Dc10A14C6F",
+        "pendingOwner": null,
+        "admin": null,
+        "implementation": null,
+        "factory": null,
+        "feeEscrow": null,
+        "feeSweepOperator": null,
+        "poolManager": null
+      },
+      "implementation": {
+        "address": "0x68184C449E1a8f34fA18d289737129FD27B66f8F",
+        "runtimeHash": "0x3a551ac5c744af57e68a1d1431ac403c0f516ffd7d224a75746aee11fc4f3baf",
+        "bytes": 18644
+      }
+    },
+    "operator": {
+      "address": "0xa1018c1D9655292A2dE0F7dEa9a0F848EaA8cA83",
+      "runtimeHash": "0x9c86e11c753329f4ef90de81efc51906f11de45caf818be0fac37284d657017c",
+      "bytes": 17929,
+      "previousHashMatches": null,
+      "slots": {
+        "implementation": "0x0000000000000000000000000000000000000000000000000000000000000000",
+        "admin": "0x0000000000000000000000000000000000000000000000000000000000000000",
+        "beacon": "0x0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "getters": {
+        "owner": "0x370cB84FffF9B3E517ECAFE3E05689B7168e97ac",
+        "pendingOwner": "0x263ed295dAFaE1d9AAdD6E56c4B6F9f38eE019Dd",
+        "admin": null,
+        "implementation": null,
+        "factory": "0x7eD598BcEf8bd9Edd8C97A195C6d13f40801EC7e",
+        "feeEscrow": null,
+        "feeSweepOperator": null,
+        "poolManager": "0x8366a39CC670B4001A1121B8F6A443A643e40951"
+      }
+    }
+  },
+  "limitations": [
+    "Read failures of optional getters are null, not absence of authority",
+    "Standard EIP1967 slots only; custom proxies and mutable external dependencies require source review",
+    "Runtime equality is not source verification or authorization to deploy"
+  ]
+}

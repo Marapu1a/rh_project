@@ -30,3 +30,19 @@ test('CLI refuses missing input without exposing credentials or loading a signer
  const r=spawnSync(process.execPath,['scripts/inspect-pons-public.cjs'],{encoding:'utf8',env:{...process.env,RH_RPC_URL:'https://example.invalid/private-secret'}});
  assert.equal(r.status,1);assert(!r.stderr.includes('private-secret'));assert.match(r.stderr,/inspection refused/);
 });
+
+test('dependency inventory records USDG implementation separately from stable proxy runtime',async()=>{
+ const {inspect,slot}=require('../scripts/inspect-pons-dependencies.cjs');
+ const {ethers}=require('ethers');
+ const quote='0x0000000000000000000000000000000000000011',impl='0x0000000000000000000000000000000000000022';
+ const provider={getNetwork:async()=>({chainId:4663n}),getBlock:async()=>({number:1,hash:ethers.id('head')}),getCode:async a=>a.toLowerCase()===impl.toLowerCase()?'0x6002':'0x6001',getStorage:async(a,s)=>a===quote&&s===slot('implementation')?ethers.zeroPadValue(impl,32):ethers.ZeroHash,call:async()=>{throw Error('unavailable');}};
+ const r=await inspect(provider,{addresses:{hook:quote,quote},hashes:{quote:ethers.keccak256('0x6001')}});
+ assert.equal(r.contracts.quote.previousHashMatches,true);
+ assert.equal(r.contracts.quote.implementation.runtimeHash,ethers.keccak256('0x6002'));
+ assert.equal(r.contracts.quote.getters.owner,null);assert.equal(r.sourceVerification,false);
+});
+test('dependency inventory rejects wrong chain and changing snapshot',async()=>{
+ const {inspect}=require('../scripts/inspect-pons-dependencies.cjs');
+ await assert.rejects(inspect({getNetwork:async()=>({chainId:1n})},{addresses:{}}),/Wrong chain/);
+ let reads=0;await assert.rejects(inspect({getNetwork:async()=>({chainId:4663n}),getBlock:async()=>({number:1,hash:String(++reads)})},{addresses:{},hashes:{}}),/Snapshot reorg/);
+});
