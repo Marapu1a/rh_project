@@ -98,6 +98,7 @@
       "test/pons-automation.test.cjs",
       "test/fork-empty-storage.test.cjs",
       "test/pons-crash-recovery.test.cjs",
+      "test/rehearsal-backup.test.cjs",
       "test/pons-direct-purchase.test.cjs",
       "test/purchase-review.test.cjs",
       "test/pons-browser-bridge.test.cjs",
@@ -437,6 +438,7 @@
       "test/pons-collector.test.cjs",
       "test/pons-automation.test.cjs",
       "test/pons-crash-recovery.test.cjs",
+      "test/rehearsal-backup.test.cjs",
       "test/drand-delivery-worker.test.cjs"
     ]
   },
@@ -503,6 +505,7 @@
       "test/pons-policy-indexer.test.cjs",
       "test/public-rpc-qualification.test.cjs",
       "test/pons-crash-recovery.test.cjs",
+      "test/rehearsal-backup.test.cjs",
       "test/pons-wallet-verifier.test.cjs"
     ]
   },

@@ -21,6 +21,11 @@ async function finish({out,save,provider,user,quote,cycle,manifest,rpc,buy,direc
  async function clock(){await new Promise(r=>setTimeout(r,1100));}
  async function tick(extra={},hooks={}){await clock();if(indexed){finalized=await rpc('eth_blockNumber');liveFinality=liveFinality||await short.activeProposal()!==ethers.ZeroHash||await monthly.activeMonth()!==ethers.ZeroHash;if(!extra.skipIndex)await require('./persistent-buy-indexer.cjs').indexOnce({config:require('./shared-index-config.cjs').buildIndexConfigs(require('./pons-automation.cjs').schedulerConfigFor(config)).indexConfig,statePath:config.indexer.statePath,rpc:(m,p)=>provider.send(m,p)});}const r=await runPonsAutomation({...options,...extra},hooks);report.automation.runs.push(r);save();assert(!['error','blocked'].includes(r.status),JSON.stringify(r));return r;}
  try{
+  if(process.argv.includes('--restore-drill')){
+   const latest=await rpc('eth_getBlockByNumber',['latest',false]),now=Math.floor(Date.now()/1000);
+   await rpc('evm_setNextBlockTimestamp',[Math.max(now,Number(BigInt(latest.timestamp)))]);await rpc('evm_mine');
+   report.assumptions.push('Restore drill aligns local fork timestamp to wall time once before draws; no public clock/finality claim and no RNG guard changes');
+  }
   // A real chain keeps producing blocks while the coordinator performs reads.
   // Keep all drand freshness limits unchanged; advance only the local test chain.
   await rpc('evm_setIntervalMining',[1000]);
@@ -39,7 +44,14 @@ async function finish({out,save,provider,user,quote,cycle,manifest,rpc,buy,direc
   for(let n=0;n<16;n++){await tick();shortId=await short.pendingDatasetDraw();monthId=await monthly.pendingMonth();if(shortId!==ethers.ZeroHash&&monthId!==ethers.ZeroHash)break;}
   assert.notEqual(shortId,ethers.ZeroHash,'Short not frozen');assert.notEqual(monthId,ethers.ZeroHash,'Monthly not frozen');
   report.fundingAtFreeze=await invariant();assert(report.automation.runs.flatMap(r=>r.steps).some(s=>s.action==='pull'),'Coordinator did not collect fresh escrow');assert(report.automation.runs.flatMap(r=>r.steps).some(s=>s.action==='pay'),'Coordinator did not distribute credit');
-  await buy(100_000000n);
+  const restoreDrill=process.argv.includes('--restore-drill');let frozenBackup;
+  if(restoreDrill){
+   const b=require('./rehearsal-backup.cjs');frozenBackup=b.backup(directory);
+   report.restoreDrill={backup:frozenBackup,atFreeze:report.fundingAtFreeze};save();
+   await buy(60_000000n);await buy(40_000000n);
+   const transfer=await (await new ethers.Contract(out.token,['function transfer(address,uint256) returns(bool)'],user).transfer(owner,1)).wait();
+   report.restoreDrill.nonBuyTransfer=transfer.hash;
+  }else await buy(100_000000n);
   const ids=[await short.drawRequest(shortId),await monthly.drawRequest(monthId)],requests=await Promise.all(ids.map(id=>random.requests(id)));report.requests=requests.map((r,i)=>({id:ids[i],round:r.round,context:r.context,consumer:r.consumer}));save();
   const target=Math.max(...requests.map(r=>1727521075+(Number(r.round)-1)*3));assert(target-Date.now()/1000<90);
   while(Date.now()/1000<target+2){console.log('automation: waiting fixed drand rounds');await new Promise(r=>setTimeout(r,Math.min(10000,Math.max(1,(target+2)*1000-Date.now()))));}
@@ -49,7 +61,19 @@ async function finish({out,save,provider,user,quote,cycle,manifest,rpc,buy,direc
   report.after=await invariant();report.paid=report.fundingAtFreeze.balance-report.after.balance;assert(report.paid>=0n);
   report.finalReplay=await scanWithRpc(manifest,rpc,await rpc('eth_blockNumber'),lifecycle);report.finalReplay.lifecycle=lifecycle;report.finalLedger=replayAttempts(manifest,lifecycle,report.finalReplay.blocks);
   const final=report.finalLedger.wallets.find(w=>w.wallet===owner);for(const k of ['SHORT','MONTHLY']){assert.equal(final[k].consumedTotal,'86');assert.equal(final[k].open,'1');}
-  const nonce=await provider.getTransactionCount(owner),again=await tick();assert.equal(again.steps.length,0);assert.equal(await provider.getTransactionCount(owner),nonce);if(indexed){report.walletApi=await require('./verify-pons-wallet-api.cjs').verify({config:require('./shared-index-config.cjs').buildIndexConfigs(require('./pons-automation.cjs').schedulerConfigFor(config)).indexConfig,wallet:owner,expected:final});} if(indexed&&process.argv.includes('--wallet-browser')){report.walletBrowserAfter=await require('./verify-wallet-browser.cjs').verify({config:require('./shared-index-config.cjs').buildIndexConfigs(require('./pons-automation.cjs').schedulerConfigFor(config)).indexConfig,wallet:owner,expected:final,artifactPrefix:directory+'/browser-after'});} report.status=indexed?'PONS_INDEXED_AUTOMATION_PASSED':'PONS_AUTOMATION_PASSED';save();
+  const nonce=await provider.getTransactionCount(owner),again=await tick();assert.equal(again.steps.length,0);assert.equal(await provider.getTransactionCount(owner),nonce);
+  if(restoreDrill){
+   assert(!report.finalLedger.buyLedger.decisions.some(d=>d.transactionHash===report.restoreDrill.nonBuyTransfer&&d.status==='ELIGIBLE'));
+   const before=await invariant(),indexConfig=require('./shared-index-config.cjs').buildIndexConfigs(require('./pons-automation.cjs').schedulerConfigFor(config)).indexConfig;
+   report.restoreDrill.restored=require('./rehearsal-backup.cjs').restore(frozenBackup);
+   for(let i=0;i<2;i++){const resumed=await tick();assert.equal(resumed.steps.length,0,'Restored journal sent another transaction');}
+   assert.equal(await provider.getTransactionCount(owner),nonce);assert.deepEqual(await invariant(),before);
+   const restored=JSON.parse(fs.readFileSync(config.indexer.statePath)),ledger=replayAttempts(restored.index.manifest,lifecycle,restored.index.blocks);
+   assert.deepEqual(ledger.wallets,report.finalLedger.wallets);assert.deepEqual(ledger.draws,report.finalLedger.draws);
+   report.restoreDrill.api=await require('./verify-pons-wallet-api.cjs').verify({config:indexConfig,wallet:owner,expected:final});
+   report.restoreDrill.result={status:'RESTORED_WITHOUT_SENDS',nonce,balances:before,draws:ledger.draws.length};save();
+  }
+  if(indexed){report.walletApi=await require('./verify-pons-wallet-api.cjs').verify({config:require('./shared-index-config.cjs').buildIndexConfigs(require('./pons-automation.cjs').schedulerConfigFor(config)).indexConfig,wallet:owner,expected:final});} if(indexed&&process.argv.includes('--wallet-browser')){report.walletBrowserAfter=await require('./verify-wallet-browser.cjs').verify({config:require('./shared-index-config.cjs').buildIndexConfigs(require('./pons-automation.cjs').schedulerConfigFor(config)).indexConfig,wallet:owner,expected:final,artifactPrefix:directory+'/browser-after'});} report.status=indexed?'PONS_INDEXED_AUTOMATION_PASSED':'PONS_AUTOMATION_PASSED';save();
  }finally{provider.send=originalSend;await rpc('evm_setIntervalMining',[0]);server.closeAllConnections();await new Promise(r=>server.close(r));}
 }
 module.exports={finish};

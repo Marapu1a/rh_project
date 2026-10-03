@@ -1,0 +1,466 @@
+{
+  "date": "2026-10-03T07:24:56.526Z",
+  "base": "12a7dbf",
+  "status": "PONS_INDEXED_AUTOMATION_PASSED",
+  "anchor": {
+    "number": 78900097,
+    "hash": "0xf5afb8402d9948258ca631e34f6a856ecd02f2dab4cc1d3e0ca3239f7c6bf4f7"
+  },
+  "publicSends": false,
+  "report": ".local/logs/pons-restore-cycle-20261003-b.json",
+  "reportSha256": "aaf99ffad3ddb974f33d1a136a8fbdd8817f3d08da9de5fa3cf49f61d2b9b581",
+  "artifactSha256": "038d667c4018e6c811e8e16c69e2604077d0c34904461adaf2edb5496bd8b09f",
+  "sources": {
+    "scripts/pons-automation-rehearsal.cjs": "c92f4fbad557c70c33636afcf2361f805b4a66e7d263cdb2391c3fbd5e653ecc",
+    "scripts/pons-collector-fork.cjs": "49af672ac7dc8bf2843776a1d86f7e0156efa1db7a89b95c0de470c859d5e7e7",
+    "scripts/rehearsal-backup.cjs": "550a7c1786c5be88a0a39f203dfcb480db1af5e0e027f187679a4f4ce258990a",
+    "test/rehearsal-backup.test.cjs": "689faa1e2b9f9ce569af2d02af77ad3d3b015ff5bed8655d51b5dd6d4308de6b",
+    "scripts/pons-automation.cjs": "55ef21e410198a8d86dba280dad8558b2105edab7643d0e8db454d9305c0e552",
+    "scripts/persistent-buy-indexer.cjs": "e4d7cff3f464da5efad439377a8fb1737cc8fa97edeb382eb1d5229faaa2d8a2",
+    "scripts/user-status-api.cjs": "d8920107edef4b4b0ac44d7dca3a25683a7a980907ebd525e8e93185f955afc0"
+  },
+  "assumptions": [
+    "Constructor clocks backdated only in in-memory compiled ShortRulesEpochs/MonthlySettlement; repository contracts unchanged",
+    "Local ArbSys shim, not Nitro finality proof",
+    "Current launch-plan rules/weights/minimum, no changed odds or selected seeds",
+    "Live drand BLS proof; 60-second lead is test-only",
+    "Synthetic owner USDG may donate missing Monthly readiness reserves; never injected into prize vault storage",
+    "Local finalized pinned for initial snapshot admission; advances with local latest after proposals begin. Not mainnet finality proof",
+    "Restore drill aligns local fork timestamp to wall time once before draws; no public clock/finality claim and no RNG guard changes",
+    "Automation fork mines a block every second while workers read; RNG freshness gates unchanged"
+  ],
+  "manifestSchema": "direct-buy-pons-v2",
+  "passes": 15,
+  "actions": [
+    {
+      "status": "waiting",
+      "actions": [
+        "pull",
+        "pay"
+      ]
+    },
+    {
+      "status": "waiting",
+      "actions": [
+        "pay",
+        "pay"
+      ]
+    },
+    {
+      "status": "waiting",
+      "actions": [
+        "checkpointCutoff",
+        "checkpointCutoff"
+      ]
+    },
+    {
+      "status": "waiting",
+      "actions": [
+        "begin",
+        "beginMonth"
+      ]
+    },
+    {
+      "status": "waiting",
+      "actions": [
+        "publish",
+        "publishMonth"
+      ]
+    },
+    {
+      "status": "waiting",
+      "actions": [
+        "seal",
+        "sealMonth"
+      ]
+    },
+    {
+      "status": "stopped",
+      "actions": [
+        "prove"
+      ]
+    },
+    {
+      "status": "waiting",
+      "actions": [
+        "deliver",
+        "prove"
+      ]
+    },
+    {
+      "status": "waiting",
+      "actions": [
+        "deliver",
+        "processShort"
+      ]
+    },
+    {
+      "status": "waiting",
+      "actions": [
+        "finishShort",
+        "processMonth"
+      ]
+    },
+    {
+      "status": "waiting",
+      "actions": [
+        "claim",
+        "finishMonth"
+      ]
+    },
+    {
+      "status": "waiting",
+      "actions": [
+        "claim"
+      ]
+    },
+    {
+      "status": "waiting",
+      "actions": []
+    },
+    {
+      "status": "waiting",
+      "actions": []
+    },
+    {
+      "status": "waiting",
+      "actions": []
+    }
+  ],
+  "fundingAtFreeze": {
+    "balance": "346425927",
+    "parts": [
+      "0",
+      "0",
+      "100000000",
+      "246425927",
+      "0",
+      "0"
+    ]
+  },
+  "paid": "129298504",
+  "finalWallets": [
+    {
+      "wallet": "0x098afa6731239a00ce0aff669aaefd16b7c72114",
+      "SHORT": {
+        "mintedTotal": "87",
+        "open": "1",
+        "frozenByDraw": {},
+        "consumedTotal": "86",
+        "byEpoch": [
+          {
+            "epoch": "1",
+            "minted": "87",
+            "consumed": "86",
+            "frozen": "0",
+            "open": "1",
+            "firstOpenAttempt": "87",
+            "lastOpenAttempt": "87"
+          }
+        ]
+      },
+      "MONTHLY": {
+        "mintedTotal": "87",
+        "open": "1",
+        "frozenByDraw": {},
+        "consumedTotal": "86",
+        "byEpoch": [
+          {
+            "epoch": "1",
+            "minted": "87",
+            "consumed": "86",
+            "frozen": "0",
+            "open": "1",
+            "firstOpenAttempt": "87",
+            "lastOpenAttempt": "87"
+          }
+        ]
+      }
+    }
+  ],
+  "draws": [
+    {
+      "drawId": "0x6e093cb9207b8a772536a8228c76909e8adad03ab79c3d90b1575813e1f9209d",
+      "kind": "SHORT",
+      "status": "CONSUMED",
+      "totalAttempts": "86"
+    },
+    {
+      "drawId": "0x9916cbfc8f4c9783bd9bf0a540f0b5e3cc563c26bd804636998a8483a76000f6",
+      "kind": "MONTHLY",
+      "status": "CONSUMED",
+      "totalAttempts": "86"
+    }
+  ],
+  "restore": {
+    "backup": {
+      "source": "D:\\sites\\rh_project\\.local\\logs\\pons-cycle-2dnO0F",
+      "copy": "D:\\sites\\rh_project\\.local\\logs\\pons-cycle-2dnO0F-frozen-backup",
+      "hashes": {
+        "automation.json": "9a78c2de520da836c12ba222204da27e8b6a24e90587a0ff46be8fa39a46f9eb",
+        "automation.json.scheduler": "1272d5dc0791e9e90d48f6d550e7f71310d6ed9d5674fc2c77734dd53b21031f",
+        "config.json": "8bea66237c5247e1e5c550803debb77ef0148897ba99b808dc922190b2069315",
+        "indexer.json": "26c155595c2423eb9115fdb986685ab5a7dc289b22863bcf39d3b2791ee62968"
+      }
+    },
+    "atFreeze": {
+      "balance": "346425927",
+      "parts": [
+        "0",
+        "0",
+        "100000000",
+        "246425927",
+        "0",
+        "0"
+      ]
+    },
+    "nonBuyTransfer": "0x28ceae73d595f26934010e685e1492cb9db0ced6a04a5c8f5bd1183b21d16661",
+    "restored": {
+      "archive": "D:\\sites\\rh_project\\.local\\logs\\pons-cycle-2dnO0F-before-restore",
+      "files": 4
+    },
+    "api": {
+      "status": "PONS_SAVED_CYCLE_HTTP_PASSED",
+      "publicSends": false,
+      "results": [
+        {
+          "status": "observed",
+          "head": {
+            "number": 78900435,
+            "hash": "0x3d92d1718081b0dd9354eaed364a517edb4bef4cb961c77fbed325a85bc8a592"
+          },
+          "balances": {
+            "SHORT": {
+              "mintedTotal": "87",
+              "open": "1",
+              "frozenByDraw": {},
+              "consumedTotal": "86",
+              "byEpoch": [
+                {
+                  "epoch": "1",
+                  "minted": "87",
+                  "consumed": "86",
+                  "frozen": "0",
+                  "open": "1",
+                  "firstOpenAttempt": "87",
+                  "lastOpenAttempt": "87"
+                }
+              ]
+            },
+            "MONTHLY": {
+              "mintedTotal": "87",
+              "open": "1",
+              "frozenByDraw": {},
+              "consumedTotal": "86",
+              "byEpoch": [
+                {
+                  "epoch": "1",
+                  "minted": "87",
+                  "consumed": "86",
+                  "frozen": "0",
+                  "open": "1",
+                  "firstOpenAttempt": "87",
+                  "lastOpenAttempt": "87"
+                }
+              ]
+            },
+            "carryRaw": "80328733",
+            "entryThresholdRaw": "100000000",
+            "quoteDecimals": 6
+          },
+          "purchases": 8,
+          "rewards": 2
+        },
+        {
+          "status": "observed",
+          "head": {
+            "number": 78900435,
+            "hash": "0x3d92d1718081b0dd9354eaed364a517edb4bef4cb961c77fbed325a85bc8a592"
+          },
+          "balances": {
+            "SHORT": {
+              "mintedTotal": "87",
+              "open": "1",
+              "frozenByDraw": {},
+              "consumedTotal": "86",
+              "byEpoch": [
+                {
+                  "epoch": "1",
+                  "minted": "87",
+                  "consumed": "86",
+                  "frozen": "0",
+                  "open": "1",
+                  "firstOpenAttempt": "87",
+                  "lastOpenAttempt": "87"
+                }
+              ]
+            },
+            "MONTHLY": {
+              "mintedTotal": "87",
+              "open": "1",
+              "frozenByDraw": {},
+              "consumedTotal": "86",
+              "byEpoch": [
+                {
+                  "epoch": "1",
+                  "minted": "87",
+                  "consumed": "86",
+                  "frozen": "0",
+                  "open": "1",
+                  "firstOpenAttempt": "87",
+                  "lastOpenAttempt": "87"
+                }
+              ]
+            },
+            "carryRaw": "80328733",
+            "entryThresholdRaw": "100000000",
+            "quoteDecimals": 6
+          },
+          "purchases": 8,
+          "rewards": 2
+        }
+      ],
+      "limits": [
+        "Reads the provided immutable snapshot; no independent chain refresh",
+        "HTTP/worker verification only; execution qualification belongs to the calling rehearsal",
+        "No browser interaction or mainnet finality proof"
+      ]
+    },
+    "result": {
+      "status": "RESTORED_WITHOUT_SENDS",
+      "nonce": 83,
+      "balances": {
+        "balance": "217127423",
+        "parts": [
+          "117127423",
+          "100000000",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      },
+      "draws": 2
+    }
+  },
+  "walletApi": {
+    "status": "PONS_SAVED_CYCLE_HTTP_PASSED",
+    "publicSends": false,
+    "results": [
+      {
+        "status": "observed",
+        "head": {
+          "number": 78900435,
+          "hash": "0x3d92d1718081b0dd9354eaed364a517edb4bef4cb961c77fbed325a85bc8a592"
+        },
+        "balances": {
+          "SHORT": {
+            "mintedTotal": "87",
+            "open": "1",
+            "frozenByDraw": {},
+            "consumedTotal": "86",
+            "byEpoch": [
+              {
+                "epoch": "1",
+                "minted": "87",
+                "consumed": "86",
+                "frozen": "0",
+                "open": "1",
+                "firstOpenAttempt": "87",
+                "lastOpenAttempt": "87"
+              }
+            ]
+          },
+          "MONTHLY": {
+            "mintedTotal": "87",
+            "open": "1",
+            "frozenByDraw": {},
+            "consumedTotal": "86",
+            "byEpoch": [
+              {
+                "epoch": "1",
+                "minted": "87",
+                "consumed": "86",
+                "frozen": "0",
+                "open": "1",
+                "firstOpenAttempt": "87",
+                "lastOpenAttempt": "87"
+              }
+            ]
+          },
+          "carryRaw": "80328733",
+          "entryThresholdRaw": "100000000",
+          "quoteDecimals": 6
+        },
+        "purchases": 8,
+        "rewards": 2
+      },
+      {
+        "status": "observed",
+        "head": {
+          "number": 78900435,
+          "hash": "0x3d92d1718081b0dd9354eaed364a517edb4bef4cb961c77fbed325a85bc8a592"
+        },
+        "balances": {
+          "SHORT": {
+            "mintedTotal": "87",
+            "open": "1",
+            "frozenByDraw": {},
+            "consumedTotal": "86",
+            "byEpoch": [
+              {
+                "epoch": "1",
+                "minted": "87",
+                "consumed": "86",
+                "frozen": "0",
+                "open": "1",
+                "firstOpenAttempt": "87",
+                "lastOpenAttempt": "87"
+              }
+            ]
+          },
+          "MONTHLY": {
+            "mintedTotal": "87",
+            "open": "1",
+            "frozenByDraw": {},
+            "consumedTotal": "86",
+            "byEpoch": [
+              {
+                "epoch": "1",
+                "minted": "87",
+                "consumed": "86",
+                "frozen": "0",
+                "open": "1",
+                "firstOpenAttempt": "87",
+                "lastOpenAttempt": "87"
+              }
+            ]
+          },
+          "carryRaw": "80328733",
+          "entryThresholdRaw": "100000000",
+          "quoteDecimals": 6
+        },
+        "purchases": 8,
+        "rewards": 2
+      }
+    ],
+    "limits": [
+      "Reads the provided immutable snapshot; no independent chain refresh",
+      "HTTP/worker verification only; execution qualification belongs to the calling rehearsal",
+      "No browser interaction or mainnet finality proof"
+    ]
+  },
+  "tests": {
+    "boundaryAndBatch": 7,
+    "crashRecovery": 1,
+    "crashWindows": 6,
+    "routeNeighbors": 10,
+    "backupFinalRerun": 1,
+    "uniqueTests": 18
+  },
+  "firstAttempt": {
+    "report": ".local/logs/pons-restore-cycle-20261003-a.json",
+    "status": "INTERRUPTED_BEFORE_FREEZE",
+    "reason": "Local fork timestamp lag approx 30 seconds; RNG finalityLag guard waited. No PASS claimed."
+  }
+}
