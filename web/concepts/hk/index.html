@@ -8,7 +8,7 @@
     <title>QIANQI — Token, USDG Prize Draws &amp; Rules</title>
     <link rel="icon" href="/assets/logo-cn.png">
     <link rel="stylesheet" href="/concepts/hk/style.css">
-    <script src="/vendor/ethers-6.17.0.min.js" defer></script><script src="/claim.js" defer></script><script src="/app.js" defer></script>
+    <script src="/app.js" defer></script>
     <script src="/overview.js" defer></script>
 
     <meta name="description" content="QIANQI on Robinhood Chain: token trading, eligible purchases, USDG prize draw rules and transparent funding. Check the current launch status.">
@@ -25,6 +25,7 @@
 </head>
 
 <body data-market-token="0x6EA39A23AA46E51CA6CD2d1cbc0B5bfb29ECB216">
+    <a class="skip-link" href="#main-content">Skip to content</a>
     <header>
         <nav class="wrap" aria-label="Main navigation"><a class="brand" href="#">QIANQI<span
                     lang="zh-Hant">千祺</span></a>
@@ -32,7 +33,7 @@
                     rules</a></div><button class="button dark connect"><span class="connect-label">CONNECT WALLET</span></button>
         </nav>
     </header>
-    <main>
+    <main id="main-content" tabindex="-1">
         <section class="hero wrap" aria-labelledby="hero-title">
             <div class="hero-topline"><span>A LITTLE ROOM FOR LUCK</span><span>ROBINHOOD CHAIN /
                     PONS</span></div>
@@ -59,9 +60,9 @@
             <iframe title="QIANQI / USDG price chart by GeckoTerminal" src="https://www.geckoterminal.com/robinhood/pools/0x12ba58b5455fdbc15165e0e8b2096498d2c684f1?embed=1&amp;info=0&amp;swaps=0&amp;light_chart=1&amp;chart_type=price&amp;resolution=15m&amp;bg_color=f5f2e9" loading="lazy" allow="clipboard-write" allowfullscreen referrerpolicy="no-referrer"></iframe>
             <p class="market-source">Chart by <a href="https://www.geckoterminal.com/robinhood/pools/0x12ba58b5455fdbc15165e0e8b2096498d2c684f1" target="_blank" rel="noopener noreferrer">GeckoTerminal</a>. If the chart is unavailable, open it there. Only eligible purchases count toward tickets.</p>
         </section>
-        <section class="panel how wrap" id="how">
+        <section class="panel how wrap" id="how" aria-labelledby="how-title">
             <div class="section-heading">
-                <h2>Buy. Enter automatically.<br>Check your results.</h2><span>HOW IT WORKS</span>
+                <h2 id="how-title">Buy. Enter automatically.<br>Check your results.</h2><span>HOW IT WORKS</span>
             </div>
             <div class="steps">
                 <article><span class="step-number">01</span>
@@ -111,7 +112,7 @@
         <div class="account-heading wrap"><span>YOUR WALLET</span>
             <p>Your tickets. Your wins. What’s been paid.</p>
         </div>
-        <section class="account wrap" id="account">
+        <section class="account wrap" id="account" aria-label="Your wallet">
             <aside class="panel wallet-panel">
                 <div class="section-heading">
                     <h2>Your tickets.</h2><span class="dot"></span>
@@ -134,9 +135,9 @@
                     <table>
                         <thead>
                             <tr>
-                                <th>Draw</th>
-                                <th>Amount · USDG</th>
-                                <th>Status</th>
+                                <th scope="col">Draw</th>
+                                <th scope="col">Amount · USDG</th>
+                                <th scope="col">Status</th>
                             </tr>
                         </thead>
                         <tbody id="rewards-body">
@@ -171,9 +172,9 @@
             </div>
             <a class="text-link" href="#rules">See the numbers. Know the odds. </a>
         </section>
-        <section class="rules wrap" id="rules">
+        <section class="rules wrap" id="rules" aria-labelledby="rules-title">
             <div class="section-heading">
-                <h2>The rules.<br>No guesswork.</h2><span>KNOW THE GAME</span>
+                <h2 id="rules-title">The rules.<br>No guesswork.</h2><span>KNOW THE GAME</span>
                 <aside class="rule-update"><span>RULE UPDATE · 4 OCT</span><p>Earlier buys. Future draws.</p><a href="/notices/late-purchases-2026-10-04.html">Late purchase confirmation</a></aside>
                 <p>What counts, how the odds work, and where the money goes.</p>
             </div>
@@ -240,7 +241,7 @@
         <div class="footer-bottom wrap"><span>© QIANQI · 千祺</span><p>A little luck. No promised wins or profits.</p></div>
     </footer>
     <dialog id="dialog"><button class="dialog-close" aria-label="Close dialog">×</button><img id="dialog-mouse"
-            src="/assets/mouse-error.png" alt="" hidden>
+            src="/assets/mouse-error.png" loading="lazy" decoding="async" alt="" hidden>
         <p class="eyebrow">QIANQI COIN</p>
         <h2 id="dialog-title"></h2>
         <p id="dialog-copy"></p>

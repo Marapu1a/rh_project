@@ -19,3 +19,15 @@ Sources:
 - https://llmstxt.org/ — proposed agent navigation convention, not an indexing guarantee.
 
 No promises of rankings, AI citations, rich results or security endorsements. robots.txt governs cooperative crawling, not access control. Public page bodies already expose substantive rules without requiring a wallet or JavaScript. No SEO plugin, extra tracking or external submissions added.
+
+## Layout and load audit
+
+4 October: inspected heading hierarchy (one H1, H2 sections, H3 steps), HTML content without JS, native links/details, table, iframe title, alt text and responsive layout. Added keyboard skip link, named main sections, column scopes and reduced-motion CSS. No claim that this is a full WCAG or HTML validator audit.
+
+Measured initial local mobile viewport390x844, 2.5s after DOMContentLoaded, no network/CPU throttling, read-only API unavailable fixture. Before: first-party subresources1,287,739 bytes; after490,849 bytes, about62% less. Excludes main HTML and later external iframe traffic. Removed eager ethers526,551B + claim7,260B by loading those only for a configured local Claim deployment; hidden error illustration263,683B now lazy. Main mascot remains440,953B: a possible later image optimization, not changed here.
+
+Local observations: LCP112ms before /116ms after, CLS0 in both. These localhost measurements do NOT establish production speed or field Core Web Vitals; no INP conclusion. Chart did not request on the initial mobile viewport, but native lazy loading can preload it earlier on larger screens. CSP and real external chart rendering were checked in the earlier frontend package.
+
+Verified skip-link keyboard focus and target, all local fragment links and aria-labelledby targets, no horizontal overflow320/390/768/1440. Next production step: measure deployed build with mobile throttling/PageSpeed and check compression/cache headers; field Core Web Vitals require real traffic. Reference: https://developers.google.com/search/docs/appearance/page-experience .
+
+Affected-path checks: `SITE_TEST_PATH=/concepts/hk/ node --test web/site.test.cjs web/token-balance.test.cjs web/claim.test.cjs` passed8/8, including browser test deployment Claim through actual local vault, reload and stale-data controls after lazy loading. Full suite not run.
