@@ -102,3 +102,7 @@ admission не заявлены. [Результаты/границы](PONS_ROUT
 `pons-live-direct-accounting-rehearsal.cjs`: существующий token + planner/ledger,
 restart/checkpoint/idempotency и опциональный локальный wallet API.
 [Готовность, ограничения и единый пакет расширения](PONS_ROUTE_RESOLUTION_2026-10-04.md).
+
+Source поздних покупок: `scripts/recognition-deployment.cjs` — read-only CREATE plan,
+точный runtime с immutables, strategy существующей signing queue;
+`deployment-console.cjs` — отдельная очередь4177. [Границы](RECOGNITION_DEPLOYMENT_2026-10-04.md).

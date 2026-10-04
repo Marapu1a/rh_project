@@ -147,7 +147,8 @@
       "test/project-history.test.cjs",
       "test/operations-rpc-storage.test.cjs",
       "test/purchase-recognition.test.cjs",
-      "test/purchase-recognition-source.test.cjs"
+      "test/purchase-recognition-source.test.cjs",
+      "test/recognition-deployment.test.cjs"
     ]
   },
   "accounting": {
@@ -677,6 +678,7 @@
     "files": [
       "test/purchase-recognition.test.cjs",
       "test/purchase-recognition-source.test.cjs",
+      "test/recognition-deployment.test.cjs",
       "test/attempt-lifecycle.test.cjs",
       "test/attempt-lifecycle-dual.test.cjs",
       "test/verified-buy-replay.test.cjs",

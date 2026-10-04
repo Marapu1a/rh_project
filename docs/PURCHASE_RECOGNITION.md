@@ -125,3 +125,5 @@ O(project history), trace читается повторно при новом sn
 Проверки и измерения: [отчёт04.10](PURCHASE_RECOGNITION_2026-10-04.md).
 
 Разбор свежего GPT review и план первого боевого пути: [04.10](PURCHASE_RECOGNITION_REVIEW_2026-10-04.md).
+
+Подготовка source/подписи: [пакет04.10](RECOGNITION_DEPLOYMENT_2026-10-04.md).

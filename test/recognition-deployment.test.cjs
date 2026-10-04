@@ -1,0 +1,20 @@
+const {test}=require('node:test'),assert=require('node:assert/strict'),E=require('ethers'),D=require('../scripts/recognition-deployment.cjs');
+test('recognition deployment: real bytecode, executor authority, exact runtime and finalized receipt binding',async t=>{
+ const hre=require('hardhat');await hre.network.provider.send('hardhat_reset');
+ const p=new E.BrowserProvider(hre.network.provider,undefined,{cacheTimeout:-1}),owner=await p.getSigner(0),executor=await p.getSigner(1),build=D.compile();
+ const provider=new Proxy(p,{get(t,k){if(k==='getNetwork')return async()=>({chainId:4663n});if(k==='getBlock')return b=>t.getBlock(b==='finalized'?'latest':b);if(k==='getTransaction')return async h=>({...await t.getTransaction(h),chainId:4663n});return typeof t[k]==='function'?t[k].bind(t):t[k];}});
+ const args={provider,governor:await owner.getAddress(),publisher:await executor.getAddress(),instanceId:E.id('recognition deployment test'),maxGasPrice:'100000000000',build};
+ const plan=await D.prepare(args);assert.equal(plan.sent,false);
+ const fs=require('node:fs'),os=require('node:os'),path=require('node:path');const dir=fs.mkdtempSync(path.join(os.tmpdir(),'recognition-signing-'));t.after(()=>{assert.equal(path.dirname(fs.realpathSync(dir)),fs.realpathSync(os.tmpdir()));assert(path.basename(dir).startsWith('recognition-signing-'));fs.rmSync(dir,{recursive:true,force:true});});
+ const setup=D.signing({plan,build,provider,maxGasPrice:args.maxGasPrice}),opts={...setup,provider,file:path.join(dir,'journal.json'),check:setup.strategy.check,allowSend:true};
+ const queue=require('../scripts/deployment-signing-queue.cjs').create(opts),review=await queue.prepare();const {chainId,...request}=await queue.arm(review.id);await assert.rejects(queue.prepare(),/Unresolved/);
+ const tx=await owner.sendTransaction(request);await tx.wait();await queue.submitted(tx.hash);assert.equal(queue.view().completed,1);
+ const resumed=require('../scripts/deployment-signing-queue.cjs').create(opts);await resumed.refresh();assert.equal(resumed.view().completed,1);await assert.rejects(resumed.prepare(),/Prefix complete/);
+ const result=await D.verify({provider,plan,build,transactionHash:tx.hash});assert.equal(result.publisher,args.publisher);assert.equal(result.source,plan.predictedAddress);
+ const source=new E.Contract(result.source,build.artifact.abi,executor);assert.equal(await source.availableAt(),BigInt(result.availableAt));
+ await assert.rejects(D.verify({provider,plan:{...plan,publisher:args.governor},build,transactionHash:tx.hash}));
+ await hre.network.provider.send('evm_increaseTime',[86400]);await hre.network.provider.send('evm_mine');
+ await assert.rejects(source.connect(owner).confirm.staticCall(E.id('bundle'),1));await(await source.confirm(E.id('bundle'),1)).wait();assert(await source.published(E.id('bundle')));
+ await assert.rejects(D.prepare({...args,provider:new Proxy(provider,{get(t,k){return k==='getTransactionCount'?async(a,tag)=>tag==='pending'?99:1:t[k];}})}),/Pending governor/);
+ await assert.rejects(D.prepare({...args,provider:new Proxy(provider,{get(t,k){return k==='getNetwork'?async()=>({chainId:1n}):t[k];}})}));
+});

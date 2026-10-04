@@ -2,15 +2,15 @@
 const fs=require('node:fs'),path=require('node:path'),http=require('node:http'),{randomBytes}=require('node:crypto'),{ethers:E}=require('ethers');
 async function main(){
  const [planFile,journal,...flags]=process.argv.slice(2);if(!planFile||!journal||flags.some(f=>f!=='--enable-signing'))throw Error('Arguments');
- const plan=JSON.parse(fs.readFileSync(planFile)),settings=require('../config/pons-deployment-candidate.json');
- if(plan.settingsHash!==require('./direct-buy.cjs').hash(settings))throw Error('Settings changed');
+ const loaded=JSON.parse(fs.readFileSync(planFile)),recognition=loaded.plan?.schema==='recognition-deployment-plan-v1';let plan=recognition?loaded.plan:loaded;const settings=require('../config/pons-deployment-candidate.json');
+ if(!recognition&&plan.settingsHash!==require('./direct-buy.cjs').hash(settings))throw Error('Settings changed');
  const rpcUrl=process.env.RH_RPC_URL;if(new URL(rpcUrl).protocol!=='https:')throw Error('HTTPS required');
  const req=new E.FetchRequest(rpcUrl);req.timeout=20000;const provider=new E.JsonRpcProvider(req,undefined,{cacheTimeout:-1});
  const lock=journal+'.service.lock';fs.writeFileSync(lock,String(process.pid),{flag:'wx'});
- const key=randomBytes(24).toString('hex'),port=4176,origin=`http://127.0.0.1:${port}`;
+ const key=randomBytes(24).toString('hex'),port=recognition?4177:4176,origin=`http://127.0.0.1:${port}`;
  const continuation=plan.schema==='qianqi-launch-continuation-v1';
  const inspect=()=>require('./pons-launch-preflight.cjs').inspect(provider,settings,require('../docs/evidence/PONS_DEPENDENCIES_2026-10-03.json'));
- let strategy;
+ let strategy;if(recognition){if(plan.governor.toLowerCase()!==settings.roles.governor.toLowerCase()||plan.publisher.toLowerCase()!==settings.roles.executor.toLowerCase())throw Error('Recognition roles changed');const setup=require('./recognition-deployment.cjs').signing({plan,build:loaded.build,provider,maxGasPrice:settings.maxGasPrice});plan=setup.plan;strategy=setup.strategy;}
  if(continuation){const compiled=require('./test-artifact.cjs').readArtifact();if(!compiled)throw Error('Pinned artifact required');strategy=require('./deployment-continuation.cjs').createStrategy({plan,provider,compiled,settings,preflight:inspect});}
  const queue=require('./deployment-signing-queue.cjs').create({plan,file:journal,provider,allowSend:flags.includes('--enable-signing'),strategy,check:strategy?strategy.check:async()=>{
   const report=await require('./pons-launch-preflight.cjs').inspect(provider,settings,require('../docs/evidence/PONS_DEPENDENCIES_2026-10-03.json'));
@@ -25,7 +25,7 @@ async function main(){
   res.setHeader('Cache-Control','no-store');res.setHeader('X-Content-Type-Options','nosniff');
   res.setHeader('Content-Security-Policy',"default-src 'self'; script-src 'self'; style-src 'unsafe-inline'; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'");
   if(req.headers.host!==`127.0.0.1:${port}`){res.writeHead(403).end();return;}
-  if(req.method==='GET'&&['/','/app.js'].includes(req.url)){res.setHeader('Content-Type',req.url==='/'?'text/html; charset=utf-8':'text/javascript');let asset=fs.readFileSync(path.join(assets,req.url==='/'?'index.html':'app.js'),'utf8');if(req.url==='/'&&continuation)asset=asset.replace('Сначала шесть контрактов проекта. Запуск токена и привязка правил — следующий этап, после проверки фактических адресов и блоков.','Четыре подписи: запуск QIANQI через Pons → правила билетов → распределение 90/5/5 → привязка Pons. Покупка101USDG и включение автоматики — отдельно.');res.end(asset);return;}
+  if(req.method==='GET'&&['/','/app.js'].includes(req.url)){res.setHeader('Content-Type',req.url==='/'?'text/html; charset=utf-8':'text/javascript');let asset=fs.readFileSync(path.join(assets,req.url==='/'?'index.html':'app.js'),'utf8');if(req.url==='/'&&recognition)asset=asset.replace('Сначала шесть контрактов проекта. Запуск токена и привязка правил — следующий этап, после проверки фактических адресов и блоков.','Одна подпись: контракт позднего подтверждения покупок. Издатель — кошелёк автоматики. Начисления и включение розыгрышей выполняются отдельно.');if(req.url==='/'&&continuation)asset=asset.replace('Сначала шесть контрактов проекта. Запуск токена и привязка правил — следующий этап, после проверки фактических адресов и блоков.','Четыре подписи: запуск QIANQI через Pons → правила билетов → распределение 90/5/5 → привязка Pons. Покупка101USDG и включение автоматики — отдельно.');res.end(asset);return;}
   if(req.method!=='POST'||req.headers.origin!==origin||req.headers['x-qianqi-session']!==key){res.writeHead(403).end();return;}
   try{
    let body='';for await(const chunk of req){body+=chunk;if(Buffer.byteLength(body)>4096)throw Error('Size');}const input=JSON.parse(body||'{}');
@@ -33,6 +33,7 @@ async function main(){
    res.setHeader('Content-Type','application/json');res.end(JSON.stringify(value));
   }catch(e){
    const messages={
+    'Deployment not finalized':'Транзакция включена в блок. Дождитесь финализации и нажмите «Проверить подтверждение». Повторная отправка не нужна.',
     'Prefix complete; prepare next phase from actual receipts':'Эта очередь завершена. Больше подписей здесь не требуется.',
     'Review expired':'Проверка устарела. Нажмите «Проверить следующий шаг» ещё раз.',
     'Reviewed gas budget exceeded':'Газ вышел за показанные лимиты. Нажмите «Проверить следующий шаг» для новой оценки. Запрос в кошелёк не отправлен.',
