@@ -13,6 +13,7 @@ files.set('/vendor/ethers-6.17.0.min.js','vendor/ethers-6.17.0.min.js');
 files.set('/notices/late-purchases-2026-10-04.html','notices/late-purchases-2026-10-04.html');
 files.set('/notices/notice.css','notices/notice.css');
 files.set('/evidence/purchases/','evidence/purchases/index.html');
+for(const name of ['robots.txt','sitemap.xml','llms.txt'])files.set('/'+name,name);
 function createSite({apiOrigin='http://127.0.0.1:8787',purchaseDemo=false,actions=null}={}){
  if(actions)require('../web/claim.js').config(actions);
  const routes=new Map(files);
@@ -32,7 +33,7 @@ function createSite({apiOrigin='http://127.0.0.1:8787',purchaseDemo=false,action
     try{const upstream=await fetch(new URL(url.pathname+url.search,origin),{signal:AbortSignal.timeout(8000),redirect:'error'});const body=await upstream.text();res.writeHead(upstream.status);res.end(body);}catch{res.writeHead(503);res.end(JSON.stringify({error:'unavailable'}));}return;
    }
    const file=routes.get(url.pathname);if(!file){res.writeHead(404,{'Content-Type':'text/html; charset=utf-8'});res.end(await fs.readFile(path.join(root,'404.html')));return;}
-   const body=await fs.readFile(path.join(root,file));res.setHeader('Content-Type',file.endsWith('.css')?'text/css':file.endsWith('.js')?'text/javascript':file.endsWith('.png')?'image/png':'text/html; charset=utf-8');res.setHeader('Cache-Control','no-cache');res.end(body);
+   const body=await fs.readFile(path.join(root,file));res.setHeader('Content-Type',file.endsWith('.txt')?'text/plain; charset=utf-8':file.endsWith('.xml')?'application/xml; charset=utf-8':file.endsWith('.css')?'text/css':file.endsWith('.js')?'text/javascript':file.endsWith('.png')?'image/png':'text/html; charset=utf-8');res.setHeader('Cache-Control','no-cache');res.end(body);
   }catch{res.writeHead(503);res.end('Unavailable');}
  });
 }
