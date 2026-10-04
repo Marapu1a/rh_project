@@ -66,3 +66,16 @@ test('scanner account hint is bounded to canonical single operation, never choos
  const o=C.ENTRY_ABI.decodeFunctionData('handleOps',f.tx.input);f.tx.input=C.ENTRY_ABI.encodeFunctionData('handleOps',[[o.ops[0],o.ops[0]],o.beneficiary]);assert.equal(A.accountCandidate(f.m,f.tx),null);
  f.tx.input='0x1234';assert.equal(A.accountCandidate(f.m,f.tx),null);
 });
+
+test('project compaction keeps neighboring authorizations required to reject same-block delegation changes',async()=>{
+ const f=fixture(),P=require('../scripts/project-history.cjs'),wallet=new E.Wallet(require('../scripts/pons-launch-rehearsal.cjs').KEY);
+ const signed=await wallet.authorize({address:C.IMPLEMENTATION,chainId:4663,nonce:123});
+ const a={address:signed.address,chainId:E.toQuantity(signed.chainId),nonce:E.toQuantity(signed.nonce),r:signed.signature.r,s:signed.signature.s,yParity:E.toQuantity(signed.signature.yParity)};
+ const tx={...structuredClone(f.tx),hash:E.id('neighbor authorization'),type:'0x4',input:'0x',transactionIndex:'0x1',authorizationList:[a]};
+ const receipt={...structuredClone(f.receipt),transactionHash:tx.hash,transactionIndex:tx.transactionIndex,logs:[]};
+ f.block.transactions.push({tx,receipt});
+ const before=D.replay(f.m,f.blocks);assert.equal(before.wallets.length,0);
+ const compact=P.compact(f.blocks,f.m,null);
+ assert.equal(compact.find(b=>b.number===f.block.number).transactions.length,2);
+ assert.deepEqual(D.replay(f.m,compact),before);
+});

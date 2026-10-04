@@ -55,7 +55,7 @@ function execution(m,tx,block){
 function decode(m,tx,receipt,block){
  const original=C.decode(m,tx,receipt);
  if(!tx.to||low(tx.to)!==low(tx.from))return original;
- if(!original.length)return original;
+ if(!original.length||original.every(d=>d.reason==='SELL'))return original;
  try{
   execution(m,tx,block);
   let shape=B.decode(m,tx,receipt),filtered=receipt;
@@ -72,6 +72,6 @@ function decode(m,tx,receipt,block){
   const decisions=C.decode(m,{...tx,to:m.curve,input:buy.callData},filtered);
   check(decisions.length===1&&decisions[0].status==='ELIGIBLE','Inconsistent batch BUY');
   return decisions.map(d=>({...d,reason:'SUPPORTED_SELF_BATCH_BUY',batchRoute:ID,fundingQuoteRaw:shape.fundingQuoteRaw??'0',evidenceLogIndexes:receipt.logs.map(l=>Number(BigInt(l.logIndex)))}));
- }catch(e){return original.map(d=>({...d,status:'UNSUPPORTED_ROUTE',reason:'BATCH_EXECUTION_NOT_QUALIFIED',batchDetail:e.message}));}
+ }catch(e){return original.map(d=>d.reason==='SELL'?d:({...d,status:'UNSUPPORTED_ROUTE',reason:'BATCH_EXECUTION_NOT_QUALIFIED',batchDetail:e.message}));}
 }
 module.exports={SCHEMA,ID,FIELDS,PINS,EXECUTOR,EXECUTOR_HASH,validate,validateBindings,decode,execution};

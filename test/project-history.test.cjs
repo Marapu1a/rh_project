@@ -90,3 +90,14 @@ test('RPC log mismatch stops scan and unsupported deep reorg preserves last good
  await assert.rejects(indexOnce({config,rpc:f.rpc,statePath:f.statePath,batchSize:1000}),/Reorg exceeds/);
  assert.equal(D.hash(f.read().index),previous);assert.equal(f.read().status.state,'waiting');
 });
+
+test('authorization audit restores omitted neighboring context without changing ledger or input',async t=>{
+ const f=setup(t),{audit}=require('../scripts/audit-project-authorizations.cjs'),{indexerChecksum}=require('../scripts/indexer-checksum.cjs');
+ const blocks=P.compact(f.blocks,f.m,null),ledger=D.replay(f.m,blocks),config=f.config;
+ const state={configHash:D.hash({kind:'persistent-buy-indexer-v1',config}),index:{evidenceMode:P.SCHEMA,manifest:f.m,blocks,head:1012,ledger,ledgerHash:D.hash(ledger)}};
+ state.checksum=indexerChecksum(state);const before=JSON.stringify(state);
+ const row=structuredClone(f.blocks[0].transactions[0]);row.tx.hash=E.id('context');row.tx.input='0x';row.tx.transactionIndex=1;row.tx.authorizationList=[{chainId:'0x1237',nonce:'0x0',address:addr(999),r:E.ZeroHash,s:E.ZeroHash,yParity:'0x0'}];
+ row.receipt.transactionHash=row.tx.hash;row.receipt.transactionIndex=1;row.receipt.logs=[];f.blocks[0].transactions.push(row);
+ const result=await audit({config,state,rpc:f.rpc});assert.equal(result.report.addedTransactions,1);assert.equal(result.report.ledgerUnchanged,true);assert.equal(result.state.index.blocks[0].transactions.length,2);assert.equal(JSON.stringify(state),before);
+ const wrong=structuredClone(state);wrong.checksum='bad';await assert.rejects(audit({config,state:wrong,rpc:f.rpc}),/identity/);
+});

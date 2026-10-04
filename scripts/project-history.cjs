@@ -25,7 +25,10 @@ function compact(blocks,input,lifecycle,{tail=128,extra=[]}={}){
  const notices=new Set((input.versions||[]).slice(1).map(v=>v.announcedAtBlock));
  const kept=[];
  for(const b of blocks){
-  const transactions=b.transactions.filter(({receipt})=>receipt.logs.some(l=>relevant(l,m,addresses)));
+  const hasProjectEvent=b.transactions.some(({receipt})=>receipt.logs.some(l=>relevant(l,m,addresses)));
+  // A neighboring 7702 authorization can invalidate a buyer's parent delegation.
+  // Keep its full envelope/receipt as execution context only in project event blocks.
+  const transactions=b.transactions.filter(({tx,receipt})=>receipt.logs.some(l=>relevant(l,m,addresses))||(hasProjectEvent&&tx.authorizationList?.length));
   if(!transactions.length&&n(b.number)<end-tail&&!notices.has(n(b.number)))continue;
   const out={number:b.number,hash:b.hash,parentHash:b.parentHash,timestamp:b.timestamp,transactions};
   if(transactions.length){for(const key of ['batchAccounts','entrypointAccounts','projectReferences'])if(b[key])out[key]=b[key];}

@@ -119,3 +119,16 @@ test('combined genesis preserves curve batch decisions and never upgrades older 
  const old={...m,schema:V.SCHEMA,routeVersion:V.ID};assert.equal(D.replay(old,f.blocks).wallets.length,0);
  assert.notEqual(D.hash(m),D.hash(old));
 });
+
+test('live self-batch SELL stays ineligible even when buy shape is unsupported',()=>{
+ const f=require('./fixtures/pons-live-self-sell.json');
+ const out=R.decode(f.manifest,f.tx,f.receipt);
+ assert.equal(out.length,1);assert.equal(out[0].status,'INELIGIBLE');assert.equal(out[0].reason,'SELL');
+ const C=require('../scripts/pons-curve-buy.cjs');
+ const mixed=structuredClone(f.receipt),sell=mixed.logs.find(l=>l.topics[0]===C.EVENTS.getEvent('CurveSell').topicHash);
+ const event=C.EVENTS.encodeEventLog(C.EVENTS.getEvent('CurveBuy'),[f.tx.from,f.tx.from,100,200,1,3]);
+ mixed.logs.push({...sell,...event,logIndex:'0xffff'});
+ const result=R.decode(f.manifest,f.tx,mixed);
+ assert.equal(result.find(d=>d.logIndex===Number(BigInt(sell.logIndex))).reason,'SELL');
+ assert.equal(result.find(d=>d.logIndex===65535).status,'UNSUPPORTED_ROUTE');
+});

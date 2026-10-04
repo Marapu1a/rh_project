@@ -71,3 +71,13 @@ Project-only Pons history: project-history/migrate-project-history — RPC-selec
 транзакции проекта, хвост129 высот, ссылки на исторические cutoff, офлайн миграция
 с точным сравнением BUY/lifecycle/rewards. Scanner/persistent/replay/API поддерживают
 пропуски явно; 384MiB guard остаётся. [Формат, trust и замеры](PROJECT_HISTORY_2026-10-04.md).
+
+### Ночной пакет04.10: project execution context
+
+- `scripts/project-history.cjs`: соседние authorizationList сохраняются в event-блоках.
+- `scripts/audit-project-authorizations.cjs`: read-only audit/export старых compact snapshots;
+  проверяет неизменность ledger, не активирует результат.
+- `scripts/pons-batch-route.cjs`: terminal SELL не переименовывается в unsupported BUY.
+- `scripts/verify-live-pons-token-fork.cjs`: существующий deployed token, локальный BUY/transfer/SELL;
+  upstream read-only, production runtime не запускает этот developer tool.
+- [Проверки/ограничения](NIGHT_PACKAGE_2026-10-04.md),23/23 адресных tests.
