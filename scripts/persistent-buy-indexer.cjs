@@ -9,7 +9,7 @@ const tag=n=>'0x'+BigInt(n).toString(16);
 const check=(v,m)=>{if(!v)throw Error(m);};
 const nextDelay=status=>status?.state==='catchingUp'?0:10000;
 // Bump when replay semantics change; never reuse a ledger produced by an older engine.
-const REPLAY_REVISION='buy-replay-checkpoint-v2-bloom';
+const REPLAY_REVISION='buy-replay-checkpoint-v3-recognition';
 async function readSnapshot({config,statePath,manifest,cutoff,rpc,now=Date.now()}){
  const waiting=reason=>{throw Object.assign(Error(reason),{code:'INDEXER_WAIT',reason});};
  let state;
@@ -29,7 +29,7 @@ async function readSnapshot({config,statePath,manifest,cutoff,rpc,now=Date.now()
   const savedHead=await rpc('eth_getBlockByNumber',[tag(index.head),false]);
   if(savedHead?.hash!==index.blocks.at(-1)?.hash)return waiting('indexerBranch');
   if(!blocks.length||Number(BigInt(blocks.at(-1).number))!==cutoff)blocks.push({number:current.number,hash:current.hash,parentHash:current.parentHash,timestamp:current.timestamp,transactions:[]});
-  blocks=require('./project-history.cjs').mark(blocks,manifest,config.lifecycle,undefined,[config.buyPolicy?.source]);
+  blocks=require('./project-history.cjs').mark(blocks,manifest,config.lifecycle,undefined,[config.buyPolicy?.source,config.recognition?.source]);
  }
  const head=blocks.at(-1);
  if(!head||BigInt(head.number)!==BigInt(cutoff)||head.hash!==current?.hash)return waiting('indexerBranch');
@@ -87,12 +87,13 @@ async function indexOnce({config,rpc,statePath,batchSize=config.indexer?.batchSi
    const resolved=await resolveBuyPolicy(config,rpc,end);
    const scanStarted=performance.now();
    const project=config.indexer?.scanMode==='pons-project-events-v1';
-   const suffix=end>base?await scanWithRpc(resolved.manifest,read,end,config.lifecycle,{fromBlock:base+1,mode:config.indexer?.scanMode,watchAddresses:[config.buyPolicy?.source]}):{blocks:[]};
+   const suffix=end>base?await scanWithRpc(resolved.manifest,read,end,config.lifecycle,{fromBlock:base+1,mode:config.indexer?.scanMode,watchAddresses:[config.buyPolicy?.source,config.recognition?.source]}):{blocks:[]};
    if(project&&suffix.blocks.length)require('./project-history.cjs').validate(suffix.blocks[0],resolved.manifest,{number:base,hash:keep?prior.blocks[keep-1].hash.toLowerCase():m.anchor.hash.toLowerCase()});
+   await require('./purchase-recognition.cjs').hydrate(resolved.manifest,suffix.blocks,config.recognition,read);
    const joined=[...prior.blocks.slice(0,keep),...suffix.blocks];
-   const input={manifest:resolved.manifest,blocks:project?require('./project-history.cjs').compact(joined,resolved.manifest,config.lifecycle,{tail:128,extra:[config.buyPolicy?.source]}):joined};
+   const input={manifest:resolved.manifest,blocks:project?require('./project-history.cjs').compact(joined,resolved.manifest,config.lifecycle,{tail:128,extra:[config.buyPolicy?.source,config.recognition?.source]}):joined};
    const scanMs=performance.now()-scanStarted,replayStarted=performance.now();
-   const sameReplay=!project&&!fullRewardAudit&&!removed&&prior.replayRevision===REPLAY_REVISION&&prior.ledger&&hash(prior.manifest)===hash(input.manifest);
+   const sameReplay=!resolved.manifest.recognition&&!project&&!fullRewardAudit&&!removed&&prior.replayRevision===REPLAY_REVISION&&prior.ledger&&hash(prior.manifest)===hash(input.manifest);
    const unchanged=sameReplay&&end===base&&prior.replayCheckpoint?.schema==='buy-replay-checkpoint-v1';
    const continued=sameReplay&&end>base&&prior.replayCheckpoint?.schema==='buy-replay-checkpoint-v1'
     &&prior.replayCheckpoint.head?.number===base&&prior.replayCheckpoint.head.hash===prior.blocks[keep-1]?.hash;

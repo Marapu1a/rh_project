@@ -7,7 +7,8 @@ const {inspect,ABI}=require('./pons-collector-manual.cjs');
 const check=(v,m)=>{if(!v)throw Error(m);},same=(a,b)=>String(a).toLowerCase()===String(b).toLowerCase();
 const {reconcilePending,createBoundary}=require('./pons-transaction-journal.cjs');
 function schedulerConfigFor(c){
- const base={schema:'robinhood-promo-scheduler-v1',manifest:c.manifest,lifecycle:c.lifecycle,campaignId:'1',shortBudgetMode:'FREE_SHORT',chunkSize:64};
+ const base={schema:'robinhood-promo-scheduler-v1',manifest:c.manifest,lifecycle:c.lifecycle,campaignId:'1',shortBudgetMode:'FREE_SHORT',chunkSize:64,...(c.recognition?{recognition:c.recognition}:{})};
+ check(!c.recognition||(c.buyPolicy&&c.indexer),'Late recognition requires the shared canonical index');
  if(c.indexer!==undefined||c.buyPolicy!==undefined){
   check(c.buyPolicy&&c.indexer,'Pons indexed mode requires policy and indexer together');
   check(c.buyPolicy.genesisHash===require('./direct-buy.cjs').hash(c.manifest)&&c.buyPolicy.instanceId===c.lifecycle.instanceId&&String(c.buyPolicy.chainId)===String(c.manifest.chainId),'Pons policy identity mismatch');

@@ -3,7 +3,7 @@ const SCHEMA='pons-project-events-v1';
 const n=x=>Number(BigInt(x)),low=x=>x.toLowerCase();
 const check=(v,m)=>{if(!v)throw Error('Project history: '+m);};
 function genesis(input){return input.versions?input.versions[0].manifest:input;}
-function watched(input,lifecycle,extra=[]){const m=genesis(input);return [...new Set([m.token,m.curve,m.registry,lifecycle?.source,lifecycle?.monthlySource,lifecycle?.vault,...extra].filter(Boolean).map(low))].sort();}
+function watched(input,lifecycle,extra=[]){const m=genesis(input);return [...new Set([m.token,m.curve,m.registry,lifecycle?.source,lifecycle?.monthlySource,lifecycle?.vault,input.recognition?.source,...extra].filter(Boolean).map(low))].sort();}
 function relevant(log,m,addresses){return addresses.includes(low(log.address))||!!(m.manager&&low(log.address)===low(m.manager)&&log.topics[1]?.toLowerCase()===m.poolId?.toLowerCase());}
 function mark(blocks,input,lifecycle,previous,extra=[]){
  const m=genesis(input),addresses=watched(input,lifecycle,extra);let prev=previous??{number:n(m.anchor.number),hash:low(m.anchor.hash)};
@@ -31,7 +31,7 @@ function compact(blocks,input,lifecycle,{tail=128,extra=[]}={}){
   const transactions=b.transactions.filter(({tx,receipt})=>receipt.logs.some(l=>relevant(l,m,addresses))||(hasProjectEvent&&tx.authorizationList?.length));
   if(!transactions.length&&n(b.number)<end-tail&&!notices.has(n(b.number)))continue;
   const out={number:b.number,hash:b.hash,parentHash:b.parentHash,timestamp:b.timestamp,transactions};
-  if(transactions.length){for(const key of ['batchAccounts','entrypointAccounts','projectReferences'])if(b[key])out[key]=b[key];}
+  if(transactions.length){for(const key of ['batchAccounts','entrypointAccounts','projectReferences','recognitionSourceCode','recognitionBundles'])if(b[key])out[key]=b[key];}
   kept.push(out);
  }
  return mark(kept,input,lifecycle,undefined,extra);

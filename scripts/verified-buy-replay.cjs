@@ -9,7 +9,7 @@ function createVerifiedBuyReplay(){
   try{
    const identity=hash(manifest),digests=blocks.map(digest);
    const ordered=blocks.every((b,i)=>!i||BigInt(b.number)>BigInt(blocks[i-1].number));
-   const extendsPrior=ordered&&previous&&identity===previous.identity&&blocks.length>=previous.digests.length&&previous.digests.every((d,i)=>d===digests[i]);
+   const extendsPrior=!manifest.recognition&&ordered&&previous&&identity===previous.identity&&blocks.length>=previous.digests.length&&previous.digests.every((d,i)=>d===digests[i]);
    const offset=extendsPrior?previous.digests.length:0;
    const unchanged=extendsPrior&&offset===blocks.length;
    const result=unchanged?previous.result:replayWithCheckpoint(manifest,blocks.slice(offset),extendsPrior?previous.result:null);

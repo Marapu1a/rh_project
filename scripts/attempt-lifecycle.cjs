@@ -108,12 +108,13 @@ function replayAttemptsWith(input,config,deliveredBlocks,replayBuys){
   const monthPolicy=epoch=>monthEpochs.find(e=>e.epoch===epoch);
   const monthEpochAt=height=>monthEpochs.filter(e=>e.firstBlock<=height).at(-1);
   const events=[],history=new Map();
-  for(const d of buyLedger.decisions){
+  for(const d of [...buyLedger.decisions].sort(require('./purchase-recognition.cjs').order)){
     if(d.status!=='ELIGIBLE')continue;
+    const credit=require('./purchase-recognition.cjs').position(d);
     const count=BigInt(d.entriesMinted),list=history.get(d.payer)||[];
-    list.push({blockNumber:d.blockNumber,total:(list.at(-1)?.total||0n)+count});history.set(d.payer,list);
-    events.push({type:'MINT',count,wallet:d.payer,occurrenceId:d.candidateId,blockNumber:d.blockNumber,blockHash:d.blockHash,
-      transactionHash:d.transactionHash,transactionIndex:d.transactionIndex,logIndex:d.logIndex});
+    list.push({blockNumber:credit.blockNumber,total:(list.at(-1)?.total||0n)+count});history.set(d.payer,list);
+    events.push({type:'MINT',count,wallet:d.payer,occurrenceId:d.candidateId,blockNumber:credit.blockNumber,blockHash:credit.blockHash,
+      transactionHash:credit.transactionHash,transactionIndex:credit.transactionIndex,logIndex:credit.logIndex});
   }
   const seen=new Set(),known=new Set(ABI.fragments.map(f=>f.topicHash));
   for(const block of blocks)for(const {receipt} of block.transactions)for(const log of receipt.logs){

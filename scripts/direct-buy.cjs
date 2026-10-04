@@ -192,6 +192,7 @@ function decodeTransaction(m,tx,receipt,block){
 // Branch replacement is full replay; stale committed draws are NOT repaired here.
 function replayEngine(input,deliveredBlocks,previous=null,capture=false){
   const policy=buyPolicyHistory(input),m=policy.genesis;
+  ensure(!input.recognition||!previous,"Recognition requires full project replay");
   const manifestHash=hash(input),checkpoint=previous?.checkpoint,prior=previous?.ledger;
   if(previous){
     ensure(checkpoint?.schema==='buy-replay-checkpoint-v1'&&checkpoint.manifestHash===manifestHash,'Replay checkpoint policy mismatch');
@@ -265,6 +266,7 @@ function replayEngine(input,deliveredBlocks,previous=null,capture=false){
     finality:'canonical-in-supplied-branch-not-eligible-for-commit',
     registrations:[...registrations.values()].sort((a,b)=>a.participant.localeCompare(b.participant)),decisions,
     wallets:[...wallets].sort(([a],[b])=>a.localeCompare(b)).map(([wallet,w])=>({wallet,carryRaw:String(w.carryRaw),entriesMinted:String(w.entriesMinted),shortAttemptsMinted:String(w.entriesMinted),monthlyAttemptsMinted:String(w.entriesMinted)}))};
+  if(input.recognition)require('./purchase-recognition.cjs').apply(input,blocks,ledger);
   return {ledger,checkpoint:capture?{schema:'buy-replay-checkpoint-v1',manifestHash,head:ledger.head,ledgerHash:hash(ledger),registryDeployed,txHashes:[...txHashes]}:null};
 }
 function replay(input,blocks){return replayEngine(input,blocks).ledger;}

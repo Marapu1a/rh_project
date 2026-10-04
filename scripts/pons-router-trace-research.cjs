@@ -1,4 +1,5 @@
-// Offline research only. Never imported by admission/indexer or used to mint tickets.
+// Execution-shape matcher. Its research result alone is never admission;
+// purchase-recognition adds source commitments, runtime pins and canonical replay.
 const E=require('ethers'),P=require('./pons-curve-buy.cjs'),A=require('./pons-channel-attribution.cjs');
 const ROUTER='0x65050a9b7e5075a2ba5ced7b1b64ee66262c40dc';
 const low=x=>String(x).toLowerCase(),check=(v,m)=>{if(!v)throw Error(m);};

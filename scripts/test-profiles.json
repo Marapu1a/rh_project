@@ -145,7 +145,9 @@
       "test/deployment-console-ui.test.cjs",
       "test/pons-receipt-scan.test.cjs",
       "test/project-history.test.cjs",
-      "test/operations-rpc-storage.test.cjs"
+      "test/operations-rpc-storage.test.cjs",
+      "test/purchase-recognition.test.cjs",
+      "test/purchase-recognition-source.test.cjs"
     ]
   },
   "accounting": {
@@ -668,6 +670,20 @@
       "test/wallet-reward-completeness.test.cjs",
       "test/public-rpc-qualification.test.cjs",
       "test/indexer-service.test.cjs"
+    ]
+  },
+  "purchase-recognition": {
+    "compile": false,
+    "files": [
+      "test/purchase-recognition.test.cjs",
+      "test/purchase-recognition-source.test.cjs",
+      "test/attempt-lifecycle.test.cjs",
+      "test/attempt-lifecycle-dual.test.cjs",
+      "test/verified-buy-replay.test.cjs",
+      "test/pons-policy-indexer.test.cjs",
+      "test/shared-index-config.test.cjs",
+      "test/pons-router-trace-research.test.cjs",
+      "test/user-status-cache.test.cjs"
     ]
   }
 }

@@ -7,7 +7,10 @@ const {replayAttempts,createReplayAttempts}=require('./attempt-lifecycle.cjs');
 function prepare(config,raw,replay=replayAttempts){
   const {checksum,...state}=JSON.parse(raw);
   if(!validIndexerChecksum(state,checksum)||state.configHash!==hash({kind:'persistent-buy-indexer-v1',config})||state.index?.policyStatus?.mode!=='admitted'||!config.lifecycle)throw Error('Invalid snapshot');
-  const index=state.index,ledger=replay(index.manifest,config.lifecycle,index.blocks);
+  const index=state.index;
+  const expectedRecognition=config.recognition?require('./purchase-recognition.cjs').attach(config.manifest,config.recognition).recognition:null;
+  if(hash(index.manifest.recognition??null)!==hash(expectedRecognition))throw Error('Recognition trust mismatch');
+  const ledger=replay(index.manifest,config.lifecycle,index.blocks);
   state.status={...state.status,...(index.evidenceMode?{evidenceMode:index.evidenceMode}: {})};
   if(ledger.head.number!==index.head||hash(ledger.buyLedger)!==index.ledgerHash)throw Error('Invalid snapshot');
  let projected=null;
@@ -26,7 +29,7 @@ function render(config,view,{wallet,offset=0,limit=25,now=Date.now()}){
   const address=wallet.toLowerCase(),balance=view.balances.get(address),buy=view.buys.get(address);
   const empty=()=>({mintedTotal:'0',open:'0',frozenByDraw:{},consumedTotal:'0'});
   const decisions=(view.decisions.get(address)??[]);
-  const purchases=decisions.slice(offset,offset+limit).map(d=>Object.fromEntries(['transactionHash','blockNumber','blockHash','logIndex','status','reason','grossQuoteRaw','netQuoteDebitRaw','entriesMinted','poolQuoteRaw','routeFeeQuoteRaw','positiveSlippageTokenRaw','observedSender','observedAccount','attribution','userOpHash','entryPoint'].filter(k=>d[k]!==undefined).map(k=>[k,d[k]])));
+  const purchases=decisions.slice(offset,offset+limit).map(d=>Object.fromEntries(['transactionHash','blockNumber','blockHash','logIndex','status','reason','grossQuoteRaw','netQuoteDebitRaw','entriesMinted','poolQuoteRaw','routeFeeQuoteRaw','positiveSlippageTokenRaw','observedSender','observedAccount','attribution','userOpHash','entryPoint','recognition','creditedAt'].filter(k=>d[k]!==undefined).map(k=>[k,d[k]])));
   let rewards=null;
   if(index.rewards){
    const rows=view.rewards.get(address)??[];

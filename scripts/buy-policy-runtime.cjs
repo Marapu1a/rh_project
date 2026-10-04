@@ -12,12 +12,12 @@ async function resolveBuyPolicy(config,rpc,cutoff){
  if(!config.buyPolicy){
   const local=String(config.manifest.chainId)==='31337'&&config.manifest.schema==='direct-buy-v1';
   if(config.buyPolicyMode!=='unadmitted'&&(!local||config.buyPolicyMode==='admitted'))throw Error('BUY policy trust required; use explicit unadmitted mode only for research');
-  return {manifest:config.manifest,policyStatus:{mode:'unadmitted',reason:local?'Local genesis fixture; no source admission':'Explicit research genesis; no source admission'}};
+  return {manifest:require('./purchase-recognition.cjs').attach(config.manifest,config.recognition),policyStatus:{mode:'unadmitted',reason:local?'Local genesis fixture; no source admission':'Explicit research genesis; no source admission'}};
  }
  const admitted=await loadBuyPolicy({trust:config.buyPolicy,genesis:config.manifest,rpc,cutoff});
  const height=cutoff??admitted.checkpoint.number;
  if(!Number.isSafeInteger(height)||height>admitted.checkpoint.number)throw Error('BUY policy cutoff is not finalized');
- const manifest=prefix(admitted.history,height);
+ const manifest=require('./purchase-recognition.cjs').attach(prefix(admitted.history,height),config.recognition);
  buyPolicyHistory(manifest).at(height);
  return {manifest,admission:admitted,cutoff:height,policyStatus:{mode:'admitted',trustHash:admitted.trustHash,checkpoint:admitted.checkpoint,pendingAdapters:admitted.pendingAdapters}};
 }

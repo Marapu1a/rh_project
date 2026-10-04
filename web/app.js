@@ -178,8 +178,9 @@ function renderPurchases(data){
  let box=$('purchase-status');if(!box){box=document.createElement('section');box.id='purchase-status';$('provenance').parentElement.after(box);}box.replaceChildren();
  const heading=document.createElement('h3');heading.textContent='Your observed purchases';box.append(heading);
  const info=document.createElement('p');info.textContent='Only supported routes earn tickets. This is the activity our indexer could attribute to your wallet, not your complete trading history.';box.append(info);
- const labels={ELIGIBLE:'Counted toward tickets',INELIGIBLE:'Does not qualify',UNSUPPORTED_ROUTE:'This route is not supported yet',AMBIGUOUS:'Could not verify this purchase'};
+ const labels={ELIGIBLE:'Counted toward tickets',INELIGIBLE:'Does not qualify',WAITING_RECOGNITION:'Waiting for purchase verification',UNSUPPORTED_ROUTE:'This route is not supported yet',AMBIGUOUS:'Could not verify this purchase'};
  for(const purchase of data.purchases?.items??[]){const p=document.createElement('p');p.textContent=`${String(purchase.transactionHash).slice(0,12)}… · ${labels[purchase.status]??'Still checking'}${purchase.status==='ELIGIBLE'?` · ${purchase.entriesMinted??'0'} ticket pairs added`:''}`;
+  if(purchase.creditedAt){const note=document.createElement('span');note.textContent=` � Verified at block ${purchase.creditedAt.blockNumber}. Tickets became available for future draws at confirmation.`;p.append(note);}
   if(purchase.reason&&purchase.status!=='ELIGIBLE'){const detail=document.createElement('details'),summary=document.createElement('summary'),code=document.createElement('code');summary.textContent='Check detail';code.textContent=purchase.reason;detail.append(summary,code);p.append(detail);}box.append(p);}
  if(!data.purchases?.items?.length){const p=document.createElement('p');p.textContent='No attributed purchases in this snapshot. A missing purchase is not proof that it was rejected.';box.append(p);}
  if(data.purchases){const p=document.createElement('p');p.textContent=`Showing ${data.purchases.items.length} of ${data.purchases.total} observed purchases.`;box.append(p);}

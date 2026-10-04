@@ -56,7 +56,7 @@ async function scanWithRpc(input,rpc,toBlock,lifecycle=null,{fromBlock,mode,watc
     if(!block||BigInt(block.number)!==n||!Array.isArray(block.transactions))throw Error('Invalid scan block');
     if(sparse){
       const bloom=require('./pons-bloom-evidence.cjs'),ponsOmission=bloom.encodeHeader(block);
-      if(!bloom.relevant(block.logsBloom,manifest,[lifecycle?.source,lifecycle?.monthlySource,lifecycle?.vault])){
+      if(!bloom.relevant(block.logsBloom,manifest,[lifecycle?.source,lifecycle?.monthlySource,lifecycle?.vault,input.recognition?.source,...watchAddresses])){
         return {number:block.number,hash:block.hash,parentHash:block.parentHash,timestamp:block.timestamp,transactions:[],ponsOmission};
       }
       const full=await rpc('eth_getBlockByNumber',[tag(n),true]);

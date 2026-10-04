@@ -31,6 +31,14 @@ async function setup(t,{late=false}={}){
 }
 async function choose(page,name='Alpha'){await page.locator('header .connect').click();await page.getByRole('button',{name,exact:true}).click();await page.waitForFunction(()=>!document.querySelector('header .connect').disabled&&document.getElementById('disconnect').hidden===false);}
 async function count(page,n){await page.waitForFunction(n=>document.getElementById('short-count').textContent===n,n);}
+
+test('late purchase shows waiting and then confirmation without changing its original transaction',async t=>{
+ const {page}=await setup(t);let confirmed=false;
+ await page.route('**/v1/wallets/**',r=>r.fulfill({contentType:'application/json',body:JSON.stringify({schema:'promo-wallet-status-v1',status:'observed',wallet:A,provenance:{chainId:'4663',head:{number:20}},balances:{SHORT:{open:confirmed?'2':'0'},MONTHLY:{open:confirmed?'2':'0'},carryRaw:'0',entryThresholdRaw:'100',quoteDecimals:0},purchases:{items:[{transactionHash:'0x'+'a'.repeat(64),blockNumber:10,status:confirmed?'ELIGIBLE':'WAITING_RECOGNITION',entriesMinted:confirmed?'2':'0',...(confirmed?{creditedAt:{blockNumber:20}}:{})}],total:1},rewards:{items:[],total:0}})}));
+ await choose(page);await page.getByText('Waiting for purchase verification',{exact:false}).waitFor();await count(page,'0');
+ confirmed=true;await page.locator('#refresh').click();await count(page,'2');
+ await page.getByText('Verified at block 20.',{exact:false}).waitFor();assert.match(await page.locator('#purchase-status').innerText(),/0xaaaaaaaaaa/);
+});
 test('multiple providers, deduplication, account selection and provider cleanup',async t=>{
  const {page}=await setup(t);assert.equal(await page.evaluate(()=>calls.length),0);await page.locator('header .connect').click();
  await page.evaluate(()=>{ws.Alpha.announce();ws.Beta.announce();});assert.equal(await page.locator('#wallet-options button').count(),2);

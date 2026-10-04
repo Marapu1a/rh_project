@@ -1,0 +1,237 @@
+{
+  "schema": "purchase-recognition-read-probe-v1",
+  "date": "2026-10-04",
+  "mode": "real retained purchases and freshly read RPC proofs; SYNTHETIC confirmation block/source; local replay only",
+  "count": 28,
+  "bundleHash": "0x83002bf7f793beb7b0c6594d7f2d2247b8effdc06317c4e529d50cdea9823f7c",
+  "bytes": 926536,
+  "transactions": [
+    "0xb64952128bacef2516f47eca910eab4c324f032ef115a41315a21d4bda500c79",
+    "0x1859bc5352b7e00f078e36224088aaefacc69e66f89a7a2f50080366acbc7ff8",
+    "0x12fd7b10f4f3529b18316e8485fc4c129b7abd66fe8fed51ef7232f3dc7a47fa",
+    "0xe4108a1b3497ba6611450450f9eb29ac6b09429c4eed3702ce189507b68f95b6",
+    "0xad6d1cf57ac30d40b832b6327f9c36f28a2f506a2bbcb758858e10896143ca03",
+    "0x7b1f808c8c480bfc09adb5437dd2b04ab9892722bd6877c4f1c066365e516bce",
+    "0xa0f449e13cf7659b731913c7662fc56e1b6ce1c680a420bb5917c498770efbc3",
+    "0x7e904bbbdacd41ff972ee5a5833ac0055cd40e0acf143ac57d73d63ad98f167f",
+    "0xeb4228dbc60761390d905d8570c82ae8614ba962519cc30c51d67a2f0fb47ba0",
+    "0x366150da9c5cb4cb0a607f0fe7d22e370044988f00727c645621c7fb4a0425e9",
+    "0x93a94204cdac4f1419e80316b60dc88dd643777e3803191869aa85010911be3c",
+    "0xa845840a995f6c9f0a744be37c0a54376ceb3e0926a745865e4bd80d3300b639",
+    "0xf1d6bad36db433b4ed996745c6a939ca4918131de40386a9c3657404f89ec779",
+    "0x094bc0f4ef596799311c378c6d47d02113cd51e7ec0e70ae4d81ce567241edb1",
+    "0x1d0972e6e69a3b7c8298bf167ca872aa0a8679959b5840977322a530b870ed4f",
+    "0x7c747a47b736754bb6f030204ece9ca6bda2b17ed4a8c587ccfcbe03e702efcf",
+    "0x5c2517a8050d6a559380693f2a205a94744b84cd4679c1453fbbcd46008c7f6b",
+    "0xb4a6b438f62bdc104e201f8834bc014eb839a0b97b3b9060805ef03cc79d1ab2",
+    "0xa5d3aeeef38386a8a96b8cf60b6570dd9e070137d0e1807123d4e5c376b12b75",
+    "0xe69466809d47916c246e08cd3aa15d367b2b7ae3d9802187a5b6517cefd682ba",
+    "0x063471a443483268289aa89602fc63ea5445877656a1673df0723159a13d7ec2",
+    "0x947db2a3e999b8a6056d69d494d9adf6b62cb7a8dca032c1f64bad9ca0ee5f55",
+    "0x38b89b695f86e73e9f38caabc78a6cb37355a9423e81fc48a82b3001b093c930",
+    "0xfc13e57b83ab019fc6bfb23c0f932d1c28abeb3eca29fe82017d39d14107d973",
+    "0x927aa5b73613f1af311de4d5bac43ff95cc876c1e32b33d451767857139c8429",
+    "0x38b623bf1c946d5f8e95967b0a543bef6eac4a2568facd5e417e7cb84a3851e5",
+    "0xc1ded7278f5b3931a87e539c4bb6a0534d3c3b1254857ab1ced1afcdac1f61ad",
+    "0xe22f1fbaedac452143cd63747d2ad7f096477531df39ef53b707fb032441757f"
+  ],
+  "sent": false,
+  "sourceHead": 79518814,
+  "originalDrawsPreserved": true,
+  "beforeMinted": "0",
+  "afterMinted": "14",
+  "confirmed": 28,
+  "waiting": 24,
+  "elapsedMs": 216.23470000000003,
+  "wallets": [
+    {
+      "wallet": "0x023d068f3d2fe0b2bfca389c96a7f2768ac0d931",
+      "carryRaw": "65965515",
+      "entriesMinted": "2",
+      "shortAttemptsMinted": "2",
+      "monthlyAttemptsMinted": "2"
+    },
+    {
+      "wallet": "0x04e4c506b92372d5dbc92d59a08fd805410528cc",
+      "carryRaw": "66492346",
+      "entriesMinted": "0",
+      "shortAttemptsMinted": "0",
+      "monthlyAttemptsMinted": "0"
+    },
+    {
+      "wallet": "0x08f8fef2b7636cdde9ea6d576d72c9bef1fb9ca8",
+      "carryRaw": "34519551",
+      "entriesMinted": "0",
+      "shortAttemptsMinted": "0",
+      "monthlyAttemptsMinted": "0"
+    },
+    {
+      "wallet": "0x097ccd00d6af3f85bd13587fc2f5bbc806cbf170",
+      "carryRaw": "21085817",
+      "entriesMinted": "0",
+      "shortAttemptsMinted": "0",
+      "monthlyAttemptsMinted": "0"
+    },
+    {
+      "wallet": "0x0a421199d91909b0c2a39ca0bcb01482c9c33f55",
+      "carryRaw": "26601093",
+      "entriesMinted": "0",
+      "shortAttemptsMinted": "0",
+      "monthlyAttemptsMinted": "0"
+    },
+    {
+      "wallet": "0x1dced1e34f67fbe36036fa24d2b5a92a1a45fdd9",
+      "carryRaw": "11465071",
+      "entriesMinted": "0",
+      "shortAttemptsMinted": "0",
+      "monthlyAttemptsMinted": "0"
+    },
+    {
+      "wallet": "0x3126078488a7ef3df0ee9da108d9d5e144fa5226",
+      "carryRaw": "2000000",
+      "entriesMinted": "0",
+      "shortAttemptsMinted": "0",
+      "monthlyAttemptsMinted": "0"
+    },
+    {
+      "wallet": "0x366b907694aa0943883546d1ba53e7875a063a1b",
+      "carryRaw": "2659647",
+      "entriesMinted": "0",
+      "shortAttemptsMinted": "0",
+      "monthlyAttemptsMinted": "0"
+    },
+    {
+      "wallet": "0x4a92b75d86eba7fd957025dfea154b6c7c863393",
+      "carryRaw": "21911724",
+      "entriesMinted": "0",
+      "shortAttemptsMinted": "0",
+      "monthlyAttemptsMinted": "0"
+    },
+    {
+      "wallet": "0x55f3422138e9fed0bd81351bff66c882550002e8",
+      "carryRaw": "65965039",
+      "entriesMinted": "2",
+      "shortAttemptsMinted": "2",
+      "monthlyAttemptsMinted": "2"
+    },
+    {
+      "wallet": "0x5853afac5efb02f5a07325cfc55bdb30f34389df",
+      "carryRaw": "26596625",
+      "entriesMinted": "0",
+      "shortAttemptsMinted": "0",
+      "monthlyAttemptsMinted": "0"
+    },
+    {
+      "wallet": "0x61435de8961424cc48999329d396713af7169c13",
+      "carryRaw": "46276270",
+      "entriesMinted": "1",
+      "shortAttemptsMinted": "1",
+      "monthlyAttemptsMinted": "1"
+    },
+    {
+      "wallet": "0x61b5207edb92c95bcee2fd3326617fdec50fc0c2",
+      "carryRaw": "66037918",
+      "entriesMinted": "2",
+      "shortAttemptsMinted": "2",
+      "monthlyAttemptsMinted": "2"
+    },
+    {
+      "wallet": "0x6fb50f9afc513aebe4d1e303c83200c5b3977f61",
+      "carryRaw": "32998039",
+      "entriesMinted": "1",
+      "shortAttemptsMinted": "1",
+      "monthlyAttemptsMinted": "1"
+    },
+    {
+      "wallet": "0x8c2733a490b40eee2ec2e9423c4533f44736fd55",
+      "carryRaw": "66492376",
+      "entriesMinted": "0",
+      "shortAttemptsMinted": "0",
+      "monthlyAttemptsMinted": "0"
+    },
+    {
+      "wallet": "0x8e9f3182835aa7d5d94cd706e6be99429439cff1",
+      "carryRaw": "37717585",
+      "entriesMinted": "0",
+      "shortAttemptsMinted": "0",
+      "monthlyAttemptsMinted": "0"
+    },
+    {
+      "wallet": "0x92f38964f5acfdbf5ebc41366973e444e6f8b740",
+      "carryRaw": "17791040",
+      "entriesMinted": "0",
+      "shortAttemptsMinted": "0",
+      "monthlyAttemptsMinted": "0"
+    },
+    {
+      "wallet": "0x9ab81cfdb4a8c2b0d1f8173513c4d2874d851a3c",
+      "carryRaw": "46276202",
+      "entriesMinted": "1",
+      "shortAttemptsMinted": "1",
+      "monthlyAttemptsMinted": "1"
+    },
+    {
+      "wallet": "0x9b140a3a7fe193f46121835fcdcabb957739b187",
+      "carryRaw": "39901654",
+      "entriesMinted": "0",
+      "shortAttemptsMinted": "0",
+      "monthlyAttemptsMinted": "0"
+    },
+    {
+      "wallet": "0xbfebff3812b8a87857ae1150ab62e08094ce3367",
+      "carryRaw": "18348163",
+      "entriesMinted": "0",
+      "shortAttemptsMinted": "0",
+      "monthlyAttemptsMinted": "0"
+    },
+    {
+      "wallet": "0xc0c0e4f7cb82c826a2596f50ae01cafeac61085d",
+      "carryRaw": "32998394",
+      "entriesMinted": "1",
+      "shortAttemptsMinted": "1",
+      "monthlyAttemptsMinted": "1"
+    },
+    {
+      "wallet": "0xc77b5585ca3cd4beec6051cca89921a2f01d9a5c",
+      "carryRaw": "0",
+      "entriesMinted": "2",
+      "shortAttemptsMinted": "2",
+      "monthlyAttemptsMinted": "2"
+    },
+    {
+      "wallet": "0xc917c3ac178cf19c4aa495775ea11d4b2976b19a",
+      "carryRaw": "6000000",
+      "entriesMinted": "0",
+      "shortAttemptsMinted": "0",
+      "monthlyAttemptsMinted": "0"
+    },
+    {
+      "wallet": "0xca0546a46ea2fdb80b08d8ac37181f425181caea",
+      "carryRaw": "53211203",
+      "entriesMinted": "0",
+      "shortAttemptsMinted": "0",
+      "monthlyAttemptsMinted": "0"
+    },
+    {
+      "wallet": "0xd6853246a81be86e5bcff25e7e08f7475c977958",
+      "carryRaw": "32998157",
+      "entriesMinted": "1",
+      "shortAttemptsMinted": "1",
+      "monthlyAttemptsMinted": "1"
+    },
+    {
+      "wallet": "0xd754de7eaea4bddc5091ed492d4720f2c581653f",
+      "carryRaw": "3192906",
+      "entriesMinted": "0",
+      "shortAttemptsMinted": "0",
+      "monthlyAttemptsMinted": "0"
+    },
+    {
+      "wallet": "0xf8b691fc58b61a633ef616318bda8c65e9410fa3",
+      "carryRaw": "32998276",
+      "entriesMinted": "1",
+      "shortAttemptsMinted": "1",
+      "monthlyAttemptsMinted": "1"
+    }
+  ]
+}
