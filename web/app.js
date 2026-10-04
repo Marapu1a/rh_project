@@ -33,7 +33,7 @@ window.addEventListener('eip6963:announceProvider',e=>{
  scheduleRestore();
 });
 function emptyRewards(title,copy){const td=document.createElement('td');td.colSpan=3;const box=document.createElement('div');box.className='empty-state';const h=document.createElement('h3');h.textContent=title;const p=document.createElement('p');p.textContent=copy;box.append(h,p);td.append(box);const tr=document.createElement('tr');tr.append(td);$('rewards-body').replaceChildren(tr);}
-function resetData(message){invalidateClaims();$('purchase-status')?.remove();if($('locked-tickets'))$('locked-tickets').replaceChildren();$('short-count').textContent='—';$('monthly-count').textContent='—';$('carry').textContent=message;$('provenance').textContent='We can’t confirm the numbers right now.';emptyRewards('PRIZES: WAITING FOR DATA',message);}
+function resetData(message,{keepToken=false}={}){if(!keepToken&&$('token-balance'))$('token-balance').textContent='—';invalidateClaims();$('purchase-status')?.remove();if($('locked-tickets'))$('locked-tickets').replaceChildren();$('short-count').textContent='—';$('monthly-count').textContent='—';$('carry').textContent=message;$('provenance').textContent='We can’t confirm the numbers right now.';emptyRewards('PRIZES: WAITING FOR DATA',message);}
 function updateButtons(){for(const b of document.querySelectorAll('.connect')){const label=b.querySelector('.connect-label');const text=busy?'CONNECTING…':address?`${address.slice(0,6)}…${address.slice(-4)}`:'CONNECT WALLET';if(label)label.textContent=text;else b.textContent=text;b.disabled=busy;b.setAttribute('aria-label',address?`Manage wallet ${address}`:text);}$('disconnect').hidden=!provider;$('refresh').hidden=!address;}
 function disconnected(){restoreAllowed=false;clearTimeout(restoreTimer);session++;version++;detach();detach=()=>{};provider=null;currentWallet=null;address=null;accounts=[];chain=null;busy=false;forget();if(dialog.open)dialog.close();updateButtons();$('wallet-status').textContent='Wallet disconnected.';resetData('Connect and check your tickets.');}
 function applyAccounts(value,preferred=address){accounts=cleanAccounts(value);if(!accounts.length){disconnected();return false;}address=accounts.includes(preferred)?preferred:accounts[0];version++;remember();updateButtons();resetData('Getting this wallet’s numbers…');return true;}
@@ -101,10 +101,26 @@ function scheduleRestore(){
 }
 window.dispatchEvent(new Event('eip6963:requestProvider'));scheduleRestore();
 function units(raw,decimals){if(!/^\d+$/.test(String(raw))||!Number.isInteger(decimals)||decimals<0||decimals>36)throw Error('Invalid amount');const n=BigInt(raw),d=10n**BigInt(decimals),fraction=(n%d).toString().padStart(decimals,'0').replace(/0+$/,'');return (n/d).toLocaleString('en-US')+(fraction?'.'+fraction:'');}
+async function refreshTokenBalance(request,wallet){
+ const box=$('token-balance');if(!box)return;
+ if(siteActions||chain!==4663n){box.textContent='Unavailable on this network';return;}
+ box.textContent='Loading…';const p=provider,token=document.body.dataset.marketToken;
+ try{
+  if(!/^0x[\da-f]{40}$/i.test(token))throw Error();
+  const [raw,dec]=await Promise.all([
+   rpc(p,'eth_call',[{to:token,data:'0x70a08231'+wallet.slice(2).padStart(64,'0')},'latest']),
+   rpc(p,'eth_call',[{to:token,data:'0x313ce567'},'latest'])]);
+  if(request!==version||p!==provider)return;
+  if(!/^0x[\da-f]{64}$/i.test(raw)||!/^0x[\da-f]{64}$/i.test(dec))throw Error();
+  const decimals=Number(BigInt(dec));
+  box.textContent=units(BigInt(raw).toString(),decimals);
+ }catch{if(request===version&&p===provider)box.textContent='Unable to load';}
+}
 async function refresh(){
  const request=++version,wallet=address;if(!wallet)return;
  await actionsReady;if(request!==version)return;
  if(chain!==expectedChain){$('wallet-status').textContent=`Wrong network. Tap your wallet address and choose ${networkLabel()}.`;resetData(`Switch to ${networkLabel()} to see your tickets and prizes.`);return;}
+ void refreshTokenBalance(request,wallet);
  $('wallet-status').textContent='Fetching your tickets and prizes…';
  try{
   const res=await fetch(`/v1/wallets/${wallet}?limit=25`,{cache:'no-store',signal:AbortSignal.timeout(10000)});const data=await res.json();if(request!==version)return;
@@ -131,12 +147,12 @@ async function refresh(){
    attachClaims(data,claimVersion);
   }
   renderPurchases(data);
- }catch{if(request!==version)return;resetData('We can’t load your tickets right now. That doesn’t mean you have none.');$('wallet-status').textContent='Data unavailable. Give Refresh a try in a moment.';}
+ }catch{if(request!==version)return;resetData('We can’t load your tickets right now. That doesn’t mean you have none.',{keepToken:true});$('wallet-status').textContent='Data unavailable. Give Refresh a try in a moment.';}
 }
 for(const b of document.querySelectorAll('.connect'))b.addEventListener('click',()=>void chooseWallet());
 $('disconnect').addEventListener('click',disconnected);$('refresh').addEventListener('click',()=>void refresh());
 $('buy').addEventListener('click',()=>{
- const token=siteActions?.publishedMarketToken;
+ const token=siteActions?siteActions.publishedMarketToken:document.body.dataset.marketToken;
  if(typeof token==='string'&&/^0x[\da-f]{40}$/i.test(token)){
   show('Buy on Pons',`Pons opens the trading page for ${token}. Check the token and payment route there. Only supported purchases earn tickets.`,{choices:[{name:'Open Pons',action:()=>window.open('https://www.ponsfamily.com/launchpad/'+token,'_blank','noopener,noreferrer')}]});
  }else show('Buy link: coming soon','We haven’t added a checked buy link yet. Before you buy, make sure the token address and route match the ones we publish.');

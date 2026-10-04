@@ -6,7 +6,7 @@ async function open(t){const server=createSite();await new Promise(r=>server.lis
 async function inject(page,{chain='0x1237',reject=false}={}){await page.addInitScript(({wallet,chain,reject})=>{window.walletEvents={};window.ethereum={request:async({method})=>{if(reject)throw {code:4001};if(method==='eth_requestAccounts')return [wallet];if(method==='eth_chainId')return chain;throw Error('Unexpected wallet operation');},on:(name,fn)=>{window.walletEvents[name]=fn;},removeListener:name=>{delete window.walletEvents[name];}};},{wallet,chain,reject});}
 test('desktop/mobile layout, rules, honest pre-launch and no-wallet dialog',async t=>{
  const {page,url}=await open(t);await page.goto(url);assert.match(await page.title(),/QIANQI/);
- await page.locator('#buy').click();assert.match(await page.locator('#dialog-copy').textContent(),/checked buy link/);await page.keyboard.press('Escape');
+ await page.locator('#buy').click();assert.match(await page.locator('#dialog-copy').textContent(),/checked buy link|Check the token and payment route/);await page.keyboard.press('Escape');
  await page.locator('header .connect').click();assert.match(await page.locator('#dialog-title').textContent(),/Wallet required/);await page.keyboard.press('Escape');
  await page.locator('summary').first().click();assert.equal(await page.locator('details').first().getAttribute('open'),'');
  for(const width of [1440,768,390,320]){await page.setViewportSize({width,height:900});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,`overflow at ${width}`);}

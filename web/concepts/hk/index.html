@@ -14,7 +14,7 @@
     <script src="/overview.js" defer></script>
 </head>
 
-<body>
+<body data-market-token="0x6EA39A23AA46E51CA6CD2d1cbc0B5bfb29ECB216">
     <header>
         <nav class="wrap" aria-label="Main navigation"><a class="brand" href="#">QIANQI<span
                     lang="zh-Hant">千祺</span></a>
@@ -33,8 +33,7 @@
                     <p>A speculative token with a little extra thrill: USDG prize draws. Eligible buys get you in
                         automatically once the draws are live. No registration. No staking. No hoops to jump through.</p>
                     <p>Trading fees fuel the prizes. Donations can top them up. No magic money, no guaranteed wins.
-                        Know the risks. Let luck do its thing.</p><a
-                        class="text-link" href="#money">Follow the money </a>
+                        Know the risks. Let luck do its thing.</p><div class="hero-actions"><a class="button coral" href="https://www.ponsfamily.com/launchpad/0x6EA39A23AA46E51CA6CD2d1cbc0B5bfb29ECB216" target="_blank" rel="noopener noreferrer">BUY ON PONS ↗</a><a class="text-link" href="#market">View chart ↓</a></div>
                 </div>
                 <div class="mascot-scene">
                     <div class="orbit" aria-hidden="true"></div><span class="scene-character" lang="zh-Hant"
@@ -44,6 +43,11 @@
                 </div>
                 <div class="vertical-note" aria-hidden="true">FORTUNE FINDS YOU HERE · 運氣就在這裡</div>
             </div>
+        </section>
+        <section class="market wrap" id="market" aria-labelledby="market-title">
+            <div class="market-heading"><div><span class="index-label">THE MARKET</span><h2 id="market-title">QIANQI / USDG</h2></div><a class="button coral" href="https://www.ponsfamily.com/launchpad/0x6EA39A23AA46E51CA6CD2d1cbc0B5bfb29ECB216" target="_blank" rel="noopener noreferrer">BUY ON PONS ↗</a></div>
+            <iframe title="QIANQI / USDG price chart by GeckoTerminal" src="https://www.geckoterminal.com/robinhood/pools/0x12ba58b5455fdbc15165e0e8b2096498d2c684f1?embed=1&amp;info=0&amp;swaps=0&amp;light_chart=1&amp;chart_type=price&amp;resolution=15m&amp;bg_color=f5f2e9" loading="lazy" allow="clipboard-write" allowfullscreen referrerpolicy="no-referrer"></iframe>
+            <p class="market-source">Chart by <a href="https://www.geckoterminal.com/robinhood/pools/0x12ba58b5455fdbc15165e0e8b2096498d2c684f1" target="_blank" rel="noopener noreferrer">GeckoTerminal ↗</a>. If the chart is unavailable, open it there. Only eligible purchases count toward tickets.</p>
         </section>
         <section class="panel how wrap" id="how">
             <div class="section-heading">
@@ -78,8 +82,6 @@
                     </div>
                     <div class="bank"><strong id="short-bank">—</strong><span>USDG</span></div>
                     <p id="short-draw-state">Waiting for live data</p><p id="short-time" class="small">At least 6 hours between draws</p>
-                    <div class="draw-card-meta"><span>Starts with a 100 USDG pool</span><span>Up to 10 prizes</span>
-                    </div>
                 </article>
                 <article class="draw-card monthly">
                     <div class="draw-card-title">
@@ -87,7 +89,6 @@
                     </div>
                     <div class="bank"><strong id="monthly-bank">—</strong><span>USDG</span></div>
                     <p id="monthly-draw-state">Waiting for live data</p><p id="monthly-time" class="small">At least 30 days between draws</p>
-                    <div class="draw-card-meta"><span>75%: one winner</span><span>25% rollover</span></div>
                 </article>
             </div>
         </section>
@@ -111,7 +112,7 @@
                 </div>
                 <div id="locked-tickets" aria-live="polite"></div><p id="carry">Connect and check your tickets.</p><button class="button dark connect"><span class="connect-label">CONNECT WALLET</span></button><button class="text-button" id="disconnect" hidden>Disconnect this
                     site</button>
-                <p class="small">Eligible buys get tickets. Holding alone doesn’t.</p>
+                <div class="token-holding"><span>QIANQI IN YOUR WALLET</span><strong id="token-balance" aria-live="polite">—</strong></div><p class="small">Holding alone doesn’t earn tickets.</p>
             </aside>
             <article class="panel rewards">
                 <div class="section-heading">

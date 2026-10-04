@@ -19,7 +19,7 @@ function createSite({apiOrigin='http://127.0.0.1:8787',purchaseDemo=false,action
  if(purchaseDemo)for(const name of ['index.html','style.css','review.js','demo.js'])routes.set('/purchase-demo/'+(name==='index.html'?'':name),'purchase-demo/'+name);
  const origin=new URL(apiOrigin);if(!['http:','https:'].includes(origin.protocol)||origin.username||origin.password||origin.pathname!=='/'||origin.search||origin.hash)throw Error('Invalid API origin');
  return http.createServer(async(req,res)=>{
-  res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('Referrer-Policy','no-referrer');res.setHeader('Content-Security-Policy',"default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'");
+  res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('Referrer-Policy','no-referrer');res.setHeader('Content-Security-Policy',"default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'self'; frame-src https://www.geckoterminal.com; object-src 'none'; base-uri 'none'; frame-ancestors 'none'");
   if(req.method!=='GET'){res.writeHead(405,{Allow:'GET'});res.end();return;}
   try{
    const url=new URL(req.url,'http://localhost');

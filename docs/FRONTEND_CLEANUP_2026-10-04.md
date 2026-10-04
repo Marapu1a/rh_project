@@ -9,3 +9,13 @@ Validation: `SITE_TEST_PATH=/concepts/hk/ node --test web/site.test.cjs web/wall
 Playwright screenshots and overflow checks at 1440, 768, 390, 320 px passed. Footer and mobile page visually inspected. Local transparency, notice and evidence pages return HTTP 200. `git diff --check` passed. Screenshots in `.local/logs/frontend-*.png`.
 
 Preview: http://127.0.0.1:4180/concepts/hk/ . Static preview proxies the public read-only API; data availability remains dependent on that API. No financial automation or production files changed. Production transfer is a separate next step.
+
+## Market chart and token balance follow-up
+
+Removed draw-card bottom strips; Monthly probabilities remain correctly explained in rules (75% payout / 25% rollover, not a money split). Added prominent Pons links in hero and market section, and connected the existing buy dialog to the published token address. No swap execution was added.
+
+GeckoTerminal official embed: https://about.geckoterminal.com/embed-charts . API search verified Robinhood pool 0x12ba58b5455fdbc15165e0e8b2096498d2c684f1 against QIANQI token 0x6EA39A23AA46E51CA6CD2d1cbc0B5bfb29ECB216. Real chart rendered in browser; screenshot `.local/logs/market-chart.png`. External availability is outside our control; direct chart link remains visible. Local server and nginx template allow only GeckoTerminal in frame-src. Apply this CSP change with the future production deployment.
+
+Connected wallet balance uses read-only eth_call balanceOf and decimals against the fixed published QIANQI address on chain4663. Exact integer formatting, network/account/disconnect guards, timeout/error display; no signature or transaction. Test deployment does not query the production token. Ticket API failure does not erase an independently read token balance.
+
+Validation: site/wallet/overview/token-balance tests: 19/21 initially; two old wallet assertions assumed no eth_call and were adjusted to retain checks on connection/permission methods. Those two reran 2/2 PASS. 21 unique cases passed across runs. New test covers exact large balance, read error, obsolete account response and disconnect. Mobile overflow checks320/390 passed. Production unchanged. Updated preview runs at http://127.0.0.1:4181/concepts/hk/ .

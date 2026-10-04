@@ -48,11 +48,11 @@ test('multiple providers, deduplication, account selection and provider cleanup'
  await page.getByRole('button',{name:'Change wallet',exact:true}).click();await page.getByRole('button',{name:'Beta',exact:true}).click();await count(page,'3');
  assert.equal(await page.evaluate(()=>[...ws.Alpha.events.values()].reduce((n,s)=>n+s.size,0)),0);
  await page.evaluate(()=>ws.Alpha.emit('accountsChanged',[]));await count(page,'3');
- assert.deepEqual(await page.evaluate(()=>[...new Set(calls.map(c=>c.method))]),['eth_requestAccounts','eth_chainId']);
+ assert.deepEqual(await page.evaluate(()=>[...new Set(calls.filter(c=>c.method!=='eth_call').map(c=>c.method))]),['eth_requestAccounts','eth_chainId']);
 });
 test('reload silently restores the selected account; disconnect prevents restoration',async t=>{
  const {page}=await setup(t);await choose(page);await count(page,'1');await page.locator('header .connect').click();await page.getByRole('button',{name:B,exact:true}).click();await count(page,'2');await page.reload();await count(page,'2');
- assert.deepEqual(await page.evaluate(()=>calls.map(c=>c.method)),['eth_accounts','eth_chainId']);assert.equal(await page.locator('#dialog').evaluate(d=>d.open),false);
+ assert.deepEqual(await page.evaluate(()=>calls.filter(c=>c.method!=='eth_call').map(c=>c.method)),['eth_accounts','eth_chainId']);assert.equal(await page.locator('#dialog').evaluate(d=>d.open),false);
  await page.locator('#disconnect').click();await page.reload();await page.waitForTimeout(350);assert.equal(await page.evaluate(()=>calls.length),0);assert.equal(await page.locator('#disconnect').isVisible(),false);
 });
 test('revoked permission does not trigger an interactive reconnect',async t=>{
