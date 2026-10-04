@@ -1,0 +1,13 @@
+{
+  "transactionHash": "0xcc7a87bfcb5ea1a2c136f1f249d55956b2a72ae4c16f824e97cd91dd1f036198",
+  "source": "0xD084329F25DE50afD68B154caFAC6A8d7046f97F",
+  "sourceCodeHash": "0xb14aeac4da2d4b7480685a7a8fda667c4ca4f113fec51131eb8343cacc147c8c",
+  "publisher": "0x7170c2d8Abd99C471B89ffcAaC765d5aD94D1Bf3",
+  "instanceId": "0x8a6a507aae35a2981afdf8e3637d013b5736b70a6621355254d55ccdc0a3da12",
+  "blockNumber": 79859732,
+  "blockHash": "0x56cac4f7ea24bd29cb47b1b2c7ac3a37194f203db31d011006a64af9204738fd",
+  "availableAt": "2026-10-05T10:19:59.000Z",
+  "finalizedBlock": 79850498,
+  "finalized": false,
+  "exactRuntimeMatched": true
+}
