@@ -81,3 +81,10 @@ Project-only Pons history: project-history/migrate-project-history — RPC-selec
 - `scripts/verify-live-pons-token-fork.cjs`: существующий deployed token, локальный BUY/transfer/SELL;
   upstream read-only, production runtime не запускает этот developer tool.
 - [Проверки/ограничения](NIGHT_PACKAGE_2026-10-04.md),23/23 адресных tests.
+
+### Исследование65050… (без admission)
+
+`scripts/pons-router-trace-research.cjs` связывает captured callTracer и receipt,
+показывает ETH/USDG funding и terminal BUY, всегда admitted=false.
+Fixtures `test/fixtures/pons-router-research`, tests в full/pons-channels.
+[Границы и implementation gaps](PONS_ROUTER_RESEARCH_2026-10-04.md).

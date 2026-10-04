@@ -1,0 +1,1561 @@
+{
+  "schema": "pons-router-research-report-v1",
+  "checkedAt": "2026-10-04T06:29:04.906Z",
+  "snapshotHead": 79518814,
+  "finalized": {
+    "number": 79714938,
+    "hash": "0x401d69174d7010f60857ab4c8c9d2684c83ea377cc09319667f778a15e78316e"
+  },
+  "admitted": false,
+  "codes": [
+    {
+      "address": "0x65050a9b7e5075a2ba5ced7b1b64ee66262c40dc",
+      "firstHash": "0xf9e0c7528d41526b7e818b1b8dcab413df3f20e8908b5386e4ba6f3c3ef07a8f",
+      "currentHash": "0xf9e0c7528d41526b7e818b1b8dcab413df3f20e8908b5386e4ba6f3c3ef07a8f",
+      "sameRuntime": true,
+      "bytes": 752,
+      "sourcify": {
+        "http": 404
+      }
+    },
+    {
+      "address": "0x56101165bcf508b288f383113892e6db6be6db0e",
+      "firstHash": "0x138db16738c14ad90956aecbd0939fcbf72e9d39755867e02b87a4d927a2f4ab",
+      "currentHash": "0x138db16738c14ad90956aecbd0939fcbf72e9d39755867e02b87a4d927a2f4ab",
+      "sameRuntime": true,
+      "bytes": 21138,
+      "sourcify": {
+        "http": 404
+      }
+    },
+    {
+      "address": "0xd17b21b65cc273a4b342f14b19063da8bb410dbd",
+      "firstHash": "0x0f3e60976384e62a8359f1c3a6424b488b12a05bfa82366fdffafd9d3d1fbf95",
+      "currentHash": "0x0f3e60976384e62a8359f1c3a6424b488b12a05bfa82366fdffafd9d3d1fbf95",
+      "sameRuntime": true,
+      "bytes": 1593,
+      "sourcify": {
+        "http": 404
+      }
+    },
+    {
+      "address": "0x1ab4c5dfe15ff16170201d7fe0edc20c3d0cada3",
+      "firstHash": "0x0a9f1cdcd49033dedb5525414b57d74ca5aa4832d86263a4189adab37f334174",
+      "currentHash": "0x0a9f1cdcd49033dedb5525414b57d74ca5aa4832d86263a4189adab37f334174",
+      "sameRuntime": true,
+      "bytes": 3843,
+      "sourcify": {
+        "http": 404
+      }
+    }
+  ],
+  "observations": [
+    {
+      "schema": "pons-router-trace-research-v1",
+      "admitted": false,
+      "eligibility": null,
+      "transactionHash": "0xb64952128bacef2516f47eca910eab4c324f032ef115a41315a21d4bda500c79",
+      "blockNumber": 79378063,
+      "recipient": "0x61435de8961424cc48999329d396713af7169c13",
+      "funding": "ETH",
+      "curveQuoteRaw": "93087934",
+      "observedWalletQuoteDebitRaw": null,
+      "routerQuoteFunding": [
+        {
+          "asset": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+          "from": "0x52e65b17fb6e5ba00ed806f37afcd2daa50271ca",
+          "to": "0x65050a9b7e5075a2ba5ced7b1b64ee66262c40dc",
+          "amountRaw": "93087934",
+          "logIndex": "12"
+        }
+      ],
+      "routerQuoteDebits": [
+        {
+          "asset": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+          "from": "0x65050a9b7e5075a2ba5ced7b1b64ee66262c40dc",
+          "to": "0x12ba58b5455fdbc15165e0e8b2096498d2c684f1",
+          "amountRaw": "93087934",
+          "logIndex": "16"
+        }
+      ],
+      "nativePayments": [
+        {
+          "to": "0xb8159ba378904f803639d274cec79f788931c9c8",
+          "valueRaw": "350000000000000",
+          "selector": "0x"
+        },
+        {
+          "to": "0x0bd7d308f8e1639fab988df18a8011f41eacad73",
+          "valueRaw": "34650000000000000",
+          "selector": "0xd0e30db0"
+        }
+      ],
+      "routerModules": [
+        "0x56101165bcf508b288f383113892e6db6be6db0e",
+        "0xd17b21b65cc273a4b342f14b19063da8bb410dbd",
+        "0x1ab4c5dfe15ff16170201d7fe0edc20c3d0cada3"
+      ],
+      "frames": 45,
+      "receiptLogsBound": 11,
+      "limits": [
+        "RPC callTracer is trusted execution evidence, not cryptographic proof",
+        "Observed payment is not an approved ticket basis",
+        "Runtime/storage/upgrade/signature semantics not admitted",
+        "No new policy and no retroactive tickets"
+      ]
+    },
+    {
+      "schema": "pons-router-trace-research-v1",
+      "admitted": false,
+      "eligibility": null,
+      "transactionHash": "0x1859bc5352b7e00f078e36224088aaefacc69e66f89a7a2f50080366acbc7ff8",
+      "blockNumber": 79378063,
+      "recipient": "0x9ab81cfdb4a8c2b0d1f8173513c4d2874d851a3c",
+      "funding": "ETH",
+      "curveQuoteRaw": "93087876",
+      "observedWalletQuoteDebitRaw": null,
+      "routerQuoteFunding": [
+        {
+          "asset": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+          "from": "0x52e65b17fb6e5ba00ed806f37afcd2daa50271ca",
+          "to": "0x65050a9b7e5075a2ba5ced7b1b64ee66262c40dc",
+          "amountRaw": "93087876",
+          "logIndex": "23"
+        }
+      ],
+      "routerQuoteDebits": [
+        {
+          "asset": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+          "from": "0x65050a9b7e5075a2ba5ced7b1b64ee66262c40dc",
+          "to": "0x12ba58b5455fdbc15165e0e8b2096498d2c684f1",
+          "amountRaw": "93087876",
+          "logIndex": "27"
+        }
+      ],
+      "nativePayments": [
+        {
+          "to": "0xb8159ba378904f803639d274cec79f788931c9c8",
+          "valueRaw": "350000000000000",
+          "selector": "0x"
+        },
+        {
+          "to": "0x0bd7d308f8e1639fab988df18a8011f41eacad73",
+          "valueRaw": "34650000000000000",
+          "selector": "0xd0e30db0"
+        }
+      ],
+      "routerModules": [
+        "0x56101165bcf508b288f383113892e6db6be6db0e",
+        "0xd17b21b65cc273a4b342f14b19063da8bb410dbd",
+        "0x1ab4c5dfe15ff16170201d7fe0edc20c3d0cada3"
+      ],
+      "frames": 45,
+      "receiptLogsBound": 11,
+      "limits": [
+        "RPC callTracer is trusted execution evidence, not cryptographic proof",
+        "Observed payment is not an approved ticket basis",
+        "Runtime/storage/upgrade/signature semantics not admitted",
+        "No new policy and no retroactive tickets"
+      ]
+    },
+    {
+      "schema": "pons-router-trace-research-v1",
+      "admitted": false,
+      "eligibility": null,
+      "transactionHash": "0x12fd7b10f4f3529b18316e8485fc4c129b7abd66fe8fed51ef7232f3dc7a47fa",
+      "blockNumber": 79378195,
+      "recipient": "0x023d068f3d2fe0b2bfca389c96a7f2768ac0d931",
+      "funding": "ETH",
+      "curveQuoteRaw": "265965515",
+      "observedWalletQuoteDebitRaw": null,
+      "routerQuoteFunding": [
+        {
+          "asset": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+          "from": "0x52e65b17fb6e5ba00ed806f37afcd2daa50271ca",
+          "to": "0x65050a9b7e5075a2ba5ced7b1b64ee66262c40dc",
+          "amountRaw": "265965515",
+          "logIndex": "15"
+        }
+      ],
+      "routerQuoteDebits": [
+        {
+          "asset": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+          "from": "0x65050a9b7e5075a2ba5ced7b1b64ee66262c40dc",
+          "to": "0x12ba58b5455fdbc15165e0e8b2096498d2c684f1",
+          "amountRaw": "265965515",
+          "logIndex": "19"
+        }
+      ],
+      "nativePayments": [
+        {
+          "to": "0xb8159ba378904f803639d274cec79f788931c9c8",
+          "valueRaw": "1000000000000000",
+          "selector": "0x"
+        },
+        {
+          "to": "0x0bd7d308f8e1639fab988df18a8011f41eacad73",
+          "valueRaw": "99000000000000000",
+          "selector": "0xd0e30db0"
+        }
+      ],
+      "routerModules": [
+        "0x56101165bcf508b288f383113892e6db6be6db0e",
+        "0xd17b21b65cc273a4b342f14b19063da8bb410dbd",
+        "0x1ab4c5dfe15ff16170201d7fe0edc20c3d0cada3"
+      ],
+      "frames": 45,
+      "receiptLogsBound": 11,
+      "limits": [
+        "RPC callTracer is trusted execution evidence, not cryptographic proof",
+        "Observed payment is not an approved ticket basis",
+        "Runtime/storage/upgrade/signature semantics not admitted",
+        "No new policy and no retroactive tickets"
+      ]
+    },
+    {
+      "schema": "pons-router-trace-research-v1",
+      "admitted": false,
+      "eligibility": null,
+      "transactionHash": "0xe4108a1b3497ba6611450450f9eb29ac6b09429c4eed3702ce189507b68f95b6",
+      "blockNumber": 79378195,
+      "recipient": "0x55f3422138e9fed0bd81351bff66c882550002e8",
+      "funding": "ETH",
+      "curveQuoteRaw": "265965039",
+      "observedWalletQuoteDebitRaw": null,
+      "routerQuoteFunding": [
+        {
+          "asset": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+          "from": "0x52e65b17fb6e5ba00ed806f37afcd2daa50271ca",
+          "to": "0x65050a9b7e5075a2ba5ced7b1b64ee66262c40dc",
+          "amountRaw": "265965039",
+          "logIndex": "26"
+        }
+      ],
+      "routerQuoteDebits": [
+        {
+          "asset": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+          "from": "0x65050a9b7e5075a2ba5ced7b1b64ee66262c40dc",
+          "to": "0x12ba58b5455fdbc15165e0e8b2096498d2c684f1",
+          "amountRaw": "265965039",
+          "logIndex": "30"
+        }
+      ],
+      "nativePayments": [
+        {
+          "to": "0xb8159ba378904f803639d274cec79f788931c9c8",
+          "valueRaw": "1000000000000000",
+          "selector": "0x"
+        },
+        {
+          "to": "0x0bd7d308f8e1639fab988df18a8011f41eacad73",
+          "valueRaw": "99000000000000000",
+          "selector": "0xd0e30db0"
+        }
+      ],
+      "routerModules": [
+        "0x56101165bcf508b288f383113892e6db6be6db0e",
+        "0xd17b21b65cc273a4b342f14b19063da8bb410dbd",
+        "0x1ab4c5dfe15ff16170201d7fe0edc20c3d0cada3"
+      ],
+      "frames": 45,
+      "receiptLogsBound": 11,
+      "limits": [
+        "RPC callTracer is trusted execution evidence, not cryptographic proof",
+        "Observed payment is not an approved ticket basis",
+        "Runtime/storage/upgrade/signature semantics not admitted",
+        "No new policy and no retroactive tickets"
+      ]
+    },
+    {
+      "schema": "pons-router-trace-research-v1",
+      "admitted": false,
+      "eligibility": null,
+      "transactionHash": "0xad6d1cf57ac30d40b832b6327f9c36f28a2f506a2bbcb758858e10896143ca03",
+      "blockNumber": 79378206,
+      "recipient": "0x366b907694aa0943883546d1ba53e7875a063a1b",
+      "funding": "ETH",
+      "curveQuoteRaw": "2659647",
+      "observedWalletQuoteDebitRaw": null,
+      "routerQuoteFunding": [
+        {
+          "asset": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+          "from": "0x52e65b17fb6e5ba00ed806f37afcd2daa50271ca",
+          "to": "0x65050a9b7e5075a2ba5ced7b1b64ee66262c40dc",
+          "amountRaw": "2659647",
+          "logIndex": "5"
+        }
+      ],
+      "routerQuoteDebits": [
+        {
+          "asset": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+          "from": "0x65050a9b7e5075a2ba5ced7b1b64ee66262c40dc",
+          "to": "0x12ba58b5455fdbc15165e0e8b2096498d2c684f1",
+          "amountRaw": "2659647",
+          "logIndex": "9"
+        }
+      ],
+      "nativePayments": [
+        {
+          "to": "0xb8159ba378904f803639d274cec79f788931c9c8",
+          "valueRaw": "10000000000000",
+          "selector": "0x"
+        },
+        {
+          "to": "0x0bd7d308f8e1639fab988df18a8011f41eacad73",
+          "valueRaw": "990000000000000",
+          "selector": "0xd0e30db0"
+        }
+      ],
+      "routerModules": [
+        "0x56101165bcf508b288f383113892e6db6be6db0e",
+        "0xd17b21b65cc273a4b342f14b19063da8bb410dbd",
+        "0x1ab4c5dfe15ff16170201d7fe0edc20c3d0cada3"
+      ],
+      "frames": 45,
+      "receiptLogsBound": 11,
+      "limits": [
+        "RPC callTracer is trusted execution evidence, not cryptographic proof",
+        "Observed payment is not an approved ticket basis",
+        "Runtime/storage/upgrade/signature semantics not admitted",
+        "No new policy and no retroactive tickets"
+      ]
+    },
+    {
+      "schema": "pons-router-trace-research-v1",
+      "admitted": false,
+      "eligibility": null,
+      "transactionHash": "0x7b1f808c8c480bfc09adb5437dd2b04ab9892722bd6877c4f1c066365e516bce",
+      "blockNumber": 79378232,
+      "recipient": "0x5853afac5efb02f5a07325cfc55bdb30f34389df",
+      "funding": "ETH",
+      "curveQuoteRaw": "26596625",
+      "observedWalletQuoteDebitRaw": null,
+      "routerQuoteFunding": [
+        {
+          "asset": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+          "from": "0x52e65b17fb6e5ba00ed806f37afcd2daa50271ca",
+          "to": "0x65050a9b7e5075a2ba5ced7b1b64ee66262c40dc",
+          "amountRaw": "26596625",
+          "logIndex": "3"
+        }
+      ],
+      "routerQuoteDebits": [
+        {
+          "asset": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+          "from": "0x65050a9b7e5075a2ba5ced7b1b64ee66262c40dc",
+          "to": "0x12ba58b5455fdbc15165e0e8b2096498d2c684f1",
+          "amountRaw": "26596625",
+          "logIndex": "7"
+        }
+      ],
+      "nativePayments": [
+        {
+          "to": "0xb8159ba378904f803639d274cec79f788931c9c8",
+          "valueRaw": "100000000000000",
+          "selector": "0x"
+        },
+        {
+          "to": "0x0bd7d308f8e1639fab988df18a8011f41eacad73",
+          "valueRaw": "9900000000000000",
+          "selector": "0xd0e30db0"
+        }
+      ],
+      "routerModules": [
+        "0x56101165bcf508b288f383113892e6db6be6db0e",
+        "0xd17b21b65cc273a4b342f14b19063da8bb410dbd",
+        "0x1ab4c5dfe15ff16170201d7fe0edc20c3d0cada3"
+      ],
+      "frames": 45,
+      "receiptLogsBound": 11,
+      "limits": [
+        "RPC callTracer is trusted execution evidence, not cryptographic proof",
+        "Observed payment is not an approved ticket basis",
+        "Runtime/storage/upgrade/signature semantics not admitted",
+        "No new policy and no retroactive tickets"
+      ]
+    },
+    {
+      "schema": "pons-router-trace-research-v1",
+      "admitted": false,
+      "eligibility": null,
+      "transactionHash": "0xa0f449e13cf7659b731913c7662fc56e1b6ce1c680a420bb5917c498770efbc3",
+      "blockNumber": 79378355,
+      "recipient": "0x8c2733a490b40eee2ec2e9423c4533f44736fd55",
+      "funding": "ETH",
+      "curveQuoteRaw": "66492376",
+      "observedWalletQuoteDebitRaw": null,
+      "routerQuoteFunding": [
+        {
+          "asset": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+          "from": "0x52e65b17fb6e5ba00ed806f37afcd2daa50271ca",
+          "to": "0x65050a9b7e5075a2ba5ced7b1b64ee66262c40dc",
+          "amountRaw": "66492376",
+          "logIndex": "42"
+        }
+      ],
+      "routerQuoteDebits": [
+        {
+          "asset": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+          "from": "0x65050a9b7e5075a2ba5ced7b1b64ee66262c40dc",
+          "to": "0x12ba58b5455fdbc15165e0e8b2096498d2c684f1",
+          "amountRaw": "66492376",
+          "logIndex": "46"
+        }
+      ],
+      "nativePayments": [
+        {
+          "to": "0xb8159ba378904f803639d274cec79f788931c9c8",
+          "valueRaw": "250000000000000",
+          "selector": "0x"
+        },
+        {
+          "to": "0x0bd7d308f8e1639fab988df18a8011f41eacad73",
+          "valueRaw": "24750000000000000",
+          "selector": "0xd0e30db0"
+        }
+      ],
+      "routerModules": [
+        "0x56101165bcf508b288f383113892e6db6be6db0e",
+        "0xd17b21b65cc273a4b342f14b19063da8bb410dbd",
+        "0x1ab4c5dfe15ff16170201d7fe0edc20c3d0cada3"
+      ],
+      "frames": 45,
+      "receiptLogsBound": 11,
+      "limits": [
+        "RPC callTracer is trusted execution evidence, not cryptographic proof",
+        "Observed payment is not an approved ticket basis",
+        "Runtime/storage/upgrade/signature semantics not admitted",
+        "No new policy and no retroactive tickets"
+      ]
+    },
+    {
+      "schema": "pons-router-trace-research-v1",
+      "admitted": false,
+      "eligibility": null,
+      "transactionHash": "0x7e904bbbdacd41ff972ee5a5833ac0055cd40e0acf143ac57d73d63ad98f167f",
+      "blockNumber": 79378355,
+      "recipient": "0x04e4c506b92372d5dbc92d59a08fd805410528cc",
+      "funding": "ETH",
+      "curveQuoteRaw": "66492346",
+      "observedWalletQuoteDebitRaw": null,
+      "routerQuoteFunding": [
+        {
+          "asset": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+          "from": "0x52e65b17fb6e5ba00ed806f37afcd2daa50271ca",
+          "to": "0x65050a9b7e5075a2ba5ced7b1b64ee66262c40dc",
+          "amountRaw": "66492346",
+          "logIndex": "53"
+        }
+      ],
+      "routerQuoteDebits": [
+        {
+          "asset": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+          "from": "0x65050a9b7e5075a2ba5ced7b1b64ee66262c40dc",
+          "to": "0x12ba58b5455fdbc15165e0e8b2096498d2c684f1",
+          "amountRaw": "66492346",
+          "logIndex": "57"
+        }
+      ],
+      "nativePayments": [
+        {
+          "to": "0xb8159ba378904f803639d274cec79f788931c9c8",
+          "valueRaw": "250000000000000",
+          "selector": "0x"
+        },
+        {
+          "to": "0x0bd7d308f8e1639fab988df18a8011f41eacad73",
+          "valueRaw": "24750000000000000",
+          "selector": "0xd0e30db0"
+        }
+      ],
+      "routerModules": [
+        "0x56101165bcf508b288f383113892e6db6be6db0e",
+        "0xd17b21b65cc273a4b342f14b19063da8bb410dbd",
+        "0x1ab4c5dfe15ff16170201d7fe0edc20c3d0cada3"
+      ],
+      "frames": 45,
+      "receiptLogsBound": 11,
+      "limits": [
+        "RPC callTracer is trusted execution evidence, not cryptographic proof",
+        "Observed payment is not an approved ticket basis",
+        "Runtime/storage/upgrade/signature semantics not admitted",
+        "No new policy and no retroactive tickets"
+      ]
+    },
+    {
+      "schema": "pons-router-trace-research-v1",
+      "admitted": false,
+      "eligibility": null,
+      "transactionHash": "0xeb4228dbc60761390d905d8570c82ae8614ba962519cc30c51d67a2f0fb47ba0",
+      "blockNumber": 79378374,
+      "recipient": "0xc77b5585ca3cd4beec6051cca89921a2f01d9a5c",
+      "funding": "USDG",
+      "curveQuoteRaw": "198000000",
+      "observedWalletQuoteDebitRaw": "200000000",
+      "routerQuoteFunding": [
+        {
+          "asset": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+          "from": "0xc77b5585ca3cd4beec6051cca89921a2f01d9a5c",
+          "to": "0x65050a9b7e5075a2ba5ced7b1b64ee66262c40dc",
+          "amountRaw": "198000000",
+          "logIndex": "7"
+        }
+      ],
+      "routerQuoteDebits": [
+        {
+          "asset": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+          "from": "0x65050a9b7e5075a2ba5ced7b1b64ee66262c40dc",
+          "to": "0x12ba58b5455fdbc15165e0e8b2096498d2c684f1",
+          "amountRaw": "198000000",
+          "logIndex": "9"
+        }
+      ],
+      "nativePayments": [],
+      "routerModules": [
+        "0x56101165bcf508b288f383113892e6db6be6db0e",
+        "0x1ab4c5dfe15ff16170201d7fe0edc20c3d0cada3"
+      ],
+      "frames": 32,
+      "receiptLogsBound": 9,
+      "limits": [
+        "RPC callTracer is trusted execution evidence, not cryptographic proof",
+        "Observed payment is not an approved ticket basis",
+        "Runtime/storage/upgrade/signature semantics not admitted",
+        "No new policy and no retroactive tickets"
+      ]
+    },
+    {
+      "schema": "pons-router-trace-research-v1",
+      "admitted": false,
+      "eligibility": null,
+      "transactionHash": "0x366150da9c5cb4cb0a607f0fe7d22e370044988f00727c645621c7fb4a0425e9",
+      "blockNumber": 79378412,
+      "recipient": "0xc0c0e4f7cb82c826a2596f50ae01cafeac61085d",
+      "funding": "ETH",
+      "curveQuoteRaw": "132998394",
+      "observedWalletQuoteDebitRaw": null,
+      "routerQuoteFunding": [
+        {
+          "asset": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+          "from": "0x52e65b17fb6e5ba00ed806f37afcd2daa50271ca",
+          "to": "0x65050a9b7e5075a2ba5ced7b1b64ee66262c40dc",
+          "amountRaw": "132998394",
+          "logIndex": "2"
+        }
+      ],
+      "routerQuoteDebits": [
+        {
+          "asset": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+          "from": "0x65050a9b7e5075a2ba5ced7b1b64ee66262c40dc",
+          "to": "0x12ba58b5455fdbc15165e0e8b2096498d2c684f1",
+          "amountRaw": "132998394",
+          "logIndex": "6"
+        }
+      ],
+      "nativePayments": [
+        {
+          "to": "0xb8159ba378904f803639d274cec79f788931c9c8",
+          "valueRaw": "500000000000000",
+          "selector": "0x"
+        },
+        {
+          "to": "0x0bd7d308f8e1639fab988df18a8011f41eacad73",
+          "valueRaw": "49500000000000000",
+          "selector": "0xd0e30db0"
+        }
+      ],
+      "routerModules": [
+        "0x56101165bcf508b288f383113892e6db6be6db0e",
+        "0xd17b21b65cc273a4b342f14b19063da8bb410dbd",
+        "0x1ab4c5dfe15ff16170201d7fe0edc20c3d0cada3"
+      ],
+      "frames": 45,
+      "receiptLogsBound": 11,
+      "limits": [
+        "RPC callTracer is trusted execution evidence, not cryptographic proof",
+        "Observed payment is not an approved ticket basis",
+        "Runtime/storage/upgrade/signature semantics not admitted",
+        "No new policy and no retroactive tickets"
+      ]
+    },
+    {
+      "schema": "pons-router-trace-research-v1",
+      "admitted": false,
+      "eligibility": null,
+      "transactionHash": "0x93a94204cdac4f1419e80316b60dc88dd643777e3803191869aa85010911be3c",
+      "blockNumber": 79378412,
+      "recipient": "0xf8b691fc58b61a633ef616318bda8c65e9410fa3",
+      "funding": "ETH",
+      "curveQuoteRaw": "132998276",
+      "observedWalletQuoteDebitRaw": null,
+      "routerQuoteFunding": [
+        {
+          "asset": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+          "from": "0x52e65b17fb6e5ba00ed806f37afcd2daa50271ca",
+          "to": "0x65050a9b7e5075a2ba5ced7b1b64ee66262c40dc",
+          "amountRaw": "132998276",
+          "logIndex": "13"
+        }
+      ],
+      "routerQuoteDebits": [
+        {
+          "asset": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+          "from": "0x65050a9b7e5075a2ba5ced7b1b64ee66262c40dc",
+          "to": "0x12ba58b5455fdbc15165e0e8b2096498d2c684f1",
+          "amountRaw": "132998276",
+          "logIndex": "17"
+        }
+      ],
+      "nativePayments": [
+        {
+          "to": "0xb8159ba378904f803639d274cec79f788931c9c8",
+          "valueRaw": "500000000000000",
+          "selector": "0x"
+        },
+        {
+          "to": "0x0bd7d308f8e1639fab988df18a8011f41eacad73",
+          "valueRaw": "49500000000000000",
+          "selector": "0xd0e30db0"
+        }
+      ],
+      "routerModules": [
+        "0x56101165bcf508b288f383113892e6db6be6db0e",
+        "0xd17b21b65cc273a4b342f14b19063da8bb410dbd",
+        "0x1ab4c5dfe15ff16170201d7fe0edc20c3d0cada3"
+      ],
+      "frames": 45,
+      "receiptLogsBound": 11,
+      "limits": [
+        "RPC callTracer is trusted execution evidence, not cryptographic proof",
+        "Observed payment is not an approved ticket basis",
+        "Runtime/storage/upgrade/signature semantics not admitted",
+        "No new policy and no retroactive tickets"
+      ]
+    },
+    {
+      "schema": "pons-router-trace-research-v1",
+      "admitted": false,
+      "eligibility": null,
+      "transactionHash": "0xa845840a995f6c9f0a744be37c0a54376ceb3e0926a745865e4bd80d3300b639",
+      "blockNumber": 79378412,
+      "recipient": "0xd6853246a81be86e5bcff25e7e08f7475c977958",
+      "funding": "ETH",
+      "curveQuoteRaw": "132998157",
+      "observedWalletQuoteDebitRaw": null,
+      "routerQuoteFunding": [
+        {
+          "asset": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+          "from": "0x52e65b17fb6e5ba00ed806f37afcd2daa50271ca",
+          "to": "0x65050a9b7e5075a2ba5ced7b1b64ee66262c40dc",
+          "amountRaw": "132998157",
+          "logIndex": "24"
+        }
+      ],
+      "routerQuoteDebits": [
+        {
+          "asset": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+          "from": "0x65050a9b7e5075a2ba5ced7b1b64ee66262c40dc",
+          "to": "0x12ba58b5455fdbc15165e0e8b2096498d2c684f1",
+          "amountRaw": "132998157",
+          "logIndex": "28"
+        }
+      ],
+      "nativePayments": [
+        {
+          "to": "0xb8159ba378904f803639d274cec79f788931c9c8",
+          "valueRaw": "500000000000000",
+          "selector": "0x"
+        },
+        {
+          "to": "0x0bd7d308f8e1639fab988df18a8011f41eacad73",
+          "valueRaw": "49500000000000000",
+          "selector": "0xd0e30db0"
+        }
+      ],
+      "routerModules": [
+        "0x56101165bcf508b288f383113892e6db6be6db0e",
+        "0xd17b21b65cc273a4b342f14b19063da8bb410dbd",
+        "0x1ab4c5dfe15ff16170201d7fe0edc20c3d0cada3"
+      ],
+      "frames": 45,
+      "receiptLogsBound": 11,
+      "limits": [
+        "RPC callTracer is trusted execution evidence, not cryptographic proof",
+        "Observed payment is not an approved ticket basis",
+        "Runtime/storage/upgrade/signature semantics not admitted",
+        "No new policy and no retroactive tickets"
+      ]
+    },
+    {
+      "schema": "pons-router-trace-research-v1",
+      "admitted": false,
+      "eligibility": null,
+      "transactionHash": "0xf1d6bad36db433b4ed996745c6a939ca4918131de40386a9c3657404f89ec779",
+      "blockNumber": 79378412,
+      "recipient": "0x6fb50f9afc513aebe4d1e303c83200c5b3977f61",
+      "funding": "ETH",
+      "curveQuoteRaw": "132998039",
+      "observedWalletQuoteDebitRaw": null,
+      "routerQuoteFunding": [
+        {
+          "asset": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+          "from": "0x52e65b17fb6e5ba00ed806f37afcd2daa50271ca",
+          "to": "0x65050a9b7e5075a2ba5ced7b1b64ee66262c40dc",
+          "amountRaw": "132998039",
+          "logIndex": "35"
+        }
+      ],
+      "routerQuoteDebits": [
+        {
+          "asset": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+          "from": "0x65050a9b7e5075a2ba5ced7b1b64ee66262c40dc",
+          "to": "0x12ba58b5455fdbc15165e0e8b2096498d2c684f1",
+          "amountRaw": "132998039",
+          "logIndex": "39"
+        }
+      ],
+      "nativePayments": [
+        {
+          "to": "0xb8159ba378904f803639d274cec79f788931c9c8",
+          "valueRaw": "500000000000000",
+          "selector": "0x"
+        },
+        {
+          "to": "0x0bd7d308f8e1639fab988df18a8011f41eacad73",
+          "valueRaw": "49500000000000000",
+          "selector": "0xd0e30db0"
+        }
+      ],
+      "routerModules": [
+        "0x56101165bcf508b288f383113892e6db6be6db0e",
+        "0xd17b21b65cc273a4b342f14b19063da8bb410dbd",
+        "0x1ab4c5dfe15ff16170201d7fe0edc20c3d0cada3"
+      ],
+      "frames": 45,
+      "receiptLogsBound": 11,
+      "limits": [
+        "RPC callTracer is trusted execution evidence, not cryptographic proof",
+        "Observed payment is not an approved ticket basis",
+        "Runtime/storage/upgrade/signature semantics not admitted",
+        "No new policy and no retroactive tickets"
+      ]
+    },
+    {
+      "schema": "pons-router-trace-research-v1",
+      "admitted": false,
+      "eligibility": null,
+      "transactionHash": "0x094bc0f4ef596799311c378c6d47d02113cd51e7ec0e70ae4d81ce567241edb1",
+      "blockNumber": 79378436,
+      "recipient": "0xbfebff3812b8a87857ae1150ab62e08094ce3367",
+      "funding": "ETH",
+      "curveQuoteRaw": "18348163",
+      "observedWalletQuoteDebitRaw": null,
+      "routerQuoteFunding": [
+        {
+          "asset": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+          "from": "0x52e65b17fb6e5ba00ed806f37afcd2daa50271ca",
+          "to": "0x65050a9b7e5075a2ba5ced7b1b64ee66262c40dc",
+          "amountRaw": "18348163",
+          "logIndex": "34"
+        }
+      ],
+      "routerQuoteDebits": [
+        {
+          "asset": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+          "from": "0x65050a9b7e5075a2ba5ced7b1b64ee66262c40dc",
+          "to": "0x12ba58b5455fdbc15165e0e8b2096498d2c684f1",
+          "amountRaw": "18348163",
+          "logIndex": "38"
+        }
+      ],
+      "nativePayments": [
+        {
+          "to": "0xb8159ba378904f803639d274cec79f788931c9c8",
+          "valueRaw": "68978000000000",
+          "selector": "0x"
+        },
+        {
+          "to": "0x0bd7d308f8e1639fab988df18a8011f41eacad73",
+          "valueRaw": "6828822000000000",
+          "selector": "0xd0e30db0"
+        }
+      ],
+      "routerModules": [
+        "0x56101165bcf508b288f383113892e6db6be6db0e",
+        "0xd17b21b65cc273a4b342f14b19063da8bb410dbd",
+        "0x1ab4c5dfe15ff16170201d7fe0edc20c3d0cada3"
+      ],
+      "frames": 45,
+      "receiptLogsBound": 11,
+      "limits": [
+        "RPC callTracer is trusted execution evidence, not cryptographic proof",
+        "Observed payment is not an approved ticket basis",
+        "Runtime/storage/upgrade/signature semantics not admitted",
+        "No new policy and no retroactive tickets"
+      ]
+    },
+    {
+      "schema": "pons-router-trace-research-v1",
+      "admitted": false,
+      "eligibility": null,
+      "transactionHash": "0x1d0972e6e69a3b7c8298bf167ca872aa0a8679959b5840977322a530b870ed4f",
+      "blockNumber": 79378553,
+      "recipient": "0x9b140a3a7fe193f46121835fcdcabb957739b187",
+      "funding": "ETH",
+      "curveQuoteRaw": "39901654",
+      "observedWalletQuoteDebitRaw": null,
+      "routerQuoteFunding": [
+        {
+          "asset": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+          "from": "0x52e65b17fb6e5ba00ed806f37afcd2daa50271ca",
+          "to": "0x65050a9b7e5075a2ba5ced7b1b64ee66262c40dc",
+          "amountRaw": "39901654",
+          "logIndex": "14"
+        }
+      ],
+      "routerQuoteDebits": [
+        {
+          "asset": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+          "from": "0x65050a9b7e5075a2ba5ced7b1b64ee66262c40dc",
+          "to": "0x12ba58b5455fdbc15165e0e8b2096498d2c684f1",
+          "amountRaw": "39901654",
+          "logIndex": "18"
+        }
+      ],
+      "nativePayments": [
+        {
+          "to": "0xb8159ba378904f803639d274cec79f788931c9c8",
+          "valueRaw": "150000000000000",
+          "selector": "0x"
+        },
+        {
+          "to": "0x0bd7d308f8e1639fab988df18a8011f41eacad73",
+          "valueRaw": "14850000000000000",
+          "selector": "0xd0e30db0"
+        }
+      ],
+      "routerModules": [
+        "0x56101165bcf508b288f383113892e6db6be6db0e",
+        "0xd17b21b65cc273a4b342f14b19063da8bb410dbd",
+        "0x1ab4c5dfe15ff16170201d7fe0edc20c3d0cada3"
+      ],
+      "frames": 45,
+      "receiptLogsBound": 11,
+      "limits": [
+        "RPC callTracer is trusted execution evidence, not cryptographic proof",
+        "Observed payment is not an approved ticket basis",
+        "Runtime/storage/upgrade/signature semantics not admitted",
+        "No new policy and no retroactive tickets"
+      ]
+    },
+    {
+      "schema": "pons-router-trace-research-v1",
+      "admitted": false,
+      "eligibility": null,
+      "transactionHash": "0x7c747a47b736754bb6f030204ece9ca6bda2b17ed4a8c587ccfcbe03e702efcf",
+      "blockNumber": 79378559,
+      "recipient": "0x0a421199d91909b0c2a39ca0bcb01482c9c33f55",
+      "funding": "ETH",
+      "curveQuoteRaw": "26601093",
+      "observedWalletQuoteDebitRaw": null,
+      "routerQuoteFunding": [
+        {
+          "asset": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+          "from": "0x52e65b17fb6e5ba00ed806f37afcd2daa50271ca",
+          "to": "0x65050a9b7e5075a2ba5ced7b1b64ee66262c40dc",
+          "amountRaw": "26601093",
+          "logIndex": "2"
+        }
+      ],
+      "routerQuoteDebits": [
+        {
+          "asset": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+          "from": "0x65050a9b7e5075a2ba5ced7b1b64ee66262c40dc",
+          "to": "0x12ba58b5455fdbc15165e0e8b2096498d2c684f1",
+          "amountRaw": "26601093",
+          "logIndex": "6"
+        }
+      ],
+      "nativePayments": [
+        {
+          "to": "0xb8159ba378904f803639d274cec79f788931c9c8",
+          "valueRaw": "100000000000000",
+          "selector": "0x"
+        },
+        {
+          "to": "0x0bd7d308f8e1639fab988df18a8011f41eacad73",
+          "valueRaw": "9900000000000000",
+          "selector": "0xd0e30db0"
+        }
+      ],
+      "routerModules": [
+        "0x56101165bcf508b288f383113892e6db6be6db0e",
+        "0xd17b21b65cc273a4b342f14b19063da8bb410dbd",
+        "0x1ab4c5dfe15ff16170201d7fe0edc20c3d0cada3"
+      ],
+      "frames": 45,
+      "receiptLogsBound": 11,
+      "limits": [
+        "RPC callTracer is trusted execution evidence, not cryptographic proof",
+        "Observed payment is not an approved ticket basis",
+        "Runtime/storage/upgrade/signature semantics not admitted",
+        "No new policy and no retroactive tickets"
+      ]
+    },
+    {
+      "schema": "pons-router-trace-research-v1",
+      "admitted": false,
+      "eligibility": null,
+      "transactionHash": "0x5c2517a8050d6a559380693f2a205a94744b84cd4679c1453fbbcd46008c7f6b",
+      "blockNumber": 79378679,
+      "recipient": "0x61b5207edb92c95bcee2fd3326617fdec50fc0c2",
+      "funding": "ETH",
+      "curveQuoteRaw": "266037918",
+      "observedWalletQuoteDebitRaw": null,
+      "routerQuoteFunding": [
+        {
+          "asset": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+          "from": "0x52e65b17fb6e5ba00ed806f37afcd2daa50271ca",
+          "to": "0x65050a9b7e5075a2ba5ced7b1b64ee66262c40dc",
+          "amountRaw": "266037918",
+          "logIndex": "2"
+        }
+      ],
+      "routerQuoteDebits": [
+        {
+          "asset": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+          "from": "0x65050a9b7e5075a2ba5ced7b1b64ee66262c40dc",
+          "to": "0x12ba58b5455fdbc15165e0e8b2096498d2c684f1",
+          "amountRaw": "266037918",
+          "logIndex": "6"
+        }
+      ],
+      "nativePayments": [
+        {
+          "to": "0xb8159ba378904f803639d274cec79f788931c9c8",
+          "valueRaw": "1000000000000000",
+          "selector": "0x"
+        },
+        {
+          "to": "0x0bd7d308f8e1639fab988df18a8011f41eacad73",
+          "valueRaw": "99000000000000000",
+          "selector": "0xd0e30db0"
+        }
+      ],
+      "routerModules": [
+        "0x56101165bcf508b288f383113892e6db6be6db0e",
+        "0xd17b21b65cc273a4b342f14b19063da8bb410dbd",
+        "0x1ab4c5dfe15ff16170201d7fe0edc20c3d0cada3"
+      ],
+      "frames": 45,
+      "receiptLogsBound": 11,
+      "limits": [
+        "RPC callTracer is trusted execution evidence, not cryptographic proof",
+        "Observed payment is not an approved ticket basis",
+        "Runtime/storage/upgrade/signature semantics not admitted",
+        "No new policy and no retroactive tickets"
+      ]
+    },
+    {
+      "schema": "pons-router-trace-research-v1",
+      "admitted": false,
+      "eligibility": null,
+      "transactionHash": "0xb4a6b438f62bdc104e201f8834bc014eb839a0b97b3b9060805ef03cc79d1ab2",
+      "blockNumber": 79378732,
+      "recipient": "0x08f8fef2b7636cdde9ea6d576d72c9bef1fb9ca8",
+      "funding": "ETH",
+      "curveQuoteRaw": "34519551",
+      "observedWalletQuoteDebitRaw": null,
+      "routerQuoteFunding": [
+        {
+          "asset": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+          "from": "0x52e65b17fb6e5ba00ed806f37afcd2daa50271ca",
+          "to": "0x65050a9b7e5075a2ba5ced7b1b64ee66262c40dc",
+          "amountRaw": "34519551",
+          "logIndex": "15"
+        }
+      ],
+      "routerQuoteDebits": [
+        {
+          "asset": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+          "from": "0x65050a9b7e5075a2ba5ced7b1b64ee66262c40dc",
+          "to": "0x12ba58b5455fdbc15165e0e8b2096498d2c684f1",
+          "amountRaw": "34519551",
+          "logIndex": "19"
+        }
+      ],
+      "nativePayments": [
+        {
+          "to": "0xb8159ba378904f803639d274cec79f788931c9c8",
+          "valueRaw": "129747617514147",
+          "selector": "0x"
+        },
+        {
+          "to": "0x0bd7d308f8e1639fab988df18a8011f41eacad73",
+          "valueRaw": "12845014133900613",
+          "selector": "0xd0e30db0"
+        }
+      ],
+      "routerModules": [
+        "0x56101165bcf508b288f383113892e6db6be6db0e",
+        "0xd17b21b65cc273a4b342f14b19063da8bb410dbd",
+        "0x1ab4c5dfe15ff16170201d7fe0edc20c3d0cada3"
+      ],
+      "frames": 45,
+      "receiptLogsBound": 11,
+      "limits": [
+        "RPC callTracer is trusted execution evidence, not cryptographic proof",
+        "Observed payment is not an approved ticket basis",
+        "Runtime/storage/upgrade/signature semantics not admitted",
+        "No new policy and no retroactive tickets"
+      ]
+    },
+    {
+      "schema": "pons-router-trace-research-v1",
+      "admitted": false,
+      "eligibility": null,
+      "transactionHash": "0xa5d3aeeef38386a8a96b8cf60b6570dd9e070137d0e1807123d4e5c376b12b75",
+      "blockNumber": 79378732,
+      "recipient": "0x097ccd00d6af3f85bd13587fc2f5bbc806cbf170",
+      "funding": "ETH",
+      "curveQuoteRaw": "21085817",
+      "observedWalletQuoteDebitRaw": null,
+      "routerQuoteFunding": [
+        {
+          "asset": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+          "from": "0x52e65b17fb6e5ba00ed806f37afcd2daa50271ca",
+          "to": "0x65050a9b7e5075a2ba5ced7b1b64ee66262c40dc",
+          "amountRaw": "21085817",
+          "logIndex": "26"
+        }
+      ],
+      "routerQuoteDebits": [
+        {
+          "asset": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+          "from": "0x65050a9b7e5075a2ba5ced7b1b64ee66262c40dc",
+          "to": "0x12ba58b5455fdbc15165e0e8b2096498d2c684f1",
+          "amountRaw": "21085817",
+          "logIndex": "30"
+        }
+      ],
+      "nativePayments": [
+        {
+          "to": "0xb8159ba378904f803639d274cec79f788931c9c8",
+          "valueRaw": "79254652327257",
+          "selector": "0x"
+        },
+        {
+          "to": "0x0bd7d308f8e1639fab988df18a8011f41eacad73",
+          "valueRaw": "7846210580398485",
+          "selector": "0xd0e30db0"
+        }
+      ],
+      "routerModules": [
+        "0x56101165bcf508b288f383113892e6db6be6db0e",
+        "0xd17b21b65cc273a4b342f14b19063da8bb410dbd",
+        "0x1ab4c5dfe15ff16170201d7fe0edc20c3d0cada3"
+      ],
+      "frames": 45,
+      "receiptLogsBound": 11,
+      "limits": [
+        "RPC callTracer is trusted execution evidence, not cryptographic proof",
+        "Observed payment is not an approved ticket basis",
+        "Runtime/storage/upgrade/signature semantics not admitted",
+        "No new policy and no retroactive tickets"
+      ]
+    },
+    {
+      "schema": "pons-router-trace-research-v1",
+      "admitted": false,
+      "eligibility": null,
+      "transactionHash": "0xe69466809d47916c246e08cd3aa15d367b2b7ae3d9802187a5b6517cefd682ba",
+      "blockNumber": 79378732,
+      "recipient": "0x92f38964f5acfdbf5ebc41366973e444e6f8b740",
+      "funding": "ETH",
+      "curveQuoteRaw": "17791040",
+      "observedWalletQuoteDebitRaw": null,
+      "routerQuoteFunding": [
+        {
+          "asset": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+          "from": "0x52e65b17fb6e5ba00ed806f37afcd2daa50271ca",
+          "to": "0x65050a9b7e5075a2ba5ced7b1b64ee66262c40dc",
+          "amountRaw": "17791040",
+          "logIndex": "37"
+        }
+      ],
+      "routerQuoteDebits": [
+        {
+          "asset": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+          "from": "0x65050a9b7e5075a2ba5ced7b1b64ee66262c40dc",
+          "to": "0x12ba58b5455fdbc15165e0e8b2096498d2c684f1",
+          "amountRaw": "17791040",
+          "logIndex": "41"
+        }
+      ],
+      "nativePayments": [
+        {
+          "to": "0xb8159ba378904f803639d274cec79f788931c9c8",
+          "valueRaw": "66870679611082",
+          "selector": "0x"
+        },
+        {
+          "to": "0x0bd7d308f8e1639fab988df18a8011f41eacad73",
+          "valueRaw": "6620197281497173",
+          "selector": "0xd0e30db0"
+        }
+      ],
+      "routerModules": [
+        "0x56101165bcf508b288f383113892e6db6be6db0e",
+        "0xd17b21b65cc273a4b342f14b19063da8bb410dbd",
+        "0x1ab4c5dfe15ff16170201d7fe0edc20c3d0cada3"
+      ],
+      "frames": 45,
+      "receiptLogsBound": 11,
+      "limits": [
+        "RPC callTracer is trusted execution evidence, not cryptographic proof",
+        "Observed payment is not an approved ticket basis",
+        "Runtime/storage/upgrade/signature semantics not admitted",
+        "No new policy and no retroactive tickets"
+      ]
+    },
+    {
+      "schema": "pons-router-trace-research-v1",
+      "admitted": false,
+      "eligibility": null,
+      "transactionHash": "0x063471a443483268289aa89602fc63ea5445877656a1673df0723159a13d7ec2",
+      "blockNumber": 79378732,
+      "recipient": "0x4a92b75d86eba7fd957025dfea154b6c7c863393",
+      "funding": "ETH",
+      "curveQuoteRaw": "21911724",
+      "observedWalletQuoteDebitRaw": null,
+      "routerQuoteFunding": [
+        {
+          "asset": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+          "from": "0x52e65b17fb6e5ba00ed806f37afcd2daa50271ca",
+          "to": "0x65050a9b7e5075a2ba5ced7b1b64ee66262c40dc",
+          "amountRaw": "21911724",
+          "logIndex": "48"
+        }
+      ],
+      "routerQuoteDebits": [
+        {
+          "asset": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+          "from": "0x65050a9b7e5075a2ba5ced7b1b64ee66262c40dc",
+          "to": "0x12ba58b5455fdbc15165e0e8b2096498d2c684f1",
+          "amountRaw": "21911724",
+          "logIndex": "52"
+        }
+      ],
+      "nativePayments": [
+        {
+          "to": "0xb8159ba378904f803639d274cec79f788931c9c8",
+          "valueRaw": "82358987728167",
+          "selector": "0x"
+        },
+        {
+          "to": "0x0bd7d308f8e1639fab988df18a8011f41eacad73",
+          "valueRaw": "8153539785088591",
+          "selector": "0xd0e30db0"
+        }
+      ],
+      "routerModules": [
+        "0x56101165bcf508b288f383113892e6db6be6db0e",
+        "0xd17b21b65cc273a4b342f14b19063da8bb410dbd",
+        "0x1ab4c5dfe15ff16170201d7fe0edc20c3d0cada3"
+      ],
+      "frames": 45,
+      "receiptLogsBound": 11,
+      "limits": [
+        "RPC callTracer is trusted execution evidence, not cryptographic proof",
+        "Observed payment is not an approved ticket basis",
+        "Runtime/storage/upgrade/signature semantics not admitted",
+        "No new policy and no retroactive tickets"
+      ]
+    },
+    {
+      "schema": "pons-router-trace-research-v1",
+      "admitted": false,
+      "eligibility": null,
+      "transactionHash": "0x947db2a3e999b8a6056d69d494d9adf6b62cb7a8dca032c1f64bad9ca0ee5f55",
+      "blockNumber": 79378732,
+      "recipient": "0x8e9f3182835aa7d5d94cd706e6be99429439cff1",
+      "funding": "ETH",
+      "curveQuoteRaw": "37717585",
+      "observedWalletQuoteDebitRaw": null,
+      "routerQuoteFunding": [
+        {
+          "asset": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+          "from": "0x52e65b17fb6e5ba00ed806f37afcd2daa50271ca",
+          "to": "0x65050a9b7e5075a2ba5ced7b1b64ee66262c40dc",
+          "amountRaw": "37717585",
+          "logIndex": "59"
+        }
+      ],
+      "routerQuoteDebits": [
+        {
+          "asset": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+          "from": "0x65050a9b7e5075a2ba5ced7b1b64ee66262c40dc",
+          "to": "0x12ba58b5455fdbc15165e0e8b2096498d2c684f1",
+          "amountRaw": "37717585",
+          "logIndex": "63"
+        }
+      ],
+      "nativePayments": [
+        {
+          "to": "0xb8159ba378904f803639d274cec79f788931c9c8",
+          "valueRaw": "141768062819344",
+          "selector": "0x"
+        },
+        {
+          "to": "0x0bd7d308f8e1639fab988df18a8011f41eacad73",
+          "valueRaw": "14035038219115141",
+          "selector": "0xd0e30db0"
+        }
+      ],
+      "routerModules": [
+        "0x56101165bcf508b288f383113892e6db6be6db0e",
+        "0xd17b21b65cc273a4b342f14b19063da8bb410dbd",
+        "0x1ab4c5dfe15ff16170201d7fe0edc20c3d0cada3"
+      ],
+      "frames": 45,
+      "receiptLogsBound": 11,
+      "limits": [
+        "RPC callTracer is trusted execution evidence, not cryptographic proof",
+        "Observed payment is not an approved ticket basis",
+        "Runtime/storage/upgrade/signature semantics not admitted",
+        "No new policy and no retroactive tickets"
+      ]
+    },
+    {
+      "schema": "pons-router-trace-research-v1",
+      "admitted": false,
+      "eligibility": null,
+      "transactionHash": "0x38b89b695f86e73e9f38caabc78a6cb37355a9423e81fc48a82b3001b093c930",
+      "blockNumber": 79378789,
+      "recipient": "0xd754de7eaea4bddc5091ed492d4720f2c581653f",
+      "funding": "ETH",
+      "curveQuoteRaw": "3192906",
+      "observedWalletQuoteDebitRaw": null,
+      "routerQuoteFunding": [
+        {
+          "asset": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+          "from": "0x52e65b17fb6e5ba00ed806f37afcd2daa50271ca",
+          "to": "0x65050a9b7e5075a2ba5ced7b1b64ee66262c40dc",
+          "amountRaw": "3192906",
+          "logIndex": "60"
+        }
+      ],
+      "routerQuoteDebits": [
+        {
+          "asset": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+          "from": "0x65050a9b7e5075a2ba5ced7b1b64ee66262c40dc",
+          "to": "0x12ba58b5455fdbc15165e0e8b2096498d2c684f1",
+          "amountRaw": "3192906",
+          "logIndex": "64"
+        }
+      ],
+      "nativePayments": [
+        {
+          "to": "0xb8159ba378904f803639d274cec79f788931c9c8",
+          "valueRaw": "12000000000000",
+          "selector": "0x"
+        },
+        {
+          "to": "0x0bd7d308f8e1639fab988df18a8011f41eacad73",
+          "valueRaw": "1188000000000000",
+          "selector": "0xd0e30db0"
+        }
+      ],
+      "routerModules": [
+        "0x56101165bcf508b288f383113892e6db6be6db0e",
+        "0xd17b21b65cc273a4b342f14b19063da8bb410dbd",
+        "0x1ab4c5dfe15ff16170201d7fe0edc20c3d0cada3"
+      ],
+      "frames": 45,
+      "receiptLogsBound": 11,
+      "limits": [
+        "RPC callTracer is trusted execution evidence, not cryptographic proof",
+        "Observed payment is not an approved ticket basis",
+        "Runtime/storage/upgrade/signature semantics not admitted",
+        "No new policy and no retroactive tickets"
+      ]
+    },
+    {
+      "schema": "pons-router-trace-research-v1",
+      "admitted": false,
+      "eligibility": null,
+      "transactionHash": "0xfc13e57b83ab019fc6bfb23c0f932d1c28abeb3eca29fe82017d39d14107d973",
+      "blockNumber": 79379487,
+      "recipient": "0xca0546a46ea2fdb80b08d8ac37181f425181caea",
+      "funding": "ETH",
+      "curveQuoteRaw": "53211203",
+      "observedWalletQuoteDebitRaw": null,
+      "routerQuoteFunding": [
+        {
+          "asset": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+          "from": "0x52e65b17fb6e5ba00ed806f37afcd2daa50271ca",
+          "to": "0x65050a9b7e5075a2ba5ced7b1b64ee66262c40dc",
+          "amountRaw": "53211203",
+          "logIndex": "12"
+        }
+      ],
+      "routerQuoteDebits": [
+        {
+          "asset": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+          "from": "0x65050a9b7e5075a2ba5ced7b1b64ee66262c40dc",
+          "to": "0x12ba58b5455fdbc15165e0e8b2096498d2c684f1",
+          "amountRaw": "53211203",
+          "logIndex": "16"
+        }
+      ],
+      "nativePayments": [
+        {
+          "to": "0xb8159ba378904f803639d274cec79f788931c9c8",
+          "valueRaw": "200000000000000",
+          "selector": "0x"
+        },
+        {
+          "to": "0x0bd7d308f8e1639fab988df18a8011f41eacad73",
+          "valueRaw": "19800000000000000",
+          "selector": "0xd0e30db0"
+        }
+      ],
+      "routerModules": [
+        "0x56101165bcf508b288f383113892e6db6be6db0e",
+        "0xd17b21b65cc273a4b342f14b19063da8bb410dbd",
+        "0x1ab4c5dfe15ff16170201d7fe0edc20c3d0cada3"
+      ],
+      "frames": 45,
+      "receiptLogsBound": 11,
+      "limits": [
+        "RPC callTracer is trusted execution evidence, not cryptographic proof",
+        "Observed payment is not an approved ticket basis",
+        "Runtime/storage/upgrade/signature semantics not admitted",
+        "No new policy and no retroactive tickets"
+      ]
+    },
+    {
+      "schema": "pons-router-trace-research-v1",
+      "admitted": false,
+      "eligibility": null,
+      "transactionHash": "0x927aa5b73613f1af311de4d5bac43ff95cc876c1e32b33d451767857139c8429",
+      "blockNumber": 79380740,
+      "recipient": "0x61435de8961424cc48999329d396713af7169c13",
+      "funding": "ETH",
+      "curveQuoteRaw": "26595526",
+      "observedWalletQuoteDebitRaw": null,
+      "routerQuoteFunding": [
+        {
+          "asset": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+          "from": "0x52e65b17fb6e5ba00ed806f37afcd2daa50271ca",
+          "to": "0x65050a9b7e5075a2ba5ced7b1b64ee66262c40dc",
+          "amountRaw": "26595526",
+          "logIndex": "13"
+        }
+      ],
+      "routerQuoteDebits": [
+        {
+          "asset": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+          "from": "0x65050a9b7e5075a2ba5ced7b1b64ee66262c40dc",
+          "to": "0x12ba58b5455fdbc15165e0e8b2096498d2c684f1",
+          "amountRaw": "26595526",
+          "logIndex": "17"
+        }
+      ],
+      "nativePayments": [
+        {
+          "to": "0xb8159ba378904f803639d274cec79f788931c9c8",
+          "valueRaw": "100000000000000",
+          "selector": "0x"
+        },
+        {
+          "to": "0x0bd7d308f8e1639fab988df18a8011f41eacad73",
+          "valueRaw": "9900000000000000",
+          "selector": "0xd0e30db0"
+        }
+      ],
+      "routerModules": [
+        "0x56101165bcf508b288f383113892e6db6be6db0e",
+        "0xd17b21b65cc273a4b342f14b19063da8bb410dbd",
+        "0x1ab4c5dfe15ff16170201d7fe0edc20c3d0cada3"
+      ],
+      "frames": 45,
+      "receiptLogsBound": 11,
+      "limits": [
+        "RPC callTracer is trusted execution evidence, not cryptographic proof",
+        "Observed payment is not an approved ticket basis",
+        "Runtime/storage/upgrade/signature semantics not admitted",
+        "No new policy and no retroactive tickets"
+      ]
+    },
+    {
+      "schema": "pons-router-trace-research-v1",
+      "admitted": false,
+      "eligibility": null,
+      "transactionHash": "0x38b623bf1c946d5f8e95967b0a543bef6eac4a2568facd5e417e7cb84a3851e5",
+      "blockNumber": 79380740,
+      "recipient": "0x9ab81cfdb4a8c2b0d1f8173513c4d2874d851a3c",
+      "funding": "ETH",
+      "curveQuoteRaw": "26595521",
+      "observedWalletQuoteDebitRaw": null,
+      "routerQuoteFunding": [
+        {
+          "asset": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+          "from": "0x52e65b17fb6e5ba00ed806f37afcd2daa50271ca",
+          "to": "0x65050a9b7e5075a2ba5ced7b1b64ee66262c40dc",
+          "amountRaw": "26595521",
+          "logIndex": "24"
+        }
+      ],
+      "routerQuoteDebits": [
+        {
+          "asset": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+          "from": "0x65050a9b7e5075a2ba5ced7b1b64ee66262c40dc",
+          "to": "0x12ba58b5455fdbc15165e0e8b2096498d2c684f1",
+          "amountRaw": "26595521",
+          "logIndex": "28"
+        }
+      ],
+      "nativePayments": [
+        {
+          "to": "0xb8159ba378904f803639d274cec79f788931c9c8",
+          "valueRaw": "100000000000000",
+          "selector": "0x"
+        },
+        {
+          "to": "0x0bd7d308f8e1639fab988df18a8011f41eacad73",
+          "valueRaw": "9900000000000000",
+          "selector": "0xd0e30db0"
+        }
+      ],
+      "routerModules": [
+        "0x56101165bcf508b288f383113892e6db6be6db0e",
+        "0xd17b21b65cc273a4b342f14b19063da8bb410dbd",
+        "0x1ab4c5dfe15ff16170201d7fe0edc20c3d0cada3"
+      ],
+      "frames": 45,
+      "receiptLogsBound": 11,
+      "limits": [
+        "RPC callTracer is trusted execution evidence, not cryptographic proof",
+        "Observed payment is not an approved ticket basis",
+        "Runtime/storage/upgrade/signature semantics not admitted",
+        "No new policy and no retroactive tickets"
+      ]
+    },
+    {
+      "schema": "pons-router-trace-research-v1",
+      "admitted": false,
+      "eligibility": null,
+      "transactionHash": "0xc1ded7278f5b3931a87e539c4bb6a0534d3c3b1254857ab1ced1afcdac1f61ad",
+      "blockNumber": 79380751,
+      "recipient": "0x61435de8961424cc48999329d396713af7169c13",
+      "funding": "ETH",
+      "curveQuoteRaw": "26592810",
+      "observedWalletQuoteDebitRaw": null,
+      "routerQuoteFunding": [
+        {
+          "asset": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+          "from": "0x52e65b17fb6e5ba00ed806f37afcd2daa50271ca",
+          "to": "0x65050a9b7e5075a2ba5ced7b1b64ee66262c40dc",
+          "amountRaw": "26592810",
+          "logIndex": "29"
+        }
+      ],
+      "routerQuoteDebits": [
+        {
+          "asset": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+          "from": "0x65050a9b7e5075a2ba5ced7b1b64ee66262c40dc",
+          "to": "0x12ba58b5455fdbc15165e0e8b2096498d2c684f1",
+          "amountRaw": "26592810",
+          "logIndex": "33"
+        }
+      ],
+      "nativePayments": [
+        {
+          "to": "0xb8159ba378904f803639d274cec79f788931c9c8",
+          "valueRaw": "100000000000000",
+          "selector": "0x"
+        },
+        {
+          "to": "0x0bd7d308f8e1639fab988df18a8011f41eacad73",
+          "valueRaw": "9900000000000000",
+          "selector": "0xd0e30db0"
+        }
+      ],
+      "routerModules": [
+        "0x56101165bcf508b288f383113892e6db6be6db0e",
+        "0xd17b21b65cc273a4b342f14b19063da8bb410dbd",
+        "0x1ab4c5dfe15ff16170201d7fe0edc20c3d0cada3"
+      ],
+      "frames": 45,
+      "receiptLogsBound": 11,
+      "limits": [
+        "RPC callTracer is trusted execution evidence, not cryptographic proof",
+        "Observed payment is not an approved ticket basis",
+        "Runtime/storage/upgrade/signature semantics not admitted",
+        "No new policy and no retroactive tickets"
+      ]
+    },
+    {
+      "schema": "pons-router-trace-research-v1",
+      "admitted": false,
+      "eligibility": null,
+      "transactionHash": "0xe22f1fbaedac452143cd63747d2ad7f096477531df39ef53b707fb032441757f",
+      "blockNumber": 79380751,
+      "recipient": "0x9ab81cfdb4a8c2b0d1f8173513c4d2874d851a3c",
+      "funding": "ETH",
+      "curveQuoteRaw": "26592805",
+      "observedWalletQuoteDebitRaw": null,
+      "routerQuoteFunding": [
+        {
+          "asset": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+          "from": "0x52e65b17fb6e5ba00ed806f37afcd2daa50271ca",
+          "to": "0x65050a9b7e5075a2ba5ced7b1b64ee66262c40dc",
+          "amountRaw": "26592805",
+          "logIndex": "40"
+        }
+      ],
+      "routerQuoteDebits": [
+        {
+          "asset": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+          "from": "0x65050a9b7e5075a2ba5ced7b1b64ee66262c40dc",
+          "to": "0x12ba58b5455fdbc15165e0e8b2096498d2c684f1",
+          "amountRaw": "26592805",
+          "logIndex": "44"
+        }
+      ],
+      "nativePayments": [
+        {
+          "to": "0xb8159ba378904f803639d274cec79f788931c9c8",
+          "valueRaw": "100000000000000",
+          "selector": "0x"
+        },
+        {
+          "to": "0x0bd7d308f8e1639fab988df18a8011f41eacad73",
+          "valueRaw": "9900000000000000",
+          "selector": "0xd0e30db0"
+        }
+      ],
+      "routerModules": [
+        "0x56101165bcf508b288f383113892e6db6be6db0e",
+        "0xd17b21b65cc273a4b342f14b19063da8bb410dbd",
+        "0x1ab4c5dfe15ff16170201d7fe0edc20c3d0cada3"
+      ],
+      "frames": 45,
+      "receiptLogsBound": 11,
+      "limits": [
+        "RPC callTracer is trusted execution evidence, not cryptographic proof",
+        "Observed payment is not an approved ticket basis",
+        "Runtime/storage/upgrade/signature semantics not admitted",
+        "No new policy and no retroactive tickets"
+      ]
+    }
+  ],
+  "proxy": {
+    "implementationSlot": "0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc",
+    "first": "0x00000000000000000000000056101165bcf508b288f383113892e6db6be6db0e",
+    "finalized": "0x00000000000000000000000056101165bcf508b288f383113892e6db6be6db0e",
+    "adminLiteralInBytecode": "0x75fc5cd1794921e617d97e4afa2ff93613413be3",
+    "interpretation": "Bytecode has admin branch and implementation SSTORE; identical proxy code is not an immutable implementation guarantee"
+  }
+}

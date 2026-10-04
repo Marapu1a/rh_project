@@ -164,3 +164,12 @@ PASS,53 записи разобраны (52 BUY+1 SELL), authorizations и SELL 
 исправлены,23/23 адресных tests. Новые router admissions не включены.
 Далее: один проверенный adapter с явным решением по policy; explorer/GoPlus
 обновление остаётся внешней зависимостью. Автоматика выключена.
+
+## Текущий шаг: массовый router65050…
+
+[Исследование](PONS_ROUTER_RESEARCH_2026-10-04.md):28/28 сохранённых BUY связаны
+с trace/receipt и конечным получателем. Обнаружен upgradeable proxy; одинаковый
+внешний codeHash недостаточен. Семантика трёх модулей ещё не допущена.
+7/7 предметных tests и5/5 launcher PASS. Production admission не менялся.
+Далее: ABI/implementation review и локальные adversarial fork сценарии; затем
+отдельное решение о policy. Сервер утром lag0,1362 прохода без ошибок,2.37MB.

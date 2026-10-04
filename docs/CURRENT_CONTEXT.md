@@ -192,3 +192,12 @@ fork существующего токена PASS. Из106 событий55 BUY/
 tests PASS; read-only runtime night-final-20261004 установлен отдельно.
 Следующий шаг: согласовать один router adapter после проверки его исполнителей;
 довести explorer/GoPlus indexing. Финансовая автоматика остаётся выключенной.
+
+## Текущий шаг: массовый router65050…
+
+[Исследование](PONS_ROUTER_RESEARCH_2026-10-04.md):28/28 сохранённых BUY связаны
+с trace/receipt и конечным получателем. Обнаружен upgradeable proxy; одинаковый
+внешний codeHash недостаточен. Семантика трёх модулей ещё не допущена.
+7/7 предметных tests и5/5 launcher PASS. Production admission не менялся.
+Далее: ABI/implementation review и локальные adversarial fork сценарии; затем
+отдельное решение о policy. Сервер утром lag0,1362 прохода без ошибок,2.37MB.
