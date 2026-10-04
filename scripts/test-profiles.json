@@ -121,6 +121,7 @@
       "test/pons-pool-batch.test.cjs",
       "test/pons-funding-pass.test.cjs",
       "test/pons-gas-budget.test.cjs",
+      "test/pace-public-rpc.test.cjs",
       "test/pons-wallet-verifier.test.cjs",
       "test/pons-zeroex-evidence.test.cjs",
       "test/pons-zeroex-buy.test.cjs",
@@ -461,6 +462,7 @@
       "test/fork-empty-storage.test.cjs",
       "test/pons-funding-pass.test.cjs",
       "test/pons-gas-budget.test.cjs",
+      "test/pace-public-rpc.test.cjs",
       "test/pons-delay-status.test.cjs",
       "test/pons-storage-failure.test.cjs",
       "test/wallet-reward-completeness.test.cjs"
@@ -595,6 +597,7 @@
       "test/wallet-reward-completeness.test.cjs",
       "test/pons-automation.test.cjs",
       "test/pons-gas-budget.test.cjs",
+      "test/pace-public-rpc.test.cjs",
       "test/pons-funding-pass.test.cjs",
       "test/local-state-lock.test.cjs",
       "test/indexer-service.test.cjs",
@@ -644,6 +647,7 @@
       "test/pons-public-runtime.test.cjs",
       "test/pons-automation.test.cjs",
       "test/pons-gas-budget.test.cjs",
+      "test/pace-public-rpc.test.cjs",
       "test/pons-crash-recovery.test.cjs",
       "test/robinhood-runtime.test.cjs",
       "test/ops-session.test.cjs"

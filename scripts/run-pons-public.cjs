@@ -22,7 +22,7 @@ async function main(){
  const wallet=await ethers.Wallet.fromEncryptedJson(fs.readFileSync(o['--keystore'],'utf8'),password);
  if(wallet.address.toLowerCase()!==c.executor.toLowerCase())throw Error('Wrong executor');
  const request=new ethers.FetchRequest(url.href);request.timeout=20000;
- const provider=new ethers.JsonRpcProvider(request,undefined,{cacheTimeout:-1}),executor=wallet.connect(provider),stop=new AbortController();
+ const provider=require('./pace-public-rpc.cjs').paceProvider(new ethers.JsonRpcProvider(request,undefined,{cacheTimeout:-1})),executor=wallet.connect(provider),stop=new AbortController();
  const halt=()=>stop.abort();process.once('SIGINT',halt);process.once('SIGTERM',halt);
  try{await require('./ops-session.cjs').withOpsSession(o['--state'],async ops=>{
   do{
