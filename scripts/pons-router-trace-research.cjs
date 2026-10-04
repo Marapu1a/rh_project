@@ -5,6 +5,7 @@ const low=x=>String(x).toLowerCase(),check=(v,m)=>{if(!v)throw Error(m);};
 function inspect({manifest:m,tx,receipt,trace}){
  const observed=A.inspect(m,tx,receipt);
  check(low(tx.to)===ROUTER&&tx.input.slice(0,10)==='0x4d819a2a','Unexpected research route');
+ const shape=require('./pons-router-calldata-research.cjs').decode(m,tx);
  check(trace.type==='CALL'&&low(trace.from)===low(tx.from)&&low(trace.to)===low(tx.to)&&low(trace.input)===low(tx.input)&&BigInt(trace.value||0)===BigInt(tx.value||0),'Trace envelope mismatch');
  const frames=[],logs=new Map();
  function walk(n,parent,path){
@@ -38,6 +39,20 @@ function inspect({manifest:m,tx,receipt,trace}){
  const directUsd=BigInt(tx.value||0)===0n;
  if(directUsd)check(funding.length===1&&funding[0].from===low(tx.from),'Ambiguous USDG payer');
  else check(funding.length===1&&funding[0].from!==low(tx.from)&&!walletDelta,'Ambiguous ETH funding');
+ check(BigInt(event.tokensOutRaw)>=shape.minReturn,'Minimum output mismatch');
+ const feeRecipient='0xb8159ba378904f803639d274cec79f788931c9c8',fee=shape.amountIn/100n;
+ const expected=directUsd?[
+  [m.quote,tx.from,feeRecipient,fee],[m.quote,tx.from,ROUTER,shape.amountIn-fee],
+  [m.quote,ROUTER,m.curve,shape.amountIn-fee],[m.token,m.curve,tx.from,BigInt(event.tokensOutRaw)]
+ ]:[
+  [m.quote,m.fundingPool,ROUTER,BigInt(event.quoteInRaw)],
+  [m.quote,ROUTER,m.curve,BigInt(event.quoteInRaw)],[m.token,m.curve,tx.from,BigInt(event.tokensOutRaw)]
+ ];
+ check(observed.transfers.length===expected.length,'Refund/extra project asset transfer');
+ expected.forEach(([asset,from,to,amount],i)=>{const t=observed.transfers[i];check(t.asset===low(asset)&&t.from===low(from)&&t.to===low(to)&&BigInt(t.amountRaw)===amount,'Exact funding/payment flow mismatch');});
+ const modules=[...new Set(frames.filter(f=>f.node.type==='DELEGATECALL'&&f.context===ROUTER).map(f=>low(f.node.to)))];
+ const expectedModules=['0x56101165bcf508b288f383113892e6db6be6db0e',...(directUsd?[]:['0xd17b21b65cc273a4b342f14b19063da8bb410dbd']),'0x1ab4c5dfe15ff16170201d7fe0edc20c3d0cada3'];
+ check(JSON.stringify(modules)===JSON.stringify(expectedModules),'Unexpected executed router module');
  return {schema:'pons-router-trace-research-v1',admitted:false,eligibility:null,transactionHash:tx.hash,blockNumber:Number(BigInt(tx.blockNumber)),recipient:low(tx.from),funding:directUsd?'USDG':'ETH',curveQuoteRaw:event.quoteInRaw,
   observedWalletQuoteDebitRaw:walletDelta?String(-BigInt(walletDelta.delta)):null,routerQuoteFunding:funding,routerQuoteDebits:debits,
   nativePayments:frames.filter(f=>f.node.type==='CALL'&&low(f.node.from)===ROUTER&&BigInt(f.node.value||0)>0n).map(f=>({to:low(f.node.to),valueRaw:String(BigInt(f.node.value)),selector:f.node.input?.slice(0,10)})),

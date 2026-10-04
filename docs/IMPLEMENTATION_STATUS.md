@@ -92,3 +92,12 @@ Fixtures `test/fixtures/pons-router-research`, tests в full/pons-channels.
 `scripts/pons-router-fork-research.cjs` — developer-only historical fork harness
 для65050…:19 сценариев, read-only upstream, snapshot/revert. Полный ABI и
 admission не заявлены. [Результаты/границы](PONS_ROUTER_FORK_2026-10-04.md).
+
+### Итог маршрутов04.10
+
+`pons-router-calldata-research.cjs`: восстановленная canonical ABI, узкие1/2-step
+формы. `pons-router-trace-research.cjs`: точный USDG/QIANQI flow, запрет лишних
+переводов/неизвестных modules; всё ещё research-only, admitted=false.
+`pons-live-direct-accounting-rehearsal.cjs`: существующий token + planner/ledger,
+restart/checkpoint/idempotency и опциональный локальный wallet API.
+[Готовность, ограничения и единый пакет расширения](PONS_ROUTE_RESOLUTION_2026-10-04.md).

@@ -1,0 +1,345 @@
+{
+  "date": "2026-10-04",
+  "admittedNewRoutes": false,
+  "productionChanged": false,
+  "decision": "Not production-ready; tested existing direct route is the release fallback",
+  "calldataSignature": [
+    "swap((uint8,address,address,address,uint24,int24,address,bytes,address,bytes32)[],address,uint256,uint256,uint256)"
+  ],
+  "shapeResults": [
+    {
+      "transactionHash": "0xb64952128bacef2516f47eca910eab4c324f032ef115a41315a21d4bda500c79",
+      "status": "MATCH",
+      "funding": "ETH",
+      "curveQuoteRaw": "93087934",
+      "observedWalletQuoteDebitRaw": null
+    },
+    {
+      "transactionHash": "0x1859bc5352b7e00f078e36224088aaefacc69e66f89a7a2f50080366acbc7ff8",
+      "status": "MATCH",
+      "funding": "ETH",
+      "curveQuoteRaw": "93087876",
+      "observedWalletQuoteDebitRaw": null
+    },
+    {
+      "transactionHash": "0x12fd7b10f4f3529b18316e8485fc4c129b7abd66fe8fed51ef7232f3dc7a47fa",
+      "status": "MATCH",
+      "funding": "ETH",
+      "curveQuoteRaw": "265965515",
+      "observedWalletQuoteDebitRaw": null
+    },
+    {
+      "transactionHash": "0xe4108a1b3497ba6611450450f9eb29ac6b09429c4eed3702ce189507b68f95b6",
+      "status": "MATCH",
+      "funding": "ETH",
+      "curveQuoteRaw": "265965039",
+      "observedWalletQuoteDebitRaw": null
+    },
+    {
+      "transactionHash": "0xad6d1cf57ac30d40b832b6327f9c36f28a2f506a2bbcb758858e10896143ca03",
+      "status": "MATCH",
+      "funding": "ETH",
+      "curveQuoteRaw": "2659647",
+      "observedWalletQuoteDebitRaw": null
+    },
+    {
+      "transactionHash": "0x7b1f808c8c480bfc09adb5437dd2b04ab9892722bd6877c4f1c066365e516bce",
+      "status": "MATCH",
+      "funding": "ETH",
+      "curveQuoteRaw": "26596625",
+      "observedWalletQuoteDebitRaw": null
+    },
+    {
+      "transactionHash": "0xa0f449e13cf7659b731913c7662fc56e1b6ce1c680a420bb5917c498770efbc3",
+      "status": "MATCH",
+      "funding": "ETH",
+      "curveQuoteRaw": "66492376",
+      "observedWalletQuoteDebitRaw": null
+    },
+    {
+      "transactionHash": "0x7e904bbbdacd41ff972ee5a5833ac0055cd40e0acf143ac57d73d63ad98f167f",
+      "status": "MATCH",
+      "funding": "ETH",
+      "curveQuoteRaw": "66492346",
+      "observedWalletQuoteDebitRaw": null
+    },
+    {
+      "transactionHash": "0xeb4228dbc60761390d905d8570c82ae8614ba962519cc30c51d67a2f0fb47ba0",
+      "status": "MATCH",
+      "funding": "USDG",
+      "curveQuoteRaw": "198000000",
+      "observedWalletQuoteDebitRaw": "200000000"
+    },
+    {
+      "transactionHash": "0x366150da9c5cb4cb0a607f0fe7d22e370044988f00727c645621c7fb4a0425e9",
+      "status": "MATCH",
+      "funding": "ETH",
+      "curveQuoteRaw": "132998394",
+      "observedWalletQuoteDebitRaw": null
+    },
+    {
+      "transactionHash": "0x93a94204cdac4f1419e80316b60dc88dd643777e3803191869aa85010911be3c",
+      "status": "MATCH",
+      "funding": "ETH",
+      "curveQuoteRaw": "132998276",
+      "observedWalletQuoteDebitRaw": null
+    },
+    {
+      "transactionHash": "0xa845840a995f6c9f0a744be37c0a54376ceb3e0926a745865e4bd80d3300b639",
+      "status": "MATCH",
+      "funding": "ETH",
+      "curveQuoteRaw": "132998157",
+      "observedWalletQuoteDebitRaw": null
+    },
+    {
+      "transactionHash": "0xf1d6bad36db433b4ed996745c6a939ca4918131de40386a9c3657404f89ec779",
+      "status": "MATCH",
+      "funding": "ETH",
+      "curveQuoteRaw": "132998039",
+      "observedWalletQuoteDebitRaw": null
+    },
+    {
+      "transactionHash": "0x094bc0f4ef596799311c378c6d47d02113cd51e7ec0e70ae4d81ce567241edb1",
+      "status": "MATCH",
+      "funding": "ETH",
+      "curveQuoteRaw": "18348163",
+      "observedWalletQuoteDebitRaw": null
+    },
+    {
+      "transactionHash": "0x1d0972e6e69a3b7c8298bf167ca872aa0a8679959b5840977322a530b870ed4f",
+      "status": "MATCH",
+      "funding": "ETH",
+      "curveQuoteRaw": "39901654",
+      "observedWalletQuoteDebitRaw": null
+    },
+    {
+      "transactionHash": "0x7c747a47b736754bb6f030204ece9ca6bda2b17ed4a8c587ccfcbe03e702efcf",
+      "status": "MATCH",
+      "funding": "ETH",
+      "curveQuoteRaw": "26601093",
+      "observedWalletQuoteDebitRaw": null
+    },
+    {
+      "transactionHash": "0x5c2517a8050d6a559380693f2a205a94744b84cd4679c1453fbbcd46008c7f6b",
+      "status": "MATCH",
+      "funding": "ETH",
+      "curveQuoteRaw": "266037918",
+      "observedWalletQuoteDebitRaw": null
+    },
+    {
+      "transactionHash": "0xb4a6b438f62bdc104e201f8834bc014eb839a0b97b3b9060805ef03cc79d1ab2",
+      "status": "MATCH",
+      "funding": "ETH",
+      "curveQuoteRaw": "34519551",
+      "observedWalletQuoteDebitRaw": null
+    },
+    {
+      "transactionHash": "0xa5d3aeeef38386a8a96b8cf60b6570dd9e070137d0e1807123d4e5c376b12b75",
+      "status": "MATCH",
+      "funding": "ETH",
+      "curveQuoteRaw": "21085817",
+      "observedWalletQuoteDebitRaw": null
+    },
+    {
+      "transactionHash": "0xe69466809d47916c246e08cd3aa15d367b2b7ae3d9802187a5b6517cefd682ba",
+      "status": "MATCH",
+      "funding": "ETH",
+      "curveQuoteRaw": "17791040",
+      "observedWalletQuoteDebitRaw": null
+    },
+    {
+      "transactionHash": "0x063471a443483268289aa89602fc63ea5445877656a1673df0723159a13d7ec2",
+      "status": "MATCH",
+      "funding": "ETH",
+      "curveQuoteRaw": "21911724",
+      "observedWalletQuoteDebitRaw": null
+    },
+    {
+      "transactionHash": "0x947db2a3e999b8a6056d69d494d9adf6b62cb7a8dca032c1f64bad9ca0ee5f55",
+      "status": "MATCH",
+      "funding": "ETH",
+      "curveQuoteRaw": "37717585",
+      "observedWalletQuoteDebitRaw": null
+    },
+    {
+      "transactionHash": "0x38b89b695f86e73e9f38caabc78a6cb37355a9423e81fc48a82b3001b093c930",
+      "status": "MATCH",
+      "funding": "ETH",
+      "curveQuoteRaw": "3192906",
+      "observedWalletQuoteDebitRaw": null
+    },
+    {
+      "transactionHash": "0xfc13e57b83ab019fc6bfb23c0f932d1c28abeb3eca29fe82017d39d14107d973",
+      "status": "MATCH",
+      "funding": "ETH",
+      "curveQuoteRaw": "53211203",
+      "observedWalletQuoteDebitRaw": null
+    },
+    {
+      "transactionHash": "0x927aa5b73613f1af311de4d5bac43ff95cc876c1e32b33d451767857139c8429",
+      "status": "MATCH",
+      "funding": "ETH",
+      "curveQuoteRaw": "26595526",
+      "observedWalletQuoteDebitRaw": null
+    },
+    {
+      "transactionHash": "0x38b623bf1c946d5f8e95967b0a543bef6eac4a2568facd5e417e7cb84a3851e5",
+      "status": "MATCH",
+      "funding": "ETH",
+      "curveQuoteRaw": "26595521",
+      "observedWalletQuoteDebitRaw": null
+    },
+    {
+      "transactionHash": "0xc1ded7278f5b3931a87e539c4bb6a0534d3c3b1254857ab1ced1afcdac1f61ad",
+      "status": "MATCH",
+      "funding": "ETH",
+      "curveQuoteRaw": "26592810",
+      "observedWalletQuoteDebitRaw": null
+    },
+    {
+      "transactionHash": "0xe22f1fbaedac452143cd63747d2ad7f096477531df39ef53b707fb032441757f",
+      "status": "MATCH",
+      "funding": "ETH",
+      "curveQuoteRaw": "26592805",
+      "observedWalletQuoteDebitRaw": null
+    }
+  ],
+  "policy": {
+    "block": {
+      "number": 79722696,
+      "hash": "0x1d59f2c1638288cf839173f7dc5471c5773ed031382f4df411e398ce9a456dd1"
+    },
+    "source": "0x4C6fCD1645f15E6eCFc02E74A68ac81e3eD02738",
+    "genesisHash": "0x96f08f9d1b0ce23742cd83a32b0803a6516e36d07aadda9276564cb5b70e5e2b",
+    "currentHash": "0x96f08f9d1b0ce23742cd83a32b0803a6516e36d07aadda9276564cb5b70e5e2b",
+    "publishedCount": "0",
+    "noticeBlocks": "864000",
+    "publisher": "0x098afA6731239a00CE0aff669aaefD16b7C72114",
+    "configHash": "0x96f08f9d1b0ce23742cd83a32b0803a6516e36d07aadda9276564cb5b70e5e2b",
+    "currentDecoderExtension": null,
+    "limits": "Read-only. Null means current Pons decoder cannot interpret new route announcements; contract itself is append-only extensible."
+  },
+  "directFallback": {
+    "schema": "pons-live-direct-accounting-rehearsal-v1",
+    "publicSends": 0,
+    "localOnly": true,
+    "steps": [
+      {
+        "kind": "approve-usdg",
+        "venue": "curve",
+        "hash": "0x6188e70eb88cf9ce4ea30763603ca66ec47888ce839a23d905817da2fbf9a7fe"
+      },
+      {
+        "kind": "buy",
+        "venue": "curve",
+        "hash": "0x6efd9c1344ce6f7fdb685172846c8e8d42e97e175c73be37406fba23035ce221"
+      }
+    ],
+    "fork": {
+      "number": 79722696,
+      "hash": "0x1d59f2c1638288cf839173f7dc5471c5773ed031382f4df411e398ce9a456dd1"
+    },
+    "token": "0x6EA39A23AA46E51CA6CD2d1cbc0B5bfb29ECB216",
+    "localAnchor": {
+      "number": 79722697,
+      "hash": "0x98c3471a2615be084a416187ca4125bf9a4027f18c0c02691baf0eee15f44e9a"
+    },
+    "productionAnchorChanged": false,
+    "status": "PASSED",
+    "wallet": {
+      "wallet": "0x0000000000000000000000000000000000004321",
+      "carryRaw": "1000000",
+      "entriesMinted": "1",
+      "shortAttemptsMinted": "1",
+      "monthlyAttemptsMinted": "1"
+    },
+    "decisions": [
+      {
+        "candidateId": "4663:0x7e86febb41bd3a6e6ff9332e440596c8f1c8b31de5787f7074c47864979a7ecb:0x6efd9c1344ce6f7fdb685172846c8e8d42e97e175c73be37406fba23035ce221:2",
+        "blockNumber": 79722699,
+        "blockHash": "0x7e86febb41bd3a6e6ff9332e440596c8f1c8b31de5787f7074c47864979a7ecb",
+        "transactionHash": "0x6efd9c1344ce6f7fdb685172846c8e8d42e97e175c73be37406fba23035ce221",
+        "transactionIndex": 0,
+        "logIndex": 2,
+        "payer": "0x0000000000000000000000000000000000004321",
+        "recipient": "0x0000000000000000000000000000000000004321",
+        "grossQuoteRaw": "101000000",
+        "evidenceLogIndexes": [
+          2,
+          0,
+          1
+        ],
+        "status": "ELIGIBLE",
+        "reason": "SUPPORTED_BUY",
+        "netQuoteDebitRaw": "101000000",
+        "refundQuoteRaw": "0",
+        "quoteBasis": "wallet-net-debit-v1",
+        "entriesMinted": "1"
+      }
+    ],
+    "restartSameLedger": true,
+    "checkpointContinuationSameLedger": true,
+    "duplicateDeliveryIdempotent": true,
+    "conflictingBlockRejected": true,
+    "limits": [
+      "Synthetic USDG/ETH and local impersonation only",
+      "Anchor changed only in local manifest for isolated rehearsal; no production policy changes",
+      "Existing direct planner and v4 accounting; not public browser activation"
+    ],
+    "walletApi": {
+      "http": 200,
+      "status": "observed",
+      "balances": {
+        "SHORT": {
+          "mintedTotal": "1",
+          "open": "1",
+          "frozenByDraw": {},
+          "consumedTotal": "0",
+          "byEpoch": [
+            {
+              "epoch": "1",
+              "minted": "1",
+              "consumed": "0",
+              "frozen": "0",
+              "open": "1",
+              "firstOpenAttempt": "1",
+              "lastOpenAttempt": "1"
+            }
+          ]
+        },
+        "MONTHLY": {
+          "mintedTotal": "1",
+          "open": "1",
+          "frozenByDraw": {},
+          "consumedTotal": "0",
+          "byEpoch": [
+            {
+              "epoch": "1",
+              "minted": "1",
+              "consumed": "0",
+              "frozen": "0",
+              "open": "1",
+              "firstOpenAttempt": "1",
+              "lastOpenAttempt": "1"
+            }
+          ]
+        },
+        "carryRaw": "1000000",
+        "entryThresholdRaw": "100000000",
+        "quoteDecimals": 6
+      },
+      "localAdmissionAssumption": true
+    },
+    "proxyStats": {
+      "requests": 230,
+      "retries": 0,
+      "errors": 0
+    }
+  },
+  "tests": {
+    "command": "node --test test/pons-direct-purchase.test.cjs test/pons-router-trace-research.test.cjs test/pons-channel-attribution.test.cjs",
+    "passed": 12,
+    "failed": 0,
+    "fullSuite": false
+  }
+}
