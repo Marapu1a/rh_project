@@ -1,5 +1,23 @@
 const {test}=require('node:test'),assert=require('node:assert/strict'),E=require('ethers');
 const D=require('../scripts/direct-buy.cjs'),R=require('../scripts/purchase-recognition.cjs'),{fixture}=require('./fixtures/purchase-recognition.cjs');
+function preparation(t){
+ const fs=require('node:fs'),path=require('node:path'),dir=fs.mkdtempSync(path.resolve('.local/logs/recognition-preflight-'));
+ t.after(()=>{for(const file of fs.readdirSync(dir))fs.unlinkSync(path.join(dir,file));fs.rmdirSync(dir);});
+ const f=fixture(),calls=[],source=new E.Interface(['function instanceId() view returns(bytes32)','function publisher() view returns(address)','function availableAt() view returns(uint256)','function published(bytes32) view returns(bool)','function confirm(bytes32,uint256)']);
+ const flags={code:'0x01',publisher:f.recognition.publisher,instanceId:f.recognition.instanceId,availableAt:1,published:false,changedFinality:false};
+ const row=f.blocks[0].transactions[0];
+ const rpc=async(method,params=[])=>{
+  calls.push([method,params]);
+  if(method==='eth_chainId')return '0x1237';
+  if(method==='eth_getBlockByNumber')return {...f.blocks[0],...(flags.changedFinality&&params[0]!=='finalized'?{hash:E.ZeroHash}:{})};
+  if(method==='eth_getTransactionReceipt')return row.receipt;
+  if(method==='debug_traceTransaction')return f.proof.trace;
+  if(method==='eth_getCode')return params[0].toLowerCase()===f.recognition.source.toLowerCase()?flags.code:require('./fixtures/pons-router-research/runtime-codes.json')[params[0]];
+  if(method==='eth_call'){const name=source.parseTransaction({data:params[0].data}).name;return name==='confirm'?'0x':source.encodeFunctionResult(name,[flags[name]]);}
+  throw Error('Unexpected RPC '+method);
+ };
+ return {f,flags,calls,dir,args:{config:{manifest:f.m,recognition:f.recognition,lifecycle:f.config},blocks:f.marked(),transactionHashes:[row.tx.hash],rpc,directory:dir}};
+}
 test('late USDG purchase credits only future draws; original source and frozen hashes survive restart',()=>{
  const f=fixture();f.buy();const short=f.freeze('SHORT',1),monthly=f.freeze('MONTHLY',1),before=f.run();
  assert.equal(before.buyLedger.decisions[0].status,'WAITING_RECOGNITION');f.consume(short);f.confirm();
@@ -56,14 +74,11 @@ test('bundle hydration, restart and wallet API independently reproduce pending/c
  fs.unlinkSync(path.join(dir,key+'.json'));assert.equal(read().balances.SHORT.open,'2'); // durable index contains the committed proof
 });
 test('read-only preparation validates canonical receipts and runtimes, writes content-addressed evidence, never sends',async t=>{
- const fs=require('node:fs'),path=require('node:path'),dir=fs.mkdtempSync(path.resolve('.local/logs/recognition-plan-'));
- t.after(()=>{for(const file of fs.readdirSync(dir))fs.unlinkSync(path.join(dir,file));fs.rmdirSync(dir);});
- const f=fixture(),row=f.blocks[0].transactions[0],calls=[];
- const rpc=async(method,params)=>{calls.push(method);if(method==='eth_chainId')return '0x1237';if(method==='eth_getBlockByNumber')return f.blocks[0];if(method==='eth_getTransactionReceipt')return row.receipt;if(method==='debug_traceTransaction')return f.proof.trace;if(method==='eth_getCode')return require('./fixtures/pons-router-research/runtime-codes.json')[params[0]];throw Error('Unexpected RPC');};
- const args={config:{manifest:f.m,recognition:f.recognition},blocks:f.blocks,transactionHashes:[row.tx.hash],rpc,directory:dir};
- const plan=await require('../scripts/prepare-purchase-recognition.cjs').prepare(args);assert.equal(plan.sent,false);assert.equal(plan.bundleHash,D.hash(JSON.parse(fs.readFileSync(plan.file))));assert(!calls.some(x=>x.includes('send')));
- assert.equal((await require('../scripts/prepare-purchase-recognition.cjs').prepare(args)).bundleHash,plan.bundleHash);
- await assert.rejects(require('../scripts/prepare-purchase-recognition.cjs').prepare({...args,rpc:async(method,params)=>method==='eth_getCode'&&params[1]!==row.tx.blockNumber?'0x02':rpc(method,params)}));
+ const {args,flags,calls}=preparation(t),prepare=require('../scripts/prepare-purchase-recognition.cjs').prepare;
+ const plan=await prepare(args);assert.equal(plan.sent,false);assert.equal(plan.validation.newlyConfirmed,1);
+ assert.equal(plan.bundleHash,D.hash(JSON.parse(require('node:fs').readFileSync(plan.file))));assert(!calls.some(([x])=>x.includes('send')));
+ assert.equal((await prepare(args)).bundleHash,plan.bundleHash);
+ flags.code='0x02';await assert.rejects(prepare(args),/source runtime/);
 });
 test('persistent index stops at unavailable/corrupt commitment without replacing last good purchases',async t=>{
  const fs=require('node:fs'),path=require('node:path'),dir=fs.mkdtempSync(path.resolve('.local/logs/recognition-fault-'));
@@ -87,4 +102,38 @@ test('v4 delayed entries belong to the confirmation epochs of both Short and Mon
  emit('MonthlyRulesActivated',[1,2,f.head().blockNumber+2],address);
  f.confirm();const r=f.run();
  for(const kind of ['SHORT','MONTHLY'])assert.deepEqual(r.wallets[0][kind].byEpoch.map(e=>e.minted),['0','2']);
+});
+test('publication refuses duplicate transaction hashes even with different letter case',async t=>{
+ const {args}=preparation(t),hash=args.transactionHashes[0];
+ await assert.rejects(require('../scripts/prepare-purchase-recognition.cjs').prepare({...args,transactionHashes:[hash,'0x'+hash.slice(2).toUpperCase()]}),/unique purchases/);
+});
+test('publication rejects unsafe source, premature notice and duplicate commitment before writing a plan',async t=>{
+ const prepare=require('../scripts/prepare-purchase-recognition.cjs').prepare,fs=require('node:fs');
+ for(const change of [x=>x.flags.code='0x',x=>x.flags.publisher=E.ZeroAddress,x=>x.flags.instanceId=E.ZeroHash,x=>x.flags.availableAt=9999999999,x=>x.flags.published=true]){
+  const x=preparation(t);change(x);await assert.rejects(prepare(x.args));assert.deepEqual(fs.readdirSync(x.dir),[]);
+ }
+});
+test('publication validates full history and lifecycle, refusing stale frozen snapshots and already credited purchases',async t=>{
+ const prepare=require('../scripts/prepare-purchase-recognition.cjs').prepare;
+ const x=preparation(t);x.f.buy();x.f.freeze('SHORT',99);await assert.rejects(prepare({...x.args,blocks:x.f.marked()}),/Frozen snapshot does not match replay/);
+ const y=preparation(t);y.f.confirm();await assert.rejects(prepare({...y.args,blocks:y.f.marked()}),/already counted/);
+ const z=preparation(t);z.args.blocks[0].transactions[0].receipt.logs[0].removed=true;await assert.rejects(prepare(z.args),/provenance/);
+});
+test('publication validates header metadata and rechecks finality after source simulation',async t=>{
+ const prepare=require('../scripts/prepare-purchase-recognition.cjs').prepare;
+ const x=preparation(t);x.args.blocks[0].timestamp--;await assert.rejects(prepare(x.args),/header changed/);
+ const y=preparation(t),rpc=y.args.rpc;
+ y.args.rpc=async(method,params)=>{const result=await rpc(method,params);if(method==='eth_call'&&params[0].from)y.flags.changedFinality=true;return result;};
+ await assert.rejects(prepare(y.args),/finalized branch changed/);
+ assert.equal(require('node:fs').readdirSync(y.dir).length,0);
+});
+test('publication CLI rejects corrupt, foreign, unadmitted, waiting and stale index before RPC',()=>{
+ const f=fixture(),config={manifest:f.m,recognition:f.recognition,lifecycle:f.config,indexer:{maxAgeSeconds:60}},now=Date.now();
+ const state={configHash:D.hash({kind:'persistent-buy-indexer-v1',config}),status:{state:'caughtUp'},index:{manifest:f.manifest,blocks:f.marked(),observedAt:new Date(now).toISOString(),policyStatus:{mode:'admitted'}}};
+ const seal=s=>({...s,checksum:require('../scripts/indexer-checksum.cjs').indexerChecksum(s)}),read=require('../scripts/prepare-purchase-recognition.cjs').publicationHistory;
+ assert.deepEqual(read(config,seal(state),now).blocks,state.index.blocks);
+ assert.throws(()=>read(config,{...seal(state),checksum:'invalid'},now),/checksum/);
+ for(const change of [s=>s.configHash=E.ZeroHash,s=>s.status.state='waiting',s=>s.index.policyStatus.mode='unadmitted',s=>s.index.observedAt=new Date(now-61000).toISOString(),s=>s.index.observedAt=new Date(now+1000).toISOString()]){
+  const s=structuredClone(state);change(s);assert.throws(()=>read(config,seal(s),now));
+ }
 });
