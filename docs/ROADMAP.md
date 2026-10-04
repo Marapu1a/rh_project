@@ -205,3 +205,4 @@ escrow300.285210USDG доступно, pull/sweep simulated.24 других BUY 
 04.10 — [SEO/AI discovery](SEO_PREPARATION_2026-10-04.md) подготовлено локально. Боевой перенос и Search Console/Bing verification остаются отдельными следующими действиями.
 04.10 — аудит структуры/доступности и стартовых ресурсов выполнен; перед утверждением боевой скорости требуется замер deployed build. Изменения локальные,8/8 адресных checks.
 04.10 — frontend/SEO перенесены на production по разрешению пользователя, live-check PASS. Следующий шаг: подтверждение домена в поисковых кабинетах и отправка sitemap; реальные Core Web Vitals отдельно.
+04.10 — [Призовой фонд реально пополнен](FUNDING_ACTIVATION_2026-10-04.md). Следующий технический шаг: bounded payout catch-up и controlled restart с сохранением подписанного hash до broadcast; затем регулярный worker. Confirm notice не обходился.

@@ -9,8 +9,13 @@ async function reconcilePending(state,save,provider,sender){
  if(!tx||!b||!same(b.hash,r.blockHash)||!same(r.hash,p.transactionHash)||!same(tx.hash,p.transactionHash)||tx.nonce!==p.nonce||!same(tx.from,sender)||!same(tx.to,p.target)||!same(tx.data,p.data)||BigInt(tx.value||0)!==BigInt(p.value||0)||![0,1].includes(r.status))return {status:'blocked',reason:'unconfirmedReceipt'};
  state.lastResolved={...p,status:r.status,blockNumber:r.blockNumber,blockHash:r.blockHash};delete state.pending;save(state);return null;
 }
-function createBoundary({state,save,provider,sender,guard,onConfirmed}){
- return {preflight:guard,before:async(request,action)=>{await guard(request,action);check(!state.pending,'Unresolved intent');state.pending={action,target:request.to,data:request.data,value:String(request.value||0),from:sender};save(state);},sent:async tx=>{state.pending={...state.pending,transactionHash:tx.hash,nonce:tx.nonce};save(state);},confirmed:async r=>{
+function createBoundary({state,save,provider,sender,guard,onConfirmed,signer}){
+ return {...(signer?{broadcast:async request=>{
+  const tx=await signer.populateTransaction(request),raw=await signer.signTransaction(tx);
+  const hash=require('ethers').keccak256(raw);
+  state.pending={...state.pending,nonce:tx.nonce,transactionHash:hash,signedTransaction:raw};save(state);
+  const sent=await provider.broadcastTransaction(raw);check(same(sent.hash,hash),'Broadcast hash mismatch');return sent;
+ }}:{}),preflight:guard,before:async(request,action)=>{await guard(request,action);check(!state.pending,'Unresolved intent');state.pending={action,target:request.to,data:request.data,value:String(request.value||0),from:sender};save(state);},sent:async tx=>{state.pending={...state.pending,transactionHash:tx.hash,nonce:tx.nonce};save(state);},confirmed:async r=>{
   check(state.pending&&same(r.hash,state.pending.transactionHash)&&same((await provider.getBlock(r.blockNumber))?.hash,r.blockHash),'Noncanonical receipt');
   const resolved={...state.pending,status:r.status,blockNumber:r.blockNumber,blockHash:r.blockHash};state.lastResolved=resolved;delete state.pending;save(state);await onConfirmed(resolved);
  }};

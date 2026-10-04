@@ -61,11 +61,11 @@ async function runPonsAutomation({provider,executor,config:c,rpcUrl,statePath,si
     if(request.gasLimit&&BigInt(request.gasLimit)>BigInt(c.gasLimit))wait('gasBound');
     await gas.check(request,action,price);
    }
-   const boundary={...createBoundary({state,save,provider,sender:c.executor,guard,onConfirmed:async s=>{steps.push(s);sentCount++;await onStep(s);}}),gasLimit:gas.gasLimit,estimateFailed:gas.estimateFailed};
+   const boundary={...createBoundary({state,save,provider,sender:c.executor,...(publicSends?{signer:executor}:{}),guard,onConfirmed:async s=>{steps.push(s);sentCount++;await onStep(s);}}),gasLimit:gas.gasLimit,estimateFailed:gas.estimateFailed};
    const deliver={provider,adapter,executor,job:c.deliveryJob,statePath:file+'.rng',signal,receiptTimeoutMs};
    const schedule={provider,short,monthly,publisher:executor,executor,config:schedulerConfig,...(schedulerConfig.indexer?{indexConfig:require('./shared-index-config.cjs').buildIndexConfigs(schedulerConfig).indexConfig}:{}),rpcUrl,statePath:file+'.scheduler',signal,receiptTimeoutMs};
    function fairSchedule(){return {...schedule,kinds:require('./pons-cadence.cjs').laneOrder(state.lastResolved?.target,short.target)};}
-   async function send(method,args=[]){const price=(await provider.getFeeData()).gasPrice;return sendLocalTransaction(method,args,{type:2,maxFeePerGas:price,maxPriorityFeePerGas:0},{signal,receiptTimeoutMs});}
+   async function send(method,args=[]){const observed=(await provider.getFeeData()).gasPrice;const padded=publicSends?(observed*120n+99n)/100n:observed;const price=padded>BigInt(c.maxGasPrice)?BigInt(c.maxGasPrice):padded;return sendLocalTransaction(method,args,{type:2,maxFeePerGas:price,maxPriorityFeePerGas:0},{signal,receiptTimeoutMs});}
    async function claims(){
     state.payouts??=[];
     await require('./pons-payout-scan.cjs').scanPayouts({provider,short,monthly,state,save,anchor:c.manifest.anchor,signal});

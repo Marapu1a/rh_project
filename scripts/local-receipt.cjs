@@ -46,7 +46,7 @@ async function sendLocalTransaction(method,args,overrides,options={}){
     // cancelling between persistence and broadcast. Later abort stops wait/subsequent sends.
     if(network.current().publicGuard)await network.current().publicGuard(await method.populateTransaction(...args,{...overrides,gasLimit}),method.fragment.name);
     if(boundary)await boundary.before(await method.populateTransaction(...args,{...overrides,gasLimit}),method.fragment.name);
-    stage='broadcast';tx=await method(...args,{...overrides,gasLimit});
+    stage='broadcast';tx=boundary?.broadcast?await boundary.broadcast(await method.populateTransaction(...args,{...overrides,gasLimit})):await method(...args,{...overrides,gasLimit});
     if(boundary)await boundary.sent(tx);
     stage='confirm';const receipt=await waitLocalReceipt(tx,options);
     if(boundary)await boundary.confirmed(receipt);
