@@ -167,9 +167,11 @@ PASS,53 записи разобраны (52 BUY+1 SELL), authorizations и SELL 
 
 ## Текущий шаг: массовый router65050…
 
-[Исследование](PONS_ROUTER_RESEARCH_2026-10-04.md):28/28 сохранённых BUY связаны
-с trace/receipt и конечным получателем. Обнаружен upgradeable proxy; одинаковый
-внешний codeHash недостаточен. Семантика трёх модулей ещё не допущена.
-7/7 предметных tests и5/5 launcher PASS. Production admission не менялся.
-Далее: ABI/implementation review и локальные adversarial fork сценарии; затем
-отдельное решение о policy. Сервер утром lag0,1362 прохода без ошибок,2.37MB.
+[Trace research](PONS_ROUTER_RESEARCH_2026-10-04.md):28/28 наблюдаемых BUY связаны.
+[Проверка исполнителей на fork](PONS_ROUTER_FORK_2026-10-04.md):19 сценариев
+завершены ожидаемо; sender funding/recipient, allowance, slippage/deadline,
+callback и proxy upgrade проверены в обозначенных границах. Production не менялся.
+Открыто: полная ABI/семантика modules, refunds/mixed calls и upgrade guards.
+Далее: metadata по сохранённым CID/верифицируемые исходники → узкий test decoder;
+при несоразмерном review выбрать маршрут с доступной семантикой. Не включать
+универсальный CurveBuy admission. Финансовая автоматика выключена.

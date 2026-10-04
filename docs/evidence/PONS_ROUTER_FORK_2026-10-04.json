@@ -1,0 +1,352 @@
+{
+  "date": "2026-10-04",
+  "fork": {
+    "schema": "pons-router-fork-research-v1",
+    "admitted": false,
+    "publicSends": 0,
+    "cases": [
+      {
+        "route": "usdg",
+        "label": "captured baseline",
+        "forkBlock": 79378373,
+        "forkHash": "0x79304bdec2ab60e489818cef8e0a941e5c0bc4265415bdf8a0cfdf46cce34546",
+        "success": true,
+        "error": null,
+        "originalTokensDelta": "32816113140282644859373324",
+        "otherTokensDelta": "0",
+        "implementationAfter": "0x00000000000000000000000056101165bcf508b288f383113892e6db6be6db0e"
+      },
+      {
+        "route": "usdg",
+        "label": "impossible minimum output",
+        "forkBlock": 79378373,
+        "forkHash": "0x79304bdec2ab60e489818cef8e0a941e5c0bc4265415bdf8a0cfdf46cce34546",
+        "success": false,
+        "error": "VM Exception while processing transaction: reverted with reason string 'ERR_EXCEEDED_SLIPPAGE:minReturn not reached'",
+        "originalTokensDelta": "0",
+        "otherTokensDelta": "0",
+        "implementationAfter": "0x00000000000000000000000056101165bcf508b288f383113892e6db6be6db0e"
+      },
+      {
+        "route": "usdg",
+        "label": "expired deadline",
+        "forkBlock": 79378373,
+        "forkHash": "0x79304bdec2ab60e489818cef8e0a941e5c0bc4265415bdf8a0cfdf46cce34546",
+        "success": false,
+        "error": "VM Exception while processing transaction: reverted with reason string 'Transaction too old'",
+        "originalTokensDelta": "0",
+        "otherTokensDelta": "0",
+        "implementationAfter": "0x00000000000000000000000056101165bcf508b288f383113892e6db6be6db0e"
+      },
+      {
+        "route": "usdg",
+        "label": "different outer sender",
+        "forkBlock": 79378373,
+        "forkHash": "0x79304bdec2ab60e489818cef8e0a941e5c0bc4265415bdf8a0cfdf46cce34546",
+        "success": false,
+        "error": "VM Exception while processing transaction: reverted with reason string 'insufficient balance'",
+        "originalTokensDelta": "0",
+        "otherTokensDelta": "0",
+        "implementationAfter": "0x00000000000000000000000056101165bcf508b288f383113892e6db6be6db0e"
+      },
+      {
+        "route": "usdg",
+        "label": "different sender with own USDG",
+        "forkBlock": 79378373,
+        "forkHash": "0x79304bdec2ab60e489818cef8e0a941e5c0bc4265415bdf8a0cfdf46cce34546",
+        "success": true,
+        "error": null,
+        "originalTokensDelta": "0",
+        "otherTokensDelta": "32816113140282644859373324",
+        "implementationAfter": "0x00000000000000000000000056101165bcf508b288f383113892e6db6be6db0e"
+      },
+      {
+        "route": "usdg",
+        "label": "revoked payer allowance",
+        "forkBlock": 79378373,
+        "forkHash": "0x79304bdec2ab60e489818cef8e0a941e5c0bc4265415bdf8a0cfdf46cce34546",
+        "success": false,
+        "error": "VM Exception while processing transaction: reverted with an unrecognized custom error (return data: 0x13be252b)",
+        "originalTokensDelta": "0",
+        "otherTokensDelta": "0",
+        "implementationAfter": "0x00000000000000000000000056101165bcf508b288f383113892e6db6be6db0e"
+      },
+      {
+        "route": "usdg",
+        "label": "unknown route discriminator",
+        "forkBlock": 79378373,
+        "forkHash": "0x79304bdec2ab60e489818cef8e0a941e5c0bc4265415bdf8a0cfdf46cce34546",
+        "success": false,
+        "error": "Transaction reverted without a reason string",
+        "originalTokensDelta": "0",
+        "otherTokensDelta": "0",
+        "implementationAfter": "0x00000000000000000000000056101165bcf508b288f383113892e6db6be6db0e"
+      },
+      {
+        "route": "usdg",
+        "label": "substituted curve target",
+        "forkBlock": 79378373,
+        "forkHash": "0x79304bdec2ab60e489818cef8e0a941e5c0bc4265415bdf8a0cfdf46cce34546",
+        "success": false,
+        "error": "Transaction reverted without a reason string",
+        "originalTokensDelta": "0",
+        "otherTokensDelta": "0",
+        "implementationAfter": "0x00000000000000000000000056101165bcf508b288f383113892e6db6be6db0e"
+      },
+      {
+        "route": "usdg",
+        "label": "unauthorized proxy upgrade",
+        "forkBlock": 79378373,
+        "forkHash": "0x79304bdec2ab60e489818cef8e0a941e5c0bc4265415bdf8a0cfdf46cce34546",
+        "success": false,
+        "error": "Transaction reverted without a reason string",
+        "originalTokensDelta": "0",
+        "otherTokensDelta": "0",
+        "implementationAfter": "0x00000000000000000000000056101165bcf508b288f383113892e6db6be6db0e"
+      },
+      {
+        "route": "usdg",
+        "label": "proxy admin upgrade",
+        "forkBlock": 79378373,
+        "forkHash": "0x79304bdec2ab60e489818cef8e0a941e5c0bc4265415bdf8a0cfdf46cce34546",
+        "success": true,
+        "error": null,
+        "originalTokensDelta": "0",
+        "otherTokensDelta": "0",
+        "implementationAfter": "0x0000000000000000000000000000000000000000000000000000000000001234"
+      },
+      {
+        "route": "usdg",
+        "label": "local implementation replacement",
+        "forkBlock": 79378373,
+        "forkHash": "0x79304bdec2ab60e489818cef8e0a941e5c0bc4265415bdf8a0cfdf46cce34546",
+        "success": true,
+        "error": null,
+        "originalTokensDelta": "0",
+        "otherTokensDelta": "0",
+        "implementationAfter": "0x0000000000000000000000000000000000000000000000000000000000001234"
+      },
+      {
+        "route": "eth",
+        "label": "captured baseline",
+        "forkBlock": 79378062,
+        "forkHash": "0xad8e7c9626b55770fed1b04a6991562a91aa600abff6c3a37c914b5dafa46c91",
+        "success": true,
+        "error": null,
+        "originalTokensDelta": "23890094304398294700765488",
+        "otherTokensDelta": "0",
+        "implementationAfter": "0x00000000000000000000000056101165bcf508b288f383113892e6db6be6db0e"
+      },
+      {
+        "route": "eth",
+        "label": "impossible minimum output",
+        "forkBlock": 79378062,
+        "forkHash": "0xad8e7c9626b55770fed1b04a6991562a91aa600abff6c3a37c914b5dafa46c91",
+        "success": false,
+        "error": "VM Exception while processing transaction: reverted with reason string 'ERR_EXCEEDED_SLIPPAGE:minReturn not reached'",
+        "originalTokensDelta": "0",
+        "otherTokensDelta": "0",
+        "implementationAfter": "0x00000000000000000000000056101165bcf508b288f383113892e6db6be6db0e"
+      },
+      {
+        "route": "eth",
+        "label": "expired deadline",
+        "forkBlock": 79378062,
+        "forkHash": "0xad8e7c9626b55770fed1b04a6991562a91aa600abff6c3a37c914b5dafa46c91",
+        "success": false,
+        "error": "VM Exception while processing transaction: reverted with reason string 'Transaction too old'",
+        "originalTokensDelta": "0",
+        "otherTokensDelta": "0",
+        "implementationAfter": "0x00000000000000000000000056101165bcf508b288f383113892e6db6be6db0e"
+      },
+      {
+        "route": "eth",
+        "label": "different outer sender",
+        "forkBlock": 79378062,
+        "forkHash": "0xad8e7c9626b55770fed1b04a6991562a91aa600abff6c3a37c914b5dafa46c91",
+        "success": true,
+        "error": null,
+        "originalTokensDelta": "0",
+        "otherTokensDelta": "23890094304398294700765488",
+        "implementationAfter": "0x00000000000000000000000056101165bcf508b288f383113892e6db6be6db0e"
+      },
+      {
+        "route": "eth",
+        "label": "unauthorized proxy upgrade",
+        "forkBlock": 79378062,
+        "forkHash": "0xad8e7c9626b55770fed1b04a6991562a91aa600abff6c3a37c914b5dafa46c91",
+        "success": false,
+        "error": "Transaction reverted without a reason string",
+        "originalTokensDelta": "0",
+        "otherTokensDelta": "0",
+        "implementationAfter": "0x00000000000000000000000056101165bcf508b288f383113892e6db6be6db0e"
+      },
+      {
+        "route": "eth",
+        "label": "proxy admin upgrade",
+        "forkBlock": 79378062,
+        "forkHash": "0xad8e7c9626b55770fed1b04a6991562a91aa600abff6c3a37c914b5dafa46c91",
+        "success": true,
+        "error": null,
+        "originalTokensDelta": "0",
+        "otherTokensDelta": "0",
+        "implementationAfter": "0x0000000000000000000000000000000000000000000000000000000000001234"
+      },
+      {
+        "route": "eth",
+        "label": "local implementation replacement",
+        "forkBlock": 79378062,
+        "forkHash": "0xad8e7c9626b55770fed1b04a6991562a91aa600abff6c3a37c914b5dafa46c91",
+        "success": true,
+        "error": null,
+        "originalTokensDelta": "0",
+        "otherTokensDelta": "0",
+        "implementationAfter": "0x0000000000000000000000000000000000000000000000000000000000001234"
+      },
+      {
+        "route": "eth",
+        "label": "spoofed funding callback",
+        "forkBlock": 79378062,
+        "forkHash": "0xad8e7c9626b55770fed1b04a6991562a91aa600abff6c3a37c914b5dafa46c91",
+        "success": false,
+        "error": "Transaction reverted without a reason string",
+        "originalTokensDelta": "0",
+        "otherTokensDelta": "0",
+        "implementationAfter": "0x00000000000000000000000056101165bcf508b288f383113892e6db6be6db0e"
+      }
+    ],
+    "roles": [
+      {
+        "route": "usdg",
+        "block": 79378373,
+        "admin": "0x75fc5cd1794921e617d97e4afa2ff93613413be3",
+        "routerOwner": "0x0000000000000000000000000c628d6535b781f6c703ad319af8b1bcec63fbb4",
+        "proxyAdminOwner": "0x0000000000000000000000000c628d6535b781f6c703ad319af8b1bcec63fbb4"
+      },
+      {
+        "route": "eth",
+        "block": 79378062,
+        "admin": "0x75fc5cd1794921e617d97e4afa2ff93613413be3",
+        "routerOwner": "0x0000000000000000000000000c628d6535b781f6c703ad319af8b1bcec63fbb4",
+        "proxyAdminOwner": "0x0000000000000000000000000c628d6535b781f6c703ad319af8b1bcec63fbb4"
+      }
+    ],
+    "limits": [
+      "Captured calldata mutations, not a verified ABI or full module audit",
+      "Synthetic local funds and impersonation; no production admission"
+    ],
+    "status": "COMPLETED",
+    "proxyStats": {
+      "requests": 399,
+      "retries": 0,
+      "errors": 0
+    }
+  },
+  "bytecode": {
+    "method": "Literal PUSH4/address observations; not decompilation or verified ABI",
+    "modules": [
+      {
+        "address": "0x56101165bcf508b288f383113892e6db6be6db0e",
+        "hash": "0x138db16738c14ad90956aecbd0939fcbf72e9d39755867e02b87a4d927a2f4ab",
+        "embeddedModules": [
+          {
+            "address": "0xd17b21b65cc273a4b342f14b19063da8bb410dbd",
+            "byteOffset": 12985
+          },
+          {
+            "address": "0x1ab4c5dfe15ff16170201d7fe0edc20c3d0cada3",
+            "byteOffset": 11703
+          }
+        ],
+        "dispatcherSelectors": [
+          "0x0b3f5cf9",
+          "0x180b0d7e",
+          "0x1d5f45f5",
+          "0x236b7db2",
+          "0x23a69e75",
+          "0x2c8958f6",
+          "0x32c5f0ed",
+          "0x33babf6c",
+          "0x396abe06",
+          "0x3f4ba83a",
+          "0x4d819a2a",
+          "0x58e3ce30",
+          "0x5c975abb",
+          "0x68e0d4e1",
+          "0x715018a6",
+          "0x8456cb59",
+          "0x8cbe4838",
+          "0x8da5cb5b",
+          "0x91dd7346",
+          "0x978bbdb9",
+          "0xad5c4648",
+          "0xbcd292c7",
+          "0xbfc60df9",
+          "0xc415b95c",
+          "0xe34e7283",
+          "0xf2fde38b",
+          "0xf7013ef6",
+          "0xf73e5aab",
+          "0xfa461e33",
+          "0x4e487b71"
+        ]
+      },
+      {
+        "address": "0xd17b21b65cc273a4b342f14b19063da8bb410dbd",
+        "hash": "0x0f3e60976384e62a8359f1c3a6424b488b12a05bfa82366fdffafd9d3d1fbf95",
+        "embeddedModules": [],
+        "dispatcherSelectors": [
+          "0xd4fa7037",
+          "0x4e487b71",
+          "0x4e487b71"
+        ]
+      },
+      {
+        "address": "0x1ab4c5dfe15ff16170201d7fe0edc20c3d0cada3",
+        "hash": "0x0a9f1cdcd49033dedb5525414b57d74ca5aa4832d86263a4189adab37f334174",
+        "embeddedModules": [],
+        "dispatcherSelectors": [
+          "0xd4fa7037",
+          "0x4e487b71",
+          "0x70a08231",
+          "0x59a87bc1",
+          "0x70a08231"
+        ]
+      }
+    ]
+  },
+  "metadata": [
+    {
+      "address": "0x56101165bcf508b288f383113892e6db6be6db0e",
+      "cid": "QmRcvLHVqA93zuxZsKT3HBgtfRftXLxwDoG9N4uH44U5ih",
+      "http": 429
+    },
+    {
+      "address": "0xd17b21b65cc273a4b342f14b19063da8bb410dbd",
+      "cid": "QmdB553mRnomzEmN5VGS1N3z2XCF9oyizTpKcTx6nej7LV",
+      "http": 429
+    },
+    {
+      "address": "0x1ab4c5dfe15ff16170201d7fe0edc20c3d0cada3",
+      "cid": "Qmepus9uShyTu8jttKJTGnto3rP45Shc4y21zrJQz5YqRT",
+      "http": 429
+    }
+  ],
+  "alternateGateway": [
+    {
+      "address": "0x56101165bcf508b288f383113892e6db6be6db0e",
+      "cid": "QmRcvLHVqA93zuxZsKT3HBgtfRftXLxwDoG9N4uH44U5ih",
+      "error": "timeout/network"
+    },
+    {
+      "address": "0xd17b21b65cc273a4b342f14b19063da8bb410dbd",
+      "cid": "QmdB553mRnomzEmN5VGS1N3z2XCF9oyizTpKcTx6nej7LV",
+      "error": "timeout/network"
+    },
+    {
+      "address": "0x1ab4c5dfe15ff16170201d7fe0edc20c3d0cada3",
+      "cid": "Qmepus9uShyTu8jttKJTGnto3rP45Shc4y21zrJQz5YqRT",
+      "error": "timeout/network"
+    }
+  ]
+}

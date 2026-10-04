@@ -88,3 +88,7 @@ Project-only Pons history: project-history/migrate-project-history — RPC-selec
 показывает ETH/USDG funding и terminal BUY, всегда admitted=false.
 Fixtures `test/fixtures/pons-router-research`, tests в full/pons-channels.
 [Границы и implementation gaps](PONS_ROUTER_RESEARCH_2026-10-04.md).
+
+`scripts/pons-router-fork-research.cjs` — developer-only historical fork harness
+для65050…:19 сценариев, read-only upstream, snapshot/revert. Полный ABI и
+admission не заявлены. [Результаты/границы](PONS_ROUTER_FORK_2026-10-04.md).
