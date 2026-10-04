@@ -46,8 +46,9 @@ runtime hashes получены от RPC. Это не cryptographic execution pr
 узкая; несовпадение исполнения останавливает подтверждение, а не включает fallback.
 Publisher определяет момент публикации доказательств и может задержать её.
 Штатный формат не принимает готовое число билетов, но честность trace/code
-assertions остаётся границей доверия publisher/RPC. Независимая проверка первым
-боевым пакетом пока не пройдена; commitment сам по себе её не заменяет.
+assertions остаётся границей доверия publisher/RPC. Владелец04.10 принял QuickNode
+как достаточный источник: второй RPC не обязателен. Независимый аудит не заявляем;
+commitment фиксирует evidence, но не доказывает истинность ответа RPC.
 
 ## Файлы и запуск
 
@@ -74,8 +75,9 @@ node scripts/prepare-purchase-recognition.cjs CONFIG INDEX_STATE BUNDLE_DIRECTOR
 CLI использует конфигурацию именно постоянного индекса и требует admitted/caughtUp,
 свежесть, checksum/config identity. Планv2 проверяет source runtime/immutable/
 availableAt, целый bundle обычным replay и read-only eth_call(confirm).
-Независимый audit, публичное объявление/24ч и доступность bundle проверяются
-отдельно: они перечислены в publicationChecksRemaining.
+Полнота истории через QuickNode, публичное объявление/24ч и доступность bundle
+проверяются отдельно: они перечислены в publicationChecksRemaining. Повторное
+чтение через тот же RPC проверяет согласованность, не независимость источника.
 
 Сначала сохранить и проверить bundle, затем отдельно публиковать выданный
 `confirm(hash,count)` через владельца. Публикация в публичную сеть не входит

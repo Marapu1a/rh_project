@@ -75,7 +75,7 @@ test('bundle hydration, restart and wallet API independently reproduce pending/c
 });
 test('read-only preparation validates canonical receipts and runtimes, writes content-addressed evidence, never sends',async t=>{
  const {args,flags,calls}=preparation(t),prepare=require('../scripts/prepare-purchase-recognition.cjs').prepare;
- const plan=await prepare(args);assert.equal(plan.sent,false);assert.equal(plan.validation.newlyConfirmed,1);
+ const plan=await prepare(args);assert.equal(plan.sent,false);assert.equal(plan.validation.newlyConfirmed,1);assert.deepEqual(plan.publicationChecksRemaining,['projectHistoryAudit','publicAnnouncement24h','bundleAvailability']);
  assert.equal(plan.bundleHash,D.hash(JSON.parse(require('node:fs').readFileSync(plan.file))));assert(!calls.some(([x])=>x.includes('send')));
  assert.equal((await prepare(args)).bundleHash,plan.bundleHash);
  flags.code='0x02';await assert.rejects(prepare(args),/source runtime/);

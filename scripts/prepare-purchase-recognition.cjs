@@ -70,7 +70,7 @@ async function prepare({config,blocks,manifest,transactionHashes,rpc,directory})
  if(fs.existsSync(file)){if(D.hash(JSON.parse(fs.readFileSync(file,'utf8')))!==bundleHash)throw Error('Conflicting existing bundle');}
  else fs.writeFileSync(file,JSON.stringify(bundle)+'\n',{flag:'wx'});
  return {schema:'purchase-recognition-plan-v2',bundleHash,count:proofs.length,file,validation,sourceCheckpoint:{number:String(BigInt(final.number)),hash:final.hash,availableAt:String(availableAt)},
-  publicationChecksRemaining:['independentBundleAudit','projectHistoryAudit','publicAnnouncement24h','bundleAvailability'],request,sent:false};
+  publicationChecksRemaining:['projectHistoryAudit','publicAnnouncement24h','bundleAvailability'],request,sent:false};
 }
 function publicationHistory(config,state,now=Date.now()){
  const {checksum,...stored}=state;
