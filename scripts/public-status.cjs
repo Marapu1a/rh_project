@@ -35,6 +35,6 @@ function renderPublic(config,view,{offset=0,limit=25,now=Date.now()}){
  }
  return {schema:'promo-overview-v1',status:fresh?'observed':'stale',asset:o.asset,reserves:o.reserves,draws,
   history:{items:o.history.slice(offset,offset+limit),offset,limit,total:o.history.length,nextOffset:offset+limit<o.history.length?offset+limit:null},
-  provenance:{chainId:String(config.manifest.chainId),head:view.ledger.head,observedAt:view.index.observedAt,manifestHash:view.manifestHash,ledgerHash:view.index.ledgerHash,indexerState:view.state.status?.state,canonicality:'saved-observation-not-live-finality'}};
+  provenance:{chainId:String(config.manifest.chainId),head:view.ledger.head,observedAt:view.index.observedAt,manifestHash:view.manifestHash,ledgerHash:view.index.ledgerHash,indexerState:view.state.status?.state,canonicality:'saved-observation-not-live-finality',...require('./project-history.cjs').provenance(view.state.status?.evidenceMode)}};
 }
 module.exports={preparePublic,renderPublic};

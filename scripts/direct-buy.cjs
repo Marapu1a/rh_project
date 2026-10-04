@@ -212,23 +212,26 @@ function replayEngine(input,deliveredBlocks,previous=null,capture=false){
   let registryDeployed=checkpoint?.registryDeployed??false;
   const txHashes=new Set(checkpoint?.txHashes||[]);
   for(const b of blocks){
-    ensure(number(b.number)===height+1&&low(b.parentHash)===parent,'Non-contiguous canonical branch');
+    const project=!!b.projectEvidence;
+    if(project)require('./project-history.cjs').validate(b,input,{number:height,hash:parent});
+    else ensure(number(b.number)===height+1&&low(b.parentHash)===parent,'Non-contiguous canonical branch');
     if(b.ponsOmission!==undefined){ensure(!!PONS_PROFILES.get(m.schema),'Pons omission on other venue');require('./pons-bloom-evidence.cjs').validateOmission(b,policy.at(number(b.number)));}
     const events=[],logIndexes=new Set();
     const txs=[...b.transactions].sort((a,c)=>number(a.tx.transactionIndex)-number(c.tx.transactionIndex));
     for(let i=0;i<txs.length;i++){
       const {tx,receipt}=txs[i];
-      ensure(number(tx.transactionIndex)===i,'Missing/duplicate transaction index');
+      const txIndex=number(tx.transactionIndex);
+      ensure(project?i===0||txIndex>number(txs[i-1].tx.transactionIndex):txIndex===i,'Missing/duplicate transaction index');
       ensure(!txHashes.has(low(tx.hash)),'Duplicate canonical transaction');txHashes.add(low(tx.hash));
       ensure(low(tx.blockHash)===low(b.hash)&&number(tx.blockNumber)===number(b.number),'Transaction block mismatch');
-      ensure(low(receipt.transactionHash)===low(tx.hash)&&low(receipt.blockHash)===low(b.hash)&&number(receipt.blockNumber)===number(b.number)&&number(receipt.transactionIndex)===i,'Receipt mismatch');
+      ensure(low(receipt.transactionHash)===low(tx.hash)&&low(receipt.blockHash)===low(b.hash)&&number(receipt.blockNumber)===number(b.number)&&number(receipt.transactionIndex)===txIndex,'Receipt mismatch');
       ensure(low(receipt.from)===low(tx.from)&&low(receipt.to||'0x')===low(tx.to||'0x'),'Receipt sender/target mismatch');
       ensure(require('./transaction-chain.cjs').matchesChain(tx,m.chainId),'Transaction chain mismatch');
       ensure(BigInt(receipt.status)===1n||receipt.logs.length===0,'Failed transaction has logs');
       if(receipt.contractAddress&&low(receipt.contractAddress)===low(m.registry)&&BigInt(receipt.status)===1n)registryDeployed=true;
       const unique=new Map();
       for(const l of receipt.logs){
-        ensure(!l.removed&&low(l.blockHash)===low(b.hash)&&number(l.blockNumber)===number(b.number)&&low(l.transactionHash)===low(tx.hash)&&number(l.transactionIndex)===i,'Log provenance mismatch');
+        ensure(!l.removed&&low(l.blockHash)===low(b.hash)&&number(l.blockNumber)===number(b.number)&&low(l.transactionHash)===low(tx.hash)&&number(l.transactionIndex)===txIndex,'Log provenance mismatch');
         const index=number(l.logIndex);
         if(unique.has(index)){ensure(canonical(unique.get(index))===canonical(l),'Conflicting log delivery');continue;}
         ensure(!logIndexes.has(index),'Duplicate log index across transactions');logIndexes.add(index);unique.set(index,l);
@@ -239,7 +242,7 @@ function replayEngine(input,deliveredBlocks,previous=null,capture=false){
       }
       for(const d of decodeTransaction(policy.at(number(b.number)),tx,{...receipt,logs:[...unique.values()].sort((a,c)=>number(a.logIndex)-number(c.logIndex))},b))events.push({kind:'swap',index:d.logIndex,decision:d});
     }
-    ensure([...logIndexes].sort((a,b)=>a-b).every((index,i)=>index===i),'Missing receipt log index');
+    if(!project)ensure([...logIndexes].sort((a,b)=>a-b).every((index,i)=>index===i),'Missing receipt log index');
     for(const e of events.sort((a,b)=>a.index-b.index)){
       if(e.kind==='register'){
         ensure(!registrations.has(e.participant),'Duplicate registration in canonical history');

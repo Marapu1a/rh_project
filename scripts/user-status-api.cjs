@@ -8,6 +8,7 @@ function prepare(config,raw,replay=replayAttempts){
   const {checksum,...state}=JSON.parse(raw);
   if(!validIndexerChecksum(state,checksum)||state.configHash!==hash({kind:'persistent-buy-indexer-v1',config})||state.index?.policyStatus?.mode!=='admitted'||!config.lifecycle)throw Error('Invalid snapshot');
   const index=state.index,ledger=replay(index.manifest,config.lifecycle,index.blocks);
+  state.status={...state.status,...(index.evidenceMode?{evidenceMode:index.evidenceMode}: {})};
   if(ledger.head.number!==index.head||hash(ledger.buyLedger)!==index.ledgerHash)throw Error('Invalid snapshot');
  let projected=null;
  if(index.rewards){
@@ -32,7 +33,7 @@ function render(config,view,{wallet,offset=0,limit=25,now=Date.now()}){
    rewards={items:rows.slice(offset,offset+limit),offset,limit,total:rows.length,nextOffset:offset+limit<rows.length?offset+limit:null,coverage:'vault-events-and-checkpointed-storage',vault:config.lifecycle.vault};
   }
   return {schema:'promo-wallet-status-v1',status:fresh?'observed':'stale',wallet:address,
-   provenance:{chainId:String(config.manifest.chainId),anchor:config.manifest.anchor,head:ledger.head,manifestHash:view.manifestHash,ledgerHash:index.ledgerHash,observedAt:index.observedAt??null,ageSeconds:Number.isFinite(age)?Math.max(0,Math.floor(age/1000)):null,indexerState:state.status?.state??'unknown',targetBlock:state.status?.targetBlock??null,canonicality:'saved-observation-not-live-finality'},
+   provenance:{chainId:String(config.manifest.chainId),anchor:config.manifest.anchor,head:ledger.head,manifestHash:view.manifestHash,ledgerHash:index.ledgerHash,observedAt:index.observedAt??null,ageSeconds:Number.isFinite(age)?Math.max(0,Math.floor(age/1000)):null,indexerState:state.status?.state??'unknown',targetBlock:state.status?.targetBlock??null,canonicality:'saved-observation-not-live-finality',...require('./project-history.cjs').provenance(state.status?.evidenceMode)},
    balances:{SHORT:balance?.SHORT??empty(),MONTHLY:balance?.MONTHLY??empty(),carryRaw:buy?.carryRaw??'0',entryThresholdRaw:config.manifest.entryThresholdRaw,quoteDecimals:config.manifest.quoteDecimals},
    purchases:{items:purchases,offset,limit,total:decisions.length,nextOffset:offset+purchases.length<decisions.length?offset+purchases.length:null,coverage:decisions.some(d=>d.observedAccount)?'decoded-payer-or-explicit-user-operation-sender-candidates-only; absence-is-not-rejection':decisions.some(d=>d.observedSender)?'decoded-payer-or-explicit-transaction-sender-candidates-only; absence-is-not-rejection':'decoded-payer-attributed-candidates-only; absence-is-not-rejection'},rewards,asset:view.publicView?.asset??null};
 }

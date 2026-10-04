@@ -15,10 +15,11 @@ async function scan(input,rpcUrl,toBlock,lifecycle=null){
   }
   return scanWithRpc(input,rpc,toBlock,lifecycle);
 }
-async function scanWithRpc(input,rpc,toBlock,lifecycle=null,{fromBlock,mode}={}){
+async function scanWithRpc(input,rpc,toBlock,lifecycle=null,{fromBlock,mode,watchAddresses=[]}={}){
   const manifest=buyPolicyHistory(input).genesis;
   const pons=PONS_PROFILES.get(manifest.schema),batch=pons?.FIELDS.includes('batchExecutor');
-  if(mode!==undefined&&!['pons-block-receipts-v1','pons-bloom-receipts-v1'].includes(mode))throw Error('Unknown scan mode');
+  const project=mode==='pons-project-events-v1';
+  if(mode!==undefined&&!['pons-block-receipts-v1','pons-bloom-receipts-v1','pons-project-events-v1'].includes(mode))throw Error('Unknown scan mode');
   const sparse=mode==='pons-bloom-receipts-v1',fast=mode!==undefined;
   if(fast&&!pons)throw Error('Pons receipt scan requires Pons manifest');
   const curveBuyTopic=batch?require('./pons-curve-buy.cjs').EVENTS.getEvent('CurveBuy').topicHash:null;
@@ -118,8 +119,35 @@ async function scanWithRpc(input,rpc,toBlock,lifecycle=null,{fromBlock,mode}={})
     }
     return {number:block.number,hash:block.hash,parentHash:block.parentHash,timestamp:block.timestamp,transactions,...(batch?{batchAccounts}:{}),...(pons?.accountCandidate?{entrypointAccounts}:{})};
   }
-  const heights=[];for(let n=first;n<=BigInt(toBlock);n++)heights.push(n);
-  const blocks=await mapLimit(heights,sparse?8:fast?4:1,readBlock);
+  let blocks;
+  if(project){
+    const P=require('./project-history.cjs'),addresses=P.watched(input,lifecycle,watchAddresses);
+    const {pagedLogs}=require('./paged-log-read.cjs');
+    const filters=[{address:addresses},...(manifest.manager?[{address:manifest.manager,topics:[null,manifest.poolId]}]:[])];
+    const logs=[];
+    for(const filter of filters)logs.push(...await pagedLogs(Number(first),Number(toBlock),(from,to)=>rpc('eth_getLogs',[{...filter,fromBlock:tag(from),toBlock:tag(to)}])));
+    const candidates=new Set(logs.map(l=>Number(BigInt(l.blockNumber))));
+    for(const v of input.versions||[])if(v.announcedAtBlock>=Number(first)&&v.announcedAtBlock<=Number(toBlock))candidates.add(v.announcedAtBlock);
+    const heights=new Set(candidates);
+    for(let n=BigInt(toBlock)>128n?BigInt(toBlock)-128n:first;n<=BigInt(toBlock);n++)if(n>=first)heights.add(Number(n));
+    blocks=await mapLimit([...heights].sort((a,b)=>a-b),4,async n=>{
+      if(candidates.has(n))return readBlock(BigInt(n));
+      const b=await rpc('eth_getBlockByNumber',[tag(n),false]);
+      if(!b||BigInt(b.number)!==BigInt(n))throw Error('Missing project header');
+      return {number:b.number,hash:b.hash,parentHash:b.parentHash,timestamp:b.timestamp,transactions:[]};
+    });
+    // Every selected log must occur unchanged in its full receipt before filtering.
+    const receipts=new Map(blocks.flatMap(b=>b.transactions.flatMap(t=>t.receipt.logs.map(l=>[l.transactionHash.toLowerCase()+':'+BigInt(l.logIndex),l]))));
+    for(const log of logs){const found=receipts.get(log.transactionHash.toLowerCase()+':'+BigInt(log.logIndex));
+      if(!found||found.blockHash!==log.blockHash||BigInt(found.blockNumber)!==BigInt(log.blockNumber)||BigInt(found.transactionIndex)!==BigInt(log.transactionIndex)||found.address.toLowerCase()!==log.address.toLowerCase()||found.data!==log.data||JSON.stringify(found.topics)!==JSON.stringify(log.topics))throw Error('Project log/receipt mismatch');}
+    await P.references(blocks,input,lifecycle,rpc);
+    const previous=await rpc('eth_getBlockByNumber',[tag(first-1n),false]);
+    if(!previous||BigInt(previous.number)!==first-1n)throw Error('Missing project predecessor');
+    blocks=P.mark(P.compact(blocks,input,lifecycle,{extra:watchAddresses}),input,lifecycle,{number:Number(first-1n),hash:previous.hash},watchAddresses);
+  }else{
+    const heights=[];for(let n=first;n<=BigInt(toBlock);n++)heights.push(n);
+    blocks=await mapLimit(heights,sparse?8:fast?4:1,readBlock);
+  }
   if((await rpc('eth_getBlockByNumber',[tag(toBlock),false])).hash!==head.hash)throw Error('Chain changed during scan; retry canonical range');
   return {manifest:input,blocks};
 }

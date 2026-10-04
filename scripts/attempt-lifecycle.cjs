@@ -88,6 +88,14 @@ function replayAttemptsWith(input,config,deliveredBlocks,replayBuys){
   const blocks=[...new Map(deliveredBlocks.map(b=>[integer(b.number),b])).values()].sort((a,b)=>integer(a.number)-integer(b.number));
   for(const b of blocks)require('./pons-bloom-evidence.cjs').validateOmission(b,null,[config.source,config.monthlySource,config.vault]);
   const headers=new Map([[integer(manifest.anchor.number),lower(manifest.anchor.hash)],...blocks.map(b=>[integer(b.number),lower(b.hash)])]);
+  for(const b of blocks){
+    require('./project-history.cjs').validateSources(b,[config.source,config.monthlySource,config.vault]);
+    for(const ref of b.projectReferences||[]){
+      requireThat(!!b.projectEvidence&&integer(ref.number)<integer(b.number),'Invalid project reference');
+      const at=integer(ref.number),digest=bytes32(ref.hash,'reference hash');
+      requireThat(!headers.has(at)||headers.get(at)===digest,'Conflicting cutoff reference');headers.set(at,digest);
+    }
+  }
   const times=new Map(blocks.map(b=>[integer(b.number),integer(b.timestamp)]));
   const monthEpochMode=config.schema==='attempt-lifecycle-v4',dualMode=monthEpochMode||config.schema==='attempt-lifecycle-v3',epochMode=config.schema!=='attempt-lifecycle-v1';
   let lastMonthlyTime=dualMode?integer(config.monthlyPolicy.startedAt):0;

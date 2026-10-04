@@ -66,3 +66,8 @@ Pons payout discovery: `scripts/pons-payout-scan.cjs` — окна10 блоко�
 формата; local-scheduler-state — disk/384MiB guards только индексатора.
 paged-log-read используется policy/Short/Monthly verification/recovery.
 [Проверки, OOM и открытые ограничения](OPERATIONS_FOLLOWUP_2026-10-04.md).
+
+Project-only Pons history: project-history/migrate-project-history — RPC-selected
+транзакции проекта, хвост129 высот, ссылки на исторические cutoff, офлайн миграция
+с точным сравнением BUY/lifecycle/rewards. Scanner/persistent/replay/API поддерживают
+пропуски явно; 384MiB guard остаётся. [Формат, trust и замеры](PROJECT_HISTORY_2026-10-04.md).

@@ -22,8 +22,16 @@ async function readSnapshot({config,statePath,manifest,cutoff,rpc,now=Date.now()
  if(index.head<cutoff)return waiting('indexerBehind');
  const saved=index.manifest.versions?require('./buy-policy-runtime.cjs').prefix(index.manifest,cutoff):index.manifest;
  if(hash(saved)!==hash(manifest))return waiting('indexerPolicy');
- const blocks=index.blocks.filter(b=>BigInt(b.number)<=BigInt(cutoff));
- const head=blocks.at(-1),current=await rpc('eth_getBlockByNumber',[tag(cutoff),false]);
+ let blocks=index.blocks.filter(b=>BigInt(b.number)<=BigInt(cutoff));
+ const current=await rpc('eth_getBlockByNumber',[tag(cutoff),false]);
+ if(index.evidenceMode==='pons-project-events-v1'){
+  if(!current||Number(BigInt(current.number))!==cutoff)return waiting('indexerBranch');
+  const savedHead=await rpc('eth_getBlockByNumber',[tag(index.head),false]);
+  if(savedHead?.hash!==index.blocks.at(-1)?.hash)return waiting('indexerBranch');
+  if(!blocks.length||Number(BigInt(blocks.at(-1).number))!==cutoff)blocks.push({number:current.number,hash:current.hash,parentHash:current.parentHash,timestamp:current.timestamp,transactions:[]});
+  blocks=require('./project-history.cjs').mark(blocks,manifest,config.lifecycle,undefined,[config.buyPolicy?.source]);
+ }
+ const head=blocks.at(-1);
  if(!head||BigInt(head.number)!==BigInt(cutoff)||head.hash!==current?.hash)return waiting('indexerBranch');
  // Never consume cached minted totals as open attempts. Caller runs lifecycle replay.
  replay(manifest,blocks);
@@ -49,6 +57,7 @@ async function indexOnce({config,rpc,statePath,batchSize=config.indexer?.batchSi
     if(current.hash.toLowerCase()===b.hash.toLowerCase())break;
     check(removed<reorgLimit,'Reorg exceeds configured limit; independent review required');
     keep--;removed++;
+    if(prior.evidenceMode==='pons-project-events-v1'&&keep)check(prior.head-Number(BigInt(prior.blocks[keep-1].number))<=reorgLimit,'Reorg exceeds retained project tail; independent review required');
    }
    const base=keep?Number(BigInt(prior.blocks[keep-1].number)):anchor;
    const end=Math.min(target,base+batchSize),cache={};
@@ -77,10 +86,13 @@ async function indexOnce({config,rpc,statePath,batchSize=config.indexer?.batchSi
    };
    const resolved=await resolveBuyPolicy(config,rpc,end);
    const scanStarted=performance.now();
-   const suffix=end>base?await scanWithRpc(resolved.manifest,read,end,config.lifecycle,{fromBlock:base+1,mode:config.indexer?.scanMode}):{blocks:[]};
-   const input={manifest:resolved.manifest,blocks:[...prior.blocks.slice(0,keep),...suffix.blocks]};
+   const project=config.indexer?.scanMode==='pons-project-events-v1';
+   const suffix=end>base?await scanWithRpc(resolved.manifest,read,end,config.lifecycle,{fromBlock:base+1,mode:config.indexer?.scanMode,watchAddresses:[config.buyPolicy?.source]}):{blocks:[]};
+   if(project&&suffix.blocks.length)require('./project-history.cjs').validate(suffix.blocks[0],resolved.manifest,{number:base,hash:keep?prior.blocks[keep-1].hash.toLowerCase():m.anchor.hash.toLowerCase()});
+   const joined=[...prior.blocks.slice(0,keep),...suffix.blocks];
+   const input={manifest:resolved.manifest,blocks:project?require('./project-history.cjs').compact(joined,resolved.manifest,config.lifecycle,{tail:128,extra:[config.buyPolicy?.source]}):joined};
    const scanMs=performance.now()-scanStarted,replayStarted=performance.now();
-   const sameReplay=!fullRewardAudit&&!removed&&prior.replayRevision===REPLAY_REVISION&&prior.ledger&&hash(prior.manifest)===hash(input.manifest);
+   const sameReplay=!project&&!fullRewardAudit&&!removed&&prior.replayRevision===REPLAY_REVISION&&prior.ledger&&hash(prior.manifest)===hash(input.manifest);
    const unchanged=sameReplay&&end===base&&prior.replayCheckpoint?.schema==='buy-replay-checkpoint-v1';
    const continued=sameReplay&&end>base&&prior.replayCheckpoint?.schema==='buy-replay-checkpoint-v1'
     &&prior.replayCheckpoint.head?.number===base&&prior.replayCheckpoint.head.hash===prior.blocks[keep-1]?.hash;
@@ -97,9 +109,9 @@ async function indexOnce({config,rpc,statePath,batchSize=config.indexer?.batchSi
    }
    check((await rpc('eth_getBlockByNumber',[finalized.number,false])).hash===finalized.hash,'Finalized branch changed during indexing');
    // Publish evidence and derived ledger together; failure leaves the last good snapshot intact.
-   state.index={head:end,observedAt:new Date().toISOString(),blocks:input.blocks,cache,manifest:input.manifest,ledger,ledgerHash:unchanged?prior.ledgerHash:replayCheckpoint?.ledgerHash??null,replayCheckpoint,replayRevision:REPLAY_REVISION,rewards,publicObservation,publicProjection,policyStatus:resolved.policyStatus};
+   state.index={head:end,observedAt:new Date().toISOString(),blocks:input.blocks,cache,manifest:input.manifest,ledger,ledgerHash:unchanged?prior.ledgerHash:replayCheckpoint?.ledgerHash??null,replayCheckpoint,replayRevision:REPLAY_REVISION,rewards,publicObservation,publicProjection,policyStatus:resolved.policyStatus,...(project?{evidenceMode:'pons-project-events-v1'}:{})};
    state.status={state:end===target?'caughtUp':'catchingUp',processedBlock:end,targetBlock:target,removedBlocks:removed,cacheHits,updatedAt:new Date().toISOString()};
-   state.status.metrics={lagBlocks:target-end,historyBlocks:input.blocks.length,scannedBlocks:suffix.blocks.length,replayedBlocks:unchanged?0:continued?suffix.blocks.length:input.blocks.length,replayMode:unchanged?'reused':continued?'checkpoint':'full',scanMs,replayMs,rewardMs:performance.now()-rewardStarted,beforeSaveMs:performance.now()-started};
+   state.status.metrics={lagBlocks:target-end,coveredBlocks:end-anchor,historyBlocks:input.blocks.length,scannedBlocks:suffix.blocks.length,replayedBlocks:unchanged?0:continued?suffix.blocks.length:input.blocks.length,replayMode:unchanged?'reused':continued?'checkpoint':'full',scanMs,replayMs,rewardMs:performance.now()-rewardStarted,beforeSaveMs:performance.now()-started};
    const saveStarted=performance.now();save(state);
    // Final write timing is returned/logged, not followed by another state write.
    return {...state.status,observedAt:state.index.observedAt,policyMode:resolved.policyStatus.mode,processedTimestamp:input.blocks.at(-1)?.timestamp??null,metrics:{...state.status.metrics,saveMs:performance.now()-saveStarted,totalMs:performance.now()-started,stateBytes:fs.statSync(statePath).size}};

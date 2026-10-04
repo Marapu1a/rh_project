@@ -142,7 +142,9 @@
       "test/deployment-signing-plan.test.cjs",
       "test/deployment-signing-queue.test.cjs",
       "test/deployment-console-ui.test.cjs",
-      "test/pons-receipt-scan.test.cjs"
+      "test/pons-receipt-scan.test.cjs",
+      "test/project-history.test.cjs",
+      "test/operations-rpc-storage.test.cjs"
     ]
   },
   "accounting": {
@@ -643,6 +645,8 @@
     "compile": true,
     "files": [
       "test/pons-receipt-scan.test.cjs",
+      "test/project-history.test.cjs",
+      "test/operations-rpc-storage.test.cjs",
       "test/persistent-buy-indexer.test.cjs",
       "test/pons-persistent-indexer.test.cjs",
       "test/pons-policy-indexer.test.cjs",

@@ -1,0 +1,146 @@
+{
+  "schema": "project-history-validation-v1",
+  "date": "2026-10-04",
+  "baseCommit": "730a6f0",
+  "scope": "working tree project-history package; partial tests; read-only mainnet indexer only",
+  "migration": {
+    "schema": "project-history-migration-v1",
+    "head": 79513933,
+    "oldRecords": 136074,
+    "newRecords": 227,
+    "retainedTransactions": 167,
+    "ledgerHash": "0xd51585129a44fdb6e0263f73dc6ae546f49c54ad04283d15d7a693d3e4416da7",
+    "lifecycleHash": "0xab40905cac4715c04882625a2ae33446b0a1ca88d1ed95ad64917d1440f25387",
+    "bytes": 1804034,
+    "trust": "rpc-selected-project-events; gaps are not independently proven",
+    "activated": false
+  },
+  "beforeRestart": {
+    "schema": "promo-service-health-v1",
+    "status": "ready",
+    "ready": true,
+    "reason": null,
+    "activePass": false,
+    "indexerPid": null,
+    "passStartedAt": "2026-10-04T00:57:54.712Z",
+    "attempts": 8,
+    "successes": 8,
+    "failures": 0,
+    "snapshotFresh": true,
+    "policyMode": "admitted",
+    "observedAt": "2026-10-04T00:57:57.640Z",
+    "ageSeconds": 1,
+    "processedBlock": 79518814,
+    "targetBlock": 79518814,
+    "lagBlocks": 0,
+    "processedTimestamp": "0x6ac1a0c6",
+    "metrics": {
+      "lagBlocks": 0,
+      "coveredBlocks": 140955,
+      "historyBlocks": 227,
+      "scannedBlocks": 0,
+      "replayedBlocks": 227,
+      "replayMode": "full",
+      "scanMs": 2.461562999999842,
+      "replayMs": 188.86226499999998,
+      "rewardMs": 1316.5283970000003,
+      "beforeSaveMs": 2602.225093,
+      "saveMs": 53.07306000000017,
+      "totalMs": 2655.312182,
+      "stateBytes": 2374700
+    },
+    "scope": "last-index-pass; not-live-finality-or-wallet-readiness"
+  },
+  "afterRestart": {
+    "schema": "promo-service-health-v1",
+    "status": "ready",
+    "ready": true,
+    "reason": null,
+    "activePass": false,
+    "indexerPid": null,
+    "passStartedAt": "2026-10-04T00:59:06.346Z",
+    "attempts": 3,
+    "successes": 3,
+    "failures": 0,
+    "snapshotFresh": true,
+    "policyMode": "admitted",
+    "observedAt": "2026-10-04T00:59:09.203Z",
+    "ageSeconds": 5,
+    "processedBlock": 79518814,
+    "targetBlock": 79518814,
+    "lagBlocks": 0,
+    "processedTimestamp": "0x6ac1a0c6",
+    "metrics": {
+      "lagBlocks": 0,
+      "coveredBlocks": 140955,
+      "historyBlocks": 227,
+      "scannedBlocks": 0,
+      "replayedBlocks": 227,
+      "replayMode": "full",
+      "scanMs": 2.545555999999806,
+      "replayMs": 196.29603599999996,
+      "rewardMs": 1309.0991160000003,
+      "beforeSaveMs": 2547.704972,
+      "saveMs": 51.70499999999993,
+      "totalMs": 2599.420602,
+      "stateBytes": 2374700
+    },
+    "scope": "last-index-pass; not-live-finality-or-wallet-readiness"
+  },
+  "http": {
+    "coldMs": 551.47,
+    "warmMs": 3.56,
+    "status": "observed",
+    "carryRaw": "6000000",
+    "provenance": {
+      "chainId": "4663",
+      "anchor": {
+        "number": 79377859,
+        "hash": "0xfa6872fc31c8a7cb329ca96586107cc7a9659ced22f21eb903ab47ec8a11af49"
+      },
+      "head": {
+        "number": 79518814,
+        "hash": "0x871907e6501bc53b4f46a779b642fc764c16b1a4ae3d3d85e4de2bcd03206a74"
+      },
+      "manifestHash": "0xe66c288e09c6ec705d34b17f3ea536ad08494a84a60d1282c35016c8b9f18c2a",
+      "ledgerHash": "0xd3bc1f5a0864a78229e053147b704c8cb20d0868ff21561fa320e2470535c663",
+      "observedAt": "2026-10-04T00:59:09.203Z",
+      "ageSeconds": 6,
+      "indexerState": "caughtUp",
+      "targetBlock": 79518814,
+      "canonicality": "saved-observation-not-live-finality",
+      "evidenceMode": "pons-project-events-v1",
+      "historyCompleteness": "trusted-rpc-log-selection; gaps-not-independently-proven"
+    }
+  },
+  "memoryPeakBytes": 111812608,
+  "offServerCopy": {
+    "head": 79518814,
+    "checksum": true,
+    "configIdentity": true,
+    "independentBuyReplay": true
+  },
+  "tests": {
+    "finalTargeted": {
+      "passed": 38,
+      "total": 38
+    },
+    "catalog": {
+      "passed": 1,
+      "total": 1
+    },
+    "fullSuite": false
+  },
+  "runtime": {
+    "path": "/opt/qianqi/releases/project-events-20261004",
+    "verifiedFiles": 312,
+    "bundleSha256": "0f67688930b7ce28dfaa4e53902d07aefb2ba8c8a5e70379ca6a3bff862bd598"
+  },
+  "financialAutomation": "disabled/inactive; activation marker absent",
+  "publicApi": "unchanged unavailable",
+  "limitations": [
+    "RPC log completeness trusted; gaps not independently proven",
+    "monolithic significant project history still grows with project activity",
+    "53 unsupported BUY candidates retained; admission unchanged"
+  ]
+}
