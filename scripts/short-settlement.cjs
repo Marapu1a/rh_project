@@ -1,3 +1,4 @@
+const {pagedLogs}=require('./paged-log-read.cjs');
 // Independent full-sort verifier and read-only recovery for the canonical path.
 const {ethers}=require('ethers');
 const model=require('./short-outcome.cjs');
@@ -18,7 +19,7 @@ async function recover(provider,source,drawId){
   const state=await source.settlements(drawId,at);
   if(state.phase===0n)throw Error('Unknown settlement');
   const proposal=await source.datasetProposal(state.proposalId,at);
-  const events=await source.queryFilter(source.filters.DatasetChunk(state.proposalId),Number(proposal.request.cutoffBlockNumber)+1,head.number);
+  const events=await pagedLogs(Number(proposal.request.cutoffBlockNumber)+1,head.number,(from,to)=>source.queryFilter(source.filters.DatasetChunk(state.proposalId),from,to));
   const chunks=[];
   for(const event of events){
     if(event.args.index!==BigInt(chunks.length))throw Error('Missing or duplicate chunk');

@@ -1,0 +1,187 @@
+{
+  "schema": "operations-followup-v1",
+  "old-metrics": {
+    "mode": "old",
+    "elapsedMs": 4188.5637,
+    "maxRSSKiB": 2446980,
+    "head": 79480507,
+    "bytes": 280119788
+  },
+  "new-metrics": {
+    "mode": "new",
+    "elapsedMs": 3967.5539,
+    "maxRSSKiB": 859080,
+    "head": 79480507,
+    "bytes": 280119788
+  },
+  "api-proof": {
+    "elapsedMs": 56480.229,
+    "maxRSSKiB": 858088,
+    "result": {
+      "schema": "promo-wallet-status-v1",
+      "status": "stale",
+      "wallet": "0xc917c3ac178cf19c4aa495775ea11d4b2976b19a",
+      "provenance": {
+        "chainId": "4663",
+        "anchor": {
+          "number": 79377859,
+          "hash": "0xfa6872fc31c8a7cb329ca96586107cc7a9659ced22f21eb903ab47ec8a11af49"
+        },
+        "head": {
+          "number": 79480507,
+          "hash": "0x602b0c1ca6743e4a9d062b19744aa816365eb37659d216f035dcfea706602f76"
+        },
+        "manifestHash": "0xe66c288e09c6ec705d34b17f3ea536ad08494a84a60d1282c35016c8b9f18c2a",
+        "ledgerHash": "0xd8bf49b42db23dcb31654c4079dccdade13037ed504f5dae96c57c3e42450543",
+        "observedAt": "2026-10-03T23:55:25.014Z",
+        "ageSeconds": 627,
+        "indexerState": "caughtUp",
+        "targetBlock": 79480507,
+        "canonicality": "saved-observation-not-live-finality"
+      },
+      "balances": {
+        "SHORT": {
+          "mintedTotal": "0",
+          "open": "0",
+          "frozenByDraw": {},
+          "consumedTotal": "0",
+          "byEpoch": [
+            {
+              "epoch": "1",
+              "minted": "0",
+              "consumed": "0",
+              "frozen": "0",
+              "open": "0",
+              "firstOpenAttempt": null,
+              "lastOpenAttempt": null
+            }
+          ]
+        },
+        "MONTHLY": {
+          "mintedTotal": "0",
+          "open": "0",
+          "frozenByDraw": {},
+          "consumedTotal": "0",
+          "byEpoch": [
+            {
+              "epoch": "1",
+              "minted": "0",
+              "consumed": "0",
+              "frozen": "0",
+              "open": "0",
+              "firstOpenAttempt": null,
+              "lastOpenAttempt": null
+            }
+          ]
+        },
+        "carryRaw": "6000000",
+        "entryThresholdRaw": "100000000",
+        "quoteDecimals": 6
+      },
+      "purchases": {
+        "items": [
+          {
+            "transactionHash": "0xa3dea5a817398750fa7293047ea5db959f18346a3f2d8005972087a609842501",
+            "blockNumber": 79377876,
+            "blockHash": "0xad558aee1f8ff6bd3d9226b718f943634c90a32b3c78e17b2ab46ea9015ffeec",
+            "logIndex": 29,
+            "status": "ELIGIBLE",
+            "reason": "SUPPORTED_BUY",
+            "grossQuoteRaw": "6000000",
+            "netQuoteDebitRaw": "6000000",
+            "entriesMinted": "0"
+          }
+        ],
+        "offset": 0,
+        "limit": 25,
+        "total": 1,
+        "nextOffset": null,
+        "coverage": "decoded-payer-attributed-candidates-only; absence-is-not-rejection"
+      },
+      "rewards": {
+        "items": [],
+        "offset": 0,
+        "limit": 25,
+        "total": 0,
+        "nextOffset": null,
+        "coverage": "vault-events-and-checkpointed-storage",
+        "vault": "0x2E9e7412e19497b60f25D05b68717067A6B743D4"
+      },
+      "asset": {
+        "address": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+        "decimals": 6,
+        "symbol": "USDG",
+        "codeHash": "0x864cc9ad53b338b82da1f7cab85ab0b3d5c8861acb422b6fec63cf36234f36a6"
+      }
+    }
+  },
+  "purchases": {
+    "head": 79480507,
+    "counts": {
+      "UNSUPPORTED_ROUTE:NOT_DIRECT_CURVE_CALL": 51,
+      "ELIGIBLE:SUPPORTED_BUY": 2,
+      "INELIGIBLE:SELL": 50,
+      "UNSUPPORTED_ROUTE:BATCH_EXECUTION_NOT_QUALIFIED": 2
+    },
+    "wallets": [
+      {
+        "wallet": "0x3126078488a7ef3df0ee9da108d9d5e144fa5226",
+        "carryRaw": "2000000",
+        "entriesMinted": "0",
+        "shortAttemptsMinted": "0",
+        "monthlyAttemptsMinted": "0"
+      },
+      {
+        "wallet": "0xc917c3ac178cf19c4aa495775ea11d4b2976b19a",
+        "carryRaw": "6000000",
+        "entriesMinted": "0",
+        "shortAttemptsMinted": "0",
+        "monthlyAttemptsMinted": "0"
+      }
+    ],
+    "minted": [],
+    "blockShape": [
+      "number",
+      "hash",
+      "parentHash",
+      "timestamp",
+      "transactions",
+      "batchAccounts",
+      "entrypointAccounts"
+    ],
+    "firstTime": 1791060271,
+    "lastTime": 1791070641,
+    "blocks": 102648,
+    "bytes": 280119788
+  },
+  "routes": {
+    "0x56684e8ba6ce363df70486df947f0e3651941a9a:0xa147df59:NOT_DIRECT_CURVE_CALL": 1,
+    "0x9b0559e3569cee2a620a914716c7d05b2edd4624:0x831efaa3:NOT_DIRECT_CURVE_CALL": 1,
+    "0x65050a9b7e5075a2ba5ced7b1b64ee66262c40dc:0x4d819a2a:NOT_DIRECT_CURVE_CALL": 28,
+    "0xf2c69db0311b3ded8ec7f39e80f555a200cc2839:0x11a7dbea:NOT_DIRECT_CURVE_CALL": 1,
+    "0xe8cf99602aff6a7a165406fd0ed7c4d85216b141:0xfaf3a4a7:NOT_DIRECT_CURVE_CALL": 1,
+    "0x6131b5fae19ea4f9d964eac0408e4408b66337b5:0xe21fd0e9:NOT_DIRECT_CURVE_CALL": 4,
+    "0x9689992f5b5c09447f15906d8d11214944488341:0x3e0f9c3c:NOT_DIRECT_CURVE_CALL": 11,
+    "0x125736d9ee228f1cc277bb2182b08e7ccb8b0f61:0xe9ae5c53:BATCH_EXECUTION_NOT_QUALIFIED": 2,
+    "0xbd3d28619604c4d85521609f31d5af36f8fa7790:0xe2fd8549:NOT_DIRECT_CURVE_CALL": 1,
+    "0x9a4d81005c9f3d595330d44bf378626638fa0171:0x5bca49a7:NOT_DIRECT_CURVE_CALL": 1,
+    "0x00000000e91fc5bad977c0cc4ad60557c06886a2:0x1dcd4dad:NOT_DIRECT_CURVE_CALL": 1,
+    "0xcb60ed141f508b9de752026226f2790765b046a4:0xfe9c3a46:NOT_DIRECT_CURVE_CALL": 1
+  },
+  "payout-live": {
+    "observedAt": "2026-10-04T00:08:18.548Z",
+    "end": 79488261,
+    "rows": [
+      {
+        "address": "0xa631f7845af257daEe0b9f6Ff744334294cE6846",
+        "events": 0
+      },
+      {
+        "address": "0x3EE0c608815Ec5a621F330Fb8899ED31Fe682393",
+        "events": 0
+      }
+    ],
+    "calls": 24,
+    "readOnly": true
+  }
+}

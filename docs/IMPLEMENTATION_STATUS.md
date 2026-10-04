@@ -61,3 +61,8 @@ Legacy RPC transaction evidence: scripts/transaction-chain.cjs проверяе�
 Pons payout discovery: `scripts/pons-payout-scan.cjs` — окна10 блоков,
 проверка границ/результата, курсор после полного окна; используется pons-automation.
 [Локальная проверка и открытые RPC-пути](PONS_PAYOUT_RPC_2026-10-04.md).
+
+Эксплуатация04.10: indexer-checksum/indexer-json — порционная обработка прежнего
+формата; local-scheduler-state — disk/384MiB guards только индексатора.
+paged-log-read используется policy/Short/Monthly verification/recovery.
+[Проверки, OOM и открытые ограничения](OPERATIONS_FOLLOWUP_2026-10-04.md).

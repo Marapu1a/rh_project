@@ -1,0 +1,372 @@
+{
+  "schema": "quicknode-paid-qualification-v1",
+  "switched": false,
+  "probe": {
+    "schema": "quicknode-project-probe-v1",
+    "observedAt": "2026-10-03T23:33:09.730Z",
+    "switched": false,
+    "history": {
+      "schema": "public-rpc-capabilities-v1",
+      "observedAt": "2026-10-03T23:33:09.732Z",
+      "quote": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+      "observations": [
+        {
+          "number": "0x4bc9a0d",
+          "depthBlocks": 0,
+          "hash": "0xb961f03912af8b257b8321d178c4da97b9f44b9f5799872e788b6839af37c32a",
+          "codeHash": "0x864cc9ad53b338b82da1f7cab85ab0b3d5c8861acb422b6fec63cf36234f36a6",
+          "decimals": "6",
+          "totalSupply": "699810244136124",
+          "storageSlot0": "0x0000000000000000000000000000000000000000000000000000000000000001",
+          "ok": true
+        },
+        {
+          "number": "0x4bc72fd",
+          "depthBlocks": 10000,
+          "hash": "0xf2937765340298e1da39d98d0368ceceab79a16e6bd3a96dadce36359d30a5c9",
+          "codeHash": "0x864cc9ad53b338b82da1f7cab85ab0b3d5c8861acb422b6fec63cf36234f36a6",
+          "decimals": "6",
+          "totalSupply": "699819670332139",
+          "storageSlot0": "0x0000000000000000000000000000000000000000000000000000000000000001",
+          "ok": true
+        },
+        {
+          "number": "0x4af6b0d",
+          "depthBlocks": 864000,
+          "hash": "0xa10fd7b0549329a2507f3cfa0bdaf3097d86c1aeab3afdbb9be39cf700b2ecf4",
+          "codeHash": "0x864cc9ad53b338b82da1f7cab85ab0b3d5c8861acb422b6fec63cf36234f36a6",
+          "decimals": "6",
+          "totalSupply": "700490016349496",
+          "storageSlot0": "0x0000000000000000000000000000000000000000000000000000000000000001",
+          "ok": true
+        }
+      ],
+      "historicalReadsAvailable": true,
+      "publicLaunchReady": false,
+      "chainId": "4663",
+      "latest": {
+        "number": "0x4bcbcfc",
+        "hash": "0xd663edec66ba8e25262afbd356d63c0ec9a60d8c90addcee1886bfe6bf4b0553",
+        "timestamp": "0x6ac190b6"
+      },
+      "finalized": {
+        "number": "0x4bc9a0d",
+        "hash": "0xb961f03912af8b257b8321d178c4da97b9f44b9f5799872e788b6839af37c32a",
+        "timestamp": "0x6ac18d31"
+      },
+      "finalizedLagBlocks": "8943",
+      "limitation": "Sampled history only, not full archive SLA."
+    },
+    "probes": [
+      {
+        "name": "launchHeader",
+        "ok": true,
+        "hash": "0x000fc74b62d1e6f26533117cbb84085fc799c0855d694e6f8c59ed2588725bc1"
+      },
+      {
+        "name": "launchReceipts",
+        "ok": true,
+        "count": 5
+      },
+      {
+        "name": "tokenCodeAtLaunch",
+        "ok": true,
+        "codeHash": "0x68375920a0acc51f0038b37aeaf86dbb35b44cefd95d1b62ea770baa6b41d8be"
+      },
+      {
+        "name": "logs1",
+        "ok": true,
+        "count": 1
+      },
+      {
+        "name": "logs10",
+        "ok": true,
+        "count": 3
+      },
+      {
+        "name": "logs500",
+        "ok": true,
+        "count": 22
+      },
+      {
+        "name": "logs501",
+        "ok": true,
+        "count": 22
+      },
+      {
+        "name": "logs1000",
+        "ok": true,
+        "count": 115
+      },
+      {
+        "name": "logs10000",
+        "ok": true,
+        "count": 235
+      }
+    ],
+    "requests": {
+      "eth_chainId": 1,
+      "eth_getBlockByNumber": 10,
+      "eth_getCode": 4,
+      "eth_call": 6,
+      "eth_getStorageAt": 3,
+      "eth_getBlockReceipts": 1,
+      "eth_getLogs": 6
+    }
+  },
+  "index-probe": {
+    "schema": "quicknode-index-probe-v1",
+    "observedAt": "2026-10-03T23:33:47.784Z",
+    "first": {
+      "state": "catchingUp",
+      "processedBlock": 79377869,
+      "targetBlock": 79469069,
+      "removedBlocks": 0,
+      "cacheHits": 0,
+      "updatedAt": "2026-10-03T23:33:33.175Z",
+      "metrics": {
+        "lagBlocks": 91200,
+        "historyBlocks": 10,
+        "scannedBlocks": 10,
+        "replayedBlocks": 10,
+        "replayMode": "full",
+        "scanMs": 9790.488000000001,
+        "replayMs": 6.621999999999389,
+        "rewardMs": 2647.9344,
+        "beforeSaveMs": 14588.1852,
+        "saveMs": 121.45620000000054,
+        "totalMs": 14709.647500000001,
+        "stateBytes": 1674675
+      },
+      "observedAt": "2026-10-03T23:33:33.174Z",
+      "policyMode": "admitted",
+      "processedTimestamp": "0x6ac16930"
+    },
+    "second": {
+      "state": "catchingUp",
+      "processedBlock": 79377879,
+      "targetBlock": 79469069,
+      "removedBlocks": 0,
+      "cacheHits": 0,
+      "updatedAt": "2026-10-03T23:33:47.638Z",
+      "metrics": {
+        "lagBlocks": 91190,
+        "historyBlocks": 20,
+        "scannedBlocks": 10,
+        "replayedBlocks": 10,
+        "replayMode": "checkpoint",
+        "scanMs": 9775.258399999999,
+        "replayMs": 7.517299999999523,
+        "rewardMs": 2510.564900000001,
+        "beforeSaveMs": 14337.0257,
+        "saveMs": 142.34960000000137,
+        "totalMs": 14479.3798,
+        "stateBytes": 3420079
+      },
+      "observedAt": "2026-10-03T23:33:47.638Z",
+      "policyMode": "admitted",
+      "processedTimestamp": "0x6ac16931"
+    },
+    "compare": {
+      "head": 79377869,
+      "referenceHead": 79377869,
+      "ledgerHash": "0x573b5006fb302851fe42de78443a2cb06decf5adf2d78447ce8d2d4fc8f08e70",
+      "referenceLedgerHash": "0x573b5006fb302851fe42de78443a2cb06decf5adf2d78447ce8d2d4fc8f08e70"
+    },
+    "requests": {
+      "eth_chainId": 6,
+      "eth_getBlockByNumber": 45,
+      "eth_getCode": 122,
+      "eth_call": 146,
+      "eth_getTransactionReceipt": 24
+    },
+    "decisions": 3,
+    "switched": false
+  },
+  "limits-finality": {
+    "observedAt": "2026-10-03T23:34:15.868Z",
+    "logs": [
+      {
+        "blocks": 5,
+        "ok": true,
+        "count": 3
+      },
+      {
+        "blocks": 6,
+        "ok": true,
+        "count": 3
+      },
+      {
+        "blocks": 7,
+        "ok": true,
+        "count": 3
+      }
+    ],
+    "finality": [
+      {
+        "observedAt": "2026-10-03T23:34:18.150Z",
+        "quicknode": {
+          "number": 79469069,
+          "hash": "0xb961f03912af8b257b8321d178c4da97b9f44b9f5799872e788b6839af37c32a",
+          "lagSeconds": 969
+        },
+        "alchemy": {
+          "number": 79469069,
+          "hash": "0xb961f03912af8b257b8321d178c4da97b9f44b9f5799872e788b6839af37c32a",
+          "lagSeconds": 970
+        }
+      },
+      {
+        "observedAt": "2026-10-03T23:34:19.747Z",
+        "quicknode": {
+          "number": 79469069,
+          "hash": "0xb961f03912af8b257b8321d178c4da97b9f44b9f5799872e788b6839af37c32a",
+          "lagSeconds": 971
+        },
+        "alchemy": {
+          "number": 79469069,
+          "hash": "0xb961f03912af8b257b8321d178c4da97b9f44b9f5799872e788b6839af37c32a",
+          "lagSeconds": 972
+        }
+      },
+      {
+        "observedAt": "2026-10-03T23:34:21.088Z",
+        "quicknode": {
+          "number": 79469069,
+          "hash": "0xb961f03912af8b257b8321d178c4da97b9f44b9f5799872e788b6839af37c32a",
+          "lagSeconds": 972
+        },
+        "alchemy": {
+          "number": 79469069,
+          "hash": "0xb961f03912af8b257b8321d178c4da97b9f44b9f5799872e788b6839af37c32a",
+          "lagSeconds": 973
+        }
+      },
+      {
+        "observedAt": "2026-10-03T23:34:22.436Z",
+        "quicknode": {
+          "number": 79469069,
+          "hash": "0xb961f03912af8b257b8321d178c4da97b9f44b9f5799872e788b6839af37c32a",
+          "lagSeconds": 974
+        },
+        "alchemy": {
+          "number": 79469069,
+          "hash": "0xb961f03912af8b257b8321d178c4da97b9f44b9f5799872e788b6839af37c32a",
+          "lagSeconds": 974
+        }
+      },
+      {
+        "observedAt": "2026-10-03T23:34:23.782Z",
+        "quicknode": {
+          "number": 79469069,
+          "hash": "0xb961f03912af8b257b8321d178c4da97b9f44b9f5799872e788b6839af37c32a",
+          "lagSeconds": 975
+        },
+        "alchemy": {
+          "number": 79469069,
+          "hash": "0xb961f03912af8b257b8321d178c4da97b9f44b9f5799872e788b6839af37c32a",
+          "lagSeconds": 976
+        }
+      },
+      {
+        "observedAt": "2026-10-03T23:34:25.149Z",
+        "quicknode": {
+          "number": 79469069,
+          "hash": "0xb961f03912af8b257b8321d178c4da97b9f44b9f5799872e788b6839af37c32a",
+          "lagSeconds": 976
+        },
+        "alchemy": {
+          "number": 79469069,
+          "hash": "0xb961f03912af8b257b8321d178c4da97b9f44b9f5799872e788b6839af37c32a",
+          "lagSeconds": 977
+        }
+      },
+      {
+        "observedAt": "2026-10-03T23:34:26.502Z",
+        "quicknode": {
+          "number": 79469069,
+          "hash": "0xb961f03912af8b257b8321d178c4da97b9f44b9f5799872e788b6839af37c32a",
+          "lagSeconds": 978
+        },
+        "alchemy": {
+          "number": 79469069,
+          "hash": "0xb961f03912af8b257b8321d178c4da97b9f44b9f5799872e788b6839af37c32a",
+          "lagSeconds": 978
+        }
+      },
+      {
+        "observedAt": "2026-10-03T23:34:27.866Z",
+        "quicknode": {
+          "number": 79469069,
+          "hash": "0xb961f03912af8b257b8321d178c4da97b9f44b9f5799872e788b6839af37c32a",
+          "lagSeconds": 979
+        },
+        "alchemy": {
+          "number": 79469069,
+          "hash": "0xb961f03912af8b257b8321d178c4da97b9f44b9f5799872e788b6839af37c32a",
+          "lagSeconds": 980
+        }
+      }
+    ]
+  },
+  "log-proof": {
+    "observedAt": "2026-10-03T23:34:09.616Z",
+    "wholeLogs": 235,
+    "splitLogs": 235,
+    "exactMatch": true,
+    "samples": [
+      {
+        "number": "0x4bb35c4",
+        "blockHash": "0x000fc74b62d1e6f26533117cbb84085fc799c0855d694e6f8c59ed2588725bc1",
+        "transactions": 5,
+        "logs": 8,
+        "evidenceHash": "0x0cdc556107c22fdaa732f6a0055017e18ee2d3f1724b054ac8a2eea4af197853"
+      },
+      {
+        "number": "0x4bb35c8",
+        "blockHash": "0xe202f5e243b2c62afbf46c98b62c79afe0e81555c073cbf736bacc66bfdf6919",
+        "transactions": 8,
+        "logs": 16,
+        "evidenceHash": "0x393b08773751b86f9af8e36e6d137facbfa46f07f9b31509453ac6cfef91e5e6"
+      },
+      {
+        "number": "0x4bb35d4",
+        "blockHash": "0xad558aee1f8ff6bd3d9226b718f943634c90a32b3c78e17b2ab46ea9015ffeec",
+        "transactions": 6,
+        "logs": 40,
+        "evidenceHash": "0x4ef7f431047ce95d8432b7664d6aa33e2ed041f7a9697322554a4f749fa63587"
+      }
+    ],
+    "calls": 31
+  },
+  "restart": {
+    "observedAt": "2026-10-03T23:35:13.062Z",
+    "freshProcess": true,
+    "result": {
+      "state": "catchingUp",
+      "processedBlock": 79377889,
+      "targetBlock": 79469069,
+      "removedBlocks": 0,
+      "cacheHits": 1,
+      "updatedAt": "2026-10-03T23:35:12.896Z",
+      "metrics": {
+        "lagBlocks": 91180,
+        "historyBlocks": 30,
+        "scannedBlocks": 10,
+        "replayedBlocks": 10,
+        "replayMode": "checkpoint",
+        "scanMs": 14439.870400000002,
+        "replayMs": 8.331999999998516,
+        "rewardMs": 4541.854599999999,
+        "beforeSaveMs": 22895.7851,
+        "saveMs": 165.57240000000093,
+        "totalMs": 23061.3628,
+        "stateBytes": 5129392
+      },
+      "observedAt": "2026-10-03T23:35:12.896Z",
+      "policyMode": "admitted",
+      "processedTimestamp": "0x6ac16932"
+    },
+    "calls": 175
+  }
+}

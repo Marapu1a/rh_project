@@ -1,0 +1,315 @@
+{
+  "schema": "quicknode-qualification-evidence-v1",
+  "probe": {
+    "schema": "quicknode-project-probe-v1",
+    "observedAt": "2026-10-03T23:17:27.681Z",
+    "switched": false,
+    "history": {
+      "schema": "public-rpc-capabilities-v1",
+      "observedAt": "2026-10-03T23:17:27.683Z",
+      "quote": "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+      "observations": [
+        {
+          "number": "0x4bc6da1",
+          "depthBlocks": 0,
+          "hash": "0x4a5109caaaa9e80ec4bc8eb5812bf0cda614e3d490b3673a8b1378e2af6a72ac",
+          "codeHash": "0x864cc9ad53b338b82da1f7cab85ab0b3d5c8861acb422b6fec63cf36234f36a6",
+          "decimals": "6",
+          "totalSupply": "699819670332139",
+          "storageSlot0": "0x0000000000000000000000000000000000000000000000000000000000000001",
+          "ok": true
+        },
+        {
+          "number": "0x4bc4691",
+          "depthBlocks": 10000,
+          "hash": "0xdc0236f2887b723ee0f3afebafa1c2731e2e2bbec122114ee20e917721018200",
+          "codeHash": "0x864cc9ad53b338b82da1f7cab85ab0b3d5c8861acb422b6fec63cf36234f36a6",
+          "decimals": "6",
+          "totalSupply": "699764526141619",
+          "storageSlot0": "0x0000000000000000000000000000000000000000000000000000000000000001",
+          "ok": true
+        },
+        {
+          "number": "0x4af3ea1",
+          "depthBlocks": 864000,
+          "hash": "0x80aacf6aa7024e1f975691d92d6b23afb9321691916aac9d3f5183abd697d08f",
+          "codeHash": "0x864cc9ad53b338b82da1f7cab85ab0b3d5c8861acb422b6fec63cf36234f36a6",
+          "decimals": "6",
+          "totalSupply": "700505016349496",
+          "storageSlot0": "0x0000000000000000000000000000000000000000000000000000000000000001",
+          "ok": true
+        }
+      ],
+      "historicalReadsAvailable": true,
+      "publicLaunchReady": false,
+      "chainId": "4663",
+      "latest": {
+        "number": "0x4bc9877",
+        "hash": "0x6251789665b92c826080251f0bfd01d9d9d2992c3a050f8083585d6a65690d42",
+        "timestamp": "0x6ac18d08"
+      },
+      "finalized": {
+        "number": "0x4bc6da1",
+        "hash": "0x4a5109caaaa9e80ec4bc8eb5812bf0cda614e3d490b3673a8b1378e2af6a72ac",
+        "timestamp": "0x6ac188b6"
+      },
+      "finalizedLagBlocks": "10966",
+      "limitation": "Sampled historical reads only; not full archive SLA or finality proof."
+    },
+    "probes": [
+      {
+        "name": "launchHeader",
+        "ok": true,
+        "hash": "0x000fc74b62d1e6f26533117cbb84085fc799c0855d694e6f8c59ed2588725bc1"
+      },
+      {
+        "name": "launchReceipts",
+        "ok": true,
+        "count": 5
+      },
+      {
+        "name": "tokenCodeAtLaunch",
+        "ok": true,
+        "codeHash": "0x68375920a0acc51f0038b37aeaf86dbb35b44cefd95d1b62ea770baa6b41d8be"
+      },
+      {
+        "name": "logs1",
+        "ok": true,
+        "count": 1
+      },
+      {
+        "name": "logs10",
+        "ok": false,
+        "error": "RPC HTTP 413"
+      },
+      {
+        "name": "logs500",
+        "ok": false,
+        "error": "RPC HTTP 413"
+      },
+      {
+        "name": "logs501",
+        "ok": false,
+        "error": "RPC HTTP 413"
+      },
+      {
+        "name": "logs1000",
+        "ok": false,
+        "error": "RPC HTTP 413"
+      },
+      {
+        "name": "logs10000",
+        "ok": false,
+        "error": "RPC HTTP 413"
+      }
+    ],
+    "requests": {
+      "eth_chainId": 1,
+      "eth_getBlockByNumber": 10,
+      "eth_getCode": 4,
+      "eth_call": 6,
+      "eth_getStorageAt": 3,
+      "eth_getBlockReceipts": 1,
+      "eth_getLogs": 6
+    }
+  },
+  "index": {
+    "schema": "quicknode-index-probe-v1",
+    "observedAt": "2026-10-03T23:18:22.233Z",
+    "first": {
+      "state": "catchingUp",
+      "processedBlock": 79377869,
+      "targetBlock": 79457697,
+      "removedBlocks": 0,
+      "cacheHits": 0,
+      "updatedAt": "2026-10-03T23:18:04.108Z",
+      "metrics": {
+        "lagBlocks": 79828,
+        "historyBlocks": 10,
+        "scannedBlocks": 10,
+        "replayedBlocks": 10,
+        "replayMode": "full",
+        "scanMs": 15454.214199999999,
+        "replayMs": 8.235700000001088,
+        "rewardMs": 2554.870600000002,
+        "beforeSaveMs": 20177.3169,
+        "saveMs": 119.81169999999838,
+        "totalMs": 20297.1371,
+        "stateBytes": 1674684
+      },
+      "observedAt": "2026-10-03T23:18:04.108Z",
+      "policyMode": "admitted",
+      "processedTimestamp": "0x6ac16930"
+    },
+    "second": {
+      "state": "catchingUp",
+      "processedBlock": 79377879,
+      "targetBlock": 79457697,
+      "removedBlocks": 0,
+      "cacheHits": 0,
+      "updatedAt": "2026-10-03T23:18:22.078Z",
+      "metrics": {
+        "lagBlocks": 79818,
+        "historyBlocks": 20,
+        "scannedBlocks": 10,
+        "replayedBlocks": 10,
+        "replayMode": "checkpoint",
+        "scanMs": 13219.2854,
+        "replayMs": 7.288899999999558,
+        "rewardMs": 2545.0239,
+        "beforeSaveMs": 17843.678200000002,
+        "saveMs": 151.7428,
+        "totalMs": 17995.424899999998,
+        "stateBytes": 3420072
+      },
+      "observedAt": "2026-10-03T23:18:22.078Z",
+      "policyMode": "admitted",
+      "processedTimestamp": "0x6ac16931"
+    },
+    "compare": {
+      "head": 79377869,
+      "referenceHead": 79377869,
+      "ledgerHash": "0x573b5006fb302851fe42de78443a2cb06decf5adf2d78447ce8d2d4fc8f08e70",
+      "referenceLedgerHash": "0x573b5006fb302851fe42de78443a2cb06decf5adf2d78447ce8d2d4fc8f08e70"
+    },
+    "requests": {
+      "eth_chainId": 6,
+      "eth_getBlockByNumber": 46,
+      "eth_getCode": 133,
+      "eth_call": 149,
+      "eth_getTransactionReceipt": 25
+    },
+    "decisions": 3,
+    "switched": false
+  },
+  "limitsFinality": {
+    "observedAt": "2026-10-03T23:18:57.217Z",
+    "logs": [
+      {
+        "blocks": 5,
+        "ok": true,
+        "count": 3
+      },
+      {
+        "blocks": 6,
+        "ok": true,
+        "count": 3
+      },
+      {
+        "blocks": 7,
+        "ok": false,
+        "error": "RPC HTTP 413"
+      }
+    ],
+    "finality": [
+      {
+        "observedAt": "2026-10-03T23:18:59.458Z",
+        "quicknode": {
+          "number": 79461617,
+          "hash": "0xeac4b91eb0491e39716124af08daf9cf8bbd219b9b971f02f4219b511a16dd3c",
+          "lagSeconds": 802
+        },
+        "alchemy": {
+          "number": 79461617,
+          "hash": "0xeac4b91eb0491e39716124af08daf9cf8bbd219b9b971f02f4219b511a16dd3c",
+          "lagSeconds": 803
+        }
+      },
+      {
+        "observedAt": "2026-10-03T23:19:01.056Z",
+        "quicknode": {
+          "number": 79461617,
+          "hash": "0xeac4b91eb0491e39716124af08daf9cf8bbd219b9b971f02f4219b511a16dd3c",
+          "lagSeconds": 803
+        },
+        "alchemy": {
+          "number": 79461617,
+          "hash": "0xeac4b91eb0491e39716124af08daf9cf8bbd219b9b971f02f4219b511a16dd3c",
+          "lagSeconds": 804
+        }
+      },
+      {
+        "observedAt": "2026-10-03T23:19:02.398Z",
+        "quicknode": {
+          "number": 79461617,
+          "hash": "0xeac4b91eb0491e39716124af08daf9cf8bbd219b9b971f02f4219b511a16dd3c",
+          "lagSeconds": 805
+        },
+        "alchemy": {
+          "number": 79461617,
+          "hash": "0xeac4b91eb0491e39716124af08daf9cf8bbd219b9b971f02f4219b511a16dd3c",
+          "lagSeconds": 805
+        }
+      },
+      {
+        "observedAt": "2026-10-03T23:19:03.746Z",
+        "quicknode": {
+          "number": 79461617,
+          "hash": "0xeac4b91eb0491e39716124af08daf9cf8bbd219b9b971f02f4219b511a16dd3c",
+          "lagSeconds": 806
+        },
+        "alchemy": {
+          "number": 79461617,
+          "hash": "0xeac4b91eb0491e39716124af08daf9cf8bbd219b9b971f02f4219b511a16dd3c",
+          "lagSeconds": 807
+        }
+      },
+      {
+        "observedAt": "2026-10-03T23:19:05.095Z",
+        "quicknode": {
+          "number": 79461617,
+          "hash": "0xeac4b91eb0491e39716124af08daf9cf8bbd219b9b971f02f4219b511a16dd3c",
+          "lagSeconds": 807
+        },
+        "alchemy": {
+          "number": 79461617,
+          "hash": "0xeac4b91eb0491e39716124af08daf9cf8bbd219b9b971f02f4219b511a16dd3c",
+          "lagSeconds": 808
+        }
+      },
+      {
+        "observedAt": "2026-10-03T23:19:06.442Z",
+        "quicknode": {
+          "number": 79461617,
+          "hash": "0xeac4b91eb0491e39716124af08daf9cf8bbd219b9b971f02f4219b511a16dd3c",
+          "lagSeconds": 809
+        },
+        "alchemy": {
+          "number": 79461617,
+          "hash": "0xeac4b91eb0491e39716124af08daf9cf8bbd219b9b971f02f4219b511a16dd3c",
+          "lagSeconds": 809
+        }
+      },
+      {
+        "observedAt": "2026-10-03T23:19:07.792Z",
+        "quicknode": {
+          "number": 79461617,
+          "hash": "0xeac4b91eb0491e39716124af08daf9cf8bbd219b9b971f02f4219b511a16dd3c",
+          "lagSeconds": 810
+        },
+        "alchemy": {
+          "number": 79461617,
+          "hash": "0xeac4b91eb0491e39716124af08daf9cf8bbd219b9b971f02f4219b511a16dd3c",
+          "lagSeconds": 811
+        }
+      },
+      {
+        "observedAt": "2026-10-03T23:19:09.143Z",
+        "quicknode": {
+          "number": 79461617,
+          "hash": "0xeac4b91eb0491e39716124af08daf9cf8bbd219b9b971f02f4219b511a16dd3c",
+          "lagSeconds": 811
+        },
+        "alchemy": {
+          "number": 79461617,
+          "hash": "0xeac4b91eb0491e39716124af08daf9cf8bbd219b9b971f02f4219b511a16dd3c",
+          "lagSeconds": 812
+        }
+      }
+    ]
+  },
+  "concurrentFinalityAttempt": {
+    "ok": false,
+    "error": "RPC HTTP 429"
+  }
+}

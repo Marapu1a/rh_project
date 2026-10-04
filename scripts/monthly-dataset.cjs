@@ -1,3 +1,4 @@
+const {pagedLogs}=require('./paged-log-read.cjs');
 const {ethers}=require('ethers'),{hash,canonical}=require('./direct-buy.cjs'),outcome=require('./short-outcome.cjs');
 const {replayAttempts,domainFor,snapshotFor,emptyMonthlyEpochHash}=require('./attempt-lifecycle.cjs');
 const monthlyOutcome=require('./monthly-outcome.cjs');
@@ -31,6 +32,7 @@ function buildFromHistory(input){
   return {schema:'monthly-dataset-artifact-v1',snapshot,request,rules:input.rules};
 }
 async function verifyPublication(provider,source,artifact,{blockTag='latest'}={}){
+  if(!Number.isSafeInteger(Number(blockTag)))blockTag=(await provider.getBlock(blockTag)).number;
   const {snapshot,request:r}=artifact,domain=snapshot.domain;
   check(domain.schema==='attempt-lifecycle-v4'&&snapshot.schema==='attempt-snapshot-v4','Monthly publication requires v4');
   validateDrawId(r.drawId,'MONTHLY');
@@ -45,7 +47,7 @@ async function verifyPublication(provider,source,artifact,{blockTag='latest'}={}
   check(monthlyOutcome.rulesHash(artifact.rules)===policy.hash&&snapshot.rulesHash===policy.hash,'Monthly rules mismatch');
   check(snapshot.participants.every(p=>BigInt(p.count)===BigInt(p.lastAttempt)-BigInt(p.firstAttempt)+1n)
     &&snapshot.participants.reduce((s,p)=>s+BigInt(p.count),0n)===BigInt(r.attempts),'Monthly attempts mismatch');
-  const events=await source.queryFilter(source.filters.MonthChunk(r.drawId),Number(r.cutoff)+1,blockTag),participants=[],publications=[];
+  const events=await pagedLogs(Number(r.cutoff)+1,Number(blockTag),(from,to)=>source.queryFilter(source.filters.MonthChunk(r.drawId),from,to)),participants=[],publications=[];
   for(const event of events){
     check(event.args.index===BigInt(publications.length),'Monthly publication index mismatch');
     const tx=await provider.getTransaction(event.transactionHash);check(tx&&tx.to?.toLowerCase()===source.target.toLowerCase()&&tx.blockHash===event.blockHash&&tx.blockNumber===event.blockNumber,'Monthly publication unavailable');

@@ -28,9 +28,17 @@ async function withState(file,config,action,{legacyConfigs=[],validateMigration,
   const save=state=>{
     try{
     const payload={...state};delete payload.checksum;
-    const encoded=JSON.stringify({...payload,checksum:checksumFor(payload)},null,indexerFormat?undefined:2)+'\n';
+    if(indexerFormat){
+      const disk=fs.statfsSync(path.dirname(file)),bytes=fs.existsSync(file)?fs.statSync(file).size:0;
+      // Reserve room for atomic replacement plus operational headroom. Never delete evidence.
+      if(disk.bavail*disk.bsize<Math.max(1024**3,bytes*2))throw Error('Insufficient disk headroom for index snapshot');
+    }
+    const document={...payload,checksum:checksumFor(payload)};
     const temp=file+'.tmp';let out;
-    try{out=fs.openSync(temp,'w');fs.writeFileSync(out,encoded);fs.fsyncSync(out);}
+    try{out=fs.openSync(temp,'w');
+      if(indexerFormat)require('./indexer-json.cjs').writeIndexerJson(out,document);
+      else fs.writeFileSync(out,JSON.stringify(document,null,2)+'\n');
+      fs.fsyncSync(out);}
     finally{if(out!==undefined)fs.closeSync(out);}
     fs.renameSync(temp,file);
     }catch(e){e.code='SCHEDULER_STORAGE_ERROR';throw e;}
@@ -40,6 +48,10 @@ async function withState(file,config,action,{legacyConfigs=[],validateMigration,
     fs.writeFileSync(fd,String(process.pid));fs.closeSync(fd);fd=undefined;
     let state={schema:'local-scheduler-state-v1',configHash:hash(config),jobs:{SHORT:[],MONTHLY:[]}};
     if(fs.existsSync(file)){
+      // Temporary safety boundary for the single-JSON backend. Stop before Node's
+      // string/heap ceilings; retain the complete file for migration, never truncate.
+      if(indexerFormat&&fs.statSync(file).size>=384*1024**2)
+        throw Object.assign(Error('Index snapshot requires storage migration'),{code:'SCHEDULER_STORAGE_ERROR'});
       const {checksum,...stored}=JSON.parse(fs.readFileSync(file,'utf8'));
       if(!validChecksum(stored,checksum)||stored.schema!==state.schema)
         throw Error('Scheduler state checksum/config mismatch');

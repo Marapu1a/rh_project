@@ -1,3 +1,4 @@
+const {pagedLogs}=require('./paged-log-read.cjs');
 // Read-only BuyPolicySource admission. Trust root is supplied by deployment policy, never notices.
 // No signing, state writes, or fallback from finalized to latest.
 const {Interface,isAddress,isHexString,ZeroAddress,ZeroHash,keccak256}=require('ethers');
@@ -30,7 +31,7 @@ async function loadBuyPolicy({trust,genesis,rpc,cutoff}){
  // The pinned source increments publishedCount for every announcement. With zero
  // announcements the finalized getters prove an empty history; avoid rescanning
  // the entire lifetime on every pass. Commitment and lastFrom checks still apply.
- const logs=count===0?[]:await rpc('eth_getLogs',[{address:trust.source,fromBlock:tag(genesis.anchor.number),toBlock:tag(height),topics:[ABI.getEvent('BuyPolicyAnnounced').topicHash,trust.instanceId]}]);
+ const logs=count===0?[]:await pagedLogs(num(genesis.anchor.number),height,(from,to)=>rpc('eth_getLogs',[{address:trust.source,fromBlock:tag(from),toBlock:tag(to),topics:[ABI.getEvent('BuyPolicyAnnounced').topicHash,trust.instanceId]}]));
  check(Array.isArray(logs),'Missing notices');
  const history={schema:'buy-policy-history-v1',versions:[{fromBlock:num(genesis.anchor.number),manifest:genesis}]};
  const evidence=[],seen=new Set(),adapters=new Set(initialAdapters(genesis)),pendingAdapters=[];

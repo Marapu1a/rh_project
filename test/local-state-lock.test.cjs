@@ -88,3 +88,17 @@ test('pending forbids migration before admission callback and persistence',async
  await assert.rejects(()=>withState(file,{v:2},()=>{},{legacyConfigs:[{v:1}],validateMigration:()=>{called=true;}}),/Resolve pending/);
  assert(!called);assert.equal(fs.readFileSync(file,'utf8'),before);
 });
+test('low disk refuses index publication and retains the last snapshot',async t=>{
+ const file=location(t),config={kind:'persistent-buy-indexer-v1'},options={indexerFormat:true};
+ await withState(file,config,async(s,save)=>{s.marker='safe';save(s);},options);
+ const before=fs.readFileSync(file),original=fs.statfsSync;
+ fs.statfsSync=()=>({bavail:1,bsize:4096});
+ try{await assert.rejects(withState(file,config,async(s,save)=>{s.marker='new';save(s);},options),e=>e.code==='SCHEDULER_STORAGE_ERROR');}finally{fs.statfsSync=original;}
+ assert.deepEqual(fs.readFileSync(file),before);assert.equal(inspectLock(file+'.lock').exists,false);
+});
+test('oversize index snapshot stops before parsing and preserves evidence',async t=>{
+ const file=location(t);fs.writeFileSync(file,'retained');const stat=fs.statSync;
+ fs.statSync=function(p,...args){if(path.resolve(p)===file)return {size:384*1024**2};return stat.call(fs,p,...args);};
+ try{await assert.rejects(withState(file,{kind:'persistent-buy-indexer-v1'},async()=>assert.fail(),{indexerFormat:true}),e=>e.code==='SCHEDULER_STORAGE_ERROR');}finally{fs.statSync=stat;}
+ assert.equal(fs.readFileSync(file,'utf8'),'retained');assert.equal(inspectLock(file+'.lock').exists,false);
+});
