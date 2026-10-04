@@ -31,3 +31,13 @@ Local observations: LCP112ms before /116ms after, CLS0 in both. These localhost 
 Verified skip-link keyboard focus and target, all local fragment links and aria-labelledby targets, no horizontal overflow320/390/768/1440. Next production step: measure deployed build with mobile throttling/PageSpeed and check compression/cache headers; field Core Web Vitals require real traffic. Reference: https://developers.google.com/search/docs/appearance/page-experience .
 
 Affected-path checks: `SITE_TEST_PATH=/concepts/hk/ node --test web/site.test.cjs web/token-balance.test.cjs web/claim.test.cjs` passed8/8, including browser test deployment Claim through actual local vault, reload and stale-data controls after lazy loading. Full suite not run.
+
+## Production deployment — 4 October 2026
+
+User explicitly authorized transfer. Published frontend3852a99 to `/var/www/qianqi/releases/frontend-3852a99` by cloning prior release and overlaying only reviewed HTML/CSS/JS/SEO files. Current symlink switched atomically. Prior release `/var/www/qianqi/releases/data-20260930` retained; nginx backup and previous target at `/opt/qianqi/backups/frontend-3852a99`.
+
+Nginx CSP now permits GeckoTerminal frames. Initial index.html301 caused root internal-index redirect loop; detected immediately by external checks, removed that rule and reloaded validated nginx config. Final home and index.html200 with canonical root; concept URLs redirect home. No ongoing loop.
+
+Post-deploy: home/transparency/robots/sitemap/llms/API200, missing page404, no X-Robots-Tag noindex. Home/app/SEO bytes match reviewed local files. Published notice SHA256 remains f1d1d7dd9bf685e2086d72fcb9f0cc2c30bf7132883a0a987a811f4321704c3d. Real GeckoTerminal chart visually inspected at `.local/logs/live-market.png`; no top-level browser errors, no overflow1440/390/320. Overview loads real API. Indexer active, financial automation inactive. No wallet transaction sent. Field Core Web Vitals and search-console ownership remain outstanding.
+
+Rollback: restore current symlink to previous release and nginx from the backup; validate nginx then reload. Do not alter API service/config or financial state.
