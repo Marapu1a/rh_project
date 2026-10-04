@@ -1,6 +1,6 @@
 # Late purchase confirmation — draft
 
-Status: NOT PUBLISHED. No announcement clock has started.
+Historical draft. Final notice published04.10.2026: [publication record](RECOGNITION_PUBLICATION_2026-10-04.md). The final HTML and recorded hash are authoritative; this draft is retained for context.
 
 ## Public copy
 

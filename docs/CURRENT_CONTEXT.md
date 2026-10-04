@@ -213,6 +213,8 @@ bundle. Следующий этап — подготовка первого ма
 [Source deployment подготовлен](RECOGNITION_DEPLOYMENT_2026-10-04.md): одна подпись
 на локальной консоли4177, publisher executor, live preflight PASS.13 адресных tests
 и исправленный catalog1/1 PASS. Владелец подписал: CREATE successful в79859732,
-точный runtime/адрес/издатель совпали. Хеш сохранён в pending; ждём finality
-(проверенная высота79850498), не повторять отправку. Затем публикация правила:
-объявление пока черновик,24ч от публикации ещё не начались.
+точный runtime/адрес/издатель совпали. Finality подтверждена
+при finalized79876906; очередь completed1/pending=null.
+[Объявление опубликовано](RECOGNITION_PUBLICATION_2026-10-04.md)04.10 в11:07:49UTC.
+Первый confirm не раньше05.10 11:30UTC (14:30МСК) и после готовности readers,
+полноты истории и bundle availability. Автоматика не включалась.
