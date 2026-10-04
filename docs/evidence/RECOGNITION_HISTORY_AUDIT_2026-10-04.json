@@ -1,0 +1,24 @@
+{
+  "schema": "project-log-audit-v1",
+  "trust": "same QuickNode source; consistency, not independent execution proof",
+  "configHash": "0x9cf7b787c2b372583a12bdc57c8fe61acddc0fb07071100f0f98e1b04b816c4b",
+  "stateChecksum": "sha256-v1:545eaeaebdc5ec7fc11666993f57e27e2b7b1c6952c984d3f93d10bc7a56d5b2",
+  "fromBlock": 79377860,
+  "head": 79880747,
+  "headHash": "0xd01708c08bf559357ccb18deecba05e9ec1f80ca0965a5a27e8ab2300812c9c2",
+  "addresses": [
+    "0x12ba58b5455fdbc15165e0e8b2096498d2c684f1",
+    "0x2e9e7412e19497b60f25d05b68717067a6b743d4",
+    "0x3ee0c608815ec5a621f330fb8899ed31fe682393",
+    "0x4c6fcd1645f15e6ecfc02e74a68ac81e3ed02738",
+    "0x6ea39a23aa46e51ca6cd2d1cbc0b5bfb29ecb216",
+    "0xa631f7845af257daee0b9f6ff744334294ce6846",
+    "0xd084329f25de50afd68b154cafac6a8d7046f97f",
+    "0xf55755a2433cfdddcc3949824fae6c951b138f20"
+  ],
+  "logs": 370,
+  "logIdentityHash": "0xf39913a2cb0d0bc91d7f653ee68d6c14d9c92570da975096b730fdbe39e4bc8f",
+  "requests": 102,
+  "checkedAt": "2026-10-04T11:13:09.869Z",
+  "matched": true
+}

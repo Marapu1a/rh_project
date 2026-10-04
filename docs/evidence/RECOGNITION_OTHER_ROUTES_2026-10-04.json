@@ -1,0 +1,707 @@
+[
+  {
+    "transactionHash": "0x12054e0941d6b587f263f9006e617a5b15b831ce53d9f84915ee624bbb059b69",
+    "to": "0x56684e8ba6ce363df70486df947f0e3651941a9a",
+    "selector": "0xa147df59",
+    "reason": "NOT_DIRECT_CURVE_CALL",
+    "traceError": null,
+    "types": {
+      "CALL": 10,
+      "DELEGATECALL": 14,
+      "STATICCALL": 14
+    },
+    "targets": [
+      "0x56684e8ba6ce363df70486df947f0e3651941a9a",
+      "0x0bd7d308f8e1639fab988df18a8011f41eacad73",
+      "0xc6b81b429797e0f555440b70cd99e032d7ae947e",
+      "0x16679e2ac1a798865ecf1c1639e67693ddb1c220",
+      "0x11725976bf1f38c4ab78d1f480bc5883d70d9dc3",
+      "0x1ac9db4a2608ba45d6127b1737949b51bb54b7f3",
+      "0xa8bdc945be050e451c97f935d7c0d6b0087cf94c",
+      "0x7f749fdd351c1ceed82d76d7699cb631eb8332a7",
+      "0xbb7a7015fd9744df83d688d5c71c9efe613b976d",
+      "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+      "0x68184c449e1a8f34fa18d289737129fd27b66f8f",
+      "0x12ba58b5455fdbc15165e0e8b2096498d2c684f1",
+      "0x6ea39a23aa46e51ca6cd2d1cbc0b5bfb29ecb216"
+    ],
+    "knownRouterExecuted": false,
+    "status": "pending-route-review"
+  },
+  {
+    "transactionHash": "0x75bc79ff0784c91358f3a65fb96efa007ab364ccf454d3c6d8d425725f978f36",
+    "to": "0x9b0559e3569cee2a620a914716c7d05b2edd4624",
+    "selector": "0x831efaa3",
+    "reason": "NOT_DIRECT_CURVE_CALL",
+    "traceError": null,
+    "types": {
+      "CALL": 12,
+      "STATICCALL": 11,
+      "DELEGATECALL": 14
+    },
+    "targets": [
+      "0x9b0559e3569cee2a620a914716c7d05b2edd4624",
+      "0x7ed598bcef8bd9edd8c97a195c6d13f40801ec7e",
+      "0x12ba58b5455fdbc15165e0e8b2096498d2c684f1",
+      "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+      "0x68184c449e1a8f34fa18d289737129fd27b66f8f",
+      "0x8876789976decbfcbbbe364623c63652db8c0904",
+      "0x0bd7d308f8e1639fab988df18a8011f41eacad73",
+      "0xc6b81b429797e0f555440b70cd99e032d7ae947e",
+      "0x52e65b17fb6e5ba00ed806f37afcd2daa50271ca",
+      "0x6ea39a23aa46e51ca6cd2d1cbc0b5bfb29ecb216"
+    ],
+    "knownRouterExecuted": false,
+    "status": "pending-route-review"
+  },
+  {
+    "transactionHash": "0xc0682229929c00e2d587aca02c25159dfe5ca21a586acdefb6c075b7b52de04f",
+    "to": "0xf2c69db0311b3ded8ec7f39e80f555a200cc2839",
+    "selector": "0x11a7dbea",
+    "reason": "NOT_DIRECT_CURVE_CALL",
+    "traceError": null,
+    "types": {
+      "CALL": 11,
+      "DELEGATECALL": 22,
+      "STATICCALL": 34
+    },
+    "targets": [
+      "0xf2c69db0311b3ded8ec7f39e80f555a200cc2839",
+      "0x13cb73d5077f164612bfdda300351b73ff159322",
+      "0x6ea39a23aa46e51ca6cd2d1cbc0b5bfb29ecb216",
+      "0x0bd7d308f8e1639fab988df18a8011f41eacad73",
+      "0xc6b81b429797e0f555440b70cd99e032d7ae947e",
+      "0xcaf681a66d020601342297493863e78c959e5cb2",
+      "0x1f7d7550b1b028f7571e69a784071f0205fd2efa",
+      "0x52e65b17fb6e5ba00ed806f37afcd2daa50271ca",
+      "0xa114df836c72faccb656f76416a21341a29b87e0",
+      "0x7ed598bcef8bd9edd8c97a195c6d13f40801ec7e",
+      "0x12ba58b5455fdbc15165e0e8b2096498d2c684f1",
+      "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+      "0x68184c449e1a8f34fa18d289737129fd27b66f8f",
+      "0x1776d3a97ac7ae9307f4e2dda025b33300feb793",
+      "0x118fde9b689f3ab87a9c4cf08afc39c94d6aa019"
+    ],
+    "knownRouterExecuted": false,
+    "status": "pending-route-review"
+  },
+  {
+    "transactionHash": "0xa77f9b4b250f80a703dc4d901c747c0ea02b69b95c6056b89745f24a3838b28c",
+    "to": "0xe8cf99602aff6a7a165406fd0ed7c4d85216b141",
+    "selector": "0xfaf3a4a7",
+    "reason": "NOT_DIRECT_CURVE_CALL",
+    "traceError": null,
+    "types": {
+      "CALL": 13,
+      "STATICCALL": 10,
+      "DELEGATECALL": 9
+    },
+    "targets": [
+      "0xe8cf99602aff6a7a165406fd0ed7c4d85216b141",
+      "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+      "0x68184c449e1a8f34fa18d289737129fd27b66f8f",
+      "0x8876789976decbfcbbbe364623c63652db8c0904",
+      "0x8366a39cc670b4001a1121b8f6a443a643e40951",
+      "0x6ea39a23aa46e51ca6cd2d1cbc0b5bfb29ecb216",
+      "0x12ba58b5455fdbc15165e0e8b2096498d2c684f1"
+    ],
+    "knownRouterExecuted": false,
+    "status": "pending-route-review"
+  },
+  {
+    "transactionHash": "0xcdd18fe41ae798d75fcbc775d7f7b9d311dad2b4122f144119936682e281c73c",
+    "to": "0x6131b5fae19ea4f9d964eac0408e4408b66337b5",
+    "selector": "0xe21fd0e9",
+    "reason": "NOT_DIRECT_CURVE_CALL",
+    "traceError": null,
+    "types": {
+      "CALL": 14,
+      "STATICCALL": 16,
+      "DELEGATECALL": 21
+    },
+    "targets": [
+      "0x6131b5fae19ea4f9d964eac0408e4408b66337b5",
+      "0xda80246ca50b6ade41d03057fcc18384138e1218",
+      "0x6ea39a23aa46e51ca6cd2d1cbc0b5bfb29ecb216",
+      "0x8f10b468b06c6fd214b65f87778827f7d113f996",
+      "0x4f1423cce26c09fb31d96eafe702fc5e22421f6a",
+      "0x0000000000000000000000000000000000000001",
+      "0x0bd7d308f8e1639fab988df18a8011f41eacad73",
+      "0xc6b81b429797e0f555440b70cd99e032d7ae947e",
+      "0xbd87ab4814afedbfc0c3cbf4d1337a3089dd643e",
+      "0xf4d0171f995d576b972aa982080eaf4da456cf9e",
+      "0xa7485bec4bd4aec9a4007c80f89c4d3ae25a44af",
+      "0x60380925a8b1007f70f60a6a42bffe391374b09a",
+      "0x4a9cef841098a0d84e5a8d5882aa1e120e89163d",
+      "0x1749a91f22b062a06cc344df881536cd5c1c444d",
+      "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+      "0x68184c449e1a8f34fa18d289737129fd27b66f8f",
+      "0x7b0e2e8300899b647d5ebc66f9d4fa3f16c54061",
+      "0x70810e46a7b13436c4efccbde546a024cdde57cd",
+      "0x12ba58b5455fdbc15165e0e8b2096498d2c684f1"
+    ],
+    "knownRouterExecuted": false,
+    "status": "pending-route-review"
+  },
+  {
+    "transactionHash": "0xdbdf0e6b903a99245a52af9c2ec3d84ad2c1c8a1aae3268b37ba0a5dcc2c4480",
+    "to": "0x6131b5fae19ea4f9d964eac0408e4408b66337b5",
+    "selector": "0xe21fd0e9",
+    "reason": "NOT_DIRECT_CURVE_CALL",
+    "traceError": null,
+    "types": {
+      "CALL": 14,
+      "STATICCALL": 14,
+      "DELEGATECALL": 20
+    },
+    "targets": [
+      "0x6131b5fae19ea4f9d964eac0408e4408b66337b5",
+      "0xda80246ca50b6ade41d03057fcc18384138e1218",
+      "0x6ea39a23aa46e51ca6cd2d1cbc0b5bfb29ecb216",
+      "0x8f10b468b06c6fd214b65f87778827f7d113f996",
+      "0x4f1423cce26c09fb31d96eafe702fc5e22421f6a",
+      "0x0000000000000000000000000000000000000001",
+      "0x0bd7d308f8e1639fab988df18a8011f41eacad73",
+      "0xc6b81b429797e0f555440b70cd99e032d7ae947e",
+      "0xbd87ab4814afedbfc0c3cbf4d1337a3089dd643e",
+      "0xf4d0171f995d576b972aa982080eaf4da456cf9e",
+      "0xa7485bec4bd4aec9a4007c80f89c4d3ae25a44af",
+      "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+      "0x68184c449e1a8f34fa18d289737129fd27b66f8f",
+      "0x7b0e2e8300899b647d5ebc66f9d4fa3f16c54061",
+      "0x70810e46a7b13436c4efccbde546a024cdde57cd",
+      "0x12ba58b5455fdbc15165e0e8b2096498d2c684f1"
+    ],
+    "knownRouterExecuted": false,
+    "status": "pending-route-review"
+  },
+  {
+    "transactionHash": "0xe8bf1359ad8ad1c7e90b377f7102faa56fb33f7b3380df9b1c27d59142670a6f",
+    "to": "0x6131b5fae19ea4f9d964eac0408e4408b66337b5",
+    "selector": "0xe21fd0e9",
+    "reason": "NOT_DIRECT_CURVE_CALL",
+    "traceError": null,
+    "types": {
+      "CALL": 45,
+      "STATICCALL": 59,
+      "DELEGATECALL": 47
+    },
+    "targets": [
+      "0x6131b5fae19ea4f9d964eac0408e4408b66337b5",
+      "0xda80246ca50b6ade41d03057fcc18384138e1218",
+      "0x6ea39a23aa46e51ca6cd2d1cbc0b5bfb29ecb216",
+      "0x8f10b468b06c6fd214b65f87778827f7d113f996",
+      "0x4f1423cce26c09fb31d96eafe702fc5e22421f6a",
+      "0x0000000000000000000000000000000000000001",
+      "0x0bd7d308f8e1639fab988df18a8011f41eacad73",
+      "0xc6b81b429797e0f555440b70cd99e032d7ae947e",
+      "0xbeb7242f6fcb2ad767d5f6cb79542dbc2a9d215f",
+      "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+      "0x68184c449e1a8f34fa18d289737129fd27b66f8f",
+      "0x8fd07a543f5e3b61ad0a611ea43b6e2b67b2ecc4",
+      "0x069c11bfc769be175bfae2d20bddce34e46514cc",
+      "0x8366a39cc670b4001a1121b8f6a443a643e40951",
+      "0x7b0e2e8300899b647d5ebc66f9d4fa3f16c54061",
+      "0xd1bcbcca41f3bdb6b4812652959c6df725ea2ac0",
+      "0xbeeff033f34c046626b8d0a041844c5d1a5409dd",
+      "0x44abc1d6ccff2696d98890b92e2157af242179c2",
+      "0x9d53d5e3bd5e8d4cbfa6db1ca238aea02e651010",
+      "0x2bd3d5965b26b51814ac95127b2b80dd6ccc0fa1",
+      "0x70810e46a7b13436c4efccbde546a024cdde57cd",
+      "0x12ba58b5455fdbc15165e0e8b2096498d2c684f1"
+    ],
+    "knownRouterExecuted": false,
+    "status": "pending-route-review"
+  },
+  {
+    "transactionHash": "0xe0e9e4b02a6eecac9ebb8718ea93d205202e00444144ce1a6a153404ae5d93e8",
+    "to": "0x6131b5fae19ea4f9d964eac0408e4408b66337b5",
+    "selector": "0xe21fd0e9",
+    "reason": "NOT_DIRECT_CURVE_CALL",
+    "traceError": null,
+    "types": {
+      "CALL": 44,
+      "STATICCALL": 57,
+      "DELEGATECALL": 47
+    },
+    "targets": [
+      "0x6131b5fae19ea4f9d964eac0408e4408b66337b5",
+      "0xda80246ca50b6ade41d03057fcc18384138e1218",
+      "0x6ea39a23aa46e51ca6cd2d1cbc0b5bfb29ecb216",
+      "0x8f10b468b06c6fd214b65f87778827f7d113f996",
+      "0x4f1423cce26c09fb31d96eafe702fc5e22421f6a",
+      "0x0000000000000000000000000000000000000001",
+      "0x0bd7d308f8e1639fab988df18a8011f41eacad73",
+      "0xc6b81b429797e0f555440b70cd99e032d7ae947e",
+      "0xbeb7242f6fcb2ad767d5f6cb79542dbc2a9d215f",
+      "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+      "0x68184c449e1a8f34fa18d289737129fd27b66f8f",
+      "0x8fd07a543f5e3b61ad0a611ea43b6e2b67b2ecc4",
+      "0x069c11bfc769be175bfae2d20bddce34e46514cc",
+      "0x8366a39cc670b4001a1121b8f6a443a643e40951",
+      "0x7b0e2e8300899b647d5ebc66f9d4fa3f16c54061",
+      "0xd1bcbcca41f3bdb6b4812652959c6df725ea2ac0",
+      "0xbeeff033f34c046626b8d0a041844c5d1a5409dd",
+      "0x44abc1d6ccff2696d98890b92e2157af242179c2",
+      "0x9d53d5e3bd5e8d4cbfa6db1ca238aea02e651010",
+      "0x2bd3d5965b26b51814ac95127b2b80dd6ccc0fa1",
+      "0x70810e46a7b13436c4efccbde546a024cdde57cd",
+      "0x12ba58b5455fdbc15165e0e8b2096498d2c684f1"
+    ],
+    "knownRouterExecuted": false,
+    "status": "pending-route-review"
+  },
+  {
+    "transactionHash": "0xd1f8133be3a0d28b5de962e7361ac59368d385db7460e05c06ed8c89858035d9",
+    "to": "0x9689992f5b5c09447f15906d8d11214944488341",
+    "selector": "0x3e0f9c3c",
+    "reason": "NOT_DIRECT_CURVE_CALL",
+    "traceError": null,
+    "types": {
+      "CALL": 12,
+      "DELEGATECALL": 15,
+      "STATICCALL": 11
+    },
+    "targets": [
+      "0x9689992f5b5c09447f15906d8d11214944488341",
+      "0xe419c052515cad3166988a774d9231969fd83359",
+      "0x569319680e2f921a23340d9a223c48f7b07c55bd",
+      "0x6fb4460e4bebf662fcd9bfa5ce6d6231732bb86c",
+      "0x0bd7d308f8e1639fab988df18a8011f41eacad73",
+      "0xc6b81b429797e0f555440b70cd99e032d7ae947e",
+      "0x52e65b17fb6e5ba00ed806f37afcd2daa50271ca",
+      "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+      "0x68184c449e1a8f34fa18d289737129fd27b66f8f",
+      "0x7e1eabd52ae29598e6483f72dcf1a70b14284db8",
+      "0x7ed598bcef8bd9edd8c97a195c6d13f40801ec7e",
+      "0x12ba58b5455fdbc15165e0e8b2096498d2c684f1",
+      "0x6ea39a23aa46e51ca6cd2d1cbc0b5bfb29ecb216"
+    ],
+    "knownRouterExecuted": false,
+    "status": "pending-route-review"
+  },
+  {
+    "transactionHash": "0xb2eddc60588488636bfe045908b113ee7cee11db21fe5a80e78b5d8505cc00dd",
+    "to": "0x9689992f5b5c09447f15906d8d11214944488341",
+    "selector": "0x3e0f9c3c",
+    "reason": "NOT_DIRECT_CURVE_CALL",
+    "traceError": null,
+    "types": {
+      "CALL": 11,
+      "DELEGATECALL": 14,
+      "STATICCALL": 11
+    },
+    "targets": [
+      "0x9689992f5b5c09447f15906d8d11214944488341",
+      "0xe419c052515cad3166988a774d9231969fd83359",
+      "0x569319680e2f921a23340d9a223c48f7b07c55bd",
+      "0x6fb4460e4bebf662fcd9bfa5ce6d6231732bb86c",
+      "0x0bd7d308f8e1639fab988df18a8011f41eacad73",
+      "0xc6b81b429797e0f555440b70cd99e032d7ae947e",
+      "0x52e65b17fb6e5ba00ed806f37afcd2daa50271ca",
+      "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+      "0x68184c449e1a8f34fa18d289737129fd27b66f8f",
+      "0x7e1eabd52ae29598e6483f72dcf1a70b14284db8",
+      "0x7ed598bcef8bd9edd8c97a195c6d13f40801ec7e",
+      "0x12ba58b5455fdbc15165e0e8b2096498d2c684f1",
+      "0x6ea39a23aa46e51ca6cd2d1cbc0b5bfb29ecb216"
+    ],
+    "knownRouterExecuted": false,
+    "status": "pending-route-review"
+  },
+  {
+    "transactionHash": "0x11586508790412686bdac8306f9c0a7575dee3551ece6656c6bacf85c2fe3ba2",
+    "to": "0x9689992f5b5c09447f15906d8d11214944488341",
+    "selector": "0x3e0f9c3c",
+    "reason": "NOT_DIRECT_CURVE_CALL",
+    "traceError": null,
+    "types": {
+      "CALL": 11,
+      "DELEGATECALL": 14,
+      "STATICCALL": 11
+    },
+    "targets": [
+      "0x9689992f5b5c09447f15906d8d11214944488341",
+      "0xe419c052515cad3166988a774d9231969fd83359",
+      "0x569319680e2f921a23340d9a223c48f7b07c55bd",
+      "0x6fb4460e4bebf662fcd9bfa5ce6d6231732bb86c",
+      "0x0bd7d308f8e1639fab988df18a8011f41eacad73",
+      "0xc6b81b429797e0f555440b70cd99e032d7ae947e",
+      "0x52e65b17fb6e5ba00ed806f37afcd2daa50271ca",
+      "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+      "0x68184c449e1a8f34fa18d289737129fd27b66f8f",
+      "0x7e1eabd52ae29598e6483f72dcf1a70b14284db8",
+      "0x7ed598bcef8bd9edd8c97a195c6d13f40801ec7e",
+      "0x12ba58b5455fdbc15165e0e8b2096498d2c684f1",
+      "0x6ea39a23aa46e51ca6cd2d1cbc0b5bfb29ecb216"
+    ],
+    "knownRouterExecuted": false,
+    "status": "pending-route-review"
+  },
+  {
+    "transactionHash": "0x11bc10d31f026c10dbe97d0df38cc804cdd4452aae011b8bfd2887d4c0d5f50b",
+    "to": "0x9689992f5b5c09447f15906d8d11214944488341",
+    "selector": "0x3e0f9c3c",
+    "reason": "NOT_DIRECT_CURVE_CALL",
+    "traceError": null,
+    "types": {
+      "CALL": 11,
+      "DELEGATECALL": 14,
+      "STATICCALL": 11
+    },
+    "targets": [
+      "0x9689992f5b5c09447f15906d8d11214944488341",
+      "0xe419c052515cad3166988a774d9231969fd83359",
+      "0x569319680e2f921a23340d9a223c48f7b07c55bd",
+      "0x6fb4460e4bebf662fcd9bfa5ce6d6231732bb86c",
+      "0x0bd7d308f8e1639fab988df18a8011f41eacad73",
+      "0xc6b81b429797e0f555440b70cd99e032d7ae947e",
+      "0x52e65b17fb6e5ba00ed806f37afcd2daa50271ca",
+      "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+      "0x68184c449e1a8f34fa18d289737129fd27b66f8f",
+      "0x7e1eabd52ae29598e6483f72dcf1a70b14284db8",
+      "0x7ed598bcef8bd9edd8c97a195c6d13f40801ec7e",
+      "0x12ba58b5455fdbc15165e0e8b2096498d2c684f1",
+      "0x6ea39a23aa46e51ca6cd2d1cbc0b5bfb29ecb216"
+    ],
+    "knownRouterExecuted": false,
+    "status": "pending-route-review"
+  },
+  {
+    "transactionHash": "0x8f50fa6b34508b341734b2ce0485b5bc9637327693b9c340d619a8992226274a",
+    "to": "0x9689992f5b5c09447f15906d8d11214944488341",
+    "selector": "0x3e0f9c3c",
+    "reason": "NOT_DIRECT_CURVE_CALL",
+    "traceError": null,
+    "types": {
+      "CALL": 11,
+      "DELEGATECALL": 14,
+      "STATICCALL": 11
+    },
+    "targets": [
+      "0x9689992f5b5c09447f15906d8d11214944488341",
+      "0xe419c052515cad3166988a774d9231969fd83359",
+      "0x569319680e2f921a23340d9a223c48f7b07c55bd",
+      "0x6fb4460e4bebf662fcd9bfa5ce6d6231732bb86c",
+      "0x0bd7d308f8e1639fab988df18a8011f41eacad73",
+      "0xc6b81b429797e0f555440b70cd99e032d7ae947e",
+      "0x52e65b17fb6e5ba00ed806f37afcd2daa50271ca",
+      "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+      "0x68184c449e1a8f34fa18d289737129fd27b66f8f",
+      "0x7e1eabd52ae29598e6483f72dcf1a70b14284db8",
+      "0x7ed598bcef8bd9edd8c97a195c6d13f40801ec7e",
+      "0x12ba58b5455fdbc15165e0e8b2096498d2c684f1",
+      "0x6ea39a23aa46e51ca6cd2d1cbc0b5bfb29ecb216"
+    ],
+    "knownRouterExecuted": false,
+    "status": "pending-route-review"
+  },
+  {
+    "transactionHash": "0x9ebe48ece395539cf8ae32d1fb5d40bb360aff8b2c8ee6986a2e4133520ebf69",
+    "to": "0x9689992f5b5c09447f15906d8d11214944488341",
+    "selector": "0x3e0f9c3c",
+    "reason": "NOT_DIRECT_CURVE_CALL",
+    "traceError": null,
+    "types": {
+      "CALL": 11,
+      "DELEGATECALL": 14,
+      "STATICCALL": 11
+    },
+    "targets": [
+      "0x9689992f5b5c09447f15906d8d11214944488341",
+      "0xe419c052515cad3166988a774d9231969fd83359",
+      "0x569319680e2f921a23340d9a223c48f7b07c55bd",
+      "0x6fb4460e4bebf662fcd9bfa5ce6d6231732bb86c",
+      "0x0bd7d308f8e1639fab988df18a8011f41eacad73",
+      "0xc6b81b429797e0f555440b70cd99e032d7ae947e",
+      "0x52e65b17fb6e5ba00ed806f37afcd2daa50271ca",
+      "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+      "0x68184c449e1a8f34fa18d289737129fd27b66f8f",
+      "0x7e1eabd52ae29598e6483f72dcf1a70b14284db8",
+      "0x7ed598bcef8bd9edd8c97a195c6d13f40801ec7e",
+      "0x12ba58b5455fdbc15165e0e8b2096498d2c684f1",
+      "0x6ea39a23aa46e51ca6cd2d1cbc0b5bfb29ecb216"
+    ],
+    "knownRouterExecuted": false,
+    "status": "pending-route-review"
+  },
+  {
+    "transactionHash": "0x443270d0ea3fe1c1a9cd341dd57c54af431b80c3616676b0bfddea94e31fb839",
+    "to": "0x9689992f5b5c09447f15906d8d11214944488341",
+    "selector": "0x3e0f9c3c",
+    "reason": "NOT_DIRECT_CURVE_CALL",
+    "traceError": null,
+    "types": {
+      "CALL": 11,
+      "DELEGATECALL": 14,
+      "STATICCALL": 11
+    },
+    "targets": [
+      "0x9689992f5b5c09447f15906d8d11214944488341",
+      "0xe419c052515cad3166988a774d9231969fd83359",
+      "0x569319680e2f921a23340d9a223c48f7b07c55bd",
+      "0x6fb4460e4bebf662fcd9bfa5ce6d6231732bb86c",
+      "0x0bd7d308f8e1639fab988df18a8011f41eacad73",
+      "0xc6b81b429797e0f555440b70cd99e032d7ae947e",
+      "0x52e65b17fb6e5ba00ed806f37afcd2daa50271ca",
+      "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+      "0x68184c449e1a8f34fa18d289737129fd27b66f8f",
+      "0x7e1eabd52ae29598e6483f72dcf1a70b14284db8",
+      "0x7ed598bcef8bd9edd8c97a195c6d13f40801ec7e",
+      "0x12ba58b5455fdbc15165e0e8b2096498d2c684f1",
+      "0x6ea39a23aa46e51ca6cd2d1cbc0b5bfb29ecb216"
+    ],
+    "knownRouterExecuted": false,
+    "status": "pending-route-review"
+  },
+  {
+    "transactionHash": "0x8e6f83920554d5270160a791615b17e5c2e56b65b4ed800df7aa78f8134f11e0",
+    "to": "0x9689992f5b5c09447f15906d8d11214944488341",
+    "selector": "0x3e0f9c3c",
+    "reason": "NOT_DIRECT_CURVE_CALL",
+    "traceError": null,
+    "types": {
+      "CALL": 11,
+      "DELEGATECALL": 14,
+      "STATICCALL": 11
+    },
+    "targets": [
+      "0x9689992f5b5c09447f15906d8d11214944488341",
+      "0xe419c052515cad3166988a774d9231969fd83359",
+      "0x569319680e2f921a23340d9a223c48f7b07c55bd",
+      "0x6fb4460e4bebf662fcd9bfa5ce6d6231732bb86c",
+      "0x0bd7d308f8e1639fab988df18a8011f41eacad73",
+      "0xc6b81b429797e0f555440b70cd99e032d7ae947e",
+      "0x52e65b17fb6e5ba00ed806f37afcd2daa50271ca",
+      "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+      "0x68184c449e1a8f34fa18d289737129fd27b66f8f",
+      "0x7e1eabd52ae29598e6483f72dcf1a70b14284db8",
+      "0x7ed598bcef8bd9edd8c97a195c6d13f40801ec7e",
+      "0x12ba58b5455fdbc15165e0e8b2096498d2c684f1",
+      "0x6ea39a23aa46e51ca6cd2d1cbc0b5bfb29ecb216"
+    ],
+    "knownRouterExecuted": false,
+    "status": "pending-route-review"
+  },
+  {
+    "transactionHash": "0xe7cee43702be6e47d54bebaf1eb46f69250d74595f035820f7f9468195ea5520",
+    "to": "0x9689992f5b5c09447f15906d8d11214944488341",
+    "selector": "0x3e0f9c3c",
+    "reason": "NOT_DIRECT_CURVE_CALL",
+    "traceError": null,
+    "types": {
+      "CALL": 11,
+      "DELEGATECALL": 14,
+      "STATICCALL": 11
+    },
+    "targets": [
+      "0x9689992f5b5c09447f15906d8d11214944488341",
+      "0xe419c052515cad3166988a774d9231969fd83359",
+      "0x569319680e2f921a23340d9a223c48f7b07c55bd",
+      "0x6fb4460e4bebf662fcd9bfa5ce6d6231732bb86c",
+      "0x0bd7d308f8e1639fab988df18a8011f41eacad73",
+      "0xc6b81b429797e0f555440b70cd99e032d7ae947e",
+      "0x52e65b17fb6e5ba00ed806f37afcd2daa50271ca",
+      "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+      "0x68184c449e1a8f34fa18d289737129fd27b66f8f",
+      "0x7e1eabd52ae29598e6483f72dcf1a70b14284db8",
+      "0x7ed598bcef8bd9edd8c97a195c6d13f40801ec7e",
+      "0x12ba58b5455fdbc15165e0e8b2096498d2c684f1",
+      "0x6ea39a23aa46e51ca6cd2d1cbc0b5bfb29ecb216"
+    ],
+    "knownRouterExecuted": false,
+    "status": "pending-route-review"
+  },
+  {
+    "transactionHash": "0xeec70aa58994cd19eb64649ddd3dac6892ad350c2ec85d582ebbfae78eb0215d",
+    "to": "0x125736d9ee228f1cc277bb2182b08e7ccb8b0f61",
+    "selector": "0xe9ae5c53",
+    "reason": "BATCH_EXECUTION_NOT_QUALIFIED",
+    "traceError": null,
+    "types": {
+      "CALL": 11,
+      "DELEGATECALL": 14,
+      "STATICCALL": 11
+    },
+    "targets": [
+      "0x125736d9ee228f1cc277bb2182b08e7ccb8b0f61",
+      "0x9689992f5b5c09447f15906d8d11214944488341",
+      "0xe419c052515cad3166988a774d9231969fd83359",
+      "0x6fb4460e4bebf662fcd9bfa5ce6d6231732bb86c",
+      "0x0bd7d308f8e1639fab988df18a8011f41eacad73",
+      "0xc6b81b429797e0f555440b70cd99e032d7ae947e",
+      "0x52e65b17fb6e5ba00ed806f37afcd2daa50271ca",
+      "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+      "0x68184c449e1a8f34fa18d289737129fd27b66f8f",
+      "0x7e1eabd52ae29598e6483f72dcf1a70b14284db8",
+      "0x7ed598bcef8bd9edd8c97a195c6d13f40801ec7e",
+      "0x12ba58b5455fdbc15165e0e8b2096498d2c684f1",
+      "0x6ea39a23aa46e51ca6cd2d1cbc0b5bfb29ecb216"
+    ],
+    "knownRouterExecuted": false,
+    "status": "pending-route-review"
+  },
+  {
+    "transactionHash": "0x9514ca518e435f0a0d949abdb48ea2bda7de70407564a6642b1fc48cb3b47d98",
+    "to": "0xbd3d28619604c4d85521609f31d5af36f8fa7790",
+    "selector": "0xe2fd8549",
+    "reason": "NOT_DIRECT_CURVE_CALL",
+    "traceError": null,
+    "types": {
+      "CALL": 11,
+      "STATICCALL": 6,
+      "DELEGATECALL": 10
+    },
+    "targets": [
+      "0xbd3d28619604c4d85521609f31d5af36f8fa7790",
+      "0x0000000000000000000000000000000000000064",
+      "0x12ba58b5455fdbc15165e0e8b2096498d2c684f1",
+      "0x0bd7d308f8e1639fab988df18a8011f41eacad73",
+      "0xc6b81b429797e0f555440b70cd99e032d7ae947e",
+      "0x69bfaf19c9f377bb306a89aed9f6b07e2c1a8d9a",
+      "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+      "0x68184c449e1a8f34fa18d289737129fd27b66f8f",
+      "0x6ea39a23aa46e51ca6cd2d1cbc0b5bfb29ecb216"
+    ],
+    "knownRouterExecuted": false,
+    "status": "pending-route-review"
+  },
+  {
+    "transactionHash": "0x31a9fbdc58c9605ff3e9edbc7960afe147d21e5a61273ff00c1507f1ccc7fb45",
+    "to": "0x9a4d81005c9f3d595330d44bf378626638fa0171",
+    "selector": "0x5bca49a7",
+    "reason": "NOT_DIRECT_CURVE_CALL",
+    "traceError": null,
+    "types": {
+      "CALL": 15,
+      "STATICCALL": 8,
+      "DELEGATECALL": 14
+    },
+    "targets": [
+      "0x9a4d81005c9f3d595330d44bf378626638fa0171",
+      "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+      "0x68184c449e1a8f34fa18d289737129fd27b66f8f",
+      "0x0bd7d308f8e1639fab988df18a8011f41eacad73",
+      "0xc6b81b429797e0f555440b70cd99e032d7ae947e",
+      "0xcaf681a66d020601342297493863e78c959e5cb2",
+      "0x52e65b17fb6e5ba00ed806f37afcd2daa50271ca",
+      "0x6ea39a23aa46e51ca6cd2d1cbc0b5bfb29ecb216",
+      "0x12ba58b5455fdbc15165e0e8b2096498d2c684f1"
+    ],
+    "knownRouterExecuted": false,
+    "status": "pending-route-review"
+  },
+  {
+    "transactionHash": "0x00b421b10ca20f8f625f6fce42896983ac6e68018c0bfd029280043915b86fef",
+    "to": "0x00000000e91fc5bad977c0cc4ad60557c06886a2",
+    "selector": "0x1dcd4dad",
+    "reason": "NOT_DIRECT_CURVE_CALL",
+    "traceError": null,
+    "types": {
+      "CALL": 13,
+      "DELEGATECALL": 20,
+      "STATICCALL": 12
+    },
+    "targets": [
+      "0x00000000e91fc5bad977c0cc4ad60557c06886a2",
+      "0xa1b764ecd3d6df4ef0f4c880d254890b4618e18e",
+      "0x0bd7d308f8e1639fab988df18a8011f41eacad73",
+      "0xc6b81b429797e0f555440b70cd99e032d7ae947e",
+      "0x00fd678f1f6a82ffc5109e963b55f306d6cc74bd",
+      "0x52e65b17fb6e5ba00ed806f37afcd2daa50271ca",
+      "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+      "0x68184c449e1a8f34fa18d289737129fd27b66f8f",
+      "0xcdc8aa8c6d9d732c1ba8fde643cf98e0ef5a6dda",
+      "0x7ed598bcef8bd9edd8c97a195c6d13f40801ec7e",
+      "0x6ea39a23aa46e51ca6cd2d1cbc0b5bfb29ecb216",
+      "0x12ba58b5455fdbc15165e0e8b2096498d2c684f1",
+      "0xb0999731f7c2581844658a9d2ced1be0077b7397",
+      "0xd9b2883fe1b403132d22920c449e83f4c2c1b61c"
+    ],
+    "knownRouterExecuted": false,
+    "status": "pending-route-review"
+  },
+  {
+    "transactionHash": "0xa3d99414b0c99bfef1c3c313e9d98a620cd84e4d01a914912fcdbd639e6d719e",
+    "to": "0xcb60ed141f508b9de752026226f2790765b046a4",
+    "selector": "0xfe9c3a46",
+    "reason": "NOT_DIRECT_CURVE_CALL",
+    "traceError": null,
+    "types": {
+      "CALL": 12,
+      "STATICCALL": 14,
+      "DELEGATECALL": 15
+    },
+    "targets": [
+      "0xcb60ed141f508b9de752026226f2790765b046a4",
+      "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+      "0x68184c449e1a8f34fa18d289737129fd27b66f8f",
+      "0x52e65b17fb6e5ba00ed806f37afcd2daa50271ca",
+      "0x0bd7d308f8e1639fab988df18a8011f41eacad73",
+      "0xc6b81b429797e0f555440b70cd99e032d7ae947e",
+      "0x6ea39a23aa46e51ca6cd2d1cbc0b5bfb29ecb216",
+      "0x7ed598bcef8bd9edd8c97a195c6d13f40801ec7e",
+      "0x12ba58b5455fdbc15165e0e8b2096498d2c684f1"
+    ],
+    "knownRouterExecuted": false,
+    "status": "pending-route-review"
+  },
+  {
+    "transactionHash": "0x403f8c081ba813c061ca8f19bd6503195469a5a186e97f93815c2a745c9046ec",
+    "to": "0x9689992f5b5c09447f15906d8d11214944488341",
+    "selector": "0x3e0f9c3c",
+    "reason": "NOT_DIRECT_CURVE_CALL",
+    "traceError": null,
+    "types": {
+      "CALL": 11,
+      "DELEGATECALL": 14,
+      "STATICCALL": 11
+    },
+    "targets": [
+      "0x9689992f5b5c09447f15906d8d11214944488341",
+      "0xe419c052515cad3166988a774d9231969fd83359",
+      "0x569319680e2f921a23340d9a223c48f7b07c55bd",
+      "0x6fb4460e4bebf662fcd9bfa5ce6d6231732bb86c",
+      "0x0bd7d308f8e1639fab988df18a8011f41eacad73",
+      "0xc6b81b429797e0f555440b70cd99e032d7ae947e",
+      "0x52e65b17fb6e5ba00ed806f37afcd2daa50271ca",
+      "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+      "0x68184c449e1a8f34fa18d289737129fd27b66f8f",
+      "0x7e1eabd52ae29598e6483f72dcf1a70b14284db8",
+      "0x7ed598bcef8bd9edd8c97a195c6d13f40801ec7e",
+      "0x12ba58b5455fdbc15165e0e8b2096498d2c684f1",
+      "0x6ea39a23aa46e51ca6cd2d1cbc0b5bfb29ecb216"
+    ],
+    "knownRouterExecuted": false,
+    "status": "pending-route-review"
+  },
+  {
+    "transactionHash": "0x2f1a11503f67ca74c4eebddb6edaeea2ce98cc69c79bb2e952c3384f61edf221",
+    "to": "0x9689992f5b5c09447f15906d8d11214944488341",
+    "selector": "0x3e0f9c3c",
+    "reason": "NOT_DIRECT_CURVE_CALL",
+    "traceError": null,
+    "types": {
+      "CALL": 11,
+      "DELEGATECALL": 14,
+      "STATICCALL": 11
+    },
+    "targets": [
+      "0x9689992f5b5c09447f15906d8d11214944488341",
+      "0xe419c052515cad3166988a774d9231969fd83359",
+      "0x569319680e2f921a23340d9a223c48f7b07c55bd",
+      "0x6fb4460e4bebf662fcd9bfa5ce6d6231732bb86c",
+      "0x0bd7d308f8e1639fab988df18a8011f41eacad73",
+      "0xc6b81b429797e0f555440b70cd99e032d7ae947e",
+      "0x52e65b17fb6e5ba00ed806f37afcd2daa50271ca",
+      "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
+      "0x68184c449e1a8f34fa18d289737129fd27b66f8f",
+      "0x7e1eabd52ae29598e6483f72dcf1a70b14284db8",
+      "0x7ed598bcef8bd9edd8c97a195c6d13f40801ec7e",
+      "0x12ba58b5455fdbc15165e0e8b2096498d2c684f1",
+      "0x6ea39a23aa46e51ca6cd2d1cbc0b5bfb29ecb216"
+    ],
+    "knownRouterExecuted": false,
+    "status": "pending-route-review"
+  }
+]

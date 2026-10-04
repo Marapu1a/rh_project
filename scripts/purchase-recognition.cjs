@@ -10,6 +10,7 @@ function trust(t){
  check(t?.schema==='purchase-recognition-v1'&&E.isAddress(t.source)&&t.source!==E.ZeroAddress&&E.isAddress(t.publisher)&&t.publisher!==E.ZeroAddress,'invalid source trust');
  check(E.isHexString(t.sourceCodeHash,32)&&E.isHexString(t.instanceId,32)&&t.instanceId!==E.ZeroHash,'invalid source identity');
  check(t.adapter==='pons-router-65050-v1','unknown adapter');
+ if(t.publication){const p=t.publication,a=Date.parse(p.publishedAt),b=Date.parse(p.notBefore);check(Number.isFinite(a)&&Number.isFinite(b)&&b>=a+86400000&&/^https:\/\//.test(p.url)&&/^[0-9a-f]{64}$/.test(p.sha256),'invalid public notice');}
  const implementations={quote:['0x68184c449e1a8f34fa18d289737129fd27b66f8f','0x3a551ac5c744af57e68a1d1431ac403c0f516ffd7d224a75746aee11fc4f3baf'],weth:['0xc6b81b429797e0f555440b70cd99e032d7ae947e','0xbe1295f37be34ffe03ad779bda0ef278907e1856b51a3be2f35ee541d75d4650']};
  check(Object.keys(t.implementations||{}).sort().join(',')==='quote,weth','unexpected implementation set');
  for(const [key,[address,codeHash]] of Object.entries(implementations))check(low(t.implementations[key]?.address)===address&&low(t.implementations[key]?.codeHash)===codeHash,'unreviewed implementation pin');

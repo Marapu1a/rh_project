@@ -1,0 +1,9 @@
+const {test}=require('node:test'),assert=require('node:assert/strict'),D=require('../scripts/direct-buy.cjs'),L=require('../scripts/attempt-lifecycle.cjs'),P=require('../scripts/project-history.cjs'),C=require('../scripts/indexer-checksum.cjs'),{migrate}=require('../scripts/migrate-recognition-index.cjs');
+test('recognition migration preserves frozen draw, wallets, original file and requires bound whole-range audit',()=>{
+ const f=require('./fixtures/purchase-recognition.cjs').fixture();f.buy();f.freeze('SHORT',1);
+ const config={manifest:f.m,lifecycle:f.config,buyPolicy:{source:f.config.source},indexer:{statePath:'/old',scanMode:P.SCHEMA}},blocks=P.mark(f.blocks,f.m,f.config),ledger=D.replay(f.m,blocks),state={configHash:D.hash({kind:'persistent-buy-indexer-v1',config}),index:{head:Number(blocks.at(-1).number),manifest:f.m,blocks,ledger,ledgerHash:D.hash(ledger)}};state.checksum=C.indexerChecksum(state);
+ const audit={matched:true,stateChecksum:state.checksum,configHash:state.configHash,fromBlock:Number(f.m.anchor.number)+1,head:state.index.head,headHash:blocks.at(-1).hash,addresses:[f.recognition.source.toLowerCase()]},nextConfig={...config,recognition:f.recognition,indexer:{...config.indexer,statePath:'/new'}},before=JSON.stringify(state);
+ const r=migrate({config,state,nextConfig,audit});assert.equal(r.report.drawsPreserved,1);assert.equal(JSON.stringify(state),before);assert.equal(r.state.status.state,'waiting');assert.equal(r.report.waiting,1);
+ assert.deepEqual(L.replayAttempts(r.state.index.manifest,f.config,r.state.index.blocks).draws,L.replayAttempts(f.m,f.config,blocks).draws);
+ assert.throws(()=>migrate({config,state,nextConfig,audit:{...audit,head:1}}),/audit/);assert.throws(()=>migrate({config,state,nextConfig:{...nextConfig,campaignId:'2'},audit}),/unrelated/);assert.throws(()=>migrate({config,state:{...state,checksum:'bad'},nextConfig,audit}),/identity/);
+});

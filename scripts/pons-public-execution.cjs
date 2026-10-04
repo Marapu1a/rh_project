@@ -34,6 +34,7 @@ function createGuard({provider,config:c,publicProfile:p,compiled}){
  return async(request,action)=>{
   check(BigInt(request.chainId)===4663n&&BigInt(request.value??0)===0n&&!request.authorizationList,'Public transaction envelope refused');
   check(!request.from||same(request.from,c.executor),'Public transaction sender mismatch');
+  if(c.recognition&&same(request.to,c.recognition.source)){check(action==='confirm','Recognition action refused');await require('./recognition-worker.cjs').guard(c,provider,request);return;}
   const kind=Object.keys(ACTIONS).find(k=>same(map[k][0],request.to));
   check(kind&&ACTIONS[kind].includes(action),'Public action not allowed');
   const decoded=interfaces[kind].parseTransaction({data:request.data,value:0});

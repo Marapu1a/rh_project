@@ -19,7 +19,7 @@ function rehearse(config,input,blocks,bundle,sourceCode,before){
  return {mode:'synthetic-confirmation-over-verified-history',head,ledgerHashBefore:D.hash(before.buyLedger),ledgerHashAfter:D.hash(after.buyLedger),existingDraws:before.draws.length,
   newlyConfirmed:after.buyLedger.decisions.filter(d=>d.recognition?.bundleHash===key).length};
 }
-async function prepare({config,blocks,manifest,transactionHashes,rpc,directory}){
+async function prepare({config,blocks,manifest,transactionHashes,rpc,directory,stageOnly=false}){
  const t=R.trust(config.recognition),m=config.manifest;
  check(Array.isArray(transactionHashes)&&transactionHashes.length>0&&transactionHashes.length<=50&&transactionHashes.every(x=>typeof x==='string'&&/^0x[0-9a-f]{64}$/i.test(x)),'Select 1..50 unique purchases');
  transactionHashes=transactionHashes.map(low);
@@ -39,7 +39,7 @@ async function prepare({config,blocks,manifest,transactionHashes,rpc,directory})
  check(sourceCode!=='0x'&&E.keccak256(sourceCode)===low(t.sourceCodeHash),'source runtime mismatch');
  const read=async(name,args=[])=>SOURCE.decodeFunctionResult(name,await rpc('eth_call',[{to:t.source,data:SOURCE.encodeFunctionData(name,args)},finalTag]))[0];
  check(low(await read('instanceId'))===low(t.instanceId)&&low(await read('publisher'))===low(t.publisher),'source authority mismatch');
- const availableAt=await read('availableAt');check(availableAt>0n&&BigInt(final.timestamp)>=availableAt,'source notice not elapsed');
+ const availableAt=await read('availableAt');check(availableAt>0n,'invalid source notice');if(!stageOnly){check(BigInt(final.timestamp)>=availableAt,'source notice not elapsed');if(t.publication)check(Number(BigInt(final.timestamp))*1000>=Date.parse(t.publication.notBefore),'public notice not elapsed');}
  for(const transactionHash of transactionHashes){
   const block=blocks.find(b=>b.transactions.some(r=>r.tx.hash.toLowerCase()===transactionHash.toLowerCase()));
   if(!block||BigInt(block.number)>BigInt(final.number))throw Error('Purchase not retained/finalized');
@@ -62,15 +62,15 @@ async function prepare({config,blocks,manifest,transactionHashes,rpc,directory})
  check(validation.newlyConfirmed===proofs.length,'batch replay count mismatch');
  check(!await read('published',[bundleHash]),'bundle already published');
  const request={from:t.publisher,to:t.source,chainId:'0x'+BigInt(m.chainId).toString(16),value:'0x0',data:R.ABI.encodeFunctionData('confirm',[bundleHash,proofs.length])};
- await rpc('eth_call',[{from:request.from,to:request.to,value:request.value,data:request.data},finalTag]);
+ if(!stageOnly)await rpc('eth_call',[{from:request.from,to:request.to,value:request.value,data:request.data},finalTag]);
  check(low((await rpc('eth_getBlockByNumber',[finalTag,false])).hash)===low(final.hash),'finalized branch changed');
  const retainedHead=await rpc('eth_getBlockByNumber',['0x'+BigInt(beforeLedger.head.number).toString(16),false]);
  check(low(retainedHead.hash)===low(beforeLedger.head.hash),'retained history branch changed');
  const file=path.join(directory,bundleHash+'.json');fs.mkdirSync(directory,{recursive:true});
  if(fs.existsSync(file)){if(D.hash(JSON.parse(fs.readFileSync(file,'utf8')))!==bundleHash)throw Error('Conflicting existing bundle');}
  else fs.writeFileSync(file,JSON.stringify(bundle)+'\n',{flag:'wx'});
- return {schema:'purchase-recognition-plan-v2',bundleHash,count:proofs.length,file,validation,sourceCheckpoint:{number:String(BigInt(final.number)),hash:final.hash,availableAt:String(availableAt)},
-  publicationChecksRemaining:['projectHistoryAudit','publicAnnouncement24h','bundleAvailability'],request,sent:false};
+ return {schema:stageOnly?'purchase-recognition-stage-v1':'purchase-recognition-plan-v2',bundleHash,count:proofs.length,file,validation,sourceCheckpoint:{number:String(BigInt(final.number)),hash:final.hash,availableAt:String(availableAt)},
+  publicationChecksRemaining:['projectHistoryAudit','publicAnnouncement24h','bundleAvailability'],request:stageOnly?null:request,sent:false};
 }
 function publicationHistory(config,state,now=Date.now()){
  const {checksum,...stored}=state;

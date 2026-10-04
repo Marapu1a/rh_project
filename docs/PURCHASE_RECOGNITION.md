@@ -127,3 +127,8 @@ O(project history), trace читается повторно при новом sn
 Разбор свежего GPT review и план первого боевого пути: [04.10](PURCHASE_RECOGNITION_REVIEW_2026-10-04.md).
 
 Подготовка source/подписи: [пакет04.10](RECOGNITION_DEPLOYMENT_2026-10-04.md).
+
+Операционный контур/первый запуск: [готовность04.10](RECOGNITION_READINESS_2026-10-04.md).
+`prepare({stageOnly:true})` выдаёт evidence и request=null до задержки.
+Публичные отправки проходят recognition-worker через общий coordinator journal;
+publication metadata в trust связывает URL/SHA256 объявления и notBefore.

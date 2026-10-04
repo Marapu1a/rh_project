@@ -190,3 +190,11 @@ bundle. Следующий этап — подготовка первого ма
 [Объявление опубликовано](RECOGNITION_PUBLICATION_2026-10-04.md)04.10 в11:07:49UTC.
 Первый confirm не раньше05.10 11:30UTC (14:30МСК) и после готовности readers,
 полноты истории и bundle availability. Автоматика не включалась.
+
+[Подготовка включения](RECOGNITION_READINESS_2026-10-04.md) завершена в оговорённых
+границах: full-range370 logs matched, новый read-only index/API live и restart lag0,
+публичные stage bundles1/28, worker в общем journal подготовлен/disabled.
+42 адресных +14 browser +catalog1 tests PASS. Executor0ETH; vault0USDG,
+escrow300.285210USDG доступно, pull/sweep simulated.24 других BUY остаются pending
+(11 targets, trace изучены, нового допуска нет). Далее — пополнение executor,
+после05.10 14:30МСК первый confirm/restart, затем регулярная финансовая автоматика.

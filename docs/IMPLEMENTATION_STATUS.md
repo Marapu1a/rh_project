@@ -106,3 +106,7 @@ restart/checkpoint/idempotency и опциональный локальный wa
 Source поздних покупок: `scripts/recognition-deployment.cjs` — read-only CREATE plan,
 точный runtime с immutables, strategy существующей signing queue;
 `deployment-console.cjs` — отдельная очередь4177. [Границы](RECOGNITION_DEPLOYMENT_2026-10-04.md).
+
+Recognition readiness: `audit-project-logs.cjs`, `migrate-recognition-index.cjs`,
+`recognition-worker.cjs`; stage-only preparer, public guard и coordinator journal.
+[Проверки и production границы](RECOGNITION_READINESS_2026-10-04.md).

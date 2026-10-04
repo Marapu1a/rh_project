@@ -1,5 +1,7 @@
 // Read-only explanation of an existing result. Never controls retries or sends.
 const messages={
+ recognitionNotice:'Waiting for the announced activation time. No new draws started.',
+ recognitionIndexCatchup:'Purchase confirmation is waiting for the finalized index before new draws.',
  indexerBehind:'Indexer is catching up. Keep the saved state and wait.',
  indexerStale:'Indexer data is stale. Restore indexing before starting new draws.',
  indexerUnavailable:'Indexer snapshot is unavailable. Restore the original state; do not reset tickets.',

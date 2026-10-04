@@ -90,6 +90,11 @@ async function runPonsAutomation({provider,executor,config:c,rpcUrl,statePath,si
      if(state.pending)return result('blocked',state.pending.transactionHash?'pendingReceipt':'unknownHash');
      if(['error','blocked','stopped'].includes(results.settlement.status))return result(results.settlement.status,'settlement');
      await claims();
+     if(!drain&&c.recognitionPublishing?.enabled){
+      const source=new ethers.Contract(c.recognition.source,require('./purchase-recognition.cjs').ABI,executor);
+      results.recognition=await require('./recognition-worker.cjs').run({config:c,provider,lastResolved:state.lastResolved,send:plan=>send(source.confirm,[plan.bundleHash,plan.count])});
+      if(results.recognition.status==='waiting')return result('waiting',results.recognition.reason);
+     }
      if(!drain){
       try{
        for(const k of ['collector','escrow'])check(same(ethers.keccak256(await provider.getCode(c[k])),c.codeHashes[k]),'Funding runtime changed');

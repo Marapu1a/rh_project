@@ -1,0 +1,57 @@
+{
+  "schema": "recognition-readiness-v1",
+  "date": "2026-10-04",
+  "runtime": "/opt/qianqi/releases/recognition-ready-20261004",
+  "indexHead": 79888377,
+  "indexStatus": "caughtUp",
+  "decisions": 106,
+  "waiting": 52,
+  "bundles": [
+    {
+      "count": 1,
+      "hash": "0x42e9f3c1853400d0159015e125ab9a32b7fa387151db8af46f92c8627c78f144",
+      "url": "https://qianqi.site/evidence/purchases/0x42e9f3c1853400d0159015e125ab9a32b7fa387151db8af46f92c8627c78f144.json",
+      "sent": false,
+      "validation": {
+        "mode": "synthetic-confirmation-over-verified-history",
+        "head": {
+          "number": 79880747,
+          "hash": "0xd01708c08bf559357ccb18deecba05e9ec1f80ca0965a5a27e8ab2300812c9c2"
+        },
+        "ledgerHashBefore": "0xa709973f7dadc97ef858213042622222c1e7f6589a9fe7b240b47492c9e13b01",
+        "ledgerHashAfter": "0x66f2f7e92f6c6f96780a8b4857a9cf0fad385d95d4e1dcbcba44b82864b0ca16",
+        "existingDraws": 0,
+        "newlyConfirmed": 1
+      }
+    },
+    {
+      "count": 28,
+      "hash": "0xdae264c33beb742e7335d759c3989e2ef6c5e7a0f572cf85fc5237df8623ce7c",
+      "url": "https://qianqi.site/evidence/purchases/0xdae264c33beb742e7335d759c3989e2ef6c5e7a0f572cf85fc5237df8623ce7c.json",
+      "sent": false,
+      "validation": {
+        "mode": "synthetic-confirmation-over-verified-history",
+        "head": {
+          "number": 79880747,
+          "hash": "0xd01708c08bf559357ccb18deecba05e9ec1f80ca0965a5a27e8ab2300812c9c2"
+        },
+        "ledgerHashBefore": "0xa709973f7dadc97ef858213042622222c1e7f6589a9fe7b240b47492c9e13b01",
+        "ledgerHashAfter": "0x9efb813c98d9513f874857e76f6b4d6f0c522c873e3598b1267756e06d63e4ee",
+        "existingDraws": 0,
+        "newlyConfirmed": 28
+      }
+    }
+  ],
+  "executor": "0x7170c2d8Abd99C471B89ffcAaC765d5aD94D1Bf3",
+  "executorETH": "0.0",
+  "vaultUSDG": "0.0",
+  "financialAutomationEnabled": false,
+  "recognitionPublishingEnabled": false,
+  "firstConfirmNotBefore": "2026-10-05T11:30:00Z",
+  "tests": {
+    "targetedUnique": 42,
+    "browser": 14,
+    "catalog": 1,
+    "fullSuiteRun": false
+  }
+}

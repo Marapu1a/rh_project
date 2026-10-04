@@ -1,29 +1,28 @@
-# GPT: позднее подтверждение — исправления после review
+# GPT review: подготовка поздних подтверждений и боевой read-only контур
 
-04.10.2026. Предыдущий ответ на27108e6 принят и сохранён в
-[GPT_REVIEW_RESPONSE](GPT_REVIEW_RESPONSE.md). Проверь текущий HEAD, назови его.
-[Разбор и фактические границы](PURCHASE_RECOGNITION_REVIEW_2026-10-04.md).
-Ничего не развёрнуто в production. Старый bloom-запрос —
-[в архиве](archive/GPT_REVIEW_REQUEST_PRE_RECOGNITION_2026-10-04.md).
+Проверь текущий HEAD, назови его. Область и факты:
+[RECOGNITION_READINESS_2026-10-04](RECOGNITION_READINESS_2026-10-04.md).
+Владелец принял QuickNode как достаточный источник; второй RPC не обязательный gate.
 
-Новые изменения узкие: prepare-purchase-recognition.cjs и regression tests.
-Сверь:
+Проверь статически:
 
-1. Дубли hash в разном регистре и повреждённая история отклоняются до выдачи плана.
-2. История и целый будущий bundle проходят тот же BUY/lifecycle replay; source
-   runtime/instance/publisher/availableAt/published и confirm проверяются read-only.
-   Может ли preparer штатно выдать пакет, который остановит reader после публикации?
-3. Checksum/config identity/admission/freshness CLI; canonical header и финальная
-   перепроверка ветки. Где требуется повторный preflight непосредственно перед подписью?
-4. Документы явно различают consistency replay, доверие evidence и независимый
-   trace-аудит. Последний НЕ выполнен: Alchemy Free закрывает метод, public RPC его
-   не предоставил. Не выдаём probe одной покупки за проверку28 или полноты диапазона.
-   Решение владельца04.10: одного QuickNode достаточно. Второй RPC опционален;
-   оцени проверки в этой модели доверия, не требуй второго провайдера как gate.
-5. План учитывает отдельное время публичного объявления и доступность bundle.
-   Source delay от deployment не заменяет эти условия.
+1. `audit-project-logs.cjs` и `migrate-recognition-index.cjs`: полнота диапазона,
+   привязка audit к snapshot, новый watched source, сохранение старых draws/кошельков.
+2. StageOnly выдаёт request=null; никакой путь публичного отправителя не должен
+   обходить availableAt и опубликованный notBefore05.10 11:30UTC.
+3. `recognition-worker.cjs`, public guard, coordinator: только узкий65050 adapter,
+   hash-bound public evidence, целый replay, общий journal/nonce, fail-closed сбои,
+   после confirm ожидание finalized index перед новыми freezes.
+4. Старые обязательства обслуживаются до recognition. Нет reroll/reset/withdrawal
+   или автоматического допуска24 неизвестных BUY. Призовую математику не меняли.
+5. Согласованность index/API/coordinator и operational status при сбоях.
 
-15/15 адресных tests — запуск Codex, не твой и не полный suite. Проверяй статически;
-не запускай tests/build/fork, не меняй код и не отправляй транзакции или сообщения.
-Ответ — docs/GPT_REVIEW_RESPONSE.md. Раздели воспроизводимые дефекты, обязательные
-операционные действия и улучшения на будущее. Сохранить тестовый → боевой этап.
+Факты проверки:42 уникальных адресных tests, browser14, catalog1 PASS;
+не full baseline. Новая worker orchestration проверена моделями, не реальным confirm.
+Боевой read-only index/API установлен, restart/lag0/live wallet pending проверены.
+Финансовый worker inactive, publishing disabled, activation marker отсутствует.
+Executor0ETH. Source contract уже развёрнут, но commits покупок не отправлялись.
+
+Не запускай tests/build/fork и не меняй runtime. Ответ — docs/GPT_REVIEW_RESPONSE.md.
+Раздели воспроизводимые ошибки, необходимые действия перед отправкой и улучшения.
+Исторические количества/балансы — snapshots, не гарантия текущего состояния.

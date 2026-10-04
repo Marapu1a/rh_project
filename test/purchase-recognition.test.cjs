@@ -137,3 +137,11 @@ test('publication CLI rejects corrupt, foreign, unadmitted, waiting and stale in
   const s=structuredClone(state);change(s);assert.throws(()=>read(config,seal(s),now));
  }
 });
+
+test('staging before delay produces evidence but no executable request; public notice delays publication',async t=>{
+ const x=preparation(t),prepare=require('../scripts/prepare-purchase-recognition.cjs').prepare;x.flags.availableAt=9999999999;
+ const stage=await prepare({...x.args,stageOnly:true});assert.equal(stage.schema,'purchase-recognition-stage-v1');assert.equal(stage.request,null);assert(!x.calls.some(([m,p])=>m==='eth_call'&&p[0].from));
+ await assert.rejects(prepare(x.args),/source notice/);
+ const y=preparation(t);y.args.config.recognition.publication={url:'https://example.com/notice',sha256:'a'.repeat(64),publishedAt:'2099-01-01T00:00:00Z',notBefore:'2099-01-02T00:00:00Z'};
+ await assert.rejects(prepare(y.args),/public notice/);
+});

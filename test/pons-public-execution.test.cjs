@@ -49,3 +49,9 @@ test('admission refusal survives receipt wrapping and CLI diagnostics omit raw p
  const d=require('../scripts/run-pons-public.cjs').diagnostics({results:{scheduler:{results:{SHORT:{status:'error',code:'PONS_PUBLIC_ADMISSION',admissionReasons:['finalityLag'],message:'https://private-rpc/secret'}}}}});
  assert.deepEqual(d.failures,[{lane:'scheduler',kind:'SHORT',code:'PONS_PUBLIC_ADMISSION',admission:['finalityLag']}]);assert(!JSON.stringify(d).includes('secret'));
 });
+
+test('recognition confirm cannot use the public send path while publication is disabled',async()=>{
+ const f=setup(),r=require('./fixtures/purchase-recognition.cjs').fixture().recognition;f.c.recognition={...r,publisher:f.c.executor};f.c.recognitionPublishing={enabled:false};f.p.configHash=hash(f.c);
+ const guard=createGuard({provider:f.provider,config:f.c,publicProfile:f.p,compiled}),data=require('../scripts/purchase-recognition.cjs').ABI.encodeFunctionData('confirm',[ethers.id('batch'),1]);
+ await assert.rejects(guard({to:r.source,chainId:4663,from:f.c.executor,value:0,data},'confirm'),/disabled/);
+});

@@ -148,7 +148,10 @@
       "test/operations-rpc-storage.test.cjs",
       "test/purchase-recognition.test.cjs",
       "test/purchase-recognition-source.test.cjs",
-      "test/recognition-deployment.test.cjs"
+      "test/recognition-deployment.test.cjs",
+      "test/audit-project-logs.test.cjs",
+      "test/migrate-recognition-index.test.cjs",
+      "test/recognition-worker.test.cjs"
     ]
   },
   "accounting": {
@@ -679,6 +682,9 @@
       "test/purchase-recognition.test.cjs",
       "test/purchase-recognition-source.test.cjs",
       "test/recognition-deployment.test.cjs",
+      "test/audit-project-logs.test.cjs",
+      "test/migrate-recognition-index.test.cjs",
+      "test/recognition-worker.test.cjs",
       "test/attempt-lifecycle.test.cjs",
       "test/attempt-lifecycle-dual.test.cjs",
       "test/verified-buy-replay.test.cjs",
