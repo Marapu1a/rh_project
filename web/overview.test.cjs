@@ -7,7 +7,7 @@ test('overview renders amounts, rollover, delayed snapshot, safe transaction lin
  const {page,url}=await setup(t);const d=data();d.status='stale';await page.route('**/v1/overview?*',r=>r.fulfill({json:d}));await page.goto(url);await page.waitForFunction(()=>document.getElementById('short-bank').textContent==='100');
  assert.equal(await page.locator('#monthly-bank').textContent(),'200');assert.match(await page.locator('#overview-status').textContent(),/delayed/);assert.match(await page.locator('#draw-history').textContent(),/rollover/);assert.match(await page.locator('#overview-provenance').textContent(),/block 100/);
  assert.equal(await page.locator('#draw-history a').getAttribute('href'),'https://robinhoodchain.blockscout.com/tx/'+tx);
- for(const width of [1440,768,390,320]){await page.setViewportSize({width,height:900});await page.locator('.live-summary details').evaluate(d=>d.open=true);assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);}
+ for(const width of [1440,768,390,320]){await page.setViewportSize({width,height:900});await page.locator('.live-summary details').filter({has:page.locator('#draw-history')}).evaluate(d=>d.open=true);assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);}
 });
 test('unavailable overview has unknown pools and no fabricated history',async t=>{
  const {page,url}=await setup(t);await page.route('**/v1/overview?*',r=>r.fulfill({status:503,json:{status:'unavailable'}}));await page.goto(url);await page.waitForFunction(()=>document.getElementById('overview-status').textContent.includes('Missing numbers'));assert.equal(await page.locator('#short-bank').textContent(),'—');assert.equal(await page.locator('#draw-history a').count(),0);

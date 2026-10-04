@@ -28,7 +28,7 @@
     const tx=draw.terminal?.source?.transactionHash??draw.freeze?.transactionHash;
     if(/^0x[0-9a-f]{64}$/i.test(tx)){const a=document.createElement('a');a.href='https://robinhoodchain.blockscout.com/tx/'+tx;a.target='_blank';a.rel='noopener noreferrer';a.textContent=draw.terminal?'View result transaction':'View draw transaction';row.append(a);}box.append(row);
    }
-   if(!d.history.items.length)box.textContent=offset?'No older results in this snapshot.':'No draws recorded in this snapshot yet.';
+   if(!d.history.items.length)box.textContent=offset?'No older results to show.':'No draws to show yet.';
    pageOffset=offset;nextOffset=d.history.nextOffset;el('history-next').hidden=nextOffset===null;el('history-next').textContent='Older draws';
   }catch{empty();el('overview-status').textContent='Live prize data is not available yet. Missing numbers don’t mean empty pools.';}
   finally{busy=false;el('history-next').disabled=false;}

@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="theme-color" content="#e6e2da">
     <meta name="description"
-        content="A token to trade. A chance to win. Eligible buys enter USDG prize draws automatically. Trading fees fuel the prizes; donations can top them up.">
+        content="A token to trade. A chance to win. Eligible buys earn entries for USDG prize draws. Draws are not running yet. Trading fees fuel the prizes; donations can top them up.">
     <title>QIANQI — Fortune finds you here</title>
     <link rel="icon" href="/assets/logo-cn.png">
     <link rel="stylesheet" href="/concepts/hk/style.css">
@@ -24,14 +24,14 @@
     </header>
     <main>
         <section class="hero wrap" aria-labelledby="hero-title">
-            <div class="hero-topline"><span>A SPECULATIVE TOKEN. AUTOMATIC DRAW ENTRIES.</span><span>ROBINHOOD CHAIN /
+            <div class="hero-topline"><span>A LITTLE ROOM FOR LUCK</span><span>ROBINHOOD CHAIN /
                     PONS</span></div>
             <h1 id="hero-title">QIANQI<span lang="zh-Hant">千祺</span></h1>
             <div class="hero-scene">
                 <div class="hero-copy">
                     <h2>A token to trade.<br>A chance to win.</h2>
                     <p>A speculative token with a little extra thrill: USDG prize draws. Eligible buys get you in
-                        automatically. No registration. No staking. No hoops to jump through.</p>
+                        automatically once the draws are live. No registration. No staking. No hoops to jump through.</p>
                     <p>Trading fees fuel the prizes. Donations can top them up. No magic money, no guaranteed wins.
                         Know the risks. Let luck do its thing.</p><a
                         class="text-link" href="#money">Follow the money </a>
@@ -43,6 +43,28 @@
                         class="scene-caption">千祺 / QIANQI</span>
                 </div>
                 <div class="vertical-note" aria-hidden="true">FORTUNE FINDS YOU HERE · 運氣就在這裡</div>
+            </div>
+        </section>
+        <section class="panel how wrap" id="how">
+            <div class="section-heading">
+                <h2>Buy. Enter automatically.<br>Check your results.</h2><span>HOW IT WORKS</span>
+            </div>
+            <div class="steps">
+                <article><span class="step-number">01</span>
+                    <h3>BUY IN THE RIGHT PLACE</h3>
+                    <p>Buy through a supported Pons route. Use the same wallet to pay and receive QIANQI. <a href="/transparency/#routes">Check which purchases qualify.</a> Some routes are still being verified.</p><button
+                        class="button dark" id="buy">BUY QIANQI </button>
+                </article>
+                <article><span class="step-number">02</span>
+                    <h3>LET THE TICKETS ADD UP</h3>
+                    <p>Every 100 USDG in eligible buys gets you 1 Short ticket and 1 Monthly ticket. Buy 60, then 40? That counts too. Give us a little time to pick up the purchases. You don’t need to connect here to enter.</p><a
+                        class="button outline" href="#rules">WHAT COUNTS? </a>
+                </article>
+                <article><span class="step-number">03</span>
+                    <h3>SEE HOW LUCK PLAYED IT</h3>
+                    <p>Connect to see your tickets and prizes. Draws start when the pool and system are ready. We try to send winners their USDG automatically. If a payment gets held up, you can claim it yourself and pay the gas.</p><button
+                        class="button coral connect"><span class="connect-label">CONNECT WALLET</span></button>
+                </article>
             </div>
         </section>
         <section class="draw-strip" id="draws" aria-label="The draws">
@@ -69,52 +91,13 @@
                 </article>
             </div>
         </section>
-        <p class="draw-note wrap"><span class="status-dot"></span>You’re getting a first look. We haven’t launched yet — live prize pools, checked buy links and claim links are still on the way.</p>
+        <p class="draw-note wrap"><span class="status-dot" aria-hidden="true"></span><strong>Token live. Draws coming next.</strong> You can check your purchases now. Prize draws and payouts are not running yet.</p>
         <section class="wrap live-summary" aria-label="Draw data">
             <p id="overview-status" role="status">Prize data is not connected yet.</p>
-            <p id="reserve-summary"></p><p id="overview-provenance" class="small"></p>
-            <details><summary>Past draws</summary><div id="draw-history">No confirmed results loaded.</div><button id="history-next" class="text-button" hidden>Older draws</button></details>
+            <div class="overview-details"><details><summary>Prize balances</summary><p id="reserve-summary"></p><p id="overview-provenance" class="small"></p></details>
+            <details><summary>Past draws</summary><div id="draw-history">No confirmed results loaded.</div><button id="history-next" class="text-button" hidden>Older draws</button></details></div>
         </section>
-        <section class="money wrap" id="money" aria-labelledby="money-title">
-            <div class="section-heading">
-                <h2 id="money-title">Follow every cut.</h2><span>NO MYSTERY MATH</span>
-            </div>
-            <p class="money-intro">Trading comes with a <strong>3% creator fee</strong> at launch. Here’s how we split the money that actually reaches us:</p>
-            <div class="money-split">
-                <div><strong>90%</strong><span>Prize pools</span></div>
-                <div><strong>5%</strong><span>Running costs</span></div>
-                <div><strong>5%</strong><span>Team share</span></div>
-            </div>
-            <div class="money-notes">
-                <p><strong>The fee isn’t the whole bill.</strong> A trade can also cost gas, other fees and price impact. These percentages split our fee income — not everything you spend buying tokens.</p>
-                <p><strong>Feeling generous?</strong> USDG donations go straight to the prizes. We take no cut, and donations buy no tickets. If sponsors join in with their own campaigns, those will have their own rules.</p>
-                <p><strong>Quiet market? Slower refill.</strong> No trades means no fresh trading fees. Money already in the prize pools stays there for prizes. The team can’t take it out or spend it on running costs. A prize still might not cover your trading losses.</p>
-            </div>
-            <a class="text-link" href="#rules">See the numbers. Know the odds. </a>
-        </section>
-        <section class="panel how wrap" id="how">
-            <div class="section-heading">
-                <h2>Buy. Enter automatically.<br>Check your results.</h2><span>01 — HOW IT WORKS</span>
-            </div>
-            <div class="steps">
-                <article><span class="step-number">01</span>
-                    <h3>BUY IN THE RIGHT PLACE</h3>
-                    <p>Buy through a supported Pons route. Use the same wallet to pay and receive QIANQI. We’ll list the checked routes before launch, so you know which buys count. <a href="/transparency/#routes">See where we stand.</a></p><button
-                        class="button dark" id="buy">BUY QIANQI </button>
-                </article>
-                <article><span class="step-number">02</span>
-                    <h3>LET THE TICKETS ADD UP</h3>
-                    <p>Every 100 USDG in eligible buys gets you 1 Short ticket and 1 Monthly ticket. Buy 60, then 40? That counts too. Give us a little time to pick up the purchases. You don’t need to connect here to enter.</p><a
-                        class="button outline" href="#rules">WHAT COUNTS? </a>
-                </article>
-                <article><span class="step-number">03</span>
-                    <h3>SEE HOW LUCK PLAYED IT</h3>
-                    <p>Connect to see your tickets and prizes. Draws start when the pool and system are ready. We try to send winners their USDG automatically. If a payment gets held up, you can claim it yourself and pay the gas.</p><button
-                        class="button coral connect"><span class="connect-label">CONNECT WALLET</span></button>
-                </article>
-            </div>
-        </section>
-        <div class="account-heading wrap"><span>02 — YOUR WALLET</span>
+        <div class="account-heading wrap"><span>YOUR WALLET</span>
             <p>Your tickets. Your wins. What’s been paid.</p>
         </div>
         <section class="account wrap" id="account">
@@ -157,19 +140,36 @@
                         </tbody>
                     </table>
                 </div>
-                <div class="rewards-footer"><span id="provenance">Just a connection. No payment. No signature.</span><button class="text-button" id="refresh" hidden>Refresh </button></div>
+                <div class="rewards-footer"><details class="data-details"><summary>Data details</summary><span id="provenance">Just a connection. No payment. No signature.</span></details><button class="text-button" id="refresh" hidden>Refresh </button></div>
             </article>
+        </section>
+        <section class="money wrap" id="money" aria-labelledby="money-title">
+            <div class="section-heading">
+                <h2 id="money-title">Follow every cut.</h2><span>NO MYSTERY MATH</span>
+            </div>
+            <p class="money-intro">Trading comes with a <strong>3% creator fee</strong> at launch. Here’s how we split the money that actually reaches us:</p>
+            <div class="money-split">
+                <div><strong>90%</strong><span>Prize pools</span></div>
+                <div><strong>5%</strong><span>Running costs</span></div>
+                <div><strong>5%</strong><span>Team share</span></div>
+            </div>
+            <div class="money-notes">
+                <p><strong>The fee isn’t the whole bill.</strong> A trade can also cost gas, other fees and price impact. These percentages split our fee income — not everything you spend buying tokens.</p>
+                <p><strong>Feeling generous?</strong> USDG donations go straight to the prizes. We take no cut, and donations buy no tickets. If sponsors join in with their own campaigns, those will have their own rules.</p>
+                <p><strong>Quiet market? Slower refill.</strong> No trades means no fresh trading fees. Money already in the prize pools stays there for prizes. The team can’t take it out or spend it on running costs. A prize still might not cover your trading losses.</p>
+            </div>
+            <a class="text-link" href="#rules">See the numbers. Know the odds. </a>
         </section>
         <section class="rules wrap" id="rules">
             <div class="section-heading">
                 <h2>The rules.<br>No guesswork.</h2><span>KNOW THE GAME</span>
-                <p><strong>Rule update · 4 October 2026.</strong> Verified earlier purchases can earn tickets for future draws. Closed draws stay unchanged. <a href="/notices/late-purchases-2026-10-04.html">Read the update and activation time →</a> · <a href="/evidence/purchases/">Prepared purchase evidence</a></p>
-                <p>Here’s how it will work at launch. For now, you’re looking at a preview — the draws aren’t live yet.</p>
+                <aside class="rule-update"><span>RULE UPDATE · 4 OCT</span><p>Earlier buys. Future draws.</p><a href="/notices/late-purchases-2026-10-04.html">Late purchase confirmation →</a></aside>
+                <p>What counts, how the odds work, and where the money goes.</p>
             </div>
             <details>
                 <summary>Which buys get me in?<span>+</span></summary>
                 <p>Buy QIANQI through a supported Pons route and receive the tokens in the same wallet that paid. Some checked routes let you start with ETH and convert it to USDG first. If a purchase needs more checks, it stays pending. Once an earlier purchase is verified as eligible, it can earn tickets for future draws, once the announced update takes effect. Closed draws stay unchanged. <a href="/notices/late-purchases-2026-10-04.html">See the supported routes and late-confirmation rules.</a></p>
-                <p>Every 100 USDG of eligible spending gets you one Short ticket and one Monthly ticket. We count what you actually spend, purchase fees included, minus any USDG refunded in that transaction. Small buys add up in the same wallet: 60 + 40 gets one of each. Spend 250 and you get two of each, with 50 carried toward your next pair.</p>
+                <p>Every 100 USDG of eligible spending gets you one Short ticket and one Monthly ticket. For supported USDG buys, we count the amount spent, purchase fees included, minus refunds. For the ETH route in the announced update, we count USDG delivered to the curve, excluding gas and native route fees. Small buys add up in the same wallet: 60 + 40 gets one of each. Spend 250 and you get two of each, with 50 carried toward your next pair.</p>
                 <p>No sign-up, staking or website connection needed. A ticket gives you a shot, not a promised prize. Holding, selling, gifts and transfers don’t create tickets. Selling won’t wipe out tickets you already earned, and sending tokens won’t send the tickets with them. Your transaction can be confirmed before we’ve processed it, so it may take time to appear in a draw.</p>
             </details>
             <details>
@@ -209,9 +209,9 @@
             </details>
             <details>
                 <summary>Can I check what happened for myself?<span>+</span></summary>
-                <p>That’s the idea — and here’s where you still rely on us. Our indexer, the service that reads purchases, builds the participant lists. The contracts check the locked data and the result calculation. They don’t go back and read every purchase themselves. So the list-building step still depends on the project.</p>
-                <p>The contract checks the randomness source’s signature. Our worker checks timing and network conditions; those off-chain checks aren’t a contract-level guarantee that a block is final. Once a result is fixed, there’s no reroll to find a different winner. New rules must be announced before use and can’t rewrite a fixed result.</p>
-                <p>Before launch, you’ll need to be able to check contract addresses, supported buy routes, the rules used, participant data, prize budgets, results and transactions. Those public links and live draw data are still being connected. A working Connect Wallet button doesn’t mean the draws are live.</p>
+                <p>You can check the token and contracts, purchase records and published rules. Once draws begin, their results and payment transactions will be available too.</p>
+                <p>The project checks purchases and prepares the participant lists using blockchain data. That step still relies on the project and its data provider. The contracts check the locked lists and prize calculations. A fixed result cannot be rerolled.</p>
+                <p><a href="/transparency/">See the records and what the checks cover.</a></p>
             </details>
             <details>
                 <summary>What’s the catch?<span>+</span></summary>
@@ -219,20 +219,14 @@
                 <p>The prize money comes from trading fees we actually receive and voluntary top-ups. We keep the team share shown above. You might never win, sponsors might never show up, and pools can take a while to refill. Know what you’re getting into. The rest is chance.</p>
             </details>
         </section>
-        <section class="join-band">
-            <div class="wrap join-content">
-                <div>
-                    <p class="join-title">Got tickets?<br>Take a look.</p><button class="button cream connect"><span class="connect-label">CONNECT
-                        WALLET</span></button>
-                </div><img src="/assets/mouse-happy.png" alt="A happy orange mouse welcomes you" loading="lazy">
-            </div>
-        </section>
-    </main>
-    <footer>
-        <div class="wrap footer-top"><a class="brand" href="#"><strong>QIANQI</strong> COIN</a>
-            <p>A little luck. No promised wins or profits.</p><a href="#rules">Rules</a>
+</main>
+    <footer class="site-footer">
+        <div class="wrap footer-main">
+            <div class="footer-identity"><a class="brand" href="#hero-title">QIANQI <span lang="zh-Hant">千祺</span></a><p>On Robinhood Chain.</p></div>
+            <nav class="footer-nav" aria-label="Explore"><h2>Explore</h2><a href="#how">How it works</a><a href="#draws">The draws</a><a href="#account">Your wallet</a></nav>
+            <nav class="footer-nav" aria-label="Project"><h2>Project</h2><a href="#money">Prize funding</a><a href="#rules">The rules</a><a href="/transparency/">Check for yourself</a></nav>
         </div>
-        <div class="footer-bottom wrap"><span>© QIANQI · 千祺</span><a href="/transparency/">Project status &amp; checks</a><a href="#rules">Know the rules</a></div>
+        <div class="footer-bottom wrap"><span>© QIANQI · 千祺</span><p>A little luck. No promised wins or profits.</p></div>
     </footer>
     <dialog id="dialog"><button class="dialog-close" aria-label="Close dialog">×</button><img id="dialog-mouse"
             src="/assets/mouse-error.png" alt="" hidden>

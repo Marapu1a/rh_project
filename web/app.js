@@ -120,7 +120,7 @@ async function refresh(){
   }
   const remaining=BigInt(b.entryThresholdRaw)-BigInt(b.carryRaw);if(remaining<=0n)throw Error();
   $('carry').textContent=`${units(String(remaining),b.quoteDecimals)} USDG to your next Short + Monthly ticket pair. Tickets shown here are waiting for a draw.`;
-  $('wallet-status').textContent=data.status==='stale'?'Updates delayed. You’re seeing the last numbers we could confirm.':data.provenance.indexerState==='catchingUp'?'Catching up with the chain. Recent buys may not appear yet. Your confirmed tickets stay recorded.':'These tickets are waiting for a draw. Tickets already locked into one stay with that draw.';
+  $('wallet-status').textContent=data.status==='stale'?'Updates delayed. You’re seeing the last numbers we could confirm.':data.provenance.indexerState==='catchingUp'?'Catching up with the chain. Recent buys may not appear yet. Your confirmed tickets stay recorded.':'Your prizes and payment status appear here.';
   $('provenance').textContent=`As of block ${data.provenance.head.number} · ${data.provenance.observedAt??'time unavailable'}`;
   if(data.rewards===null)emptyRewards('PRIZES: STILL CHECKING','We don’t have confirmed prize data for this wallet yet.');
   else if(!data.rewards.items.length)emptyRewards('NO PRIZES TO SHOW YET','No prizes assigned to this wallet in the latest data we have.');
@@ -175,15 +175,15 @@ function attachClaims(data,revision){
  }
 }
 function renderPurchases(data){
- let box=$('purchase-status');if(!box){box=document.createElement('section');box.id='purchase-status';$('provenance').parentElement.after(box);}box.replaceChildren();
- const heading=document.createElement('h3');heading.textContent='Your observed purchases';box.append(heading);
- const info=document.createElement('p');info.textContent='Only supported routes earn tickets. This is the activity our indexer could attribute to your wallet, not your complete trading history.';box.append(info);
+ let box=$('purchase-status');if(!box){box=document.createElement('section');box.id='purchase-status';$('provenance').closest('.rewards-footer').after(box);}box.replaceChildren();
+ const heading=document.createElement('h3');heading.textContent='Your purchases.';box.append(heading);
+ const info=document.createElement('p');info.textContent='Purchases we could identify for this wallet. Only eligible buys count toward tickets.';box.append(info);
  const labels={ELIGIBLE:'Counted toward tickets',INELIGIBLE:'Does not qualify',WAITING_RECOGNITION:'Waiting for purchase verification',UNSUPPORTED_ROUTE:'This route is not supported yet',AMBIGUOUS:'Could not verify this purchase'};
  for(const purchase of data.purchases?.items??[]){const p=document.createElement('p');p.textContent=`${String(purchase.transactionHash).slice(0,12)}… · ${labels[purchase.status]??'Still checking'}${purchase.status==='ELIGIBLE'?` · ${purchase.entriesMinted??'0'} ticket pairs added`:''}`;
-  if(purchase.creditedAt){const note=document.createElement('span');note.textContent=` � Verified at block ${purchase.creditedAt.blockNumber}. Tickets became available for future draws at confirmation.`;p.append(note);}
+  if(purchase.creditedAt){const note=document.createElement('span');note.textContent=` · Verified at block ${purchase.creditedAt.blockNumber}. Tickets became available for future draws at confirmation.`;p.append(note);}
   if(purchase.reason&&purchase.status!=='ELIGIBLE'){const detail=document.createElement('details'),summary=document.createElement('summary'),code=document.createElement('code');summary.textContent='Check detail';code.textContent=purchase.reason;detail.append(summary,code);p.append(detail);}box.append(p);}
- if(!data.purchases?.items?.length){const p=document.createElement('p');p.textContent='No attributed purchases in this snapshot. A missing purchase is not proof that it was rejected.';box.append(p);}
- if(data.purchases){const p=document.createElement('p');p.textContent=`Showing ${data.purchases.items.length} of ${data.purchases.total} observed purchases.`;box.append(p);}
+ if(!data.purchases?.items?.length){const p=document.createElement('p');p.textContent='No purchases found for this wallet yet. A recent or unverified purchase may take longer to appear.';box.append(p);}
+ if(data.purchases){const p=document.createElement('p');p.textContent=`Showing ${data.purchases.items.length} of ${data.purchases.total} purchases.`;box.append(p);}
 }
 setInterval(()=>{if(address&&!document.hidden)void refresh();},30000);
 

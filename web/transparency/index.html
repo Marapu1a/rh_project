@@ -1,61 +1,32 @@
 <!doctype html>
 <html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="theme-color" content="#f4f1e8">
-  <title>What works. What’s waiting. — QIANQI</title>
-  <link rel="icon" href="/assets/qianqi-logo.png">
-  <link rel="stylesheet" href="/transparency/style.css">
-</head>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#f4f1e8"><title>Check for yourself — QIANQI</title><link rel="icon" href="/assets/qianqi-logo.png"><link rel="stylesheet" href="/transparency/style.css"></head>
 <body>
-  <header><a class="brand" href="/">QIANQI <span>千祺</span></a><a href="/#rules">The rules</a></header>
-  <main>
-    <p class="eyebrow">PROJECT NOTES · UPDATED 3 OCTOBER 2026</p>
-    <h1>What works.<br>What’s waiting.</h1>
-    <p class="intro">No mystery box. Here’s where the project stands, what we depend on, and what you can check yourself.</p>
-    <p class="notice"><strong>Still in development.</strong> We’re adapting QIANQI to Pons V2. Our token and prize system are not live. These are dated project notes, not a live service monitor.</p>
-    <section aria-labelledby="money"><p class="eyebrow">01 · THE MONEY</p><h2 id="money">Received means received.</h2>
-      <p>Our funding plan splits collected creator revenue: 90% for prizes, 5% for operations and 5% for the team. Only USDG that actually reaches the prize vault counts as funded prize money.</p>
-      <p>Fees waiting to be collected, tokens waiting to be sold, and hoped-for donations don’t count. If money is delayed, new prize funding waits too. Already reserved prizes stay reserved.</p>
-    </section>
-    <section aria-labelledby="waiting"><p class="eyebrow">02 · THE DEPENDENCY</p><h2 id="waiting">Some fees have to wait.</h2>
-      <p>After a Pons token moves into its Uniswap pool, some fees arrive in that token instead of USDG. Pons uses an operator contract to convert them. A pending conversion can also hold up other fees still sitting in the same pool’s fee contract.</p>
-      <p>We’ve checked a real conversion into USDG. We haven’t yet confirmed whether our own executor can trigger that operator independently, or what service schedule covers a new pool.</p>
-      <p>USDG already credited to our recipient in Pons escrow can be claimed separately. Our local collector and automated runner use that separation: take what’s available, keep the rest marked as waiting. They are tested locally, not running with public funds.</p>
-      <a href="https://docs.ponsfamily.com/v2">Read Pons’s fee and payout documentation</a>
-    </section>
-    <section aria-labelledby="routes"><p class="eyebrow">03 · BUYING AND TICKETS</p><h2 id="routes">The route matters.</h2>
-      <p>Getting QIANQI in your wallet isn’t enough on its own. We need to check who paid, who received the tokens and how much USDG went into the purchase. Gifts, transfers and holding alone don’t earn tickets.</p>
-      <p>We’ve tested direct Pons buys before and after the move into its trading pool, plus specific wallet-batched purchases. Some checked routes start with ETH and convert it to USDG first. We count the eligible USDG purchase, not the exchange twice.</p>
-      <p>A few 0x and smart-account routes have also passed our checks. That doesn’t give every aggregator, wallet batch or swap a free pass. Other pools and unverified routes don’t automatically count.</p>
-      <p><strong>No public buy route is active yet.</strong> We’ll publish the checked buy link, token address and active route rules before launch. A Pons label alone doesn’t guarantee tickets — the actual purchase route has to match.</p>
-      <a href="https://github.com/Marapu1a/rh_project/blob/main/docs/PONS_CHANNEL_COVERAGE.md">The checked routes and their limits</a>
-    </section>
-    <section aria-labelledby="checks"><p class="eyebrow">04 · THE CHECKS</p><h2 id="checks">Tested isn’t the same as live.</h2>
-      <ul>
-        <li><strong>Checked locally:</strong> the latest combined Pons rehearsal covered 396 eligible purchases, 129 participating wallets per draw and 11 prize payments. Both draws completed; restart and recovery checks found no repeated confirmed sends.</li>
-        <li><strong>Test conditions:</strong> test balances on a local copy of the chain, a locally simulated Pons operator and controlled timing. Separate checks cover the narrower purchase routes. These results don’t prove public uptime, every wallet or recovery from every possible crash.</li>
-        <li><strong>Observed on-chain:</strong> an actual TOKEN-to-USDG conversion and credit to a creator. That proves a working transaction, not a promise of future uptime.</li>
-        <li><strong>Partly verified:</strong> the deployed fee hook’s executable code matches our build of the published source, with embedded addresses checked separately. Verification of the full contract set remains open.</li>
-        <li><strong>Still open:</strong> the published factory source calls a function missing from the published curve. We haven’t obtained complete verified source and access rules for the escrow and operator.</li>
-      </ul>
-      <p>External contract findings above are dated 30 September, not a fresh check of Pons today. Our latest combined rehearsal and test review are from 3 October. Public deployment, active buy routes and Claim still need to be connected and checked before launch.</p>
-    </section>
-    <section aria-labelledby="evidence"><p class="eyebrow">05 · CHECK FOR YOURSELF</p><h2 id="evidence">The receipts.</h2>
-      <ul class="links">
-        <li><a href="https://github.com/Marapu1a/rh_project/blob/main/docs/TEST_CANDIDATE_2026-10-03.md">Latest test report, findings and limits</a></li>
-        <li><a href="https://github.com/Marapu1a/rh_project/blob/main/docs/PONS_JOINT_REHEARSAL_2026-10-03.md">The combined purchase-to-payout rehearsal</a></li>
-        <li><a href="https://github.com/Marapu1a/rh_project/blob/main/docs/PONS_FAILURE_READINESS_2026-10-03.md">What happens when something waits or fails</a></li>
-        <li><a href="https://robinhoodchain.blockscout.com/tx/0x07664000987d99b4ebcddd6cbb0eba414fedda11e8c74efb69397bd4b8fd6c67">Observed USDG conversion transaction</a></li>
-        <li><a href="https://github.com/Marapu1a/rh_project/blob/main/docs/PONS_VERIFICATION.md">Our verification notes and remaining questions</a></li>
-        <li><a href="https://github.com/Marapu1a/rh_project/blob/main/docs/PONS_AUTOMATION.md">Local automation results and test limits</a></li>
-        <li><a href="https://github.com/ponsdotdev/pons-labs/tree/b51431f7d5242fc5414a7da7d3659ad3bc749eb7/contractsV2">Pons source version we checked</a></li>
-        <li><a href="https://robinhoodchain.blockscout.com/address/0xa1018c1D9655292A2dE0F7dEa9a0F848EaA8cA83">Pons operator contract</a></li>
-      </ul>
-      <p>These are Pons references, not deployed QIANQI contract addresses. QIANQI addresses and supported purchase routes will be published before launch.</p>
-    </section>
-  </main>
-  <footer><span>QIANQI · 千祺</span><a href="/">Back to QIANQI</a></footer>
-</body>
-</html>
+<header><a class="brand" href="/">QIANQI <span>千祺</span></a><a href="/#rules">The rules</a></header>
+<main>
+<p class="eyebrow">PROJECT STATUS · UPDATED 4 OCTOBER 2026</p>
+<h1>Check for yourself.</h1>
+<p class="intro">No mystery box. Here’s where the project stands, what we depend on, and what you can check yourself.</p>
+<p class="notice"><strong>Token live. Draws coming next.</strong> QIANQI is trading on Pons. Purchase tracking is available; prize draws and payouts are not running yet. This is a dated update, not a live service monitor.</p>
+<section aria-labelledby="token"><h2 id="token">One official token.</h2><p>QIANQI on Robinhood Chain:</p><p><a href="https://robinhoodchain.blockscout.com/address/0x6EA39A23AA46E51CA6CD2d1cbc0B5bfb29ECB216">0x6EA39A23AA46E51CA6CD2d1cbc0B5bfb29ECB216</a></p><p>Check the network and full address. A matching name or picture alone doesn’t identify our token.</p></section>
+<section aria-labelledby="routes"><h2 id="routes">The route matters.</h2>
+<p>Getting QIANQI in your wallet isn’t enough on its own. We check who paid, who received the tokens and the eligible purchase amount. Gifts, transfers and holding alone don’t earn tickets.</p>
+<p>Some purchases need additional checks before they count. A pending purchase isn’t a rejection, and an exchange through another token isn’t automatically eligible.</p>
+<p>Under the announced late-confirmation rules, verified earlier purchases can earn tickets for future draws. They cannot change a draw that has already locked its entries. Publication of a purchase record alone does not award tickets.</p>
+<p><a href="/notices/late-purchases-2026-10-04.html">Read the late purchase confirmation notice</a></p></section>
+<section aria-labelledby="money"><h2 id="money">Received means received.</h2>
+<p>Collected creator revenue is split: 90% for prizes, 5% for operations and 5% for the team. Only USDG that actually reaches the prize vault counts as funded prize money.</p>
+<p>Fees waiting to be collected, tokens waiting to be sold, and hoped-for donations don’t count. If money is delayed, new prize funding waits too. Already reserved prizes stay reserved.</p>
+<p>After a token moves into its trading pool, some Pons fees need conversion into USDG by an external operator. That dependency can delay collection. Available USDG and money still awaiting conversion are different things.</p></section>
+<section aria-labelledby="checks"><h2 id="checks">What you’re trusting.</h2>
+<p>The project checks purchases and prepares entry lists using blockchain data from its RPC provider. That means trusting both the project’s checks and the data provider. Published records help you inspect those decisions; they do not remove that trust.</p>
+<p>Our purchase-to-payout flow has been tested in a test environment. Those results do not establish public uptime or cover every possible swap route. Internal tests and published source code are not an independent security audit.</p>
+<p>Verification of the complete external Pons contract set remains incomplete. Conversion availability also depends on Pons. These limits remain relevant after launch.</p></section>
+<section aria-labelledby="records"><h2 id="records">The receipts.</h2><ul class="links">
+<li><a href="/evidence/purchases/">Prepared purchase records</a> — evidence for review, not proof of awarded tickets.</li>
+<li><a href="https://github.com/Marapu1a/rh_project">Project source code and documentation</a></li>
+<li><a href="https://github.com/Marapu1a/rh_project/blob/main/docs/PONS_VERIFICATION.md">Contract verification findings and remaining questions</a></li>
+<li><a href="https://github.com/Marapu1a/rh_project/blob/main/docs/TEST_CANDIDATE_2026-10-03.md">Test results and their limits</a></li>
+</ul></section>
+</main><footer><span>QIANQI · 千祺</span><a href="/">Back to QIANQI</a></footer>
+</body></html>

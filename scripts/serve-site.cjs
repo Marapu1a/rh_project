@@ -10,6 +10,9 @@ files.set('/transparency/style.css','transparency/style.css');
 files.set('/overview.js','overview.js');
 files.set('/claim.js','claim.js');
 files.set('/vendor/ethers-6.17.0.min.js','vendor/ethers-6.17.0.min.js');
+files.set('/notices/late-purchases-2026-10-04.html','notices/late-purchases-2026-10-04.html');
+files.set('/notices/notice.css','notices/notice.css');
+files.set('/evidence/purchases/','evidence/purchases/index.html');
 function createSite({apiOrigin='http://127.0.0.1:8787',purchaseDemo=false,actions=null}={}){
  if(actions)require('../web/claim.js').config(actions);
  const routes=new Map(files);
