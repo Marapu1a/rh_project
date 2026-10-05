@@ -43,16 +43,19 @@ async function obligations(f){return [String(await f.vault.reserved(f.quote.targ
 test('Pons real process kill: primary and drand journals retain unknown/known sends and status0',async()=>{
  const f=await setup();try{
   const baseline=await rpc('evm_snapshot');let snapshot=baseline;
-  for(const kind of ['main','drand'])for(const variant of ['unknown','known','reverted']){
+  for(const kind of ['main','signed-main','drand'])for(const variant of ['unknown','known','reverted']){
    await rpc('evm_revert',[snapshot]);snapshot=await rpc('evm_snapshot');
+   const wallet=kind==='signed-main'?ethers.Wallet.createRandom():null,sender=wallet?.address||f.sender;
+   if(wallet)await rpc('hardhat_setBalance',[sender,'0x1000000000000000000']);
    const stage=variant==='unknown'?'unknown':'known',state=path.join(f.directory,kind+'-'+variant+'.json'),file=state+'.config.json';
-   fs.writeFileSync(file,JSON.stringify({kind,state,instanceId:f.instanceId,rpc:f.url,sender:f.sender,collector:f.collector.target,recipient:f.recipient,job:f.job,adapterAbi:compiled.DrandRandomAdapter.abi,forceRevert:variant==='reverted'}));
-   const before=await obligations(f),nonce=await f.provider.getTransactionCount(f.sender);
+   fs.writeFileSync(file,JSON.stringify({kind:wallet?'main':kind,...(wallet?{signingKey:wallet.privateKey}:{}),state,instanceId:f.instanceId,rpc:f.url,sender,collector:f.collector.target,recipient:f.recipient,job:f.job,adapterAbi:compiled.DrandRandomAdapter.abi,forceRevert:variant==='reverted'}));
+   const before=await obligations(f),nonce=await f.provider.getTransactionCount(sender);
    if(variant==='reverted')await rpc('evm_setAutomine',[false]);
    const killed=await child(file,stage);assert.equal(killed.event,'window',kind+'/'+variant+': '+JSON.stringify(killed));
    assert.equal((await rpc('hardhat_metadata')).instanceId,f.instanceId);
    const saved=JSON.parse(fs.readFileSync(state)),lock=state+'.lock';assert.equal(fs.readFileSync(lock,'utf8'),String(killed.pid));
-   assert.equal(!!saved.pending.transactionHash,stage==='known');
+   assert.equal(!!saved.pending.transactionHash,stage==='known'||!!wallet);
+   if(wallet)assert.equal(ethers.keccak256(saved.pending.signedTransaction),killed.hash);
    const stalled=await child(file,'reconcile');assert.equal(stalled.event,'error');assert.match(stalled.message,/state locked/);
    // Only this test-owned lock is removed after the owner has exited; journal bytes remain intact.
    const bytes=fs.readFileSync(state);fs.unlinkSync(lock);assert.deepEqual(fs.readFileSync(state),bytes);
@@ -62,12 +65,12 @@ test('Pons real process kill: primary and drand journals retain unknown/known se
    }
    const result=await child(file,'reconcile');assert.equal(result.event,'result',JSON.stringify(result));
    const receipt=await f.provider.getTransactionReceipt(killed.hash);assert.equal(receipt.status,variant==='reverted'?0:1);
-   if(stage==='unknown'){assert.equal(result.result.reason,'unknownHash');assert.deepEqual(fs.readFileSync(state),bytes);}
+   if(stage==='unknown'&&!wallet){assert.equal(result.result.reason,'unknownHash');assert.deepEqual(fs.readFileSync(state),bytes);}
    else{assert(['resolved','complete'].includes(result.result.status));const resolved=JSON.parse(fs.readFileSync(state));assert.equal(resolved.pending,undefined);assert.equal(resolved.lastResolved.status,receipt.status);}
-   assert.equal(await f.provider.getTransactionCount(f.sender),nonce+1);assert.deepEqual(await obligations(f),before);
-   if(kind==='main'){assert.equal(await f.quote.balanceOf(f.recipient),variant==='reverted'?0n:50n);assert.equal(await f.collector.credit(f.recipient),variant==='reverted'?50n:0n);}
+   assert.equal(await f.provider.getTransactionCount(sender),nonce+1);assert.deepEqual(await obligations(f),before);
+   if(kind!=='drand'){assert.equal(await f.quote.balanceOf(f.recipient),variant==='reverted'?0n:50n);assert.equal(await f.collector.credit(f.recipient),variant==='reverted'?50n:0n);}
    // Another clean reconciliation still cannot generate a second transaction.
-   await child(file,'reconcile');assert.equal(await f.provider.getTransactionCount(f.sender),nonce+1);
+   await child(file,'reconcile');assert.equal(await f.provider.getTransactionCount(sender),nonce+1);
    if(kind==='drand'&&variant==='known'){
     const resumed=await child(file,'resume');assert.equal(resumed.result.status,'complete');assert.deepEqual(resumed.result.steps.map(x=>x.action),['deliver']);
     const end=await f.provider.getTransactionCount(f.sender);const again=await child(file,'resume');assert.equal(again.result.steps.length,0);assert.equal(await f.provider.getTransactionCount(f.sender),end);assert.deepEqual(await obligations(f),before);

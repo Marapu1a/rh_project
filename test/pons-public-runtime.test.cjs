@@ -36,10 +36,10 @@ test('public guard rehearsal drains both real frozen draws despite owner drift; 
  const f=await fixture(t),getLogs=f.provider.getLogs.bind(f.provider),payoutWindows=[];
  const topic=f.short.interface.getEvent('AttemptsConsumed').topicHash;
  f.provider.getLogs=async filter=>{
-  if(filter.topics?.[0]===topic){assert(BigInt(filter.toBlock)-BigInt(filter.fromBlock)<10n);payoutWindows.push([filter.fromBlock,filter.toBlock]);}
+  if(filter.topics?.[0]===topic){assert(BigInt(filter.toBlock)-BigInt(filter.fromBlock)<10000n);payoutWindows.push([filter.fromBlock,filter.toBlock]);}
   return getLogs(filter);
  };
- await rpc('hardhat_mine',['0x19']);
+ await rpc('hardhat_mine',['0x4e21']);
  await prepare(f);await sent(f.short.transferOwnership(f.other.address));
  const nonce=await f.provider.getTransactionCount(f.owner),balance=await f.provider.getBalance(f.owner);
  await rpc('hardhat_setBalance',[f.owner,'0x0']);const low=await run(f.options,{getBeacon:beacon});

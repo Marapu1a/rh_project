@@ -2,16 +2,20 @@
 const {ZeroAddress}=require('ethers');
 const same=(a,b)=>typeof a==='string'&&typeof b==='string'&&a.toLowerCase()===b.toLowerCase();
 const check=(ok,message)=>{if(!ok)throw Error(message);};
-async function scanPayouts({provider,short,monthly,state,save,anchor,signal}){
+// QuickNode's verified log range is 10,000 blocks. Bound each invocation too,
+// so catching up never monopolizes the coordinator. No change to stored cursors.
+async function scanPayouts({provider,short,monthly,state,save,anchor,signal,pageSize=10000,maxBlocks=100000}){
+ check(Number.isSafeInteger(pageSize)&&pageSize>0&&pageSize<=10000,'Invalid payout page size');
+ check(Number.isSafeInteger(maxBlocks)&&maxBlocks>0&&maxBlocks<=100000,'Invalid payout scan budget');
  const head=await provider.getBlock('latest');
  check(Number.isSafeInteger(head?.number),'Missing payout head');
  let cursor=state.cursor||anchor;
  check(Number.isSafeInteger(cursor.number)&&cursor.number>=0,'Invalid payout cursor');
  check(same((await provider.getBlock(cursor.number))?.hash,cursor.hash),'Payout cursor reorg; explicit recovery required');
- const limit=Math.min(head.number,cursor.number+1000);
- for(let from=cursor.number+1;from<=limit;from+=10){
+ const limit=Math.min(head.number,cursor.number+maxBlocks);
+ for(let from=cursor.number+1;from<=limit;from+=pageSize){
   if(signal?.aborted)throw Object.assign(Error('stopped'),{code:'LOCAL_BUDGET_WAIT'});
-  const to=Math.min(limit,from+9),end=await provider.getBlock(to),pending=[];
+  const to=Math.min(limit,from+pageSize-1),end=await provider.getBlock(to),pending=[];
   check(end?.hash,'Missing payout scan boundary');
   for(const [source,kind]of [[short,0],[monthly,1]]){
    const events=await source.queryFilter(source.filters.AttemptsConsumed(null,kind),from,to);

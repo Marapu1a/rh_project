@@ -7,7 +7,7 @@ const {runDrandDelivery}=require('../../scripts/drand-delivery-worker.cjs');
 const vector=require('../../research/drand-feasibility/vector.json').beacon;
 const [file,stage]=process.argv.slice(2),c=JSON.parse(fs.readFileSync(file));
 const provider=new ethers.JsonRpcProvider(c.rpc,undefined,{cacheTimeout:-1});provider.pollingInterval=20;
-const signer=new ethers.JsonRpcSigner(provider,c.sender);
+const signer=c.signingKey?new ethers.Wallet(c.signingKey,provider):new ethers.JsonRpcSigner(provider,c.sender);
 const pause=async tx=>{setInterval(()=>{},1000);process.send({event:'window',hash:tx.hash,nonce:tx.nonce});await new Promise(()=>{});};
 function instrument(real){
  const method=async(...args)=>{const tx=await real(...args);if(stage==='unknown')await pause(tx);if(stage==='known')return {hash:tx.hash,nonce:tx.nonce,wait:()=>pause(tx)};return tx;};
@@ -21,7 +21,11 @@ async function main(){
   const blocked=await reconcilePending(state,save,provider,c.sender);if(blocked)return blocked;
   if(stage==='reconcile'||stage==='resume')return {status:'resolved',receiptStatus:state.lastResolved?.status};
   const contract=new ethers.Contract(c.collector,['function pay(address)'],signer);
-  const boundary=createBoundary({state,save,provider,sender:c.sender,guard:async()=>{},onConfirmed:async()=>{}});
+  const boundary=createBoundary({state,save,provider,sender:c.sender,guard:async()=>{},onConfirmed:async()=>{},...(c.signingKey?{signer}:{})});
+  if(c.signingKey){
+   const broadcast=provider.broadcastTransaction.bind(provider);
+   provider.broadcastTransaction=async raw=>{const tx=await broadcast(raw);if(stage==='unknown')await pause(tx);if(stage==='known')return {hash:tx.hash,nonce:tx.nonce,wait:()=>pause(tx)};return tx;};
+  }
   await withTransactionBoundary(boundary,()=>sendLocalTransaction(instrument(contract.pay),[c.recipient],{},{receiptTimeoutMs:10000}));return {status:'complete'};
  });
  else{

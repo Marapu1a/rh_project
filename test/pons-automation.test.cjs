@@ -30,7 +30,7 @@ function payoutFixture(){
  const winner=sender,draw=ethers.id('draw'),resultHash=ethers.id('result');
  const event={blockNumber:12,blockHash:block(12).hash,args:{drawId:draw,resultHash}};
  const source=kind=>({filters:{AttemptsConsumed:()=>kind},queryFilter:async(k,from,to)=>{assert(to-from<10);calls.push([k,from,to]);return from<=12&&to>=12?[event,event]:[];},shortResult:async(id,at)=>{assert.equal(at.blockTag,20);return {resultHash,winners:[winner,winner,ethers.ZeroAddress]};},month:async(id,at)=>{assert.equal(at.blockTag,20);return {resultHash,winner};}});
- const f={provider:{getBlock:async n=>block(n==='latest'?25:n)},short:source(0),monthly:source(1),state,save:s=>saved.push(structuredClone(s)),anchor:block(0),calls,saved,event,block};return f;
+ const f={provider:{getBlock:async n=>block(n==='latest'?25:n)},short:source(0),monthly:source(1),state,save:s=>saved.push(structuredClone(s)),anchor:block(0),calls,saved,event,block,pageSize:10,maxBlocks:1000};return f;
 }
 test('payout scan pages both controllers, pins results, deduplicates and resumes without rescanning',async()=>{
  const f=payoutFixture();await scanPayouts(f);assert.equal(f.state.cursor.number,25);assert.equal(f.state.payouts.length,1);assert.equal(f.saved.length,3);
@@ -57,4 +57,34 @@ test('payout scan bounds catch-up to 1000 blocks and cancellation retains saved 
 });
 test('payout anchor/cursor reorg is rejected even with no newer blocks',async()=>{
  const f=payoutFixture();f.state.cursor={number:25,hash:'bad'};await assert.rejects(scanPayouts(f),/cursor reorg/);assert.equal(f.saved.length,0);assert.equal(f.calls.length,0);
+});
+
+test('paid-RPC payout scan catches up 100000 blocks in ten atomic pages and resumes',async()=>{
+ const f=payoutFixture();delete f.pageSize;delete f.maxBlocks;
+ f.provider.getBlock=async n=>f.block(n==='latest'?100025:n);
+ const events=[1,10000,10001,100000,100025].map(n=>({blockNumber:n,blockHash:f.block(n).hash,args:{drawId:require('ethers').id('draw '+n),resultHash:require('ethers').id('result')}}));
+ for(const source of [f.short,f.monthly]){
+  source.queryFilter=async(k,a,b)=>{assert(b-a<10000);f.calls.push([k,a,b]);return events.filter(e=>e.blockNumber>=a&&e.blockNumber<=b);};
+  source.shortResult=async(id,at)=>{assert([10000,20000,100000,100025].includes(at.blockTag));return {resultHash:events[0].args.resultHash,winners:[sender]};};
+  source.month=async()=>({resultHash:events[0].args.resultHash,winner:sender});
+ }
+ await scanPayouts(f);assert.equal(f.state.cursor.number,100000);assert.equal(f.saved.length,10);assert.equal(f.calls.length,20);assert.equal(f.state.payouts.length,4);
+ f.state=structuredClone(f.saved.at(-1));f.calls.length=0;await scanPayouts(f);
+ assert.deepEqual(f.calls,[[0,100001,100025],[1,100001,100025]]);assert.equal(f.state.payouts.length,5);
+});
+
+test('large payout page failure and reorg retain prior checkpoint and retry the entire page',async()=>{
+ for(const mode of ['failure','reorg']){
+  const f=payoutFixture();delete f.pageSize;delete f.maxBlocks;
+  const read=async n=>f.block(n==='latest'?25000:n);f.provider.getBlock=read;
+  f.short.queryFilter=async()=>[];let fail=true;
+  f.monthly.queryFilter=async(k,a,b)=>{if(a===10001&&fail){if(mode==='failure')throw Error('RPC down');f.provider.getBlock=async n=>n===b?{...f.block(n),hash:'changed'}:read(n);}return [];};
+  await assert.rejects(scanPayouts(f));assert.equal(f.state.cursor.number,10000);assert.equal(f.saved.length,1);
+  f.state=structuredClone(f.saved[0]);f.provider.getBlock=read;fail=false;await scanPayouts(f);assert.equal(f.state.cursor.number,25000);
+ }
+});
+
+test('payout scan rejects unbounded or invalid page settings before RPC',async()=>{
+ const f=payoutFixture();f.provider.getBlock=()=>assert.fail('no RPC');
+ for(const options of [{pageSize:0},{pageSize:10001},{pageSize:1.5},{maxBlocks:100001},{maxBlocks:0}])await assert.rejects(scanPayouts({...f,...options}),/Invalid payout/);
 });

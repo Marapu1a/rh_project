@@ -1,0 +1,21 @@
+{
+  "date": "2026-10-05",
+  "scope": "read-only production RPC; cloned in-memory payout state",
+  "chainId": 4663,
+  "rangeComparison": {
+    "from": 80530590,
+    "to": 80540589,
+    "logs": 0,
+    "match": true
+  },
+  "scan": {
+    "from": 79379860,
+    "to": 79479859,
+    "blocks": 100000,
+    "pages": 10,
+    "seconds": 14.732,
+    "payouts": 0
+  },
+  "productionJournalUnchanged": true,
+  "publicTransactions": 0
+}
