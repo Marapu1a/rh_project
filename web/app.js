@@ -102,6 +102,13 @@ function scheduleRestore(){
 }
 window.dispatchEvent(new Event('eip6963:requestProvider'));scheduleRestore();
 function units(raw,decimals){if(!/^\d+$/.test(String(raw))||!Number.isInteger(decimals)||decimals<0||decimals>36)throw Error('Invalid amount');const n=BigInt(raw),d=10n**BigInt(decimals),fraction=(n%d).toString().padStart(decimals,'0').replace(/0+$/,'');return (n/d).toLocaleString('en-US')+(fraction?'.'+fraction:'');}
+// Display only: retain raw amounts for accounting and signed transactions.
+function money(raw,decimals,{roundUp=false}={}){
+ units(raw,decimals);const n=BigInt(raw);if(decimals<=2)return units(raw,decimals);
+ const scale=10n**BigInt(decimals-2),cents=n/scale;
+ if(n>0n&&cents===0n&&!roundUp)return '<0.01';
+ return units(String(cents+(roundUp&&n%scale?1n:0n)),2);
+}
 async function refreshTokenBalance(request,wallet){
  const box=$('token-balance');if(!box)return;
  if(siteActions||chain!==4663n){box.textContent='Unavailable on this network';return;}
@@ -136,14 +143,14 @@ async function refresh(){
    }
   }
   const remaining=BigInt(b.entryThresholdRaw)-BigInt(b.carryRaw);if(remaining<=0n)throw Error();
-  $('carry').textContent=`${units(String(remaining),b.quoteDecimals)} USDG to your next Short + Monthly ticket pair. Tickets shown here are waiting for a draw.`;
+  $('carry').textContent=`${money(String(remaining),b.quoteDecimals,{roundUp:true})} USDG to your next Short + Monthly ticket pair. Tickets shown here are waiting for a draw.`;
   $('wallet-status').textContent=data.status==='stale'?'Updates delayed. You’re seeing the last numbers we could confirm.':data.provenance.indexerState==='catchingUp'?'Catching up with the chain. Recent buys may not appear yet. Your confirmed tickets stay recorded.':'Your prizes and payment status appear here.';
   $('provenance').textContent=`As of block ${data.provenance.head.number} · ${data.provenance.observedAt??'time unavailable'}`;
   if(data.rewards===null)emptyRewards('PRIZES: STILL CHECKING','We don’t have confirmed prize data for this wallet yet.');
   else if(!data.rewards.items.length)emptyRewards('NO PRIZES TO SHOW YET','No prizes assigned to this wallet in the latest data we have.');
   else{
    // Reward asset/decimals must come from a verified deployment profile, never the quote decimals.
-   $('rewards-body').replaceChildren();for(const reward of data.rewards.items){const tr=document.createElement('tr');for(const text of [String(reward.drawId).slice(0,10)+'…',data.asset&&reward.asset===data.asset.address?units(reward.amountRaw,data.asset.decimals)+' USDG':'Amount not loaded',reward.status==='paid'?'Paid':'Won · payment pending']){const td=document.createElement('td');td.textContent=text;tr.append(td);}tr.firstChild.title=String(reward.drawId);for(const [label,source] of [['Assignment',reward.assignment],['Payment',reward.payment]]){if(source&&/^0x[0-9a-f]{64}$/i.test(source.transactionHash)&&String(data.provenance.chainId)==='4663'){const a=document.createElement('a');a.href='https://robinhoodchain.blockscout.com/tx/'+source.transactionHash;a.textContent=label;a.target='_blank';a.rel='noopener noreferrer';tr.firstChild.append(document.createElement('br'),a);}}tr.lastChild.className=reward.status==='paid'?'status-paid':'status-assigned';$('rewards-body').append(tr);}
+   $('rewards-body').replaceChildren();for(const reward of data.rewards.items){const tr=document.createElement('tr');for(const text of [String(reward.drawId).slice(0,10)+'…',data.asset&&reward.asset===data.asset.address?money(reward.amountRaw,data.asset.decimals)+' USDG':'Amount not loaded',reward.status==='paid'?'Paid':'Won · payment pending']){const td=document.createElement('td');td.textContent=text;tr.append(td);}tr.firstChild.title=String(reward.drawId);for(const [label,source] of [['Assignment',reward.assignment],['Payment',reward.payment]]){if(source&&/^0x[0-9a-f]{64}$/i.test(source.transactionHash)&&String(data.provenance.chainId)==='4663'){const a=document.createElement('a');a.href='https://robinhoodchain.blockscout.com/tx/'+source.transactionHash;a.textContent=label;a.target='_blank';a.rel='noopener noreferrer';tr.firstChild.append(document.createElement('br'),a);}}tr.lastChild.className=reward.status==='paid'?'status-paid':'status-assigned';$('rewards-body').append(tr);}
    $('provenance').textContent+=` · Showing ${data.rewards.items.length} of ${data.rewards.total} rewards.`;
    attachClaims(data,claimVersion);
   }

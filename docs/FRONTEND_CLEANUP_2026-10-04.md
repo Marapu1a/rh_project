@@ -21,3 +21,9 @@ Connected wallet balance uses read-only eth_call balanceOf and decimals against 
 Validation: site/wallet/overview/token-balance tests: 19/21 initially; two old wallet assertions assumed no eth_call and were adjusted to retain checks on connection/permission methods. Those two reran 2/2 PASS. 21 unique cases passed across runs. New test covers exact large balance, read error, obsolete account response and disconnect. Mobile overflow checks320/390 passed. Production unchanged. Updated preview runs at http://127.0.0.1:4181/concepts/hk/ .
 
 Fee-copy follow-up: removed decorative link/button arrows. Public funding copy now shows the 3% creator fee as 2.7% prizes + 0.15% gas/operations + 0.15% team, including rules and transparency. Accounting unchanged; collected-funds qualification retained. Visual check found longer percentages overflowed320px; funding cards now stack on mobile. Desktop screenshot reviewed;320px recheck passed. No runtime logic changed.
+
+## USDG display — 5 October 2026
+
+Published to production: pool/reserve/history/reward amounts show at most two decimals, truncated so the display does not overstate available funds. Positive sub-cent amounts show <0.01. Remaining spend for tickets rounds up to cents. Raw accounting and transaction amounts and QIANQI token balances retain precision. Draw cards stack below650px; amounts no longer wrap inside digits.
+
+Validation: `SITE_TEST_PATH=/concepts/hk/ node --test web/site.test.cjs web/overview.test.cjs` 6/6 PASS. Browser checks320/390/650/768/1440px passed with real-sized amounts. Live320px shows135.12 and90.08USDG with no page overflow and a single card column; screenshot `.local/logs/usdg-mobile-live.png`. Published app.js, overview.js and concepts/hk/style.css; originals backed up at `/opt/qianqi/backups/usdg-display-20261005`. No financial runtime changes.

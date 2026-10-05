@@ -9,7 +9,7 @@
   try{
    const r=await fetch('/v1/overview?offset='+offset+'&limit=10',{cache:'no-store',signal:AbortSignal.timeout(10000)}),d=await r.json();
    if(!r.ok||d.schema!=='promo-overview-v1'||!['observed','stale'].includes(d.status)||String(d.provenance?.chainId)!=='4663'||!d.asset||!d.reserves||!d.draws||!Array.isArray(d.history?.items))throw Error();
-   const amount=n=>units(n,d.asset.decimals);
+   const amount=n=>money(n,d.asset.decimals);
    for(const kind of ['SHORT','MONTHLY']){
     const k=kind.toLowerCase(),draw=d.draws[kind];
     el(k+'-bank').textContent=amount(draw.active?.budgetRaw??draw.freeRaw);
