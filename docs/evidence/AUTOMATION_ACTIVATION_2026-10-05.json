@@ -1,0 +1,164 @@
+{
+  "schema": "qianqi-activation-evidence-v1",
+  "release": "/opt/qianqi/releases/payout-sender-eb74ac9",
+  "integrityFiles": 327,
+  "preflight": {
+    "admission": "matched",
+    "reasons": [],
+    "checks": 100,
+    "observedBlock": {
+      "number": 80560232,
+      "hash": "0x574f553346169436b3e55d16a537a39dcff4334ab5b6ac40b94919ab8df41099"
+    },
+    "nonce": {
+      "latest": 3,
+      "pending": 3,
+      "finalized": 3
+    },
+    "executorWei": "990438702004000",
+    "recognitionEnabled": false
+  },
+  "receiptSnapshot": {
+    "observedAt": "2026-10-05T06:13:37.373Z",
+    "receipts": [
+      {
+        "hash": "0x8357f2480c9a67ccbfcd716d044488d601f7cc62ddd525780b752c858f09c484",
+        "nonce": 3,
+        "status": 1,
+        "block": 80561696,
+        "selector": "0x482c8ced",
+        "gasUsed": "237975"
+      },
+      {
+        "hash": "0xdd15b63b5a9c3abc9ed48f350ca5634396cb485a762273c87fe71b1610a47b6f",
+        "nonce": 4,
+        "status": 1,
+        "block": 80562318,
+        "selector": "0x329eb839",
+        "gasUsed": "149655"
+      },
+      {
+        "hash": "0x86181d8c79f32042f167944613bc74d087c6b8aeaf4e60a1322b02ac2d8a392a",
+        "nonce": 5,
+        "status": 1,
+        "block": 80563745,
+        "selector": "0x0c11dedd",
+        "gasUsed": "104022"
+      },
+      {
+        "hash": "0xdfc3cc07cd4b022065fe64e6d955c1218b3669d0d597c7cedf79aef2d28b996a",
+        "nonce": 6,
+        "status": 1,
+        "block": 80564439,
+        "selector": "0x0c11dedd",
+        "gasUsed": "64824"
+      }
+    ],
+    "nonce": {
+      "latest": 7,
+      "pending": 7
+    },
+    "vaultRaw": "275598728",
+    "executorWei": "979283091124000",
+    "credits": [
+      {
+        "address": "0x2E9e7412e19497b60f25D05b68717067A6B743D4",
+        "raw": "0"
+      },
+      {
+        "address": "0x098afA6731239a00CE0aff669aaefD16b7C72114",
+        "raw": "0"
+      }
+    ],
+    "recognitionEnabled": false
+  },
+  "activation": {
+    "activatedAt": "2026-10-05T06:15:26.011565+00:00",
+    "pid": 260610,
+    "operator": {
+      "schema": "qianqi-operator-status-v1",
+      "pid": 260610,
+      "startedAt": "2026-10-05T06:15:25.395Z",
+      "observedAt": "2026-10-05T06:15:25.401Z",
+      "pass": 1,
+      "state": "waiting",
+      "reasons": [],
+      "publicExecution": true
+    },
+    "recognitionEnabled": false
+  },
+  "backup": {
+    "archive": "20261005T061126Z.tar.gz",
+    "sha256": "d2db7dbf4da380ef9428ec134569cc9cddbb8bd7398591728cab56650b6e2481",
+    "offServerVerified": true,
+    "restore": {
+      "files": 12,
+      "activation": false
+    }
+  },
+  "recognitionEnabled": false,
+  "liveState": {
+    "observedAt": "2026-10-05T06:17:52.037560+00:00",
+    "operator": {
+      "schema": "qianqi-operator-status-v1",
+      "pid": 260610,
+      "startedAt": "2026-10-05T06:15:25.395Z",
+      "observedAt": "2026-10-05T06:16:57.090Z",
+      "pass": 2,
+      "state": "waiting",
+      "reasons": [
+        {
+          "code": "otherWait",
+          "message": "A prerequisite is not ready. Inspect the detailed pass result before resuming."
+        }
+      ],
+      "publicExecution": true
+    },
+    "payoutCursor": {
+      "number": 80568457,
+      "hash": "0xaeaa3306a92092333e0d1bb160c953968539bc90616a6effd0827c0c33db8f29"
+    },
+    "pending": false,
+    "lastTransaction": "0xdfc3cc07cd4b022065fe64e6d955c1218b3669d0d597c7cedf79aef2d28b996a",
+    "services": {
+      "qianqi-public-automation.service": "active",
+      "qianqi-public-indexer.service": "active",
+      "qianqi-public-monitor.timer": "active",
+      "qianqi-public-backup.timer": "active"
+    },
+    "indexer": {
+      "status": "ready",
+      "ready": true,
+      "attempts": 29,
+      "successes": 28,
+      "failures": 0,
+      "lagBlocks": 0,
+      "processedBlock": 80559431,
+      "targetBlock": 80559431
+    }
+  },
+  "finalCheck": {
+    "observedAt": "2026-10-05T06:18:26.757Z",
+    "head": 80569025,
+    "payoutCursor": 80568974,
+    "payoutLagBlocks": 51,
+    "nonce": 7,
+    "pendingNonce": 7,
+    "pending": false,
+    "operator": {
+      "schema": "qianqi-operator-status-v1",
+      "pid": 260610,
+      "startedAt": "2026-10-05T06:15:25.395Z",
+      "observedAt": "2026-10-05T06:18:02.069Z",
+      "pass": 3,
+      "state": "waiting",
+      "reasons": [
+        {
+          "code": "otherWait",
+          "message": "A prerequisite is not ready. Inspect the detailed pass result before resuming."
+        }
+      ],
+      "publicExecution": true
+    }
+  }
+}

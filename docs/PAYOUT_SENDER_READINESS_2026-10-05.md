@@ -1,5 +1,7 @@
 # Payout scanner and sender readiness — 5 October 2026
 
+Subsequently [deployed and activated in a separate authorized stage](AUTOMATION_ACTIVATION_2026-10-05.md).
+
 Scope: finish the local reliability package and prepare a separate production
 transfer. No financial service activation, recognition publication, configuration
 change, cursor reset or public transaction is part of this step.

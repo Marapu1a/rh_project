@@ -15,11 +15,21 @@ for unit in "${units[@]}"; do
 done
 target="/var/backups/qianqi-public/$(date -u +%Y%m%dT%H%M%SZ)"
 mkdir -p /var/backups/qianqi-public
-node /opt/qianqi/prepared/scripts/ops-backup.cjs backup /var/lib/qianqi-public "$target"
+release="$(systemctl show qianqi-public-automation.service -p WorkingDirectory --value)"
+test -n "$release"
+node "$release/scripts/ops-backup.cjs" backup /var/lib/qianqi-public "$target"
 # Config contains public deployment facts only. RPC and custody live separately.
 cp -a /etc/qianqi/public "$target/config"
-cp /opt/qianqi/prepared/release.json "$target/release.json"
+cp "$release/release.json" "$target/release.json"
 sha256sum "$target/release.json" > "$target/release.sha256"
+# Workers may run different releases after an isolated deployment.
+mkdir "$target/runtimes"
+for unit in "${units[@]}"; do
+  directory="$(systemctl show "$unit" -p WorkingDirectory --value)"
+  test -n "$directory"
+  cp "$directory/release.json" "$target/runtimes/$unit.release.json"
+  printf '%s\n' "$directory" > "$target/runtimes/$unit.directory.txt"
+done
 # Publish a complete immutable transfer archive; pullers ignore incomplete files.
 tar -czf "$target.tar.gz.tmp" -C "$(dirname "$target")" "$(basename "$target")"
 mv "$target.tar.gz.tmp" "$target.tar.gz"
