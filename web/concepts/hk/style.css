@@ -14,7 +14,7 @@
 /* Account addresses must remain readable on narrow wallet dialogs. */
 #wallet-options .button{display:block;text-align:left;overflow-wrap:anywhere;white-space:normal}#wallet-options .button[aria-pressed="true"]{border-width:2px;font-weight:700}
 .live-summary{padding-block:20px;border-bottom:1px solid}.live-summary details{margin-block:12px}.draw-result,.locked-ticket{overflow-wrap:anywhere;line-height:1.6}.draw-result{border-top:1px solid #ccc;padding-block:14px}.draw-result a{color:inherit}.rewards td a{color:inherit;font-size:12px}.locked-ticket{font-size:13px;border-top:1px solid;padding-top:10px}
-.draw-card{min-width:0}.draw-card p{overflow-wrap:anywhere}.draw-card .bank{flex-wrap:wrap}.draw-card .bank strong{font-size:clamp(25px,4vw,52px);overflow-wrap:normal;white-space:nowrap;max-width:100%;overflow-x:auto}.live-summary{overflow-wrap:anywhere}
+.draw-card{min-width:0}.draw-card p{overflow-wrap:anywhere}.draw-card .bank{flex-wrap:wrap}.draw-card .bank strong{font-size:clamp(25px,4vw,52px);line-height:1.2;overflow-wrap:normal;white-space:nowrap;max-width:100%}.live-summary{overflow-wrap:anywhere}
 @media(max-width:650px){.draw-grid{grid-template-columns:1fr}.draw-card{border-left:0;border-top:1px solid #ffffff40}.draw-card .bank strong{font-size:clamp(28px,8vw,44px)}}
 
 /* Wallet activity must fit narrow screens, including transaction identifiers. */

@@ -248,3 +248,5 @@ escrow300.285210USDG доступно, pull/sweep simulated.24 других BUY 
 04.10: [Первое финансирование](FUNDING_ACTIVATION_2026-10-04.md) выполнено: vault270.256689USDG, ops/team30.028520USDG, executor~0.00099044ETH. Три successful receipts, pending нет. Первичный unknownHash восстановлен той же операцией/nonce0 без reset. Регулярная служба inactive: далее перенос проверенного signed-hash-before-broadcast и ускорение10-block payout scan. У4 admitted wallets билетов пока0; recognition по-прежнемуdisabled до окна.
 
 05.10: USDG на фронте ограничены двумя знаками; мобильные карточки розыгрышей складываются в колонку. Проверено и опубликовано, учётная точность сохранена. См. [отчёт](FRONTEND_CLEANUP_2026-10-04.md).
+
+05.10: устранена CSS-регрессия внутренних скроллов у сумм розыгрышей; опубликовано, desktop/mobile проверены. Финансовая логика не менялась.
